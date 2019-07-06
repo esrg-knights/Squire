@@ -38,8 +38,9 @@ INSTALLED_APPS = [
     # External Libraries
     'rest_framework',
     # Internal Components
-    'activity_calendar',
     'achievements',
+    'activity_calendar',
+    'membership_file',
 ]
 
 MIDDLEWARE = [
