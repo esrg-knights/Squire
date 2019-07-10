@@ -17,8 +17,15 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
+    # Admin Panel
     path('admin/', admin.site.urls),
-    path('calendar/', include('activity_calendar.urls')),
+    # Achievements
     path('achievements/', include('achievements.urls-frontend')),
     path('api/achievements/', include('achievements.urls-api')),
+    # Activity Calendar
+    path('calendar/', include('activity_calendar.urls-frontend')),
+    path('api/calendar/', include('activity_calendar.urls-api')),
+    # Membership File
+    path('members/', include('membership_file.urls-frontend')),
+    path('api/members/', include('membership_file.urls-api')),
 ]
