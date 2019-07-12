@@ -1,0 +1,11 @@
+{% extends 'achievements/base.html' %}
+
+{% block content %}
+	{% for achievement in achievements %}
+    <div class="achievement">
+
+    </div>
+  {% empty %}
+    <p>No achievements exist. In other words, you have them all!</p>
+  {% endfor %}
+{% endblock %}
