@@ -15,9 +15,30 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+
+def get_secret_key() -> str:
+    """
+    Get the stored secret key from the filesystem.
+
+    If this is the first time the program is run, create one.
+    """
+    try:
+        secretfile = os.path.join(BASE_DIR, "squire/secret_key.txt")
+        with open(secretfile) as f:
+            secret = f.read().strip()
+    except FileNotFoundError:
+        from django.core.management.utils import get_random_secret_key
+        print("Hello and welcome! I think that this is the first time you are"
+              " running me, I'm generating a new Secret Key for you to use. "
+              "Saving it to a file for next time...")
+        secret = get_random_secret_key()
+        with open(secretfile, 'w') as f:
+            f.write(secret)
+    return secret
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
-with open('squire/secret_key.txt') as f:
-    SECRET_KEY = f.read().strip()
+SECRET_KEY = get_secret_key()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
