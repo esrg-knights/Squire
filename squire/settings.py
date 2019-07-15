@@ -43,6 +43,7 @@ SECRET_KEY = get_secret_key()
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# Hosts on which the application will run
 ALLOWED_HOSTS = []
 
 
@@ -141,3 +142,30 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+####################################################################
+# Login Settings
+
+# The URL or named URL pattern where requests are redirected for login
+# when using the login_required() decorator.
+LOGIN_URL = 'login/' 
+
+# The URL or named URL pattern where requests are redirected after
+# login when the LoginView doesn’t get a next GET parameter.
+LOGIN_REDIRECT_URL = '' # Redirect to homepage
+
+# The URL or named URL pattern where requests are redirected after
+# logout if LogoutView doesn’t have a next_page attribute.
+LOGOUT_REDIRECT_URL = 'logout/success'
+
+####################################################################
+# Other Settings
+
+# People who get error code notifications if Debug = False
+ADMINS = [('Squire Admin', 'bestuur@kotkt.nl')] # NB: This email should be changed to something else
+
+# The email address that error messages come from, such as those sent to ADMINS and MANAGERS.
+SERVER_EMAIL = 'error@squire.kotkt.nl'
