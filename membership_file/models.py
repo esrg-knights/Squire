@@ -79,11 +79,11 @@ class Member(models.Model):
 
     # String-representation of an instance of a Member
     def __str__(self):
-        return "{1} {2} {3} ({0})".format(self.id, self.first_name, self.tussenvoegsel, self.last_name)
+        return self.getFullName() + " ({0})".format(self.id)
 
     # Gets the name of the member
     def getFullName(self):
-        if hasattr(self, 'tussenvoegsel'):
+        if self.tussenvoegsel is not None:
             return "{0} {1} {2}".format(self.first_name, self.tussenvoegsel, self.last_name)
         return "{0} {1}".format(self.first_name, self.last_name)
 
