@@ -1,13 +1,15 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from datetime import date
 import datetime
 from django.core.validators import RegexValidator, MinValueValidator
 
+##################################################################################
 # Models related to the Membership File-functionality of the application.
 # @author E.M.A. Arts
 # @since 06 JUL 2019
-
+##################################################################################
 
 # The Member model represents a Member in the membership file
 class Member(models.Model):
@@ -29,9 +31,13 @@ class Member(models.Model):
     # The card numbers of the member
     # NB: These card numbers must be unique
     # NB: These numbers may start with 0, which is why they are not IntegerFields
-    card_number_regex = RegexValidator(regex=r'^[0-9]*$', message="Card numbers must only consist of numbers.")
-    tue_card_number = models.CharField(validators=[card_number_regex], max_length=15, blank=True, null=True, unique=True)
-    external_card_number = models.CharField(validators=[card_number_regex], max_length=15, blank=True, null=True, unique=True)
+    tue_card_number_regex = RegexValidator(regex=r'^[0-9]{7}$', message="TU/e card numbers must only consist of exactly 7 numbers. E.g. 1234567")
+    tue_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, blank=True, null=True, unique=True)
+    
+    external_card_number_regex = RegexValidator(regex=r'^[0-9]{7}\-[0-9]{3}$', message="External card numbers must only consist"
+         + " of exactly 7 numbers, followed by a hyphen (-), and ended by the 'external number' which consists of exactly 3 numbers. E.g. 1234567-123")
+    external_card_number = models.CharField(validators=[external_card_number_regex], max_length=15, blank=True, null=True, unique=True)
+    external_card_cluster = models.CharField(max_length=63, blank=True, null=True)
 
     # The date of birth of the member
     date_of_birth = models.DateField(default=datetime.date(1970,1,1))
@@ -47,17 +53,29 @@ class Member(models.Model):
     street = models.CharField(max_length=63)
     house_number = models.IntegerField(validators=[MinValueValidator(1)], default=1)
     house_number_addition = models.CharField(max_length=15, blank=True, null=True)
-    city_of_residence = models.CharField(max_length=63)
-    #NB: This is the Dutch variant of postal codes, it will differ between countries!
-    postal_code_regex = RegexValidator(regex=r'^[0-9]{4} [A-Z]{2}$', message="Postal Code (Dutch variant) must be entered in the format: '1234 AB'.")
-    postal_code = models.CharField(validators=[postal_code_regex], max_length=7)
+    city = models.CharField(max_length=63)
+    #NB: States/Province are not always necessary for addresses
+    state = models.CharField(max_length=63, blank=True, null=True)
+    country = models.CharField(max_length=63)
+    #NB: Not all countries use postal codes! Moreover, it will differ between countries!
+    postal_code_regex = RegexValidator(regex=r'^[0-9A-Za-z\-" "]*$', message="Postal Codes must only consist of alphanumerical characters, spaces, and hyphens (-).")
+    postal_code = models.CharField(validators=[postal_code_regex], max_length=15)
 
-    # The date at which the member became a member (automatically handled)
-    member_since = models.DateField(auto_now_add=True)
+    # The date at which the member became a member (automatically handled, but is overridable)
+    member_since = models.DateField(default=date.today)
 
     # The date and time at which this member's information was last updated
-    # Handled automatically by Django
+    # Handled automatically by Django, and cannot be overridden
     last_updated_date = models.DateTimeField(auto_now=True)
+
+    # The user that last updated the member information
+    last_updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete = models.SET_NULL,
+        blank = True,
+        null = True,        
+        related_name = "last_updated_by_user",
+    )
 
     # String-representation of an instance of a Member
     def __str__(self):
@@ -87,16 +105,33 @@ class MemberLog(models.Model):
         related_name = "updated_member"
     )
 
+    # The date and time at which the change was performed
+    # Automatically handled by Django and cannot be overridden
+    date = models.DateTimeField(auto_now_add=True)
+
+    # String-representation of an instance of a MemberLog
+    def __str__(self):
+        return "{1} updated {2}'s information ({0})".format(self.id, self.user, self.member)
+    
+
+# The MemberLogField Model represents an updated field in a MemberLog object
+class MemberLogField(models.Model):
+    # The user that updated the information
+    member_log = models.ForeignKey(
+        MemberLog,
+        on_delete = models.CASCADE,
+        related_name = "updated_in_member_log",
+        )
+
     # The name of the field that was updated
     field = models.CharField(max_length=63)
 
     # The old value of the field
-    old_value = models.CharField(max_length=63)
+    old_value = models.TextField(null=True)
 
     # The new value of the field
-    new_value = models.CharField(max_length=63)
+    new_value = models.TextField(null=True)
 
-    # String-representation of an instance of a MemberLog
+    # String-representation of an instance of a MemberLogField
     def __str__(self):
-        return "{1} updated {2}'s {3}-information ({0})".format(self.id, self.user, self.member, self.field)
-    
+        return "{1} was updated: <{2}> -> <{3}> ({0})".format(self.id, self.field, self.old_value, self.new_value)

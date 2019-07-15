@@ -1,28 +1,15 @@
 from django.shortcuts import render, get_object_or_404
 from .models import Member, MemberLog
-from rest_framework import routers, serializers, viewsets
+from .serializers import MemberSerializer
+from rest_framework import routers, viewsets
 from rest_framework.views import APIView, Response
 
-# Renders the webpage for viewing all members
-def viewAllMembers(request):
-    serializer = MemberSerializer(Member.objects.all(), many=True)
-    return render(request, 'membership_file/view-all-members.html', {"members": serializer.data})
+# @require_safe only accepts HTTP GET and HEAD requests
+from django.views.decorators.http import require_safe
 
-# Renders the webpage for viewing a specific member
-def viewSpecificMember(request, id):
-    print(id)
-    pMember = get_object_or_404(Member, pk=id)
-    serializer = MemberSerializer(pMember)
-    return render(request, 'membership_file/view-member.html', serializer.data)
+# Enable the auto-creation of logs
+from .auto_model_update import *
 
-
-
-# The MemberSerializer converts the Member model to a Python dictionary
-class MemberSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Member
-        fields = "__all__"
-        depth = 1
 
 # API calls made to /members/
 class MemberView(APIView):
@@ -30,8 +17,6 @@ class MemberView(APIView):
         #Convert model instance to a dictionary
         serializer = MemberSerializer(Member.objects.all(), many=True)
         return Response({"members": serializer.data})
-    def put(self, request, format=None):
-        pass
     def post(self, request, format=None):
         pass
 
@@ -44,10 +29,6 @@ class SpecificMemberView(APIView):
         serializer = MemberSerializer(pMember)
 
         return Response(serializer.data)
-
-    def post(self, request, id, format=None):
-        pass
-
     def put(self, request, id, format=None):
         pass
     
