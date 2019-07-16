@@ -77,6 +77,10 @@ class Member(models.Model):
         related_name = "last_updated_by_user",
     )
 
+    # Members can be marked for deletion, after which another user
+    # can permanently delete the member
+    marked_for_deletion = models.BooleanField(default=False)
+
     # String-representation of an instance of a Member
     def __str__(self):
         return self.getFullName() + " ({0})".format(self.id)
@@ -101,8 +105,22 @@ class MemberLog(models.Model):
     # The member whose information was updated
     member = models.ForeignKey(
         Member,
-        on_delete = models.CASCADE,
-        related_name = "updated_member"
+        on_delete = models.SET_NULL,
+        related_name = "updated_member",
+        null = True,
+    )
+
+    # Possble types of updates
+    LOG_TYPE_CHOICES = [
+        ("INSERT", "Insert"),
+        ("UPDATE", "Update"),
+        ("DELETE", "Delete"),
+    ]
+
+    # The type of update
+    log_type = models.CharField(
+        max_length=6,
+        choices=LOG_TYPE_CHOICES,
     )
 
     # The date and time at which the change was performed
