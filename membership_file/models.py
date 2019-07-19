@@ -24,9 +24,9 @@ class Member(models.Model):
         )
     
     # The name of the member
-    first_name = models.CharField(max_length=63)
-    tussenvoegsel = models.CharField(max_length=15, blank=True, null=True)
-    last_name = models.CharField(max_length=63)
+    first_name = models.CharField(max_length=255)
+    tussenvoegsel = models.CharField(max_length=255, blank=True, null=True)
+    last_name = models.CharField(max_length=255)
     
     # The card numbers of the member
     # NB: These card numbers must be unique
@@ -37,29 +37,29 @@ class Member(models.Model):
     external_card_number_regex = RegexValidator(regex=r'^[0-9]{7}\-[0-9]{3}$', message="External card numbers must only consist"
          + " of exactly 7 numbers, followed by a hyphen (-), and ended by the 'external number' which consists of exactly 3 numbers. E.g. 1234567-123")
     external_card_number = models.CharField(validators=[external_card_number_regex], max_length=15, blank=True, null=True, unique=True)
-    external_card_cluster = models.CharField(max_length=63, blank=True, null=True)
+    external_card_cluster = models.CharField(max_length=255, blank=True, null=True)
 
     # The date of birth of the member
     date_of_birth = models.DateField(default=datetime.date(1970,1,1))
 
     # Email address of the member
-    email = models.EmailField(unique=True)
+    email = models.EmailField(max_length=255, unique=True)
 
     # Telephone number of the member
     phone_regex = RegexValidator(regex=r'^\+[0-9]{8,15}$', message="Phone number must be entered in the format: '+999999999'. Up to 14 digits allowed.")
     phone_number = models.CharField(validators=[phone_regex], max_length=16, blank=True, null=True, unique=True)
 
     # Address of the member
-    street = models.CharField(max_length=63)
+    street = models.CharField(max_length=255)
     house_number = models.IntegerField(validators=[MinValueValidator(1)], default=1)
-    house_number_addition = models.CharField(max_length=15, blank=True, null=True)
-    city = models.CharField(max_length=63)
+    house_number_addition = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=255)
     #NB: States/Province are not always necessary for addresses
-    state = models.CharField(max_length=63, blank=True, null=True)
-    country = models.CharField(max_length=63)
+    state = models.CharField(max_length=255, blank=True, null=True)
+    country = models.CharField(max_length=255)
     #NB: Not all countries use postal codes! Moreover, it will differ between countries!
     postal_code_regex = RegexValidator(regex=r'^[0-9A-Za-z\-" "]*$', message="Postal Codes must only consist of alphanumerical characters, spaces, and hyphens (-).")
-    postal_code = models.CharField(validators=[postal_code_regex], max_length=15)
+    postal_code = models.CharField(max_length=255, validators=[postal_code_regex])
 
     # The date at which the member became a member (automatically handled, but is overridable)
     member_since = models.DateField(default=date.today)
@@ -119,7 +119,7 @@ class MemberLog(models.Model):
 
     # The type of update
     log_type = models.CharField(
-        max_length=6,
+        max_length=255,
         choices=LOG_TYPE_CHOICES,
     )
 
@@ -142,7 +142,7 @@ class MemberLogField(models.Model):
         )
 
     # The name of the field that was updated
-    field = models.CharField(max_length=63)
+    field = models.CharField(max_length=255)
 
     # The old value of the field
     old_value = models.TextField(null=True)
