@@ -74,6 +74,7 @@ def post_save_member(sender, instance, created, **kwargs):
         # Create a new DELETE Memberlog
         MemberLog.objects.create(user=instance.last_updated_by, member=instance, log_type="DELETE")
 
+
 # Fires when the member deletion has completed successfully
 @receiver(post_delete, sender=Member)
 def post_delete_member(sender, instance, **kwargs):
