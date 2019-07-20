@@ -129,7 +129,7 @@ class MemberLog(models.Model):
 
     # String-representation of an instance of a MemberLog
     def __str__(self):
-        return "{1} updated {2}'s information ({0})".format(self.id, self.user, self.member)
+        return "[{3}] {1} updated {2}'s information ({0})".format(self.id, self.user, self.member, self.log_type)
     
 
 # The MemberLogField Model represents an updated field in a MemberLog object

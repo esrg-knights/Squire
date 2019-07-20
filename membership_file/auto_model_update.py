@@ -28,7 +28,7 @@ def pre_save_member(sender, instance, **kwargs):
 @receiver(post_save, sender=Member)
 def post_save_member(sender, instance, created, **kwargs):
 
-    updatedValues = {}
+    old_values_that_changed = {}
     iterableMember = MemberSerializer(instance).data
 
     # Ignore fields that make no sense to keep track of
@@ -49,28 +49,32 @@ def post_save_member(sender, instance, created, **kwargs):
         oldValue = instance.old_values[field] if (field in instance.old_values) else None
         # If it is different, store the change
         if oldValue != iterableMember[field]:
-            updatedValues[field] = oldValue
+            old_values_that_changed[field] = oldValue
 
     # Assert: Both dictionaries have different values for each of their keys. I.e.
-    # (\forall string k; iterableMember.hasKey(k); updatedValues.hasKey(k) && iterableMember[k] != updatedValues[k])
+    # (\forall string k; iterableMember.hasKey(k); old_values_that_changed.hasKey(k) && iterableMember[k] != old_values_that_changed[k])
 
     # The object was saved but no values were changed
-    if not updatedValues:
+    if not old_values_that_changed:
         return
 
+    
     # Create a new UPDATE MemberLog
-    memberlog = MemberLog.objects.create(user=instance.last_updated_by, member=instance, log_type=update_type)
+    # but only if the marked_for_deletion-value changed from T to F, or more values were changed
+    if old_values_that_changed.get('marked_for_deletion', True) or len(old_values_that_changed) > 1:
+        memberlog = MemberLog.objects.create(user=instance.last_updated_by, member=instance, log_type=update_type)
 
-    # Create a new MemberLogField for each updated field
-    for field in updatedValues:
-        # Do not create a memberLogEntry if marked_for_deletion has just changed to true
-        if field == 'marked_for_deletion' and not updatedValues[field]: # and iterableMember[field]
-            continue
+        # Create a new MemberLogField for each updated field
+        for field in old_values_that_changed:
+            # Do not create a memberLogEntry if marked_for_deletion has just changed to true or was just initialised
+            if field == 'marked_for_deletion' and not old_values_that_changed[field]:
+                continue
 
-        field = MemberLogField.objects.create(member_log=memberlog, field=field, old_value=updatedValues[field], new_value=iterableMember[field])
+            field = MemberLogField.objects.create(member_log=memberlog, field=field, old_value=old_values_that_changed[field], new_value=iterableMember[field])
     
     # Create a special memberlog if a member got marked for deletion
-    if iterableMember.get('marked_for_deletion', False):
+    # I.e. the old value for marked_for_deletion was False
+    if not old_values_that_changed.get('marked_for_deletion', True) and iterableMember.get('marked_for_deletion', False):
         # Create a new DELETE Memberlog
         MemberLog.objects.create(user=instance.last_updated_by, member=instance, log_type="DELETE")
 

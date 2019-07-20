@@ -37,7 +37,7 @@ class MemberWithLog(admin.ModelAdmin):
         if not obj.marked_for_deletion:
             return False
         # If the member was marked for deletion by the requesting user, disable deletion
-        elif obj.last_updated_by.id == request.user.id:
+        elif (obj.last_updated_by is not None) and obj.last_updated_by.id == request.user.id:
             return False
 
         # The member was marked for deletion, and is being deleted by another user; enable deletion
