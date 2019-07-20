@@ -1,0 +1,4 @@
+# These are libraries that are needed for the application to run in a production environment.
+# For development purposes, the libraries in requirements-dev.txt can also be installed.
+Django~=2.2.2
+djangorestframework~=3.9.4
