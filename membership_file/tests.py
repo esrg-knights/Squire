@@ -27,7 +27,54 @@ def getNumNonEmptyFields(data: dict) -> int:
             count += 1
     return count
 
-class MemberUpdateTest(TestCase):
+
+# Tests Log deletion when members are deleted
+class MemberLogCleanupTest(TestCase):
+    def setUp(self):
+        # Called each time before a testcase runs
+        # Set up data for each test.
+        # Objects are refreshed here and a client (to make HTTP-requests) is created here
+        self.client = Client()
+
+        # Create a Member
+        self.memberData = {
+            "first_name": "Luna",
+            "last_name": "Fest",
+            "date_of_birth": "1970-01-01",
+            "email": "lunafest@studentencultuur.nl",
+            "street": "De Lampendriessen",
+            "house_number": "31",
+            "city": "Eindhoven",
+            "country": "The Netherlands",
+            "postal_code": "5612 AH",
+            "member_since": "1970-01-01",
+        }
+        self.member = Member.objects.create(**self.memberData)
+
+        # Save the models
+        Member.save(self.member)
+
+    # Tests if an INSERT MemberLog is created after creating a new member
+    # but without marked_for_deletion
+    def test_delete_member(self):
+        self.member.delete()
+
+        # No memberlog or memberlogfields should exist after deleting the member
+        self.assertIsNone(MemberLog.objects.all().first())
+        self.assertIsNone(MemberLogField.objects.all().first())
+
+    def test_delete_member_logs(self):
+        memberLog = MemberLog.objects.all().first()
+        self.assertIsNotNone(memberLog)
+
+        memberLog.delete()
+
+        # No memberlog or memberlogfields should exist after deleting the memberlog
+        self.assertIsNone(MemberLog.objects.all().first())
+        self.assertIsNone(MemberLogField.objects.all().first())
+
+# Tests Log creation when updating members
+class MemberLogTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         # Called once at the beginning of the test setup
@@ -262,10 +309,10 @@ class MemberUpdateTest(TestCase):
         self.assertGreater(deleteLog.id, updateLog.id)
 
 # Checks if a member got correctly added and if the correct logs were created
-# @param self An instance of the MemberUpdateTest-class
+# @param self An instance of the MemberLogTest-class
 # @pre self != None
 # @returns The Insertlog that was created
-def member_got_correctly_added(self: MemberUpdateTest) -> MemberLog:
+def member_got_correctly_added(self: MemberLogTest) -> MemberLog:
     # The newly created member must exist in the Database
     member = Member.objects.filter(email=self.email).first()
     self.assertIsNotNone(member)
@@ -301,11 +348,11 @@ def member_got_correctly_added(self: MemberUpdateTest) -> MemberLog:
 
 
 # Checks if a member got correctly updated and if the correct logs were created
-# @param self An instance of the MemberUpdateTest-class
+# @param self An instance of the MemberLogTest-class
 # @param updatedFields The fields that were updated
 # @pre self != None
 # @returns The UPDATE-log that was created
-def member_got_correctly_updated(self: MemberUpdateTest, updatedFields: dict) -> MemberLog:
+def member_got_correctly_updated(self: MemberLogTest, updatedFields: dict) -> MemberLog:
     # There must exist an UPDATE-MemberLog for this member
     memberLogs = MemberLog.objects.filter(
         user__id = self.admin.id,
