@@ -2,9 +2,8 @@
 
 {% block content %}
 	{% for achievement in achievements %}
-    <div class="achievement">
-
-    </div>
+		<h1>All achievement data:</h1>
+		<h3>{{achievement.category}} {{achievement.name}} {{achievement.description}}</h3>
   {% empty %}
     <p>No achievements exist. In other words, you have them all!</p>
   {% endfor %}
