@@ -141,3 +141,16 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+
+COVERAGE_REPORT_DIR = os.path.join(BASE_DIR, 'coverage')
+
+# Automatically create a /coverage folder if it does not exist
+try:
+    os.makedirs(COVERAGE_REPORT_DIR)
+    print("Created a 'coverage'-folder since it did not yet exist! "
+          "Here, you will be able to find code-coverage reports after calling 'coverage run manage.py' "
+          "and 'coverage html' in that specific order.")
+except FileExistsError:
+    # Directory already exists
+    pass

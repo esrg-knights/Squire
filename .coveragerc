@@ -5,7 +5,6 @@ data_file = coverage/.coverage
 omit =
     myvenv/*
     venv/*
-    squire/*
     */__init__.py
     */tests.py
     */migrations/*
@@ -27,6 +26,7 @@ exclude_lines =
 
     # Don't complain if non-runnable code isn't run:
     if 0:
+    if False:
     if __name__ == .__main__.:
 
 fail_under = 95

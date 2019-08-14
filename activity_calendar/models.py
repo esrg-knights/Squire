@@ -8,7 +8,7 @@ from django.utils import timezone
 
 
 # The Activity model represents an activity in the calendar
-class Activity(models.Model):
+class Activity(models.Model): #pragma: no cover (This was an example Model included for reference; tests should be created later)
     # The User that created the activity
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     
