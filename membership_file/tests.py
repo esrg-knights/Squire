@@ -4,6 +4,9 @@ from .models import Member, MemberLog, MemberLogField
 from django.contrib.auth.models import User
 from .serializers import MemberSerializer
 
+from django.contrib.admin.sites import AdminSite
+from django.contrib.admin import ModelAdmin
+
 ##################################################################################
 # Test cases for MemberLog-logic and Member deletion logic
 # @author E.M.A. Arts
@@ -165,10 +168,10 @@ class MemberLogTest(TestCase):
         self.client.force_login(self.admin)
 
         # Issue a POST request.
-        response = self.client.post('/admin/membership_file/member/add/', data=self.data)
+        response = self.client.post('/admin/membership_file/member/add/', data=self.data, follow=True)
 
-        # Ensure that no internal server error occurs
-        self.assertNotEqual(response.status_code, 500)
+        # Ensure that the request is correctly handled
+        self.assertEqual(response.status_code, 200)
 
         # Check if the member and its associated logs got added correctly
         member_got_correctly_added(self)
@@ -187,10 +190,10 @@ class MemberLogTest(TestCase):
         self.data['marked_for_deletion'] = 'on'
 
         # Issue a POST request.
-        response = self.client.post('/admin/membership_file/member/add/', data=self.data)
+        response = self.client.post('/admin/membership_file/member/add/', data=self.data, follow=True)
 
-        # Ensure that no internal server error occurs
-        self.assertNotEqual(response.status_code, 500)
+        # Ensure that the request is correctly handled
+        self.assertEqual(response.status_code, 200)
 
         # Check if the member and its associated logs got added correctly
         insertLog = member_got_correctly_added(self)
@@ -222,10 +225,10 @@ class MemberLogTest(TestCase):
         self.memberData['marked_for_deletion'] = 'on'
 
         # Issue a POST request.
-        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/change/', data=self.memberData)
+        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/change/', data=self.memberData, follow=True)
 
-        # Ensure that no internal server error occurs
-        self.assertNotEqual(response.status_code, 500)
+        # Ensure that the request is correctly handled
+        self.assertEqual(response.status_code, 200)
 
         # Ensure that a DELETE-MemberLog was also created
         deleteLog = MemberLog.objects.filter(
@@ -256,10 +259,10 @@ class MemberLogTest(TestCase):
         self.memberData = {**self.memberData, **updatedFields}
 
         # Issue a POST request.
-        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/change/', data=self.memberData)
+        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/change/', data=self.memberData, follow=True)
 
-        # Ensure that no internal server error occurs
-        self.assertNotEqual(response.status_code, 500)
+        # Ensure that the request is correctly handled
+        self.assertEqual(response.status_code, 200)
 
         # Check if the member and its associated logs got added correctly
         member_got_correctly_updated(self, updatedFields)
@@ -283,10 +286,10 @@ class MemberLogTest(TestCase):
         self.memberData = {**self.memberData, **updatedFields}
 
         # Issue a POST request.
-        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/change/', data=self.memberData)
+        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/change/', data=self.memberData, follow=True)
 
-        # Ensure that no internal server error occurs
-        self.assertNotEqual(response.status_code, 500)
+        # Ensure that the request is correctly handled
+        self.assertEqual(response.status_code, 200)
 
         # Check if the member and its associated logs got added correctly
         updateLog = member_got_correctly_updated(self, updatedFields)
@@ -381,9 +384,128 @@ def member_got_correctly_updated(self: MemberLogTest, updatedFields: dict) -> Me
     return memberLog
 
 
+# Tests Deletion logic for Members
+class DeleteMemberTest(TestCase):
+    @classmethod
+    def setUpTestData(self):
+        self.modelAdmin = ModelAdmin(model=Member, admin_site=AdminSite())
 
-#TODO: the following testcases:
-# members marked for deletion:
-# - cannot be deleted by the user that marked it for deletion
-# - cannot have their info edited (apart from marked_for_deletion)
-#
+    def setUp(self):
+        # Called each time before a testcase runs
+        # Set up data for each test.
+        # Objects are refreshed here and a client (to make HTTP-requests) is created here
+        self.client = Client()
+
+        # Create normal user and admin here
+        self.admin = User.objects.create_superuser(username="admin", password="admin", email="")
+        self.admin2 = User.objects.create_superuser(username="admin2", password="admin", email="")
+
+        # Create a Member
+        self.memberData = {
+            "first_name": "HTTPs",
+            "last_name": "Committee",
+            "date_of_birth": "1970-01-01",
+            "email": "https@kotkt.nl",
+            "street": "Veld",
+            "house_number": "5",
+            "city": "Eindhoven",
+            "country": "The Netherlands",
+            "postal_code": "5612 AH",
+            "member_since": "1970-01-01",
+        }
+        self.member = Member.objects.create(**self.memberData)
+
+        # Save the models
+        User.save(self.admin)
+        User.save(self.admin2)
+        Member.save(self.member)
+
+    # Tests if a member cannot be deleted if it is NOT marked for deletion
+    def test_delete_member_not_marked_for_deletion(self):
+        # Ensure the admin is logged in
+        self.client.force_login(self.admin)
+
+        # Issue a POST request.
+        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/delete/', data={"post": "yes"}, follow=True)
+
+        # Ensure that the a 403 Forbidden response is issued
+        self.assertEqual(response.status_code, 403)
+
+        # The member should not be deleted
+        self.assertEqual(1, Member.objects.all().count())
+
+
+    # Tests if a member cannot be deleted by the user that marked it for deletion
+    def test_delete_member_marked_for_deletion_by_same_user(self):
+        # Ensure the admin is logged in
+        self.client.force_login(self.admin)
+
+        # Set the member marked to be deleted
+        self.member.marked_for_deletion = True
+        self.member.last_updated_by = self.admin
+
+        Member.save(self.member)
+
+        # Issue a POST request.
+        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/delete/', data={"post": "yes"}, follow=True)
+
+        # Ensure that a 403 Forbidden response is issued
+        self.assertEqual(response.status_code, 403)
+
+        # The member should not be deleted
+        self.assertEqual(1, Member.objects.all().count())
+    
+    # Tests if a member can be deleted if it was marked for deletion by another user
+    def test_delete_member_allowed(self):
+        # Ensure the admin is logged in
+        self.client.force_login(self.admin)
+
+        # Set the member marked to be deleted
+        self.member.marked_for_deletion = True
+        self.member.last_updated_by = self.admin2
+
+        Member.save(self.member)
+
+        # Issue a POST request.
+        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/delete/', data={"post": "yes"}, follow=True)
+
+        # Ensure that the request is correctly handled
+        self.assertEqual(response.status_code, 200)
+
+        # The member should be deleted
+        self.assertEqual(0, Member.objects.all().count())
+        
+    # Tests if a member cannot have its information updated if it is marked for deletion
+    def test_update_member_when_marked_for_deletion(self):
+        # Ensure the admin is logged in
+        self.client.force_login(self.admin)
+
+        # Set the member marked to be deleted
+        self.member.marked_for_deletion = True
+        self.member.last_updated_by = self.admin2
+        self.memberData['marked_for_deletion'] = 'on'
+
+        Member.save(self.member)
+
+        # Remove MemberLogs that were created during this update
+        MemberLog.objects.all().delete()
+
+        # The member's data got updated, even tho marked_for_deletion = True!
+        updatedFields = {
+            'first_name': 'NewFirstName',
+        }
+        postData = {**self.memberData, **updatedFields}
+
+        # Issue a POST request.
+        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/change/', data=postData, follow=True)
+
+        # Ensure that the readonly_fields are ignored
+        self.assertEqual(response.status_code, 200)
+
+        # Ensure that the name of the member was unchanged
+        self.assertEqual(Member.objects.get(id=self.member.id).first_name, self.memberData['first_name'])
+
+        # Ensure that no memberlog got created
+        self.assertEqual(MemberLog.objects.all().count(), 0)
+
+    

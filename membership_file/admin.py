@@ -15,7 +15,6 @@ class MemberWithLog(admin.ModelAdmin):
     # Disable field editing if the member was marked for deletion (except the marked_for_deletion field)
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = ['last_updated_by', 'last_updated_date']
-        
         if obj is None or not obj.marked_for_deletion:
             return readonly_fields
         readonly_fields = list(set(
@@ -37,7 +36,7 @@ class MemberWithLog(admin.ModelAdmin):
         if not obj.marked_for_deletion:
             return False
         # If the member was marked for deletion by the requesting user, disable deletion
-        elif (obj.last_updated_by is not None) and obj.last_updated_by.id == request.user.id:
+        elif (obj.last_updated_by is None) or (obj.last_updated_by.id == request.user.id):
             return False
 
         # The member was marked for deletion, and is being deleted by another user; enable deletion
