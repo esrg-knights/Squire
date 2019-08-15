@@ -1,0 +1,9 @@
+
+
+<h2>Login</h2>
+<form method="POST">{% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save</button>
+</form>
+
+Click <a href="{% url 'core/homepage' %}">here</a> to go back to the homepage.

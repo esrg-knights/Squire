@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'rest_framework',
     # Internal Components
     'activity_calendar',
+    'core',
 ]
 
 MIDDLEWARE = [
@@ -151,21 +152,21 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # The URL or named URL pattern where requests are redirected for login
 # when using the login_required() decorator.
-LOGIN_URL = 'login/' 
+LOGIN_URL = '/login/' 
 
 # The URL or named URL pattern where requests are redirected after
 # login when the LoginView doesn’t get a next GET parameter.
-LOGIN_REDIRECT_URL = '' # Redirect to homepage
+LOGIN_REDIRECT_URL = '/' # Redirect to homepage
 
 # The URL or named URL pattern where requests are redirected after
 # logout if LogoutView doesn’t have a next_page attribute.
-LOGOUT_REDIRECT_URL = 'logout/success'
+LOGOUT_REDIRECT_URL = '/logout/success'
 
 ####################################################################
 # Other Settings
 
 # People who get error code notifications if Debug = False
-ADMINS = [('Squire Admin', 'bestuur@kotkt.nl')] # NB: This email should be changed to something else
+ADMINS = [('Squire Admin', 'https@kotkt.nl')] # NB: This email should be changed to something else
 
 # The email address that error messages come from, such as those sent to ADMINS and MANAGERS.
 SERVER_EMAIL = 'error@squire.kotkt.nl'

@@ -19,4 +19,7 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('calendar/', include('activity_calendar.urls')),
+
+    #Redirect all other paths to the core module
+    path('', include('core.urls')),
 ]
