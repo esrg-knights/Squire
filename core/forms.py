@@ -1,7 +1,15 @@
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext, gettext_lazy as _
+
+##################################################################################
+# Defines general-purpose forms.
+# @author E.M.A. Arts
+# @since 15 AUG 2019
+##################################################################################
+
 
 # LoginForm that changes the default AuthenticationForm
 # It provides a different error message when passing invalid login credentials,
@@ -14,14 +22,16 @@ class LoginForm(AuthenticationForm):
         password = self.cleaned_data.get('password')
 
         # Check if both are provided
-        self.user_cache = authenticate(self.request, username=username, password=password)
-        if self.user_cache is None:
-            # Invalid credentials provided
-            raise forms.ValidationError(
-                _("The username and/or password you specified are not correct."),
-                code='ERROR_INVALID_LOGIN',
-                params={'username': self.username_field.verbose_name},
-            )
-        # else:
-            # Valid credentials provided
+        if username is not None and password:
+            self.user_cache = authenticate(self.request, username=username, password=password)
+            if self.user_cache is None:
+                # Invalid credentials provided
+                self.add_error(None, ValidationError(
+                    _("The username and/or password you specified are not correct."),
+                    code='ERROR_INVALID_LOGIN',
+                    params={'username': self.username_field.verbose_name},
+                ))
+                return
+            # else:
+                # Valid credentials provided
         return self.cleaned_data

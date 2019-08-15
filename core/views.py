@@ -10,6 +10,13 @@ from django.views.decorators.http import require_POST, require_safe, require_htt
 # User must be logged in to access a page
 from django.contrib.auth.decorators import login_required
 
+
+##################################################################################
+# Contains render-code for displaying general pages.
+# @author E.M.A. Arts
+# @since 15 JUL 2019
+##################################################################################
+
 @require_safe
 def homePage(request):
     return render(request, 'core/home.html', {})

@@ -152,11 +152,15 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # The URL or named URL pattern where requests are redirected for login
 # when using the login_required() decorator.
-LOGIN_URL = '/login/' 
+# Also used to specify the location of the login page
+LOGIN_URL = '/login' 
 
 # The URL or named URL pattern where requests are redirected after
 # login when the LoginView doesn’t get a next GET parameter.
 LOGIN_REDIRECT_URL = '/' # Redirect to homepage
+
+# Not a native Django-setting, but used to specify the location of the logout page
+LOGOUT_URL = '/logout'
 
 # The URL or named URL pattern where requests are redirected after
 # logout if LogoutView doesn’t have a next_page attribute.
