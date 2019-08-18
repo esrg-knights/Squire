@@ -168,9 +168,26 @@ LOGOUT_REDIRECT_URL = '/logout/success'
 
 ####################################################################
 # Other Settings
+# Non-native Django setting
+APPLICATION_NAME = 'Squire'
+COMMITTEE_ABBREVIATION = 'HTTPS'
+COMMITTEE_FULL_NAME = 'Hackmanite Turbo Typing Programming Squad'
 
 # People who get error code notifications if Debug = False
-ADMINS = [('Squire Admin', 'https@kotkt.nl')] # NB: This email should be changed to something else
+ADMINS = [(APPLICATION_NAME + ' Admin', 'https@kotkt.nl')] # NB: This email should be changed to something else
 
 # The email address that error messages come from, such as those sent to ADMINS and MANAGERS.
-SERVER_EMAIL = 'error@squire.kotkt.nl'
+SERVER_EMAIL = '{0} Error <error@{1}.kotkt.nl>'.format(APPLICATION_NAME, APPLICATION_NAME.lower())
+
+# Default email address to use for various automated correspondence from the site manager(s).
+DEFAULT_FROM_EMAIL = '{0} <noreply@{1}.kotkt.nl>'.format(APPLICATION_NAME, APPLICATION_NAME.lower())
+
+# Debug settings
+# Also run the following command to imitate an SMTP server locally: python -m smtpd -n -c DebuggingServer localhost:1025
+# Emails that are sent will be shown in that terminal
+if DEBUG: #pragma: debug
+    EMAIL_HOST = 'localhost'
+    EMAIL_PORT = 1025
+    EMAIL_HOST_USER = ''
+    EMAIL_HOST_PASSWORD = ''
+    EMAIL_USE_TLS = False

@@ -1,7 +1,8 @@
 from django.urls import path
-from . import views as views
+from django.conf import settings
 from django.contrib.auth import views as djangoViews
 from .forms import LoginForm
+from . import views as views
 
 
 urlpatterns = [
@@ -15,6 +16,36 @@ urlpatterns = [
 
     path('logout', djangoViews.LogoutView.as_view(), name='core/user_accounts/logout'),
     path('logout/success', views.logoutSuccess, name='core/user_accounts/logout/succes'),
+    # Password resets
+    # See: https://docs.djangoproject.com/en/2.2/topics/auth/default/#django.contrib.auth.views.PasswordResetView
+    path('password_reset', djangoViews.PasswordResetView.as_view(
+            success_url='/password_reset/done',
+            extra_context={},
+            template_name='core/user_accounts/password_reset/password_reset_form.html',
+            subject_template_name='core/user_accounts/password_reset/password_reset_subject.txt',
+            email_template_name='core/user_accounts/password_reset/password_reset_email.txt',
+            extra_email_context={
+                'committee_name': settings.COMMITTEE_FULL_NAME,
+                'committee_abbreviation': settings.COMMITTEE_ABBREVIATION,
+                'application_name': settings.APPLICATION_NAME,
+            },
+        ),
+        name='core/user_accounts/password_reset'),
+    path('password_reset/done', djangoViews.PasswordResetDoneView.as_view(
+            template_name='core/user_accounts/password_reset/password_reset_done.html',
+            extra_context={},
+        ),
+        name='core/password_reset/done'),
+    path('password_reset/<uidb64>/<token>', djangoViews.PasswordResetConfirmView.as_view(
+            success_url='/password_reset/success',
+            extra_context={},
+            template_name='core/user_accounts/password_reset/password_reset_confirm.html',
+        ),
+        name='core/password_reset/confirm'),
+    path('password_reset/success', djangoViews.PasswordResetCompleteView.as_view(
+            template_name='core/user_accounts/password_reset/password_reset_complete.html',
+            extra_context={},
+        ), name='core/password_reset/success'),
     
     path('account', views.viewAccount, name='core/user_accounts/account'),
     path('', views.homePage, name='core/homepage'),

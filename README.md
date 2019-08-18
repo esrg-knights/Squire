@@ -11,3 +11,4 @@ A re-introduction of the web application for ESRG Knights of the Kitchen Table.
 1. Install the dependencies: `pip install -r requirements.txt`. Because we haven't got all year, we use some dependencies to help speed up the process.
 1. Setup the database by running `python manage.py migrate`. This ensures your database can store the items we expect to store in it.
 1. Start the server: `python manage.py runserver`. This starts a web server, which you can access using your webbrowser and going to `localhost:8000`.
+1. If wanting to use functionality that involves sending emails (such as resetting a password), then you'll also need to run the following command in another command prompt/terminal: `python -m smtpd -n -c DebuggingServer localhost:1025`. This will mimic an smtp email server. Any emails that would normally be sent will instead show up in this terminal.
