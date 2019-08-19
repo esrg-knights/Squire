@@ -121,3 +121,9 @@ db.sqlite3
 
 # Squire-specific gitignore (Secret Keys, etc.)
 /squire/secret_key.txt
+
+# Visual Studio Code
+.vscode
+
+# coverage.py files
+/coverage

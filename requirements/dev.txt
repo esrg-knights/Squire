@@ -1,0 +1,8 @@
+# Specifies only dev-specific requirements
+# These are additional libraries that ease development, but are not needed in production.
+
+# Import common libraries as well
+-r common.txt
+
+# Import the dev-dependencies
+coverage~=4.5.3

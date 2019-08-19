@@ -1,0 +1,49 @@
+# .coveragerc to control coverage.py
+[run]
+branch = True
+data_file = coverage/.coverage
+omit =
+    myvenv/*
+    venv/*
+    */__init__.py
+    */tests.py
+    */migrations/*
+    manage.py
+
+[report]
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+
+    # Don't complain about missing debug-only code:
+    def __repr__
+    if self\.debug
+    pragma: debug
+    if DEBUG
+    if settings\.DEBUG
+
+    # Don't complain about production-messages
+    pragma: prod-msg
+
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise NotImplementedError
+
+    # Don't complain if non-runnable code isn't run:
+    if 0:
+    if False:
+    if __name__ == .__main__.:
+
+#fail_under = 95 #TODO: Add missing testcases and then enable this setting
+
+# Ignore source code that can’t be found, emitting a warning instead of an exception.
+ignore_errors = True
+
+[html]
+directory = coverage/html
+
+title = Squire Coverage Report
+
+[xml]
+output = coverage/coverage.xml
