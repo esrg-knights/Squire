@@ -6,4 +6,5 @@ install:
 script:
         - coverage run manage.py test
         - coverage report
-        - codecov
+        - coverage xml
+        - codecov --file coverage/coverage.xml
