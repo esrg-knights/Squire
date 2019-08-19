@@ -2,7 +2,8 @@ language: python
 python:
         - "3.6"
 install:
-        - pip install -r requirements/dev.txt
+        - pip install -r requirements/ci.txt
 script:
         - coverage run manage.py test
         - coverage report
+        - codecov
