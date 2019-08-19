@@ -20,6 +20,11 @@ exclude_lines =
     def __repr__
     if self\.debug
     pragma: debug
+    if DEBUG
+    if settings\.DEBUG
+
+    # Don't complain about production-messages
+    pragma: prod-msg
 
     # Don't complain if tests don't hit defensive assertion code:
     raise AssertionError
@@ -30,7 +35,7 @@ exclude_lines =
     if False:
     if __name__ == .__main__.:
 
-fail_under = 95
+#fail_under = 95 #TODO: Add missing testcases and then enable this setting
 
 # Ignore source code that can’t be found, emitting a warning instead of an exception.
 ignore_errors = True

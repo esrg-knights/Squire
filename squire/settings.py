@@ -173,5 +173,5 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 COVERAGE_REPORT_DIR = os.path.join(BASE_DIR, 'coverage')
 
 # Automatically create a /coverage folder if it does not exist
-util.createCoverageDirectory(COVERAGE_REPORT_DIR)
+util.create_coverage_directory(COVERAGE_REPORT_DIR)
 

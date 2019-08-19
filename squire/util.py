@@ -17,7 +17,7 @@ def get_secret_key(filePath: str, enableMessages: bool = False) -> str:
             secret = f.read().strip()
     except FileNotFoundError:
         from django.core.management.utils import get_random_secret_key
-        if enableMessages: #pragma: debug
+        if enableMessages: #pragma: prod-msg
             print("Hello and welcome! I think that this is the first time you are" +
                 " running me, I'm generating a new Secret Key for you to use. " +
                 "Saving it to a file for next time...")
@@ -27,7 +27,7 @@ def get_secret_key(filePath: str, enableMessages: bool = False) -> str:
     return secret
 
 
-def createCoverageDirectory(directory: str, enableMessages: bool = False) -> None:
+def create_coverage_directory(directory: str, enableMessages: bool = False) -> None:
     '''
     Creates a folder and outputs a message if that folder did not exist before.
     @param directory The folder to create
@@ -38,7 +38,7 @@ def createCoverageDirectory(directory: str, enableMessages: bool = False) -> Non
 
     try:
         os.makedirs(directory)
-        if enableMessages: #pragma: debug
+        if enableMessages: #pragma: prod-msg
             print("Created a 'coverage'-folder since it did not yet exist! (" + directory + ") " +
                 "Here, you will be able to find code-coverage reports after calling 'coverage run manage.py' " +
                 "and 'coverage html' in that specific order.")
