@@ -20,6 +20,7 @@ In order to keep things clear and to make it easier to use, these requirements a
 - `requirements/common.txt`: Contains common requirements. I.e. those that are needed for any environment.
 - `requirements/dev.txt`: Contains development requirements. I.e. those that are needed during development. Automatically includes the common requirements.
 - `requirements/prod.txt`: Contains production requirements. I.e. those that are needed during production. Automatically includes the common requirements.
+- `requirements/ci.txt`: Contains all continuous integration requirements. Automatically includes the production requirements.
 - `requirements.txt`: Shorthand for `requirements/prod.txt`. Necessary since some services (such as *GitHub's Dependency Graph*) look for files with this specific name.
 
 ## Testing!
