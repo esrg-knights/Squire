@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'rest_framework',
     # Internal Components
     'activity_calendar',
+    'achievements',
 ]
 
 MIDDLEWARE = [
@@ -174,4 +175,3 @@ COVERAGE_REPORT_DIR = os.path.join(BASE_DIR, 'coverage')
 
 # Automatically create a /coverage folder if it does not exist
 util.create_coverage_directory(COVERAGE_REPORT_DIR)
-

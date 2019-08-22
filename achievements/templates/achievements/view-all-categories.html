@@ -1,0 +1,10 @@
+{% extends 'achievements/base.html' %}
+
+{% block content %}
+	<h1>All category data:</h1>
+	{% for category in categories %}
+		<h3>{{category.name}} {{category.description}}</h3>
+  {% empty %}
+    <p>No categories exist. In other words, you have a problem!</p>
+  {% endfor %}
+{% endblock %}
