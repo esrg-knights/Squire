@@ -1,0 +1,32 @@
+<html>
+    <head>
+        <title>Knights - Member</title>
+    </head>
+    <body>
+        <h1>Hello {{first_name}}!</h1>
+        <p>
+            You're a member since {{member_since}}.<br/>
+            This is your personal information:
+        </p>
+        
+        <h3>Name:</h3>
+        <p>{{first_name}} {{tussenvoegsel}} {{last_name}}</p>
+
+        <h3>Date of Birth:</h3>
+        <p>{{date_of_birth}}</p>
+
+        <h3>Email:</h3>
+        <p>{{email}}</p>
+
+        <h3>Phone Number:</h3>
+        <p>{{phone_number}}</p>
+
+        <h3>Card Numbers:</h3>
+        <p>
+            Tue: {{tue_card_number}} <br/>
+            External: {{external_card_number}}
+        </p>
+
+        <p>This information was last changed at {{last_updated_date}}</p>
+    </body>
+</html>
