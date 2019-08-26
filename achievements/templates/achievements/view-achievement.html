@@ -2,11 +2,18 @@
 
 {% block content %}
 	<h3>Category:</h3>
-  <p>{{category}}</p>
+  <p>{{category.name}}</p>
 
   <h3>Name:</h3>
   <p>{{name}}</p>
 
   <h3>Description:</h3>
   <p>{{description}}</p>
+
+	<h3>Claimants:</h3>
+	{% for claimant in claimants %}
+		<p>{{claimant.first_name}} {{claimant.last_name}} </p>
+	{% empty %}
+		<p>No claimants.</p>
+	{% endfor %}
 {% endblock %}
