@@ -6,7 +6,7 @@
 
   <h3>Claimed achievements:</h3>
   {% for achievement in claimed_achievements %}
-    <p>{{achievement.name}}</p>
+    <p>{{achievement.category}}; {{achievement.name}}; {{achievement.description}}</p>
   {% empty %}
     <p>No achievements claimed by this member.</p>
   {% endfor %}
