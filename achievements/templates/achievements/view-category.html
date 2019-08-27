@@ -2,8 +2,15 @@
 
 {% block content %}
   <h3>Name:</h3>
-  <p>{{name}}</p>
+  <p>{{category.name}}</p>
 
   <h3>Description:</h3>
-  <p>{{description}}</p>
+  <p>{{category.description}}</p>
+
+  <h3>Achievements:</h3>
+  {% for achievement in related_achievements %}
+    <p>{{achievement.name}}</p>
+  {% empty %}
+    <p>No achievements in this category.</p>
+  {% endfor %}
 {% endblock %}

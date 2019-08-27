@@ -22,4 +22,4 @@ def viewAllCategories(request):
 def viewSpecificCategory(request, id):
     pCategory = get_object_or_404(Category, pk=id)
     serializer = CategorySerializer(pCategory)
-    return render(request, 'achievements/view-Category.html', serializer.data)
+    return render(request, 'achievements/view-Category.html', {"category": serializer.data, "related_achievements": pCategory.related_achievements.all()})

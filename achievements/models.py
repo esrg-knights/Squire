@@ -17,13 +17,13 @@ class Category(models.Model):
 # The Achievement model represents the achievements in the achievements file.
 class Achievement(models.Model):
     # Different achievements can have the same category, but every Achievement can only have one category.
-    category = models.ForeignKey(Category, on_delete = models.SET_DEFAULT, default=1, blank = True, related_name = "related_category")
+    category = models.ForeignKey(Category, on_delete = models.SET_DEFAULT, default=1, blank = True, related_name = "related_achievements")
 
     name = models.CharField(max_length=maxNameLength)
     description = models.TextField(max_length=maxDescriptionLength)
 
     # An Achievement can be claimed by more members (claimants) and a member can have more achievements.
-    claimants = models.ManyToManyField(Member, blank = True, null = True,)
+    claimants = models.ManyToManyField(Member, blank = True)
 
     def __str__(self):
         return self.name
