@@ -23,7 +23,7 @@ class Achievement(models.Model):
     description = models.TextField(max_length=maxDescriptionLength)
 
     # An Achievement can be claimed by more members (claimants) and a member can have more achievements.
-    claimants = models.ManyToManyField(Member, blank = True)
+    claimants = models.ManyToManyField(Member, blank = True, related_name = "claimed_achievements")
 
     def __str__(self):
         return self.name

@@ -1,0 +1,13 @@
+{% extends 'achievements/base.html' %}
+
+{% block content %}
+  <h3>Name:</h3>
+  <p>{{member.first_name}} {% if member.tussenvoegsel != None %}{{member.tussenvoegsel}}{% endif %} {{member.last_name}}</p>
+
+  <h3>Claimed achievements:</h3>
+  {% for achievement in claimed_achievements %}
+    <p>{{achievement.name}}</p>
+  {% empty %}
+    <p>No achievements claimed by this member.</p>
+  {% endfor %}
+{% endblock %}

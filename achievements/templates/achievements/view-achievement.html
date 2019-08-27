@@ -12,7 +12,7 @@
 
 	<h3>Claimants:</h3>
 	{% for claimant in claimants %}
-		<p>{{claimant.first_name}} {{claimant.last_name}} </p>
+		<p>{{claimant.first_name}} {% if member.tussenvoegsel != None %}{{claimant.tussenvoegsel}}{% endif %} {{claimant.last_name}} </p>
 	{% empty %}
 		<p>No claimants.</p>
 	{% endfor %}

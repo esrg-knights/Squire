@@ -8,4 +8,6 @@ urlpatterns = [
 
     path('categories/', views.viewAllCategories, name='categories-frontend'),
     path('categories/<int:id>/', views.viewSpecificCategory, name='category-frontend'),
+
+    path('members/<int:id>/', views.viewSpecificMember, name='achievement-member-frontend'),
 ]
