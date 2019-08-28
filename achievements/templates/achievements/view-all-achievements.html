@@ -1,15 +1,16 @@
 {% extends 'achievements/base.html' %}
+{% load i18n %}
 
 {% block content %}
-	<h1>All achievement data:</h1>
+	<h1>{% trans "All achievement data" %}:</h1>
 	{% for achievement in achievements %}
 		<h3>{{achievement.category.name}}; {{achievement.name}}; {{achievement.description}}</h3>
 		<p>{% for claimant in achievement.claimants %}
 			{{claimant.first_name}} {{claimant.last_name}};
 			{% empty %}
-				No claimants.
+				{% trans "No claimants." %}
 		{% endfor %}</p>
   {% empty %}
-    <p>No achievements exist. In other words, you have them all!</p>
+    <p>{% trans "No achievements exist. In other words, you have them all!" %}</p>
   {% endfor %}
 {% endblock %}

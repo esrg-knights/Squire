@@ -1,16 +1,17 @@
 {% extends 'achievements/base.html' %}
+{% load i18n %}
 
 {% block content %}
-  <h3>Name:</h3>
+  <h3>{% trans "Name" %}:</h3>
   <p>{{category.name}}</p>
 
-  <h3>Description:</h3>
+  <h3>{% trans "Description" %}:</h3>
   <p>{{category.description}}</p>
 
-  <h3>Achievements:</h3>
+  <h3>{% trans "Achievements" %}:</h3>
   {% for achievement in related_achievements %}
     <p>{{achievement.name}}</p>
   {% empty %}
-    <p>No achievements in this category.</p>
+    <p>{% trans "No achievements in this category." %}</p>
   {% endfor %}
 {% endblock %}
