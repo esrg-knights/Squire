@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-08-28 11:25+0200\n"
+"POT-Creation-Date: 2019-08-28 11:55+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -40,7 +40,7 @@ msgstr "Gehaald door"
 #: .\achievements\templates\achievements\view-achievement.html:19
 #: .\achievements\templates\achievements\view-all-achievements.html:11
 msgid "No claimants."
-msgstr "Nog niet gehaald."
+msgstr "Nog door niemand gehaald."
 
 #: .\achievements\templates\achievements\view-all-achievements.html:5
 msgid "All achievement data"
