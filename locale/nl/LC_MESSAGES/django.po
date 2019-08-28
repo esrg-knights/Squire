@@ -1,0 +1,75 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-08-28 11:55+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\achievements\templates\achievements\view-achievement.html:6
+msgid "Category"
+msgstr "Categorie"
+
+#: .\achievements\templates\achievements\view-achievement.html:9
+#: .\achievements\templates\achievements\view-category.html:5
+#: .\achievements\templates\achievements\view-member.html:5
+msgid "Name"
+msgstr "Naam"
+
+#: .\achievements\templates\achievements\view-achievement.html:12
+#: .\achievements\templates\achievements\view-category.html:8
+msgid "Description"
+msgstr "Beschrijving"
+
+#: .\achievements\templates\achievements\view-achievement.html:15
+msgid "Claimants"
+msgstr "Gehaald door"
+
+#: .\achievements\templates\achievements\view-achievement.html:19
+#: .\achievements\templates\achievements\view-all-achievements.html:11
+msgid "No claimants."
+msgstr "Nog door niemand gehaald."
+
+#: .\achievements\templates\achievements\view-all-achievements.html:5
+msgid "All achievement data"
+msgstr "Alle achievement data"
+
+#: .\achievements\templates\achievements\view-all-achievements.html:14
+msgid "No achievements exist. In other words, you have them all!"
+msgstr "Er zijn geen achievements. In andere woorden, je hebt ze allemaal!"
+
+#: .\achievements\templates\achievements\view-all-categories.html:5
+msgid "All category data"
+msgstr "Alle categorie data"
+
+#: .\achievements\templates\achievements\view-all-categories.html:9
+msgid "No categories exist. In other words, you have a problem!"
+msgstr "Er zijn geen categorieën. In andere woorden, je hebt een probleem!"
+
+#: .\achievements\templates\achievements\view-category.html:11
+msgid "Achievements"
+msgstr "Achievements"
+
+#: .\achievements\templates\achievements\view-category.html:15
+msgid "No achievements in this category."
+msgstr "Er zijn geen achievements in deze categorie."
+
+#: .\achievements\templates\achievements\view-member.html:8
+msgid "Claimed achievements"
+msgstr "Gehaalde achievements"
+
+#: .\achievements\templates\achievements\view-member.html:12
+msgid "No achievements claimed by this member."
+msgstr "Dit lid heeft nog geen achievements gehaald."

@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware', #Determine Language based on user's Language preference
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -106,8 +107,15 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
+# https://samulinatri.com/blog/django-translation
 
 LANGUAGE_CODE = 'en-gb'
+#LANGUAGE_CODE = 'nl'
+
+LANGUAGES = [
+    ('en', 'English'),
+    ('nl', 'Dutch'),
+]
 
 TIME_ZONE = 'Europe/Amsterdam'
 
@@ -117,6 +125,9 @@ USE_L10N = True
 
 USE_TZ = True
 
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
 
 # Log Settings
 APPLICATION_LOG_LEVEL = 'INFO'
