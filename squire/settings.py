@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # External Libraries
+    'bootstrap4',
     'rest_framework',
     # Internal Components
     'achievements',
@@ -58,7 +59,9 @@ ROOT_URLCONF = 'squire.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            'squire/templates'
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
