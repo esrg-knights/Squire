@@ -1,3 +1,11 @@
-Successful logout!
-<br/>
-Click <a href="{% url 'core/homepage' %}">here</a> to go back to the homepage.
+{% extends 'base.html' %}
+
+{% block title %}
+  Squire - Successful Logout
+{% endblock title %}
+
+{% block content %}
+    Successful logout!
+    <br/>
+    Click <a href="{% url 'core/homepage' %}">here</a> to go back to the homepage.
+{% endblock content %}

@@ -1,10 +1,17 @@
 
+{% extends 'base.html' %}
 
-<h2>Login</h2>
-<form method="POST">{% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Login</button>
-</form>
-Forgot your password? Click <a href="{% url 'core/user_accounts/password_reset' %}">here</a> to reset it.
-<br/><br/>
-Click <a href="{% url 'core/homepage' %}">here</a> to go back to the homepage.
+{% block title %}
+  Squire - Login
+{% endblock title %}
+
+{% block content %}
+    <h2>Login</h2>
+    <form method="POST">{% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Login</button>
+    </form>
+    Forgot your password? Click <a href="{% url 'core/user_accounts/password_reset' %}">here</a> to reset it.
+    <br/><br/>
+    Click <a href="{% url 'core/homepage' %}">here</a> to go back to the homepage.
+{% endblock title %}
