@@ -3,6 +3,7 @@ from django.test import Client
 from .models import Member, MemberLog, MemberLogField
 from django.contrib.auth.models import User
 from .serializers import MemberSerializer
+from squire.util import suppress_warnings
 
 from django.contrib.admin.sites import AdminSite
 from django.contrib.admin import ModelAdmin
@@ -421,6 +422,7 @@ class DeleteMemberTest(TestCase):
         Member.save(self.member)
 
     # Tests if a member cannot be deleted if it is NOT marked for deletion
+    @suppress_warnings
     def test_delete_member_not_marked_for_deletion(self):
         # Ensure the admin is logged in
         self.client.force_login(self.admin)
@@ -434,8 +436,10 @@ class DeleteMemberTest(TestCase):
         # The member should not be deleted
         self.assertEqual(1, Member.objects.all().count())
 
+        
 
     # Tests if a member cannot be deleted by the user that marked it for deletion
+    @suppress_warnings
     def test_delete_member_marked_for_deletion_by_same_user(self):
         # Ensure the admin is logged in
         self.client.force_login(self.admin)

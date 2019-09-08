@@ -224,7 +224,7 @@ DEFAULT_FROM_EMAIL = '{0} <noreply@{1}.kotkt.nl>'.format(APPLICATION_NAME, APPLI
 # Debug settings
 # Also run the following command to imitate an SMTP server locally: python -m smtpd -n -c DebuggingServer localhost:1025
 # Emails that are sent will be shown in that terminal
-if DEBUG: #pragma: debug
+if DEBUG:
     EMAIL_HOST = 'localhost'
     EMAIL_PORT = 1025
     EMAIL_HOST_USER = ''

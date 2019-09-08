@@ -61,5 +61,7 @@ urlpatterns = [
         name='core/user_accounts/password_change/success'),
     # Other pages
     path('account', views.viewAccount, name='core/user_accounts/account'),
+    path('register', views.register, name='core/user_accounts/register'),
+    path('register/success', views.registerSuccess, name='core/user_accounts/register/success'),
     path('', views.homePage, name='core/homepage'),
 ]

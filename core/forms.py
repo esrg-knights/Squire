@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext, gettext_lazy as _
 
@@ -35,3 +37,33 @@ class LoginForm(AuthenticationForm):
             # else:
                 # Valid credentials provided
         return self.cleaned_data
+
+
+# RegisterForm that expands on the default UserCreationForm
+# It requires a (unique) email address, and includes an optional nickname field
+class RegisterForm(UserCreationForm):
+    email = forms.EmailField(label = "Email")
+    nickname = forms.CharField(label = "Nickname", required=False, help_text='Optional')
+
+    class Meta:
+        model = User
+        fields = ("username", "nickname", "email", )
+
+    def clean_email(self):
+        # Ensure that another user with the same email does not exist
+        cleaned_email = self.cleaned_data.get('email')
+        
+        if User.objects.filter(email=cleaned_email).exists():
+            self.add_error('email', ValidationError(
+                _("A user with that email address already exists."),
+                code='ERROR_EMAIL_EXISTS',
+            ))
+
+    def save(self, commit=True):
+        user = super(RegisterForm, self).save(commit=False)
+        # First name field is used as a nickname field
+        user.first_name = self.cleaned_data["nickname"]
+        user.email = self.cleaned_data["email"]
+        if commit:
+            user.save()
+        return user
