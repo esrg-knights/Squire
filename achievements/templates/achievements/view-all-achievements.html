@@ -1,0 +1,10 @@
+{% extends 'achievements/base.html' %}
+
+{% block content %}
+	<h1>All achievement data:</h1>
+	{% for achievement in achievements %}
+		<h3>{{achievement.category}} {{achievement.name}} {{achievement.description}}</h3>
+  {% empty %}
+    <p>No achievements exist. In other words, you have them all!</p>
+  {% endfor %}
+{% endblock %}

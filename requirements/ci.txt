@@ -1,0 +1,10 @@
+# Libraries to be used during continuous integration
+# We want to keep this as similar to production as possible, however we need
+# a few things that we don't need in production, like coverage
+
+-r prod.txt
+
+codecov~=2.0
+
+coverage~=4.5.3
+

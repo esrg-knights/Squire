@@ -11,34 +11,14 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+from . import util
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
-def get_secret_key() -> str:
-    """
-    Get the stored secret key from the filesystem.
-
-    If this is the first time the program is run, create one.
-    """
-    try:
-        secretfile = os.path.join(BASE_DIR, "squire/secret_key.txt")
-        with open(secretfile) as f:
-            secret = f.read().strip()
-    except FileNotFoundError:
-        from django.core.management.utils import get_random_secret_key
-        print("Hello and welcome! I think that this is the first time you are"
-              " running me, I'm generating a new Secret Key for you to use. "
-              "Saving it to a file for next time...")
-        secret = get_random_secret_key()
-        with open(secretfile, 'w') as f:
-            f.write(secret)
-    return secret
-
-
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = get_secret_key()
+SECRET_KEY_FILENAME = os.path.join(BASE_DIR, "squire/secret_key.txt")
+SECRET_KEY = util.get_secret_key(SECRET_KEY_FILENAME)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -57,10 +37,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # External Libraries
+    'bootstrap4',
     'rest_framework',
     # Internal Components
+    'achievements',
     'activity_calendar',
     'core',
+    'membership_file',
 ]
 
 MIDDLEWARE = [
@@ -78,7 +61,9 @@ ROOT_URLCONF = 'squire.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            'squire/templates'
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -138,6 +123,53 @@ USE_L10N = True
 USE_TZ = True
 
 
+# Log Settings
+APPLICATION_LOG_LEVEL = 'INFO'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'console': {
+            # exact format is not important, this is the minimum information
+            'format': '%(asctime)s (%(name)-12s) [%(levelname)s] %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'console',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+        },
+        'squire': {
+            'handlers': ['console'],
+            'level': APPLICATION_LOG_LEVEL,
+        },
+        'core': {
+            'handlers': ['console'],
+            'level': APPLICATION_LOG_LEVEL,
+        },
+        'activity_calendar': {
+            'handlers': ['console'],
+            'level': APPLICATION_LOG_LEVEL,
+        },
+        'membership_file': {
+            'handlers': ['console'],
+            'level': APPLICATION_LOG_LEVEL,
+        },
+        'achievements': {
+            'handlers': ['console'],
+            'level': APPLICATION_LOG_LEVEL,
+        },
+    },
+}
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
@@ -146,6 +178,13 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+# The directory in which the coverage reports should be stored
+COVERAGE_REPORT_DIR = os.path.join(BASE_DIR, 'coverage')
+
+# Automatically create a /coverage folder if it does not exist
+util.create_coverage_directory(COVERAGE_REPORT_DIR)
 
 ####################################################################
 # Login Settings

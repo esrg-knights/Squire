@@ -1,0 +1,8 @@
+# Specifies only prod-specific requirements
+# These are libraries that are needed in production, but that are not needed during development
+
+# Import common libraries as well
+-r common.txt
+
+# Import the prod-dependencies
+

@@ -1,0 +1,7 @@
+# Specifies only common requirements
+# These are libraries that are needed for any environment
+
+# Import the common-dependencies
+Django~=2.2.2
+django-bootstrap4~=1.0
+djangorestframework~=3.9.4
