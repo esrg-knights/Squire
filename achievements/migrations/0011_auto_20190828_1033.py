@@ -7,6 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('achievements', '0010_auto_20190827_1416'),
+        ('membership_file', '__first__'),
     ]
 
     operations = [
