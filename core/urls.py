@@ -4,7 +4,6 @@ from django.contrib.auth import views as djangoViews
 from .forms import LoginForm
 from . import views as views
 
-
 urlpatterns = [
     # Login and logout
     path('login', djangoViews.LoginView.as_view(

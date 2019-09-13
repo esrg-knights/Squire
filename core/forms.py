@@ -52,18 +52,19 @@ class RegisterForm(UserCreationForm):
     def clean_email(self):
         # Ensure that another user with the same email does not exist
         cleaned_email = self.cleaned_data.get('email')
-        
         if User.objects.filter(email=cleaned_email).exists():
             self.add_error('email', ValidationError(
                 _("A user with that email address already exists."),
                 code='ERROR_EMAIL_EXISTS',
             ))
+        return cleaned_email
 
     def save(self, commit=True):
         user = super(RegisterForm, self).save(commit=False)
         # First name field is used as a nickname field
         user.first_name = self.cleaned_data["nickname"]
         user.email = self.cleaned_data["email"]
+
         if commit:
             user.save()
         return user

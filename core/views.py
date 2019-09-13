@@ -1,7 +1,8 @@
 from django.shortcuts import render
-from django.http import HttpResponseRedirect
 from django.contrib.auth import login as auth_login, logout as auth_logout
 from .forms import LoginForm, RegisterForm
+from django.shortcuts import redirect
+from django.urls import reverse
 
 # @require_post only accepts HTTP POST requests
 # @require_safe only accepts HTTP GET and HEAD requests
@@ -24,7 +25,7 @@ def homePage(request):
 @require_safe
 def logoutSuccess(request):
     if request.user.is_authenticated:
-        return HttpResponseRedirect('/logout')
+        return redirect(reverse('core/user_accounts/logout'))
     return render(request, 'core/user_accounts/logout-success.html', {})
 
 
@@ -47,7 +48,7 @@ def register(request):
         if form.is_valid():
             # Save the user
             form.save(commit=True)            
-            return HttpResponseRedirect('register/success')
+            return redirect(reverse('core/user_accounts/register/success'))
 
     # if a GET (or any other method) we'll create a blank form
     else:

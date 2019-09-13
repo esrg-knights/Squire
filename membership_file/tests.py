@@ -3,7 +3,7 @@ from django.test import Client
 from .models import Member, MemberLog, MemberLogField
 from django.contrib.auth.models import User
 from .serializers import MemberSerializer
-from squire.util import suppress_warnings
+from core.util import suppress_warnings
 
 from django.contrib.admin.sites import AdminSite
 from django.contrib.admin import ModelAdmin
