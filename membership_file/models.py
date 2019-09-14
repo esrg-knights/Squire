@@ -28,6 +28,10 @@ class Member(models.Model):
     tussenvoegsel = models.CharField(max_length=255, blank=True, null=True)
     last_name = models.CharField(max_length=255)
     
+    # Student Information
+    student_number = models.CharField(max_length=15, blank=True, null=True, unique=True)
+    educational_institution = models.CharField(max_length=255)
+
     # The card numbers of the member
     # NB: These card numbers must be unique
     # NB: These numbers may start with 0, which is why they are not IntegerFields
@@ -37,6 +41,7 @@ class Member(models.Model):
     external_card_number_regex = RegexValidator(regex=r'^[0-9]{7}\-[0-9]{3}$', message="External card numbers must only consist"
          + " of exactly 7 numbers, followed by a hyphen (-), and ended by the 'external number' which consists of exactly 3 numbers. E.g. 1234567-123")
     external_card_number = models.CharField(validators=[external_card_number_regex], max_length=15, blank=True, null=True, unique=True)
+    # The cluster contains additional information of an external card
     external_card_cluster = models.CharField(max_length=255, blank=True, null=True)
 
     # The date of birth of the member
@@ -57,9 +62,6 @@ class Member(models.Model):
     #NB: States/Province are not always necessary for addresses
     state = models.CharField(max_length=255, blank=True, null=True)
     country = models.CharField(max_length=255)
-    #NB: Not all countries use postal codes! Moreover, it will differ between countries!
-    postal_code_regex = RegexValidator(regex=r'^[0-9A-Za-z\-" "]*$', message="Postal Codes must only consist of alphanumerical characters, spaces, and hyphens (-).")
-    postal_code = models.CharField(max_length=255, validators=[postal_code_regex])
 
     # The date at which the member became a member (automatically handled, but is overridable)
     member_since = models.DateField(default=date.today)

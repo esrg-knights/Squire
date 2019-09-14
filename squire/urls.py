@@ -26,8 +26,7 @@ urlpatterns = [
     path('calendar/', include('activity_calendar.urls-frontend')),
     path('api/calendar/', include('activity_calendar.urls-api')),
     # Membership File
-    path('members/', include('membership_file.urls_frontend')),
-    path('api/members/', include('membership_file.urls_api')),
+    path('', include('membership_file.urls')),
 
     #Redirect all other paths to the core module
     path('', include('core.urls')),
