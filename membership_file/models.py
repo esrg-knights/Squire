@@ -4,6 +4,7 @@ from django.utils import timezone
 from datetime import date
 import datetime
 from django.core.validators import RegexValidator, MinValueValidator
+from django.contrib.auth.models import User
 
 ##################################################################################
 # Models related to the Membership File-functionality of the application.
@@ -85,14 +86,24 @@ class Member(models.Model):
 
     # String-representation of an instance of a Member
     def __str__(self):
-        return self.getFullName() + " ({0})".format(self.id)
+        return self.get_full_name() + " ({0})".format(self.id)
 
     # Gets the name of the member
-    def getFullName(self):
+    def get_full_name(self):
         if self.tussenvoegsel is not None:
             return "{0} {1} {2}".format(self.first_name, self.tussenvoegsel, self.last_name)
         return "{0} {1}".format(self.first_name, self.last_name)
 
+    # Gets the name of the person that last updated this user
+    def get_last_updated_name(self):
+        if self.last_updated_by is None:
+            return None
+        updater = Member.objects.filter(user__id=self.last_updated_by.id).first()
+        if updater is None:
+            return User.objects.filter(id=self.last_updated_by.id).first().username
+        if updater.id == self.id:
+            return 'You'
+        return updater.get_full_name()
 
 # The MemberLog Model represents a log entry that is created whenever membership data is updated
 class MemberLog(models.Model):

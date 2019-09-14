@@ -39,7 +39,6 @@ def membership_required(function=None, fail_url=None):
     to a special page if necessary.
     Based on Django's login_required and user_passes_test decorators
     """
-    print(fail_url)
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):

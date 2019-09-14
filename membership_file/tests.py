@@ -50,8 +50,8 @@ class MemberLogCleanupTest(TestCase):
             "house_number": "31",
             "city": "Eindhoven",
             "country": "The Netherlands",
-            "postal_code": "5612 AH",
             "member_since": "1970-01-01",
+            "educational_institution": "TU/e",
         }
         self.member = Member.objects.create(**self.memberData)
 
@@ -102,8 +102,8 @@ class MemberLogTest(TestCase):
             "city": "",
             "state": "",
             "country": "",
-            "postal_code": "",
             "member_since": "",
+            "educational_institution": "",
         }
 
     def setUp(self):
@@ -127,8 +127,8 @@ class MemberLogTest(TestCase):
             "house_number": "5",
             "city": "Eindhoven",
             "country": "The Netherlands",
-            "postal_code": "5612 AH",
             "member_since": "1970-01-01",
+            "educational_institution": "TU/e",
         }
         self.member = Member.objects.create(**self.memberData)
         self.memberData = fillDictKeys(self.emptyMemberDictionary, self.memberData)
@@ -157,8 +157,8 @@ class MemberLogTest(TestCase):
             "city": "Eindhoven",
             "state": "Noord-Brabant",
             "country": "The Netherlands",
-            "postal_code": "5612 AH",
             "member_since": "1970-01-01",
+            "educational_institution": "TU/e",
         })
         self.numNonEmptyFields = getNumNonEmptyFields(self.data)
 
@@ -411,8 +411,8 @@ class DeleteMemberTest(TestCase):
             "house_number": "5",
             "city": "Eindhoven",
             "country": "The Netherlands",
-            "postal_code": "5612 AH",
             "member_since": "1970-01-01",
+            "educational_institution": "TU/e",
         }
         self.member = Member.objects.create(**self.memberData)
 

@@ -1,0 +1,34 @@
+
+{% extends 'core/base.html' %}
+
+{% block title %}
+  Squire - Membership Data
+{% endblock title %}
+
+{% block content %}
+    <h1>Hello {{member.first_name}}!</h1>
+    <p>
+        You're a member since {{member.member_since}}.<br/>
+        This is your personal information:
+    </p>
+
+    <h3>Name:</h3>
+    <p>{{member.get_full_name}}</p>
+
+    <h3>Date of Birth:</h3>
+    <p>{{member.date_of_birth}}</p>
+
+    <h3>Email:</h3>
+    <p>{{member.email}}</p>
+
+    <h3>Phone Number:</h3>
+    <p>{{member.phone_number}}</p>
+
+    <h3>Card Numbers:</h3>
+    <p>
+        Tue: {{member.tue_card_number}} <br/>
+        External: {{member.external_card_number}}
+    </p>
+
+    <p>This information was last changed {{member.last_updated_date|date:"\o\n M n, Y \a\t H\:i"}} by {{member.get_last_updated_name}}</p>
+{% endblock content %}
