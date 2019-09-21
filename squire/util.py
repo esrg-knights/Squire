@@ -1,5 +1,5 @@
 """
-Contains various utility functions.
+Contains various utility functions for settings.py.
 """
 
 import os

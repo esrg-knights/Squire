@@ -1,0 +1,50 @@
+{% extends 'core/base.html' %}
+{% load i18n static %}
+
+{% block title %}
+  Squire - Register
+{% endblock title %}
+
+
+{% block content %}
+    <h1>Register</h1>
+
+    <p>{% trans "Please enter your password twice so we can verify you typed it in correctly." %}</p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="fieldWrapper">
+            {{ form.email.errors }}
+            <label for="{{ form.email.id_for_label }}">Email</label>
+            {{ form.email }}
+            {{ form.email.help_text }}
+        </div>
+        <div class="fieldWrapper">
+                {{ form.nickname.errors }}
+                <label for="{{ form.nickname.id_for_label }}">Nickname:</label>
+                {{ form.nickname }}
+                {{ form.nickname.help_text }}
+            </div>
+        <div class="fieldWrapper">
+            {{ form.username.errors }}
+            <label for="{{ form.username.id_for_label }}">Username:</label>
+            {{ form.username }}
+            {{ form.username.help_text }}
+        </div>
+        <div class="fieldWrapper">
+            {{ form.password1.errors }}
+            <label for="{{ form.password1.id_for_label }}">Password:</label>
+            {{ form.password1 }}
+            {{ form.password1.help_text }}
+        </div>
+        <div class="fieldWrapper">
+            {{ form.password2.errors }}
+            <label for="{{ form.password2.id_for_label }}">Confirm Password:</label>
+            {{ form.password2 }}
+            {{ form.password2.help_text }}
+        </div>
+        <input type="submit" value="Create Account">
+    </form>
+    <p>Already have an account? <a href="{% url 'core/user_accounts/login' %}">Login</a> instead!</p>
+{% endblock content %}

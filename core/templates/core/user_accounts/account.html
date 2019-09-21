@@ -1,0 +1,16 @@
+{% extends 'core/base.html' %}
+
+{% block title %}
+  Squire - Account
+{% endblock title %}
+
+{% block content %}
+    Hi {{ user.username }}!
+    This is your account page.
+
+    <br/>
+    This is your email: {{ user.email }}
+
+    <br/><br/>
+    Click <a href="{% url 'core/homepage' %}">here</a> to go back to the homepage.
+{% endblock content %}

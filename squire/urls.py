@@ -28,4 +28,7 @@ urlpatterns = [
     # Membership File
     path('members/', include('membership_file.urls_frontend')),
     path('api/members/', include('membership_file.urls_api')),
+
+    #Redirect all other paths to the core module
+    path('', include('core.urls')),
 ]
