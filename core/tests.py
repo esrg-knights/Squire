@@ -276,8 +276,8 @@ class RegisterFormTest(TestCase):
     def test_form_duplicate_field(self):
         form_data = {
             'username': 'schaduwbestuur',
-            'password1': 'bestaatookniet',
-            'password2': 'nomatch',
+            'password1': 'secret',
+            'password2': 'secret',
             'email': 'rva@kotkt.nl', 
             'nickname': 'wijbestaanniet',
         }
