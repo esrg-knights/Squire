@@ -1,10 +1,11 @@
 {% extends 'achievements/base.html' %}
+{% load i18n %}
 
 {% block content %}
-	<h1>All category data:</h1>
+	<h1>{% trans "All category data" %}:</h1>
 	{% for category in categories %}
-		<h3>{{category.name}} {{category.description}}</h3>
+		<h3>{{category.name}}; {{category.description}}</h3>
   {% empty %}
-    <p>No categories exist. In other words, you have a problem!</p>
+    <p>{% trans "No categories exist. In other words, you have a problem!" %}</p>
   {% endfor %}
 {% endblock %}
