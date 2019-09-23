@@ -1,0 +1,19 @@
+
+{% extends 'core/base.html' %}
+
+{% block title %}
+  Squire - Homepage
+{% endblock title %}
+
+{% block content %}
+  <h2>Placeholder Homepage!</h2>
+  <p>Look how cool it is!</p>
+
+  {% if user.is_authenticated %}
+    Hi {{ user.username }}!
+    <p><a href="{% url 'core/user_accounts/logout' %}">logout</a></p>
+  {% else %}
+    <p>You are not logged in</p>
+    <a href="{% url 'core/user_accounts/login' %}">login</a>
+  {% endif %}
+{% endblock content %}

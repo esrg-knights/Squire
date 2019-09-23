@@ -23,6 +23,7 @@ SECRET_KEY = util.get_secret_key(SECRET_KEY_FILENAME)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# Hosts on which the application will run
 ALLOWED_HOSTS = []
 
 
@@ -36,10 +37,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # External Libraries
+    'bootstrap4',
     'rest_framework',
     # Internal Components
     'achievements',
     'activity_calendar',
+    'core',
     'membership_file',
 ]
 
@@ -59,7 +62,9 @@ ROOT_URLCONF = 'squire.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            'squire/templates'
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -182,8 +187,57 @@ LOGGING = {
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
 # The directory in which the coverage reports should be stored
 COVERAGE_REPORT_DIR = os.path.join(BASE_DIR, 'coverage')
 
 # Automatically create a /coverage folder if it does not exist
 util.create_coverage_directory(COVERAGE_REPORT_DIR)
+
+####################################################################
+# Login Settings
+
+# The URL or named URL pattern where requests are redirected for login
+# when using the login_required() decorator.
+# Also used to specify the location of the login page
+LOGIN_URL = '/login' 
+
+# The URL or named URL pattern where requests are redirected after
+# login when the LoginView doesn’t get a next GET parameter.
+LOGIN_REDIRECT_URL = '/' # Redirect to homepage
+
+# Not a native Django-setting, but used to specify the location of the logout page
+LOGOUT_URL = '/logout'
+
+# The URL or named URL pattern where requests are redirected after
+# logout if LogoutView doesn’t have a next_page attribute.
+LOGOUT_REDIRECT_URL = '/logout/success'
+
+####################################################################
+# Other Settings
+# Non-native Django setting
+APPLICATION_NAME = 'Squire'
+COMMITTEE_ABBREVIATION = 'HTTPS'
+COMMITTEE_FULL_NAME = 'Hackmanite Turbo Typing Programming Squad'
+
+# People who get error code notifications if Debug = False
+ADMINS = [(APPLICATION_NAME + ' Admin', 'https@kotkt.nl')] # NB: This email should be changed to something else
+
+# The email address that error messages come from, such as those sent to ADMINS and MANAGERS.
+SERVER_EMAIL = '{0} Error <error@{1}.kotkt.nl>'.format(APPLICATION_NAME, APPLICATION_NAME.lower())
+
+# Default email address to use for various automated correspondence from the site manager(s).
+DEFAULT_FROM_EMAIL = '{0} <noreply@{1}.kotkt.nl>'.format(APPLICATION_NAME, APPLICATION_NAME.lower())
+
+# Debug settings
+# Also run the following command to imitate an SMTP server locally: python -m smtpd -n -c DebuggingServer localhost:1025
+# Emails that are sent will be shown in that terminal
+if DEBUG:
+    EMAIL_HOST = 'localhost'
+    EMAIL_PORT = 1025
+    EMAIL_HOST_USER = ''
+    EMAIL_HOST_PASSWORD = ''
+    EMAIL_USE_TLS = False

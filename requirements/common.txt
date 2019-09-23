@@ -3,4 +3,5 @@
 
 # Import the common-dependencies
 Django~=2.2.2
+django-bootstrap4~=1.0
 djangorestframework~=3.9.4
