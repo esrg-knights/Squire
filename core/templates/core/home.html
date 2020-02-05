@@ -11,6 +11,9 @@
 
   {% if user.is_authenticated %}
     Hi {{ user.username }}!
+
+    <p>You can view your account <a href="{% url 'core/user_accounts/account' %}">here</a></p>
+
     <p><a href="{% url 'core/user_accounts/logout' %}">logout</a></p>
   {% else %}
     <p>You are not logged in</p>

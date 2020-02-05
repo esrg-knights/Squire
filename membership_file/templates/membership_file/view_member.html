@@ -12,22 +12,23 @@
         This is your personal information:
     </p>
 
-    <h3>Name:</h3>
-    <p>{{member.get_full_name}}</p>
+    <h3>Basic Information</h3>
+    <p>Name: {{member.get_full_name}}</p>
+    <p>Date of Birth: {{member.date_of_birth}}</p>
+    <p>Address: {{member.display_address}}</p>
 
-    <h3>Date of Birth:</h3>
-    <p>{{member.date_of_birth}}</p>
+    <h3>Contact Details</h3>
+    <p>Email: {{member.email}}</p>
+    <p>Phone Number: {{member.phone_number}}</p>
 
-    <h3>Email:</h3>
-    <p>{{member.email}}</p>
+    <h3>Student Information</h3>
+    <p>Student Number: {{member.student_number}}</p>
+    <p>Educational Institution: {{member.educational_institution}}</p>
 
-    <h3>Phone Number:</h3>
-    <p>{{member.phone_number}}</p>
-
-    <h3>Card Numbers:</h3>
+    <h3>Card Numbers</h3>
     <p>
         Tue: {{member.tue_card_number}} <br/>
-        External: {{member.external_card_number}}
+        External: {{member.display_external_card_number}}
     </p>
 
     <p>This information was last changed {{member.last_updated_date|date:"\o\n M n, Y \a\t H\:i"}} by {{member.get_last_updated_name}}</p>

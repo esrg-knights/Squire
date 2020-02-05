@@ -179,6 +179,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# Additional places to look for static files
+STATICFILES_DIRS = []
+
 
 # The directory in which the coverage reports should be stored
 COVERAGE_REPORT_DIR = os.path.join(BASE_DIR, 'coverage')
@@ -235,3 +238,4 @@ if DEBUG:
     EMAIL_HOST_USER = ''
     EMAIL_HOST_PASSWORD = ''
     EMAIL_USE_TLS = False
+

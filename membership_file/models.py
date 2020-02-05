@@ -5,12 +5,26 @@ from datetime import date
 import datetime
 from django.core.validators import RegexValidator, MinValueValidator
 from django.contrib.auth.models import User
+import re
 
 ##################################################################################
 # Models related to the Membership File-functionality of the application.
 # @author E.M.A. Arts
 # @since 06 JUL 2019
 ##################################################################################
+
+# Returns the associated member to a given user
+def get_member(self):
+    return Member.objects.filter(user__id=self.id).first()
+
+# Checks whether a given user is a member
+def is_member(self):
+    return self.get_member() is not None
+
+# Add the methods to Django's User-Model
+User.add_to_class("get_member", get_member)
+User.add_to_class("is_member", is_member)
+
 
 # The Member model represents a Member in the membership file
 class Member(models.Model):
@@ -25,7 +39,7 @@ class Member(models.Model):
         )
     
     # The name of the member
-    first_name = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=255, help_text="Name as known by your educational institution")
     tussenvoegsel = models.CharField(max_length=255, blank=True, null=True)
     last_name = models.CharField(max_length=255)
     
@@ -104,6 +118,27 @@ class Member(models.Model):
         if updater.id == self.id:
             return 'You'
         return updater.get_full_name()
+    
+    # Displays the external card number of the member
+    def display_external_card_number(self):
+        if self.external_card_number is None:
+            return None
+        if self.external_card_cluster is None:
+            return self.external_card_number
+        return "{0} ({1})".format(self.external_card_number, self.external_card_cluster)
+
+    # Displays a user's address
+    def display_address(self):
+        house_number = str(self.house_number)
+        if self.house_number_addition is not None:
+            # If the house number starts with a number, add a dash
+            if not re.search('[a-zA-Z]', self.house_number_addition[:1]):
+                house_number += '-'
+            house_number += self.house_number_addition
+
+        return "{0} {1}, {2}, {3}{4}".format(self.street, house_number, self.city, 
+            "" if self.state is None else self.state + ', ', self.country)
+
 
 # The MemberLog Model represents a log entry that is created whenever membership data is updated
 class MemberLog(models.Model):
