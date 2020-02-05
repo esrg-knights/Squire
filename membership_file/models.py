@@ -51,7 +51,7 @@ class Member(models.Model):
     # NB: These card numbers must be unique
     # NB: These numbers may start with 0, which is why they are not IntegerFields
     tue_card_number_regex = RegexValidator(regex=r'^[0-9]{7}$', message="TU/e card numbers must only consist of exactly 7 numbers. E.g. 1234567")
-    tue_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, blank=True, null=True, unique=True)
+    tue_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, blank=True, null=True, unique=True, verbose_name="TUe card number")
     
     external_card_number_regex = RegexValidator(regex=r'^[0-9]{7}\-[0-9]{3}$', message="External card numbers must only consist"
          + " of exactly 7 numbers, followed by a hyphen (-), and ended by the 'external number' which consists of exactly 3 numbers. E.g. 1234567-123")
@@ -70,7 +70,7 @@ class Member(models.Model):
     phone_number = models.CharField(validators=[phone_regex], max_length=16, blank=True, null=True, unique=True)
 
     # Address of the member
-    street = models.CharField(max_length=255)
+    street = models.CharField(max_length=255, verbose_name="state/province")
     house_number = models.IntegerField(validators=[MinValueValidator(1)], default=1)
     house_number_addition = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=255)
