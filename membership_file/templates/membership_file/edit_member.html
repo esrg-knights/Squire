@@ -19,12 +19,13 @@
         {% generic_field form.date_of_birth %}
 
         <h3>Education</h3>
+        {% generic_field form.initials %}
         {% generic_field form.student_number %}
         {% generic_field form.educational_institution %}
 
         <h3>Access</h3>
         {% generic_field form.tue_card_number %}
-        {% generic_field form.external_card_number form.external_card_cluster %}
+        {% generic_field form.external_card_number form.external_card_digits form.external_card_cluster %}
 
         <h3>Contact Information</h3>
         {% generic_field form.email %}

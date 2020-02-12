@@ -7,11 +7,16 @@ from .forms import MemberForm
 from django.views.decorators.http import require_safe
 from core.util import membership_required
 
+# Redirect shortcuts
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.http import HttpResponseForbidden
+
 # Enable the auto-creation of logs
 from .auto_model_update import *
 
 
-# Page that loads whenever
+# Page that loads whenever a user tries to access a member-page
 @require_safe
 def viewNoMember(request):
     return render(request, 'membership_file/no_member.html', {})
@@ -26,17 +31,30 @@ def viewOwnMembership(request):
 
 
 # Renders the webpage for viewing a user's own membership information
-@require_safe
 @membership_required
 def editOwnMembership(request):
     # Process form data
     if request.method == 'POST':
-        form = MemberForm(request.POST, instance=request.user.get_member())
-        # check whether it's valid:
+        member = request.user.get_member()
+        member.last_updated_by = request.user
+
+        # Obtain the form that was entered
+        form = MemberForm(request.POST, instance=member)
+
+        # Prevent access if the user is not authenticated, or if there was no membership
+        # information linked to the user. I.e. the reuqest was forged!
+        if request.user.is_anonymous or member is None:
+            #TODO: work with permission system so board members can edit other user's info with
+            # the same form, without needing to be an admin (and doing it via the admin panel)
+            return HttpResponseForbidden()
+
+        # check whether the entered data was valid:
         if form.is_valid():
-            # Save the user
-            form.save(commit=True)            
-            return redirect(reverse('core/user_accounts/register/success')) #TODO
+            # Save the updated info
+            form.save(commit=True)      
+            # Redirect back to the view membership info page
+            # TODO: Provide a nice notification upon doing so
+            return redirect(reverse('membership_file/membership'))
 
     # if a GET (or any other method) we'll create a blank form
     else:

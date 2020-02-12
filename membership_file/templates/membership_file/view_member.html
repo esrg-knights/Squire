@@ -31,7 +31,7 @@
         External: {{member.display_external_card_number}}
     </p>
 
-    <p>This information was last changed {{member.last_updated_date|date:"\o\n M n, Y \a\t H\:i"}} by {{member.get_last_updated_name}}</p>
+    <p>This information was last changed {{member.last_updated_date|date:"\o\n M j, Y \a\t H\:i"}} by {{member.get_last_updated_name}}</p>
 
     Click <a href="{% url 'membership_file/membership/edit' %}">here</a> to edit this information.
 {% endblock content %}

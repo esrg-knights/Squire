@@ -24,7 +24,4 @@ class MemberForm(ModelForm):
 
     class Meta:
         model = Member
-        fields = "__all__"
-
-    def save(self, commit=True):
-        pass
+        exclude = ('last_updated_by', 'marked_for_deletion', 'user')
