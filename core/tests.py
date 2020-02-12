@@ -44,22 +44,30 @@ class PermissionLevel(OrderedEnum):
 # @param url URL to make the request to
 # @param httpMethod HTTP Method to make the request with E.g. get, post, put, etc. 
 # @param permissionLevel Which type of user should be able to access the page
+# @param user The user to use in the request (or empty if a new one should be created)
+# @param redirectUrl The Url to redirect to
+# @param data Additional data to pass to the request
 # 
 # @throws AssertionError iff a user of the given permission level can NOT access the given url using the given HTTP method
 #
 def checkAccessPermissions(test: TestCase, url: str, httpMethod: str, permissionLevel: PermissionLevel,
-        redirectUrl: str = "", data: dict = {}) -> None:
+        user: User = None, redirectUrl: str = "", data: dict = {}) -> None:
     client = Client()
     
     # Ensure the correct type of user makes the request
-    user = None
     if permissionLevel == PermissionLevel.LEVEL_USER:
-        user = User.objects.create_user(username="username", password="username")
+        if user is None:
+            user = User.objects.create_user(username="username", password="username")
+        else:
+            user.is_superuser = False
         User.save(user)
     elif permissionLevel == PermissionLevel.LEVEL_ADMIN:
-        user = User.objects.create_superuser(username="admin", password="admin", email="")
+        if user is None:
+            user = User.objects.create_superuser(username="admin", password="admin", email="")
+        else:
+            user.is_superuser = True
         User.save(user)
-    
+
     # Ensure the correct user is logged in
     if user:
         client.force_login(user)

@@ -9,7 +9,7 @@ from django.contrib.admin.sites import AdminSite
 from django.contrib.admin import ModelAdmin
 
 ##################################################################################
-# Test cases for MemberLog-logic and Member deletion logic
+# Test cases for MemberLog-logic and Member deletion logic on the admin-side
 # @author E.M.A. Arts
 # @since 19 JUL 2019
 ##################################################################################
@@ -87,11 +87,13 @@ class MemberLogTest(TestCase):
         # An empty dictionary of all fields that are set when making a POST request for a member
         cls.emptyMemberDictionary = {
             "user": "",
+            "initials": "",
             "first_name": "",
             "tussenvoegsel": "",
             "last_name": "",
             "tue_card_number": "",
             "external_card_number": "",
+            "external_card_digits": "",
             "external_card_cluster": "",
             "date_of_birth": "",
             "email": "",
@@ -119,6 +121,7 @@ class MemberLogTest(TestCase):
 
         # Create a Member
         self.memberData = {
+            "initials": "F.C.",
             "first_name": "Fantasy",
             "last_name": "Court",
             "date_of_birth": "1970-01-01",
@@ -146,6 +149,7 @@ class MemberLogTest(TestCase):
         self.email = "info@kotkt.nl"
         self.data = fillDictKeys(self.emptyMemberDictionary, {
             "user": "",
+            "initials": "E.S.R.G.",
             "first_name": "Knights",
             "tussenvoegsel": "of the",
             "last_name": "Kitchen Table",

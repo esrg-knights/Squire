@@ -7,7 +7,7 @@ omit =
     venv/*
     */virtualenv/*
     */__init__.py
-    */tests.py
+    */tests*.py
     */migrations/*
     manage.py
 

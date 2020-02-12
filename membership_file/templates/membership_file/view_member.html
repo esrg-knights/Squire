@@ -31,7 +31,10 @@
         External: {{member.display_external_card_number}}
     </p>
 
-    <p>This information was last changed {{member.last_updated_date|date:"\o\n M j, Y \a\t H\:i"}} by {{member.get_last_updated_name}}</p>
-
+    {% if member.last_updated_by is not None %}
+        <p>This information was last changed {{member.last_updated_date|date:"\o\n M j, Y \a\t H\:i"}} by {{member.display_last_updated_name}}</p>
+    {% else %}
+        <p>This information was never updated since its creation {{member.last_updated_date|date:"\o\n M j, Y \a\t H\:i"}}</p>
+    {% endif %}
     Click <a href="{% url 'membership_file/membership/edit' %}">here</a> to edit this information.
 {% endblock content %}

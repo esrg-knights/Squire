@@ -132,7 +132,7 @@ class Member(models.Model):
         return "{0} {1}".format(self.first_name, self.last_name)
 
     # Gets the name of the person that last updated this user
-    def get_last_updated_name(self):
+    def display_last_updated_name(self):
         if self.last_updated_by is None:
             return None
         updater = Member.objects.filter(user__id=self.last_updated_by.id).first()
@@ -159,12 +159,12 @@ class Member(models.Model):
         house_number = str(self.house_number)
         if self.house_number_addition is not None:
             # If the house number starts with a number, add a dash
-            if not re.search('[a-zA-Z]', self.house_number_addition[:1]):
+            if not self.house_number_addition[:1].isalpha():
                 house_number += '-'
             house_number += self.house_number_addition
 
         return "{0} {1}, {2}, {3}{4}".format(self.street, house_number, self.city, 
-            "" if self.state is None else self.state + ', ', self.country)
+            "" if self.state is None else f"{self.state}, ", self.country)
 
 
 # The MemberLog Model represents a log entry that is created whenever membership data is updated
