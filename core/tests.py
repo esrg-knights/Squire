@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from .forms import LoginForm, RegisterForm
 from enum import Enum
+from django.conf import settings
 
 
 ##################################################################################
@@ -57,13 +58,13 @@ def checkAccessPermissions(test: TestCase, url: str, httpMethod: str, permission
     # Ensure the correct type of user makes the request
     if permissionLevel == PermissionLevel.LEVEL_USER:
         if user is None:
-            user = User.objects.create_user(username="username", password="username")
+            user = User.objects.create_user(username=settings.TEST_USER_NAME, password="username")
         else:
             user.is_superuser = False
         User.save(user)
     elif permissionLevel == PermissionLevel.LEVEL_ADMIN:
         if user is None:
-            user = User.objects.create_superuser(username="admin", password="admin", email="")
+            user = User.objects.create_superuser(username=settings.TEST_USER_NAME, password="admin", email="")
         else:
             user.is_superuser = True
         User.save(user)
@@ -303,8 +304,6 @@ class RegisterFormTest(TestCase):
 
 # Tests the registerForm view
 class RegisterFormViewTest(TestCase):
-    def setUp(self):
-        pass
 
     # Tests if redirected when form data was entered correctly
     def test_success_redirect(self):

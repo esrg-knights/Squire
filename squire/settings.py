@@ -220,6 +220,10 @@ APPLICATION_NAME = 'Squire'
 COMMITTEE_ABBREVIATION = 'HTTPS'
 COMMITTEE_FULL_NAME = 'Hackmanite Turbo Typing Programming Squad'
 
+# Usename that is used in testcases that need to create one.
+# Prevents clashes with testcases in other files
+TEST_USER_NAME = 'qIWCcxlOJghaNrxgnYnPXJVCohpLbyXsoeofJppnwRmThTmOUoiPyBFYBprGWJfIMQUNfbMToXnAYtPW' 
+
 # People who get error code notifications if Debug = False
 ADMINS = [(APPLICATION_NAME + ' Admin', 'https@kotkt.nl')] # NB: This email should be changed to something else
 

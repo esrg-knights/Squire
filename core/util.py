@@ -46,7 +46,7 @@ def membership_required(function=None, fail_url=None, redirect_field_name=REDIRE
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
             # If the user is authenticated and a member with the same userID exists, continue
-            if request.user.is_authenticated and request.user.is_member(): #Member.objects.filter(user__id=request.user.id).exists():
+            if request.user.is_authenticated and request.user.is_member():
                 return view_func(request, *args, **kwargs)
             
             # Otherwise show the "Not a member" error page

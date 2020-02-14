@@ -2,9 +2,12 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from django import forms
 from django.template import Context, Template
+from django.conf import settings
+from django.core import serializers
 from enum import Enum
 
 from .models import Member
+from .serializers import MemberSerializer
 from core.tests import checkAccessPermissions, PermissionLevel
 
 ##################################################################################
@@ -13,16 +16,19 @@ from core.tests import checkAccessPermissions, PermissionLevel
 # @since 12 FEB 2020
 ##################################################################################
 
+# Enumeration that specifies member vs non-member status.
 class PermissionType(Enum):
     TYPE_MEMBER = 1
     TYPE_NO_MEMBER = 2
 
+# Checks whether a given url can be accessed with a given HTTP Method by a user with a given permissionType
+# Invokes the checkAccessPermissions method from the Core app.
 def checkAccessPermissionsMember(test: TestCase, url: str, httpMethod: str, permissionType: PermissionType,
         user: User = None, redirectUrl: str = "", data: dict = {}) -> None:
     
     # Create a user if it does not exist
     if user is None:
-        user = User.objects.create_user(username="username", password="username")
+        user = User.objects.create_user(username=settings.TEST_USER_NAME, password="username")
     User.save(user)
 
     # Make the user a member
@@ -57,16 +63,16 @@ def checkAccessPermissionsMember(test: TestCase, url: str, httpMethod: str, perm
 
     checkAccessPermissions(test, url, httpMethod, PermissionLevel.LEVEL_USER, user, redirectUrl, data)
 
-
+################################################################
+# TEMPLATE TAGS
+################################################################
+# Dummy form used during test cases
 class DummyForm(forms.Form): 
     test_required_field = forms.CharField(required = True) 
     test_optional_field = forms.CharField(required = False)
 
-# Tests Log deletion when members are deleted
+# Tests usage of custom template tags
 class TemplateTagsTest(TestCase):
-    def setUp(self):
-        pass
-
     # Tests the field_label template tag
     def test_field_label(self):
         form_data = {
@@ -93,6 +99,169 @@ class TemplateTagsTest(TestCase):
         }))
         self.assertEqual(out, "MyFormFieldName")
 
+################################################################
+# VIEWS
+################################################################
+
+# Tests the editing feature of a user's own membership info.
+class MemberfileEditTest(TestCase):
+    def setUp(self):
+        # Create a user
+        self.user = User.objects.create(username="username", password="password")
+
+        # Test Member Data
+        self.member_data = {
+            "initials": "J.D.",
+            "first_name": "John",
+            "last_name": "Doe",
+            "date_of_birth": "1970-01-01",
+            "email": "johndoe@gmail.com",
+            "street": "Main Street",
+            "house_number": "42",
+            "city": "New York",
+            "country": "U.S.A.",
+            "member_since": "1970-01-01",
+            "educational_institution": "University of Toronto",
+            "user": self.user,
+        }
+        # The member to test the request methods on
+        self.member_to_run_tests_on = Member.objects.create(**self.member_data)
+
+        # Save the models
+        Member.save(self.member_to_run_tests_on)
+
+    # Tests correct edit
+    def test_correct_edit(self):
+        form_data = {
+            "initials": "J.D.",
+            "first_name": "John",
+            "last_name": "Doe",
+            "date_of_birth": "1970-01-01",
+            "email": "johndoe@gmail.com",
+            "street": "Main Street",
+            "house_number": "69",
+            "city": "New York",
+            "country": "U.S.A.",
+            "member_since": "1970-01-01",
+            "educational_institution": "University of Toronto",
+        }
+
+        checkAccessPermissionsMember(self, '/account/membership/edit', 'post', PermissionType.TYPE_MEMBER,
+                user=self.user, redirectUrl='/account/membership', data=form_data)
+        
+        member = Member.objects.filter(id=self.member_to_run_tests_on.id).first()
+        self.assertIsNotNone(member)
+
+        # Ensure the correct values were changed
+        old_serialized_data = MemberSerializer(self.member_to_run_tests_on).data
+        new_serialized_data = MemberSerializer(member).data
+        for field, value in old_serialized_data.items():
+            if field == 'house_number':
+                # House Number was updated
+                self.assertEqual(69, new_serialized_data['house_number'])
+            elif field == 'last_updated_date':
+                # last_updated_date was updated
+                self.assertTrue(value < new_serialized_data['last_updated_date'])
+            elif field == 'last_updated_by':
+                # last_updated_by was updated
+                self.assertEqual(new_serialized_data['user'], self.user.id)
+            else:
+                # All other fields remain the same
+                self.assertEqual(value, new_serialized_data[field], f"{field} did not match!")       
+    
+    # Tests an invalid edit
+    def test_invalid_edit(self):
+        form_data = {
+            "initials": "J.D.",
+            "first_name": "John",
+            "last_name": "Doe",
+            "date_of_birth": "1970-01-01",
+            "email": "johndoe@gmail.com",
+            "street": "Main Street",
+            "house_number": "sixtynine", # House number should be a number
+            "city": "New York",
+            "country": "U.S.A.",
+            "member_since": "1970-01-01",
+            "educational_institution": "University of Toronto",
+        }
+
+        checkAccessPermissionsMember(self, '/account/membership/edit', 'post', PermissionType.TYPE_MEMBER,
+                user=self.user, data=form_data)
+        
+        member = Member.objects.filter(id=self.member_to_run_tests_on.id).first()
+        self.assertIsNotNone(member)
+
+        # Ensure no values were changed
+        old_serialized_data = MemberSerializer(self.member_to_run_tests_on).data
+        new_serialized_data = MemberSerializer(member).data
+        for field, value in old_serialized_data.items():
+            # All other fields remain the same
+            self.assertEqual(value, new_serialized_data[field], f"{field} did not match!")  
+
+    # Tests if redirected if an unauthenticated user tries to edit information
+    def test_unauthenticated_user_redirect(self):
+        form_data = {
+            "initials": "J.D.",
+            "first_name": "John",
+            "last_name": "Doe",
+            "date_of_birth": "1970-01-01",
+            "email": "johndoe@gmail.com",
+            "street": "Main Street",
+            "house_number": "69",
+            "city": "New York",
+            "country": "U.S.A.",
+            "member_since": "1970-01-01",
+            "educational_institution": "University of Toronto",
+        }
+
+        checkAccessPermissionsMember(self, '/account/membership/edit', 'post', PermissionType.TYPE_NO_MEMBER,
+                data=form_data, redirectUrl='/no_member')
+        
+        member = Member.objects.filter(id=self.member_to_run_tests_on.id).first()
+        self.assertIsNotNone(member)
+
+        # Ensure no values were changed
+        old_serialized_data = MemberSerializer(self.member_to_run_tests_on).data
+        new_serialized_data = MemberSerializer(member).data
+        for field, value in old_serialized_data.items():
+            # All other fields remain the same
+            self.assertEqual(value, new_serialized_data[field], f"{field} did not match!")  
+
+    # Tests if certain fields are properly ignored
+    def test_ignore_fields(self):
+        other_user = User.objects.create(username="user2", password="password")
+        other_user.save()
+        form_data = {
+            "initials": "J.D.",
+            "first_name": "John",
+            "last_name": "Doe",
+            "date_of_birth": "1970-01-01",
+            "email": "johndoe@gmail.com",
+            "street": "Main Street",
+            "house_number": "69",
+            "city": "New York",
+            "country": "U.S.A.",
+            "member_since": "1970-01-01",
+            "educational_institution": "University of Toronto",
+            "user": other_user.id,
+            "last_updated_by": "",
+            "last_updated_date": "02/02/2002",
+        }
+
+        # Should still be redirected to the account page
+        checkAccessPermissionsMember(self, '/account/membership/edit', 'post', PermissionType.TYPE_MEMBER,
+                user=self.user, data=form_data, redirectUrl='/account/membership')
+
+        member = Member.objects.filter(id=self.member_to_run_tests_on.id).first()
+        self.assertIsNotNone(member)
+
+        # Ensure the 'user' field is not edited
+        self.assertEqual(self.member_to_run_tests_on.user, member.user)
+        # Ensure the 'last updated by' and 'last updated date' fields are edited properly
+        self.assertEqual(self.user, member.last_updated_by)
+        self.assertTrue(self.member_to_run_tests_on.last_updated_date < member.last_updated_date)
+
+
 # Tests views of the Membership info view/edit
 class MemberfileViewTest(TestCase):
     # Tests if the no-member page can be reached
@@ -116,8 +285,12 @@ class MemberfileViewTest(TestCase):
         checkAccessPermissionsMember(self, '/account/membership/edit', 'get', PermissionType.TYPE_NO_MEMBER,
                 redirectUrl='/no_member')
 
-    # TODO: POST-request for edit info
 
+################################################################
+# STRING FORMATTING
+################################################################
+
+# Tests several member-info-related formatting methods
 class MemberRenderTest(TestCase):
     def setUp(self):
         # Create a user
