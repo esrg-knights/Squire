@@ -9,7 +9,6 @@ import re
 
 ##################################################################################
 # Models related to the Membership File-functionality of the application.
-# @author E.M.A. Arts
 # @since 06 JUL 2019
 ##################################################################################
 

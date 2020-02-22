@@ -12,7 +12,6 @@ from core.tests import checkAccessPermissions, PermissionLevel
 
 ##################################################################################
 # Test cases for MemberLog-logic and Member deletion logic on the user-side
-# @author E.M.A. Arts
 # @since 12 FEB 2020
 ##################################################################################
 
@@ -26,40 +25,29 @@ class PermissionType(Enum):
 def checkAccessPermissionsMember(test: TestCase, url: str, httpMethod: str, permissionType: PermissionType,
         user: User = None, redirectUrl: str = "", data: dict = {}) -> None:
     
-    # Create a user if it does not exist
-    if user is None:
-        user = User.objects.create_user(username=settings.TEST_USER_NAME, password="username")
-    User.save(user)
-
-    # Make the user a member
     member = None
-    linked_members = Member.objects.filter(user=user)
     if permissionType == PermissionType.TYPE_MEMBER:
-        if not linked_members.exists():
-            # User should be linked to a member, but this was not yet the case
-            member = Member.objects.create(**{
-                "user": user,
-                "initials": "H.T.T.P.S.",
-                "first_name": "Hackmanite",
-                "last_name": "Turbo",
-                "date_of_birth": "1970-01-02",
-                "email": "https@kotkt.nl",
-                "street": "Port",
-                "house_number": "418",
-                "city": "The Internet",
-                "country": "The Netherlands",
-                "member_since": "1970-01-01",
-                "educational_institution": "Python",
-            })
-            Member.save(member)
-            member.user = user
-            User.save(user)
-    elif linked_members.exists():
-        # User should NOT be linked to a member, but this was the case
-        linked_members.update(user=None)
-        for linked_member in linked_members:
-            linked_member.user = None
-            linked_member.save()
+        # Requesting user should be a member
+        member = Member.objects.get(email='linked_member@gmail.com')
+        if user is None:
+            user = User.objects.get(username='test_user')
+        else:
+            member = Member.objects.filter(user=user).first()
+            if member is None:
+                # The passed user was NOT yet a member, but should be one!
+                member = Member.objects.get(email='linked_member@gmail.com')
+                member.user = user
+                member.save()
+    else:
+        # Requesting user should NOT be a member
+        if user is None:
+            user = User.objects.get(username='test_user_alt')
+        else:
+            member = Member.objects.filter(user=user).first()
+            if member is not None:
+                # The passed user was a member, but should NOT be one!
+                member.user = None
+                member.save()
 
     checkAccessPermissions(test, url, httpMethod, PermissionLevel.LEVEL_USER, user, redirectUrl, data)
 
@@ -105,6 +93,8 @@ class TemplateTagsTest(TestCase):
 
 # Tests the editing feature of a user's own membership info.
 class MemberfileEditTest(TestCase):
+    fixtures = ['test_users.json', 'test_members.json']
+
     def setUp(self):
         # Create a user
         self.user = User.objects.create(username="username", password="password")
@@ -264,6 +254,8 @@ class MemberfileEditTest(TestCase):
 
 # Tests views of the Membership info view/edit
 class MemberfileViewTest(TestCase):
+    fixtures = ['test_users.json', 'test_members.json']
+
     # Tests if the no-member page can be reached
     def test_no_member_page(self):
         checkAccessPermissions(self, '/no_member', 'get', PermissionLevel.LEVEL_PUBLIC)

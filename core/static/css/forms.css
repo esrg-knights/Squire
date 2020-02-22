@@ -1,5 +1,5 @@
 
 /* Optional inputs gain a dashed border rather than a solid one */
-input:optional:not[type=submit] {
+input:optional {
     border-style: dashed
 }

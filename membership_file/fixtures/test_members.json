@@ -1,0 +1,62 @@
+[
+   {
+      "model": "membership_file.member",
+      "pk": 1,
+      "fields": {
+         "user": 2,
+         "initials": "A.B.",
+         "first_name": "Charlie",
+         "tussenvoegsel": "van der",
+         "last_name": "Dommel",
+         "student_number": "0987654",
+         "educational_institution": "TUe",
+         "tue_card_number": "1234567",
+         "external_card_number": null,
+         "external_card_digits": null,
+         "external_card_cluster": null,
+         "email": "linked_member@gmail.com",
+         "phone_number": null,
+         "street": "John F. Kennedylaan",
+         "house_number": 1,
+         "house_number_addition": null,
+         "city": "Eindhoven",
+         "state": null,
+         "country": "The Netherlands",
+         "date_of_birth": "1970-01-01",
+         "member_since": "2020-01-01",
+         "last_updated_date": "1970-01-01T12:00:00Z",
+         "last_updated_by": null,
+         "marked_for_deletion": false
+      }
+   },
+   {
+      "model": "membership_file.member",
+      "pk": 2,
+      "fields": {
+         "user": null,
+         "initials": "Z.Y.",
+         "first_name": "Xena",
+         "tussenvoegsel": null,
+         "last_name": "Wolf",
+         "student_number": null,
+         "educational_institution": "Summa",
+         "tue_card_number": null,
+         "external_card_number": null,
+         "external_card_digits": null,
+         "external_card_cluster": null,
+         "email": "nonlinked_member@gmail.com",
+         "phone_number": null,
+         "street": "Limbopad",
+         "house_number": 2,
+         "house_number_addition": null,
+         "city": "Eindhoven",
+         "state": null,
+         "country": "The Netherlands",
+         "date_of_birth": "1970-01-01",
+         "member_since": "2020-01-01",
+         "last_updated_date": "1970-01-01T12:00:00Z",
+         "last_updated_by": null,
+         "marked_for_deletion": false
+      }
+   }
+]

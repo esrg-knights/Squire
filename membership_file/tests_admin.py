@@ -10,7 +10,6 @@ from django.contrib.admin import ModelAdmin
 
 ##################################################################################
 # Test cases for MemberLog-logic and Member deletion logic on the admin-side
-# @author E.M.A. Arts
 # @since 19 JUL 2019
 ##################################################################################
 

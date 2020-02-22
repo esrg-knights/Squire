@@ -9,7 +9,6 @@ from django.conf import settings
 
 ##################################################################################
 # Test cases for core
-# @author E.M.A. Arts
 # @since 15 AUG 2019
 ##################################################################################
 
@@ -58,16 +57,16 @@ def checkAccessPermissions(test: TestCase, url: str, httpMethod: str, permission
     # Ensure the correct type of user makes the request
     if permissionLevel == PermissionLevel.LEVEL_USER:
         if user is None:
-            user = User.objects.create_user(username=settings.TEST_USER_NAME, password="username")
-        else:
+            user = User.objects.get(username='test_user')
+        elif user.is_superuser:
             user.is_superuser = False
-        User.save(user)
+            User.save(user)
     elif permissionLevel == PermissionLevel.LEVEL_ADMIN:
         if user is None:
-            user = User.objects.create_superuser(username=settings.TEST_USER_NAME, password="admin", email="")
-        else:
+            user = User.objects.get(username='test_admin')
+        elif not user.is_superuser:
             user.is_superuser = True
-        User.save(user)
+            User.save(user)
 
     # Ensure the correct user is logged in
     if user:
@@ -120,6 +119,8 @@ def checkAccessPermissions(test: TestCase, url: str, httpMethod: str, permission
 
 # Tests whether front-end pages can be accessed
 class FrontEndTest(TestCase):
+    fixtures = ['test_users.json']
+
     # Tests if the homepage can be accessed
     def test_homepage(self):
         checkAccessPermissions(self, '/', 'get', PermissionLevel.LEVEL_PUBLIC)
@@ -304,6 +305,7 @@ class RegisterFormTest(TestCase):
 
 # Tests the registerForm view
 class RegisterFormViewTest(TestCase):
+    fixtures = ['test_users.json']
 
     # Tests if redirected when form data was entered correctly
     def test_success_redirect(self):
