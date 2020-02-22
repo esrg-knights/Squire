@@ -1,0 +1,14 @@
+{% extends 'achievements/base.html' %}
+{% load i18n %}
+
+{% block content %}
+  <h3>{% trans "Name" %}:</h3>
+  <p>{{member.first_name}} {% if member.tussenvoegsel != None %}{{member.tussenvoegsel}}{% endif %} {{member.last_name}}</p>
+
+  <h3>{% trans "Claimed achievements" %}:</h3>
+  {% for achievement in claimed_achievements %}
+    <p>{{achievement.category}}; {{achievement.name}}; {{achievement.description}}</p>
+  {% empty %}
+    <p>{% trans "No achievements claimed by this member." %}</p>
+  {% endfor %}
+{% endblock %}

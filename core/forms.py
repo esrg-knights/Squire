@@ -23,7 +23,7 @@ class LoginForm(AuthenticationForm):
         password = self.cleaned_data.get('password')
 
         # Check if both are provided
-        if username is not None and password:
+        if username and password:
             self.user_cache = authenticate(self.request, username=username, password=password)
             if self.user_cache is None:
                 # Invalid credentials provided
