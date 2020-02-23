@@ -44,7 +44,7 @@ class MemberLogCleanupTest(TestCase):
             "first_name": "Luna",
             "last_name": "Fest",
             "date_of_birth": "1970-01-01",
-            "email": "lunafest@studentencultuur.nl",
+            "email": "lunafest@example.com",
             "street": "De Lampendriessen",
             "house_number": "31",
             "city": "Eindhoven",
@@ -124,7 +124,7 @@ class MemberLogTest(TestCase):
             "first_name": "Fantasy",
             "last_name": "Court",
             "date_of_birth": "1970-01-01",
-            "email": "info@fantasycourt.nl",
+            "email": "info@example.com",
             "street": "Veld",
             "house_number": "5",
             "city": "Eindhoven",
@@ -145,7 +145,7 @@ class MemberLogTest(TestCase):
         MemberLog.objects.all().delete()
 
         # Define test data
-        self.email = "info@kotkt.nl"
+        self.email = "info-kotkt@example.com"
         self.data = fillDictKeys(self.emptyMemberDictionary, {
             "user": "",
             "initials": "E.S.R.G.",
@@ -258,7 +258,7 @@ class MemberLogTest(TestCase):
         # The member's data got updated
         updatedFields = {
             'first_name': 'NewFirstName',
-            'email': 'newemail@email.com',
+            'email': 'newemail@example.com',
         }
         self.memberData = {**self.memberData, **updatedFields}
 
@@ -284,7 +284,7 @@ class MemberLogTest(TestCase):
         # The member's data got updated
         updatedFields = {
             'first_name': 'NewFirstName',
-            'email': 'newemail@email.com',
+            'email': 'newemail@example.com',
             'marked_for_deletion': 'on',
         }
         self.memberData = {**self.memberData, **updatedFields}
@@ -409,7 +409,7 @@ class DeleteMemberTest(TestCase):
             "first_name": "HTTPs",
             "last_name": "Committee",
             "date_of_birth": "1970-01-01",
-            "email": "https@kotkt.nl",
+            "email": "https@example.com",
             "street": "Veld",
             "house_number": "5",
             "city": "Eindhoven",

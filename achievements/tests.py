@@ -35,7 +35,7 @@ class TestCaseAchievementFrontEndViews(TestCase):
             "first_name": "Fantasy",
             "last_name": "Court",
             "date_of_birth": "1970-01-01",
-            "email": "info@fantasycourt.nl",
+            "email": "info@example.com",
             "street": "Veld",
             "house_number": "5",
             "city": "Eindhoven",

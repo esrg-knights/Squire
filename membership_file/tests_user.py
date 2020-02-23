@@ -28,14 +28,14 @@ def checkAccessPermissionsMember(test: TestCase, url: str, httpMethod: str, perm
     member = None
     if permissionType == PermissionType.TYPE_MEMBER:
         # Requesting user should be a member
-        member = Member.objects.get(email='linked_member@gmail.com')
+        member = Member.objects.get(email='linked_member@example.com')
         if user is None:
             user = User.objects.get(username='test_user')
         else:
             member = Member.objects.filter(user=user).first()
             if member is None:
                 # The passed user was NOT yet a member, but should be one!
-                member = Member.objects.get(email='linked_member@gmail.com')
+                member = Member.objects.get(email='linked_member@example.com')
                 member.user = user
                 member.save()
     else:
@@ -105,7 +105,7 @@ class MemberfileEditTest(TestCase):
             "first_name": "John",
             "last_name": "Doe",
             "date_of_birth": "1970-01-01",
-            "email": "johndoe@gmail.com",
+            "email": "johndoe@example.com",
             "street": "Main Street",
             "house_number": "42",
             "city": "New York",
@@ -127,7 +127,7 @@ class MemberfileEditTest(TestCase):
             "first_name": "John",
             "last_name": "Doe",
             "date_of_birth": "1970-01-01",
-            "email": "johndoe@gmail.com",
+            "email": "johndoe@example.com",
             "street": "Main Street",
             "house_number": "69",
             "city": "New York",
@@ -166,7 +166,7 @@ class MemberfileEditTest(TestCase):
             "first_name": "John",
             "last_name": "Doe",
             "date_of_birth": "1970-01-01",
-            "email": "johndoe@gmail.com",
+            "email": "johndoe@example.com",
             "street": "Main Street",
             "house_number": "sixtynine", # House number should be a number
             "city": "New York",
@@ -195,7 +195,7 @@ class MemberfileEditTest(TestCase):
             "first_name": "John",
             "last_name": "Doe",
             "date_of_birth": "1970-01-01",
-            "email": "johndoe@gmail.com",
+            "email": "johndoe@example.com",
             "street": "Main Street",
             "house_number": "69",
             "city": "New York",
@@ -226,7 +226,7 @@ class MemberfileEditTest(TestCase):
             "first_name": "John",
             "last_name": "Doe",
             "date_of_birth": "1970-01-01",
-            "email": "johndoe@gmail.com",
+            "email": "johndoe@example.com",
             "street": "Main Street",
             "house_number": "69",
             "city": "New York",
@@ -293,7 +293,7 @@ class MemberRenderTest(TestCase):
             "first_name": "John",
             "last_name": "Doe",
             "date_of_birth": "1970-01-01",
-            "email": "johndoe@gmail.com",
+            "email": "johndoe@example.com",
             "street": "Main Street",
             "house_number": "42",
             "city": "New York",
@@ -313,7 +313,7 @@ class MemberRenderTest(TestCase):
             "first_name": "De",
             "last_name": "Bunker",
             "date_of_birth": "1970-01-01",
-            "email": "de-bunker@de-bunker.nl",
+            "email": "de-bunker@example.com",
             "street": "John F. Kennedylaan",
             "house_number": "3",
             "city": "Eindhoven",

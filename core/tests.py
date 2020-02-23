@@ -208,7 +208,7 @@ class RegisterFormTest(TestCase):
     def setUp(self):
         # Called each time before a testcase runs
         # Set up data for each test.
-        self.user = User.objects.create_user(username="schaduwbestuur", password="bestaatniet", email='rva@kotkt.nl')
+        self.user = User.objects.create_user(username="schaduwbestuur", password="bestaatniet", email='rva@example.com')
         User.save(self.user)
 
     # Test if the user can register if everything is correct
@@ -217,7 +217,7 @@ class RegisterFormTest(TestCase):
             'username': 'schaduwkandi',
             'password1': 'bestaatookniet',
             'password2': 'bestaatookniet',
-            'email': 'kandi@kotkt.nl', 
+            'email': 'kandi@example.com', 
             'nickname': 'wijbestaanniet',
         }
         form = RegisterForm(data=form_data)
@@ -228,7 +228,7 @@ class RegisterFormTest(TestCase):
         # Ensure the correct object is returned (but not saved)
         user = form.save(commit=False)
         self.assertIsNotNone(user)
-        self.assertEquals(user.email, 'kandi@kotkt.nl')
+        self.assertEquals(user.email, 'kandi@example.com')
         self.assertTrue(user.check_password('bestaatookniet'))
         self.assertEqual(user.first_name, 'wijbestaanniet')
 
@@ -239,7 +239,7 @@ class RegisterFormTest(TestCase):
         form.save(commit=True)  
         user = User.objects.filter(username='schaduwkandi').first()
         self.assertIsNotNone(user)
-        self.assertEquals(user.email, 'kandi@kotkt.nl')
+        self.assertEquals(user.email, 'kandi@example.com')
         self.assertTrue(user.check_password('bestaatookniet'))
         self.assertEqual(user.first_name, 'wijbestaanniet')
 
@@ -270,7 +270,7 @@ class RegisterFormTest(TestCase):
             'username': 'schaduwkandi',
             'password1': 'bestaatookniet',
             'password2': 'nomatch',
-            'email': 'kandi@kotkt.nl', 
+            'email': 'kandi@example.com', 
             'nickname': 'wijbestaanniet',
         }
         form = RegisterForm(data=form_data)
@@ -288,7 +288,7 @@ class RegisterFormTest(TestCase):
             'username': 'schaduwbestuur',
             'password1': 'secret',
             'password2': 'secret',
-            'email': 'rva@kotkt.nl', 
+            'email': 'rva@example.com', 
             'nickname': 'wijbestaanniet',
         }
         form = RegisterForm(data=form_data)
@@ -313,14 +313,14 @@ class RegisterFormViewTest(TestCase):
             'username': 'username',
             'password1': 'thisactuallyneedstobeagoodpassword',
             'password2': 'thisactuallyneedstobeagoodpassword',
-            'email': 'email@email.com',
+            'email': 'email@example.com',
         }
         checkAccessPermissions(self, '/register', 'post', PermissionLevel.LEVEL_PUBLIC,
                 redirectUrl='/register/success', data=form_data)
         
         user = User.objects.filter(username='username').first()
         self.assertIsNotNone(user)
-        self.assertEquals(user.email, 'email@email.com')
+        self.assertEquals(user.email, 'email@example.com')
         self.assertTrue(user.check_password('thisactuallyneedstobeagoodpassword'))
         self.assertEqual(user.first_name, '')
 
@@ -330,7 +330,7 @@ class RegisterFormViewTest(TestCase):
             'username': 'username',
             'password1': 'password', # Password too easy so should fail
             'password2': 'password',
-            'email': 'email@email.com',
+            'email': 'email@example.com',
         }
         checkAccessPermissions(self, '/register', 'post', PermissionLevel.LEVEL_PUBLIC, data=form_data)
 

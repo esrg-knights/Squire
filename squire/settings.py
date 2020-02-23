@@ -235,10 +235,10 @@ COMMITTEE_FULL_NAME = 'Hackmanite Turbo Typing Programming Squad'
 ADMINS = [(APPLICATION_NAME + ' Admin', 'https@kotkt.nl')] # TODO: This email should be changed to something else
 
 # The email address that error messages come from, such as those sent to ADMINS and MANAGERS.
-SERVER_EMAIL = f'{APPLICATION_NAME} Error <error@{APPLICATION_NAME.lower()}.kotkt.nl>'
+SERVER_EMAIL = f'{APPLICATION_NAME} Error <{APPLICATION_NAME.lower()}-error@kotkt.nl>'
 
 # Default email address to use for various automated correspondence from the site manager(s).
-DEFAULT_FROM_EMAIL = f'{APPLICATION_NAME} <noreply@{APPLICATION_NAME.lower()}.kotkt.nl>'
+DEFAULT_FROM_EMAIL = f'{APPLICATION_NAME} <{APPLICATION_NAME.lower()}-noreply@kotkt.nl>'
 
 # Debug settings
 # Also run the following command to imitate an SMTP server locally: python -m smtpd -n -c DebuggingServer localhost:1025
