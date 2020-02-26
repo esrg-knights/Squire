@@ -4,11 +4,11 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from .forms import LoginForm, RegisterForm
 from enum import Enum
+from django.conf import settings
 
 
 ##################################################################################
 # Test cases for core
-# @author E.M.A. Arts
 # @since 15 AUG 2019
 ##################################################################################
 
@@ -44,22 +44,30 @@ class PermissionLevel(OrderedEnum):
 # @param url URL to make the request to
 # @param httpMethod HTTP Method to make the request with E.g. get, post, put, etc. 
 # @param permissionLevel Which type of user should be able to access the page
+# @param user The user to use in the request (or empty if a new one should be created)
+# @param redirectUrl The Url to redirect to
+# @param data Additional data to pass to the request
 # 
 # @throws AssertionError iff a user of the given permission level can NOT access the given url using the given HTTP method
 #
 def checkAccessPermissions(test: TestCase, url: str, httpMethod: str, permissionLevel: PermissionLevel,
-        redirectUrl: str = "", data: dict = {}) -> None:
+        user: User = None, redirectUrl: str = "", data: dict = {}) -> None:
     client = Client()
     
     # Ensure the correct type of user makes the request
-    user = None
     if permissionLevel == PermissionLevel.LEVEL_USER:
-        user = User.objects.create_user(username="username", password="username")
-        User.save(user)
+        if user is None:
+            user = User.objects.get(username='test_user')
+        elif user.is_superuser:
+            user.is_superuser = False
+            User.save(user)
     elif permissionLevel == PermissionLevel.LEVEL_ADMIN:
-        user = User.objects.create_superuser(username="admin", password="admin", email="")
-        User.save(user)
-    
+        if user is None:
+            user = User.objects.get(username='test_admin')
+        elif not user.is_superuser:
+            user.is_superuser = True
+            User.save(user)
+
     # Ensure the correct user is logged in
     if user:
         client.force_login(user)
@@ -111,6 +119,8 @@ def checkAccessPermissions(test: TestCase, url: str, httpMethod: str, permission
 
 # Tests whether front-end pages can be accessed
 class FrontEndTest(TestCase):
+    fixtures = ['test_users.json']
+
     # Tests if the homepage can be accessed
     def test_homepage(self):
         checkAccessPermissions(self, '/', 'get', PermissionLevel.LEVEL_PUBLIC)
@@ -198,7 +208,7 @@ class RegisterFormTest(TestCase):
     def setUp(self):
         # Called each time before a testcase runs
         # Set up data for each test.
-        self.user = User.objects.create_user(username="schaduwbestuur", password="bestaatniet", email='rva@kotkt.nl')
+        self.user = User.objects.create_user(username="schaduwbestuur", password="bestaatniet", email='rva@example.com')
         User.save(self.user)
 
     # Test if the user can register if everything is correct
@@ -207,7 +217,7 @@ class RegisterFormTest(TestCase):
             'username': 'schaduwkandi',
             'password1': 'bestaatookniet',
             'password2': 'bestaatookniet',
-            'email': 'kandi@kotkt.nl', 
+            'email': 'kandi@example.com', 
             'nickname': 'wijbestaanniet',
         }
         form = RegisterForm(data=form_data)
@@ -218,7 +228,7 @@ class RegisterFormTest(TestCase):
         # Ensure the correct object is returned (but not saved)
         user = form.save(commit=False)
         self.assertIsNotNone(user)
-        self.assertEquals(user.email, 'kandi@kotkt.nl')
+        self.assertEquals(user.email, 'kandi@example.com')
         self.assertTrue(user.check_password('bestaatookniet'))
         self.assertEqual(user.first_name, 'wijbestaanniet')
 
@@ -229,7 +239,7 @@ class RegisterFormTest(TestCase):
         form.save(commit=True)  
         user = User.objects.filter(username='schaduwkandi').first()
         self.assertIsNotNone(user)
-        self.assertEquals(user.email, 'kandi@kotkt.nl')
+        self.assertEquals(user.email, 'kandi@example.com')
         self.assertTrue(user.check_password('bestaatookniet'))
         self.assertEqual(user.first_name, 'wijbestaanniet')
 
@@ -260,7 +270,7 @@ class RegisterFormTest(TestCase):
             'username': 'schaduwkandi',
             'password1': 'bestaatookniet',
             'password2': 'nomatch',
-            'email': 'kandi@kotkt.nl', 
+            'email': 'kandi@example.com', 
             'nickname': 'wijbestaanniet',
         }
         form = RegisterForm(data=form_data)
@@ -278,7 +288,7 @@ class RegisterFormTest(TestCase):
             'username': 'schaduwbestuur',
             'password1': 'secret',
             'password2': 'secret',
-            'email': 'rva@kotkt.nl', 
+            'email': 'rva@example.com', 
             'nickname': 'wijbestaanniet',
         }
         form = RegisterForm(data=form_data)
@@ -295,8 +305,7 @@ class RegisterFormTest(TestCase):
 
 # Tests the registerForm view
 class RegisterFormViewTest(TestCase):
-    def setUp(self):
-        pass
+    fixtures = ['test_users.json']
 
     # Tests if redirected when form data was entered correctly
     def test_success_redirect(self):
@@ -304,14 +313,14 @@ class RegisterFormViewTest(TestCase):
             'username': 'username',
             'password1': 'thisactuallyneedstobeagoodpassword',
             'password2': 'thisactuallyneedstobeagoodpassword',
-            'email': 'email@email.com',
+            'email': 'email@example.com',
         }
         checkAccessPermissions(self, '/register', 'post', PermissionLevel.LEVEL_PUBLIC,
                 redirectUrl='/register/success', data=form_data)
         
         user = User.objects.filter(username='username').first()
         self.assertIsNotNone(user)
-        self.assertEquals(user.email, 'email@email.com')
+        self.assertEquals(user.email, 'email@example.com')
         self.assertTrue(user.check_password('thisactuallyneedstobeagoodpassword'))
         self.assertEqual(user.first_name, '')
 
@@ -321,7 +330,7 @@ class RegisterFormViewTest(TestCase):
             'username': 'username',
             'password1': 'password', # Password too easy so should fail
             'password2': 'password',
-            'email': 'email@email.com',
+            'email': 'email@example.com',
         }
         checkAccessPermissions(self, '/register', 'post', PermissionLevel.LEVEL_PUBLIC, data=form_data)
 

@@ -14,7 +14,6 @@ from django.contrib.auth.decorators import login_required
 
 ##################################################################################
 # Contains render-code for displaying general pages.
-# @author E.M.A. Arts
 # @since 15 JUL 2019
 ##################################################################################
 

@@ -9,8 +9,7 @@ from django.contrib.admin.sites import AdminSite
 from django.contrib.admin import ModelAdmin
 
 ##################################################################################
-# Test cases for MemberLog-logic and Member deletion logic
-# @author E.M.A. Arts
+# Test cases for MemberLog-logic and Member deletion logic on the admin-side
 # @since 19 JUL 2019
 ##################################################################################
 
@@ -45,13 +44,13 @@ class MemberLogCleanupTest(TestCase):
             "first_name": "Luna",
             "last_name": "Fest",
             "date_of_birth": "1970-01-01",
-            "email": "lunafest@studentencultuur.nl",
+            "email": "lunafest@example.com",
             "street": "De Lampendriessen",
             "house_number": "31",
             "city": "Eindhoven",
             "country": "The Netherlands",
-            "postal_code": "5612 AH",
             "member_since": "1970-01-01",
+            "educational_institution": "TU/e",
         }
         self.member = Member.objects.create(**self.memberData)
 
@@ -87,11 +86,13 @@ class MemberLogTest(TestCase):
         # An empty dictionary of all fields that are set when making a POST request for a member
         cls.emptyMemberDictionary = {
             "user": "",
+            "initials": "",
             "first_name": "",
             "tussenvoegsel": "",
             "last_name": "",
             "tue_card_number": "",
             "external_card_number": "",
+            "external_card_digits": "",
             "external_card_cluster": "",
             "date_of_birth": "",
             "email": "",
@@ -102,8 +103,8 @@ class MemberLogTest(TestCase):
             "city": "",
             "state": "",
             "country": "",
-            "postal_code": "",
             "member_since": "",
+            "educational_institution": "",
         }
 
     def setUp(self):
@@ -119,16 +120,17 @@ class MemberLogTest(TestCase):
 
         # Create a Member
         self.memberData = {
+            "initials": "F.C.",
             "first_name": "Fantasy",
             "last_name": "Court",
             "date_of_birth": "1970-01-01",
-            "email": "info@fantasycourt.nl",
+            "email": "info@example.com",
             "street": "Veld",
             "house_number": "5",
             "city": "Eindhoven",
             "country": "The Netherlands",
-            "postal_code": "5612 AH",
             "member_since": "1970-01-01",
+            "educational_institution": "TU/e",
         }
         self.member = Member.objects.create(**self.memberData)
         self.memberData = fillDictKeys(self.emptyMemberDictionary, self.memberData)
@@ -143,9 +145,10 @@ class MemberLogTest(TestCase):
         MemberLog.objects.all().delete()
 
         # Define test data
-        self.email = "info@kotkt.nl"
+        self.email = "info-kotkt@example.com"
         self.data = fillDictKeys(self.emptyMemberDictionary, {
             "user": "",
+            "initials": "E.S.R.G.",
             "first_name": "Knights",
             "tussenvoegsel": "of the",
             "last_name": "Kitchen Table",
@@ -157,8 +160,8 @@ class MemberLogTest(TestCase):
             "city": "Eindhoven",
             "state": "Noord-Brabant",
             "country": "The Netherlands",
-            "postal_code": "5612 AH",
             "member_since": "1970-01-01",
+            "educational_institution": "TU/e",
         })
         self.numNonEmptyFields = getNumNonEmptyFields(self.data)
 
@@ -255,7 +258,7 @@ class MemberLogTest(TestCase):
         # The member's data got updated
         updatedFields = {
             'first_name': 'NewFirstName',
-            'email': 'newemail@email.com',
+            'email': 'newemail@example.com',
         }
         self.memberData = {**self.memberData, **updatedFields}
 
@@ -281,7 +284,7 @@ class MemberLogTest(TestCase):
         # The member's data got updated
         updatedFields = {
             'first_name': 'NewFirstName',
-            'email': 'newemail@email.com',
+            'email': 'newemail@example.com',
             'marked_for_deletion': 'on',
         }
         self.memberData = {**self.memberData, **updatedFields}
@@ -406,13 +409,13 @@ class DeleteMemberTest(TestCase):
             "first_name": "HTTPs",
             "last_name": "Committee",
             "date_of_birth": "1970-01-01",
-            "email": "https@kotkt.nl",
+            "email": "https@example.com",
             "street": "Veld",
             "house_number": "5",
             "city": "Eindhoven",
             "country": "The Netherlands",
-            "postal_code": "5612 AH",
             "member_since": "1970-01-01",
+            "educational_institution": "TU/e",
         }
         self.member = Member.objects.create(**self.memberData)
 

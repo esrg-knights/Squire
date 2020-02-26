@@ -3,7 +3,6 @@ from django.db import models
 from django.utils import timezone
 
 # Models related to the Calendar-functionality of the application.
-# @author E.M.A. Arts
 # @since 29 JUN 2019
 
 # The Activity model represents an activity in the calendar

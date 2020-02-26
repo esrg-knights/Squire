@@ -35,12 +35,11 @@ class TestCaseAchievementFrontEndViews(TestCase):
             "first_name": "Fantasy",
             "last_name": "Court",
             "date_of_birth": "1970-01-01",
-            "email": "info@fantasycourt.nl",
+            "email": "info@example.com",
             "street": "Veld",
             "house_number": "5",
             "city": "Eindhoven",
             "country": "The Netherlands",
-            "postal_code": "5612 AH",
             "member_since": "1970-01-01",
         }
         self.member = Member.objects.create(**self.memberData)

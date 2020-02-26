@@ -1,0 +1,28 @@
+
+{% load field_label %}
+
+<div class="form-group">
+    <!-- Field Errors -->
+    {% for field in fields %}
+        <p>{{field.errors}}</p>
+    {% endfor %}
+    <div class="input-group">
+        <div class="input-group-prepend">
+            {% for field in fields %}
+                <span class="input-group-text" id="">
+                    <!-- Field Names -->
+                    {% field_label field.label|title field %}
+                </span>
+            {% endfor %}
+        </div>
+        <!-- HTML Inputs -->
+        {% for field in fields %}
+            {{ field }}
+        {% endfor %}
+    </div>
+    <!-- Field Help Texts -->
+    {% for field in fields %}
+        <small class="form-text text-muted">{{ field.help_text }}</small>
+    {% endfor %}
+</div>
+

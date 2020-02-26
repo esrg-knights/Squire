@@ -8,7 +8,6 @@ from django.utils.translation import gettext, gettext_lazy as _
 
 ##################################################################################
 # Defines general-purpose forms.
-# @author E.M.A. Arts
 # @since 15 AUG 2019
 ##################################################################################
 

@@ -190,6 +190,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# Additional places to look for static files
+STATICFILES_DIRS = []
+
 
 # The directory in which the coverage reports should be stored
 COVERAGE_REPORT_DIR = os.path.join(BASE_DIR, 'coverage')
@@ -216,6 +219,11 @@ LOGOUT_URL = '/logout'
 # logout if LogoutView doesn’t have a next_page attribute.
 LOGOUT_REDIRECT_URL = '/logout/success'
 
+
+# Not a native Django setting, but used to specify the url to redirect to
+# when the membership_required-decorator does not receive a fail_url parameter
+MEMBERSHIP_FAIL_URL = '/no_member'
+
 ####################################################################
 # Other Settings
 # Non-native Django setting
@@ -224,13 +232,13 @@ COMMITTEE_ABBREVIATION = 'HTTPS'
 COMMITTEE_FULL_NAME = 'Hackmanite Turbo Typing Programming Squad'
 
 # People who get error code notifications if Debug = False
-ADMINS = [(APPLICATION_NAME + ' Admin', 'https@kotkt.nl')] # NB: This email should be changed to something else
+ADMINS = [(APPLICATION_NAME + ' Admin', 'https@kotkt.nl')] # TODO: This email should be changed to something else
 
 # The email address that error messages come from, such as those sent to ADMINS and MANAGERS.
-SERVER_EMAIL = '{0} Error <error@{1}.kotkt.nl>'.format(APPLICATION_NAME, APPLICATION_NAME.lower())
+SERVER_EMAIL = f'{APPLICATION_NAME} Error <{APPLICATION_NAME.lower()}-error@kotkt.nl>'
 
 # Default email address to use for various automated correspondence from the site manager(s).
-DEFAULT_FROM_EMAIL = '{0} <noreply@{1}.kotkt.nl>'.format(APPLICATION_NAME, APPLICATION_NAME.lower())
+DEFAULT_FROM_EMAIL = f'{APPLICATION_NAME} <{APPLICATION_NAME.lower()}-noreply@kotkt.nl>'
 
 # Debug settings
 # Also run the following command to imitate an SMTP server locally: python -m smtpd -n -c DebuggingServer localhost:1025
@@ -241,3 +249,4 @@ if DEBUG:
     EMAIL_HOST_USER = ''
     EMAIL_HOST_PASSWORD = ''
     EMAIL_USE_TLS = False
+

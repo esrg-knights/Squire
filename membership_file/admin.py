@@ -9,7 +9,6 @@ class MemberWithLog(admin.ModelAdmin):
     # Override the admin panel's save method to automatically include the user that updated the member
     def save_model(self, request, obj, form, change):
         obj.last_updated_by = request.user
-
         super().save_model(request, obj, form, change)
 
     # Disable field editing if the member was marked for deletion (except the marked_for_deletion field)

@@ -4,12 +4,26 @@ from django.utils import timezone
 from datetime import date
 import datetime
 from django.core.validators import RegexValidator, MinValueValidator
+from django.contrib.auth.models import User
+import re
 
 ##################################################################################
 # Models related to the Membership File-functionality of the application.
-# @author E.M.A. Arts
 # @since 06 JUL 2019
 ##################################################################################
+
+# Returns the associated member to a given user
+def get_member(self):
+    return Member.objects.filter(user__id=self.id).first()
+
+# Checks whether a given user is a member
+def is_member(self):
+    return self.get_member() is not None
+
+# Add the methods to Django's User-Model
+User.add_to_class("get_member", get_member)
+User.add_to_class("is_member", is_member)
+
 
 # The Member model represents a Member in the membership file
 class Member(models.Model):
@@ -22,26 +36,45 @@ class Member(models.Model):
         null = True,        
         related_name = "related_user",
         )
-    
-    # The name of the member
+
+    ##################################
+    # NAME
+    ##################################
+    initials_regex = RegexValidator(regex=r'^([A-Z]\.)+$', message="Initials must be capital letters only, and must be separated by dots. E.g. A.B.")
+    initials = models.CharField(validators=[initials_regex], max_length=15, null=True, help_text="Initials as known by your Educational Institution.")
     first_name = models.CharField(max_length=255)
     tussenvoegsel = models.CharField(max_length=255, blank=True, null=True)
     last_name = models.CharField(max_length=255)
     
-    # The card numbers of the member
+    ##################################
+    # STUDENT INFORMATION
+    ##################################
+    student_number = models.CharField(max_length=15, blank=True, null=True, unique=True)
+    educational_institution = models.CharField(max_length=255)
+
+    ##################################
+    # CARD NUMBERS
     # NB: These card numbers must be unique
     # NB: These numbers may start with 0, which is why they are not IntegerFields
-    tue_card_number_regex = RegexValidator(regex=r'^[0-9]{7}$', message="TU/e card numbers must only consist of exactly 7 numbers. E.g. 1234567")
-    tue_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, blank=True, null=True, unique=True)
+    ##################################
+    tue_card_number_regex = RegexValidator(regex=r'^[0-9]{7}$', message="TUe card numbers must only consist of exactly 7 numbers. E.g. 1234567")
+    tue_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, blank=True, null=True, unique=True, verbose_name="TUe card number")
     
-    external_card_number_regex = RegexValidator(regex=r'^[0-9]{7}\-[0-9]{3}$', message="External card numbers must only consist"
-         + " of exactly 7 numbers, followed by a hyphen (-), and ended by the 'external number' which consists of exactly 3 numbers. E.g. 1234567-123")
-    external_card_number = models.CharField(validators=[external_card_number_regex], max_length=15, blank=True, null=True, unique=True)
-    external_card_cluster = models.CharField(max_length=255, blank=True, null=True)
+    external_card_digits_regex = RegexValidator(regex=r'^[0-9]{3}$', message="External card digits must consist of exactly 3 digits. E.g. 012")
+    
+    # External card uses the same number formatting as Tue cards, but its number does not necessarily need to be unique
+    external_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, blank=True, null=True)
+    # 3-digit code at the bottom of a card
+    external_card_digits = models.CharField(validators=[external_card_digits_regex], max_length=3, blank=True, null=True, verbose_name="digits")
+    # The cluster contains additional information of an external card
+    external_card_cluster = models.CharField(max_length=255, blank=True, null=True, verbose_name="cluster") 
 
-    # The date of birth of the member
-    date_of_birth = models.DateField(default=datetime.date(1970,1,1))
+    # External card number and digit-pairs are a unique combination
+    unique_together = [['external_card_number', 'external_card_digits']]
 
+    ##################################
+    # CONTACT INFORMATION
+    ##################################
     # Email address of the member
     email = models.EmailField(max_length=255, unique=True)
 
@@ -55,11 +88,14 @@ class Member(models.Model):
     house_number_addition = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=255)
     #NB: States/Province are not always necessary for addresses
-    state = models.CharField(max_length=255, blank=True, null=True)
+    state = models.CharField(max_length=255, blank=True, null=True, verbose_name="state/province")
     country = models.CharField(max_length=255)
-    #NB: Not all countries use postal codes! Moreover, it will differ between countries!
-    postal_code_regex = RegexValidator(regex=r'^[0-9A-Za-z\-" "]*$', message="Postal Codes must only consist of alphanumerical characters, spaces, and hyphens (-).")
-    postal_code = models.CharField(max_length=255, validators=[postal_code_regex])
+
+    ##################################
+    # OTHER INFORMATION
+    ##################################
+    # The date of birth of the member
+    date_of_birth = models.DateField(default=datetime.date(1970,1,1))
 
     # The date at which the member became a member (automatically handled, but is overridable)
     member_since = models.DateField(default=date.today)
@@ -80,16 +116,54 @@ class Member(models.Model):
     # Members can be marked for deletion, after which another user
     # can permanently delete the member
     marked_for_deletion = models.BooleanField(default=False)
-
+    
+    ##################################
+    # STRING REPRESENTATION METHODS
+    ##################################
     # String-representation of an instance of a Member
     def __str__(self):
-        return self.getFullName() + " ({0})".format(self.id)
+        return self.get_full_name() + " ({0})".format(self.id)
 
     # Gets the name of the member
-    def getFullName(self):
+    def get_full_name(self):
         if self.tussenvoegsel is not None:
             return "{0} {1} {2}".format(self.first_name, self.tussenvoegsel, self.last_name)
         return "{0} {1}".format(self.first_name, self.last_name)
+
+    # Gets the name of the person that last updated this user
+    def display_last_updated_name(self):
+        if self.last_updated_by is None:
+            return None
+        updater = Member.objects.filter(user__id=self.last_updated_by.id).first()
+        if updater is None:
+            return User.objects.filter(id=self.last_updated_by.id).first().username
+        if updater.id == self.id:
+            return 'You'
+        return updater.get_full_name()
+    
+    # Displays the external card number of the member
+    def display_external_card_number(self):
+        if self.external_card_number is None:
+            return None
+        if self.external_card_cluster is None:
+            # Not all external cards have a cluster
+            return "{0}-{1}".format(self.external_card_number, self.external_card_digits)
+        if self.external_card_digits is None:
+            # Not all external cards have a 3-digit code (E.g. parking cards)
+            return "{0} ({1})".format(self.external_card_number, self.external_card_cluster)
+        return "{0}-{1} ({2})".format(self.external_card_number, self.external_card_digits, self.external_card_cluster)
+
+    # Displays a user's address
+    def display_address(self):
+        house_number = str(self.house_number)
+        if self.house_number_addition is not None:
+            # If the house number starts with a number, add a dash
+            if not self.house_number_addition[:1].isalpha():
+                house_number += '-'
+            house_number += self.house_number_addition
+
+        return "{0} {1}, {2}, {3}{4}".format(self.street, house_number, self.city, 
+            "" if self.state is None else f"{self.state}, ", self.country)
 
 
 # The MemberLog Model represents a log entry that is created whenever membership data is updated

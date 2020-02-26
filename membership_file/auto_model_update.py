@@ -6,13 +6,15 @@ from .models import Member, MemberLog, MemberLogField
 
 ##################################################################################
 # Methods that automatically create Log data when a Member gets updated
-# @author E.M.A. Arts
 # @since 15 JUL 2019
 ##################################################################################
 
 # Fires when a member gets created or updated
 @receiver(pre_save, sender=Member)
-def pre_save_member(sender, instance, **kwargs):
+def pre_save_member(sender, instance, raw, **kwargs):
+    # Do not create logs if the database is not yet in a consistent state
+    if raw:
+        return
 
     # if instance is being updated, it has an id
     if instance.id:
@@ -26,7 +28,10 @@ def pre_save_member(sender, instance, **kwargs):
 
 # Fires when the member update/creation has completed successfully
 @receiver(post_save, sender=Member)
-def post_save_member(sender, instance, created, **kwargs):
+def post_save_member(sender, instance, created, raw, **kwargs):
+    # Do not create logs if the database is not yet in a consistent state
+    if raw:
+        return
 
     old_values_that_changed = {}
     iterableMember = MemberSerializer(instance).data

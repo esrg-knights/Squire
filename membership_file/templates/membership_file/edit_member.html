@@ -1,0 +1,40 @@
+{% extends 'core/base.html' %}
+
+{% block title %}
+  Squire - Membership Data
+{% endblock title %}
+
+{% load generic_field %}
+
+{% block content %}
+    <h1>Editing user information...</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <h3>Basic Information</h3>
+        <!-- First Name, Tussenvoegsel, Last Name-->
+        {% generic_field form.first_name form.tussenvoegsel form.last_name %}
+        {% generic_field form.member_since %}
+        {% generic_field form.date_of_birth %}
+
+        <h3>Education</h3>
+        {% generic_field form.initials %}
+        {% generic_field form.student_number %}
+        {% generic_field form.educational_institution %}
+
+        <h3>Access</h3>
+        {% generic_field form.tue_card_number %}
+        {% generic_field form.external_card_number form.external_card_digits form.external_card_cluster %}
+
+        <h3>Contact Information</h3>
+        {% generic_field form.email %}
+        {% generic_field form.phone_number %}
+        {% generic_field form.street form.house_number form.house_number_addition %}
+        {% generic_field form.city form.state form.country %}
+
+        <input type="submit" value="Confirm Changes">
+    </form>
+
+    Click <a href="{% url 'membership_file/membership' %}">here</a> to cancel all changes.
+{% endblock content %}
