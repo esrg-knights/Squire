@@ -1,0 +1,24 @@
+{% extends 'core/base.html' %}
+
+{% block title %}
+  Squire - Achievements
+{% endblock title %}
+
+
+{% block content %}
+    <h1>Achievements</h1>
+    {% for category in categories %}
+        <h2>{{category.name}}</h2>
+        <p>{{category.description}}</p>
+        <ul>
+            {% for achievement in category.achievements %}
+                <li><strong>{{achievement.name}}</strong>: {{achievement.description}}</li>
+            {% empty %}
+                <li>No Achievements exist in this Category.</li>
+            {% endfor %}
+        </ul>
+    {% empty %}
+        No Categories exist! 
+    {% endfor %}
+
+{% endblock content %}

@@ -32,5 +32,18 @@ class Achievement(models.Model):
     # An Achievement can be claimed by more members (claimants) and a member can have more achievements.
     claimants = models.ManyToManyField(User, blank=True, related_name="claimed_achievements")
 
+    class Meta:
+        permissions = [
+            ("can_view_claimants", "Can view the claimants of Achievements"),
+        ]
+
     def __str__(self):
         return self.name
+
+    # Checks whether a given user can view this achievement's claimants
+    def user_can_view_claimants(self, user):
+        if user is None:
+            return False
+        
+        # TODO: Work with Permission System
+        return user.is_authenticated

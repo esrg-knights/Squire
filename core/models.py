@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 # Gets the display name of the user
 def get_display_name(self):
-    if self.first_name is not None:
+    if self.first_name:
         return self.first_name
     return self.username
 

@@ -1,12 +1,10 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from rest_framework import routers, viewsets
-from rest_framework.views import APIView, Response
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.views.decorators.http import require_safe
 
 from .models import Achievement, Category
-from membership_file.models import Member
 from .serializers import AchievementSerializer, CategorySerializer
-from membership_file.serializers import MemberSerializer
 
 @require_safe
 def viewAllAchievements(request):
@@ -35,3 +33,29 @@ def viewSpecificMember(request, id):
     pMember = get_object_or_404(Member, pk=id)
     serializer = MemberSerializer(pMember)
     return render(request, 'achievements/view-member.html', {"member": serializer.data, "claimed_achievements": pMember.claimed_achievements.all()})
+
+
+# View user Achievements Page
+@require_safe
+@login_required
+def viewAchievementsUser(request):
+    serializer = CategorySerializer(Category.objects.all(), many=True, context={
+        'user_id': request.user.id,
+        'obtain_self_earned': True,
+    })
+
+    return render(request, 'achievements/view_achievements_user.html', {
+        "categories": serializer.data
+    })
+
+# View all Achievements Page
+@require_safe
+def viewAchievementsAll(request):
+    serializer = CategorySerializer(Category.objects.all(), many=True, context={
+        "user_id": request.user.id,
+        "obtain_claimants": True,
+    })
+    print(serializer.data)
+    return render(request, 'achievements/view_achievements_all.html', {
+        "categories": serializer.data
+    })

@@ -22,14 +22,13 @@ urlpatterns = [
     # Admin Panel
     path('admin/', admin.site.urls),
     # Achievements
-    path('achievements/', include('achievements.urls-frontend')),
-    path('api/achievements/', include('achievements.urls-api')),
+    path('', include('achievements.urls')),
     # Activity Calendar
     path('calendar/', include('activity_calendar.urls-frontend')),
     path('api/calendar/', include('activity_calendar.urls-api')),
     # Membership File
     path('', include('membership_file.urls')),
 
-    #Redirect all other paths to the core module
+    # Redirect all other paths to the core module
     path('', include('core.urls')),
 ]
