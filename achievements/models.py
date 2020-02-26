@@ -11,6 +11,9 @@ class Category(models.Model):
     class Meta:
         # Enabled proper plurality
         verbose_name_plural = "categories"
+        
+        # Sort by name. If they are equal, sort by Id
+        ordering = ['name','id']
 
     name = models.CharField(max_length=maxNameLength)
     description = models.TextField(max_length=maxDescriptionLength)
@@ -36,12 +39,14 @@ class Achievement(models.Model):
         permissions = [
             ("can_view_claimants", "Can view the claimants of Achievements"),
         ]
+        ordering = ['name','id']
 
     def __str__(self):
         return self.name
 
     # Checks whether a given user can view this achievement's claimants
-    def user_can_view_claimants(self, user):
+    @staticmethod
+    def user_can_view_claimants(user):
         if user is None:
             return False
         

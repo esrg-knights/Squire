@@ -7,12 +7,29 @@
 
 {% block content %}
     <h1>Achievements</h1>
+    <!-- Show Achievements per Category -->
     {% for category in categories %}
         <h2>{{category.name}}</h2>
         <p>{{category.description}}</p>
+        <!-- List Achievements -->
         <ul>
             {% for achievement in category.achievements %}
-                <li><strong>{{achievement.name}}</strong>: {{achievement.description}}</li>
+                <li>
+                    <strong>{{achievement.name}}</strong>: {{achievement.description}}.
+                    <!-- Show Claimants -->
+                    {% if show_claimants %}
+                        {% if not achievement.claimants %}
+                            <i>No-one has claimed this Achievement yet!</i>
+                        {% else %}
+                            <i>
+                                Claimed by: 
+                                {% for name in achievement.claimants %}
+                                    {{name}},                                
+                                {% endfor %}
+                            </i>
+                        {% endif %}
+                    {% endif %}
+                </li>
             {% empty %}
                 <li>No Achievements exist in this Category.</li>
             {% endfor %}
@@ -20,5 +37,9 @@
     {% empty %}
         No Categories exist! 
     {% endfor %}
+
+    {% if not show_claimants %}
+        <small>Login to view claimants.</small>
+    {% endif %}
 
 {% endblock content %}

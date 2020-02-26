@@ -40,8 +40,7 @@ def viewSpecificMember(request, id):
 @login_required
 def viewAchievementsUser(request):
     serializer = CategorySerializer(Category.objects.all(), many=True, context={
-        'user_id': request.user.id,
-        'obtain_self_earned': True,
+        'user_id': request.user.id
     })
 
     return render(request, 'achievements/view_achievements_user.html', {
@@ -51,11 +50,12 @@ def viewAchievementsUser(request):
 # View all Achievements Page
 @require_safe
 def viewAchievementsAll(request):
+    show_claimants = Achievement.user_can_view_claimants(request.user)
     serializer = CategorySerializer(Category.objects.all(), many=True, context={
-        "user_id": request.user.id,
-        "obtain_claimants": True,
+        "obtain_claimants": show_claimants,
     })
-    print(serializer.data)
+    
     return render(request, 'achievements/view_achievements_all.html', {
-        "categories": serializer.data
+        "categories": serializer.data,
+        "show_claimants": show_claimants,
     })
