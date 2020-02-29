@@ -16,7 +16,10 @@
         <ul>
             {% for achievement in category.achievements %}
                 <li>
-                    <strong>{{achievement.name}}</strong>: {{achievement.description}}.
+                    <img src={{ achievement.image }} alt="Achievement Icon for {{achievement.name}}" width=120px>
+                    <p>
+                        <strong>{{achievement.name}}</strong>: {{achievement.description}}.
+                    </p>
                     <!-- Show Claimants -->
                     {% if show_claimants %}
                         {% if not achievement.claimants %}

@@ -13,6 +13,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 
@@ -31,4 +33,9 @@ urlpatterns = [
 
     # Redirect all other paths to the core module
     path('', include('core.urls')),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# NB: 'static(...) above only works when Debug=True! In production, the web server should be set up to serve files
+# For production use, view the following:
+# https://docs.djangoproject.com/en/3.0/howto/static-files/#serving-files-uploaded-by-a-user
+# https://docs.djangoproject.com/en/3.0/howto/static-files/deployment/
+#

@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
+import os
 
 #Setup some constants
 maxDescriptionLength = 255
@@ -25,6 +26,15 @@ class Category(models.Model):
 def get_or_create_default_category():  
     return Category.objects.get_or_create(name='General', description='Contains Achievements that do not belong to any other Category.')[0]
 
+# File path to upload achievement images to
+def get_upload_path(instance, filename):
+    # Obtain extension
+    # NB: A file can be renamed to have ANY extension
+    _, extension = os.path.splitext(filename)
+
+    # file will be uploaded to MEDIA_ROOT / images/achievement_<achievement_id>.<file_extension>
+    return 'images/achievements/achievement_{0}{1}'.format(instance.id, extension)
+
 # Achievements that can be earned by users
 class Achievement(models.Model):
     # Basic Information
@@ -34,6 +44,9 @@ class Achievement(models.Model):
 
     # An Achievement can be claimed by more members (claimants) and a member can have more achievements.
     claimants = models.ManyToManyField(User, blank=True, through="Claimant", related_name="claimed_achievements")
+
+    # Achievement Icon
+    image = models.ImageField(upload_to=get_upload_path) 
 
     # Text used to display unlocked status. Can be used to display extra data for high scores.
     # {0} User

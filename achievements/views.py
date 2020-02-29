@@ -28,7 +28,7 @@ def viewAchievementsAll(request):
     serializer = CategorySerializer(Category.objects.all(), many=True, context={
         "obtain_claimants": show_claimants,
     })
-    
+
     return render(request, 'achievements/view_achievements_all.html', {
         "categories": serializer.data,
         "show_claimants": show_claimants,

@@ -11,7 +11,7 @@ class AchievementSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Achievement
-        fields = ('name', 'description', 'unlocked_text', 'claimants')
+        fields = ('name', 'description', 'unlocked_text', 'image', 'claimants')
         depth = 0
     
     # Gets claimants of an achievement
