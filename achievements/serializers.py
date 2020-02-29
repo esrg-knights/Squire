@@ -1,4 +1,4 @@
-from .models import Achievement, Category
+from .models import Achievement, Category, Claimant
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
@@ -7,28 +7,40 @@ from django.contrib.auth.models import User
 # Includes a 'claimed' field representing whether the currently logged in
 # user has the given achievement
 class AchievementSerializer(serializers.ModelSerializer):
-    claimed = serializers.SerializerMethodField('earned_by_current_user')
     claimants = serializers.SerializerMethodField('get_all_claimants')
     
     class Meta:
         model = Achievement
-        fields = ('name', 'description', 'claimed', 'claimants')
+        fields = ('name', 'description', 'unlocked_text', 'claimants')
         depth = 0
     
-    # Adds a field representing whether the achievement was
-    # claimed by the logged in user
-    def earned_by_current_user(self, obj):
-        user_id = self.context.get("user_id")
-        if user_id and obj.claimants.filter(id=user_id).exists():
-            return True
-        return False
-    
-    # Gets all claimants of an achievement
+    # Gets claimants of an achievement
     def get_all_claimants(self, obj):
         show_claimants = self.context.get("obtain_claimants")
         if show_claimants:
-            return [user.get_display_name() for user in User.objects.filter(claimed_achievements__id=obj.id)]
+            return ClaimantSerializer(Claimant.objects.filter(achievement__id=obj.id), many=True).data
+        
+        user_id = self.context.get("user_id")
+        if user_id:
+            return ClaimantSerializer(Claimant.objects.filter(achievement__id=obj.id, user__id=user_id), many=True).data
+
         return []
+
+class ClaimantSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField('get_user_display_name')
+    user_id = serializers.SerializerMethodField('get_current_user_id')
+
+    class Meta:
+        model = Claimant
+        fields = ('name', 'date_unlocked', 'extra_data_1', 'extra_data_2', 'extra_data_3', 'user_id')
+        depth = 0
+    
+    def get_user_display_name(self, obj):
+        return obj.user.get_display_name()
+    
+    def get_current_user_id(self, obj):
+        return obj.user.id
+
 
 # Dictionary representation of a Category
 # Includes all achievements from that Category

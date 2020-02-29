@@ -4,6 +4,7 @@
   Squire - Achievements
 {% endblock title %}
 
+{% load format_string %}
 
 {% block content %}
     <h1>Achievements</h1>
@@ -22,10 +23,17 @@
                             <i>No-one has claimed this Achievement yet!</i>
                         {% else %}
                             <i>
-                                Claimed by: 
-                                {% for name in achievement.claimants %}
-                                    {{name}},                                
-                                {% endfor %}
+                                <ul>
+                                    {% for claimant in achievement.claimants %}
+                                        <li>
+                                            {% if claimant.user_id == request_user_id %}
+                                                {% format_string achievement.unlocked_text "You" claimant.date_unlocked claimant.extra_data1 claimant.extra_data_2 claimant.extra_data_3 %}
+                                            {% else %}
+                                                {% format_string achievement.unlocked_text claimant.name claimant.date_unlocked claimant.extra_data1 claimant.extra_data_2 claimant.extra_data_3 %}
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
                             </i>
                         {% endif %}
                     {% endif %}

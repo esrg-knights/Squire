@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
                 ('state', models.CharField(blank=True, max_length=255, null=True, verbose_name='state/province')),
                 ('last_updated_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='last_updated_by_user', to=settings.AUTH_USER_MODEL)),
                 ('marked_for_deletion', models.BooleanField(default=False)),
-                ('educational_institution', models.CharField(default='TU/e', max_length=255)),
+                ('educational_institution', models.CharField(max_length=255)),
                 ('student_number', models.CharField(blank=True, max_length=15, null=True, unique=True)),
                 ('external_card_digits', models.CharField(blank=True, max_length=3, null=True, validators=[django.core.validators.RegexValidator(message='External card digits must consist of exactly 3 digits. E.g. 012', regex='^[0-9]{3}$')], verbose_name='digits')),
                 ('initials', models.CharField(help_text='Initials as known by your Educational Institution.', max_length=15, null=True, validators=[django.core.validators.RegexValidator(message='Initials must be capital letters only, and must be separated by dots. E.g. A.B.', regex='^([A-Z]\\.)+$')])),
