@@ -50,13 +50,33 @@ class Achievement(models.Model):
 
     # Text used to display unlocked status. Can be used to display extra data for high scores.
     # {0} User
-    # {1} Date (Sorted on descending)
-    # {2} extra_data_1 (Sorted on ascending)
-    # {3} extra_data_2 (Sorted on descending)
+    # {1} Date (Sorted on descending by default)
+    # {2} extra_data_1
+    # {3} extra_data_2
     # {4} extra_data_3
     # E.g. {0} unlocked this achievement on {1} with a score of {2}!
     unlocked_text = models.CharField(max_length=127, default="Claimed by {0} on {1}.",
-        help_text="{0}: User, {1}: Date (Tertiary Sort, Descending), {2}: Extra Data 1 (Primary Sort, Ascending), {3}: Extra Data 2 (Secondary Sort, Descending), {4}: Extra Data 3")
+        help_text="{0}: User Display Name, {1}: Date Unlocked, {2}: Extra Data 1 (int), {3}: Extra Data 2 (string), {4}: Extra Data 3 (string)")
+
+
+    # Possible sort options
+    FIELD_OPTIONS = [
+        ("date_unlocked",           "Unlocked Date"),
+        ("extra_data_1",            "Extra Data 1"),
+        ("extra_data_2",            "Extra Data 2"),
+        ("extra_data_3",            "Extra Data 3"),
+    ]
+
+    # The field to sort on
+    claimants_sort_field = models.CharField(
+        max_length=31,
+        choices=FIELD_OPTIONS,
+        default='date_unlocked',
+    )
+
+    # Whether sorting should be reversed
+    # False <==> Sort Descending
+    claimants_sort_ascending = models.BooleanField(default=False)
 
     class Meta:
         permissions = [
@@ -84,12 +104,9 @@ class Claimant(models.Model):
     date_unlocked = models.DateField(default=timezone.now)
 
     # Extra data fields that can be used to track high-scores
-    extra_data_1 = models.CharField(max_length=63, null=True, blank=True)
+    extra_data_1 = models.IntegerField(null=True, blank=True)
     extra_data_2 = models.CharField(max_length=63, null=True, blank=True)
     extra_data_3 = models.CharField(max_length=63, null=True, blank=True)
 
     def __str__(self):
         return f"{self.achievement} unlocked by {self.user}"
-    
-    class Meta:
-        ordering = ['extra_data_1', '-extra_data_2', '-date_unlocked','id']

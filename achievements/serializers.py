@@ -2,6 +2,14 @@ from .models import Achievement, Category, Claimant
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
+# Obtains the string that can be used to obtain the sort order of the claimants
+def get_claimant_sort(achievement):
+    sort_str = ""
+    if not achievement.claimants_sort_ascending:
+        sort_str += "-"
+    sort_str += achievement.claimants_sort_field
+    return sort_str
+
 
 # Dictionary representation of an Achievement
 # Includes a 'claimed' field representing whether the currently logged in
@@ -11,24 +19,32 @@ class AchievementSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Achievement
-        fields = ('name', 'description', 'unlocked_text', 'image', 'claimants')
+        fields = ('name', 'description', 'unlocked_text', 'image',
+            'claimants', 'claimants_sort_field', 'claimants_sort_ascending')
         depth = 0
     
     # Gets claimants of an achievement
     def get_all_claimants(self, obj):
         show_claimants = self.context.get("obtain_claimants")
         if show_claimants:
-            return ClaimantSerializer(Claimant.objects.filter(achievement__id=obj.id), many=True).data
+            return ClaimantSerializer(
+                Claimant.objects.filter(achievement__id=obj.id)
+                    .order_by(get_claimant_sort(obj), '-date_unlocked'),
+                many=True).data
         
         user_id = self.context.get("user_id")
         if user_id:
-            return ClaimantSerializer(Claimant.objects.filter(achievement__id=obj.id, user__id=user_id), many=True).data
+            return ClaimantSerializer(
+                Claimant.objects.filter(achievement__id=obj.id, user__id=user_id)
+                    .order_by(get_claimant_sort(obj), '-date_unlocked'),
+                many=True).data
 
         return []
 
 class ClaimantSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField('get_user_display_name')
     user_id = serializers.SerializerMethodField('get_current_user_id')
+    date_unlocked = serializers.DateField(format="%d %b %Y")
 
     class Meta:
         model = Claimant
