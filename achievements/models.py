@@ -43,7 +43,7 @@ class Achievement(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET(get_or_create_default_category), related_name="related_achievements")
 
     # An Achievement can be claimed by more members (claimants) and a member can have more achievements.
-    claimants = models.ManyToManyField(User, blank=True, through="Claimant", related_name="claimed_achievements")
+    claimants = models.ManyToManyField(User, blank=True, through="Claimant", related_name="claimant_info")
 
     # Achievement Icon
     image = models.ImageField(upload_to=get_upload_path) 

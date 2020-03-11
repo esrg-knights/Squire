@@ -1,6 +1,15 @@
 from .models import Achievement, Category, Claimant
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from django.db.models import Count, Max
+from enum import Enum
+
+# Enumeration that specifies sorting options for achievements
+class AchievementSortType(Enum):
+    ACHIEVEMENTSORT_DEFAULT = 1
+    ACHIEVEMENTSORT_LATEST_UNLOCK_DATE = 2
+    ACHIEVEMENTSORT_NUM_CLAIMANTS = 3
+
 
 # Obtains the string that can be used to obtain the sort order of the claimants
 def get_claimant_sort(achievement):
@@ -16,11 +25,13 @@ def get_claimant_sort(achievement):
 # user has the given achievement
 class AchievementSerializer(serializers.ModelSerializer):
     claimants = serializers.SerializerMethodField('get_all_claimants')
-    
+    claimant_count = serializers.IntegerField(source='claimants.count', read_only=True)
+
     class Meta:
         model = Achievement
         fields = ('name', 'description', 'unlocked_text', 'image',
-            'claimants', 'claimants_sort_field', 'claimants_sort_ascending')
+            'claimants', 'claimants_sort_field', 'claimants_sort_ascending',
+            'claimant_count')
         depth = 0
     
     # Gets claimants of an achievement
@@ -61,9 +72,35 @@ class ClaimantSerializer(serializers.ModelSerializer):
 # Dictionary representation of a Category
 # Includes all achievements from that Category
 class CategorySerializer(serializers.ModelSerializer):
-    achievements = AchievementSerializer(source='related_achievements', many=True)
+    achievements = serializers.SerializerMethodField('get_all_achievements')
 
     class Meta:
         model = Category
         fields = ("name", "description", "achievements")
         depth = 1
+
+    # Get achievements with the specified sorting
+    def get_all_achievements(self, obj):
+        user_id = self.context.get("user_id")
+        sort_type = self.context.get("sort_type")
+        
+        # Sort by name
+        if sort_type is None or sort_type == AchievementSortType.ACHIEVEMENTSORT_DEFAULT:
+            return AchievementSerializer(Achievement.objects.filter(category__id=obj.id),
+                context=self.context, many=True).data                    
+
+        # Sort by latest unlocked date
+        if sort_type == AchievementSortType.ACHIEVEMENTSORT_LATEST_UNLOCK_DATE:
+            return AchievementSerializer(
+                    Achievement.objects.filter(category__id=obj.id, claimant__user__id=user_id)
+                        .annotate(latest_unlocked_date=Max('claimant__date_unlocked'))
+                        .order_by('-latest_unlocked_date'),
+                    context=self.context, many=True).data  
+        
+        # sort_type == AchievementSortType.ACHIEVEMENTSORT_NUM_CLAIMANTS 
+        # Sort by number of claimants
+        return AchievementSerializer(
+                Achievement.objects.filter(category__id=obj.id)
+                    .annotate(num_claimants=Count('claimants'))
+                    .order_by('-num_claimants'),
+                context=self.context, many=True).data  

@@ -1,0 +1,52 @@
+{% extends 'core/base.html' %}
+
+{% block title %}
+  Squire - Your Achievements
+{% endblock title %}
+
+{% load format_string %}
+{% load negate %}
+
+{% block content %}
+    <h1>Achievements</h1>
+    <!-- Show Achievements per Category -->
+    {% for category in categories %}
+        <h2>{{category.name}}</h2>
+        <p>{{category.description}}</p>
+        <!-- List Achievements -->
+        <ul>
+            {% for achievement in category.achievements %}
+                <li>
+                    <img src={{ achievement.image }} alt="Achievement Icon for {{achievement.name}}" width=60px>
+                    <p>
+                        <strong>{{achievement.name}}</strong>: {{achievement.description}}.
+                    </p>
+                        <i>
+                            <ul>
+                                {% for claimant in achievement.claimants %}
+                                    <li>
+                                        {% format_string achievement.unlocked_text "You" claimant.date_unlocked claimant.extra_data_1 claimant.extra_data_2 claimant.extra_data_3 %}
+                                    </li>
+                                {% endfor %}
+                                <li>
+                                    <!-- Count the number of other people that also earned this achievement -->
+                                    {% with num_others_earned=achievement.claimants|length|negate|add:achievement.claimant_count %}
+                                        Claimed by {{ num_others_earned }} other user(s).
+                                    {% endwith %}
+                                </li>
+                            </ul>
+                        </i>
+                </li>
+            {% empty %}
+                <li>No Achievements exist in this Category.</li>
+            {% endfor %}
+        </ul>
+    {% empty %}
+        No Categories exist! 
+    {% endfor %}
+
+    {% if not show_claimants %}
+        <small>Login to view claimants.</small>
+    {% endif %}
+
+{% endblock content %}
