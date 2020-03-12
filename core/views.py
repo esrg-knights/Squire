@@ -4,6 +4,8 @@ from .forms import LoginForm, RegisterForm
 from django.shortcuts import redirect
 from django.urls import reverse
 
+from membership_file.util import request_member # TODO: Remove cyclic dependency between modules
+
 # @require_post only accepts HTTP POST requests
 # @require_safe only accepts HTTP GET and HEAD requests
 from django.views.decorators.http import require_POST, require_safe, require_http_methods
@@ -30,6 +32,7 @@ def logoutSuccess(request):
 
 @require_safe
 @login_required
+@request_member
 def viewAccount(request):
     return render(request, 'core/user_accounts/account.html', {})
 

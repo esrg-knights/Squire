@@ -1,11 +1,11 @@
 from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.models import User
+from .models import MemberUser as User
 from .models import Member, MemberLog
 from .forms import MemberForm
 
 # @require_safe only accepts HTTP GET and HEAD requests
 from django.views.decorators.http import require_safe
-from core.util import membership_required
+from .util import membership_required, request_member
 
 # Redirect shortcuts
 from django.shortcuts import redirect
@@ -25,6 +25,7 @@ def viewNoMember(request):
 # Renders the webpage for viewing a user's own membership information
 @require_safe
 @membership_required
+@request_member
 def viewOwnMembership(request):
     tData = {'member': request.user.get_member()}
     return render(request, 'membership_file/view_member.html', tData)
@@ -32,6 +33,7 @@ def viewOwnMembership(request):
 
 # Renders the webpage for viewing a user's own membership information
 @membership_required
+@request_member
 def editOwnMembership(request):
     # Process form data
     if request.method == 'POST':

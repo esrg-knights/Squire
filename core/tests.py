@@ -1,10 +1,11 @@
 from django.test import TestCase
 from django.test import Client
-from django.contrib.auth.models import User
 from django.conf import settings
+
 from .forms import LoginForm, RegisterForm
+from .models import ExtendedUser as User
+
 from enum import Enum
-from django.conf import settings
 
 
 ##################################################################################

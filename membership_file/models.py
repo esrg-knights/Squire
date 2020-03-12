@@ -4,7 +4,7 @@ from django.utils import timezone
 from datetime import date
 import datetime
 from django.core.validators import RegexValidator, MinValueValidator
-from django.contrib.auth.models import User
+from core.models import ExtendedUser as User
 import re
 
 ##################################################################################
@@ -12,18 +12,28 @@ import re
 # @since 06 JUL 2019
 ##################################################################################
 
-# Returns the associated member to a given user
-def get_member(self):
-    return Member.objects.filter(user__id=self.id).first()
+# Users should be displayed by their names according to the membership file (if they're a member)
+User.set_display_name_method(lambda x: (
+        MemberUser(x.id).get_member().get_full_name()
+    if MemberUser(x.id).is_member()
+        else x.get_simple_display_name())
+)
 
-# Checks whether a given user is a member
-def is_member(self):
-    return self.get_member() is not None
+# Provides additional methods on the ExtendedUser model
+class MemberUser(User):
+    class Meta:
+        proxy = True
 
-# Add the methods to Django's User-Model
-User.add_to_class("get_member", get_member)
-User.add_to_class("is_member", is_member)
+    # Returns the associated member to a given user
+    def get_member(self):
+        return Member.objects.filter(user__id=self.id).first()
 
+    # Checks whether a given user is a member
+    def is_member(self):
+        return self.get_member() is not None
+
+
+##################################################################################
 
 # The Member model represents a Member in the membership file
 class Member(models.Model):
@@ -165,6 +175,7 @@ class Member(models.Model):
         return "{0} {1}, {2}, {3}{4}".format(self.street, house_number, self.city, 
             "" if self.state is None else f"{self.state}, ", self.country)
 
+##################################################################################
 
 # The MemberLog Model represents a log entry that is created whenever membership data is updated
 class MemberLog(models.Model):

@@ -1,5 +1,4 @@
 from django.test import TestCase
-from django.contrib.auth.models import User
 from django import forms
 from django.template import Context, Template
 from django.conf import settings
@@ -7,6 +6,7 @@ from django.core import serializers
 from enum import Enum
 
 from .models import Member
+from .models import MemberUser as User
 from .serializers import MemberSerializer
 from core.tests import checkAccessPermissions, PermissionLevel
 

@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
-from django.contrib.auth.models import User
+
+from core.models import ExtendedUser as User
+
 import os
 
 #Setup some constants

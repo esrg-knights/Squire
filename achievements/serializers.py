@@ -1,7 +1,9 @@
-from .models import Achievement, Category, Claimant
 from rest_framework import serializers
-from django.contrib.auth.models import User
 from django.db.models import Count, Max
+
+from core.models import ExtendedUser as User
+from .models import Achievement, Category, Claimant
+
 from enum import Enum
 
 # Enumeration that specifies sorting options for achievements

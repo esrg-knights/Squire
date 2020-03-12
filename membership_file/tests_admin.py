@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.test import Client
 from .models import Member, MemberLog, MemberLogField
-from django.contrib.auth.models import User
+from .models import MemberUser as User
 from .serializers import MemberSerializer
 from core.util import suppress_warnings
 

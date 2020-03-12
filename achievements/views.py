@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
+from core.models import ExtendedUser as User
 from django.views.decorators.http import require_safe
 
 from .models import Achievement, Category
