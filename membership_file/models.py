@@ -1,11 +1,13 @@
 from django.conf import settings
+from django.core.validators import RegexValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 from datetime import date
+
 import datetime
-from django.core.validators import RegexValidator, MinValueValidator
-from core.models import ExtendedUser as User
 import re
+
+from core.models import ExtendedUser as User
 
 ##################################################################################
 # Models related to the Membership File-functionality of the application.

@@ -40,9 +40,9 @@ INSTALLED_APPS = [
     'bootstrap4',
     'rest_framework',
     # Internal Components
+    'core', # Core Module should load first
     'achievements',
     'activity_calendar',
-    'core',
     'membership_file',
 ]
 

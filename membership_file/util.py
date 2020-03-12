@@ -7,16 +7,24 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import resolve_url
 from functools import wraps
 
+def user_to_member(user):
+    """
+    Transforms a User to a MemberUser with the same data
+    """
+     # Copy over all old information
+    attrs = {field.name: getattr(user, field.name) for field in user._meta.fields}
+    return MemberUser(**attrs)
 
 def request_member(function=None):
     """
-    Decorator for views that transforms the class of request.user from User to MemberUser
+    Decorator for views that transforms request.user to type MemberUser instead of User
     """
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
             if request.user.is_authenticated:
-                request.user = MemberUser(request.user.id)
+                # Override request.user with a MemberUser with the same data
+                request.user = user_to_member(request.user)
             return view_func(request, *args, **kwargs)
         return _wrapped_view
     

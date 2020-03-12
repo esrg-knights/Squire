@@ -4,11 +4,8 @@ from .forms import LoginForm, RegisterForm
 from django.shortcuts import redirect
 from django.urls import reverse
 
-from membership_file.util import request_member # TODO: Remove cyclic dependency between modules
-
-# @require_post only accepts HTTP POST requests
 # @require_safe only accepts HTTP GET and HEAD requests
-from django.views.decorators.http import require_POST, require_safe, require_http_methods
+from django.views.decorators.http import require_safe
 
 # User must be logged in to access a page
 from django.contrib.auth.decorators import login_required
@@ -18,6 +15,22 @@ from django.contrib.auth.decorators import login_required
 # Contains render-code for displaying general pages.
 # @since 15 JUL 2019
 ##################################################################################
+
+class TemplateManager():
+    # Stores the method used to display a user's name
+    templates = {}
+
+    # Allows other modules to change the way a user is displayed across the entire application
+    @staticmethod
+    def set_template(filename, template_name):
+        TemplateManager.templates[filename] = template_name
+
+    @staticmethod
+    def get_template(filename):
+        if filename in TemplateManager.templates:
+            return TemplateManager.templates[filename]
+        return None
+
 
 @require_safe
 def homePage(request):
@@ -32,9 +45,10 @@ def logoutSuccess(request):
 
 @require_safe
 @login_required
-@request_member
 def viewAccount(request):
-    return render(request, 'core/user_accounts/account.html', {})
+    return render(request, 'core/user_accounts/account.html', {
+        'included_template_name': TemplateManager.get_template('core/user_accounts/account.html'),
+    })
 
 @require_safe
 def registerSuccess(request):
