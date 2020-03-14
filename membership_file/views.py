@@ -19,7 +19,7 @@ from core.views import TemplateManager
 from .auto_model_update import *
 
 
-# Add a redirect to each user's Account page to its Membership page
+# Add a link to each user's Account page leading to its Membership page
 TemplateManager.set_template('core/user_accounts/account.html', 'membership_file/account_membership.html')
 
 

@@ -1,13 +1,10 @@
 from django.db import models
 from django.utils import timezone
+from django.utils.text import slugify
 
 from core.models import ExtendedUser as User
 
 import os
-
-#Setup some constants
-maxDescriptionLength = 255
-maxNameLength = 31
 
 # Create categories for the Achievements like Boardgames, Roleplay, General
 class Category(models.Model):
@@ -18,8 +15,8 @@ class Category(models.Model):
         # Sort by name. If they are equal, sort by Id
         ordering = ['name','id']
 
-    name = models.CharField(max_length=maxNameLength)
-    description = models.TextField(max_length=maxDescriptionLength)
+    name = models.CharField(max_length=63)
+    description = models.TextField(max_length=255)
 
     def __str__(self):
         return self.name
@@ -29,26 +26,26 @@ def get_or_create_default_category():
     return Category.objects.get_or_create(name='General', description='Contains Achievements that do not belong to any other Category.')[0]
 
 # File path to upload achievement images to
-def get_upload_path(instance, filename):
+def get_achievement_image_upload_path(instance, filename):
     # Obtain extension
     # NB: A file can be renamed to have ANY extension
     _, extension = os.path.splitext(filename)
 
     # file will be uploaded to MEDIA_ROOT / images/achievement_<achievement_id>.<file_extension>
-    return 'images/achievements/achievement_{0}{1}'.format(instance.id, extension)
+    return 'images/achievements/achievement_{0}{1}'.format(slugify(instance.name), extension)
 
 # Achievements that can be earned by users
 class Achievement(models.Model):
     # Basic Information
-    name = models.CharField(max_length=maxNameLength)
-    description = models.TextField(max_length=maxDescriptionLength)
+    name = models.CharField(max_length=63)
+    description = models.TextField(max_length=255)
     category = models.ForeignKey(Category, on_delete=models.SET(get_or_create_default_category), related_name="related_achievements")
 
     # An Achievement can be claimed by more members (claimants) and a member can have more achievements.
     claimants = models.ManyToManyField(User, blank=True, through="Claimant", related_name="claimant_info")
 
     # Achievement Icon
-    image = models.ImageField(upload_to=get_upload_path) 
+    image = models.ImageField(upload_to=get_achievement_image_upload_path) 
 
     # Text used to display unlocked status. Can be used to display extra data for high scores.
     # {0} User

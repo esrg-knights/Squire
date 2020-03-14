@@ -4,5 +4,6 @@
 # Import the common-dependencies
 Django~=2.2.2
 django-bootstrap4~=1.0
+django-cleanup~=4.0.0 # Removes old FileField files upon saving
 djangorestframework~=3.9.4
-Pillow~=7.0
+Pillow~=7.0.0 # ImageField support

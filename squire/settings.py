@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'achievements',
     'activity_calendar',
     'membership_file',
+    # More External Libraries
+    'django_cleanup.apps.CleanupConfig',
 ]
 
 MIDDLEWARE = [
