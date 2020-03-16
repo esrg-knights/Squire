@@ -1,35 +1,19 @@
 from django.test import TestCase
 from django.test import Client
-from .models import Member, MemberLog, MemberLogField
-from .models import MemberUser as User
-from .serializers import MemberSerializer
-from core.util import suppress_warnings
-
 from django.contrib.admin.sites import AdminSite
 from django.contrib.admin import ModelAdmin
+
+from core.util import suppress_warnings
+from membership_file.tests.util import fillDictKeys, getNumNonEmptyFields
+from membership_file.models import Member, MemberLog, MemberLogField
+from membership_file.models import MemberUser as User
+from membership_file.serializers import MemberSerializer
+
 
 ##################################################################################
 # Test cases for MemberLog-logic and Member deletion logic on the admin-side
 # @since 19 JUL 2019
 ##################################################################################
-
-# Fills the keys of one dictionary with those of another
-# @param toFill The dictionary to fill
-# @param fillData The dictionary whose data to use to fill empty
-# @returns The values from fillData are in toFill
-def fillDictKeys(toFill: dict, fillData: dict) -> dict:
-    return {**toFill, **fillData}
-
-# Gets the number of non-empty fields in a dictionary
-# @param data The dictionary
-# @returns the number of non-empty fields in a dictionary
-def getNumNonEmptyFields(data: dict) -> int:
-    count = 0
-    for key in data:
-        if data[key]:
-            count += 1
-    return count
-
 
 # Tests Log deletion when members are deleted
 class MemberLogCleanupTest(TestCase):

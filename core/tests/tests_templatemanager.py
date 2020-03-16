@@ -1,5 +1,6 @@
 from django.test import TestCase
-from .views import TemplateManager
+
+from core.views import TemplateManager
 
 ##################################################################################
 # Test the TemplateManager

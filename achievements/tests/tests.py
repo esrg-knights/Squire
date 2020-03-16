@@ -1,11 +1,9 @@
 from django.test import TestCase, Client
 
-from .serializers import AchievementSerializer, CategorySerializer
-from .models import Achievement, Category
+from achievements.serializers import AchievementSerializer, CategorySerializer
+from achievements.models import Achievement, Category
+from core.tests.util import checkAccessPermissions, PermissionLevel
 
-from membership_file.models import Member
-from membership_file.serializers import MemberSerializer
-from core.tests import checkAccessPermissions, PermissionLevel
 
 # Create your tests here.
 class TestCaseAchievementFrontEndViews(TestCase):

@@ -6,8 +6,8 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 
 from core.models import ExtendedUser as User
-from .models import MemberUser
-from .util import membership_required, request_member
+from membership_file.models import MemberUser
+from membership_file.util import membership_required, request_member
 
 
 ##################################################################################

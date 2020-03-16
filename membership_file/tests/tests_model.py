@@ -1,6 +1,7 @@
 from django.test import TestCase
-from .models import Member, get_member_display_name, MemberLog, MemberLogField
-from .models import MemberUser as User
+
+from membership_file.models import Member, get_member_display_name, MemberLog, MemberLogField
+from membership_file.models import MemberUser as User
 
 
 ##################################################################################
