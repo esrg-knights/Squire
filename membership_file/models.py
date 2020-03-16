@@ -14,12 +14,15 @@ from core.models import ExtendedUser as User
 # @since 06 JUL 2019
 ##################################################################################
 
+# Display method for a user that may also be a member
+def get_member_display_name(user):
+    member = MemberUser(user.id).get_member()
+    if member is not None:
+        return member.get_full_name()
+    return user.get_simple_display_name()
+
 # Users should be displayed by their names according to the membership file (if they're a member)
-User.set_display_name_method(lambda x: (
-        MemberUser(x.id).get_member().get_full_name()
-    if MemberUser(x.id).is_member()
-        else x.get_simple_display_name())
-)
+User.set_display_name_method(get_member_display_name)
 
 # Provides additional methods on the ExtendedUser model
 class MemberUser(User):

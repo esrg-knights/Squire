@@ -49,11 +49,11 @@ def membership_required(function=None, fail_url=None, redirect_field_name=REDIRE
                 return view_func(request, *args, **kwargs)
             
             # Otherwise show the "Not a member" error page
-            path = request.build_absolute_uri()
             resolved_fail_url = resolve_url(fail_url or settings.MEMBERSHIP_FAIL_URL)
             return HttpResponseRedirect(resolved_fail_url)
-        return _wrapped_view
+        # Wrap inside the login_required decorator (as non-logged in users can never be members)
+        return login_required(_wrapped_view, login_url=login_url, redirect_field_name=redirect_field_name)
     
     if function:
-        return login_required(decorator(function), login_url=login_url, redirect_field_name=redirect_field_name)
-    return login_required(decorator, login_url=login_url, redirect_field_name=redirect_field_name)
+        return decorator(function)
+    return decorator
