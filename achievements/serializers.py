@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from django.db.models import Count, Max
+from django.db.models import Count, Max, When, Case
 
 from core.models import ExtendedUser as User
 from .models import Achievement, Category, Claimant
@@ -10,7 +10,7 @@ from enum import Enum
 class AchievementSortType(Enum):
     ACHIEVEMENTSORT_DEFAULT = 1
     ACHIEVEMENTSORT_LATEST_UNLOCK_DATE = 2
-    ACHIEVEMENTSORT_NUM_CLAIMANTS = 3
+    ACHIEVEMENTSORT_MOST_NUM_CLAIMANTS = 3
 
 
 # Obtains the string that can be used to obtain the sort order of the claimants
@@ -94,15 +94,15 @@ class CategorySerializer(serializers.ModelSerializer):
         # Sort by latest unlocked date
         if sort_type == AchievementSortType.ACHIEVEMENTSORT_LATEST_UNLOCK_DATE:
             return AchievementSerializer(
-                    Achievement.objects.filter(category__id=obj.id, claimant__user__id=user_id)
-                        .annotate(latest_unlocked_date=Max('claimant__date_unlocked'))
-                        .order_by('-latest_unlocked_date'),
-                    context=self.context, many=True).data  
+                    Achievement.objects.filter(category__id=obj.id)
+                            .annotate(latest_unlocked_date=Max(Case(When(claimant__user__id=user_id, then='claimant__date_unlocked'))))
+                        .order_by('-latest_unlocked_date', 'name'),
+                    context=self.context, many=True).data
         
-        # sort_type == AchievementSortType.ACHIEVEMENTSORT_NUM_CLAIMANTS 
+        # sort_type == AchievementSortType.ACHIEVEMENTSORT_MOST_NUM_CLAIMANTS 
         # Sort by number of claimants
         return AchievementSerializer(
                 Achievement.objects.filter(category__id=obj.id)
                     .annotate(num_claimants=Count('claimants'))
-                    .order_by('-num_claimants'),
+                    .order_by('-num_claimants', 'name'),
                 context=self.context, many=True).data  
