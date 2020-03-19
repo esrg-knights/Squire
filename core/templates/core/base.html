@@ -28,6 +28,11 @@
 				<ul class="navbar-nav mr-auto">
 					{% if user.is_authenticated %}
 						<li class="nav-item">
+							<a class="nav-link" href="{% url 'achievements/user' %}">Earned Achievements</a>
+						</li>
+					{% endif %}
+					{% if user.is_authenticated %}
+						<li class="nav-item">
 							<a class="nav-link" href="{% url 'core/user_accounts/account' %}">Account</a>
 						</li>
 					{% endif %}

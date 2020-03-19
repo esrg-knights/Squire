@@ -5,31 +5,12 @@ from django.conf import settings
 from enum import Enum
 
 from core.models import ExtendedUser as User
+from core.util import OrderedEnum
 
 ##################################################################################
 # Utility Methods for testcases
 # @since 15 AUG 2019
 ##################################################################################
-
-# An enumeration that allows comparison
-# See: https://docs.python.org/3/library/enum.html#orderedenum
-class OrderedEnum(Enum):
-    def __ge__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value >= other.value
-        return NotImplemented
-    def __gt__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value > other.value
-        return NotImplemented
-    def __le__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value <= other.value
-        return NotImplemented
-    def __lt__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value < other.value
-        return NotImplemented
 
 class PermissionLevel(OrderedEnum):
     LEVEL_PUBLIC = 1

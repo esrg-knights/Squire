@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from django.contrib.auth import login as auth_login, logout as auth_logout
-from .forms import LoginForm, RegisterForm
 from django.shortcuts import redirect
 from django.urls import reverse
 
@@ -10,27 +9,13 @@ from django.views.decorators.http import require_safe
 # User must be logged in to access a page
 from django.contrib.auth.decorators import login_required
 
+from .forms import LoginForm, RegisterForm
+from .managers import TemplateManager
 
 ##################################################################################
 # Contains render-code for displaying general pages.
 # @since 15 JUL 2019
 ##################################################################################
-
-class TemplateManager():
-    # Stores the method used to display a user's name
-    templates = {}
-
-    # Allows other modules to change the way a user is displayed across the entire application
-    @staticmethod
-    def set_template(filename, template_name):
-        TemplateManager.templates[filename] = template_name
-
-    @staticmethod
-    def get_template(filename):
-        if filename in TemplateManager.templates:
-            return TemplateManager.templates[filename]
-        return None
-
 
 @require_safe
 def homePage(request):
