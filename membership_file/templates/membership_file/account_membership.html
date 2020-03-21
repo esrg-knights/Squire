@@ -1,10 +1,14 @@
 
 {% load to_member %}
 
+<h2>Membership Information</h2>
 {% with memberuser=user|to_member %}
     {% if memberuser.is_member %}
-        <p>You can view your membership information <a href="{% url 'membership_file/membership' %}">here</a>.<p>
+        <p>
+            You are a Knights Member; hooray!<br>
+            You can view your membership information <a href="{% url 'membership_file/membership' %}">here</a>.
+            <p>
     {% else %}
-        <p>You are not a Knights Member.</p>
+        <p>You are not a Knights Member. Please notify the board so they can link your Squire account to your membership information.</p>
     {% endif %}
 {% endwith %}

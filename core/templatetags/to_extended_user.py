@@ -11,6 +11,4 @@ register = template.Library()
 @register.filter
 def to_extended_user(user):
     attrs = {field.name: getattr(user, field.name) for field in user._meta.fields}
-    print(user)
-    print(ExtendedUser(**attrs).get_display_name())
     return ExtendedUser(**attrs)
