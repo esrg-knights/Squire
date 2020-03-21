@@ -5,18 +5,50 @@
   Squire - Homepage
 {% endblock title %}
 
+{% load to_extended_user %}
+
 {% block content %}
-  <h2>Placeholder Homepage!</h2>
-  <p>Look how cool it is!</p>
 
-  {% if user.is_authenticated %}
-    Hi {{ user.username }}!
+  <div class='contentFrame'>
+    <!-- Welcome Message -->
+    <h1>Welcome to Squire!</h1>
+    {% if user.is_authenticated %}
+      {% with extendeduser=user|to_extended_user %}
+        <p>Have a nice day {{ extendeduser.get_display_name }}!</p>
+      {% endwith %}
+    {% else %}
+        <p>Have a nice day day!</p>
+    {% endif %}
+    
+    <!-- Application Description -->
+    <h3>What is Squire?</h3>
+    <p>
+      Squire is the new webapp developed by the HTTPS-committee of ESRG Knights of the Kitchen Table.
+      Its goals are to ease certain tasks to be performed by the board, and to provide members with more control over their personal data.
+    </p>
 
-    <p>You can view your account <a href="{% url 'core/user_accounts/account' %}">here</a></p>
+    <h4>Current Features</h4>
+    <ul>
+      <li>You can view and <i>edit</i> your own <strong>membership information</strong> at all times! No need to wait for the board to reply to your messages, and verifying it becomes much easier.</li>
+      <li><strong>Achievements</strong> are back! Show of your skills or weird interactions in Boardgames, Roleplaying Sessions, or LARPs, and be an active member to earn some general achievements.</li>
+    </ul>
 
-    <p><a href="{% url 'core/user_accounts/logout' %}">logout</a></p>
-  {% else %}
-    <p>You are not logged in</p>
-    <a href="{% url 'core/user_accounts/login' %}">login</a>
-  {% endif %}
+    <h4>Future Plans</h4>
+    <p>Oh boy are there many future features that we did not have the time for to develop before the first release. Do you have a (good) idea that is not on this list? Notify the board!</p>
+    <ul>
+      <li><strong>A Committee Overview</strong>: Are you a new (or old!) member and interested in our committees? Find them in a single place and see what they (should) do!</li>
+      <li><strong>Email Opt-outs</strong>: Don't want to receive certain emails, such as the monthly agenda? Then an easy to manage opt-out system is key.</li>
+      <li><strong>Delegating Tasks</strong>: The board (and admins) are currently the only people who can manage most things on this application, while some things (such as managing achievements) could also be done by certain committees instead!</li>
+    </ul>
+
+    <!-- Submit a Bug Report -->
+    <h3>I found a bug!</h3>
+    <p>Great! Or well...? Please notify the Board of what went wrong, or create an issue on <a href="https://github.com/EricTRL/Squire/issues">GitHub</a> if you know how that stuff works!</p>
+  </div>
+
 {% endblock content %}
+
+<!-- Privacy Policy Notice -->
+{% block footer %}
+  <small>Hey, listen! We currently do not have a separate Privacy Policy for this application, but we do adhere to that of ESRG Knights of the Kitchen Table!</small>
+{% endblock %}
