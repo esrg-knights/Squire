@@ -91,11 +91,11 @@ class Member(models.Model):
     # CONTACT INFORMATION
     ##################################
     # Email address of the member
-    email = models.EmailField(max_length=255, unique=True)
+    email = models.EmailField(max_length=255, unique=True, help_text="This email address is used by the board to contact you.")
 
     # Telephone number of the member
     phone_regex = RegexValidator(regex=r'^\+[0-9]{8,15}$', message="Phone number must be entered in the format: '+999999999'. Up to 14 digits allowed.")
-    phone_number = models.CharField(validators=[phone_regex], max_length=16, blank=True, null=True, unique=True)
+    phone_number = models.CharField(validators=[phone_regex], max_length=16, blank=True, null=True, unique=True, help_text="A phone number is required if you want access to our rooms.")
 
     # Address of the member
     street = models.CharField(max_length=255)

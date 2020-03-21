@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 {% load bootstrap4 %}
 {% load static %}
+{% load to_member %}
 <html lang="en">
 	<head>
 		<meta charset="UTF-8">
@@ -38,6 +39,11 @@
 							<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
 								<a class="dropdown-item greenify" href="{% url 'core/user_accounts/account' %}">View Account</a>
 								<a class="dropdown-item greenify" href="{% url 'achievements/user' %}">Earned Achievements</a>
+								{% with memberuser=user|to_member %}
+									{% if memberuser.is_member %}
+										<a class="dropdown-item greenify" href="{% url 'membership_file/membership' %}">Membership Information</a>
+									{% endif %}
+								{% endwith %}
 								<div class="dropdown-divider greenify"></div>
 								<a class="dropdown-item greenify" href="{% url 'core/user_accounts/logout' %}">Sign out</a>
 							</div>

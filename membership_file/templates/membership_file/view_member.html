@@ -6,35 +6,54 @@
 {% endblock title %}
 
 {% block content %}
-    <h1>Hello {{member.first_name}}!</h1>
-    <p>
-        You're a member since {{member.member_since}}.<br/>
-        This is your personal information:
-    </p>
+    <div class='contentFrame'>
+        <h1>Hello {{member.first_name}}!</h1>
+        <p>
+            You're a member since {{member.member_since}}.
+        </p>
 
-    <h3>Basic Information</h3>
-    <p>Name: {{member.get_full_name}}</p>
-    <p>Date of Birth: {{member.date_of_birth}}</p>
-    <p>Address: {{member.display_address}}</p>
+        <h3>Basic Information</h3>
+        <p>
+            Name: <i>{{member.get_full_name}}</i><br>
+            Date of Birth: <i>{{member.date_of_birth}}</i><br>
+            Address: <i>{{member.display_address}}</i><br>
+        </p>
 
-    <h3>Contact Details</h3>
-    <p>Email: {{member.email}}</p>
-    <p>Phone Number: {{member.phone_number}}</p>
+        <h3>Contact Details</h3>
+        <p>
+            Email: <i>{{member.email}}</i><br>
+            Phone Number: <i>{{member.phone_number|default:"No phone number provided"}}</i>
+        </p>
 
-    <h3>Student Information</h3>
-    <p>Student Number: {{member.student_number}}</p>
-    <p>Educational Institution: {{member.educational_institution}}</p>
+        <h3>Student Information</h3>
+        <p>
+            Initials: <i>{{member.initials|default:"No initials known"}}</i><br>
+            Student Number: <i>{{member.student_number|default:"No student number provided"}}</i><br>
+            Educational Institution: <i>{{member.educational_institution}}</i>
+        </p>
 
-    <h3>Card Numbers</h3>
-    <p>
-        Tue: {{member.tue_card_number}} <br/>
-        External: {{member.display_external_card_number}}
-    </p>
+        <h3>Card Numbers</h3>
+        <p>
+            Tu/e Card: <i>{{member.tue_card_number|default:"No Tu/e card in possession"}}</i><br>
+            External Card: <i>{{member.display_external_card_number|default:"No external card in possession"}}</i><br>
 
-    {% if member.last_updated_by is not None %}
-        <p>This information was last changed {{member.last_updated_date|date:"\o\n M j, Y \a\t H\:i"}} by {{member.display_last_updated_name}}</p>
-    {% else %}
-        <p>This information was never updated since its creation {{member.last_updated_date|date:"\o\n M j, Y \a\t H\:i"}}</p>
-    {% endif %}
-    Click <a href="{% url 'membership_file/membership/edit' %}">here</a> to edit this information.
+            <small class="form-text text-muted">External cards are blue, whereas Tu/e cards are (currently) orange.</small>
+        </p>
+
+        <p>
+            {% if member.last_updated_by is not None %}
+                This information was last changed {{member.last_updated_date|date:"\o\n M j, Y \a\t H\:i"}} by {{member.display_last_updated_name}}
+            {% else %}
+                This information was never updated since its creation {{member.last_updated_date|date:"\o\n M j, Y \a\t H\:i"}}
+            {% endif %}
+            <br>
+            {% if member.marked_for_deletion %}
+                <br>
+                You currently <strong>cannot</strong> edit this information; your membership is about to be cancelled!
+                Please notify the board if this was a mistake.
+            {% else %}
+                You can edit this information <a href="{% url 'membership_file/membership/edit' %}">here</a>.
+            {% endif %}
+        </p>
+    </div>
 {% endblock content %}

@@ -42,20 +42,22 @@ def viewOwnMembership(request):
 @membership_required
 @request_member
 def editOwnMembership(request):
+    member = request.user.get_member()
+
+    # Prevent access if the user is not authenticated, or if there was no membership
+    # information linked to the user. I.e. the reuqest was forged!
+    # Also deny access if the user is marked for deletion
+    if request.user.is_anonymous or member is None or member.marked_for_deletion:
+        #TODO: work with permission system so board members can edit other user's info with
+        # the same form, without needing to be an admin (and doing it via the admin panel)
+        return HttpResponseForbidden()
+
     # Process form data
     if request.method == 'POST':
-        member = request.user.get_member()
         member.last_updated_by = request.user
 
         # Obtain the form that was entered
         form = MemberForm(request.POST, instance=member)
-
-        # Prevent access if the user is not authenticated, or if there was no membership
-        # information linked to the user. I.e. the reuqest was forged!
-        if request.user.is_anonymous or member is None:
-            #TODO: work with permission system so board members can edit other user's info with
-            # the same form, without needing to be an admin (and doing it via the admin panel)
-            return HttpResponseForbidden()
 
         # check whether the entered data was valid:
         if form.is_valid():
