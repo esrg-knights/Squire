@@ -1,10 +1,10 @@
 from django import forms
-from django.contrib.auth.models import User
 from django.forms import ModelForm
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext, gettext_lazy as _
 
 from .models import Member
+from .models import MemberUser as User
 
 ##################################################################################
 # Defines forms related to the membership file.

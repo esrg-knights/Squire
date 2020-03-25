@@ -1,0 +1,10 @@
+
+{% load to_member %}
+
+{% with memberuser=user|to_member %}
+    {% if memberuser.is_member %}
+        <p>You can view your membership information <a href="{% url 'membership_file/membership' %}">here</a>.<p>
+    {% else %}
+        <p>You are not a Knights Member.</p>
+    {% endif %}
+{% endwith %}

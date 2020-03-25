@@ -1,16 +1,16 @@
 from django.shortcuts import render
 from django.contrib.auth import login as auth_login, logout as auth_logout
-from .forms import LoginForm, RegisterForm
 from django.shortcuts import redirect
 from django.urls import reverse
 
-# @require_post only accepts HTTP POST requests
 # @require_safe only accepts HTTP GET and HEAD requests
-from django.views.decorators.http import require_POST, require_safe, require_http_methods
+from django.views.decorators.http import require_safe
 
 # User must be logged in to access a page
 from django.contrib.auth.decorators import login_required
 
+from .forms import LoginForm, RegisterForm
+from .managers import TemplateManager
 
 ##################################################################################
 # Contains render-code for displaying general pages.
@@ -31,7 +31,9 @@ def logoutSuccess(request):
 @require_safe
 @login_required
 def viewAccount(request):
-    return render(request, 'core/user_accounts/account.html', {})
+    return render(request, 'core/user_accounts/account.html', {
+        'included_template_name': TemplateManager.get_template('core/user_accounts/account.html'),
+    })
 
 @require_safe
 def registerSuccess(request):

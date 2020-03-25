@@ -1,29 +1,44 @@
 from django.conf import settings
+from django.core.validators import RegexValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 from datetime import date
+
 import datetime
-from django.core.validators import RegexValidator, MinValueValidator
-from django.contrib.auth.models import User
 import re
+
+from core.models import ExtendedUser as User
 
 ##################################################################################
 # Models related to the Membership File-functionality of the application.
 # @since 06 JUL 2019
 ##################################################################################
 
-# Returns the associated member to a given user
-def get_member(self):
-    return Member.objects.filter(user__id=self.id).first()
+# Display method for a user that may also be a member
+def get_member_display_name(user):
+    member = MemberUser(user.id).get_member()
+    if member is not None:
+        return member.get_full_name()
+    return user.get_simple_display_name()
 
-# Checks whether a given user is a member
-def is_member(self):
-    return self.get_member() is not None
+# Users should be displayed by their names according to the membership file (if they're a member)
+User.set_display_name_method(get_member_display_name)
 
-# Add the methods to Django's User-Model
-User.add_to_class("get_member", get_member)
-User.add_to_class("is_member", is_member)
+# Provides additional methods on the ExtendedUser model
+class MemberUser(User):
+    class Meta:
+        proxy = True
 
+    # Returns the associated member to a given user
+    def get_member(self):
+        return Member.objects.filter(user__id=self.id).first()
+
+    # Checks whether a given user is a member
+    def is_member(self):
+        return self.get_member() is not None
+
+
+##################################################################################
 
 # The Member model represents a Member in the membership file
 class Member(models.Model):
@@ -165,6 +180,7 @@ class Member(models.Model):
         return "{0} {1}, {2}, {3}{4}".format(self.street, house_number, self.city, 
             "" if self.state is None else f"{self.state}, ", self.country)
 
+##################################################################################
 
 # The MemberLog Model represents a log entry that is created whenever membership data is updated
 class MemberLog(models.Model):

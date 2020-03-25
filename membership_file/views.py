@@ -1,19 +1,26 @@
 from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.models import User
-from .models import Member, MemberLog
-from .forms import MemberForm
-
-# @require_safe only accepts HTTP GET and HEAD requests
-from django.views.decorators.http import require_safe
-from core.util import membership_required
 
 # Redirect shortcuts
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.http import HttpResponseForbidden
 
+# @require_safe only accepts HTTP GET and HEAD requests
+from django.views.decorators.http import require_safe
+
+from .models import MemberUser as User
+from .models import Member, MemberLog
+from .forms import MemberForm
+from .util import membership_required, request_member
+
+from core.views import TemplateManager
+
 # Enable the auto-creation of logs
 from .auto_model_update import *
+
+
+# Add a link to each user's Account page leading to its Membership page
+TemplateManager.set_template('core/user_accounts/account.html', 'membership_file/account_membership.html')
 
 
 # Page that loads whenever a user tries to access a member-page
@@ -25,6 +32,7 @@ def viewNoMember(request):
 # Renders the webpage for viewing a user's own membership information
 @require_safe
 @membership_required
+@request_member
 def viewOwnMembership(request):
     tData = {'member': request.user.get_member()}
     return render(request, 'membership_file/view_member.html', tData)
@@ -32,6 +40,7 @@ def viewOwnMembership(request):
 
 # Renders the webpage for viewing a user's own membership information
 @membership_required
+@request_member
 def editOwnMembership(request):
     # Process form data
     if request.method == 'POST':

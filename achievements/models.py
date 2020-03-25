@@ -1,29 +1,111 @@
 from django.db import models
 from django.utils import timezone
-from membership_file.models import Member
+from django.utils.text import slugify
 
-#Setup some constants
-maxDescriptionLength = 255
-maxNameLength = 31
+from core.models import ExtendedUser as User
+
+import os
 
 # Create categories for the Achievements like Boardgames, Roleplay, General
 class Category(models.Model):
-    name = models.CharField(max_length=maxNameLength)
-    description = models.TextField(max_length=maxDescriptionLength)
+    class Meta:
+        # Enabled proper plurality
+        verbose_name_plural = "categories"
+        
+        # Sort by name. If they are equal, sort by Id
+        ordering = ['name','id']
+
+    name = models.CharField(max_length=63)
+    description = models.TextField(max_length=255)
 
     def __str__(self):
         return self.name
 
-# The Achievement model represents the achievements in the achievements file.
-class Achievement(models.Model):
-    # Different achievements can have the same category, but every Achievement can only have one category.
-    category = models.ForeignKey(Category, on_delete = models.SET_DEFAULT, default=1, blank = True, related_name = "related_achievements")
+# Gets or creates the default Category
+def get_or_create_default_category():  
+    return Category.objects.get_or_create(name='General', description='Contains Achievements that do not belong to any other Category.')[0]
 
-    name = models.CharField(max_length=maxNameLength)
-    description = models.TextField(max_length=maxDescriptionLength)
+# File path to upload achievement images to
+def get_achievement_image_upload_path(instance, filename):
+    # Obtain extension
+    # NB: A file can be renamed to have ANY extension
+    _, extension = os.path.splitext(filename)
+
+    # file will be uploaded to MEDIA_ROOT / images/achievement_<achievement_id>.<file_extension>
+    return 'images/achievements/achievement_{0}{1}'.format(slugify(instance.name), extension)
+
+# Achievements that can be earned by users
+class Achievement(models.Model):
+    # Basic Information
+    name = models.CharField(max_length=63)
+    description = models.TextField(max_length=255)
+    category = models.ForeignKey(Category, on_delete=models.SET(get_or_create_default_category), related_name="related_achievements")
 
     # An Achievement can be claimed by more members (claimants) and a member can have more achievements.
-    claimants = models.ManyToManyField(Member, blank = True, related_name = "claimed_achievements")
+    claimants = models.ManyToManyField(User, blank=True, through="Claimant", related_name="claimant_info")
+
+    # Achievement Icon
+    image = models.ImageField(upload_to=get_achievement_image_upload_path) 
+
+    # Text used to display unlocked status. Can be used to display extra data for high scores.
+    # {0} User
+    # {1} Date (Sorted on descending by default)
+    # {2} extra_data_1
+    # {3} extra_data_2
+    # {4} extra_data_3
+    # E.g. {0} unlocked this achievement on {1} with a score of {2}!
+    unlocked_text = models.CharField(max_length=127, default="Claimed by {0} on {1}.",
+        help_text="{0}: User Display Name, {1}: Date Unlocked, {2}: Extra Data 1 (int), {3}: Extra Data 2 (string), {4}: Extra Data 3 (string)")
+
+
+    # Possible sort options
+    FIELD_OPTIONS = [
+        ("date_unlocked",           "Unlocked Date"),
+        ("extra_data_1",            "Extra Data 1"),
+        ("extra_data_2",            "Extra Data 2"),
+        ("extra_data_3",            "Extra Data 3"),
+    ]
+
+    # The field to sort on
+    claimants_sort_field = models.CharField(
+        max_length=31,
+        choices=FIELD_OPTIONS,
+        default='date_unlocked',
+    )
+
+    # Whether sorting should be reversed
+    # False <==> Sort Descending
+    claimants_sort_ascending = models.BooleanField(default=False)
+
+    class Meta:
+        permissions = [
+            ("can_view_claimants", "Can view the claimants of Achievements"),
+        ]
+        ordering = ['name','id']
 
     def __str__(self):
         return self.name
+
+    # Checks whether a given user can view this achievement's claimants
+    @staticmethod
+    def user_can_view_claimants(user):
+        if user is None:
+            return False
+        
+        # TODO: Work with Permission System
+        return user.is_authenticated
+
+
+# Represents a user earning an achievement
+class Claimant(models.Model):
+    achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date_unlocked = models.DateField(default=timezone.now)
+
+    # Extra data fields that can be used to track high-scores
+    extra_data_1 = models.IntegerField(null=True, blank=True)
+    extra_data_2 = models.CharField(max_length=63, null=True, blank=True)
+    extra_data_3 = models.CharField(max_length=63, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.achievement} unlocked by {self.user}"

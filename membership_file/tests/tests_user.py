@@ -1,55 +1,20 @@
 from django.test import TestCase
-from django.contrib.auth.models import User
 from django import forms
-from django.template import Context, Template
 from django.conf import settings
 from django.core import serializers
-from enum import Enum
+from django.template import Context, Template
 
-from .models import Member
-from .serializers import MemberSerializer
-from core.tests import checkAccessPermissions, PermissionLevel
+from core.tests.util import checkAccessPermissions, PermissionLevel
+from membership_file.tests.util import checkAccessPermissionsMember, PermissionType
+from membership_file.models import Member
+from membership_file.models import MemberUser as User
+from membership_file.serializers import MemberSerializer
 
 ##################################################################################
 # Test cases for MemberLog-logic and Member deletion logic on the user-side
 # @since 12 FEB 2020
 ##################################################################################
 
-# Enumeration that specifies member vs non-member status.
-class PermissionType(Enum):
-    TYPE_MEMBER = 1
-    TYPE_NO_MEMBER = 2
-
-# Checks whether a given url can be accessed with a given HTTP Method by a user with a given permissionType
-# Invokes the checkAccessPermissions method from the Core app.
-def checkAccessPermissionsMember(test: TestCase, url: str, httpMethod: str, permissionType: PermissionType,
-        user: User = None, redirectUrl: str = "", data: dict = {}) -> None:
-    
-    member = None
-    if permissionType == PermissionType.TYPE_MEMBER:
-        # Requesting user should be a member
-        member = Member.objects.get(email='linked_member@example.com')
-        if user is None:
-            user = User.objects.get(username='test_user')
-        else:
-            member = Member.objects.filter(user=user).first()
-            if member is None:
-                # The passed user was NOT yet a member, but should be one!
-                member = Member.objects.get(email='linked_member@example.com')
-                member.user = user
-                member.save()
-    else:
-        # Requesting user should NOT be a member
-        if user is None:
-            user = User.objects.get(username='test_user_alt')
-        else:
-            member = Member.objects.filter(user=user).first()
-            if member is not None:
-                # The passed user was a member, but should NOT be one!
-                member.user = None
-                member.save()
-
-    checkAccessPermissions(test, url, httpMethod, PermissionLevel.LEVEL_USER, user, redirectUrl, data)
 
 ################################################################
 # TEMPLATE TAGS
