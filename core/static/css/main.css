@@ -76,6 +76,11 @@ footer {
     margin: 0 auto;
 }
 
+.wideContentFrame {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
 /* Vertically align the navbar brand with the navbar items*/
 .navbar-brand {
     align-items: center;

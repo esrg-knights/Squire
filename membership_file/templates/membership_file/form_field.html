@@ -1,27 +1,35 @@
 
 {% load field_label %}
+{% load set_max_width %}
+{% load contains_any_error %}
 
 <div class="form-group">
-    <!-- Field Errors -->
-    {% for field in fields %}
-        <p>{{field.errors}}</p>
-    {% endfor %}
+    {% if fields|contains_any_error %}
+        <!-- Field Errors -->
+        <ul class="errorlist alert alert-danger">
+            {% for field, _ in fields %}
+                {% for error in field.errors %}
+                    <small><li>{{ error }}</li></small>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    {% endif %}
     <div class="input-group">
         <div class="input-group-prepend">
-            {% for field in fields %}
-                <span class="input-group-text" id="">
-                    <!-- Field Names -->
+            <!-- Field Names -->
+            {% for field, _ in fields %}
+                <span class="input-group-text{% if field.errors %} alert-danger{% endif %}">
                     {% field_label field.label|title field %}
                 </span>
             {% endfor %}
         </div>
         <!-- HTML Inputs -->
-        {% for field in fields %}
-            {{ field }}
+        {% for field, max_px_width in fields %}
+            {{ field|set_max_width:max_px_width }}
         {% endfor %}
     </div>
     <!-- Field Help Texts -->
-    {% for field in fields %}
+    {% for field, _ in fields %}
         <small class="form-text text-muted">{{ field.help_text }}</small>
     {% endfor %}
 </div>
