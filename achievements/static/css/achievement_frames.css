@@ -4,6 +4,11 @@
     text-align: center;
 }
 
+/* Left-align text in modal */
+.modal-achievement {
+    text-align: left;
+}
+
 /* Achievement panes */
 .achievement {
     display: inline-block;
@@ -13,47 +18,43 @@
     padding: 10px;
     vertical-align: top;
 }
+    /* Center achievement image in its pane */
+    .achievement .achievementImage {
+        width: 120px;
+        height: 120px;
+        overflow: hidden;
+        position: relative;
+        margin: 5px auto;
+    }
+        /* Center achievement image in its pane */
+        .achievement .achievementImage > img {
+            max-width: 100%;
+            max-height: 100%;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: auto;
+        }
 
-/* Center achievement image in its pane */
-.achievementImage {
-    width: 120px;
-    height: 120px;
-    overflow: hidden;
-    position: relative;
-    margin: 5px auto;
-}
-
-/* Center achievement image in its pane */
-.achievementImage > img {
-    max-width: 100%;
-    max-height: 100%;
-    /* height: auto; */
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    margin: auto;
-}
+    /* Change margin from claimant list */
+    .achievement .achievementClaimants {
+        margin: 5px;
+        text-align: left;
+    }
 
 /* Center achievement description and apply minimum height  */
 .achievementName {
-    text-align: center;
     width: 100%;
     min-height: 150px;
 }
-    .achievementName h3, .achievementName h4 {
+    .achievementName h3, .achievementName h4, .achievementName h5 {
         margin-bottom: 5px;
     }
     .achievementName p {
         margin-bottom: 0px;
     }
-
-/* Change margin from claimant list */
-.achievementClaimants {
-    margin: 5px;
-    text-align: left;
-}
 
 /* Center 'Nobody claimed' message */
 .achievementMessage {
@@ -61,7 +62,28 @@
     width: 100%;
 }
 
-/* Left-align text in modal */
-.modal-achievement {
+/* Wide Achievement Design */
+.achievement-wide {
+    padding: 5px;
     text-align: left;
+    margin: 10px auto;
 }
+    .achievement-wide .card-body {
+        padding: 5px 10px;
+        min-height: inherit;
+    }
+    /* Auto-scale image */
+    .achievement-wide .achievementImage > img {
+        max-width: 100%;
+        max-height: 100%;
+        margin: auto;
+        width: initial;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+    .achievement-wide .achievementClaimants {
+        text-align: right;
+    }

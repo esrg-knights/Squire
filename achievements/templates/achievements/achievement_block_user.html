@@ -1,0 +1,73 @@
+{% load format_string %}
+{% load filter_first %}
+{% load negate %}
+
+<div class="card greenify achievement-wide">
+    <div class="row no-gutters">
+        <div class="col-md-1 achievementImage">
+            <img src={{ achievement.image }} alt="Achievement Icon for {{achievement.name}}" class="card-img">
+        </div>
+        <div class="col-md-11">
+            <div class="card-body achievementName">
+                <h5 class="card-title">{{achievement.name}}</h5>
+                <p class="card-text">{{achievement.description}}</p>
+                <div class="row no-gutters">
+                    <div class="col-md-10">
+                        <p class="card-text">
+                            <small class="text-muted">
+                                {% if achievement.claimants|length > 0 %}
+                                    {% for claimant in achievement.claimants|filter_first:1 %}
+                                            {% format_string achievement.unlocked_text "You" claimant.date_unlocked claimant.extra_data_1 claimant.extra_data_2 claimant.extra_data_3 %}
+                                    {% endfor %}
+                                {% else %}
+                                    You have not yet claimed this achievement.
+                                {% endif %}
+                            </small>
+                        </p>
+                    </div>
+                    <div class="col-md-2 achievementClaimants">
+                        <p class="card-text">
+                            <small class="text-muted">
+                                {% if achievement.claimants|length > 1 %}
+                                    <a href="#" data-toggle="modal" data-target="#modal_achievement_{{achievement.id}}">
+                                        View Your Claim History
+                                    </a>
+                                {% else %}
+                                    {% if achievement.claimants|length > 0 %}
+                                        No Other Claims by You
+                                    {% endif %}
+                                {% endif %}
+                            </small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- All claimants modal -->
+<div class="modal fade modal-achievement" id="modal_achievement_{{achievement.id}}" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Your {{achievement.name}} Claim History</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <ul>
+                {% for claimant in achievement.claimants %}
+                    <li>
+                        {% include "achievements/achievement_claimant.html" %}                               
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary greenify" data-dismiss="modal">Close</button>
+        </div>
+        </div>
+    </div>
+</div>
