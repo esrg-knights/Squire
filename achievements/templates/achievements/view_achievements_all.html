@@ -1,56 +1,39 @@
 {% extends 'core/base.html' %}
 
+{% load static %}
+
 {% block title %}
   Squire - Achievements
 {% endblock title %}
 
-{% load format_string %}
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/achievement_frames.css' %}">
+{% endblock css %}
 
 {% block content %}
-    <h1>Achievements</h1>
-    <!-- Show Achievements per Category -->
-    {% for category in categories %}
-        <h2>{{category.name}}</h2>
-        <p>{{category.description}}</p>
-        <!-- List Achievements -->
-        <ul>
-            {% for achievement in category.achievements %}
-                <li>
-                    <img src={{ achievement.image }} alt="Achievement Icon for {{achievement.name}}" width=120px>
-                    <p>
-                        <strong>{{achievement.name}}</strong>: {{achievement.description}}.
-                    </p>
-                    <!-- Show Claimants -->
-                    {% if show_claimants %}
-                        {% if not achievement.claimants %}
-                            <i>No-one has claimed this Achievement yet!</i>
-                        {% else %}
-                            <i>
-                                <ul>
-                                    {% for claimant in achievement.claimants %}
-                                        <li>
-                                            {% if claimant.user_id == request_user_id %}
-                                                {% format_string achievement.unlocked_text "You" claimant.date_unlocked claimant.extra_data_1 claimant.extra_data_2 claimant.extra_data_3 %}
-                                            {% else %}
-                                                {% format_string achievement.unlocked_text claimant.name claimant.date_unlocked claimant.extra_data_1 claimant.extra_data_2 claimant.extra_data_3 %}
-                                            {% endif %}
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            </i>
-                        {% endif %}
-                    {% endif %}
-                </li>
-            {% empty %}
-                <li>No Achievements exist in this Category.</li>
-            {% endfor %}
-        </ul>
-    {% empty %}
-        No Categories exist! 
-    {% endfor %}
+    <div class="wideContentFrame">
+        <h1>Achievements</h1>
+        <!-- Show Achievements per Category -->
+        {% for category in categories %}
+            <h2>{{category.name}}</h2>
+            <p>{{category.description}}</p>
+            <!-- List Achievements -->
+            <div class='achievementList'>
+                {% for achievement in category.achievements %}
+                    {% include "achievements/achievement_block.html" %}
+                {% empty %}
+                    Woops! There do not seem to be any achievements in this category!</li>
+                {% endfor %}
+            </div>
+        {% empty %}
+            <p>Woops! No Achievements seem to exist!</p>
+        {% endfor %}
 
-    {% if not show_claimants %}
-        <small>Login to view claimants.</small>
-    {% endif %}
-
+        {% if not show_claimants %}
+        <p>
+            <small>Only logged in members can view claimants.</small>
+        </p>
+        {% endif %}
+    </div>
 {% endblock content %}

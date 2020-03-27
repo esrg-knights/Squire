@@ -7,6 +7,7 @@ DEFINITIONS
     --main-text-color: white;
     --main-bg-color-dark: #163b28;
     --main-bg-color-hover: #3b6b5377;
+    --main-bg-color-light: #45ac786e;
 }
 
 /* Main background colour */
@@ -42,6 +43,11 @@ h1, h2, h3, h4, strong {
         background-color: var(--main-bg-color);
         color: var(--main-text-color);
     }
+
+.greenify.card {
+    background-color: var(--main-bg-color-light);
+    color: black;
+}
 
 /*********************************************************************************************
 FORMATTING

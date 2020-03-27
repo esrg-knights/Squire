@@ -1,0 +1,67 @@
+
+/* Center achievement panes in the contentframe */
+.achievementList {
+    text-align: center;
+}
+
+/* Achievement panes */
+.achievement {
+    display: inline-block;
+    width: 375px;
+    min-height: 425px;
+    margin: 5px;
+    padding: 10px;
+    vertical-align: top;
+}
+
+/* Center achievement image in its pane */
+.achievementImage {
+    width: 120px;
+    height: 120px;
+    overflow: hidden;
+    position: relative;
+    margin: 5px auto;
+}
+
+/* Center achievement image in its pane */
+.achievementImage > img {
+    max-width: 100%;
+    max-height: 100%;
+    /* height: auto; */
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+}
+
+/* Center achievement description and apply minimum height  */
+.achievementName {
+    text-align: center;
+    width: 100%;
+    min-height: 150px;
+}
+    .achievementName h3, .achievementName h4 {
+        margin-bottom: 5px;
+    }
+    .achievementName p {
+        margin-bottom: 0px;
+    }
+
+/* Change margin from claimant list */
+.achievementClaimants {
+    margin: 5px;
+    text-align: left;
+}
+
+/* Center 'Nobody claimed' message */
+.achievementMessage {
+    text-align: center;
+    width: 100%;
+}
+
+/* Left-align text in modal */
+.modal-achievement {
+    text-align: left;
+}
