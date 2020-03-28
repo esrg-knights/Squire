@@ -10,7 +10,7 @@
 }
 
 /* Achievement panes */
-.achievement {
+.achievement-card {
     display: inline-block;
     width: 375px;
     min-height: 425px;
@@ -19,7 +19,7 @@
     vertical-align: top;
 }
     /* Center achievement image in its pane */
-    .achievement .achievementImage {
+    .achievement-card .achievementImage {
         width: 120px;
         height: 120px;
         overflow: hidden;
@@ -27,7 +27,7 @@
         margin: 5px auto;
     }
         /* Center achievement image in its pane */
-        .achievement .achievementImage > img {
+        .achievement-card .achievementImage > img {
             max-width: 100%;
             max-height: 100%;
             position: absolute;
@@ -39,7 +39,7 @@
         }
 
     /* Change margin from claimant list */
-    .achievement .achievementClaimants {
+    .achievement-card .achievementClaimants {
         margin: 5px;
         text-align: left;
     }
@@ -85,5 +85,13 @@
         right: 0;
     }
     .achievement-wide .achievementClaimants {
-        text-align: right;
+        display: flex;
+        justify-content: flex-end;
+    }
+        .achievement-wide .achievementClaimants p {
+            align-self: flex-end;
+        }
+    .achievement-wide ul {
+        margin-bottom: 0px;
+        padding-left: 20px;
     }

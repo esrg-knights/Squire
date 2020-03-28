@@ -1,6 +1,5 @@
 {% load format_string %}
 {% load filter_first %}
-{% load negate %}
 
 <div class="card greenify achievement-wide">
     <div class="row no-gutters">
@@ -17,7 +16,7 @@
                             <small class="text-muted">
                                 {% if achievement.claimants|length > 0 %}
                                     {% for claimant in achievement.claimants|filter_first:1 %}
-                                            {% format_string achievement.unlocked_text "You" claimant.date_unlocked claimant.extra_data_1 claimant.extra_data_2 claimant.extra_data_3 %}
+                                        {% format_string achievement.unlocked_text "You" claimant.date_unlocked claimant.extra_data_1 claimant.extra_data_2 claimant.extra_data_3 %}
                                     {% endfor %}
                                 {% else %}
                                     You have not yet claimed this achievement.
