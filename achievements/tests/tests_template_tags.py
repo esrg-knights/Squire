@@ -26,3 +26,28 @@ class TemplateTagsTest(TestCase):
             "{% format_string 'This does not take any parameters!' %}"
         ).render(Context())
         self.assertEqual(out, "Bond, James Bond<br>My name is Oscar<br>This does not take any parameters!")
+
+    # Tests the subtract template tag
+    def test_subtract(self):
+        out = Template(
+            "{% load subtract %}"
+            "{{ 2|subtract:1 }}<br>"
+            "{{ 2|subtract:5 }}"
+        ).render(Context())
+        self.assertEqual(out, "1<br>-3")
+
+    # Tests the filter_first template tag
+    def test_filter_first(self):
+        out = Template(
+            "{% load filter_first %}"
+            "{% for item in lst|filter_first:0 %}"
+                "{{item}}<br>"
+            "{% endfor %}"
+            "<br><br>"
+            "{% for item in lst|filter_first:2 %}"
+                "{{item}}<br>"
+            "{% endfor %}"
+        ).render(Context({
+            'lst': [1, 'blah', -5],
+        }))
+        self.assertEqual(out, "<br><br>1<br>blah<br>")
