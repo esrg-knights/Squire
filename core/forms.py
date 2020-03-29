@@ -5,6 +5,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext, gettext_lazy as _
 
+from .util import add_form_control_class
 from .models import ExtendedUser as User
 
 ##################################################################################
@@ -17,6 +18,8 @@ from .models import ExtendedUser as User
 # It provides a different error message when passing invalid login credentials,
 # and allows Inactive users to login
 class LoginForm(AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        add_form_control_class(LoginForm, self, *args, **kwargs)
 
     def clean(self):
         # Obtain username and password
@@ -42,8 +45,11 @@ class LoginForm(AuthenticationForm):
 # RegisterForm that expands on the default UserCreationForm
 # It requires a (unique) email address, and includes an optional nickname field
 class RegisterForm(UserCreationForm):
+    def __init__(self, *args, **kwargs):
+        add_form_control_class(RegisterForm, self, *args, **kwargs)
+
     email = forms.EmailField(label = "Email")
-    nickname = forms.CharField(label = "Nickname", required=False, help_text='Optional')
+    nickname = forms.CharField(label = "Nickname", required=False, help_text='A nickname (if provided) is shown instead of your username.')
 
     class Meta:
         model = User

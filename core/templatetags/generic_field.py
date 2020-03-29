@@ -9,7 +9,7 @@ register = template.Library()
 # @since 05 FEB 2020
 ##################################################################################
 
-@register.inclusion_tag('membership_file/form_field.html')
+@register.inclusion_tag('core/form_field.html')
 def generic_field(*args):
     return {
         'fields': list(zip(args[:len(args)//2], args[len(args)//2:])),

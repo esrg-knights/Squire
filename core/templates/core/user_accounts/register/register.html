@@ -1,50 +1,41 @@
 {% extends 'core/base.html' %}
 {% load i18n static %}
 
+{% load generic_field %}
+
 {% block title %}
   Squire - Register
 {% endblock title %}
 
 
 {% block content %}
-    <h1>Register</h1>
+    <div class='contentFrame'>
+        <h1>Register</h1>
 
-    <p>{% trans "Please enter your password twice so we can verify you typed it in correctly." %}</p>
+        <p>{% trans "Please enter your password twice so we can verify you typed it in correctly." %}</p>
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-        <div class="fieldWrapper">
-            {{ form.email.errors }}
-            <label for="{{ form.email.id_for_label }}">Email</label>
-            {{ form.email }}
-            {{ form.email.help_text }}
-        </div>
-        <div class="fieldWrapper">
-                {{ form.nickname.errors }}
-                <label for="{{ form.nickname.id_for_label }}">Nickname:</label>
-                {{ form.nickname }}
-                {{ form.nickname.help_text }}
-            </div>
-        <div class="fieldWrapper">
-            {{ form.username.errors }}
-            <label for="{{ form.username.id_for_label }}">Username:</label>
-            {{ form.username }}
-            {{ form.username.help_text }}
-        </div>
-        <div class="fieldWrapper">
-            {{ form.password1.errors }}
-            <label for="{{ form.password1.id_for_label }}">Password:</label>
-            {{ form.password1 }}
-            {{ form.password1.help_text }}
-        </div>
-        <div class="fieldWrapper">
-            {{ form.password2.errors }}
-            <label for="{{ form.password2.id_for_label }}">Confirm Password:</label>
-            {{ form.password2 }}
-            {{ form.password2.help_text }}
-        </div>
-        <input type="submit" value="Create Account">
-    </form>
-    <p>Already have an account? <a href="{% url 'core/user_accounts/login' %}">Login</a> instead!</p>
+        <form method="post">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <ul class="errorlist alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% generic_field form.email -1 %}
+            {% generic_field form.nickname -1 %}
+            {% generic_field form.password1 -1 %}
+            {% generic_field form.password2 -1 %}
+
+            {% include 'core/description_required_fields.html' %}
+            <input type="submit" value="Create Account" class="greenify btn btn-dark">
+        </form>
+        <p>
+            <br>
+            Already have an account? <a href="{% url 'core/user_accounts/login' %}">Login</a> instead!
+        </p>
+    </div>
 {% endblock content %}

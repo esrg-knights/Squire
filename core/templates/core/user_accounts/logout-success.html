@@ -1,11 +1,25 @@
 {% extends 'core/base.html' %}
 
+{% load static %}
+
 {% block title %}
   Squire - Successful Logout
 {% endblock title %}
 
 {% block content %}
-    Successful logout!
-    <br/>
-    Click <a href="{% url 'core/homepage' %}">here</a> to go back to the homepage.
+  <div class='contentFrame'>
+    <center>
+      <h2>Successful Logout!</h2>
+      <p>
+        Nobody can view your secrets anymore if you leave your device opened up!
+      </p>
+      <img src="{% static 'images/regendans.jpg' %}" alt="Regendans" height='256px'>
+      <p>
+        Please do not perform rain dances on this page.
+      </p>
+      <p>
+        Click <a href="{% url 'core/homepage' %}">here</a> to go back to the homepage.
+      </p>
+    </center>
+  </div>
 {% endblock content %}

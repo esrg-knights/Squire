@@ -12,7 +12,13 @@
     <p>
       <form method="post">
           {% csrf_token %}
-          {{ form.non_field_errors }}
+          {% if form.non_field_errors %}
+            <ul class="errorlist alert alert-danger">
+              {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
 
           <h3>Basic Information</h3>
           <!-- First Name, Tussenvoegsel, Last Name-->
@@ -35,11 +41,9 @@
           {% generic_field form.street form.house_number form.house_number_addition -1 85 85 %}
           {% generic_field form.city form.state form.country -1 -1 -1 %}
 
-          <p>
-            <small>Fields marked by a * are required.</small>
-          </p>
+          {% include 'core/description_required_fields.html' %}
 
-          <input type="submit" value="Confirm Changes" class="greenify btn-dark">
+          <input type="submit" value="Confirm Changes" class="greenify btn btn-dark">
       </form>
     </p>
 

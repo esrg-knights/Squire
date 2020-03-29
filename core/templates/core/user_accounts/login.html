@@ -1,18 +1,35 @@
 
 {% extends 'core/base.html' %}
 
+{% load generic_field %}
+
 {% block title %}
   Squire - Login
 {% endblock title %}
 
 {% block content %}
+  <div class='contentFrame'>
     <h2>Login</h2>
     <form method="POST">{% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Login</button>
+        {% if form.non_field_errors %}
+          <ul class="errorlist alert alert-danger">
+            {% for error in form.non_field_errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        {% generic_field form.username -1 %}
+        {% generic_field form.password -1 %}
+
+        {% include 'core/description_required_fields.html' %}
+        <input type="submit" value="Login" class="greenify btn btn-dark">
     </form>
-    Forgot your password? Click <a href="{% url 'core/user_accounts/password_reset' %}">here</a> to reset it.
-    <p>You don't have an account? <a href="{% url 'core/user_accounts/register' %}">Register</a> instead!</p>
-    <br/><br/>
-    Click <a href="{% url 'core/homepage' %}">here</a> to go back to the homepage.
+    <br>
+    <p>
+      Forgot your password? Click <a href="{% url 'core/user_accounts/password_reset' %}">here</a> to reset it.
+      <br>
+      You don't have an account? <a href="{% url 'core/user_accounts/register' %}">Register</a> instead!
+    </p>
+  </div>
 {% endblock content %}
