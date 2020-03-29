@@ -1,7 +1,8 @@
 from django import forms
 from django.contrib.auth import authenticate
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import (AuthenticationForm, UserCreationForm,
+    PasswordChangeForm as DjangoPasswordChangeForm, PasswordResetForm as DjangoPasswordResetForm,
+    SetPasswordForm as DjangoPasswordResetConfirmForm)
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext, gettext_lazy as _
 
@@ -74,3 +75,17 @@ class RegisterForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+# Adds the relevant bootstrap classes to the password change form
+class PasswordChangeForm(DjangoPasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        add_form_control_class(PasswordChangeForm, self, *args, **kwargs)
+
+# Adds the relevant bootstrap classes to the password reset form
+class PasswordResetForm(DjangoPasswordResetForm):
+    def __init__(self, *args, **kwargs):
+        add_form_control_class(PasswordResetForm, self, *args, **kwargs)
+
+class PasswordResetConfirmForm(DjangoPasswordResetConfirmForm):
+    def __init__(self, *args, **kwargs):
+        add_form_control_class(PasswordResetConfirmForm, self, *args, **kwargs)
