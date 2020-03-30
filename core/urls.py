@@ -1,7 +1,7 @@
 from django.urls import path
 from django.conf import settings
 from django.contrib.auth import views as djangoViews
-from .forms import LoginForm
+from .forms import LoginForm, PasswordResetForm, PasswordChangeForm, PasswordResetConfirmForm
 from . import views as views
 
 urlpatterns = [
@@ -28,6 +28,7 @@ urlpatterns = [
                 'committee_abbreviation': settings.COMMITTEE_ABBREVIATION,
                 'application_name': settings.APPLICATION_NAME,
             },
+            form_class=PasswordResetForm,
         ),
         name='core/user_accounts/password_reset'),
     path('password_reset/done', djangoViews.PasswordResetDoneView.as_view(
@@ -39,6 +40,7 @@ urlpatterns = [
             success_url='/password_reset/success',
             extra_context={},
             template_name='core/user_accounts/password_reset/password_reset_confirm.html',
+            form_class=PasswordResetConfirmForm,
         ),
         name='core/user_accounts/password_reset/confirm'),
     path('password_reset/success', djangoViews.PasswordResetCompleteView.as_view(
@@ -51,6 +53,7 @@ urlpatterns = [
             template_name='core/user_accounts/password_change/password_change_form.html',
             extra_context={},
             success_url='password_change/success',
+            form_class=PasswordChangeForm,
         ),
         name='core/user_accounts/password_change'),
     path('account/password_change/success', djangoViews.PasswordChangeDoneView.as_view(

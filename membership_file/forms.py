@@ -3,6 +3,7 @@ from django.forms import ModelForm
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext, gettext_lazy as _
 
+from core.util import add_form_control_class
 from .models import Member
 from .models import MemberUser as User
 
@@ -16,10 +17,7 @@ from .models import MemberUser as User
 class MemberForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
-        super(MemberForm, self).__init__(*args, **kwargs)
-        for visible in self.visible_fields():
-            # Add Bootstrap css
-            visible.field.widget.attrs['class'] = 'form-control'
+        add_form_control_class(MemberForm, self, *args, **kwargs)
 
     def is_valid(self):
         ret = forms.Form.is_valid(self)
