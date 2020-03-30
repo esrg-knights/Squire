@@ -35,6 +35,7 @@ class AchievementModelSerializersTest(TestCase):
         })
 
         self.assertDictEqual(serializer.data, {
+            'id':                       1,
             'name':                     "Test",
             'description':              "Be a test user",
             'unlocked_text':            "Unlocked by {0} on {1}",
@@ -53,6 +54,7 @@ class AchievementModelSerializersTest(TestCase):
         })
 
         self.assertDictEqual(serializer.data, {
+            'id':                       1,
             'name':                     "Test",
             'description':              "Be a test user",
             'unlocked_text':            "Unlocked by {0} on {1}",
@@ -68,6 +70,7 @@ class AchievementModelSerializersTest(TestCase):
         serializer = AchievementSerializer(self.achievement)
 
         self.assertDictEqual(serializer.data, {
+            'id':                       1,
             'name':                     "Test",
             'description':              "Be a test user",
             'unlocked_text':            "Unlocked by {0} on {1}",
@@ -133,6 +136,7 @@ class AchievementModelSerializersTest(TestCase):
         })
 
         self.assertDictEqual(serializer.data, {
+            "id":           1,
             "name":         "Testing",
             "description":  "A Category used for testing!",
             "achievements": AchievementSerializer(Achievement.objects.filter(category__id=self.category.id), 

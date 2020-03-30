@@ -1,0 +1,99 @@
+/*********************************************************************************************
+DEFINITIONS
+*********************************************************************************************/
+/* Define main colour scheme */
+:root {
+    --main-bg-color: #206141;
+    --main-text-color: white;
+    --main-bg-color-dark: #163b28;
+    --main-bg-color-hover: #3b6b5377;
+    --main-bg-color-light: #45ac786e;
+}
+
+/* Main background colour */
+body {
+    background-color: #e5e0e0;
+}
+
+/*********************************************************************************************
+COLOUR SCHEME
+*********************************************************************************************/
+/* Headers and bold text have a slightly greenish colour */
+h1, h2, h3, h4, strong {
+    color: var(--main-bg-color-dark);
+}
+
+/* General theme colours */
+.greenify {
+    background-color: var(--main-bg-color);
+    color: var(--main-text-color);
+}
+
+/* Theme colours are different for Bootstrap dropdown menus */
+.greenify.dropdown-item {
+    background-color: inherit;
+    color: var(--main-bg-color);
+}
+    /* Green hover colours */
+    .greenify.dropdown-item.hover, .greenify.dropdown-item:hover {
+        background-color: var(--main-bg-color-hover);
+    }
+    /* Green click colours */
+    .greenify.dropdown-item.active, .greenify.dropdown-item:active {
+        background-color: var(--main-bg-color);
+        color: var(--main-text-color);
+    }
+
+.greenify.card {
+    background-color: var(--main-bg-color-light);
+    color: black;
+}
+
+/*********************************************************************************************
+FORMATTING
+*********************************************************************************************/
+/* Ensure elements can be aligned to the bottom of the page
+    when the page does not fill the entire viewport */
+body, html {
+    height: 100%;
+}
+
+footer {
+    /* Align footer to the bottom of the page (non-sticky) */
+    margin-top: auto; 
+
+    /* Footer is centered */
+    text-align: center;
+    width: 100%;
+    padding: 5px;
+    padding-bottom: 10px;
+}
+
+/* Add a margin aroun the page content
+    so it's not too close to the navigation and footer */
+    #mainContent {
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+    
+/* Main content is centered and cannot exceed a certain width */
+.contentFrame {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.wideContentFrame {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Vertically align the navbar brand with the navbar items*/
+.navbar-brand {
+    align-items: center;
+    display: flex;
+    padding: 0px;
+}
+    /* Properly space the brand icon and brand name */
+    .navbar-brand .brand-text {
+        margin-left: 10px;
+    }

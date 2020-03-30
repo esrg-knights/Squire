@@ -11,7 +11,7 @@ def user_to_member(user):
     """
     Transforms a User to a MemberUser with the same data
     """
-     # Copy over all old information
+    # Copy over all old information
     attrs = {field.name: getattr(user, field.name) for field in user._meta.fields}
     return MemberUser(**attrs)
 

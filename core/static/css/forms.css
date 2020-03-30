@@ -1,5 +1,11 @@
 
-/* Optional inputs gain a dashed border rather than a solid one */
-input:optional {
-    border-style: dashed
+/* Darken the field descriptions */
+.input-group-text.alert-danger {
+    background-color: #d6bfc1;
+    border-color: #bd9a9d;
+}
+
+/* Reduce standard padding on field error messages */
+.errorlist.alert {
+    padding: 5px 10px 5px 25px;
 }

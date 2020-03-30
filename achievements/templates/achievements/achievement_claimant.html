@@ -1,0 +1,7 @@
+{% load format_string %}
+
+{% if claimant.user_id == request_user_id %}
+    {% format_string achievement.unlocked_text "You" claimant.date_unlocked claimant.extra_data_1 claimant.extra_data_2 claimant.extra_data_3 %}
+{% else %}
+    {% format_string achievement.unlocked_text claimant.name claimant.date_unlocked claimant.extra_data_1 claimant.extra_data_2 claimant.extra_data_3 %}
+{% endif %}

@@ -1,0 +1,74 @@
+{% load filter_first %}
+{% load subtract %}
+
+<div class='achievement-card card greenify'>
+    <div class='achievementImage'>
+        <img src={{ achievement.image }} alt="Achievement Icon for {{achievement.name}}">
+    </div>
+    <div class="achievementName">
+        <h4>{{achievement.name}}</h4>
+        <p>
+            {{achievement.description}}
+        </p>
+    </div>
+    <!-- Show Claimants -->
+    {% if show_claimants %}
+        {% if not achievement.claimants %}
+        <div class="achievementMessage">
+            <p>
+                <i>No-one has claimed this achievement yet!</i>
+            </p>
+        </div>
+        {% else %}
+            <i>
+                {% with num_shown_claimants=2 %}
+                    {% with num_others_earned=achievement.claimants|length|subtract:num_shown_claimants %}
+                        <ul class="achievementClaimants">
+                            {% for claimant in achievement.claimants|filter_first:num_shown_claimants %}
+                                <li>
+                                    {% include "achievements/achievement_claimant.html" %}                               
+                                </li>
+                            {% endfor %}
+                            {% if num_others_earned > 0 %}
+                                <li>Claimed by {{ num_others_earned }} <a href="#" data-toggle="modal" data-target="#modal_achievement_{{achievement.id}}">other</a> user(s).</li>
+                            {% endif %}
+                        </ul>
+                        {% if num_others_earned <= 0 %}
+                            <div class="achievementMessage">
+                                <p>
+                                    <i>No other user has claimed this achievement.</i>
+                                </p>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                {% endwith %}
+            </i>
+        {% endif %}
+    {% endif %}
+</div>
+
+<!-- All claimants modal -->
+<div class="modal fade modal-achievement" id="modal_achievement_{{achievement.id}}" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{achievement.name}} Claimants</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+            <ul>
+                {% for claimant in achievement.claimants %}
+                    <li>
+                        {% include "achievements/achievement_claimant.html" %}                               
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary greenify" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>

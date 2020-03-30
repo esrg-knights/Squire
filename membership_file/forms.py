@@ -21,6 +21,13 @@ class MemberForm(ModelForm):
             # Add Bootstrap css
             visible.field.widget.attrs['class'] = 'form-control'
 
+    def is_valid(self):
+        ret = forms.Form.is_valid(self)
+        # Add an 'error' class to input elements that contain an error
+        for field in self.errors:
+            self.fields[field].widget.attrs.update({'class': self.fields[field].widget.attrs.get('class', '') + ' alert-danger'})
+        return ret
+
     class Meta:
         model = Member
         exclude = ('last_updated_by', 'marked_for_deletion', 'user')

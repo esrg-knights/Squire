@@ -7,34 +7,44 @@
 {% load generic_field %}
 
 {% block content %}
-    <h1>Editing user information...</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
+  <div class='wideContentFrame'>
+    <h1>Editing Member Information...</h1>
+    <p>
+      <form method="post">
+          {% csrf_token %}
+          {{ form.non_field_errors }}
 
-        <h3>Basic Information</h3>
-        <!-- First Name, Tussenvoegsel, Last Name-->
-        {% generic_field form.first_name form.tussenvoegsel form.last_name %}
-        {% generic_field form.member_since %}
-        {% generic_field form.date_of_birth %}
+          <h3>Basic Information</h3>
+          <!-- First Name, Tussenvoegsel, Last Name-->
+          {% generic_field form.first_name form.tussenvoegsel form.last_name -1 100 -1 %}
+          {% generic_field form.member_since -1 %}
+          {% generic_field form.date_of_birth -1 %}
 
-        <h3>Education</h3>
-        {% generic_field form.initials %}
-        {% generic_field form.student_number %}
-        {% generic_field form.educational_institution %}
+          <h3>Education</h3>
+          {% generic_field form.initials -1 %}
+          {% generic_field form.student_number -1 %}
+          {% generic_field form.educational_institution -1 %}
 
-        <h3>Access</h3>
-        {% generic_field form.tue_card_number %}
-        {% generic_field form.external_card_number form.external_card_digits form.external_card_cluster %}
+          <h3>Access</h3>
+          {% generic_field form.tue_card_number -1 %}
+          {% generic_field form.external_card_number form.external_card_digits form.external_card_cluster 110 70 -1 %}
 
-        <h3>Contact Information</h3>
-        {% generic_field form.email %}
-        {% generic_field form.phone_number %}
-        {% generic_field form.street form.house_number form.house_number_addition %}
-        {% generic_field form.city form.state form.country %}
+          <h3>Contact Information</h3>
+          {% generic_field form.email -1 %}
+          {% generic_field form.phone_number -1 %}
+          {% generic_field form.street form.house_number form.house_number_addition -1 85 85 %}
+          {% generic_field form.city form.state form.country -1 -1 -1 %}
 
-        <input type="submit" value="Confirm Changes">
-    </form>
+          <p>
+            <small>Fields marked by a * are required.</small>
+          </p>
 
-    Click <a href="{% url 'membership_file/membership' %}">here</a> to cancel all changes.
+          <input type="submit" value="Confirm Changes" class="greenify btn-dark">
+      </form>
+    </p>
+
+    <p>
+      Click <a href="{% url 'membership_file/membership' %}">here</a> to cancel all changes.
+    </p>
+  </div>
 {% endblock content %}

@@ -31,7 +31,7 @@ class AchievementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Achievement
-        fields = ('name', 'description', 'unlocked_text', 'image',
+        fields = ('id', 'name', 'description', 'unlocked_text', 'image',
             'claimants', 'claimants_sort_field', 'claimants_sort_ascending',
             'claimant_count')
         depth = 0
@@ -78,7 +78,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ("name", "description", "achievements")
+        fields = ("id", "name", "description", "achievements")
         depth = 1
 
     # Get achievements with the specified sorting

@@ -78,7 +78,7 @@ class Member(models.Model):
     external_card_digits_regex = RegexValidator(regex=r'^[0-9]{3}$', message="External card digits must consist of exactly 3 digits. E.g. 012")
     
     # External card uses the same number formatting as Tue cards, but its number does not necessarily need to be unique
-    external_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, blank=True, null=True)
+    external_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, blank=True, null=True, help_text="External cards are blue, whereas Tu/e cards are (currently) orange.")
     # 3-digit code at the bottom of a card
     external_card_digits = models.CharField(validators=[external_card_digits_regex], max_length=3, blank=True, null=True, verbose_name="digits")
     # The cluster contains additional information of an external card
@@ -91,11 +91,11 @@ class Member(models.Model):
     # CONTACT INFORMATION
     ##################################
     # Email address of the member
-    email = models.EmailField(max_length=255, unique=True)
+    email = models.EmailField(max_length=255, unique=True, help_text="This email address is used by the board to contact you.")
 
     # Telephone number of the member
-    phone_regex = RegexValidator(regex=r'^\+[0-9]{8,15}$', message="Phone number must be entered in the format: '+999999999'. Up to 14 digits allowed.")
-    phone_number = models.CharField(validators=[phone_regex], max_length=16, blank=True, null=True, unique=True)
+    phone_regex = RegexValidator(regex=r'^\+[0-9]{8,15}$', message="Phone number must be entered in the format: '+31651018209'. Up to 14 digits allowed.")
+    phone_number = models.CharField(validators=[phone_regex], max_length=16, blank=True, null=True, unique=True, help_text="A phone number is required if you want access to our rooms.")
 
     # Address of the member
     street = models.CharField(max_length=255)
