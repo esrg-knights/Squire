@@ -1,6 +1,7 @@
 {% extends 'core/base.html' %}
 
 {% load static %}
+{% load category_has_any_achievement_unlocked_or_empty %}
 
 {% block title %}
   Squire - Your Achievements
@@ -16,7 +17,7 @@
         <h1>Earned Achievements</h1>
         <p>
             These are all the achievement's you've earned; ever! Feel free to brag about them to other members.
-            The achievement that you unlocked the latests is shown first.
+            The achievement that you unlocked the latest is shown first.
         </p>
         <!-- Show Achievements per Category -->
         {% for category in categories %}
@@ -24,14 +25,18 @@
             <p>{{category.description}}</p>
             <!-- List Achievements -->
             <div class='achievementList'>
-                {% for achievement in category.achievements %}
-                    <!-- Only show user claimed achievements -->
-                    {% if achievement.claimants|length > 0 %}
-                        {% include "achievements/achievement_block_user.html" %}
-                    {% endif %}
-                {% empty %}
-                    <p>Woops! There do not seem to be any achievements in this category!</p>
-                {% endfor %}
+                {% if category|category_has_any_achievement_unlocked_or_empty %}
+                    {% for achievement in category.achievements %}
+                        <!-- Only show user claimed achievements -->
+                        {% if achievement.claimants|length > 0 %}
+                            {% include "achievements/achievement_block_user.html" %}
+                        {% endif %}
+                    {% empty %}
+                        <p>Woops! There do not seem to be any achievements in this category!</p>
+                    {% endfor %}
+                {% else %}
+                    <p style='text-align: left;'><i>You have not claimed any achievement in this category!</i></p>
+                {% endif %}
             </div>
         {% empty %}
             <p>Woops! No Achievements seem to exist!</p>
