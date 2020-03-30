@@ -15,14 +15,22 @@
                         <div class="col-md-10">
                             <div class="card-text">
                                 <small class="text-muted">
-                                    {% if achievement.claimants|length > 0 %}
-                                        <ul>
-                                            {% for claimant in achievement.claimants|filter_first:num_shown_claimants %}
-                                                <li>{% include "achievements/achievement_claimant.html" %}</li>
-                                            {% endfor %}
-                                        </ul>
+                                    {% if show_claimants %}
+                                        {% if achievement.claimants|length > 0 %}
+                                            <ul>
+                                                {% for claimant in achievement.claimants|filter_first:num_shown_claimants %}
+                                                    <li>{% include "achievements/achievement_claimant.html" %}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            No-one has claimed this achievement yet!
+                                        {% endif %}
                                     {% else %}
-                                        No-one has claimed this achievement yet!
+                                        {% if achievement.claimant_count > 0 %}
+                                            Claimed a total of {{achievement.claimant_count}} time(s).
+                                        {% else %}
+                                            This achievement was never claimed!
+                                        {% endif %}
                                     {% endif %}
                                 </small>
                             </div>

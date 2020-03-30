@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from core.models import ExtendedUser as User
+from membership_file.util import user_to_member
 
 import os
 
@@ -12,11 +13,12 @@ class Category(models.Model):
         # Enabled proper plurality
         verbose_name_plural = "categories"
         
-        # Sort by name. If they are equal, sort by Id
-        ordering = ['name','id']
+        # Sort by priority, then name, then Id
+        ordering = ['priority', 'name','id']
 
     name = models.CharField(max_length=63)
     description = models.TextField(max_length=255)
+    priority = models.IntegerField(default=1)
 
     def __str__(self):
         return self.name
@@ -77,6 +79,9 @@ class Achievement(models.Model):
     # False <==> Sort Descending
     claimants_sort_ascending = models.BooleanField(default=False)
 
+    # Whether the achievement can be accessed outside the admin panel
+    is_public = models.BooleanField(default=True)
+
     class Meta:
         permissions = [
             ("can_view_claimants", "Can view the claimants of Achievements"),
@@ -93,7 +98,7 @@ class Achievement(models.Model):
             return False
         
         # TODO: Work with Permission System
-        return user.is_authenticated
+        return user.is_authenticated and user_to_member(user).is_member()
 
 
 # Represents a user earning an achievement
