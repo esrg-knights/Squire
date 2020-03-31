@@ -21,7 +21,7 @@ SECRET_KEY_FILENAME = os.path.join(BASE_DIR, "squire/secret_key.txt")
 SECRET_KEY = util.get_secret_key(SECRET_KEY_FILENAME)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_ENV') != 'PRODUCTION'
 
 # Hosts on which the application will run
 ALLOWED_HOSTS = []
