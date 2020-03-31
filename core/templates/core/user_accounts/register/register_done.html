@@ -6,5 +6,11 @@
 {% endblock title %}
 
 {% block content %}
-    <p>Your account has been registered! Click <a href="{% url 'core/user_accounts/login' %}">here</a> to login!</p>
+  <div class='contentFrame'>
+    <h1>Register Successfull!</h1>
+    <p>Your account has been registered!</p>
+    <a href="{% url 'core/user_accounts/login' %}" class="greenify btn btn-dark greenify">
+      Log in
+    </a>
+  </div>
 {% endblock content %}
