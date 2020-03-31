@@ -6,3 +6,4 @@
 
 # Import the prod-dependencies
 gunicorn~=20.0.4
+sentry-sdk~=0.14.3

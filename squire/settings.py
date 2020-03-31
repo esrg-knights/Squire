@@ -23,6 +23,17 @@ SECRET_KEY = util.get_secret_key(SECRET_KEY_FILENAME)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_ENV') != 'PRODUCTION'
 
+if os.getenv('SENTRY_DSN'):
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+            os.getenv('SENTRY_DSN'),
+            integrations=[DjangoIntegration()],
+            # Do not send email addresses to Sentry
+            send_default_pii=False
+    )
+
 # Hosts on which the application will run
 ALLOWED_HOSTS = []
 
