@@ -21,7 +21,18 @@ SECRET_KEY_FILENAME = os.path.join(BASE_DIR, "squire/secret_key.txt")
 SECRET_KEY = util.get_secret_key(SECRET_KEY_FILENAME)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_ENV') != 'PRODUCTION'
+
+if os.getenv('SENTRY_DSN'):
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+            os.getenv('SENTRY_DSN'),
+            integrations=[DjangoIntegration()],
+            # Do not send email addresses to Sentry
+            send_default_pii=False
+    )
 
 # Hosts on which the application will run
 ALLOWED_HOSTS = []
@@ -187,10 +198,10 @@ LOGGING = {
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'htdocs', 'static')
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'htdocs', 'media')
 
 # Additional places to look for static files
 STATICFILES_DIRS = []
