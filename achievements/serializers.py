@@ -27,7 +27,7 @@ def get_claimant_sort(achievement):
 # user has the given achievement
 class AchievementSerializer(serializers.ModelSerializer):
     claimants = serializers.SerializerMethodField('get_all_claimants')
-    claimant_count = serializers.IntegerField(source='claimants.count', read_only=True)
+    claimant_count = serializers.SerializerMethodField('get_num_claimants')
 
     class Meta:
         model = Achievement
@@ -35,6 +35,10 @@ class AchievementSerializer(serializers.ModelSerializer):
             'claimants', 'claimants_sort_field', 'claimants_sort_ascending',
             'claimant_count')
         depth = 0
+    
+    # Count number of claimants
+    def get_num_claimants(self, obj):
+        return Claimant.objects.filter(achievement__id=obj.id).count()
     
     # Gets claimants of an achievement
     def get_all_claimants(self, obj):
@@ -88,13 +92,13 @@ class CategorySerializer(serializers.ModelSerializer):
         
         # Sort by name
         if sort_type is None or sort_type == AchievementSortType.ACHIEVEMENTSORT_DEFAULT:
-            return AchievementSerializer(Achievement.objects.filter(category__id=obj.id),
+            return AchievementSerializer(Achievement.objects.filter(category__id=obj.id, is_public=True),
                 context=self.context, many=True).data                    
 
         # Sort by latest unlocked date
         if sort_type == AchievementSortType.ACHIEVEMENTSORT_LATEST_UNLOCK_DATE:
             return AchievementSerializer(
-                    Achievement.objects.filter(category__id=obj.id)
+                    Achievement.objects.filter(category__id=obj.id, is_public=True)
                             .annotate(latest_unlocked_date=Max(Case(When(claimant__user__id=user_id, then='claimant__date_unlocked'))))
                         .order_by('-latest_unlocked_date', 'name'),
                     context=self.context, many=True).data
@@ -102,7 +106,7 @@ class CategorySerializer(serializers.ModelSerializer):
         # sort_type == AchievementSortType.ACHIEVEMENTSORT_MOST_NUM_CLAIMANTS 
         # Sort by number of claimants
         return AchievementSerializer(
-                Achievement.objects.filter(category__id=obj.id)
+                Achievement.objects.filter(category__id=obj.id, is_public=True)
                     .annotate(num_claimants=Count('claimants'))
                     .order_by('-num_claimants', 'name'),
                 context=self.context, many=True).data  

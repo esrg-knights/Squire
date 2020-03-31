@@ -58,3 +58,16 @@ In order to exclude files that do not need to be tested (and show up in the cove
 
 NB: Only files with a *.py* extension are tested by default.
 <br/><br/>
+
+## Setting up for Production
+There are still several things that need to be done before the application can be run. First and foremost, `DEBUG = False` should be set in `squire/settings.py`.
+Moreover, files in the `media` folder will need to be served. This should be set up on the server on which Squire is run itself.
+
+Before making anything public, run `python manage.py check --deploy` to ensure that there are no futher security warnings.
+
+Run `python manage.py migrate`
+Run `python manage.py runserver`
+
+### Loading Existing Data
+Setting up things like achievements can be time consuming. Hence, it is possible to use data that was set up earlier. For instance, achievement data can be dumped to a file using `python manage.py dumpdata achievements --exclude achievements.claimant --indent 2 > achievements.json`.
+After that, the data can easily be loaded during production using `python manage.py loaddata achievements.json` (after running `the migrate` but before running `runserver`). Note that the images inside the media folder are not automatically imported; only their file path is!
