@@ -5,4 +5,4 @@
 -r common.txt
 
 # Import the prod-dependencies
-
+gunicorn~=20.0.4
