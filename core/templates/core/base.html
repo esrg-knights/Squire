@@ -16,19 +16,12 @@
 			<link rel="stylesheet" href="{% static 'css/main.css' %}">
 			<link rel="stylesheet" href="{% static 'css/forms.css' %}">
 		{% endblock css %}
-
-		<!-- BEGIN APRILS FOOLS -->
-		<script src="{% static 'js/aprils-fools.js' %}"></script>
-		<!-- END APRILS FOOLS -->
 	</head>
 	<body class='d-flex flex-column'>
 		<nav class="navbar navbar-expand-lg navbar-dark greenify">
 			<a class="navbar-brand" href="/">
-				<!-- BEGIN APRILS FOOLS -->
-				<!-- <img src="{% static 'images/logo_black_dragon_white_text.png' %}" alt="Modified Knights Logo" height=85px> -->
-				<img src="{% static 'images/tim-triggered.png' %}" alt="Modified Knights Logo" height=85px>
+				<img src="{% static 'images/logo_black_dragon_white_text.png' %}" alt="Modified Knights Logo" height=85px>
 				<span class="brand-text">Squire</span>
-				<!-- END APRILS FOOLS -->
 			</a>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 				<span class="navbar-toggler-icon"></span>
@@ -41,11 +34,6 @@
 					<li>
 						<a class="nav-link" href="/calendar">Activity Calendar</a>
 					</li>
-					<!-- BEGIN APRILS FOOLS -->
-					<li>
-						<a class="nav-link" href="https://bit.ly/2URPMEe">Committees</a>
-					</li>
-					<!-- END APRILS FOOLS -->
 				</ul>
 				<ul class="navbar-nav navbar-right">
 					{% if user.is_authenticated %}
@@ -81,97 +69,7 @@
 					<!-- Other templates can add extra content here -->
 				{% endblock %}
 			</div>
-		</main>
-
-		<!-- BEGIN APRILS FOOLS -->
-		<a href="https://timheiszwolf.jimdofree.com/contact/">
-			<div class="april-ad left">
-				<img src="{% static 'images/tim-merch-ad.gif' %}" alt="Tim Heiszwolf Merch Advertisement">
-				<p>Advertisement</p>
-			</div>
-		</a>
-		<a href="https://kinjin.nl/?ddownload=1985">
-			<div class="april-ad right">
-				<img src="{% static 'images/weird-parrot.gif' %}" alt="Weird Parrot">
-				<p>Advertisement</p>
-			</div>
-		</a>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 0px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 30px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 60px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 90px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 120px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 150px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 180px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 210px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 240px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 270px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 300px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 330px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 360px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 390px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 420px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 450px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 480px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 510px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 540px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 570px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 600px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 630px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 660px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 690px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 720px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 750px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 780px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 810px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 840px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 870px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 900px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 930px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 960px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 990px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1020px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1050px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1080px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1110px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1140px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1170px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1200px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1230px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1260px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1290px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1320px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1350px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1380px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1410px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1440px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1470px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1500px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1530px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1560px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1590px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1620px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1650px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1680px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1710px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1740px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1770px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1800px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1830px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1860px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1890px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1920px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1950px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1980px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 1010px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 2040px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 2070px'>
-		<img class='april-footer-img' src="{% static 'images/parrot.gif' %}" alt="Party Parrot" style='left: 2100px'>
-		<div class="april-footer">
-			<p>This website uses cookies to steal your personal data and sells it off to third parties such as Quadrivium and Data Analytics for Engineers. Please press Ctrl + W to revoke consent.</p>
-		</div>
-		<br>
-		<!-- END APRILS FOOLS -->
+		</main>		
 		
 		<!-- Show footer at bottom of the page -->
 		<footer class='greenify'>
