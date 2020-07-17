@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # External Libraries
     'bootstrap4',
+    'recurrence',
     'rest_framework',
     # Internal Components
     'core', # Core Module should load first
