@@ -25,14 +25,6 @@ class OrderedEnum(Enum):
             return self.value < other.value
         return NotImplemented
 
-# Adds the bootstrap form control to a class when
-# called from that class' __init__ method
-def add_form_control_class(cls, self, *args, **kwargs):
-    super(cls, self).__init__(*args, **kwargs)
-    for visible in self.visible_fields():
-        # Add Bootstrap css
-        visible.field.widget.attrs['class'] = 'form-control'
-
 def suppress_warnings(original_function):
     """
     Decorator that surpresses Django-warnings when calling a function.
