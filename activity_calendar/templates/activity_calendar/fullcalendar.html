@@ -1,0 +1,99 @@
+{% extends 'core/base.html' %}
+
+{% load static %}
+
+{% block title %}
+  Squire - Calendar
+{% endblock title %}
+
+{% block css %}
+  {{ block.super }}
+  <link href="{% static 'js/fullcalendar/main.min.css' %}" rel='stylesheet'/>
+  <style>
+  
+    #loading {
+      display: none;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+  
+    #calendar {
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 0 10px;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+      font-size: 14px;
+    }
+
+      #calendar .fc-view-harness {
+        background-color: white;
+      }
+  
+  </style>
+{% endblock css %}
+
+{% block js %}
+  {{ block.super }}
+    <script src="{% static 'js/fullcalendar/main.min.js' %}"></script>
+    <script src="{% static 'js/fullcalendar/locales/en-gb.js' %}"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+          locale: 'en-gb', // We want dd/mm/yyy formatting
+          firstDay: 1, // Weeks start on monday
+          initialView: 'timeGridWeek',
+          headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'timeGridWeek,dayGridMonth listWeek,listMonth'
+          },
+          // Determines how far forward the scroll pane is initially scrolled.
+          // This value ensures that evening-activities are visible without needing to scroll
+          scrollTime: '14:00:00',
+          // customize the button names,
+          // otherwise they'd all just say "list"
+          views: {
+            listWeek: { buttonText: 'list day' },
+            listMonth: { buttonText: 'list week' }
+          },
+          editable: false,
+          navLinks: false, // can click day/week names to navigate views
+          dayMaxEvents: true, // allow "more" link when too many events
+          events: {
+            url: 'fullcalendar/',
+            failure: function() {
+              console.log('Something went wrong while fetching the activities!')
+              // document.getElementById('script-warning').style.display = 'block'
+            },
+            success: function(response){
+              console.log('Activities were successfully fetched!')
+            },
+            extraParams: {
+              test: 'hi!',
+            },
+          },
+          // FullCalendar expects a JSON array, which is part of a JSON object of us
+          eventSourceSuccess: function(content, xhr) {
+            return content.activities;
+          },
+          loading: function(bool) {
+            document.getElementById('loading').style.display =
+              bool ? 'block' : 'none';
+          }
+        });
+        calendar.render();
+      });
+    </script>
+{% endblock js %}
+
+{% block content %}
+    <div class="contentFrame">
+        <h1>Activity Calendar</h1>
+        <div id='loading'>loading...</div>
+      <div id='calendar'></div>
+    </div>
+{% endblock content %}

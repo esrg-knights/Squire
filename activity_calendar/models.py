@@ -1,18 +1,21 @@
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 
-from django_ical.utils import build_rrule_from_recurrences_rrule
-from django_ical.views import ICalFeed
 from recurrence.fields import RecurrenceField
+
+from core.models import ExtendedUser as User
 
 # Models related to the Calendar-functionality of the application.
 # @since 29 JUN 2019
 
 # The Activity model represents an activity in the calendar
 class Activity(models.Model): #TODO: Create testcases
+    verbose_name_plural = "activities"
+
     # The User that created the activity
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
     
     # Possible statuses of an event
     STATUS_OPTIONS = [
@@ -39,107 +42,59 @@ class Activity(models.Model): #TODO: Create testcases
     end_date = models.DateTimeField(default=timezone.now)
 
     # Recurrence information (e.g. a weekly event)
-    recurrences = RecurrenceField()
+    # This means we do not need to store (nor create!) recurring activities separately
+    recurrences = RecurrenceField(blank=True, include_dtstart=False)
+
+    # Maximum number of participants/slots
+    # -1 denotes unlimited
+    max_slots = models.IntegerField(default=-1, validators=[MinValueValidator(-1)],
+        help_text="-1 denotes unlimited slots")
+    max_participants = models.IntegerField(default=-1, validators=[MinValueValidator(-1)],
+        help_text="-1 denotes unlimited participants")
+
+    # Maximum number of slots that someone can create/join
+    max_slots_join_per_participant = models.IntegerField(default=-1, validators=[MinValueValidator(-1)],
+        help_text="-1 denotes unlimited slots")
+    max_slots_create_per_participant = models.IntegerField(default=-1, validators=[MinValueValidator(-1)],
+        help_text="-1 denotes unlimited slots")
+    
 
     # Publishes the activity, making it visible for all users
     def publish(self):
         self.published_date = timezone.now()
         self.save()
 
+    # Whether this activity is recurring
+    def is_recurring(self):
+        return self.recurrences is not None
+        
+
+    def has_instance_at(self, datetime):
+        if not self.is_recurring():
+            # Not a recurring activity; we only need to check the object's start time
+            return self.start_date == datetime
+        
+        # Date is specifically excluded
+        if datetime in self.recurrences.exdates:
+            return False
+
+
+        print("exdates")
+        for date in self.recurrences.exdates:
+            print(date)
+        print(self.recurrences.rdates)
+        print(self.recurrences.exrules)
+        print(self.recurrences.rrules)
+
+        print("reeee")
+        print(self.recurrences.occurrences())
+        # for thingy in self.recurrences.occurrences():
+        #     print(thingy)
+        
+        # print(timezone.datetime(2020, 7, 23, 22, tzinfo=timezone.utc))
+
     # String-representation of an instance of the model
     def __str__(self):
         return "{1} ({0})".format(self.id, self.title)
 
-
-class EventFeed(ICalFeed):
-    """
-    A simple event calender
-    Please refer the docs for the full list of options:
-    https://django-ical.readthedocs.io/en/latest/usage.html#property-reference-and-extensions
-    """
-    product_id = '-//Squire//Activity Calendar//EN'
-    timezone = 'UTC'
-    file_name = "knights-calendar.ics"
-
-    def title(self):
-        # TODO: unhardcode
-        return "Activiteiten Agenda - Knights"
-
-    def description(self):
-        # TODO: unhardcode
-        return "Knights of the Kitchen Table Activiteiten en Evenementen."
-
-    def method(self):
-        return "PUBLISH"
-
-    def timezone(self):
-        return settings.TIME_ZONE
-
-    def items(self):
-        # Only consider published activities
-        return Activity.objects.filter(published_date__lte=timezone.now()).order_by('-published_date')
-
-    def item_guid(self, item):
-        # ID should be _globally_ unique
-        return f"activity-id-{item.id}@kotkt.nl"
     
-    def item_class(self, item):
-        return "PUBLIC"
-
-    def item_title(self, item):
-        return item.title
-
-    def item_description(self, item):
-        return item.description
-
-    def item_start_datetime(self, item):
-        return item.start_date
-    
-    def item_end_datetime(self, item):
-        return item.end_date
-    
-    def item_created(self, item):
-        return item.created_date
-    
-    def item_updateddate(self, item):
-        return item.last_updated_date
-
-    def item_timestamp(self, item):
-        return self.item_created(item)
-
-    def item_link(self, item):
-        # There is no special page for the activity
-        return ""
-
-    def item_location(self, item):
-        return item.location
-    
-    def item_status(self, item):
-        return item.status
-    
-    def item_transparency(self, item):
-        # Items marked as "TRANSPARENT" show up as 'free' in busy time searches
-        # Items marked as "OPAQUE" show up as 'busy' in busy time searches.
-        return "TRANSPARENT"
-
-    def item_rrule(self, item):
-        if item.recurrences:
-            rules = []
-            for rule in item.recurrences.rrules:
-                rules.append(build_rrule_from_recurrences_rrule(rule))
-            return rules
-
-    def item_exrule(self, item):
-        if item.recurrences:
-            rules = []
-            for rule in item.recurrences.exrules:
-                rules.append(build_rrule_from_recurrences_rrule(rule))
-            return rules
-
-    def item_rdate(self, item):
-        if item.recurrences:
-            return item.recurrences.rdates
-
-    def item_exdate(self, item):
-        if item.recurrences:
-            return item.recurrences.exdates

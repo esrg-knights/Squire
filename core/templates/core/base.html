@@ -11,11 +11,17 @@
 		{% bootstrap_css %}
 		{% bootstrap_javascript jquery='full' %}
 
-		<!-- Custom Css -->
+		<!-- Css -->
 		{% block css %}
 			<link rel="stylesheet" href="{% static 'css/main.css' %}">
 			<link rel="stylesheet" href="{% static 'css/forms.css' %}">
 		{% endblock css %}
+
+		<!-- Js -->
+		{% block js %}
+		{% endblock js %}
+
+		<!-- Form Media -->
 		{% block form_media %}
 			{{ form.media }}
 		{% endblock form_media %}
