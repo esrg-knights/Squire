@@ -15,6 +15,5 @@ class Migration(migrations.Migration):
             model_name='activity',
             name='recurrences',
             field=recurrence.fields.RecurrenceField(blank=True, default=''),
-            preserve_default=False,
         ),
     ]

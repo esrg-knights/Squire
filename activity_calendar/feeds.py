@@ -1,10 +1,19 @@
 from django.conf import settings
 from django.utils import timezone
 
+import django_ical.feedgenerator
+
 from django_ical.utils import build_rrule_from_recurrences_rrule
 from django_ical.views import ICalFeed
 
 from .models import Activity
+
+# Monkey-patch; Why is this not open for extension in the first place?
+django_ical.feedgenerator.ITEM_EVENT_FIELD_MAP = (
+    *(django_ical.feedgenerator.ITEM_EVENT_FIELD_MAP),
+    ('recurrenceid',    'recurrence-id'),
+)
+
 
 class EventFeed(ICalFeed):
     """
@@ -60,7 +69,8 @@ class EventFeed(ICalFeed):
         return item.last_updated_date
 
     def item_timestamp(self, item):
-        return self.item_created(item)
+        # When the item was generated, which is at this moment!
+        return timezone.now()
 
     def item_link(self, item):
         # There is no special page for the activity
@@ -104,8 +114,16 @@ class EventFeed(ICalFeed):
     # Dates to exclude for recurrence rules
     def item_exdate(self, item):
         if item.recurrences:
-            print(item.recurrences.exdates)
-            # REEE dit is allemaal UTC!
-            # TODO: kijk of er in de recurrence ding een optie UTC zit ofzo...
-            # of convert de begin/eindtijd van events naar UTC in deze feed, en de timezone ook
             return item.recurrences.exdates
+
+    # RECURRENCE-ID
+    def item_recurrenceid(self, item):
+        return None
+
+    # We also want to store the recurrence-id
+    def item_extra_kwargs(self, item):
+        kwargs = super().item_extra_kwargs(item)
+        recurrence_id =  self._get_dynamic_attr('item_recurrenceid', item)
+        if recurrence_id:
+            return {**kwargs, 'recurrenceid': recurrence_id}
+        return kwargs

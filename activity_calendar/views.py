@@ -52,7 +52,6 @@ def fullcalendar_feed(request):
     if start_date is None or end_date is None:
         return HttpResponseBadRequest("start and end date must be provided")
 
-    print(start_date)
     # Start and end dates should be provided in ISO format
     try: 
         start_date = datetime.fromisoformat(start_date)
@@ -64,33 +63,34 @@ def fullcalendar_feed(request):
     if (end_date - start_date).days > 42:
         return HttpResponseBadRequest("start and end date cannot differ more than 42 days")
 
+    activities = []
     non_recurring_activities = Activity.objects.filter(recurrences="", published_date__lte=timezone.now()) \
             .filter((Q(start_date__gte=start_date) | Q(end_date__lte=end_date)))
+    
+    for non_recurring_activity in non_recurring_activities:
+        activities.append({
+            'groupId': non_recurring_activity.id,
+            'title': non_recurring_activity.title,
+            'start': non_recurring_activity.start_date.isoformat(),
+            'end': non_recurring_activity.end_date.isoformat(),
+        })
 
     all_recurring_activities = Activity.objects.exclude(recurrences="").filter(published_date__lte=timezone.now())
-    filtered_recurring_activities = []
 
     for recurring_activity in all_recurring_activities:
         recurrences = recurring_activity.recurrences
+        start_time = recurring_activity.start_date.time()
+        end_time = recurring_activity.end_date.time()
 
-        print(str(type(recurrences)))
-        print(recurrences.dtstart)
-
-        for instance in recurrences.between(start_date, end_date, dtstart=start_date, inc=True):
-            filtered_recurring_activities.append({
+        for instance in recurrences.between(start_date, end_date, dtstart=recurring_activity.start_date, inc=True):
+            instance_start_date = datetime.combine(instance.date(), start_time, tzinfo=timezone.utc)
+            activities.append({
                 'groupId': recurring_activity.id,
                 'title': recurring_activity.title,
-                'start': datetime.combine(instance.date(), recurring_activity.start_date.time(), tzinfo=timezone.utc).isoformat(),
-                'end': datetime.combine(instance.date(), recurring_activity.end_date.time(), tzinfo=timezone.utc).isoformat(),
+                'start': instance_start_date.isoformat(),
+                'end': datetime.combine(instance.date(), end_time, tzinfo=timezone.utc).isoformat(),
             })
-
-    # print(filtered_recurring_activities)
-    import pprint
-    pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(filtered_recurring_activities)
-
-    print(start_date)
 
     print("FULLCALENDAR REQUESTED SOMETHING!")
 
-    return JsonResponse({'activities': filtered_recurring_activities})
+    return JsonResponse({'activities': activities})

@@ -1,7 +1,9 @@
 from django.conf import settings
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
 from django.utils import timezone
+
+from datetime import datetime
 
 from recurrence.fields import RecurrenceField
 
@@ -18,6 +20,7 @@ class Activity(models.Model): #TODO: Create testcases
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
     
     # Possible statuses of an event
+    # TODO: These are likely only for meeting requests; Remove them in a future version!
     STATUS_OPTIONS = [
         ("CONFIRMED",   "Confirmed"),
         ("CANCELLED",   "Cancelled"),
@@ -43,7 +46,7 @@ class Activity(models.Model): #TODO: Create testcases
 
     # Recurrence information (e.g. a weekly event)
     # This means we do not need to store (nor create!) recurring activities separately
-    recurrences = RecurrenceField(blank=True, include_dtstart=False)
+    recurrences = RecurrenceField(blank=True)
 
     # Maximum number of participants/slots
     # -1 denotes unlimited
@@ -64,37 +67,38 @@ class Activity(models.Model): #TODO: Create testcases
         self.published_date = timezone.now()
         self.save()
 
-    # Whether this activity is recurring
-    def is_recurring(self):
-        return self.recurrences is not None
-        
-
-    def has_instance_at(self, datetime):
-        if not self.is_recurring():
-            # Not a recurring activity; we only need to check the object's start time
-            return self.start_date == datetime
-        
-        # Date is specifically excluded
-        if datetime in self.recurrences.exdates:
-            return False
-
-
-        print("exdates")
-        for date in self.recurrences.exdates:
-            print(date)
-        print(self.recurrences.rdates)
-        print(self.recurrences.exrules)
-        print(self.recurrences.rrules)
-
-        print("reeee")
-        print(self.recurrences.occurrences())
-        # for thingy in self.recurrences.occurrences():
-        #     print(thingy)
-        
-        # print(timezone.datetime(2020, 7, 23, 22, tzinfo=timezone.utc))
-
     # String-representation of an instance of the model
     def __str__(self):
         return "{1} ({0})".format(self.id, self.title)
 
     
+    def clean_fields(self, exclude=None):
+        super().clean_fields(exclude=exclude)
+        errors = {}
+
+        # Activities must start before they can end
+        if self.start_date >= self.end_date:
+            errors.update({'start_date': 'Start date must be before the end date'})
+
+
+        r = self.recurrences
+        if r:
+            recurrence_errors = []
+            current_start_time = self.start_date.time()
+
+            # Attempting to exclude dates if no recurrence is specified
+            if not r.rrules and (r.exrules or r.exdates):
+                recurrence_errors.append('Cannot exclude dates if the activity is non-recurring')
+
+            # Each EXDATE's time needs to match the event start-time
+            # Since there's no possibility to select the time in the UI, we're overriding it here
+            r.exdates = list(map(lambda dt: datetime.combine(
+                    dt.astimezone(timezone.get_current_timezone()).date(),
+                    current_start_time), r.exdates))
+
+            if recurrence_errors:
+                errors.update({'recurrences': recurrence_errors})
+
+        if errors:
+            raise ValidationError(errors)
+        
