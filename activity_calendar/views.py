@@ -11,11 +11,6 @@ from .models import Activity
 # Renders the simple v1 calendar
 @require_safe
 def googlehtml_activity_collection(request):
-    act = Activity.objects.filter(title="Test Activity").first()
-    print(act.title)
-    print(timezone.now())
-    print(act.start_date)
-    act.has_instance_at(timezone.now())
     return render(request, 'activity_calendar/calendar.html', {})
 
 
@@ -41,6 +36,23 @@ def activity_collection(request):
         # "events":all_events,
     }
     return render(request, 'activity_calendar/fullcalendar.html', context)
+
+def get_activity_json(activity, start, end):
+    return {
+        'groupId': activity.id,
+        'title': activity.title,
+        'description': activity.description,
+        'location': activity.location,
+        'recurrenceInfo': {
+            'rrules': [rule.to_text() for rule in activity.recurrences.rrules],
+            'exrules': [rule.to_text() for rule in activity.recurrences.exrules],
+            'rdates': [occ.date().isoformat() for occ in activity.recurrences.rdates],
+            'exdates': [occ.date().isoformat() for occ in activity.recurrences.exdates],
+        },
+        'start': start,
+        'end': end,
+        'allDay': False,
+    }
 
 @require_safe
 def fullcalendar_feed(request):
@@ -69,12 +81,11 @@ def fullcalendar_feed(request):
             .filter((Q(start_date__gte=start_date) | Q(end_date__lte=end_date)))
     
     for non_recurring_activity in non_recurring_activities:
-        activities.append({
-            'groupId': non_recurring_activity.id,
-            'title': non_recurring_activity.title,
-            'start': non_recurring_activity.start_date.isoformat(),
-            'end': non_recurring_activity.end_date.isoformat(),
-        })
+        activities.append(get_activity_json(
+            non_recurring_activity,
+            non_recurring_activity.start_date.isoformat(),
+            non_recurring_activity.end_date.isoformat()
+        ))
 
     # Obtain occurrences of recurring activities in the relevant timeframe
     all_recurring_activities = Activity.objects.exclude(recurrences="").filter(published_date__lte=timezone.now())
@@ -84,14 +95,16 @@ def fullcalendar_feed(request):
         start_time = recurring_activity.start_date.time()
         end_time = recurring_activity.end_date.time()
 
-        for instance in recurrences.between(start_date, end_date, dtstart=recurring_activity.start_date, inc=True):
-            instance_start_date = datetime.combine(instance.date(), start_time, tzinfo=timezone.utc)
-            activities.append({
-                'groupId': recurring_activity.id,
-                'title': recurring_activity.title,
-                'start': instance_start_date.isoformat(),
-                'end': datetime.combine(instance.date(), end_time, tzinfo=timezone.utc).isoformat(),
-            })
+        # If the activity ends on a different day than it starts, this also needs to be the case for the occurrence
+        days_diff = recurring_activity.end_date.date() - recurring_activity.start_date.date()
+
+        for occurence in recurrences.between(start_date, end_date, dtstart=recurring_activity.start_date, inc=True):
+            occurence_start_date = datetime.combine(occurence.date(), start_time, tzinfo=timezone.utc)
+            activities.append(get_activity_json(
+                recurring_activity,
+                occurence_start_date.isoformat(),
+                datetime.combine(occurence.date() + days_diff, end_time, tzinfo=timezone.utc).isoformat()
+            ))
 
     return JsonResponse({'activities': activities})
 

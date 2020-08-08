@@ -36,4 +36,82 @@
       <div id='loading'>loading...</div>
       <div id='calendar'></div>
     </div>
+
+    <!-- Event Details Modal -->
+    <div class="modal fade" id="event-modal" tabindex="-1" role="dialog" aria-labelledby="event-modal-aria" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modal-title">Modal title</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body" id="modal-description">
+            <div class="container-fluid">
+              <div class="row">
+                <!-- Calendar Icon -->
+                <div class="col-xs-2">
+                  <img
+                    src="{% static 'icons/calendar.svg' %}" 
+                    alt="Calendar"
+                    height="16"
+                    width="16"
+                  />
+                </div>
+                <!-- Event Date & Recurrence Information -->
+                <div class="col align-self-center">
+                  <div class='nospace'>
+                    <small>
+                      <p id="event-date"></p>
+                      <span id="event-recurrence-info">
+                        <p id="rrules"></p>
+                        <p id="rdates"></p>
+                        <p id="exrules"></p>
+                        <p id="exdates"></p>
+                      </span>
+                    </small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row largespace">
+                <!-- Location Icon -->
+                <div class="col-xs-2">
+                  <img
+                    src="{% static 'icons/location.svg' %}" 
+                    alt="Calendar"
+                    height="16"
+                    width="16"
+                  />
+                </div>
+                <!-- Location -->
+                <div class="col nospace align-self-center">
+                  <small><p id="event-location"></p></small>
+                </div>
+              </div>
+            
+              <div class="row">
+                <!-- Calendar Icon -->
+                <div class="col-xs-2">
+                  <img
+                    src="{% static 'icons/three-bars.svg' %}" 
+                    alt="Calendar"
+                    height="16"
+                    width="16"
+                  />
+                </div>
+                <!-- Event Description -->
+                <div class="col align-self-center">
+                  <p id="event-description"></p>
+                </div>
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
 {% endblock content %}

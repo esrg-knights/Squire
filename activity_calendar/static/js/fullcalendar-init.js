@@ -46,10 +46,79 @@ document.addEventListener('DOMContentLoaded', function() {
         eventSourceSuccess: function(content, xhr) {
             return content.activities;
         },
+        eventClick: function(info) {
+            onEventClick(info, this)
+        },
         loading: function(bool) {
-        document.getElementById('loading').style.display =
-            bool ? 'block' : 'none';
+            document.getElementById('loading').style.display =
+                bool ? 'block' : 'none';
         }
     });
     calendar.render();
 });
+
+
+function onEventClick(info, calendar) {
+    var event = info.event
+    var start_date = event.start
+    var end_date = event.end
+
+    var date_str = ""
+    if (start_date.getDate() === end_date.getDate()
+            && start_date.getMonth() === end_date.getMonth()
+            && start_date.getFullYear() === end_date.getFullYear()) {
+        
+        // Vrijdag, 7 augustus 19:00 – 22:00
+        date_str = start_date.toLocaleString('en-gb', {
+                weekday: 'long', month: 'long', day: 'numeric' 
+            })
+
+        if (event.allDay) {
+            // All-day event; display "all day" instead of event duration
+            date_str += ' - ' + calendar.currentData.options.allDayText
+        } else {
+            date_str += ' '
+                + start_date.toLocaleString('en-gb', {
+                    hour: 'numeric', minute: 'numeric' 
+                })
+                + ' - '
+                + end_date.toLocaleString('en-gb', {hour: 'numeric', minute: 'numeric'})
+        }
+    } else {
+        // 5 augustus, 19:30 – 6 augustus, 02:00
+        var opts = {}
+
+        if (!event.allDay) {
+            opts = {hour: 'numeric', minute: 'numeric'}
+        }
+
+        date_str = start_date.toLocaleString('en-gb', {
+            month: 'long', day: 'numeric', ...opts
+        })
+        date_str += ' - ' + end_date.toLocaleString('en-gb', {
+            month: 'long', day: 'numeric', ...opts
+        })
+    }
+
+    var rInfo = event.extendedProps.recurrenceInfo
+
+    // Set modal contents
+    $('#modal-title').text(event.title)
+    $('#event-date').text(date_str)
+    if (rInfo.rrules.length !== 0) {
+        $('#event-recurrence-info #rrules').text('Repeats ' + rInfo.rrules.join(' and '))
+    }
+    if (rInfo.rdates.length !== 0) {
+        $('#event-recurrence-info #rdates').text('Also on: ' + rInfo.rdates.join(' and ') )
+    }
+    if (rInfo.exrules.length !== 0) {
+        $('#event-recurrence-info #exrules').text('Excluding ' + rInfo.exrules.join(' and '))
+    }
+    if (rInfo.exdates.length !== 0) {
+        $('#event-recurrence-info #exdates').text('Except on: ' + rInfo.exdates.join(' and '))
+    }
+    $('#event-location').text(event.extendedProps.location)
+    $('#event-description').text(event.extendedProps.description)
+
+    $('#event-modal').modal()
+}

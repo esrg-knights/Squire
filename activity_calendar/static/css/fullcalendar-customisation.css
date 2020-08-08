@@ -18,5 +18,23 @@
 }
 
     #calendar .fc-view-harness {
-    background-color: white;
+        background-color: white;
     }
+
+    
+#event-modal .modal-body {
+    padding-top: 10px;
+}
+
+#event-modal .nospace p {
+    margin-bottom: 0px;
+}
+
+#event-modal .row {
+    margin-bottom: 5px;
+}
+
+#event-modal .largespace {
+    margin-bottom: 15px;
+}
+
