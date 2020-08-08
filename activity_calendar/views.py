@@ -63,6 +63,7 @@ def fullcalendar_feed(request):
     if (end_date - start_date).days > 42:
         return HttpResponseBadRequest("start and end date cannot differ more than 42 days")
 
+    # Obtain non-recurring activities
     activities = []
     non_recurring_activities = Activity.objects.filter(recurrences="", published_date__lte=timezone.now()) \
             .filter((Q(start_date__gte=start_date) | Q(end_date__lte=end_date)))
@@ -75,6 +76,7 @@ def fullcalendar_feed(request):
             'end': non_recurring_activity.end_date.isoformat(),
         })
 
+    # Obtain occurrences of recurring activities in the relevant timeframe
     all_recurring_activities = Activity.objects.exclude(recurrences="").filter(published_date__lte=timezone.now())
 
     for recurring_activity in all_recurring_activities:
@@ -91,6 +93,8 @@ def fullcalendar_feed(request):
                 'end': datetime.combine(instance.date(), end_time, tzinfo=timezone.utc).isoformat(),
             })
 
-    print("FULLCALENDAR REQUESTED SOMETHING!")
-
     return JsonResponse({'activities': activities})
+
+
+# https://stackoverflow.com/questions/8858426/fullcalendar-json-feed-caching
+# https://fullcalendar.io/docs/recurring-events
