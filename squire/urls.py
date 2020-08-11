@@ -26,7 +26,7 @@ urlpatterns = [
     # Achievements
     path('', include('achievements.urls')),
     # Activity Calendar
-    path('calendar/', include('activity_calendar.urls')),
+    path('', include('activity_calendar.urls')),
     # Membership File
     path('', include('membership_file.urls')),
 

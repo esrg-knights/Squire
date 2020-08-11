@@ -23,7 +23,7 @@ SECRET_KEY = util.get_secret_key(SECRET_KEY_FILENAME)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_ENV') != 'PRODUCTION'
 
-if os.getenv('SENTRY_DSN'):
+if os.getenv('SENTRY_DSN'): # pragma: no cover
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
 

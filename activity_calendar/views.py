@@ -46,8 +46,8 @@ def get_activity_json(activity, start, end):
         'recurrenceInfo': {
             'rrules': [rule.to_text() for rule in activity.recurrences.rrules],
             'exrules': [rule.to_text() for rule in activity.recurrences.exrules],
-            'rdates': [occ.date().isoformat() for occ in activity.recurrences.rdates],
-            'exdates': [occ.date().isoformat() for occ in activity.recurrences.exdates],
+            'rdates': [occ.date().strftime("%A, %B %d, %Y") for occ in activity.recurrences.rdates],
+            'exdates': [occ.date().strftime("%A, %B %d, %Y") for occ in activity.recurrences.exdates],
         },
         'start': start,
         'end': end,

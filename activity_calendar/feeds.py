@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.conf import settings
 from django.utils import timezone
 
@@ -79,10 +81,6 @@ class EventFeed(ICalFeed):
     def item_location(self, item):
         return item.location
     
-    def item_status(self, item):
-        # TODO: check how "CANCELLED" activiites show in Google Calendar and Outlook Calendar
-        return item.status
-    
     def item_transparency(self, item):
         # Items marked as "TRANSPARENT" show up as 'free' in busy time searches
         # Items marked as "OPAQUE" show up as 'busy' in busy time searches.
@@ -114,6 +112,15 @@ class EventFeed(ICalFeed):
     # Dates to exclude for recurrence rules
     def item_exdate(self, item):
         if item.recurrences:
+            # Each EXDATE's time needs to match the event start-time, but they default to midnigth in the widget!
+            # Since there's no possibility to select the time in the UI either, we're overriding it here
+            # and enforce each EXDATE's time to be equal to the event's start time
+            utc_start_time = item.start_date.astimezone(timezone.utc).time()
+            print([dt.time() == utc_start_time for dt in item.recurrences.exdates])
+            item.recurrences.exdates = list(map(lambda dt:
+                    datetime.combine(
+                        timezone.localtime(dt).date(),
+                        utc_start_time, timezone.utc), item.recurrences.exdates))
             return item.recurrences.exdates
 
     # RECURRENCE-ID
