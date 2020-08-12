@@ -92,18 +92,20 @@ def fullcalendar_feed(request):
 
     for recurring_activity in all_recurring_activities:
         recurrences = recurring_activity.recurrences
-        start_time = recurring_activity.start_date.time()
-        end_time = recurring_activity.end_date.time()
+        # start_time = recurring_activity.start_date.time()
+        # end_time = recurring_activity.end_date.time()
 
         # If the activity ends on a different day than it starts, this also needs to be the case for the occurrence
-        days_diff = recurring_activity.end_date.date() - recurring_activity.start_date.date()
-
+        # days_diff = recurring_activity.end_date.date() - recurring_activity.start_date.date()
+        time_diff = recurring_activity.end_date - recurring_activity.start_date
+        print(recurring_activity)
         for occurence in recurrences.between(start_date, end_date, dtstart=recurring_activity.start_date, inc=True):
-            occurence_start_date = datetime.combine(occurence.date(), start_time, tzinfo=timezone.utc)
+            print(occurence)
+            # occurence_start_date = datetime.combine(occurence.date(), start_time, tzinfo=timezone.utc)
             activities.append(get_activity_json(
                 recurring_activity,
-                occurence_start_date.isoformat(),
-                datetime.combine(occurence.date() + days_diff, end_time, tzinfo=timezone.utc).isoformat()
+                occurence.isoformat(),# occurence_start_date.isoformat(),
+                occurence + time_diff,# datetime.combine(occurence.date() + days_diff, end_time, tzinfo=timezone.utc).isoformat()
             ))
 
     return JsonResponse({'activities': activities})
