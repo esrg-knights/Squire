@@ -40,7 +40,6 @@ def get_activity_json(activity, start, end):
 def fullcalendar_feed(request):
     start_date = request.GET.get('start', None)
     end_date = request.GET.get('end', None)
-    test = request.GET.get('test', None)
 
     # Start and end dates should be provided
     if start_date is None or end_date is None:

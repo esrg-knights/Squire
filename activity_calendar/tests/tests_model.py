@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from django.core.validators import ValidationError
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.utils import timezone
 
 from recurrence import Recurrence, deserialize as deserialize_recurrence_test

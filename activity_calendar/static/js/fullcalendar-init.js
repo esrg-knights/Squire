@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
         navLinks: false, // can click day/week names to navigate views
         dayMaxEvents: true, // allow "more" link when too many events
         events: {
-            url: '/api/calendar/activities',
+            url: '/api/calendar/fullcalendar',
             failure: function() {
                 if ($("#error-msg .alert").length <= 1) {
                     $("#error-template").clone().appendTo("#error-msg").show();
