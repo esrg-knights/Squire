@@ -67,11 +67,6 @@ class ExtendedICal20Feed(ICal20Feed):
 
         calendar.add_component(tz_info)
 
-        # print("Items:")
-        # print(self.items)
-        print("Feed:")
-        print(self.feed)
-
         super().write_items(calendar)
 
 
@@ -142,10 +137,12 @@ class CESTEventFeed(ICalFeed):
         return item.description
 
     def item_start_datetime(self, item):
-        return item.start_date
+        # Convert to Europe/Amsterdam to ensure daylight saving time is accounted for in recurring events
+        return item.start_date.astimezone(timezone.get_current_timezone())
     
     def item_end_datetime(self, item):
-        return item.end_date
+        # Convert to Europe/Amsterdam to ensure daylight saving time is accounted for in recurring events
+        return item.end_date.astimezone(timezone.get_current_timezone())
     
     def item_created(self, item):
         return item.created_date
