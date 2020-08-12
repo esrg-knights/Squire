@@ -14,8 +14,6 @@ class TestCaseActivityClean(TestCase):
     fixtures = []
 
     def setUp(self):
-        timezone.activate("Europe/Amsterdam")
-
         # Make an Activity
         self.base_activity_dict = {
             'title':        "Test Activity",

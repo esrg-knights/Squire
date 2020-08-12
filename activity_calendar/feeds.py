@@ -33,16 +33,14 @@ ICAL_DAYLIGHT_FIELDS_MAP = [
 ]
 
 ICAL_VTIMEZONE_ITEMS_MAP = [
-    ("daylight", TimezoneStandard),
-    ("standard", TimezoneDaylight),
+    ("daylight", TimezoneDaylight),
+    ("standard", TimezoneStandard),
 ]
 
 class ExtendedICal20Feed(ICal20Feed):
     """
     iCalendar 2.0 Feed implementation that also supports VTIMEZONE.
     """
-
-    mime_type = "text/calendar; charset=utf8"
 
     def write_items(self, calendar):
         """
