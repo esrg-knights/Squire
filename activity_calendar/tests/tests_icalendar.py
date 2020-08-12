@@ -13,11 +13,6 @@ from django_ical.feedgenerator import ICal20Feed
 from django_ical.views import ICalFeed
 
 
-class TestItemsFeed(CESTEventFeed):
-    feed_type = ExtendedICal20Feed
-    title = "Test Feed"
-    description = "Test ICal Feed"
-
 class TestCaseICalendarExport(TestCase):
     fixtures = ['test_activity_recurrence_dst.json']
 
@@ -28,7 +23,7 @@ class TestCaseICalendarExport(TestCase):
         non_published.save()
 
         request = RequestFactory().get("/api/calendar/ical")
-        view = TestItemsFeed()
+        view = CESTEventFeed()
 
         response = view(request)
         calendar = icalendar.Calendar.from_ical(response.content)
@@ -41,7 +36,7 @@ class TestCaseICalendarExport(TestCase):
 
     # Ensure that DST does not affect EXDATE's start dates
     def test_recurrence_dst(self):
-        class DSTTestItemsFeed(TestItemsFeed):
+        class DSTTestItemsFeed(CESTEventFeed):
             def items(self):
                 return Activity.objects.filter(title='Weekly CEST Event')
 
@@ -72,7 +67,7 @@ class TestCaseICalendarExport(TestCase):
     # Ensure that the VTIMEZONE field is correctly set
     def test_vtimezone(self):
         request = RequestFactory().get("/api/calendar/ical")
-        view = TestItemsFeed()
+        view = CESTEventFeed()
 
         response = view(request)
         calendar = icalendar.Calendar.from_ical(response.content)

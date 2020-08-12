@@ -7,7 +7,7 @@ import django_ical.feedgenerator
 
 from django_ical.utils import build_rrule_from_recurrences_rrule, build_rrule_from_text
 from django_ical.views import ICalFeed
-from django_ical.feedgenerator import ICal20Feed, FEED_FIELD_MAP
+from django_ical.feedgenerator import ICal20Feed
 from icalendar.cal import Timezone, TimezoneStandard, TimezoneDaylight
 
 from .models import Activity

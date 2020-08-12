@@ -45,3 +45,6 @@ class TestCaseActivityClean(TestCase):
     # Must do nothing if everything is defined correctly
     def test_clean_correct(self):
         self.base_activity.clean_fields()
+
+        self.base_activity.recurrences = deserialize_recurrence_test("RDATE:19700101T230000Z")
+        self.base_activity.clean_fields()
