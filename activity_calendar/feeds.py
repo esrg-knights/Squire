@@ -11,6 +11,7 @@ from django_ical.feedgenerator import ICal20Feed
 from icalendar.cal import Timezone, TimezoneStandard, TimezoneDaylight
 
 from .models import Activity
+from .util import generate_vtimezone
 
 # Monkey-patch; Why is this not open for extension in the first place?
 django_ical.feedgenerator.ITEM_EVENT_FIELD_MAP = (
@@ -18,24 +19,6 @@ django_ical.feedgenerator.ITEM_EVENT_FIELD_MAP = (
     ('recurrenceid',    'recurrence-id'),
 )
 
-
-ICAL_VTIMEZONE_FIELDS_MAP = [
-    ("x_lic_location", 'x-lic-location'),
-    ("tz_id",           'tzid')
-]
-
-ICAL_DAYLIGHT_FIELDS_MAP = [
-    ("tzoffset_from", 'tzoffsetfrom'),
-    ("tzoffset_to", 'tzoffsetto'),
-    ("tzname", 'tzname'),
-    ("dtstart", 'dtstart'),
-    ("rrule", 'rrule'),
-]
-
-ICAL_VTIMEZONE_ITEMS_MAP = [
-    ("daylight", TimezoneDaylight),
-    ("standard", TimezoneStandard),
-]
 
 class ExtendedICal20Feed(ICal20Feed):
     """
@@ -47,23 +30,9 @@ class ExtendedICal20Feed(ICal20Feed):
         Writes the feed to the specified file in the
         specified encoding.
         """
-        tz_info = Timezone()
-        for ifield, efield in ICAL_VTIMEZONE_FIELDS_MAP:
-            val = self.feed.get(ifield)
-            if val is not None:
-                tz_info.add(efield, val)
-        
-        for ifield, tz_class in ICAL_VTIMEZONE_ITEMS_MAP:
-            is_present = self.feed.get(ifield)
-            if val:
-                tz_dst = tz_class()
-                for idaylightfield, efield in ICAL_DAYLIGHT_FIELDS_MAP:
-                    val = self.feed.get(ifield + "_" + idaylightfield)
-                    if val is not None:
-                        tz_dst.add(efield, val)
-                tz_info.add_component(tz_dst)
-
-        calendar.add_component(tz_info)
+        tz_info = self.feed.get('vtimezone')
+        if tz_info:
+            calendar.add_component(tz_info)
 
         super().write_items(calendar)
 
@@ -94,25 +63,11 @@ class CESTEventFeed(ICalFeed):
         return settings.TIME_ZONE
     
     #######################################################
-    # Timezone information (Daylight-saving time, etc.)
-    def vtimezone_x_lic_location(self):
-        return settings.TIME_ZONE
-    
-    vtimezone_tz_id = settings.TIME_ZONE
-
-    # Summer Time
-    vtimezone_daylight_tzoffset_from = timedelta(hours=1)
-    vtimezone_daylight_tzoffset_to = timedelta(hours=2)
-    vtimezone_daylight_tzname = "CEST"
-    vtimezone_daylight_dtstart = datetime(1970, 3, 29, 20)
-    vtimezone_daylight_rrule = build_rrule_from_text("FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU")
-
-    # Winter Time
-    vtimezone_standard_tzoffset_from = timedelta(hours=2)
-    vtimezone_standard_tzoffset_to = timedelta(hours=1)
-    vtimezone_standard_tzname = "CET"
-    vtimezone_standard_dtstart = datetime(1970, 10, 25, 3)
-    vtimezone_standard_rrule = build_rrule_from_text("FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU")
+    # Timezone information (Daylight-saving time, etc.)    
+    def vtimezone(self):
+        tz_info = generate_vtimezone(settings.TIME_ZONE, datetime(2020, 1, 1))
+        tz_info.add('x-lic-location', settings.TIME_ZONE)
+        return tz_info
 
     #######################################################
     # Activities
@@ -210,28 +165,16 @@ class CESTEventFeed(ICalFeed):
     # Include 
     def feed_extra_kwargs(self, obj):
         kwargs = super().feed_extra_kwargs(obj)
-        # x-lic-location
-        for (field, _) in ICAL_VTIMEZONE_FIELDS_MAP:
-            val = self._get_dynamic_attr("vtimezone_" + field, obj)
-            if val:
-                kwargs[field] = val
-
-        # Daylight-saving items
-        for (field, _) in ICAL_VTIMEZONE_ITEMS_MAP:
-            # Daylight-saving item fields
-            for (daylight_field, _) in ICAL_DAYLIGHT_FIELDS_MAP:
-                val = self._get_dynamic_attr("vtimezone_" + field + "_" + daylight_field, obj)
-                if val:
-                    kwargs[field + "_" + daylight_field] = val
-                    kwargs[field] = True
-
+        val = self._get_dynamic_attr('vtimezone', obj)
+        if val:
+            kwargs['vtimezone'] = val
         return kwargs
 
     # We also want to store the recurrence-id
     def item_extra_kwargs(self, item):
         kwargs = super().item_extra_kwargs(item)
 
-        recurrence_id =  self._get_dynamic_attr('item_recurrenceid', item)
-        if recurrence_id:
-            return {**kwargs, 'recurrenceid': recurrence_id}
+        val =  self._get_dynamic_attr('item_recurrenceid', item)
+        if val:
+            kwargs['recurrenceid'] = val
         return kwargs
