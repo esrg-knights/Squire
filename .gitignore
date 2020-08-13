@@ -122,7 +122,6 @@ db.sqlite3
 # Squire-specific gitignore (Secret Keys, etc.)
 /squire/secret_key.txt
 htdocs/media/images/achievements
-/components
 
 # Visual Studio Code
 .vscode
