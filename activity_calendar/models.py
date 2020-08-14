@@ -78,10 +78,7 @@ class Activity(models.Model):
             # Attempting to exclude dates if no recurrence is specified
             if not r.rrules and (r.exrules or r.exdates):
                 recurrence_errors.append('Cannot exclude dates if the activity is non-recurring')
-
-            
-            
-
+                
             if recurrence_errors:
                 errors.update({'recurrences': recurrence_errors})
 

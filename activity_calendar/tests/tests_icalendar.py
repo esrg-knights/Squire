@@ -83,15 +83,13 @@ class TestCaseICalendarExport(TestCase):
         for sub in vtimezone.subcomponents:
             if isinstance(sub, icalendar.cal.TimezoneDaylight):
                 self.assertEqual(sub.name, "DAYLIGHT")
-                self.assertEqual(sub["DTSTART"].to_ical(), b"19700329T200000")
-                self.assertEqual(sub["RRULE"].to_ical(), b"FREQ=YEARLY;BYDAY=-1SU;BYMONTH=3")
+                self.assertEqual(sub["DTSTART"].to_ical(), b"20210328T020000")
                 self.assertEqual(sub["TZNAME"].to_ical(), b"CEST")
                 self.assertEqual(sub["TZOFFSETFROM"].to_ical(), "+0100")
                 self.assertEqual(sub["TZOFFSETTO"].to_ical(), "+0200")
             elif isinstance(sub, icalendar.cal.TimezoneStandard):
                 self.assertEqual(sub.name, "STANDARD")
-                self.assertEqual(sub["DTSTART"].to_ical(), b"19701025T030000")
-                self.assertEqual(sub["RRULE"].to_ical(), b"FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10")
+                self.assertEqual(sub["DTSTART"].to_ical(), b"20201025T030000")
                 self.assertEqual(sub["TZNAME"].to_ical(), b"CET")
                 self.assertEqual(sub["TZOFFSETFROM"].to_ical(), "+0200")
                 self.assertEqual(sub["TZOFFSETTO"].to_ical(), "+0100")
