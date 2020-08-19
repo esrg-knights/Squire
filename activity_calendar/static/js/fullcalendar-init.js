@@ -119,6 +119,30 @@ function onEventClick(info, calendar) {
     }
     $('#event-location').text(event.extendedProps.location)
     $('#event-description').text(event.extendedProps.description)
+    
+    if (event.extendedProps.isSubscribed) {
+        $('#subscribe-required').hide()
+        $('#subscribe-done').show()
+        $('#event-subscription').text("You are registered for this activity!")
+    } else if (event.extendedProps.subscriptionsRequired) {
+        $('#subscribe-required').show()
+        $('#subscribe-done').hide()
+        $('#event-subscription').text("You need to register for this activity before you can join!")
+    }
+
+    console.log(event.extendedProps.canSubscribe)
+    if (!event.extendedProps.canSubscribe) {
+        console.log("hell yeah!")
+        $('#event-subscription-closed').text("Registrations have closed.")
+    } else {
+        console.log("F")
+    }
+    
+    if (event.extendedProps.maxParticipants < 0) {
+        $('#event-participants-count').text(`${event.extendedProps.numParticipants} participant(s) so far.`)
+    } else {
+        $('#event-participants-count').text(`${event.extendedProps.numParticipants}/${event.extendedProps.maxParticipants} participant(s)`)
+    }
 
     $('#event-modal').modal()
 }

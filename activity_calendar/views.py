@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render
@@ -19,7 +20,11 @@ def activity_collection(request):
     return render(request, 'activity_calendar/fullcalendar.html', {})
 
 # The view that is accessed by FullCalendar to retrieve events
-def get_activity_json(activity, start, end):
+def get_activity_json(activity, start, end, user):
+    activity_participants = activity.get_subscribed_participants(start)
+    max_activity_participants = activity.get_max_num_participants(start)
+    print(activity.can_user_subscribe(user, start,
+                participants=activity_participants, max_participants=max_activity_participants))
     return {
         'groupId': activity.id,
         'title': activity.title,
@@ -31,8 +36,15 @@ def get_activity_json(activity, start, end):
             'rdates': [occ.date().strftime("%A, %B %d, %Y") for occ in activity.recurrences.rdates],
             'exdates': [occ.date().strftime("%A, %B %d, %Y") for occ in activity.recurrences.exdates],
         },
-        'start': start,
-        'end': end,
+        'subscriptionsRequired': activity.subscriptions_required,
+        'numParticipants': activity_participants.count(),
+        'maxParticipants': max_activity_participants,
+        'isSubscribed': activity.is_user_subscribed(user, start,
+                participants=activity_participants),
+        'canSubscribe': activity.can_user_subscribe(user, start,
+                participants=activity_participants, max_participants=max_activity_participants),
+        'start': start.isoformat(),
+        'end': end.isoformat(),
         'allDay': False,
     }
 
@@ -64,8 +76,9 @@ def fullcalendar_feed(request):
     for non_recurring_activity in non_recurring_activities:
         activities.append(get_activity_json(
             non_recurring_activity,
-            non_recurring_activity.start_date.isoformat(),
-            non_recurring_activity.end_date.isoformat()
+            non_recurring_activity.start_date,
+            non_recurring_activity.end_date,
+            request.user
         ))
 
     # Obtain occurrences of recurring activities in the relevant timeframe
@@ -93,11 +106,19 @@ def fullcalendar_feed(request):
             occurence = timezone.get_current_timezone().localize(
                 datetime.combine(timezone.localtime(occurence).date(), event_start_time)
             )
-
+            
             activities.append(get_activity_json(
                 recurring_activity,
-                occurence.isoformat(),
-                (occurence + time_diff).isoformat(),
+                occurence,
+                (occurence + time_diff),
+                request.user
             ))
 
     return JsonResponse({'activities': activities})
+
+# Shows the slots for some activity on some date
+@require_safe
+@login_required
+def show_activity_slots_on_date(request, activity_id, year, month, day):
+    activity = Activity.objects.get(id=activity_id)
+    print(activity)

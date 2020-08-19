@@ -54,7 +54,7 @@
                 <div class="col-xs-2">
                   <img
                     src="{% static 'octicons/calendar.svg' %}" 
-                    alt="Calendar"
+                    alt="Calendar-icon"
                     height="16"
                     width="16"
                   />
@@ -77,12 +77,12 @@
                 </div>
               </div>
 
-              <div class="row largespace">
+              <div class="row">
                 <!-- Location Icon -->
                 <div class="col-xs-2">
                   <img
                     src="{% static 'octicons/location.svg' %}" 
-                    alt="Calendar"
+                    alt="Location-icon"
                     height="16"
                     width="16"
                   />
@@ -92,13 +92,45 @@
                   <small><p id="event-location"></p></small>
                 </div>
               </div>
+
+              <div class="row largespace">
+                <!-- Alert Icon -->
+                <div class="col-xs-2">
+                  <img
+                    src="{% static 'octicons/alert.svg' %}"
+                    alt="Alert-icon"
+                    height="16"
+                    width="16"
+                    class="icon-warning"
+                    style="display:none"
+                    id="subscribe-required"
+                  />
+                  <img
+                    src="{% static 'octicons/check-circle.svg' %}"
+                    alt="Check-icon"
+                    height="16"
+                    width="16"
+                    class="icon-success"
+                    style="display:none"
+                    id="subscribe-done"
+                  />
+                </div>
+                <!-- Subscription -->
+                <div class="col nospace align-self-center">
+                  <small>
+                    <p id="event-subscription"></p>
+                    <p id="event-participants-count"></p>
+                    <p id="event-subscription-closed"></p>
+                  </small>
+                </div>
+              </div>
             
               <div class="row">
                 <!-- Calendar Icon -->
                 <div class="col-xs-2">
                   <img
                     src="{% static 'octicons/three-bars.svg' %}" 
-                    alt="Calendar"
+                    alt="Description-icon"
                     height="16"
                     width="16"
                   />
