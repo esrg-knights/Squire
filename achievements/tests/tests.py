@@ -1,4 +1,4 @@
-from django.test import TestCase, Client
+from django.test import TestCase
 
 from achievements.serializers import AchievementSerializer, CategorySerializer
 from achievements.models import Achievement, Category

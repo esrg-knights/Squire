@@ -7,3 +7,5 @@ django-bootstrap4~=1.0
 django-cleanup~=4.0.0 # Removes old FileField files upon saving
 djangorestframework~=3.9.4
 Pillow~=7.0.0 # ImageField support
+django-ical~=1.7.1 # iCalendar export
+django-recurrence~=1.10.3 # Recurring Dates

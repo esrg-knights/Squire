@@ -6,7 +6,6 @@ from django.contrib.auth.forms import (AuthenticationForm, UserCreationForm,
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext, gettext_lazy as _
 
-from .util import add_form_control_class
 from .models import ExtendedUser as User
 
 ##################################################################################
@@ -19,9 +18,6 @@ from .models import ExtendedUser as User
 # It provides a different error message when passing invalid login credentials,
 # and allows Inactive users to login
 class LoginForm(AuthenticationForm):
-    def __init__(self, *args, **kwargs):
-        add_form_control_class(LoginForm, self, *args, **kwargs)
-
     def clean(self):
         # Obtain username and password
         username = self.cleaned_data.get('username')
@@ -46,15 +42,12 @@ class LoginForm(AuthenticationForm):
 # RegisterForm that expands on the default UserCreationForm
 # It requires a (unique) email address, and includes an optional nickname field
 class RegisterForm(UserCreationForm):
-    def __init__(self, *args, **kwargs):
-        add_form_control_class(RegisterForm, self, *args, **kwargs)
-
     email = forms.EmailField(label = "Email")
     nickname = forms.CharField(label = "Nickname", required=False, help_text='A nickname (if provided) is shown instead of your username.')
 
     class Meta:
         model = User
-        fields = ("username", "nickname", "email", )
+        fields = ("username", "nickname", "email")
 
     def clean_email(self):
         # Ensure that another user with the same email does not exist
@@ -78,14 +71,11 @@ class RegisterForm(UserCreationForm):
 
 # Adds the relevant bootstrap classes to the password change form
 class PasswordChangeForm(DjangoPasswordChangeForm):
-    def __init__(self, *args, **kwargs):
-        add_form_control_class(PasswordChangeForm, self, *args, **kwargs)
+    pass
 
 # Adds the relevant bootstrap classes to the password reset form
 class PasswordResetForm(DjangoPasswordResetForm):
-    def __init__(self, *args, **kwargs):
-        add_form_control_class(PasswordResetForm, self, *args, **kwargs)
+    pass
 
 class PasswordResetConfirmForm(DjangoPasswordResetConfirmForm):
-    def __init__(self, *args, **kwargs):
-        add_form_control_class(PasswordResetConfirmForm, self, *args, **kwargs)
+    pass

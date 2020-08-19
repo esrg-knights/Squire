@@ -1,4 +1,5 @@
 from django import template
+from django.forms.widgets import Input
 
 register = template.Library()
 
@@ -11,6 +12,23 @@ register = template.Library()
 
 @register.inclusion_tag('core/form_field.html')
 def generic_field(*args):
+    fields = list(zip(args[:len(args)//2], args[len(args)//2:]))
+
+    # Ensure the correct bootstrap classes are added to input fields
+    for boundfield, _ in fields:
+        multi_or_single_widget = boundfield.field.widget
+        widgets = [multi_or_single_widget]
+        if not isinstance(multi_or_single_widget, Input):
+            # Widget is a multi-widget, apply css to all subwidgets
+            widgets = multi_or_single_widget.widgets
+
+        # Update the css classes of all widgets and apply bootstrap
+        for widget in widgets:
+            old_classes = ''
+            if 'class' in widget.attrs:
+                old_classes = widget.attrs['class'] + ' '
+            widget.attrs['class'] = old_classes + 'form-control'
+
     return {
-        'fields': list(zip(args[:len(args)//2], args[len(args)//2:])),
+        'fields': fields,
     }

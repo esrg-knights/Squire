@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Do not count FullCalendar and Octicons in the Github statistics
+activity_calendar/static/fullcalendar/* linguist-vendored
+activity_calendar/static/octicons/* linguist-vendored
