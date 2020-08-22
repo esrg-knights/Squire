@@ -117,7 +117,7 @@ myvenv
 .DS_Store
 *.log
 local_settings.py
-db.sqlite3
+*.sqlite3
 
 # Squire-specific gitignore (Secret Keys, etc.)
 /squire/secret_key.txt

@@ -3,16 +3,17 @@ from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponseBadRequest
-from django.shortcuts import render
-from django.utils import timezone
+from django.shortcuts import render, get_object_or_404
+from django.utils import timezone, dateparse
 from django.views.decorators.http import require_safe
+from django.views.generic import DetailView
 
 from .models import Activity
 
 # Renders the simple v1 calendar
 @require_safe
 def googlehtml_activity_collection(request):
-    return render(request, 'activity_calendar/calendar.html', {})
+    return render(request, 'activity_calendar/googlecalendar.html', {})
 
 # Renders the calendar page, which utilises FullCalendar
 @require_safe
@@ -23,8 +24,7 @@ def activity_collection(request):
 def get_activity_json(activity, start, end, user):
     activity_participants = activity.get_subscribed_participants(start)
     max_activity_participants = activity.get_max_num_participants(start)
-    print(activity.can_user_subscribe(user, start,
-                participants=activity_participants, max_participants=max_activity_participants))
+
     return {
         'groupId': activity.id,
         'title': activity.title,
@@ -122,3 +122,26 @@ def fullcalendar_feed(request):
 def show_activity_slots_on_date(request, activity_id, year, month, day):
     activity = Activity.objects.get(id=activity_id)
     print(activity)
+
+
+class ActivitySlotList(DetailView):
+
+    model = Activity
+    template_name = 'activity_calendar/activity_slots.html'
+    context_object_name = 'activity'
+    pk_url_kwarg = 'activity_id'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super().get_context_data(**kwargs)
+
+        # Add the activity's slots as well as some general info
+        recurrence_id = dateparse.parse_datetime(self.request.GET.get('date'))
+        context['recurrence_id'] = recurrence_id
+        context['slot_list'] = self.object.get_slots(recurrence_id=recurrence_id)
+        context['subscriptions_open'] = self.object.are_subscriptions_open(recurrence_id=recurrence_id)
+        context['num_registered_slots'] = self.object.get_num_user_subscriptions(self.request.user, recurrence_id=recurrence_id)
+        del context['object']
+        # print(context['slot_list'].first().image)
+        print(context)
+        return context

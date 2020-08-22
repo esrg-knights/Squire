@@ -1,0 +1,43 @@
+{% extends 'core/base.html' %}
+
+{% load static %}
+
+{% block title %}
+  Squire - Calendar
+{% endblock title %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/slot_frames.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <div class="wideContentFrame">
+      {% if not subscriptions_open %}
+        <!-- ERROR Message -->
+        <div id="error-msg" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong class="alert-danger">Oh noes!</strong> Registrations are currently closed!
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+      {% endif %}
+
+      {% if num_registered_slots > 0 %}
+        <div id="info-msg" class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong class="alert-success">Hooray!</strong> You are currently registered for {{ num_registered_slots }} slot(s)!
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+      {% endif %}
+
+      <!-- Slots -->
+      <h1>{{ activity.title }}</h1>
+      {% for slot in slot_list %}
+        {% include "activity_calendar/slot_block.html" %}
+      {% empty %}
+        This activity has no slots (yet)!
+      {% endfor %}
+    </div>
+{% endblock content %}

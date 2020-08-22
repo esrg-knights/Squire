@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from recurrence.fields import RecurrenceField
 
-from core.models import ExtendedUser as User
+from core.models import ExtendedUser as User, PresetImage
 
 # Models related to the Calendar-functionality of the application.
 # @since 29 JUN 2019
@@ -17,7 +17,6 @@ def later_rounded():
 # Rounds the current time (used as a default value below)
 def now_rounded():
     return timezone.now().replace(minute=0, second=0)
-
 
 # The Activity model represents an activity in the calendar
 class Activity(models.Model):
@@ -31,6 +30,7 @@ class Activity(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     location = models.CharField(max_length=255)
+    image = models.ForeignKey(PresetImage, blank=True, null=True, related_name="activity_image", on_delete=models.SET_NULL)
     
     # Creation and last update dates (handled automatically)
     created_date = models.DateTimeField(auto_now_add=True)
@@ -63,10 +63,18 @@ class Activity(models.Model):
     subscriptions_required = models.BooleanField(default=True,
         help_text="People are only allowed to go to the activity if they register beforehand")
 
+    auto_create_first_slot = models.BooleanField(default=True,
+        help_text="The first slot is automatically created if someone registers for the activity.")
 
     # When people can start/no longer subscribe to slots
     subscriptions_open = models.DurationField(default=timezone.timedelta(days=7))
     subscriptions_close = models.DurationField(default=timezone.timedelta(hours=2))
+
+    @property
+    def image_url(self):
+        if self.image is None:
+            return f'{settings.STATIC_URL}images/activity_default.png'
+        return self.image.image.url
 
     # Publishes the activity, making it visible for all users
     def publish(self):
@@ -139,13 +147,21 @@ class Activity(models.Model):
         # the slots that already exist
         return self.get_num_slots(self, recurrence_id)
     
-    # Whether a given user is subscribed to the activity
-    def is_user_subscribed(self, user, recurrence_id=None, participants=None):
+    # Get the subscriptions of a user of a specific occurrence
+    def get_user_subscriptions(self, user, recurrence_id=None, participants=None):
         if user.is_anonymous:
-            return False
+            return Participant.objects.none()
         if participants is None:
             participants = self.get_subscribed_participants(recurrence_id)
-        return participants.filter(user__id=user.id).first() is not None
+        return participants.filter(user__id=user.id)
+    
+    # Get the subscriptions of a user of a specific occurrence
+    def get_num_user_subscriptions(self, user, recurrence_id=None, participants=None):
+        return self.get_user_subscriptions(user, recurrence_id, participants).count()
+
+    # Whether a given user is subscribed to the activity
+    def is_user_subscribed(self, user, recurrence_id=None, participants=None):
+        return self.get_user_subscriptions(user, recurrence_id, participants).first() is not None
     
     # Whether a user can still subscribe to the activity
     def can_user_subscribe(self, user, recurrence_id=None, participants=None, max_participants=None):
@@ -225,7 +241,7 @@ class Activity(models.Model):
 
 class ActivitySlot(models.Model):
     title = models.CharField(max_length=255)
-    description = models.TextField()
+    description = models.TextField(blank=True)
     location = models.CharField(max_length=255, blank=True, null=True,
         help_text="If left empty, matches location with parent activity")
     start_date = models.DateTimeField(blank=True, null=True,
@@ -246,8 +262,17 @@ class ActivitySlot(models.Model):
     max_participants = models.IntegerField(default=-1, validators=[MinValueValidator(-1)],
         help_text="-1 denotes unlimited participants")
 
+    image = models.ForeignKey(PresetImage, blank=True, null=True, related_name="slot_image", on_delete=models.SET_NULL,
+        help_text="If left empty, matches the image of the parent activity.")
+
     def __str__(self):
         return f"{self.id}"
+
+    @property
+    def image_url(self):
+        if self.image is None:
+            return self.parent_activity.image_url
+        return self.image.image.url
 
     @property
     def subscriptions_open_date(self):
@@ -262,7 +287,7 @@ class ActivitySlot(models.Model):
         return self.participants
     
     # Number of participants already subscribed
-    def get_num_subscribed_participants(self, recurrence_id=None):
+    def get_num_subscribed_participants(self):
         return get_subscribed_participants().count()
 
     def clean_fields(self, exclude=None):

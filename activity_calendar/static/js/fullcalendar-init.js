@@ -130,12 +130,8 @@ function onEventClick(info, calendar) {
         $('#event-subscription').text("You need to register for this activity before you can join!")
     }
 
-    console.log(event.extendedProps.canSubscribe)
     if (!event.extendedProps.canSubscribe) {
-        console.log("hell yeah!")
         $('#event-subscription-closed').text("Registrations have closed.")
-    } else {
-        console.log("F")
     }
     
     if (event.extendedProps.maxParticipants < 0) {
@@ -143,6 +139,9 @@ function onEventClick(info, calendar) {
     } else {
         $('#event-participants-count').text(`${event.extendedProps.numParticipants}/${event.extendedProps.maxParticipants} participant(s)`)
     }
+
+    // Link to the correct occurence
+    $('#event-subscribe-url').attr("href", `calendar/slots/${event.groupId}?date=${encodeURIComponent(start_date.toISOString())}`)
 
     $('#event-modal').modal()
 }
