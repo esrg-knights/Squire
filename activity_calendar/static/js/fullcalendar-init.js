@@ -131,7 +131,7 @@ function onEventClick(info, calendar) {
     }
 
     if (!event.extendedProps.canSubscribe) {
-        $('#event-subscription-closed').text("Registrations have closed.")
+        $('#event-subscription-closed').text("Registrations have not opened yet or are closed.")
     }
     
     if (event.extendedProps.maxParticipants < 0) {

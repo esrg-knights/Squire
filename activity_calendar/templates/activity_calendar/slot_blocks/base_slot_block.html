@@ -1,0 +1,50 @@
+{% load static %}
+
+<div class="card greenify activity-wide">
+    <div class="row no-gutters">
+        <div class="col-md-1 activityImage">
+            <div class="heightener"></div>
+            <img src="
+                {% block slot_image %}
+                    {{ activity.image_url }}
+                {% endblock slot_image %}
+            " alt="Activity Icon for 
+                {% block slot_image_title %}{% endblock slot_image_title %}
+            " class="card-img">
+        </div>
+        <div class="col-md-9">
+            <div class="card-body activityName">
+                <h5 class="card-title">
+                    {% block slot_title %}{% endblock slot_title %}
+                </h5>
+                <p class="card-text">{% block slot_description %}{% endblock slot_description %}</p>
+                <div class="row no-gutters">
+                    <div class="card-text">
+                        <small class="text-muted">
+                            {% block slot_participants %}{% endblock slot_participants %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 activityButtons">
+            <div class="row no-gutters">
+                {% if subscriptions_open %}
+                    {% if user in slot.participants.all %}
+                        <button id="deregister-{{slot.id}}" class="btn btn-danger btn-subscribe">Deregister</button>
+                    {% elif slot_number is not None or slot.max_participants < 0 or slot.participants|length < slot.max_participants %}
+                        {% block slot_register_button %}{% endblock slot_register_button %}
+                    {% else %}
+                        <p class="txt-subscribe">Slot is full</p>
+                    {% endif %}
+                {% else %}
+                    {% if user in slot.participants.all %}
+                        <p class="txt-subscribe"><strong>Registered</strong></p>
+                    {% else %}
+                        <p class="txt-subscribe">Not Registered</p>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

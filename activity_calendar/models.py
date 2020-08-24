@@ -49,22 +49,42 @@ class Activity(models.Model):
 
     # Maximum number of participants/slots
     # -1 denotes unlimited
-    max_slots = models.IntegerField(default=-1, validators=[MinValueValidator(-1)],
+    max_slots = models.IntegerField(default=1, validators=[MinValueValidator(-1)],
         help_text="-1 denotes unlimited slots")
     max_participants = models.IntegerField(default=-1, validators=[MinValueValidator(-1)],
         help_text="-1 denotes unlimited participants")
 
-    # Maximum number of slots that someone can join/create
+    # Maximum number of slots that someone can join
     max_slots_join_per_participant = models.IntegerField(default=1, validators=[MinValueValidator(-1)],
-        help_text="-1 denotes unlimited slots")
-    max_slots_create_per_participant = models.IntegerField(default=0, validators=[MinValueValidator(-1)],
         help_text="-1 denotes unlimited slots")
     
     subscriptions_required = models.BooleanField(default=True,
         help_text="People are only allowed to go to the activity if they register beforehand")
 
-    auto_create_first_slot = models.BooleanField(default=True,
-        help_text="The first slot is automatically created if someone registers for the activity.")
+    # auto_create_first_slot = models.BooleanField(default=True,
+    #     help_text="The first slot is automatically created if someone registers for the activity.")
+
+    # Possible slot-creation options:
+    # - Never: Slots can only be created in the admin panel
+    # - Auto: Slots are created automatically. They are only actually created in the DB once a participant joins.
+    #                                          Until that time they do look like real slots though (in the UI)
+    # - Users: Slots can be created by users. Users can be the owner of at most max_slots_join_per_participant slots
+    SLOT_CREATION_OPTIONS = [
+        ("CREATION_NONE",   "Never/By Administrators"),
+        ("CREATION_AUTO",   "Automatically"),
+        ("CREATION_USER",   "By Users"),
+    ]
+
+    # The maximum number of dummy slots that show up if slot_creation=CREATION_AUTO
+    # Dummy slots do not exist in the DB itself, and match their title, description, etc. with the parent activity
+    MAX_NUM_AUTO_DUMMY_SLOTS = 3
+
+    # The way slots should be created
+    slot_creation = models.CharField(
+        max_length=15,
+        choices=SLOT_CREATION_OPTIONS,
+        default='CREATION_AUTO',
+    )
 
     # When people can start/no longer subscribe to slots
     subscriptions_open = models.DurationField(default=timezone.timedelta(days=7))
@@ -100,8 +120,8 @@ class Activity(models.Model):
     def get_max_num_participants(self, recurrence_id=None):
         max_participants = self.max_participants
 
-        # Users can (in theory) create at least one slot, and at least one slot can (in theory) be made
-        if self.max_slots_create_per_participant != 0 and self.max_slots != 0:
+        # At least one slot can (in theory) be created
+        if self.slot_creation != "CREATION_NONE" and self.max_slots != 0:
             # New slots can actually be made (take into account the current limit)
             if self.max_slots < 0 or self.max_slots - self.get_num_slots(recurrence_id) > 0:
                 # Only limited by this activity's participants
@@ -140,10 +160,10 @@ class Activity(models.Model):
     # Maximum number of slots that can be created
     def get_max_num_slots(self, recurrence_id=None):
         # Users can create at least one slot
-        if self.max_slots_create_per_participant != 0:
+        if self.slot_creation != "CREATION_NONE":
             return self.max_slots
 
-        # Users cannot create slots; we have to work with
+        # Slots cannot be created outside the admin panel; we have to work with
         # the slots that already exist
         return self.get_num_slots(self, recurrence_id)
     
@@ -194,6 +214,7 @@ class Activity(models.Model):
             raise TypeError("recurrence_id cannot be None if the activity is recurring")
 
         now = timezone.now()
+        return True
         return recurrence_id - self.subscriptions_open <= now and now <= recurrence_id - self.subscriptions_close
 
     # String-representation of an instance of the model
@@ -249,6 +270,9 @@ class ActivitySlot(models.Model):
     end_date = models.DateTimeField(blank=True, null=True,
         help_text="If left empty, matches end date with parent activity")
     
+    # User that created the slot (or one that's in the slot if the original owner is no longer in the slot)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
+
     # The activity that this slot belongs to
     # NB: The slot belongs to just a single _occurence_ of a (recurring) activity.
     #   Hence, we need to store both the foreign key and a date representing one if its occurences

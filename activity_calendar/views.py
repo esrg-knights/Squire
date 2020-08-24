@@ -1,14 +1,14 @@
 from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db.models import Q, Exists, OuterRef, Sum, Count
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone, dateparse
 from django.views.decorators.http import require_safe
 from django.views.generic import DetailView
 
-from .models import Activity
+from .models import Activity, Participant
 
 # Renders the simple v1 calendar
 @require_safe
@@ -137,11 +137,31 @@ class ActivitySlotList(DetailView):
 
         # Add the activity's slots as well as some general info
         recurrence_id = dateparse.parse_datetime(self.request.GET.get('date'))
+        # TODO: error handling
+
+        slots = self.object.get_slots(recurrence_id=recurrence_id)
+        # .annotate(
+        #     is_user_subscribed=Exists(
+        #         Participant.objects.filter(user=self.request.user, activity_slot=OuterRef('id'))
+        #     )
+        # )
+
         context['recurrence_id'] = recurrence_id
-        context['slot_list'] = self.object.get_slots(recurrence_id=recurrence_id)
+        context['slot_list'] = slots
         context['subscriptions_open'] = self.object.are_subscriptions_open(recurrence_id=recurrence_id)
         context['num_registered_slots'] = self.object.get_num_user_subscriptions(self.request.user, recurrence_id=recurrence_id)
+        context['num_dummy_slots'] = self.object.MAX_NUM_AUTO_DUMMY_SLOTS
+        if self.object.max_slots >= 0:
+            context['num_dummy_slots'] = max(0, min(self.object.MAX_NUM_AUTO_DUMMY_SLOTS, self.object.max_slots - len(slots)))
+
+        duration = self.object.end_date - self.object.start_date
+        self.object.start_date = recurrence_id
+        self.object.end_date = self.object.start_date + duration
+
+        context['num_total_participants'] = slots.aggregate(Count('participants'))['participants__count']
+        context['max_participants'] = self.object.get_max_num_participants(recurrence_id=recurrence_id)
+
+        # The object is already passed as 'activity'; no need to send it over twice
         del context['object']
-        # print(context['slot_list'].first().image)
         print(context)
         return context

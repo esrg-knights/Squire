@@ -1,0 +1,21 @@
+{% extends 'activity_calendar/slot_blocks/base_slot_block.html' %}
+
+{% block slot_image_title %}
+    slot {{slot_number}}
+{% endblock slot_image_title %}
+
+{% block slot_title %}
+    Slot {{slot_number}}
+{% endblock slot_title %}
+
+{% block slot_participants %}
+    {% if activity.max_participants >= 0 %}
+        0 / {{ activity.max_participants }} Participants
+    {% else %}
+        Unlimited Participants (0 so far)
+    {% endif %}
+{% endblock slot_participants %}
+
+{% block slot_register_button %}
+    <button id="register-dummy" class="btn greenify btn-subscribe">Register</button>
+{% endblock slot_register_button %}

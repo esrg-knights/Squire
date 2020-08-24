@@ -1,0 +1,29 @@
+{% extends 'activity_calendar/slot_blocks/base_slot_block.html' %}
+
+{% block slot_image %}
+    {{slot.image_url}}
+{% endblock slot_image %}
+
+{% block slot_image_title %}
+    {{ slot.title }}
+{% endblock slot_image_title %}
+
+{% block slot_title %}
+    {{slot.title}}
+{% endblock slot_title %}
+
+{% block slot_description %}
+    {{ slot.description }}
+{% endblock slot_description %}
+
+{% block slot_participants %}
+    {% if slot.max_participants >= 0 %}
+        {{ slot.participants.all|length }} / {{ slot.max_participants }} Participants
+    {% else %}
+        Unlimited participants ({{ slot.participants.all|length }} so far)
+    {% endif %}
+{% endblock slot_participants %}
+
+{% block slot_register_button %}
+    <button id="register-{{ slot.id }}" class="btn greenify btn-subscribe">Register</button>
+{% endblock slot_register_button %}
