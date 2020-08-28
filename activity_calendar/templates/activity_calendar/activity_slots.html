@@ -2,6 +2,7 @@
 
 {% load static %}
 {% load range %}
+{% load generic_field %}
 
 {% block title %}
   Squire - Calendar
@@ -11,6 +12,17 @@
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'css/slot_frames.css' %}">
 {% endblock css %}
+
+{% block js %}
+  {{ block.super }}
+  {% if show_modal %}
+    <script type="text/javascript">
+      $(window).on('load',function(){
+          $('#slot-creation-modal').modal('show');
+      });
+    </script>
+  {% endif %}
+{% endblock js %}
 
 {% block content %}
     <div class="wideContentFrame">
@@ -27,6 +39,15 @@
       {% if num_registered_slots > 0 %}
         <div id="info-msg" class="alert alert-success alert-dismissible fade show" role="alert">
             <strong class="alert-success">Hooray!</strong> You are currently registered for {{ num_registered_slots }} slot(s)!
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+      {% endif %}
+
+      {% if deregister %}
+        <div id="info-msg" class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong class="alert-success">Aww, why are you leaving?</strong> You successfully deregistered.
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
             <span aria-hidden="true">&times;</span>
             </button>
@@ -119,5 +140,68 @@
       {% empty %}
         This activity has no slots (yet)!
       {% endfor %}
+
+      {% if activity.slot_creation == "CREATION_USER" %}
+        {% if subscriptions_open %}
+          {% if can_create_slot %}
+            <button type="button" class="btn btn-dark greenify" data-toggle="modal" data-target="#slot-creation-modal">
+              Create Slot
+            </button>
+          {% else %}
+            <p><strong>Cannot create more slots</strong></p>
+          {% endif %}
+        {% else %}
+          <p><strong>Cannot create slots as registrations are currently closed</strong></p>
+        {% endif %}
+      {% else %}
+        <p><strong>Cannot create slots for this activity</strong></p>
+      {% endif %}
     </div>
+
+
+    {% if activity.slot_creation == "CREATION_USER" %}
+      <!-- Sot Creation -->
+      <form method="post" action=''>
+        {% csrf_token %}
+      
+        <div class="modal fade" id="slot-creation-modal" tabindex="-1" role="dialog" aria-labelledby="slot-creation-modal-aria" aria-hidden="true">
+          <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="modal-title">Create Slot</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body" id="modal-description">
+                {% if form.non_field_errors %}
+                  <ul class="errorlist alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+
+                <!-- First Name, Tussenvoegsel, Last Name-->
+                {% generic_field form.title -1 %}
+                {% generic_field form.description -1 %}
+                {% generic_field form.location -1 %}
+
+                {% comment %}
+                  {% generic_field form.start_date form.end_date -1 -1 %}
+                {% endcomment %}
+                {% generic_field form.image -1 %}
+                {% generic_field form.max_participants -1 %}
+
+                {% include 'core/description_required_fields.html' %}
+              </div>
+              <div class="modal-footer">
+                <button type="submit" id='slot-creation-btn' class="btn btn-dark greenify">Create Slot</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    {% endif %}
 {% endblock content %}

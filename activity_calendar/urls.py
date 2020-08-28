@@ -7,5 +7,8 @@ urlpatterns = [
     path('calendar/google_html', views.googlehtml_activity_collection, name='googlehtml_activity_collection'),
     path('calendar', views.activity_collection, name='activity_collection'),
     path('api/calendar/ical', CESTEventFeed(), name='icalendar'),
-    path('api/calendar/fullcalendar', views.fullcalendar_feed, name='fullcalendar_feed')
+    path('api/calendar/fullcalendar', views.fullcalendar_feed, name='fullcalendar_feed'),
+    path('api/calendar/register/<int:slot_id>', views.register, name='activity_register'),
+    path('api/calendar/deregister/<int:slot_id>', views.deregister, name='activity_deregister'),
+    path('api/calendar/create_slot/<int:activity_id>', views.create_slot, name='activity_create_slot'),
 ]

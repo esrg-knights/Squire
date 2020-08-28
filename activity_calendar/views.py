@@ -2,13 +2,19 @@ from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Exists, OuterRef, Sum, Count
-from django.http import JsonResponse, HttpResponseBadRequest
-from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse, HttpResponseRedirect, HttpResponseNotFound
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.utils import timezone, dateparse
-from django.views.decorators.http import require_safe
+from django.utils.http import urlencode
+from django.utils.decorators import method_decorator
+
+from django.views.decorators.http import require_safe, require_POST
 from django.views.generic import DetailView
 
-from .models import Activity, Participant
+from .forms import ActivitySlotForm
+from .models import Activity, Participant, ActivitySlot
+from core.models import ExtendedUser, PresetImage
 
 # Renders the simple v1 calendar
 @require_safe
@@ -116,12 +122,131 @@ def fullcalendar_feed(request):
 
     return JsonResponse({'activities': activities})
 
-# Shows the slots for some activity on some date
-@require_safe
-@login_required
-def show_activity_slots_on_date(request, activity_id, year, month, day):
-    activity = Activity.objects.get(id=activity_id)
-    print(activity)
+
+def check_join_constraints(request, parent_activity, recurrence_id):
+    # Can only subscribe to at most X slots
+    if parent_activity.max_slots_join_per_participant >= 0 and \
+            parent_activity.get_user_subscriptions(user=request.user, recurrence_id=recurrence_id).count() \
+                >= parent_activity.max_slots_join_per_participant:
+        return HttpResponseBadRequest("Cannot subscribe to another slot")
+
+@require_POST
+def register(request, slot_id):
+    if request.user.is_anonymous:
+        return HttpResponseBadRequest("Must be logged in to subscribe")
+
+    slot = ActivitySlot.objects.filter(id=slot_id).first()
+    parent_activity = slot.parent_activity
+    if slot is None:
+        return HttpResponseBadRequest(f"Expected the id of an existing ActivitySlot, but got <{slot_id}>")
+
+    check_join_constraints(request, parent_activity, slot.recurrence_id)
+
+    # Base check for general activity constraints: subscription period, max number of total participants, etc.
+    if not slot.parent_activity.can_user_subscribe(request.user, recurrence_id=slot.recurrence_id):
+        return HttpResponseBadRequest("Cannot subscribe")
+
+    slot_participants = slot.participants.all()
+
+    # Can only subscribe at most once to each slot
+    if request.user in slot_participants:
+        return HttpResponseBadRequest("Cannot subscribe to the same slot more than once")    
+
+    # Slot participants limit
+    if slot.max_participants >= 0 and len(slot_participants) >= slot.max_participants:
+        return HttpResponseBadRequest("Slot is full")
+    
+    request.user.__class__ = ExtendedUser
+    # Suscribe to slot
+    participant = slot.participants.add(
+       request.user, through_defaults={}
+    )
+
+    q_str = urlencode({'date': slot.recurrence_id.isoformat()})
+    return HttpResponseRedirect(
+        f"{reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': parent_activity.id})}?{q_str}")
+
+@require_POST
+def create_slot(request, slot_id):
+    if request.user.is_anonymous:
+        return HttpResponseBadRequest("Must be logged in to create a slot")
+
+    activity = Activity.objects.filter(id=activity_id).first()
+    if activity is None:
+        return HttpResponseBadRequest(f"Expected the id of an existing Activity, but got <{slot_id}>")
+
+    if activity.slot_creation == "CREATION_NONE":
+        return HttpResponseBadRequest(f"Cannot create slots for this activity")
+
+    title = request.POST.get("title", None)
+    description = request.POST.get("description", None)
+    location = request.POST.get("location", None)
+    start_date = request.POST.get("start_date", None)
+    end_date = request.POST.get("end_date", None)
+    image_id = request.POST.get("image_id", None)
+    recurrence_id = request.pOST.get('recurrence_id', None)
+
+    if recurrence_id is None:
+        return HttpResponseBadRequest(f"RecurrenceID should be provided")
+
+    if activity.slot_creation == "CREATION_USER" and title is None:
+        return HttpResponseBadRequest(f"Title should be provided")
+
+    num_slots = activity.get_slots(recurrence_id=recurrence_id).count()
+    title = title or f"Slot {num_slots + 1}"
+
+    # Base check for general activity constraints: subscription period, max number of total participants, etc.
+    if not slot.parent_activity.can_user_subscribe(request.user, recurrence_id=slot.recurrence_id):
+        return HttpResponseBadRequest("Cannot create slot")
+
+    check_join_constraints(request, parent_activity, recurrence_id)
+    # # Can only subscribe to at most X slots
+    # if parent_activity.max_slots_join_per_participant >= 0 and \
+    #         activity.get_user_subscriptions(user=request.user, recurrence_id=recurrence_id).count() \
+    #             >= parent_activity.max_slots_join_per_participant:
+    #     return HttpResponseBadRequest("Cannot subscribe to another slot")
+
+    image = PresetImage.objects.filter(id=image_id, selectable=True).first()
+    if image_id is not None and image is None:
+        return HttpResponseBadRequest("Invalid image selected")
+
+    # Create the slot
+    slot = ActivitySlot(title=title, description=description, location=location,
+            start_date=start_date, end_date=end_date, image=image, max_participants=-1,
+            recurrence_id=recurrence_id)
+    slot.save()
+
+    # Add the user
+    request.user.__class__ = ExtendedUser
+    slot.participants.add(request.user, through_defaults={})
+    
+    q_str = urlencode({'date': recurrence_id.isoformat()})
+    return HttpResponseRedirect(
+        f"{reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': activity.id})}?{q_str}")
+
+
+@require_POST
+def deregister(request, slot_id):
+    if request.user.is_anonymous:
+        return HttpResponseBadRequest("Must be logged in to unsubscribe")
+
+    slot = ActivitySlot.objects.filter(id=slot_id).first()
+    parent_activity = slot.parent_activity
+    if slot is None:
+        return HttpResponseBadRequest(f"Expected the id of an existing ActivitySlot, but got <{slot_id}>")
+
+    # Subscriptions must be open
+    if not slot.are_subscriptions_open():
+        return HttpResponseBadRequest(f"Cannot unsubscribe once subscriptions are closed")
+
+    user_slot_participants = slot.participants.filter(id=request.user.id)
+
+    for usr in user_slot_participants:
+        slot.participants.remove(usr)
+
+    q_str = urlencode({'date': slot.recurrence_id.isoformat(), 'deregister': True})
+    return HttpResponseRedirect(
+        f"{reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': parent_activity.id})}?{q_str}")
 
 
 class ActivitySlotList(DetailView):
@@ -137,31 +262,61 @@ class ActivitySlotList(DetailView):
 
         # Add the activity's slots as well as some general info
         recurrence_id = dateparse.parse_datetime(self.request.GET.get('date'))
-        # TODO: error handling
+        
+        if recurrence_id is None:
+            return HttpResponseNotFound()   
 
         slots = self.object.get_slots(recurrence_id=recurrence_id)
-        # .annotate(
-        #     is_user_subscribed=Exists(
-        #         Participant.objects.filter(user=self.request.user, activity_slot=OuterRef('id'))
-        #     )
-        # )
+        num_total_participants = slots.aggregate(Count('participants'))['participants__count']
+        num_max_participants = self.object.get_max_num_participants(recurrence_id=recurrence_id)
 
+        context['deregister'] = self.request.GET.get('deregister', False)
         context['recurrence_id'] = recurrence_id
         context['slot_list'] = slots
-        context['subscriptions_open'] = self.object.are_subscriptions_open(recurrence_id=recurrence_id)
-        context['num_registered_slots'] = self.object.get_num_user_subscriptions(self.request.user, recurrence_id=recurrence_id)
-        context['num_dummy_slots'] = self.object.MAX_NUM_AUTO_DUMMY_SLOTS
-        if self.object.max_slots >= 0:
-            context['num_dummy_slots'] = max(0, min(self.object.MAX_NUM_AUTO_DUMMY_SLOTS, self.object.max_slots - len(slots)))
+        context['num_total_participants'] = num_total_participants
+        context['max_participants'] = num_max_participants
 
+        num_user_registrations = self.object.get_num_user_subscriptions(self.request.user, recurrence_id=recurrence_id)
+        context['num_registered_slots'] = num_user_registrations
+        context['can_create_slot'] = self.object.can_user_create_slot(self.request.user, recurrence_id=recurrence_id,
+                num_slots=len(slots), num_user_registrations=num_user_registrations,
+                num_total_participants=num_total_participants, num_max_participants=num_max_participants)
+        context['subscriptions_open'] = self.object.are_subscriptions_open(recurrence_id=recurrence_id)
+        
+        
         duration = self.object.end_date - self.object.start_date
         self.object.start_date = recurrence_id
         self.object.end_date = self.object.start_date + duration
 
-        context['num_total_participants'] = slots.aggregate(Count('participants'))['participants__count']
-        context['max_participants'] = self.object.get_max_num_participants(recurrence_id=recurrence_id)
+        context['num_dummy_slots'] = 0
+
+        if self.object.slot_creation == "CREATION_USER":
+            context['form'] = ActivitySlotForm(instance=None)
+        elif self.object.slot_creation == "CREATION_AUTO":
+            context['num_dummy_slots'] = self.object.MAX_NUM_AUTO_DUMMY_SLOTS
+            if self.object.max_slots >= 0:
+                context['num_dummy_slots'] = max(0, min(self.object.MAX_NUM_AUTO_DUMMY_SLOTS, self.object.max_slots - len(slots)))
 
         # The object is already passed as 'activity'; no need to send it over twice
         del context['object']
         print(context)
         return context
+    
+    @method_decorator(login_required)
+    def post(self, request, *args, **kwargs):
+        form = ActivitySlotForm(request.POST)
+        self.object = self.get_object()
+        context = context = self.get_context_data(**kwargs)
+        
+        form.data._mutable = True
+        form.data['parent_activity'] = context['activity_id']
+        form.data['recurrence_id'] = context['recurrence_id']
+        form.data['owner'] = request.user.id
+
+        if form.is_valid():
+            form.save(commit=True)
+            return redirect(request.get_full_path())
+        else:
+            context['form'] = form
+            context['show_modal'] = True
+            return self.render_to_response(context=context)

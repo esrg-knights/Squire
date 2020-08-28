@@ -25,5 +25,8 @@
 {% endblock slot_participants %}
 
 {% block slot_register_button %}
-    <button id="register-{{ slot.id }}" class="btn greenify btn-subscribe">Register</button>
+    <form action="/api/calendar/register/{{ slot.id }}" method="post">{% csrf_token %}
+        <button id="register-{{ slot.id }}" class="btn greenify btn-subscribe">Register</button>
+    </form>
+   
 {% endblock slot_register_button %}

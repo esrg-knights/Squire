@@ -167,6 +167,34 @@ class Activity(models.Model):
         # the slots that already exist
         return self.get_num_slots(self, recurrence_id)
     
+    def can_user_create_slot(self, user, recurrence_id=None, num_slots=None, num_user_registrations=None,
+            num_total_participants=None, num_max_participants=None):
+        if num_user_registrations is None:
+            num_user_registrations = self.get_num_user_subscriptions(user, recurrence_id=recurrence_id)
+        
+        if num_total_participants is None:
+            self.get_slots(recurrence_id=recurrence_id).aggregate(Count('participants'))['participants__count']
+        if num_max_participants is None:
+            self.get_max_num_participants(recurrence_id=recurrence_id)
+
+        # Can the user (in theory) join another slot?
+        user_can_join_another_slot = (self.max_slots_join_per_participant < 0 or \
+                num_user_registrations < self.max_slots_join_per_participant)
+
+        # The activity can have more participants
+        can_have_more_participants = num_total_participants < num_max_participants
+
+        # Infinite slots
+        if self.max_slots < 0 and user_can_join_another_slot and can_have_more_participants:
+            return True
+        
+        # Finite number of slots
+        if num_slots is None:
+            num_slots = self.get_slots(recurrence_id=recurrence_id).count()
+
+        # Limited slots and can join
+        return num_slots < self.max_slots and user_can_join_another_slot and can_have_more_participants
+
     # Get the subscriptions of a user of a specific occurrence
     def get_user_subscriptions(self, user, recurrence_id=None, participants=None):
         if user.is_anonymous:
@@ -264,11 +292,11 @@ class ActivitySlot(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     location = models.CharField(max_length=255, blank=True, null=True,
-        help_text="If left empty, matches location with parent activity")
+        help_text="If left empty, matches location with activity")
     start_date = models.DateTimeField(blank=True, null=True,
-        help_text="If left empty, matches start date with parent activity")
+        help_text="If left empty, matches start date with activity")
     end_date = models.DateTimeField(blank=True, null=True,
-        help_text="If left empty, matches end date with parent activity")
+        help_text="If left empty, matches end date with activity")
     
     # User that created the slot (or one that's in the slot if the original owner is no longer in the slot)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
@@ -284,10 +312,10 @@ class ActivitySlot(models.Model):
 
     participants = models.ManyToManyField(User, blank=True, through="Participant", related_name="participant_info")
     max_participants = models.IntegerField(default=-1, validators=[MinValueValidator(-1)],
-        help_text="-1 denotes unlimited participants")
+        help_text="-1 denotes unlimited participants", verbose_name="maximum number of participants")
 
     image = models.ForeignKey(PresetImage, blank=True, null=True, related_name="slot_image", on_delete=models.SET_NULL,
-        help_text="If left empty, matches the image of the parent activity.")
+        help_text="If left empty, matches the image of the activity.")
 
     def __str__(self):
         return f"{self.id}"
@@ -298,13 +326,8 @@ class ActivitySlot(models.Model):
             return self.parent_activity.image_url
         return self.image.image.url
 
-    @property
-    def subscriptions_open_date(self):
-        return self.recurrence_id - self.parent_activity.subscriptions_open
-    
-    @property
-    def subscriptions_open_date(self):
-        return self.recurrence_id - self.parent_activity.subscriptions_open
+    def are_subscriptions_open(self):
+        return self.parent_activity.are_subscriptions_open(recurrence_id=self.recurrence_id)
 
     # Participants already subscribed
     def get_subscribed_participants(self):
@@ -322,22 +345,23 @@ class ActivitySlot(models.Model):
         if self.start_date and self.end_date and self.start_date >= self.end_date:
             errors.update({'start_date': 'Start date must be before the end date'})
 
-        if self.recurrence_id is None:
-            # Must set a recurrence-ID if the parent activity is recurring
-            if self.parent_activity.is_recurring:
-                errors.update({'recurrence_id': 'Must set a date/time as the parent activity is recurring'})
-        else:
-            # Must not set a recurrence-ID if the parent activity not is recurring
-            if not self.parent_activity.is_recurring:
-                errors.update({'recurrence_id': 'Must NOT set a date/time as the parent activity is NOT recurring'})
-            elif self.recurrence_id not in self.parent_activity.recurrences.between(self.recurrence_id, self.recurrence_id, dtstart=self.parent_activity.start_date, inc=True):
-                errors.update({'recurrence_id': 'Parent activity has no occurence at the given date/time'})
+        if 'parent_activity' not in exclude:
+            if self.recurrence_id is None:
+                # Must set a recurrence-ID if the parent activity is recurring
+                if self.parent_activity.is_recurring:
+                    errors.update({'recurrence_id': 'Must set a date/time as the parent activity is recurring'})
+            else:
+                # Must not set a recurrence-ID if the parent activity not is recurring
+                if not self.parent_activity.is_recurring:
+                    errors.update({'recurrence_id': 'Must NOT set a date/time as the parent activity is NOT recurring'})
+                elif self.recurrence_id not in self.parent_activity.recurrences.between(self.recurrence_id, self.recurrence_id, dtstart=self.parent_activity.start_date, inc=True):
+                    errors.update({'recurrence_id': 'Parent activity has no occurence at the given date/time'})
 
-        # Start/end times must be within start/end times of parent activity
-        if self.start_date and self.start_date < self.parent_activity.start_date:
-             errors.update({'start_date': 'Start date cannot be before the start date of the parent activity'})
-        if self.start_date and self.end_date > self.parent_activity.end_date:
-             errors.update({'end_date': 'End date cannot be after the end date of the parent activity'})
+            # Start/end times must be within start/end times of parent activity
+            if self.start_date and self.start_date < self.parent_activity.start_date:
+                errors.update({'start_date': 'Start date cannot be before the start date of the parent activity'})
+            if self.start_date and self.end_date > self.parent_activity.end_date:
+                errors.update({'end_date': 'End date cannot be after the end date of the parent activity'})
 
         if errors:
             raise ValidationError(errors)

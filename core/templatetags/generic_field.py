@@ -18,7 +18,7 @@ def generic_field(*args):
     for boundfield, _ in fields:
         multi_or_single_widget = boundfield.field.widget
         widgets = [multi_or_single_widget]
-        if not isinstance(multi_or_single_widget, Input):
+        if hasattr(multi_or_single_widget, 'widget'):
             # Widget is a multi-widget, apply css to all subwidgets
             widgets = multi_or_single_widget.widgets
 
