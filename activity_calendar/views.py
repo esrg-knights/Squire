@@ -2,7 +2,8 @@ from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Exists, OuterRef, Sum, Count
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse, HttpResponseRedirect, HttpResponseNotFound, HttpResponseNotAllowed
+from django.http import (JsonResponse, HttpResponseBadRequest, HttpResponse,
+        HttpResponseRedirect, HttpResponseNotFound, HttpResponseNotAllowed, HttpResponseForbidden)
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone, dateparse
@@ -131,10 +132,8 @@ def check_join_constraints(request, parent_activity, recurrence_id):
         return HttpResponseBadRequest("Cannot subscribe to another slot")
 
 @require_POST
+@login_required
 def register(request, slot_id):
-    if request.user.is_anonymous:
-        return HttpResponseBadRequest("Must be logged in to subscribe")
-
     slot = ActivitySlot.objects.filter(id=slot_id).first()
     parent_activity = slot.parent_activity
     if slot is None:
@@ -167,10 +166,8 @@ def register(request, slot_id):
         f"{reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': parent_activity.id})}?{q_str}")
 
 @require_POST
+@login_required
 def deregister(request, slot_id):
-    if request.user.is_anonymous:
-        return HttpResponseBadRequest("Must be logged in to unsubscribe")
-
     slot = ActivitySlot.objects.filter(id=slot_id).first()
     parent_activity = slot.parent_activity
     if slot is None:

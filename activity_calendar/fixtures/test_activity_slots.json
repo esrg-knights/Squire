@@ -80,7 +80,7 @@
     "start_date": "2020-08-14T19:00:00Z",
     "end_date": "2020-08-14T21:00:00Z",
     "recurrences": "",
-    "max_slots": 5,
+    "max_slots": -1,
     "max_participants": -1,
     "max_slots_join_per_participant": 1,
     "subscriptions_required": true,
