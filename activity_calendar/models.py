@@ -242,12 +242,13 @@ class Activity(models.Model):
             raise TypeError("recurrence_id cannot be None if the activity is recurring")
 
         now = timezone.now()
-        return True
         return recurrence_id - self.subscriptions_open <= now and now <= recurrence_id - self.subscriptions_close
 
     # String-representation of an instance of the model
     def __str__(self):
-        return "{1} ({0})".format(self.id, self.title)
+        if self.is_recurring:
+            return f"{self.title} (recurring)"
+        return f"{self.title} (not recurring)"
 
     # Whether the activity is recurring
     @property
@@ -365,6 +366,9 @@ class ActivitySlot(models.Model):
 
         if errors:
             raise ValidationError(errors)
+
+    def __str__(self):
+        return self.title
 
 class Participant(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
