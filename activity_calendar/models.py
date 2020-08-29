@@ -96,11 +96,6 @@ class Activity(models.Model):
             return f'{settings.STATIC_URL}images/activity_default.png'
         return self.image.image.url
 
-    # Publishes the activity, making it visible for all users
-    def publish(self):
-        self.published_date = timezone.now()
-        self.save()
-
     # Participants already subscribed
     def get_subscribed_participants(self, recurrence_id=None):
         if not self.is_recurring:
@@ -254,7 +249,13 @@ class Activity(models.Model):
     @property
     def is_recurring(self):
         return bool(self.recurrences.rdates or self.recurrences.rrules)
-        
+    
+    # Whether this activity has an occurence at a specific date
+    def has_occurence_at(self, date):
+        if not self.is_recurring:
+            return date == self.start_date
+        occurences = self.recurrences.between(date, date, dtstart=self.start_date, inc=True)
+        return bool(occurences)
     
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
@@ -355,7 +356,7 @@ class ActivitySlot(models.Model):
                 # Must not set a recurrence-ID if the parent activity not is recurring
                 if not self.parent_activity.is_recurring:
                     errors.update({'recurrence_id': 'Must NOT set a date/time as the parent activity is NOT recurring'})
-                elif self.recurrence_id not in self.parent_activity.recurrences.between(self.recurrence_id, self.recurrence_id, dtstart=self.parent_activity.start_date, inc=True):
+                elif not self.parent_activity.has_occurence_at(self.recurrence_id):
                     errors.update({'recurrence_id': 'Parent activity has no occurence at the given date/time'})
 
             # Start/end times must be within start/end times of parent activity
@@ -374,3 +375,6 @@ class Participant(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     activity_slot = models.ForeignKey(ActivitySlot, on_delete=models.CASCADE)
     showed_up = models.BooleanField(null=True, default=None, help_text="Whether the participant actually showed up")
+
+    def __str__(self):
+        return self.user.get_simple_display_name()

@@ -5,13 +5,8 @@ from .models import Activity, ActivitySlot, Participant
 
 class ActivityAdmin(admin.ModelAdmin):
     def is_recurring(self, obj):
-        return obj.is_recurring
-    
-    def subscriptions_required(self, obj):
-        return obj.subscriptions_required
-        
+        return obj.is_recurring        
     is_recurring.boolean = True
-    subscriptions_required.boolean = True
 
     list_display = ('id', 'title', 'start_date', 'is_recurring', 'subscriptions_required', )
     list_filter = ['subscriptions_required']

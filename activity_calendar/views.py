@@ -197,16 +197,22 @@ class ActivitySlotList(DetailView):
     context_object_name = 'activity'
     pk_url_kwarg = 'activity_id'
 
+    def get(self, request, *args, **kwargs):
+        # Obtain the relevant recurrence id
+        self.object = self.get_object()
+        self.recurrence_id = dateparse.parse_datetime(self.request.GET.get('date', ''))
+        
+        if self.recurrence_id is None or not self.object.has_occurence_at(self.recurrence_id):
+            return HttpResponseNotFound()
+
+        return super().get(request, args, kwargs)
+
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super().get_context_data(**kwargs)
+        recurrence_id = self.recurrence_id
 
-        # Add the activity's slots as well as some general info
-        recurrence_id = dateparse.parse_datetime(self.request.GET.get('date'))
-        
-        if recurrence_id is None:
-            return HttpResponseNotFound()   
-
+        # Obtain information that is needed by the template
         slots = self.object.get_slots(recurrence_id=recurrence_id)
         num_total_participants = slots.aggregate(Count('participants'))['participants__count']
         num_max_participants = self.object.get_max_num_participants(recurrence_id=recurrence_id)
@@ -251,18 +257,18 @@ class ActivitySlotList(DetailView):
 
         form = ActivitySlotForm(request.POST)
 
-        recurrence_id = dateparse.parse_datetime(request.GET.get('date'))
-        if recurrence_id is None:
-            return HttpResponseBadRequest()   
+        self.recurrence_id = dateparse.parse_datetime(request.GET.get('date', ''))
+        if self.recurrence_id is None or not self.object.has_occurence_at(self.recurrence_id):
+            return HttpResponseBadRequest()
         
         form.data._mutable = True
         form.data['parent_activity'] = self.object.id
-        form.data['recurrence_id'] = recurrence_id
+        form.data['recurrence_id'] = self.recurrence_id
         form.data['owner'] = request.user.id
 
         if self.object.slot_creation == "CREATION_AUTO":
             form.data.update({
-                'title':        'Slot ' + str(self.object.get_num_slots(recurrence_id=recurrence_id) + 1),
+                'title':        'Slot ' + str(self.object.get_num_slots(recurrence_id=self.recurrence_id) + 1),
                 'description':  None,
                 'location':     None,
                 'start_date':   None,
