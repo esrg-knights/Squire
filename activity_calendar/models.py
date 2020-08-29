@@ -77,7 +77,7 @@ class Activity(models.Model):
 
     # The maximum number of dummy slots that show up if slot_creation=CREATION_AUTO
     # Dummy slots do not exist in the DB itself, and match their title, description, etc. with the parent activity
-    MAX_NUM_AUTO_DUMMY_SLOTS = 3
+    MAX_NUM_AUTO_DUMMY_SLOTS = 1
 
     # The way slots should be created
     slot_creation = models.CharField(

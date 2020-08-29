@@ -17,5 +17,8 @@
 {% endblock slot_participants %}
 
 {% block slot_register_button %}
-    <button id="register-dummy" class="btn greenify btn-subscribe">Register</button>
+    <form method="post" action=''>
+        {% csrf_token %}
+        <button id="register-dummy" class="btn greenify btn-subscribe">Register</button>
+    </form>
 {% endblock slot_register_button %}

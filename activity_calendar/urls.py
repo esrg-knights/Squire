@@ -10,5 +10,4 @@ urlpatterns = [
     path('api/calendar/fullcalendar', views.fullcalendar_feed, name='fullcalendar_feed'),
     path('api/calendar/register/<int:slot_id>', views.register, name='activity_register'),
     path('api/calendar/deregister/<int:slot_id>', views.deregister, name='activity_deregister'),
-    path('api/calendar/create_slot/<int:activity_id>', views.create_slot, name='activity_create_slot'),
 ]

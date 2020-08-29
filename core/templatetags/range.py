@@ -9,5 +9,5 @@ register = template.Library()
 ##################################################################################
 
 @register.filter(name='range')
-def range_filter(number):
-    return range(number)
+def range_filter(number, start_number):
+    return range(start_number, start_number + number)
