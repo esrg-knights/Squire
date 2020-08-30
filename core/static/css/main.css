@@ -98,3 +98,7 @@ footer {
     .navbar-brand .brand-text {
         margin-left: 10px;
     }
+
+.heightener {
+    min-height: 84px;
+}

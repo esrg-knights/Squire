@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.conf import settings
 
-from core.models import ExtendedUser
+from core.models import ExtendedUser, get_image_upload_path, PresetImage
 
 ##################################################################################
 # Test cases for the models in core
@@ -27,3 +27,11 @@ class ExtendedUserTest(TestCase):
 
         ExtendedUser.set_display_name_method(lambda x: f"{x.first_name} 'the Rock' {x.last_name}")
         self.assertEqual(self.user.get_display_name(), "Dwayne 'the Rock' Johnson")
+
+class PresetImageTest(TestCase):
+    # Tests if the preset images are uploaded to the correct location
+    def test_image_upload_path(self):
+        presetimage = PresetImage(id=1, name="na.me with / weird characters %", image="")
+        str_expected_upload_path = "images/presets/name-with-weird-characters.png"
+        str_actual_upload_path = get_image_upload_path(presetimage, "filename.png")
+        self.assertEqual(str_expected_upload_path, str_actual_upload_path)

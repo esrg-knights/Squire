@@ -119,6 +119,29 @@ function onEventClick(info, calendar) {
     }
     $('#event-location').text(event.extendedProps.location)
     $('#event-description').text(event.extendedProps.description)
+    
+    if (event.extendedProps.isSubscribed) {
+        $('#subscribe-required').hide()
+        $('#subscribe-done').show()
+        $('#event-subscription').text("You are registered for this activity!")
+    } else if (event.extendedProps.subscriptionsRequired) {
+        $('#subscribe-required').show()
+        $('#subscribe-done').hide()
+        $('#event-subscription').text("You need to register for this activity before you can join!")
+    }
+
+    if (!event.extendedProps.canSubscribe) {
+        $('#event-subscription-closed').text("Registrations have not opened yet or are closed.")
+    }
+    
+    if (event.extendedProps.maxParticipants === -1) {
+        $('#event-participants-count').text(`${event.extendedProps.numParticipants} participant(s) so far.`)
+    } else {
+        $('#event-participants-count').text(`${event.extendedProps.numParticipants}/${event.extendedProps.maxParticipants} participant(s)`)
+    }
+
+    // Link to the correct occurence
+    $('#event-subscribe-url').attr("href", `calendar/slots/${event.groupId}?date=${encodeURIComponent(start_date.toISOString())}`)
 
     $('#event-modal').modal()
 }

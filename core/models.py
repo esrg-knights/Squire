@@ -1,5 +1,8 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
+from django.utils.text import slugify
+
+import os
 
 # Proxy model based on Django's user that provides extra utility methods.
 class ExtendedUser(User):
@@ -23,3 +26,23 @@ class ExtendedUser(User):
     @staticmethod
     def set_display_name_method(method):
         ExtendedUser.display_name_method = method
+
+
+# File path to upload achievement images to
+def get_image_upload_path(instance, filename):
+    # Obtain extension
+    # NB: A file can be renamed to have ANY extension
+    _, extension = os.path.splitext(filename)
+
+    # file will be uploaded to MEDIA_ROOT / presets/<achievement_id>.<file_extension>
+    return 'images/presets/{0}{1}'.format(slugify(instance.name), extension)
+
+
+# A general model allowing the storage of images
+class PresetImage(models.Model):
+    name = models.CharField(max_length=63)
+    image = models.ImageField(upload_to=get_image_upload_path)
+    selectable = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.id})"

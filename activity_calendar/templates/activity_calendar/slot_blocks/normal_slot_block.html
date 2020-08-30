@@ -1,0 +1,39 @@
+{% extends 'activity_calendar/slot_blocks/base_slot_block.html' %}
+
+{% block slot_image %}
+    {{slot.image_url}}
+{% endblock slot_image %}
+
+{% block slot_image_title %}
+    {{ slot.title }}
+{% endblock slot_image_title %}
+
+{% block slot_title %}
+    {{slot.title}}
+{% endblock slot_title %}
+
+{% block slot_description %}
+    {% if slot.location %}
+        <div class="row no-gutters">
+            <small class="text-muted">
+                Alternative Location: {{ slot.location }}
+            </small>
+        </div>
+    {% endif %}
+    <p class="card-text">{{ slot.description }}</p>
+{% endblock slot_description %}
+
+{% block slot_participants %}
+    {% if slot.max_participants != -1 %}
+        {{ slot.participants.all|length }} / {{ slot.max_participants }} Participants
+    {% else %}
+        Unlimited participants ({{ slot.participants.all|length }} so far)
+    {% endif %}
+{% endblock slot_participants %}
+
+{% block slot_register_button %}
+    <form action="/api/calendar/register/{{ slot.id }}" method="post">{% csrf_token %}
+        <button id="register-{{ slot.id }}" class="btn greenify btn-subscribe">Register</button>
+    </form>
+   
+{% endblock slot_register_button %}
