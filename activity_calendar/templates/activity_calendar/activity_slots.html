@@ -34,6 +34,21 @@
             <span aria-hidden="true">&times;</span>
             </button>
         </div>
+      {% else %}
+        <div class="alert alert-warning" role="alert">
+          <p>
+            <strong class='alert-warning'>COVID-19 Ruleset</strong><br/>
+            Please also read our Covid-19 rules laid out in <a href="https://beta.kotkt.nl/nextcloud/s/JpGkgdMLCGX4nHL/download">this document</a>
+            <br/><br/>
+            But most importantly stay at home if any of the following applies:
+            <ul>
+              <li>You have one of the following (mild) symptoms: a cold, cough, sore throat, runny nose, sneezing, trouble breathing, loss of smell and/or taste, fever or an increased body temperature.</li>
+              <li>If a person in your household has a fever and/or trouble breathing in the last 24 hours.</li>
+              <li>If you have been positively tested for the coronavirus up until one week after the last time you had symptoms.</li>
+              <li>If a person in your household has positively tested on the coronavirus. After 14 days after the last contact with this person, while that person still had symptoms, you can come to Luna.</li>
+            </ul>
+          </p>
+        </div>
       {% endif %}
 
       {% if num_registered_slots > 0 %}
