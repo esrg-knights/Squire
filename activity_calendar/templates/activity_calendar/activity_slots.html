@@ -49,6 +49,17 @@
             </ul>
           </p>
         </div>
+        {% if not user.is_authenticated %}
+          <div class="alert alert-info" role="alert">
+            <p>
+              <strong class='alert-info'>Not a member?</strong><br/>
+              If you are <strong class='alert-info'>not</strong> a Knights member, then please register instead via <a href="https://forms.gle/5unNaWzpWbxi4wUN7">this Google Form</a>
+            
+              <br><br>
+              If you already are a Knights member, please sign in or create an account.
+            </p>
+          </div>
+        {% endif %}
       {% endif %}
 
       {% if num_registered_slots > 0 %}
