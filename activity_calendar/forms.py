@@ -24,7 +24,7 @@ class ActivitySlotForm(ModelForm):
         max_participants = self.cleaned_data['max_participants']
 
         # Users can only create slots for at least 1 participant
-        if self.data['max_participants'] == '0':
+        if max_participants == 0:
             raise ValidationError(['A slot cannot have 0 participants'])
 
     def is_valid(self):
