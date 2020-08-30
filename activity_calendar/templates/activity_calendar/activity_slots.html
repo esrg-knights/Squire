@@ -131,20 +131,7 @@
       </p>
 
       <h2>Slots</h2>
-      <!-- Real slots -->
-      {% for slot in slot_list %}
-        {% include "activity_calendar/slot_blocks/normal_slot_block.html" %}
-      {% empty %}
-        This activity has no slots (yet)!
-      {% endfor %}
-
-      <!-- Dummy slots -->
-      {% with slot_list|length|add:1 as num_slots %}
-        {% for slot_number in num_dummy_slots|range:num_slots %}
-          {% include "activity_calendar/slot_blocks/dummy_slot_block.html" %}
-        {% endfor %}
-      {% endwith %}
-
+      <!-- Create Slots -->
       {% if activity.slot_creation == "CREATION_USER" %}
         {% if subscriptions_open %}
           {% if can_create_slot %}
@@ -160,6 +147,20 @@
       {% else %}
         <p><strong>Cannot create slots for this activity</strong></p>
       {% endif %}
+      
+      <!-- Real slots -->
+      {% for slot in slot_list %}
+        {% include "activity_calendar/slot_blocks/normal_slot_block.html" %}
+      {% empty %}
+        <p>This activity has no slots (yet)!</p>
+      {% endfor %}
+
+      <!-- Dummy slots -->
+      {% with slot_list|length|add:1 as num_slots %}
+        {% for slot_number in num_dummy_slots|range:num_slots %}
+          {% include "activity_calendar/slot_blocks/dummy_slot_block.html" %}
+        {% endfor %}
+      {% endwith %}
     </div>
 
     {% if activity.slot_creation == "CREATION_USER" %}

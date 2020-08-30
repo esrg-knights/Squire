@@ -13,7 +13,14 @@
 {% endblock slot_title %}
 
 {% block slot_description %}
-    {{ slot.description }}
+    {% if slot.location %}
+        <div class="row no-gutters">
+            <small class="text-muted">
+                Alternative Location: {{ slot.location }}
+            </small>
+        </div>
+    {% endif %}
+    <p class="card-text">{{ slot.description }}</p>
 {% endblock slot_description %}
 
 {% block slot_participants %}

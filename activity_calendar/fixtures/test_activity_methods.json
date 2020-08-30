@@ -1,0 +1,161 @@
+[
+{
+  "model": "core.presetimage",
+  "pk": 1,
+  "fields": {
+    "name": "boardgames",
+    "image": "images/presets/boardgames.png",
+    "selectable": true
+  }
+},
+{
+  "model": "core.presetimage",
+  "pk": 2,
+  "fields": {
+    "name": "rpg",
+    "image": "images/presets/rpg.jpg",
+    "selectable": false
+  }
+},
+{
+  "model": "activity_calendar.activity",
+  "pk": 1,
+  "fields": {
+    "author": null,
+    "title": "Single",
+    "description": "No recurrence",
+    "location": "At home",
+    "image": null,
+    "created_date": "2020-08-14T13:59:06.245Z",
+    "last_updated_date": "2020-08-14T18:18:23.099Z",
+    "published_date": "2020-08-14T13:00:00Z",
+    "start_date": "2020-08-14T19:00:00Z",
+    "end_date": "2020-08-14T21:00:00Z",
+    "recurrences": "",
+    "max_slots": 5,
+    "max_participants": -1,
+    "max_slots_join_per_participant": 1,
+    "subscriptions_required": true,
+    "slot_creation": "CREATION_AUTO",
+    "subscriptions_open": "7 00:00:00",
+    "subscriptions_close": "00:30:00"
+  }
+},
+{
+  "model": "activity_calendar.activity",
+  "pk": 2,
+  "fields": {
+    "author": null,
+    "title": "Open Roleplay Evening",
+    "description": "An evening with oneshots",
+    "location": "Online",
+    "image": 2,
+    "created_date": "2020-08-14T14:06:27.620Z",
+    "last_updated_date": "2020-08-29T10:36:45.859Z",
+    "published_date": "2020-08-05T14:00:00Z",
+    "start_date": "2020-08-12T14:00:00Z",
+    "end_date": "2020-08-12T16:00:00Z",
+    "recurrences": "RRULE:FREQ=WEEKLY;BYDAY=WE",
+    "max_slots": -1,
+    "max_participants": -1,
+    "max_slots_join_per_participant": 1,
+    "subscriptions_required": true,
+    "slot_creation": "CREATION_NONE",
+    "subscriptions_open": "7 00:00:00",
+    "subscriptions_close": "02:00:00"
+  }
+},
+{
+  "model": "activity_calendar.activityslot",
+  "pk": 1,
+  "fields": {
+    "title": "Simple slot",
+    "description": "for a simple non-recurring activity",
+    "location": null,
+    "start_date": null,
+    "end_date": null,
+    "owner": null,
+    "parent_activity": 1,
+    "recurrence_id": null,
+    "max_participants": 6,
+    "image": null
+  }
+},
+{
+  "model": "activity_calendar.activityslot",
+  "pk": 2,
+  "fields": {
+    "title": "The Treasure of Troubled Tim",
+    "description": "DnD 5e",
+    "location": null,
+    "start_date": null,
+    "end_date": null,
+    "owner": null,
+    "parent_activity": 2,
+    "recurrence_id": "2020-08-19T14:00:00Z",
+    "max_participants": -1,
+    "image": null
+  }
+},
+{
+  "model": "activity_calendar.activityslot",
+  "pk": 3,
+  "fields": {
+    "title": "Escape to the Dreamlands",
+    "description": "FATE",
+    "location": null,
+    "start_date": null,
+    "end_date": null,
+    "owner": null,
+    "parent_activity": 2,
+    "recurrence_id": "2020-08-19T14:00:00Z",
+    "max_participants": -1,
+    "image": null
+  }
+},
+{
+  "model": "activity_calendar.participant",
+  "pk": 1,
+  "fields": {
+    "user": 1,
+    "activity_slot": 1,
+    "showed_up": null
+  }
+},
+{
+  "model": "activity_calendar.participant",
+  "pk": 2,
+  "fields": {
+    "user": 1,
+    "activity_slot": 2,
+    "showed_up": null
+  }
+},
+{
+  "model": "activity_calendar.participant",
+  "pk": 3,
+  "fields": {
+    "user": 1,
+    "activity_slot": 3,
+    "showed_up": null
+  }
+},
+{
+  "model": "activity_calendar.participant",
+  "pk": 4,
+  "fields": {
+    "user": 2,
+    "activity_slot": 2,
+    "showed_up": null
+  }
+},
+{
+  "model": "activity_calendar.participant",
+  "pk": 5,
+  "fields": {
+    "user": 2,
+    "activity_slot": 1,
+    "showed_up": null
+  }
+}
+]

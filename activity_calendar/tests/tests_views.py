@@ -31,13 +31,13 @@ class ActivityAdminTest(TestCase):
         self.upcoming_occurence_date = next_weekday(timezone.now(), 2).replace(hour=14, minute=0, second=0, microsecond=0)
         self.encoded_upcoming_occurence_date = urlencode({'date': self.upcoming_occurence_date.isoformat()})
 
-        # Ensure that all dates are in the future (and subscriptions are open)
-        ActivitySlot.objects.filter(parent_activity__id=2).update(recurrence_id=self.upcoming_occurence_date)
-
     def setUp(self):
         self.client = Client()
         self.user = User.objects.filter(username='test_user').first()
         self.client.force_login(self.user)
+        
+        # Ensure that all dates are in the future (and subscriptions are open)
+        ActivitySlot.objects.filter(parent_activity__id=2).update(recurrence_id=self.upcoming_occurence_date)
 
     @suppress_warnings
     def test_get_slots_invalid_dates(self):

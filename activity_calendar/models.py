@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
+from django.db.models import Count
 from django.utils import timezone
 
 from recurrence.fields import RecurrenceField
@@ -40,8 +41,8 @@ class Activity(models.Model):
     published_date = models.DateTimeField(default=now_rounded)
 
     # Start and end times
-    start_date = models.DateTimeField(default=now_rounded)
-    end_date = models.DateTimeField(default=later_rounded)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
 
     # Recurrence information (e.g. a weekly event)
     # This means we do not need to store (nor create!) recurring activities separately
@@ -118,7 +119,7 @@ class Activity(models.Model):
         # At least one slot can (in theory) be created
         if self.slot_creation != "CREATION_NONE" and self.max_slots != 0:
             # New slots can actually be made (take into account the current limit)
-            if self.max_slots == -1 or self.max_slots - self.get_num_slots(recurrence_id) > 0:
+            if self.max_slots == -1 or self.max_slots - self.get_num_slots(recurrence_id=recurrence_id) > 0:
                 # Only limited by this activity's participants
                 return max_participants
 
@@ -160,7 +161,7 @@ class Activity(models.Model):
 
         # Slots cannot be created outside the admin panel; we have to work with
         # the slots that already exist
-        return self.get_num_slots(self, recurrence_id)
+        return self.get_num_slots(recurrence_id=recurrence_id)
     
     def can_user_create_slot(self, user, recurrence_id=None, num_slots=None, num_user_registrations=None,
             num_total_participants=None, num_max_participants=None):
@@ -168,17 +169,17 @@ class Activity(models.Model):
             num_user_registrations = self.get_num_user_subscriptions(user, recurrence_id=recurrence_id)
         
         if num_total_participants is None:
-            self.get_slots(recurrence_id=recurrence_id).aggregate(Count('participants'))['participants__count']
+            num_total_participants = self.get_slots(recurrence_id=recurrence_id).aggregate(Count('participants'))['participants__count']
         if num_max_participants is None:
-            self.get_max_num_participants(recurrence_id=recurrence_id)
+            num_max_participants = self.get_max_num_participants(recurrence_id=recurrence_id)
 
         # Can the user (in theory) join another slot?
         user_can_join_another_slot = (self.max_slots_join_per_participant == -1 or \
                 num_user_registrations < self.max_slots_join_per_participant)
 
         # The activity can have more participants
-        can_have_more_participants = num_total_participants < num_max_participants
-
+        can_have_more_participants = num_max_participants == -1 or num_total_participants < num_max_participants
+        
         # Infinite slots
         if self.max_slots == -1 and user_can_join_another_slot and can_have_more_participants:
             return True
