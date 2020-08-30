@@ -9,7 +9,7 @@
 {% endblock slot_title %}
 
 {% block slot_participants %}
-    {% if activity.max_participants >= 0 %}
+    {% if activity.max_participants != -1 %}
         0 / {{ activity.max_participants }} Participants
     {% else %}
         Unlimited Participants (0 so far)

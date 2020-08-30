@@ -134,7 +134,7 @@ function onEventClick(info, calendar) {
         $('#event-subscription-closed').text("Registrations have not opened yet or are closed.")
     }
     
-    if (event.extendedProps.maxParticipants < 0) {
+    if (event.extendedProps.maxParticipants === -1) {
         $('#event-participants-count').text(`${event.extendedProps.numParticipants} participant(s) so far.`)
     } else {
         $('#event-participants-count').text(`${event.extendedProps.numParticipants}/${event.extendedProps.maxParticipants} participant(s)`)

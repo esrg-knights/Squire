@@ -12,7 +12,7 @@ from core.models import ExtendedUser as User, PresetImage
 
 # Not now, but a later time (used as a default value below)
 def later_rounded():
-    return (timezone.now() + timezone.timedelta(hours=2)).replace(minute=0, second=0)
+    return now_rounded() + timezone.timedelta(hours=2)
 
 # Rounds the current time (used as a default value below)
 def now_rounded():
@@ -118,7 +118,7 @@ class Activity(models.Model):
         # At least one slot can (in theory) be created
         if self.slot_creation != "CREATION_NONE" and self.max_slots != 0:
             # New slots can actually be made (take into account the current limit)
-            if self.max_slots < 0 or self.max_slots - self.get_num_slots(recurrence_id) > 0:
+            if self.max_slots == -1 or self.max_slots - self.get_num_slots(recurrence_id) > 0:
                 # Only limited by this activity's participants
                 return max_participants
 
@@ -126,12 +126,12 @@ class Activity(models.Model):
         cnt = 0
         for slot in self.get_slots(recurrence_id):
             # At least one slot allows for infinite participants
-            if slot.max_participants < 0:
+            if slot.max_participants == -1:
                 # But may still be limited by the activity's maximum amount of participants
                 return max_participants
             cnt += slot.max_participants 
         
-        if max_participants < 0:
+        if max_participants == -1:
             # Infinite activity participants means we're limited by the existing slots
             return cnt
         # Otherwise it's the smallest of the two
@@ -173,14 +173,14 @@ class Activity(models.Model):
             self.get_max_num_participants(recurrence_id=recurrence_id)
 
         # Can the user (in theory) join another slot?
-        user_can_join_another_slot = (self.max_slots_join_per_participant < 0 or \
+        user_can_join_another_slot = (self.max_slots_join_per_participant == -1 or \
                 num_user_registrations < self.max_slots_join_per_participant)
 
         # The activity can have more participants
         can_have_more_participants = num_total_participants < num_max_participants
 
         # Infinite slots
-        if self.max_slots < 0 and user_can_join_another_slot and can_have_more_participants:
+        if self.max_slots == -1 and user_can_join_another_slot and can_have_more_participants:
             return True
         
         # Finite number of slots
@@ -219,7 +219,7 @@ class Activity(models.Model):
         if max_participants is None:
             max_participants = self.get_max_num_participants(recurrence_id)
         
-        if max_participants < 0:
+        if max_participants == -1:
             # Infinite participants are allowed
             return True
 
@@ -265,9 +265,11 @@ class Activity(models.Model):
         if self.start_date >= self.end_date:
             errors.update({'start_date': 'Start date must be before the end date'})
 
+        # Subscriptions must open before they close
         if self.subscriptions_open < self.subscriptions_close:
             errors.update({'subscriptions_open': 'Subscriptions must open before they can close'})
 
+        # Ensure that subscriptions_open and subscriptions_close are a non-negative value
         if self.subscriptions_open < timezone.timedelta():
             errors.update({'subscriptions_open': 'Subscriptions must open before the activity starts'})
         
@@ -301,7 +303,7 @@ class ActivitySlot(models.Model):
         help_text="If left empty, matches end date with activity")
     
     # User that created the slot (or one that's in the slot if the original owner is no longer in the slot)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
+    owner = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
 
     # The activity that this slot belongs to
     # NB: The slot belongs to just a single _occurence_ of a (recurring) activity.

@@ -22,7 +22,7 @@ class ActivitySlotForm(ModelForm):
     def is_valid(self):
         ret = forms.Form.is_valid(self)
 
-        # Users can only create slots for at least 1 participan
+        # Users can only create slots for at least 1 participant
         # NB: At this point the data is a string
         if self.data['max_participants'] == '0':
             self.errors.update({'max_participants': ['A slot cannot have 0 participants']})

@@ -123,7 +123,7 @@
 
       <!-- Participant number -->
       <p>
-        {% if max_participants >= 0 %}
+        {% if max_participants != -1 %}
           {{ num_total_participants }} / {{ max_participants }} Total Participants
         {% else %}
           Unlimited Total Participants ({{ num_total_participants }} so far)

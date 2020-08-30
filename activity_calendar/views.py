@@ -126,7 +126,7 @@ def fullcalendar_feed(request):
 
 def check_join_constraints(request, parent_activity, recurrence_id):
     # Can only subscribe to at most X slots
-    if parent_activity.max_slots_join_per_participant >= 0 and \
+    if parent_activity.max_slots_join_per_participant != -1 and \
             parent_activity.get_user_subscriptions(user=request.user, recurrence_id=recurrence_id).count() \
                 >= parent_activity.max_slots_join_per_participant:
         return HttpResponseBadRequest("Cannot subscribe to another slot")
@@ -152,7 +152,7 @@ def register(request, slot_id):
         return HttpResponseBadRequest("Cannot subscribe to the same slot more than once")    
 
     # Slot participants limit
-    if slot.max_participants >= 0 and len(slot_participants) >= slot.max_participants:
+    if slot.max_participants != -1 and len(slot_participants) >= slot.max_participants:
         return HttpResponseBadRequest("Slot is full")
     
     request.user.__class__ = ExtendedUser
@@ -238,7 +238,7 @@ class ActivitySlotList(DetailView):
             context['form'] = ActivitySlotForm(instance=None)
         elif self.object.slot_creation == "CREATION_AUTO":
             context['num_dummy_slots'] = self.object.MAX_NUM_AUTO_DUMMY_SLOTS
-            if self.object.max_slots >= 0:
+            if self.object.max_slots != -1:
                 context['num_dummy_slots'] = max(0, min(self.object.MAX_NUM_AUTO_DUMMY_SLOTS, self.object.max_slots - len(slots)))
 
         # The object is already passed as 'activity'; no need to send it over twice
