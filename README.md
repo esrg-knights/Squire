@@ -3,7 +3,7 @@ A re-introduction of the web application for ESRG Knights of the Kitchen Table.
 
 ## Getting started with development
 
-1. Install the latest version of Python 3. If you are on Windows, you can download Python from [python.org]. If you are not, check if you already have a recent version by runnning `python3 --version`. As of writing, Python 3.5 or higher is recent enough, but this may change in the future.
+1. Install the latest version of Python 3. If you are on Windows, you can download Python from [python.org]. If you are not, check if you already have a recent version by runnning `python3 --version`. As of writing, Python 3.7 or higher is recent enough, but this may change in the future.
 1. Clone this git repository using Git, preferably to a location without spaces or other non-alphanumerical characters in it. Having spaces or other non-alphanumerical characters in the path can cause strange issues later down the road.
 1. Start a command prompt/terminal in the folder you have put the Squire sources in. Use this terminal to execute the rest of the commands (in order)
 1. Create a new virtual environment. On Windows, this can be done by running `py -3 -m venv venv`. On other operating systems this is done by running `python3 -m venv venv`. This ensures that this project's dependencies don't conflict with other Python applications on your system.
