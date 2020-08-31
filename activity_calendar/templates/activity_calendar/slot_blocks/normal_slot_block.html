@@ -30,7 +30,9 @@
     {% else %}
         Unlimited participants ({{ slot.participants.all|length }} so far):
     {% endif %}
-    {% join_string slot.participants.all %}
+    {% if subscriptions_open %}
+        {% join_string slot.participants.all %}
+    {% endif %}
 {% endblock slot_participants %}
 
 {% block slot_register_button %}
