@@ -1,4 +1,5 @@
 {% extends 'activity_calendar/slot_blocks/base_slot_block.html' %}
+{% load join_string %}
 
 {% block slot_image %}
     {{slot.image_url}}
@@ -25,10 +26,11 @@
 
 {% block slot_participants %}
     {% if slot.max_participants != -1 %}
-        {{ slot.participants.all|length }} / {{ slot.max_participants }} Participants
+        {{ slot.participants.all|length }} / {{ slot.max_participants }} Participants:
     {% else %}
-        Unlimited participants ({{ slot.participants.all|length }} so far)
+        Unlimited participants ({{ slot.participants.all|length }} so far):
     {% endif %}
+    {% join_string slot.participants.all %}
 {% endblock slot_participants %}
 
 {% block slot_register_button %}
