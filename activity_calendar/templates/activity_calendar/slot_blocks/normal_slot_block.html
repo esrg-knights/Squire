@@ -1,5 +1,4 @@
 {% extends 'activity_calendar/slot_blocks/base_slot_block.html' %}
-{% load join_string %}
 
 {% block slot_image %}
     {{slot.image_url}}
@@ -31,7 +30,7 @@
         Unlimited participants ({{ slot.participants.all|length }} so far):
     {% endif %}
     {% if subscriptions_open %}
-        {% join_string slot.participants.all %}
+        {{ slot.participants.all | join:", " }}
     {% endif %}
 {% endblock slot_participants %}
 
