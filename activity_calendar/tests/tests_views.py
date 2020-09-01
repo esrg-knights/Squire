@@ -22,6 +22,12 @@ def next_weekday(d, weekday):
         days_ahead += 7
     return d + datetime.timedelta(days_ahead)
 
+# Ensures that a given activity starts in the future (I.e. subscriptions are open)
+def make_future(activity):
+    future_date = timezone.now() + datetime.timedelta(days=5)
+    activity.update(start_date=future_date)
+    return future_date
+
 # Tests for the Admin Panel
 class ActivityAdminTest(TestCase):
     fixtures = ['test_users.json', 'test_activity_slots.json']
@@ -152,9 +158,8 @@ class ActivityAdminTest(TestCase):
                 parent_activity__id=2).first())
     
     def test_valid_post_data_non_recurring(self):
-        # Ensure the activity is in the future
-        future_date = timezone.now() + datetime.timedelta(days=5)
-        Activity.objects.filter(id=1).update(start_date=future_date)
+        future_date = make_future(Activity.objects.filter(id=1))
+    
         # Clear all participant objects first so they cannot interfere
         Participant.objects.filter(user=self.user).delete()
 
@@ -172,20 +177,45 @@ class ActivityAdminTest(TestCase):
 
     def test_valid_register(self):
         Participant.objects.filter(user=self.user).delete()
+
+        # Recurring activity
         response = self.client.post('/api/calendar/register/2', data={}, follow=True)
         self.assertEqual(response.status_code, 200)
 
         # Should have a new participant
         self.assertIsNotNone(Participant.objects.filter(user=self.user,
                 activity_slot__id=2).first())
+        
+        # Non-recurring activity
+        make_future(Activity.objects.filter(id=1))
+        response = self.client.post('/api/calendar/register/1', data={}, follow=True)
+        self.assertEqual(response.status_code, 200)
+
+        # Should have a new participant
+        self.assertIsNotNone(Participant.objects.filter(user=self.user,
+                activity_slot__id=1).first())
 
     def test_valid_deregister(self):
+        # Recurring activity
         response = self.client.post('/api/calendar/deregister/6', data={}, follow=True)
         self.assertEqual(response.status_code, 200)
 
         # Participant should no longer exist
         self.assertIsNone(Participant.objects.filter(user=self.user,
                 activity_slot__id=6).first())
+
+        # Should have a deregister message
+        self.assertTrue(response.context['deregister'])
+
+        # Non-recurring activity
+        make_future(Activity.objects.filter(id=1))
+        Participant.objects.create(user=self.user, activity_slot=ActivitySlot.objects.get(id=1))
+        response = self.client.post('/api/calendar/deregister/1', data={}, follow=True)
+        self.assertEqual(response.status_code, 200)
+
+        # Participant should no longer exist
+        self.assertIsNone(Participant.objects.filter(user=self.user,
+                activity_slot__id=1).first())
 
         # Should have a deregister message
         self.assertTrue(response.context['deregister'])
