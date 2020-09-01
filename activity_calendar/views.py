@@ -260,7 +260,9 @@ class ActivitySlotList(DetailView):
         
         form.data._mutable = True
         form.data['parent_activity'] = self.object.id
-        form.data['recurrence_id'] = self.recurrence_id
+
+        if self.object.is_recurring:
+            form.data['recurrence_id'] = self.recurrence_id
         form.data['owner'] = request.user.id
 
         if self.object.slot_creation == "CREATION_AUTO":

@@ -137,7 +137,7 @@ class ActivityAdminTest(TestCase):
         # Number of slots should not have increased
         self.assertEqual(old_count, ActivitySlot.objects.all().count())
 
-    def test_valid_post_data(self):
+    def test_valid_post_data_recurring(self):
         # Clear all participant objects first so they cannot interfere
         Participant.objects.filter(user=self.user).delete()
         response = self.client.post('/calendar/slots/2?' + self.encoded_upcoming_occurence_date, data={
@@ -146,11 +146,29 @@ class ActivityAdminTest(TestCase):
         }, follow=True)
         self.assertEqual(response.status_code, 200)
 
-        # Number of slots should not have increased
+        # New slot should exist
         self.assertIsNotNone(ActivitySlot.objects.filter(title='My new Slot',
                 owner=self.user, max_participants=5,
                 parent_activity__id=2).first())
     
+    def test_valid_post_data_non_recurring(self):
+        # Ensure the activity is in the future
+        future_date = timezone.now() + datetime.timedelta(days=5)
+        Activity.objects.filter(id=1).update(start_date=future_date)
+        # Clear all participant objects first so they cannot interfere
+        Participant.objects.filter(user=self.user).delete()
+
+        response = self.client.post('/calendar/slots/1?' + urlencode({'date': future_date.isoformat()}), data={
+            'title': 'My new Slot',
+            'max_participants': 5,
+        }, follow=True)
+        self.assertEqual(response.status_code, 200)
+
+        # New slot should have been created; passed title and max_participants
+        # should be ignored as slot_creation = CREATION_AUTO
+        self.assertIsNotNone(ActivitySlot.objects.filter(title='Slot 2',
+                owner=None, max_participants=-1,
+                parent_activity__id=1).first())
 
     def test_valid_register(self):
         Participant.objects.filter(user=self.user).delete()
