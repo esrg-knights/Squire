@@ -25,9 +25,12 @@
 
 {% block slot_participants %}
     {% if slot.max_participants != -1 %}
-        {{ slot.participants.all|length }} / {{ slot.max_participants }} Participants
+        {{ slot.participants.all|length }} / {{ slot.max_participants }} Participants:
     {% else %}
-        Unlimited participants ({{ slot.participants.all|length }} so far)
+        Unlimited participants ({{ slot.participants.all|length }} so far):
+    {% endif %}
+    {% if subscriptions_open %}
+        {{ slot.participants.all | join:", " }}
     {% endif %}
 {% endblock slot_participants %}
 
