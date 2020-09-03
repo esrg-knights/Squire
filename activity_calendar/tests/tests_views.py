@@ -22,6 +22,12 @@ def next_weekday(d, weekday):
         days_ahead += 7
     return d + datetime.timedelta(days_ahead)
 
+# Ensures that a given activity starts in the future (I.e. subscriptions are open)
+def make_future(activity):
+    future_date = timezone.now() + datetime.timedelta(days=5)
+    activity.update(start_date=future_date)
+    return future_date
+
 # Tests for the Admin Panel
 class ActivityAdminTest(TestCase):
     fixtures = ['test_users.json', 'test_activity_slots.json']
@@ -137,7 +143,7 @@ class ActivityAdminTest(TestCase):
         # Number of slots should not have increased
         self.assertEqual(old_count, ActivitySlot.objects.all().count())
 
-    def test_valid_post_data(self):
+    def test_valid_post_data_recurring(self):
         # Clear all participant objects first so they cannot interfere
         Participant.objects.filter(user=self.user).delete()
         response = self.client.post('/calendar/slots/2?' + self.encoded_upcoming_occurence_date, data={
@@ -146,28 +152,70 @@ class ActivityAdminTest(TestCase):
         }, follow=True)
         self.assertEqual(response.status_code, 200)
 
-        # Number of slots should not have increased
+        # New slot should exist
         self.assertIsNotNone(ActivitySlot.objects.filter(title='My new Slot',
                 owner=self.user, max_participants=5,
                 parent_activity__id=2).first())
     
+    def test_valid_post_data_non_recurring(self):
+        future_date = make_future(Activity.objects.filter(id=1))
+    
+        # Clear all participant objects first so they cannot interfere
+        Participant.objects.filter(user=self.user).delete()
+
+        response = self.client.post('/calendar/slots/1?' + urlencode({'date': future_date.isoformat()}), data={
+            'title': 'My new Slot',
+            'max_participants': 5,
+        }, follow=True)
+        self.assertEqual(response.status_code, 200)
+
+        # New slot should have been created; passed title and max_participants
+        # should be ignored as slot_creation = CREATION_AUTO
+        self.assertIsNotNone(ActivitySlot.objects.filter(title='Slot 2',
+                owner=None, max_participants=-1,
+                parent_activity__id=1).first())
 
     def test_valid_register(self):
         Participant.objects.filter(user=self.user).delete()
+
+        # Recurring activity
         response = self.client.post('/api/calendar/register/2', data={}, follow=True)
         self.assertEqual(response.status_code, 200)
 
         # Should have a new participant
         self.assertIsNotNone(Participant.objects.filter(user=self.user,
                 activity_slot__id=2).first())
+        
+        # Non-recurring activity
+        make_future(Activity.objects.filter(id=1))
+        response = self.client.post('/api/calendar/register/1', data={}, follow=True)
+        self.assertEqual(response.status_code, 200)
+
+        # Should have a new participant
+        self.assertIsNotNone(Participant.objects.filter(user=self.user,
+                activity_slot__id=1).first())
 
     def test_valid_deregister(self):
+        # Recurring activity
         response = self.client.post('/api/calendar/deregister/6', data={}, follow=True)
         self.assertEqual(response.status_code, 200)
 
         # Participant should no longer exist
         self.assertIsNone(Participant.objects.filter(user=self.user,
                 activity_slot__id=6).first())
+
+        # Should have a deregister message
+        self.assertTrue(response.context['deregister'])
+
+        # Non-recurring activity
+        make_future(Activity.objects.filter(id=1))
+        Participant.objects.create(user=self.user, activity_slot=ActivitySlot.objects.get(id=1))
+        response = self.client.post('/api/calendar/deregister/1', data={}, follow=True)
+        self.assertEqual(response.status_code, 200)
+
+        # Participant should no longer exist
+        self.assertIsNone(Participant.objects.filter(user=self.user,
+                activity_slot__id=1).first())
 
         # Should have a deregister message
         self.assertTrue(response.context['deregister'])

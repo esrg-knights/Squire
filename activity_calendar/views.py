@@ -161,7 +161,12 @@ def register(request, slot_id):
        request.user, through_defaults={}
     )
 
-    q_str = urlencode({'date': slot.recurrence_id.isoformat()})
+    q_str = ''
+    if slot.parent_activity.is_recurring:
+        q_str = urlencode({'date': slot.recurrence_id.isoformat()})
+    else:
+        q_str = urlencode({'date': slot.parent_activity.start_date.isoformat()})
+
     return HttpResponseRedirect(
         f"{reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': parent_activity.id})}?{q_str}")
 
@@ -182,7 +187,12 @@ def deregister(request, slot_id):
     for usr in user_slot_participants:
         slot.participants.remove(usr)
 
-    q_str = urlencode({'date': slot.recurrence_id.isoformat(), 'deregister': True})
+    q_str = ''
+    if slot.parent_activity.is_recurring:
+        q_str = urlencode({'date': slot.recurrence_id.isoformat(), 'deregister': True})
+    else:
+        q_str = urlencode({'date': slot.parent_activity.start_date.isoformat(), 'deregister': True})
+
     return HttpResponseRedirect(
         f"{reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': parent_activity.id})}?{q_str}")
 
@@ -260,7 +270,9 @@ class ActivitySlotList(DetailView):
         
         form.data._mutable = True
         form.data['parent_activity'] = self.object.id
-        form.data['recurrence_id'] = self.recurrence_id
+
+        if self.object.is_recurring:
+            form.data['recurrence_id'] = self.recurrence_id
         form.data['owner'] = request.user.id
 
         if self.object.slot_creation == "CREATION_AUTO":
