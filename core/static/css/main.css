@@ -55,8 +55,12 @@ FORMATTING
 *********************************************************************************************/
 /* Ensure elements can be aligned to the bottom of the page
     when the page does not fill the entire viewport */
-body, html {
+html {
     height: 100%;
+}
+
+body {
+    min-height: 100%;
 }
 
 footer {
@@ -75,6 +79,8 @@ footer {
     #mainContent {
         margin-top: 10px;
         margin-bottom: 10px;
+        margin-left: 10px;
+        margin-right: 10px;
     }
     
 /* Main content is centered and cannot exceed a certain width */
@@ -100,5 +106,5 @@ footer {
     }
 
 .heightener {
-    min-height: 84px;
+    min-height: 64px;
 }
