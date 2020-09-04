@@ -7,8 +7,7 @@
 }
 
 #calendar {
-    /* max-width: 1100px; */
-    max-height: 700px;
+    height: 70vh;
     margin: 40px auto;
     padding: 0 10px;
     margin: 0;
@@ -19,6 +18,13 @@
 
     #calendar .fc-view-harness {
         background-color: white;
+    }
+
+    /* Hide the "Month" button on small screens; it's not useful there even in landscape mode */
+    @media (max-width: 991px) {
+        #calendar .fc-dayGridMonth-button {
+            display: none;
+        }
     }
 
     

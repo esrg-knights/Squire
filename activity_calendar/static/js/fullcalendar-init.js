@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
             minute: '2-digit',
             meridiem: false, // AM/PM display
         },
-        initialView: 'timeGridWeek',
+        initialView: $(window).width() < 992 ? 'listWeek' : 'timeGridWeek',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
