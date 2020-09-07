@@ -48,7 +48,7 @@ class MemberWithLog(HideRelatedNameAdmin):
     list_display_links = ('id', 'first_name')
 
     fieldsets = [
-        (None,               {'fields': [('first_name', 'tussenvoegsel', 'last_name'), 'date_of_birth', ('last_updated_date', 'last_updated_by')]}),
+        (None,               {'fields': [('first_name', 'tussenvoegsel', 'last_name'), 'date_of_birth', ('last_updated_date', 'last_updated_by'), 'marked_for_deletion']}),
         ('Contact Details', {'fields': ['email', 'phone_number', ('street', 'house_number', 'house_number_addition'), 'city', ('state', 'country')]}),
         ('Card Access', {'fields': ['tue_card_number', ('external_card_number', 'external_card_digits', 'external_card_cluster')]}),
         ('Student Information', {'fields': ['initials', 'educational_institution', 'student_number']}),

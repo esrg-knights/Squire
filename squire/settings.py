@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'membership_file',
     # More External Libraries
     'django_cleanup.apps.CleanupConfig',
+    'import_export',
 ]
 
 MIDDLEWARE = [
@@ -237,6 +238,9 @@ LOGOUT_REDIRECT_URL = '/logout/success'
 # Not a native Django setting, but used to specify the url to redirect to
 # when the membership_required-decorator does not receive a fail_url parameter
 MEMBERSHIP_FAIL_URL = '/no_member'
+
+# Where the membership file will be exported to. Can be set to None to disable this functionality
+MEMBERSHIP_FILE_EXPORT_PATH = os.getenv('MEMBERSHIP_FILE_EXPORT_PATH') or os.path.join(BASE_DIR, "output")
 
 ####################################################################
 # Other Settings
