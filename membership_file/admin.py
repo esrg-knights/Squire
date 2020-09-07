@@ -1,11 +1,62 @@
 from django.contrib import admin
 from .models import Member, MemberLog, MemberLogField
-from django.contrib import admin
+from django.utils.html import format_html
+
+
+class HideRelatedNameAdmin(admin.ModelAdmin):
+    class Media:
+        # Hacky solution to hide the "X was updated: <Y> -> <Z>" text
+        # We don't need to edit this information anyways, so it's safe to hide
+        # https://stackoverflow.com/a/5556813
+        css = {
+            'all': ('css/hide_related_model_name.css',),
+        }
+
+class DisableModifications():
+    # Disable creation
+    def has_add_permission(self, request):
+        return False
+    
+    # Disable editing
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    # Disable deletion
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
+    model = MemberLog
+    extra = 0
+    readonly_fields = ['date', 'get_url']
+    fields = ['log_type', 'user', 'date', 'get_url']
+    ordering = ("-date",)
+
+    # Whether the object can be deleted inline
+    can_delete = False
+
+    def get_url(self, obj):
+        return format_html("<a href='/admin/membership_file/memberlog/{0}/change/'>View Details</a>", obj.id)
+    get_url.short_description = 'Details'
 
 # Ensures that the last_updated_by field is also updated properly from the Django admin panel
-class MemberWithLog(admin.ModelAdmin):
-    # Show the date and user that last updated the member
+class MemberWithLog(HideRelatedNameAdmin):
 
+    list_display = ('id', 'first_name', 'tussenvoegsel', 'last_name', 'educational_institution', 'email', 'phone_number', 'marked_for_deletion')
+    list_filter = ['marked_for_deletion', 'educational_institution']
+    list_display_links = ('id', 'first_name')
+
+    fieldsets = [
+        (None,               {'fields': [('first_name', 'tussenvoegsel', 'last_name'), 'date_of_birth', ('last_updated_date', 'last_updated_by')]}),
+        ('Contact Details', {'fields': ['email', 'phone_number', ('street', 'house_number', 'house_number_addition'), 'city', ('state', 'country')]}),
+        ('Card Access', {'fields': ['tue_card_number', ('external_card_number', 'external_card_digits', 'external_card_cluster')]}),
+        ('Student Information', {'fields': ['initials', 'educational_institution', 'student_number']}),
+    ]
+
+    inlines = [MemberLogReadOnlyInline]
+
+    # Show the date and user that last updated the member
     # Override the admin panel's save method to automatically include the user that updated the member
     def save_model(self, request, obj, form, change):
         obj.last_updated_by = request.user
@@ -41,38 +92,24 @@ class MemberWithLog(admin.ModelAdmin):
         # The member was marked for deletion, and is being deleted by another user; enable deletion
         return True
 
+# Prevents MemberLogField creation, edting, or deletion in the Django Admin Panel
+class MemberLogFieldReadOnlyInline(DisableModifications, admin.TabularInline):
+    model = MemberLogField
+    extra = 0
+
+    # Whether the object can be deleted inline
+    can_delete = False
+
 # Prevents MemberLog creation, edting, or deletion in the Django Admin Panel
-class MemberLogReadOnly(admin.ModelAdmin):
+class MemberLogReadOnly(DisableModifications, HideRelatedNameAdmin):
     # Show the date at which the information was updated as well
     readonly_fields = ['date']
+    list_display = ('id', 'log_type', 'user', 'member', 'date')
+    list_filter = ['log_type', 'member']
+    list_display_links = ('id', 'log_type')
 
-    # Disable creation
-    def has_add_permission(self, request):
-        return False
-    
-    # Disable editing
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    # Disable deletion
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-# Prevents MemberLogField creation, edting, or deletion in the Django Admin Panel
-class MemberLogFieldReadOnly(admin.ModelAdmin):
-    # Disable creation
-    def has_add_permission(self, request):
-        return False
-    
-    # Disable editing
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    # Disable deletion
-    def has_delete_permission(self, request, obj=None):
-        return False
+    inlines = [MemberLogFieldReadOnlyInline]
 
 # Register the special models, making them show up in the Django admin panel
 admin.site.register(Member, MemberWithLog)
 admin.site.register(MemberLog, MemberLogReadOnly)
-admin.site.register(MemberLogField, MemberLogFieldReadOnly)

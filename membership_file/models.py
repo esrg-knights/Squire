@@ -100,7 +100,7 @@ class Member(models.Model):
     # Address of the member
     street = models.CharField(max_length=255)
     house_number = models.IntegerField(validators=[MinValueValidator(1)], default=1)
-    house_number_addition = models.CharField(max_length=255, blank=True, null=True)
+    house_number_addition = models.CharField(max_length=255, blank=True, null=True, verbose_name="addition")
     city = models.CharField(max_length=255)
     #NB: States/Province are not always necessary for addresses
     state = models.CharField(max_length=255, blank=True, null=True, verbose_name="state/province")
