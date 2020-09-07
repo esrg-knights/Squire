@@ -236,9 +236,9 @@ class ActivitySlotList(DetailView):
                 num_slots=len(slots), num_user_registrations=num_user_registrations,
                 num_total_participants=num_total_participants, num_max_participants=num_max_participants)
         context['subscriptions_open'] = self.object.are_subscriptions_open(recurrence_id=recurrence_id)
-        
-        
-        duration = self.object.end_date - self.object.start_date
+        context['show_participants'] = self.object.can_show_participants(self.request.user, recurrence_id)
+
+        duration = self.object.get_duration()
         self.object.start_date = recurrence_id
         self.object.end_date = self.object.start_date + duration
 
