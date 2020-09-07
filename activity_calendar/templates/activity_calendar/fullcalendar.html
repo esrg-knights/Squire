@@ -20,132 +20,133 @@
 {% endblock js %}
 
 {% block content %}
-    <div class="wideContentFrame">
-      <!-- ERROR Message -->
-      <div id="error-msg">
-        <div id="error-template" class="alert alert-danger alert-dismissible fade show" role="alert" style="display:none">
-          <strong class="alert-danger">Oh noes!</strong> Something went wrong while retrieving calendar info!
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+  <div class="wideContentFrame">
+    <!-- ERROR Message -->
+    <div id="error-msg">
+      <div id="error-template" class="alert alert-danger alert-dismissible fade show" role="alert" style="display:none">
+        <strong class="alert-danger">Oh noes!</strong> Something went wrong while retrieving calendar info!
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Calendar -->
+    <h1>Activity Calendar</h1>
+    <div id='loading'>loading...</div>
+    <div id='calendar'></div>
+  </div>
+
+  <!-- Event Details Modal -->
+  <div class="modal fade" id="event-modal" tabindex="-1" role="dialog" aria-labelledby="event-modal-aria" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modal-title">Modal title</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-      </div>
-
-      <!-- Calendar -->
-      <h1>Activity Calendar</h1>
-      <div id='loading'>loading...</div>
-      <div id='calendar'></div>
-    </div>
-
-    <!-- Event Details Modal -->
-    <div class="modal fade" id="event-modal" tabindex="-1" role="dialog" aria-labelledby="event-modal-aria" aria-hidden="true">
-      <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="modal-title">Modal title</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body" id="modal-description">
-            <div class="container-fluid">
-              <div class="row">
-                <!-- Calendar Icon -->
-                <div class="col-xs-2">
-                  <img
-                    src="{% static 'octicons/calendar.svg' %}" 
-                    alt="Calendar-icon"
-                    height="16"
-                    width="16"
-                  />
-                </div>
-                <!-- Event Date & Recurrence Information -->
-                <div class="col align-self-center">
-                  <div class='nospace'>
-                    <small>
-                      <p id="event-date"></p>
-                      <span id="event-recurrence-info">
-                        <p id="rrules"></p>
-                        <p id="rdates"></p>
-                        <p id="exrules"></p>
-                        <!-- Commented out until single occurences can actually be edited
-                          <p id="exdates"></p>
-                        -->
-                      </span>
-                    </small>
-                  </div>
-                </div>
+        <div class="modal-body" id="modal-description">
+          <div class="container-fluid">
+            <div class="row">
+              <!-- Calendar Icon -->
+              <div class="col-xs-2">
+                <img
+                  src="{% static 'octicons/calendar.svg' %}" 
+                  alt="Calendar-icon"
+                  height="16"
+                  width="16"
+                />
               </div>
-
-              <div class="row">
-                <!-- Location Icon -->
-                <div class="col-xs-2">
-                  <img
-                    src="{% static 'octicons/location.svg' %}" 
-                    alt="Location-icon"
-                    height="16"
-                    width="16"
-                  />
-                </div>
-                <!-- Location -->
-                <div class="col nospace align-self-center">
-                  <small><p id="event-location"></p></small>
-                </div>
-              </div>
-
-              <div class="row largespace">
-                <!-- Alert Icon -->
-                <div class="col-xs-2">
-                  <img
-                    src="{% static 'octicons/alert.svg' %}"
-                    alt="Alert-icon"
-                    height="16"
-                    width="16"
-                    class="icon-warning"
-                    style="display:none"
-                    id="subscribe-required"
-                  />
-                  <img
-                    src="{% static 'octicons/check-circle.svg' %}"
-                    alt="Check-icon"
-                    height="16"
-                    width="16"
-                    class="icon-success"
-                    style="display:none"
-                    id="subscribe-done"
-                  />
-                </div>
-                <!-- Subscription -->
-                <div class="col nospace align-self-center">
+              <!-- Event Date & Recurrence Information -->
+              <div class="col align-self-center">
+                <div class='nospace'>
                   <small>
-                    <p id="event-subscription"></p>
-                    <p id="event-participants-count"></p>
-                    <p id="event-subscription-closed"></p>
+                    <p id="event-date"></p>
+                    <span id="event-recurrence-info">
+                      <p id="rrules"></p>
+                      <p id="rdates"></p>
+                      <p id="exrules"></p>
+                      <!-- Commented out until single occurences can actually be edited
+                        <p id="exdates"></p>
+                      -->
+                    </span>
                   </small>
                 </div>
               </div>
-            
-              <div class="row">
-                <!-- Calendar Icon -->
-                <div class="col-xs-2">
-                  <img
-                    src="{% static 'octicons/three-bars.svg' %}" 
-                    alt="Description-icon"
-                    height="16"
-                    width="16"
-                  />
-                </div>
-                <!-- Event Description -->
-                <div class="col align-self-center">
-                  <p id="event-description"></p>
-                </div>
+            </div>
+
+            <div class="row">
+              <!-- Location Icon -->
+              <div class="col-xs-2">
+                <img
+                  src="{% static 'octicons/location.svg' %}" 
+                  alt="Location-icon"
+                  height="16"
+                  width="16"
+                />
               </div>
+              <!-- Location -->
+              <div class="col nospace align-self-center">
+                <small><p id="event-location"></p></small>
+              </div>
+            </div>
+
+            <div class="row largespace">
+              <!-- Alert Icon -->
+              <div class="col-xs-2">
+                <img
+                  src="{% static 'octicons/alert.svg' %}"
+                  alt="Alert-icon"
+                  height="16"
+                  width="16"
+                  class="icon-warning"
+                  style="display:none"
+                  id="subscribe-required"
+                />
+                <img
+                  src="{% static 'octicons/check-circle.svg' %}"
+                  alt="Check-icon"
+                  height="16"
+                  width="16"
+                  class="icon-success"
+                  style="display:none"
+                  id="subscribe-done"
+                />
+              </div>
+              <!-- Subscription -->
+              <div class="col nospace align-self-center">
+                <small>
+                  <p id="event-subscription"></p>
+                  <p id="event-participants-count"></p>
+                  <p id="event-subscription-closed"></p>
+                </small>
+              </div>
+            </div>
+          
+            <div class="row">
+              <!-- Calendar Icon -->
+              <div class="col-xs-2">
+                <img
+                  src="{% static 'octicons/three-bars.svg' %}" 
+                  alt="Description-icon"
+                  height="16"
+                  width="16"
+                />
+              </div>
+              <!-- Event Description -->
+              <div class="col align-self-center">
+                <p id="event-description"></p>
+              </div>
+            </div>
           </div>
-          <div class="modal-footer">
-            <a id='event-subscribe-url' class="btn btn-primary" href="">View Registration Slots</a>
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          </div>
+        </div>
+        <div class="modal-footer">
+          <a id='event-subscribe-url' class="btn btn-primary" href="">View Registration Slots</a>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
+  </div>
 {% endblock content %}

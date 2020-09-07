@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
             minute: '2-digit',
             meridiem: false, // AM/PM display
         },
-        initialView: 'timeGridWeek',
+        initialView: $(window).width() < 992 ? 'listWeek' : 'timeGridWeek',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         // Determines how far forward the scroll pane is initially scrolled.
         // This value ensures that evening-activities are visible without needing to scroll
-        scrollTime: '14:00:00',
+        scrollTime: '19:00:00',
         // customize the button names,
         // otherwise they'd all just say "list"
         views: {
@@ -86,17 +86,11 @@ function onEventClick(info, calendar) {
         }
     } else {
         // 5 augustus, 19:30 – 6 augustus, 02:00
-        var opts = {}
-
-        if (!event.allDay) {
-            opts = {hour: 'numeric', minute: 'numeric'}
-        }
-
         date_str = start_date.toLocaleString('en-gb', {
-            month: 'long', day: 'numeric', ...opts
+            month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric',
         })
         date_str += ' - ' + end_date.toLocaleString('en-gb', {
-            month: 'long', day: 'numeric', ...opts
+            month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric',
         })
     }
 
