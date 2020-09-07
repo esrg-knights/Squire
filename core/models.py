@@ -27,6 +27,8 @@ class ExtendedUser(User):
     def set_display_name_method(method):
         ExtendedUser.display_name_method = method
 
+    def __str__(self):
+        return self.get_display_name()
 
 # File path to upload achievement images to
 def get_image_upload_path(instance, filename):
