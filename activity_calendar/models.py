@@ -244,7 +244,7 @@ class Activity(models.Model):
         return recurrence_id - self.subscriptions_open <= now and now <= recurrence_id - self.subscriptions_close
 
     # Whether the name of participants is shown
-    def show_participants(self, user, recurrence_id=None):
+    def can_show_participants(self, user, recurrence_id=None):
         if not self.is_recurring:
             recurrence_id = self.start_date
 
