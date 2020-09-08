@@ -1,5 +1,4 @@
-from django.test import TestCase
-from django.test import Client
+from django.test import Client, TestCase, override_settings
 from django.contrib.admin.sites import AdminSite
 from django.contrib.admin import ModelAdmin
 
@@ -16,6 +15,7 @@ from membership_file.serializers import MemberSerializer
 ##################################################################################
 
 # Tests Log deletion when members are deleted
+@override_settings(MEMBERSHIP_FILE_EXPORT_PATH=None)
 class MemberLogCleanupTest(TestCase):
     def setUp(self):
         # Called each time before a testcase runs
@@ -61,6 +61,7 @@ class MemberLogCleanupTest(TestCase):
         self.assertIsNone(MemberLogField.objects.all().first())
 
 # Tests Log creation when updating members
+@override_settings(MEMBERSHIP_FILE_EXPORT_PATH=None)
 class MemberLogTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -373,6 +374,7 @@ def member_got_correctly_updated(self: MemberLogTest, updatedFields: dict) -> Me
 
 
 # Tests Deletion logic for Members
+@override_settings(MEMBERSHIP_FILE_EXPORT_PATH=None)
 class DeleteMemberTest(TestCase):
     @classmethod
     def setUpTestData(self):
