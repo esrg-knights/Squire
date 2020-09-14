@@ -35,7 +35,8 @@ class MemberUser(User):
 
     # Checks whether a given user is a member
     def is_member(self):
-        return self.get_member() is not None
+        member = self.get_member()
+        return member is not None and not member.is_deregistered
 
 
 ##################################################################################
@@ -131,6 +132,8 @@ class Member(models.Model):
     # Members can be marked for deletion, after which another user
     # can permanently delete the member
     marked_for_deletion = models.BooleanField(default=False)
+
+    is_deregistered = models.BooleanField(default=False, help_text="Use this if you need to store (contact) information of someone who is not a member anymore.")
     
     ##################################
     # STRING REPRESENTATION METHODS
