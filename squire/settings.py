@@ -249,7 +249,7 @@ APPLICATION_NAME = 'Squire'
 COMMITTEE_ABBREVIATION = 'UUPS'
 COMMITTEE_FULL_NAME = 'UUPS Ultraviolet Programmer Squad'
 
-if not os.getenv('SENTRY_DSN'):
+if not os.getenv('SENTRY_DSN'): # pragma: no cover 
     # People who get error code notifications if Debug = False
     ADMINS = [
         (APPLICATION_NAME + ' Developer',       'developer@example.com'),
