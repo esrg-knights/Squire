@@ -90,6 +90,10 @@ class MemberLogTest(TestCase):
             "country": "",
             "member_since": "",
             "educational_institution": "",
+            "updated_member-TOTAL_FORMS": 0,
+            "updated_member-INITIAL_FORMS": 0,
+            "updated_member-MIN_NUM_FORMS": 0,
+            "updated_member-MAX_NUM_FORMS": 0,
         }
 
     def setUp(self):
@@ -404,6 +408,14 @@ class DeleteMemberTest(TestCase):
             "educational_institution": "TU/e",
         }
         self.member = Member.objects.create(**self.memberData)
+
+        self.memberData = {
+            "updated_member-TOTAL_FORMS": 0,
+            "updated_member-INITIAL_FORMS": 0,
+            "updated_member-MIN_NUM_FORMS": 0,
+            "updated_member-MAX_NUM_FORMS": 0,
+            **self.memberData,
+        }
 
         # Save the models
         User.save(self.admin)

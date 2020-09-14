@@ -246,11 +246,15 @@ MEMBERSHIP_FILE_EXPORT_PATH = os.getenv('MEMBERSHIP_FILE_EXPORT_PATH') or os.pat
 # Other Settings
 # Non-native Django setting
 APPLICATION_NAME = 'Squire'
-COMMITTEE_ABBREVIATION = 'HTTPS'
-COMMITTEE_FULL_NAME = 'Hackmanite Turbo Typing Programming Squad'
+COMMITTEE_ABBREVIATION = 'UUPS'
+COMMITTEE_FULL_NAME = 'UUPS Ultraviolet Programmer Squad'
 
-# People who get error code notifications if Debug = False
-ADMINS = [(APPLICATION_NAME + ' Admin', 'https@kotkt.nl')] # TODO: This email should be changed to something else
+if not os.getenv('SENTRY_DSN'):
+    # People who get error code notifications if Debug = False
+    ADMINS = [
+        (APPLICATION_NAME + ' Developer',       'developer@example.com'),
+        (APPLICATION_NAME + ' Administrator',   'administrator@example.com'),
+    ]
 
 # The email address that error messages come from, such as those sent to ADMINS and MANAGERS.
 SERVER_EMAIL = f'{APPLICATION_NAME} Error <{APPLICATION_NAME.lower()}-error@kotkt.nl>'
