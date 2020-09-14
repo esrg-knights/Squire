@@ -7,7 +7,7 @@ from core.util import suppress_warnings
 from membership_file.models import Member
 
 output_path = os.path.join(settings.BASE_DIR, 'test', 'output')
-output_file = os.path.join(output_path, 'membership_file.csv')
+output_file = os.path.join(output_path, 'squire_membership_file.csv')
 
 @override_settings(MEMBERSHIP_FILE_EXPORT_PATH=output_path)
 class MembershipFileExportTest(TestCase):

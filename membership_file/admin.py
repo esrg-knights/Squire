@@ -45,7 +45,7 @@ class MemberWithLog(HideRelatedNameAdmin):
 
     list_display = ('id', 'user', 'first_name', 'tussenvoegsel', 'last_name', 'educational_institution', 'is_deregistered', 'marked_for_deletion')
     list_filter = ['educational_institution', 'is_deregistered', 'marked_for_deletion']
-    list_display_links = ('id', 'first_name')
+    list_display_links = ('id', 'user', 'first_name')
 
     fieldsets = [
         (None,               {'fields': ['user', ('first_name', 'tussenvoegsel', 'last_name'), 'date_of_birth', ('last_updated_date', 'last_updated_by'), 'is_deregistered', 'marked_for_deletion']}),

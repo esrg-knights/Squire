@@ -124,6 +124,7 @@ local_settings.py
 htdocs/media/images/achievements
 htdocs/media/images/presets
 /output/
+/test/output/
 
 # Visual Studio Code
 .vscode
