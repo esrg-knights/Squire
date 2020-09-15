@@ -17,6 +17,7 @@ from core.views import TemplateManager
 
 # Enable the auto-creation of logs
 from .auto_model_update import *
+from .export import *
 
 
 # Add a link to each user's Account page leading to its Membership page
