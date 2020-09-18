@@ -2,7 +2,8 @@ from django.conf import settings
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
 from django.db.models import Count
-from django.utils import timezone
+from django.utils import timezone, http
+from django.urls import reverse
 
 from recurrence.fields import RecurrenceField
 
@@ -290,6 +291,20 @@ class Activity(models.Model):
 
         if errors:
             raise ValidationError(errors)
+
+    def get_absolute_url(self, start_time=None):
+        """
+        Returns the absolute url for the activity
+        :param start_time: Specifies the start-time and applies that in the url for recurrent activities
+        :return: the url for the activity page
+        """
+        url = reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': self.id})
+
+        if start_time is not None:
+            q_str = http.urlencode({'date': start_time.isoformat()})
+            url = f"{url}?{q_str}"
+
+        return url
         
 
 
@@ -373,6 +388,11 @@ class ActivitySlot(models.Model):
 
     def __str__(self):
         return self.title
+
+    def get_absolute_url(self):
+        q_str = http.urlencode({'date': self.recurrence_id.isoformat()})
+        return f"{reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': self.parent_activity.id})}?{q_str}"
+
 
 class Participant(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
