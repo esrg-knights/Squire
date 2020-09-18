@@ -1,5 +1,5 @@
 from django import forms
-from django.forms import ModelForm
+from django.forms import ModelForm, Form
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext, gettext_lazy as _
 from django.core.validators import ValidationError
@@ -39,3 +39,54 @@ class ActivitySlotForm(ModelForm):
     class Meta:
         model = ActivitySlot
         fields = "__all__"
+
+
+class RegisterForSlotForm(Form):
+
+    def __init__(self, *args, slot=None, user=None, **kwargs):
+        assert slot is not None
+        assert user is not None
+        self.slot = slot
+        self.user = user
+        super(RegisterForSlotForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        if not self.slot.parent_activity.can_user_subscribe(self.user, recurrence_id=self.slot.recurrence_id):
+            raise ValidationError(_("You can not subscribe to this activity"), code='invalid')
+
+        # Can only subscribe to at most X slots
+        user_subscriptions = self.slot.parent_activity.get_user_subscriptions(user=self.user, recurrence_id=self.slot.recurrence_id)
+
+
+        if self.slot.parent_activity.max_slots_join_per_participant != -1 and \
+                user_subscriptions.count() >= self.slot.parent_activity.max_slots_join_per_participant:
+            raise ValidationError(
+                _("You can not subscribe to another slot. You can only assign to at most %(max_slots) slots"),
+                code='max-slots-occupied',
+                params={'max_slots': self.slot.parent_activity.max_slots_join_per_participant}
+            )
+
+        slot_participants = self.slot.participants.all()
+
+        # Can only subscribe at most once to each slot
+        if self.user in slot_participants:
+            raise ValidationError(_("You are already registered for this slot"), code='already-registered')
+
+        # Slot participants limit
+        if self.slot.max_participants != -1 and slot_participants.count() >= self.slot.max_participants:
+            raise ValidationError(_("This slot is already at maximum capacity. You can not subscribe to it."),
+                                  code='slot-full')
+
+        return self.cleaned_data
+
+    def get_error_message(self):
+        if not self.is_valid():
+            return self.non_field_errors()[0]
+        else:
+            return None
+
+    def save(self):
+        self.slot.participants.add(
+            self.user, through_defaults={}
+        )
+
