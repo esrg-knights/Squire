@@ -34,7 +34,7 @@
                         <form action="/api/calendar/deregister/{{ slot.id }}" method="post">{% csrf_token %}
                             <button id="deregister-{{slot.id}}" class="btn btn-danger btn-subscribe">Deregister</button>
                         </form>
-                    {% elif slot_number is not None or slot.max_participants == -1 or slot.participants|length < slot.max_participants %}
+                    {% elif slot_number is not None or slot.max_participants == -1 or slot.participants.all|length < slot.max_participants %}
                         {% if activity.max_slots_join_per_participant == -1 or num_registered_slots < activity.max_slots_join_per_participant %}
                             {% block slot_register_button %}{% endblock slot_register_button %}
                         {% else %}
