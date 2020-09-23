@@ -57,8 +57,24 @@ document.addEventListener('DOMContentLoaded', function() {
     calendar.render();
 });
 
+// Reset content that is sometimes set for an activity
+function resetEventInfoModal() {
+    $('#event-recurrence-info #rrules').text("")
+    $('#event-recurrence-info #rdates').text("")
+    $('#event-recurrence-info #exrules').text("")
+    $('#event-recurrence-info #exdates').text("")
+
+    $('#subscribe-required').hide()
+    $('#subscribe-done').hide()
+    $('#subscribe-info').show()
+
+    $('#event-subscription').text("")
+    $('#event-subscription-closed').text("")
+    $('#event-participants-count').text("")
+}
 
 function onEventClick(info, calendar) {
+    resetEventInfoModal()
     var event = info.event
     var start_date = event.start
     var end_date = event.end
@@ -115,12 +131,10 @@ function onEventClick(info, calendar) {
     $('#event-description').text(event.extendedProps.description)
     
     if (event.extendedProps.isSubscribed) {
-        $('#subscribe-required').hide()
         $('#subscribe-done').show()
         $('#event-subscription').text("You are registered for this activity!")
     } else if (event.extendedProps.subscriptionsRequired) {
         $('#subscribe-required').show()
-        $('#subscribe-done').hide()
         $('#event-subscription').text("You need to register for this activity before you can join!")
     }
 
