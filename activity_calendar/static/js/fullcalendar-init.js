@@ -57,24 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
     calendar.render();
 });
 
-// Reset content that is sometimes set for an activity
-function resetEventInfoModal() {
-    $('#event-recurrence-info #rrules').text("")
-    $('#event-recurrence-info #rdates').text("")
-    $('#event-recurrence-info #exrules').text("")
-    $('#event-recurrence-info #exdates').text("")
-
-    $('#subscribe-required').hide()
-    $('#subscribe-done').hide()
-    $('#subscribe-info').show()
-
-    $('#event-subscription').text("")
-    $('#event-subscription-closed').text("")
-    $('#event-participants-count').text("")
-}
-
 function onEventClick(info, calendar) {
-    resetEventInfoModal()
     var event = info.event
     var start_date = event.start
     var end_date = event.end
@@ -117,30 +100,54 @@ function onEventClick(info, calendar) {
     $('#event-date').text(date_str)
     if (rInfo.rrules.length !== 0) {
         $('#event-recurrence-info #rrules').text('Repeats ' + rInfo.rrules.join(' and '))
+    } else {
+        $('#event-recurrence-info #rrules').text("")
     }
+
+
     if (rInfo.rdates.length !== 0) {
         $('#event-recurrence-info #rdates').text('Also on: ' + rInfo.rdates.join(' and ') )
+    } else {
+        $('#event-recurrence-info #rdates').text("")
     }
+
     if (rInfo.exrules.length !== 0) {
         $('#event-recurrence-info #exrules').text('Excluding ' + rInfo.exrules.join(' and '))
+    } else {
+        $('#event-recurrence-info #exrules').text("")
     }
+
     if (rInfo.exdates.length !== 0) {
         $('#event-recurrence-info #exdates').text('Except on: ' + rInfo.exdates.join(' and '))
+    } else {
+        $('#event-recurrence-info #exdates').text("")
     }
+
     $('#event-location').text(event.extendedProps.location)
     $('#event-description').text(event.extendedProps.description)
     
     if (event.extendedProps.isSubscribed) {
+        $('#subscribe-required').hide()
         $('#subscribe-done').show()
+        $('#subscribe-info').hide()
         $('#event-subscription').text("You are registered for this activity!")
     } else if (event.extendedProps.subscriptionsRequired) {
         $('#subscribe-required').show()
+        $('#subscribe-done').hide()
+        $('#subscribe-info').hide()
         $('#event-subscription').text("You need to register for this activity before you can join!")
+    } else {
+        $('#subscribe-required').hide()
+        $('#subscribe-done').hide()
+        $('#subscribe-info').show()
+        $('#event-subscription').text("")
     }
 
     if (!event.extendedProps.canSubscribe) {
         $('#event-subscription-closed').text("Registrations have not opened yet or are closed.")
-    }
+    } else {
+        $('#event-subscription-closed').text("")
+    }    
     
     if (event.extendedProps.maxParticipants === -1) {
         $('#event-participants-count').text(`${event.extendedProps.numParticipants} participant(s) so far.`)
