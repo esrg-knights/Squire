@@ -90,6 +90,7 @@ class MemberLogTest(TestCase):
             "country": "",
             "member_since": "",
             "educational_institution": "",
+            "is_deregistered": "",
             "updated_member-TOTAL_FORMS": 0,
             "updated_member-INITIAL_FORMS": 0,
             "updated_member-MIN_NUM_FORMS": 0,
@@ -151,6 +152,7 @@ class MemberLogTest(TestCase):
             "country": "The Netherlands",
             "member_since": "1970-01-01",
             "educational_institution": "TU/e",
+            "is_deregistered": True,
         })
         self.numNonEmptyFields = getNumNonEmptyFields(self.data)
 

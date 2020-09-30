@@ -31,6 +31,9 @@ class ActivitySlotAdmin(admin.ModelAdmin):
     list_filter = ['parent_activity', 'recurrence_id']
     list_display_links = ('id', 'title')
 
+    # Not supported yet
+    exclude = ('start_date', 'end_date')
+
     inlines = [ParticipantInline]
 
 admin.site.register(ActivitySlot, ActivitySlotAdmin)

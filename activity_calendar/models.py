@@ -4,6 +4,8 @@ from django.db import models
 from django.db.models import Count
 from django.utils import timezone
 
+from membership_file.util import user_to_member
+
 from recurrence.fields import RecurrenceField
 
 from core.models import ExtendedUser as User, PresetImage
@@ -251,7 +253,8 @@ class Activity(models.Model):
         if recurrence_id is None:
             raise TypeError("recurrence_id cannot be None if the activity is recurring")
 
-        if user.is_anonymous:
+        # TODO: Use permission system
+        if user.is_anonymous or not user_to_member(user).is_member():
             return False
 
         now = timezone.now()

@@ -43,12 +43,12 @@ class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
 # Ensures that the last_updated_by field is also updated properly from the Django admin panel
 class MemberWithLog(HideRelatedNameAdmin):
 
-    list_display = ('id', 'first_name', 'tussenvoegsel', 'last_name', 'educational_institution', 'email', 'phone_number', 'marked_for_deletion')
-    list_filter = ['marked_for_deletion', 'educational_institution']
-    list_display_links = ('id', 'first_name')
+    list_display = ('id', 'user', 'first_name', 'tussenvoegsel', 'last_name', 'educational_institution', 'is_deregistered', 'marked_for_deletion')
+    list_filter = ['educational_institution', 'is_deregistered', 'marked_for_deletion']
+    list_display_links = ('id', 'user', 'first_name')
 
     fieldsets = [
-        (None,               {'fields': [('first_name', 'tussenvoegsel', 'last_name'), 'date_of_birth', ('last_updated_date', 'last_updated_by'), 'marked_for_deletion']}),
+        (None,               {'fields': ['user', ('first_name', 'tussenvoegsel', 'last_name'), 'date_of_birth', ('last_updated_date', 'last_updated_by'), 'is_deregistered', 'marked_for_deletion']}),
         ('Contact Details', {'fields': ['email', 'phone_number', ('street', 'house_number', 'house_number_addition'), 'city', ('state', 'country')]}),
         ('Card Access', {'fields': ['tue_card_number', ('external_card_number', 'external_card_digits', 'external_card_cluster')]}),
         ('Student Information', {'fields': ['initials', 'educational_institution', 'student_number']}),
