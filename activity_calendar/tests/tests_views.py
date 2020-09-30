@@ -4,6 +4,7 @@ from django.test import TestCase, Client
 from django.conf import settings
 from django.utils import timezone, dateparse
 from django.utils.http import urlencode
+from unittest.mock import patch
 
 from activity_calendar.models import ActivitySlot, Activity, Participant
 from core.models import ExtendedUser as User
@@ -14,39 +15,22 @@ from core.util import suppress_warnings
 # @since 29 AUG 2020
 ##################################################################################
 
-
-# Source: https://stackoverflow.com/a/6558571
-def next_weekday(d, weekday):
-    days_ahead = weekday - d.weekday()
-    if days_ahead <= 0: # Target day already happened this week
-        days_ahead += 7
-    return d + datetime.timedelta(days_ahead)
-
-# Ensures that a given activity starts in the future (I.e. subscriptions are open)
-def make_future(activity):
-    future_date = timezone.now() + datetime.timedelta(days=5)
-    activity.update(start_date=future_date)
-    return future_date
+def mock_now():
+    dt = datetime.datetime(2020, 8, 14, 0, 0)
+    return timezone.make_aware(dt)
 
 # Tests for the Admin Panel
 class ActivityAdminTest(TestCase):
     fixtures = ['test_users.json', 'test_activity_slots.json']
 
-    @classmethod
-    def setUpTestData(self):
-        self.upcoming_occurence_date = next_weekday(timezone.now(), 2).replace(hour=14, minute=0, second=0, microsecond=0)
-        self.encoded_upcoming_occurence_date = urlencode({'date': self.upcoming_occurence_date.isoformat()})
-
     def setUp(self):
         self.client = Client()
         self.user = User.objects.filter(username='test_user').first()
         self.client.force_login(self.user)
-        
-        # Ensure that all dates are in the future (and subscriptions are open)
-        ActivitySlot.objects.filter(parent_activity__id=2).update(recurrence_id=self.upcoming_occurence_date)
 
     @suppress_warnings
-    def test_get_slots_invalid_dates(self):
+    @patch('django.utils.timezone.now', side_effect=mock_now)
+    def test_get_slots_invalid_dates(self, mock_tz):
         # No recurrence_id given
         response = self.client.get('/calendar/slots/2', data={})
         self.assertEqual(response.status_code, 404)
@@ -55,15 +39,16 @@ class ActivityAdminTest(TestCase):
         response = self.client.get('/calendar/slots/2?date=2020-09-03T14%3A00%3A00.000Z', data={})
         self.assertEqual(response.status_code, 404)
 
-    def test_get_slots_valid_date(self):
+    @patch('django.utils.timezone.now', side_effect=mock_now)
+    def test_get_slots_valid_date(self, mock_tz):
         # Valid (occurence) date given
-        response = self.client.get('/calendar/slots/2?' + self.encoded_upcoming_occurence_date, data={})
+        response = self.client.get('/calendar/slots/2?date=2020-08-19T14%3A00%3A00.000Z', data={})
         self.assertEqual(response.status_code, 200)
-        
+
         context = response.context
         
         self.assertEqual(context['activity'].title, 'Boardgame Evening')
-        self.assertEqual(context['recurrence_id'], self.upcoming_occurence_date)
+        self.assertEqual(context['recurrence_id'], datetime.datetime.fromisoformat('2020-08-19T14:00:00').replace(tzinfo=timezone.utc))
         self.assertFalse(context['deregister'])
 
         slots = []
@@ -109,7 +94,8 @@ class ActivityAdminTest(TestCase):
     # Test POST without a correct url
     # Even if the data is invalid, we expect a 400 bad request
     @suppress_warnings
-    def test_invalid_post_url(self):
+    @patch('django.utils.timezone.now', side_effect=mock_now)
+    def test_invalid_post_url(self, mock_tz):
         # No recurrence_id given
         response = self.client.post('/calendar/slots/2', data={})
         self.assertEqual(response.status_code, 400)
@@ -118,13 +104,14 @@ class ActivityAdminTest(TestCase):
         response = self.client.post('/calendar/slots/2?date=2020-09-03T14%3A00%3A00.000Z', data={})
         self.assertEqual(response.status_code, 400)
 
-    # Test POST without invalid POST data
+    # Test POST with invalid POST data
     @suppress_warnings
-    def test_invalid_post_data(self):
+    @patch('django.utils.timezone.now', side_effect=mock_now)
+    def test_invalid_post_data(self, mock_tz):
         old_count = ActivitySlot.objects.all().count()
 
         # Cannot create slots without a title
-        response = self.client.post('/calendar/slots/2?' + self.encoded_upcoming_occurence_date, data={
+        response = self.client.post('/calendar/slots/2?date=2020-08-19T14%3A00%3A00.000Z', data={
             # title is missing
             'max_participants': -1,
         })
@@ -134,7 +121,7 @@ class ActivityAdminTest(TestCase):
         self.assertEqual(old_count, ActivitySlot.objects.all().count())
 
         # Cannot create slots with 0 participants
-        response = self.client.post('/calendar/slots/2?' + self.encoded_upcoming_occurence_date, data={
+        response = self.client.post('/calendar/slots/2?date=2020-08-19T14%3A00%3A00.000Z', data={
             'title': 'Cool!',
             'max_participants': 0,
         })
@@ -143,10 +130,11 @@ class ActivityAdminTest(TestCase):
         # Number of slots should not have increased
         self.assertEqual(old_count, ActivitySlot.objects.all().count())
 
-    def test_valid_post_data_recurring(self):
+    @patch('django.utils.timezone.now', side_effect=mock_now)
+    def test_valid_post_data_recurring(self, mock_tz):
         # Clear all participant objects first so they cannot interfere
         Participant.objects.filter(user=self.user).delete()
-        response = self.client.post('/calendar/slots/2?' + self.encoded_upcoming_occurence_date, data={
+        response = self.client.post('/calendar/slots/2?date=2020-08-19T14%3A00%3A00.000Z', data={
             'title': 'My new Slot',
             'max_participants': 5,
         }, follow=True)
@@ -157,13 +145,12 @@ class ActivityAdminTest(TestCase):
                 owner=self.user, max_participants=5,
                 parent_activity__id=2).first())
     
-    def test_valid_post_data_non_recurring(self):
-        future_date = make_future(Activity.objects.filter(id=1))
-    
+    @patch('django.utils.timezone.now', side_effect=mock_now)
+    def test_valid_post_data_non_recurring(self, mock_tz):    
         # Clear all participant objects first so they cannot interfere
         Participant.objects.filter(user=self.user).delete()
 
-        response = self.client.post('/calendar/slots/1?' + urlencode({'date': future_date.isoformat()}), data={
+        response = self.client.post('/calendar/slots/1?date=2020-08-14T19:00:00Z', data={
             'title': 'My new Slot',
             'max_participants': 5,
         }, follow=True)
@@ -175,7 +162,8 @@ class ActivityAdminTest(TestCase):
                 owner=None, max_participants=-1,
                 parent_activity__id=1).first())
 
-    def test_valid_register(self):
+    @patch('django.utils.timezone.now', side_effect=mock_now)
+    def test_valid_register(self, mock_tz):
         Participant.objects.filter(user=self.user).delete()
 
         # Recurring activity
@@ -187,7 +175,6 @@ class ActivityAdminTest(TestCase):
                 activity_slot__id=2).first())
         
         # Non-recurring activity
-        make_future(Activity.objects.filter(id=1))
         response = self.client.post('/api/calendar/register/1', data={}, follow=True)
         self.assertEqual(response.status_code, 200)
 
@@ -195,7 +182,8 @@ class ActivityAdminTest(TestCase):
         self.assertIsNotNone(Participant.objects.filter(user=self.user,
                 activity_slot__id=1).first())
 
-    def test_valid_deregister(self):
+    @patch('django.utils.timezone.now', side_effect=mock_now)
+    def test_valid_deregister(self, mock_tz):
         # Recurring activity
         response = self.client.post('/api/calendar/deregister/6', data={}, follow=True)
         self.assertEqual(response.status_code, 200)
@@ -208,7 +196,6 @@ class ActivityAdminTest(TestCase):
         self.assertTrue(response.context['deregister'])
 
         # Non-recurring activity
-        make_future(Activity.objects.filter(id=1))
         Participant.objects.create(user=self.user, activity_slot=ActivitySlot.objects.get(id=1))
         response = self.client.post('/api/calendar/deregister/1', data={}, follow=True)
         self.assertEqual(response.status_code, 200)
@@ -222,7 +209,8 @@ class ActivityAdminTest(TestCase):
 
     # Test if unauthenticated users are redirected to the login page
     @suppress_warnings
-    def test_must_be_authenticated(self):
+    @patch('django.utils.timezone.now', side_effect=mock_now)
+    def test_must_be_authenticated(self, mock_tz):
         self.client.logout()
         response = self.client.post('/api/calendar/register/6', data={})
         self.assertEqual(response.status_code, 302)
@@ -232,9 +220,9 @@ class ActivityAdminTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, settings.LOGIN_URL + '?next=/api/calendar/deregister/6')
 
-        response = self.client.post('/calendar/slots/2?' + self.encoded_upcoming_occurence_date, data={
+        response = self.client.post('/calendar/slots/2?date=2020-08-19T14%3A00%3A00.000Z', data={
             'title': 'My new Slot',
             'max_participants': 5,
         })
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, settings.LOGIN_URL + '?' + urlencode({'next': '/calendar/slots/2?' + self.encoded_upcoming_occurence_date}))
+        self.assertRedirects(response, settings.LOGIN_URL + '?' + urlencode({'next': '/calendar/slots/2?date=2020-08-19T14%3A00%3A00.000Z'}))
