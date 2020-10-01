@@ -292,16 +292,16 @@ class Activity(models.Model):
         if errors:
             raise ValidationError(errors)
 
-    def get_absolute_url(self, start_time=None):
+    def get_absolute_url(self, recurrence_id=None):
         """
         Returns the absolute url for the activity
-        :param start_time: Specifies the start-time and applies that in the url for recurrent activities
+        :param recurrence_id: Specifies the start-time and applies that in the url for recurrent activities
         :return: the url for the activity page
         """
         url = reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': self.id})
 
-        if start_time is not None:
-            q_str = http.urlencode({'date': start_time.isoformat()})
+        if recurrence_id is not None:
+            q_str = http.urlencode({'date': recurrence_id.isoformat()})
             url = f"{url}?{q_str}"
 
         return url
@@ -325,7 +325,7 @@ class ActivitySlot(models.Model):
     # NB: The slot belongs to just a single _occurence_ of a (recurring) activity.
     #   Hence, we need to store both the foreign key and a date representing one if its occurences
     # TODO: Create a widget for the parent_activity_recurrence so editing is a bit more user-friendly
-    parent_activity = models.ForeignKey(Activity, related_name="parent_activity", on_delete=models.CASCADE)
+    parent_activity = models.ForeignKey(Activity, related_name="activity_slot_set", on_delete=models.CASCADE)
     recurrence_id = models.DateTimeField(blank=True, null=True,
         help_text="If the activity is recurring, set this to the date/time of one of its occurences. Leave this field empty if the parent activity is non-recurring.",
         verbose_name="parent activity date/time")
@@ -355,7 +355,7 @@ class ActivitySlot(models.Model):
     
     # Number of participants already subscribed
     def get_num_subscribed_participants(self):
-        return get_subscribed_participants().count()
+        return self.get_subscribed_participants().count()
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
