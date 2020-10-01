@@ -12,7 +12,7 @@ from django.utils.http import urlencode
 from django.views.decorators.http import require_POST
 
 from .models import Activity, Participant, ActivitySlot
-from core.models import User, PresetImage
+from core.models import ExtendedUser, PresetImage
 
 
 def check_join_constraints(request, parent_activity, recurrence_id):
@@ -34,7 +34,7 @@ def get_activity_json(activity, start, end, user):
         'description': activity.description,
         'location': activity.location,
         # use urlLink instead of url as that creates unwanted interactions with the calendar js module
-        'urlLink': activity.get_absolute_url(start_time=start),
+        'urlLink': activity.get_absolute_url(recurrence_id=start),
         'recurrenceInfo': {
             'rrules': [rule.to_text() for rule in activity.recurrences.rrules],
             'exrules': [rule.to_text() for rule in activity.recurrences.exrules],
@@ -146,7 +146,7 @@ def register(request, slot_id):
     if slot.max_participants != -1 and len(slot_participants) >= slot.max_participants:
         return HttpResponseBadRequest("Slot is full")
 
-    request.user.__class__ = User
+    request.user.__class__ = ExtendedUser
     # Suscribe to slot
     participant = slot.participants.add(
         request.user, through_defaults={}
