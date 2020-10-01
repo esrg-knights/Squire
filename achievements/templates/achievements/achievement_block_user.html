@@ -4,6 +4,7 @@
 <div class="card greenify achievement-wide">
     <div class="row no-gutters">
         <div class="col-md-1 achievementImage">
+            <div class="heightener"></div>
             <img src={{ achievement.image }} alt="Achievement Icon for {{achievement.name}}" class="card-img">
         </div>
         <div class="col-md-11">
@@ -47,7 +48,7 @@
 
 <!-- All claimants modal -->
 <div class="modal fade modal-achievement" id="modal_achievement_{{achievement.id}}" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
         <div class="modal-header">
             <h5 class="modal-title">Your {{achievement.name}} Claim History</h5>

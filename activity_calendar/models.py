@@ -5,6 +5,8 @@ from django.db.models import Count
 from django.utils import timezone, http
 from django.urls import reverse
 
+from membership_file.util import user_to_member
+
 from recurrence.fields import RecurrenceField
 
 from core.models import ExtendedUser as User, PresetImage
@@ -163,6 +165,9 @@ class Activity(models.Model):
         # Slots cannot be created outside the admin panel; we have to work with
         # the slots that already exist
         return self.get_num_slots(recurrence_id=recurrence_id)
+
+    def get_duration(self):
+        return self.end_date - self.start_date
     
     def can_user_create_slot(self, user, recurrence_id=None, num_slots=None, num_user_registrations=None,
             num_total_participants=None, num_max_participants=None):
@@ -240,6 +245,22 @@ class Activity(models.Model):
 
         now = timezone.now()
         return recurrence_id - self.subscriptions_open <= now and now <= recurrence_id - self.subscriptions_close
+
+    # Whether the name of participants is shown
+    def can_show_participants(self, user, recurrence_id=None):
+        if not self.is_recurring:
+            recurrence_id = self.start_date
+
+        if recurrence_id is None:
+            raise TypeError("recurrence_id cannot be None if the activity is recurring")
+
+        # TODO: Use permission system
+        if user.is_anonymous or not user_to_member(user).is_member():
+            return False
+
+        now = timezone.now()
+        return now <= recurrence_id + self.get_duration()
+
 
     # String-representation of an instance of the model
     def __str__(self):

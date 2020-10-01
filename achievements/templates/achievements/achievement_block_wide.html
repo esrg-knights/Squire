@@ -41,7 +41,7 @@
                                 <small class="text-muted">
                                     {% if achievement.claimants|length > num_shown_claimants %}
                                         <a href="#" data-toggle="modal" data-target="#modal_achievement_{{achievement.id}}">
-                                            View All Claimants
+                                            View All {{ achievement.claimants|length }} Claimants
                                         </a>
                                     {% else %}
                                         {% if achievement.claimants|length > 0 %}
@@ -60,7 +60,7 @@
 
 <!-- All claimants modal -->
 <div class="modal fade modal-achievement" id="modal_achievement_{{achievement.id}}" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
         <div class="modal-header">
             <h5 class="modal-title">{{achievement.name}} Claim History</h5>

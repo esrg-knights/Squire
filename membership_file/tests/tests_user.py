@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django import forms
 from django.conf import settings
 from django.core import serializers
@@ -57,6 +57,7 @@ class TemplateTagsTest(TestCase):
 ################################################################
 
 # Tests the editing feature of a user's own membership info.
+@override_settings(MEMBERSHIP_FILE_EXPORT_PATH=None)
 class MemberfileEditTest(TestCase):
     fixtures = ['test_users.json', 'test_members.json']
 
@@ -248,6 +249,7 @@ class MemberfileViewTest(TestCase):
 ################################################################
 
 # Tests several member-info-related formatting methods
+@override_settings(MEMBERSHIP_FILE_EXPORT_PATH=None)
 class MemberRenderTest(TestCase):
     def setUp(self):
         # Create a user

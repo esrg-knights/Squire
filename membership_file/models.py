@@ -35,7 +35,8 @@ class MemberUser(User):
 
     # Checks whether a given user is a member
     def is_member(self):
-        return self.get_member() is not None
+        member = self.get_member()
+        return member is not None and not member.is_deregistered
 
 
 ##################################################################################
@@ -100,7 +101,7 @@ class Member(models.Model):
     # Address of the member
     street = models.CharField(max_length=255)
     house_number = models.IntegerField(validators=[MinValueValidator(1)], default=1)
-    house_number_addition = models.CharField(max_length=255, blank=True, null=True)
+    house_number_addition = models.CharField(max_length=255, blank=True, null=True, verbose_name="addition")
     city = models.CharField(max_length=255)
     #NB: States/Province are not always necessary for addresses
     state = models.CharField(max_length=255, blank=True, null=True, verbose_name="state/province")
@@ -131,6 +132,8 @@ class Member(models.Model):
     # Members can be marked for deletion, after which another user
     # can permanently delete the member
     marked_for_deletion = models.BooleanField(default=False)
+
+    is_deregistered = models.BooleanField(default=False, help_text="Use this if you need to store (contact) information of someone who is not a member anymore.")
     
     ##################################
     # STRING REPRESENTATION METHODS
