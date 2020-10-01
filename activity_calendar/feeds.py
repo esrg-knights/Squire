@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.utils import timezone
+from django.urls import reverse
 
 import django_ical.feedgenerator
 
@@ -108,8 +109,8 @@ class CESTEventFeed(ICalFeed):
         return timezone.now()
 
     def item_link(self, item):
-        # There is no special page for the activity
-        return ""
+        # The local url to the activity
+        return item.get_absolute_url()
 
     def item_location(self, item):
         return item.location
