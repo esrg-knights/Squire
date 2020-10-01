@@ -141,7 +141,7 @@ function onEventClick(info, calendar) {
     }
 
     // Link to the correct occurence
-    $('#event-subscribe-url').attr("href", `calendar/slots/${event.groupId}?date=${encodeURIComponent(start_date.toISOString())}`)
+    $('#event-subscribe-url').attr("href", `${event.extendedProps.urlLink}`)
 
     $('#event-modal').modal()
 }
