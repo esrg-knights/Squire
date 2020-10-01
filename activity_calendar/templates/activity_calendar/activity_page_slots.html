@@ -1,0 +1,96 @@
+{% extends "activity_calendar/activity_page_base.html" %}
+{% load range %}
+{% load generic_field %}
+{% load render_form %}
+{% load calendar_tags %}
+
+
+{% block sign-up-status %}
+    {% if is_subscribed %}
+        <div class="alert alert-success">
+            <div class="row">
+                <div class="col-12 col-sm-7 col-md-12">
+                    <div class="p-1">
+                        {% if subscribed_slots.count == 1 %}
+                            You are subscribed to slot {{ subscribed_slots.first.activity_slot.title }}
+                        {% else %}
+                            You are subscribed to slots:
+                            {% for slot_entry in subscribed_slots %}
+                                {% if forloop.last %}and {% endif %}
+                                {{ slot_entry.activity_slot.title }}{% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-12 col-sm-5 col-md-12">
+
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert bg-light border border-danger">
+            <div class="row">
+                <div class="col-12 col-sm-7 col-md-12">
+                    <div class="d-block">
+                        You are not yet registered for this activity
+                    </div>
+                </div>
+                <div class="col-12 col-sm-5 col-md-12">
+                    <div class="d-block">
+                        Claim a slot below
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock sign-up-status %}
+
+
+{% block additional-contents %}
+    <h2>Slots</h2>
+
+    {% if not slot_creation_form.get_base_validity_error %}
+    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#slot-creation-modal">
+        Create Slot
+    </button>
+    {% else %}
+        <button type="button" class="btn btn-outline-success btn-block disabled" data-container="body" data-toggle="popover" data-placement="bottom"
+                data-content="{% form_rejection_reason slot_creation_form %}">
+            Create slot
+        </button>
+
+    {% endif %}
+
+
+
+    <div class="modal fade" id="slot-creation-modal" tabindex="-1" role="dialog"
+         aria-labelledby="slot-creation-modal-aria" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-title">Create Slot</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="modal-description">
+                    {% render_form form=slot_creation_form id="create_slot_form" submit_class="btn btn-success btn-block" submit_text="Create slot" method="post" action=register_link %}
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" form="create_slot_form" id='slot-creation-btn' class="btn btn-dark greenify">
+                        Create Slot
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real slots -->
+    {% for slot in slot_list %}
+        {% include "activity_calendar/slot_blocks/slot_block.html" %}
+    {% empty %}
+        <p>This activity has no slots (yet)!</p>
+    {% endfor %}
+
+{% endblock additional-contents %}
