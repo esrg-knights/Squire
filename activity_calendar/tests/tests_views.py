@@ -42,16 +42,16 @@ class ActivityAdminTest(TestCase):
     @suppress_warnings
     def test_get_slots_invalid_dates(self):
         # No recurrence_id given
-        response = self.client.get('/calendar/slots/2', data={})
+        response = self.client.get('/calendar/activity/2/', data={})
         self.assertEqual(response.status_code, 404)
 
         # No occurence at the given date
-        response = self.client.get('/calendar/slots/2?date=2020-09-03T14%3A00%3A00.000Z', data={})
+        response = self.client.get('/calendar/activity/2/?date=2020-09-03T14%3A00%3A00.000Z', data={})
         self.assertEqual(response.status_code, 404)
 
     def test_get_slots_valid_date(self):
         # Valid (occurence) date given
-        response = self.client.get('/calendar/slots/2?' + self.encoded_upcoming_occurence_date, data={})
+        response = self.client.get('/calendar/activity/2/?' + self.encoded_upcoming_occurence_date, data={})
         self.assertEqual(response.status_code, 200)
         
         context = response.context
@@ -82,34 +82,17 @@ class ActivityAdminTest(TestCase):
         # No dummy slots as slot_creation = CREATION_USER
         self.assertEqual(context['num_dummy_slots'], 0)
 
-    # Tests whether the correct number of dummy slots are created
-    def test_dummy_slots(self):
-        # Infinite dummy slots
-        response = self.client.get('/calendar/slots/1?date=2020-08-14T19%3A00%3A00.000Z', data={})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['num_dummy_slots'], Activity.MAX_NUM_AUTO_DUMMY_SLOTS)
-
-        activity = Activity.objects.get(title='Single')
-        activity.max_slots = 1
-        activity.save()
-        slot = ActivitySlot(title='Slot Title', parent_activity=activity)
-
-        # No more dummy slots should be created (as one already exists!)
-        response = self.client.get('/calendar/slots/1?date=2020-08-14T19%3A00%3A00.000Z', data={})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['num_dummy_slots'], 0)
-
 
     # Test POST without a correct url
     # Even if the data is invalid, we expect a 400 bad request
     @suppress_warnings
     def test_invalid_post_url(self):
         # No recurrence_id given
-        response = self.client.post('/calendar/slots/2', data={})
+        response = self.client.post('/calendar/activity/2/', data={})
         self.assertEqual(response.status_code, 400)
 
         # No occurence at the given date
-        response = self.client.post('/calendar/slots/2?date=2020-09-03T14%3A00%3A00.000Z', data={})
+        response = self.client.post('/calendar/activity/2/?date=2020-09-03T14%3A00%3A00.000Z', data={})
         self.assertEqual(response.status_code, 400)
 
     # Test POST without invalid POST data
@@ -118,7 +101,7 @@ class ActivityAdminTest(TestCase):
         old_count = ActivitySlot.objects.all().count()
 
         # Cannot create slots without a title
-        response = self.client.post('/calendar/slots/2?' + self.encoded_upcoming_occurence_date, data={
+        response = self.client.post('/calendar/activity/2/?' + self.encoded_upcoming_occurence_date, data={
             # title is missing
             'max_participants': -1,
         })
@@ -128,7 +111,7 @@ class ActivityAdminTest(TestCase):
         self.assertEqual(old_count, ActivitySlot.objects.all().count())
 
         # Cannot create slots with 0 participants
-        response = self.client.post('/calendar/slots/2?' + self.encoded_upcoming_occurence_date, data={
+        response = self.client.post('/calendar/activity/2/?' + self.encoded_upcoming_occurence_date, data={
             'title': 'Cool!',
             'max_participants': 0,
         })
@@ -140,7 +123,7 @@ class ActivityAdminTest(TestCase):
     def test_valid_post_data(self):
         # Clear all participant objects first so they cannot interfere
         Participant.objects.filter(user=self.user).delete()
-        response = self.client.post('/calendar/slots/2?' + self.encoded_upcoming_occurence_date, data={
+        response = self.client.post('/calendar/activity/2/?' + self.encoded_upcoming_occurence_date, data={
             'title': 'My new Slot',
             'max_participants': 5,
         }, follow=True)
@@ -153,8 +136,9 @@ class ActivityAdminTest(TestCase):
     
 
     def test_valid_register(self):
+        #Todo
         Participant.objects.filter(user=self.user).delete()
-        response = self.client.post('/api/calendar/register/2', data={}, follow=True)
+        response = self.client.post('/api/calendar/register/2/', data={}, follow=True)
         self.assertEqual(response.status_code, 200)
 
         # Should have a new participant
@@ -162,7 +146,8 @@ class ActivityAdminTest(TestCase):
                 activity_slot__id=2).first())
 
     def test_valid_deregister(self):
-        response = self.client.post('/api/calendar/deregister/6', data={}, follow=True)
+        #Todo
+        response = self.client.post('/api/calendar/deregister/6/', data={}, follow=True)
         self.assertEqual(response.status_code, 200)
 
         # Participant should no longer exist
@@ -176,17 +161,19 @@ class ActivityAdminTest(TestCase):
     @suppress_warnings
     def test_must_be_authenticated(self):
         self.client.logout()
-        response = self.client.post('/api/calendar/register/6', data={})
+        response = self.client.post('/calendar/activity/6/register/', data={})
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, settings.LOGIN_URL + '?next=/api/calendar/register/6')
+        self.assertRedirects(response, settings.LOGIN_URL + '?next=/calendar/activity/6/register/')
 
-        response = self.client.post('/api/calendar/deregister/6', data={})
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, settings.LOGIN_URL + '?next=/api/calendar/deregister/6')
+        # Todo: implement deregister
+        # Note: this is reworked so it is done by the same url/view form and will soon no longer be a thing
+        # response = self.client.post('/calendar/activity/6/deregister/', data={})
+        # self.assertEqual(response.status_code, 302)
+        # self.assertRedirects(response, settings.LOGIN_URL + '?next=/calendar/activity/6/deregister/')
 
-        response = self.client.post('/calendar/slots/2?' + self.encoded_upcoming_occurence_date, data={
+        response = self.client.post('/calendar/activity/2/?' + self.encoded_upcoming_occurence_date, data={
             'title': 'My new Slot',
             'max_participants': 5,
         })
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, settings.LOGIN_URL + '?' + urlencode({'next': '/calendar/slots/2?' + self.encoded_upcoming_occurence_date}))
+        self.assertRedirects(response, settings.LOGIN_URL + '?' + urlencode({'next': '/calendar/activity/2/?' + self.encoded_upcoming_occurence_date}))
