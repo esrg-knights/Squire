@@ -152,7 +152,8 @@ def register(request, slot_id):
         request.user, through_defaults={}
     )
 
-    q_str = urlencode({'date': slot.recurrence_id.isoformat()})
+    date_moment = slot.recurrence_id or slot.parent_activity.start_date
+    q_str = urlencode({'date': date_moment.isoformat()})
     return HttpResponseRedirect(
         f"{reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': parent_activity.id})}?{q_str}")
 
@@ -173,6 +174,7 @@ def deregister(request, slot_id):
     for usr in user_slot_participants:
         slot.participants.remove(usr)
 
-    q_str = urlencode({'date': slot.recurrence_id.isoformat(), 'deregister': True})
+    date_moment = slot.recurrence_id or slot.parent_activity.start_date
+    q_str = urlencode({'date': date_moment.isoformat(), 'deregister': True})
     return HttpResponseRedirect(
         f"{reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': parent_activity.id})}?{q_str}")

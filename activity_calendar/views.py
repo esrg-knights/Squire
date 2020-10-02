@@ -152,9 +152,9 @@ class ActivitySimpleMomentView(LoginRequiredForPostMixin, FormMixin, ActivityMom
             # Add some set-up data based on the current situation
             # This could be overwritten by the post data if supplied, which will yield the expected errors in that case
             'data': {
-                'sign_up': not self.object.is_user_subscribed(self.request.user, self.recurrence_id)
+                'sign_up': not self.activity.is_user_subscribed(self.request.user, self.recurrence_id)
             },
-            'activity': self.object,
+            'activity': self.activity,
             'recurrence_id': self.recurrence_id,
             'user': self.request.user,
         }
@@ -252,8 +252,3 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
         slot = form.save()
         return HttpResponseRedirect(slot.get_absolute_url())
 
-
-
-    # def form_valid(self, form):
-    #     messages.info(request=self.request, message="form successfull")
-    #     return HttpResponseRedirect('')
