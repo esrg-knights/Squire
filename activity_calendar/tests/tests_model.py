@@ -10,7 +10,7 @@ from django.utils import timezone
 from recurrence import Recurrence, deserialize as deserialize_recurrence_test
 from unittest.mock import patch
 
-from .tests_views import mock_now
+from . import mock_now
 
 from activity_calendar.models import Activity, ActivitySlot, Participant
 from core.models import ExtendedUser as User
@@ -37,7 +37,7 @@ class ModelMethodsTest(TestCase):
         self.assertEqual(self.activity.image_url, f"{settings.STATIC_URL}images/activity_default.png")
 
     # Should obtain the subscribed participants (possibly with duplicates if someone subscribed more than once)
-    @patch('django.utils.timezone.now', side_effect=mock_now)
+    @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_get_subscribed_participants(self, mock_tz):
         # Should get correctly for recurring activities
         participants = list(map(lambda x: x['user_id'],
@@ -59,7 +59,7 @@ class ModelMethodsTest(TestCase):
         with self.assertRaises(TypeError) as error:
             self.activity.get_subscribed_participants()
     
-    @patch('django.utils.timezone.now', side_effect=mock_now)
+    @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_get_num_subscribed_participants(self, mock_tz):
         # Recurring activity
         self.assertEqual(self.activity.get_num_subscribed_participants(recurrence_id=self.upcoming_occurence_date), 3)
@@ -101,7 +101,7 @@ class ModelMethodsTest(TestCase):
         self.simple_activity.max_participants = 2
         self.assertEqual(self.simple_activity.get_max_num_participants(), 2)
 
-    @patch('django.utils.timezone.now', side_effect=mock_now)
+    @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_get_slots(self, mock_tz):
         # Should get correctly for recurring activities
         slots = list(map(lambda x: x['id'],
@@ -122,14 +122,14 @@ class ModelMethodsTest(TestCase):
         with self.assertRaises(TypeError) as error:
             self.activity.get_slots()
 
-    @patch('django.utils.timezone.now', side_effect=mock_now)
+    @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_get_num_slots(self, mock_tz):
         # Recurring activity
         self.assertEqual(self.activity.get_num_slots(recurrence_id=self.upcoming_occurence_date), 2)
         # Non-recurring activity
         self.assertEqual(self.simple_activity.get_num_slots(), 1)
 
-    @patch('django.utils.timezone.now', side_effect=mock_now)
+    @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_get_max_num_slots(self, mock_tz):
         # Cannot create slots; work with the already existing slots
         self.assertEqual(self.activity.get_max_num_slots(recurrence_id=self.upcoming_occurence_date), 2)
@@ -166,7 +166,7 @@ class ModelMethodsTest(TestCase):
         self.assertTrue(self.simple_activity.can_user_create_slot(self.user,
                 num_slots=3, num_user_registrations=2, num_total_participants=3, num_max_participants=10))
 
-    @patch('django.utils.timezone.now', side_effect=mock_now)
+    @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_get_user_subscriptions(self, mock_tz):
         # Not passing values ourselves
         participants = list(map(lambda x: x['user_id'],
