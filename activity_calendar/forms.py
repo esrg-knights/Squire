@@ -5,7 +5,6 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import ValidationError
 
 from .models import ActivitySlot, Activity, Participant
-from core.models import PresetImage
 
 ##################################################################################
 # Defines forms related to the membership file.
@@ -50,24 +49,28 @@ class RegisterAcitivityMixin:
         return self.cleaned_data
 
     def check_validity(self, data):
-        """ Method that checks the validity in response to the given information. This compares the given data
-        with the known data (activity, recurrence_id, user) and either raises a ValidationError if something is not
-        correct. Or returns nothing.
+        """ Method that checks the validity in response to the given information. This is called by the clean method
+        but can also be called after Form initialisation to check data prior to user interaction. Useful for checking
+        if form cán be used prior to user data supply (e.g. communication in front-end.
+        The data is e.g. activity, recurrence_id and user.
+        Running it raises either ValidationError X or returns None
         :param data: Given data to validate to.
-        :return: """
+        :return: Raises ValidationError or returns None """
         if not self.activity.are_subscriptions_open(self.recurrence_id):
             raise ValidationError(_("Subscriptions are currently closed."), code='closed')
 
-        # Check if there is still room in the activity
-        if self.activity.max_participants != -1:
-            num_participants = Participant.objects.filter(
-                activity_slot__parent_activity=self.activity,
-                activity_slot__recurrence_id=self.recurrence_id
-            ).count()
-            if num_participants >= self.activity.max_participants:
-                raise ValidationError(
-                    _(f"This activity is already at maximum capacity."),
-                    code='activity-full'
+        # Check if, when signing up, there is still room (because max is limited)
+        if data['sign_up'] and self.activity.max_participants != -1:
+                # get the number of participants
+                num_participants = Participant.objects.filter(
+                    activity_slot__parent_activity=self.activity,
+                    activity_slot__recurrence_id=self.recurrence_id
+                ).count()
+                # check the number of participants
+                if num_participants >= self.activity.max_participants:
+                    raise ValidationError(
+                        _(f"This activity is already at maximum capacity."),
+                        code='activity-full'
                 )
 
     def get_first_error_code(self):
@@ -78,22 +81,18 @@ class RegisterAcitivityMixin:
             return invalidation_errors.code
         return None
 
-    def get_error_message(self):
-        if not self.errors:
-            return self.non_field_errors()[0]
-        else:
-            return None
-
     def get_base_validity_error(self):
-        """ Returns the error created by checking the basic form set-up. Used to validate user permissions """
+        """
+        Returns an error if present prior to user input validation. Useful to communicate reasons of denied access
+        prior to filling out the form
+        :return: The error in a <message, code> format or None when preliminary form data is valid
+        """
         try:
-            print("INITIAL")
-            print(self.initial)
             self.check_validity(self.initial)
         except ValidationError as e:
             return e.message, e.code
         else:
-            return None
+            return
 
 class RegisterForActivityForm(RegisterAcitivityMixin, Form):
     """
@@ -106,7 +105,7 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
         # Subscribing directly on activities can only happen if we don't use the multiple-slots feature
         if not self.activity.slot_creation == "CREATION_AUTO":
             raise ValidationError(
-                _("Something went wrong. Please try again."), code='invalid')
+                _("Activity mode is incorrect. Please refresh the page."), code='invalid_slot_mode')
 
         # Check if user is already present in the activity
         user_subscriptions = self.activity.get_user_subscriptions(self.user, self.recurrence_id)
@@ -130,7 +129,7 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
             }
             activity_slot = ActivitySlot.objects.filter(**kwargs).first()
             if activity_slot is None:
-                ActivitySlot.objects.create(**kwargs)
+                activity_slot = ActivitySlot.objects.create(**kwargs)
 
             activity_slot.participants.add(self.user)
             return True
@@ -238,14 +237,15 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
             )
 
         # Can the user (in theory) join another slot?
-        user_subscriptions = self.activity.get_user_subscriptions(user=self.user, recurrence_id=self.recurrence_id)
-        if self.activity.max_slots_join_per_participant != -1 and \
-                user_subscriptions.count() >= self.activity.max_slots_join_per_participant:
-            raise ValidationError(
-                _("User is already subscribed to the max number of slots (%(max_slots))"),
-                code='max-slots-occupied',
-                params={'max_slots': self.activity.max_slots_join_per_participant}
-            )
+        if data.get('sign_up', False):
+            user_subscriptions = self.activity.get_user_subscriptions(user=self.user, recurrence_id=self.recurrence_id)
+            if self.activity.max_slots_join_per_participant != -1 and \
+                    user_subscriptions.count() >= self.activity.max_slots_join_per_participant:
+                raise ValidationError(
+                    _("User is already subscribed to the max number of slots (%(max_slots)s)"),
+                    code='max-slots-occupied',
+                    params={'max_slots': self.activity.max_slots_join_per_participant}
+                )
 
         # Check cap for number of slots
         if self.activity.max_slots != -1 and \
@@ -263,11 +263,8 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
         slot_obj = super(RegisterNewSlotForm, self).save(commit=commit)
 
-        # Add the user to the slot
-        slot_obj.participants.add(self.user)
+        # Add the user to the slot if the user wants to
+        if self.cleaned_data['sign_up']:
+            slot_obj.participants.add(self.user)
 
         return slot_obj
-
-
-
-
