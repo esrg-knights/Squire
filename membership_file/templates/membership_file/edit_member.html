@@ -6,8 +6,11 @@
 
 {% load generic_field %}
 
+{% block content-frame-class %}
+    wideContentFrame
+{% endblock %}
+
 {% block content %}
-  <div class='wideContentFrame'>
     <h1>Editing Member Information...</h1>
     <p>
       <form method="post">
@@ -50,5 +53,4 @@
     <p>
       Click <a href="{% url 'membership_file/membership' %}">here</a> to cancel all changes.
     </p>
-  </div>
 {% endblock content %}

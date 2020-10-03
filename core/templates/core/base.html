@@ -71,13 +71,15 @@
 				</ul>
 			</div>
 		</nav>
-		{% bootstrap_messages %}
 
 		<main class="mb-5 px-3">
 			<div id='mainContent'>
-				{% block content %}
-					<!-- Other templates can add extra content here -->
-				{% endblock %}
+                <div class="{% block content-frame-class %}ContentFrame{% endblock %}">
+                    {% bootstrap_messages %}
+                    {% block content %}
+                        <!-- Other templates can add extra content here -->
+                    {% endblock %}
+                </div>
 			</div>
 		</main>		
 		

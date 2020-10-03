@@ -3,12 +3,15 @@
 {% load static %}
 
 {% block title %}
-  Squire - Calendar
+    Squire - Calendar
 {% endblock title %}
 
+{% block content-frame-class %}
+    wideContentFrame
+{% endblock %}
+
 {% block content %}
-    <div class="contentFrame">
-        <h1>Activity Calendar</h1>
-        <iframe src="https://calendar.google.com/calendar/embed?src=knights.of.the.kitchen.table%40gmail.com&ctz=Europe%2FAmsterdam" style="border: 0" width="800" height="600" frameborder="0" scrolling="no"></iframe>
-    </div>
+    <h1>Activity Calendar</h1>
+    <iframe src="https://calendar.google.com/calendar/embed?src=knights.of.the.kitchen.table%40gmail.com&ctz=Europe%2FAmsterdam"
+            style="border: 0" width="800" height="600" frameborder="0" scrolling="no"></iframe>
 {% endblock content %}
