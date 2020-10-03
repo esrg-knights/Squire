@@ -4,19 +4,6 @@
 {% load calendar_tags %}
 
 
-{% block XXX %}
-    <a href="{{ main_activity_url }}" class="btn btn-outline-dark btn-sm my-2">
-        <img
-                src="{% static 'octicons/arrow-left.svg' %}"
-                alt=""
-                height="12"
-                width="12"
-        />
-        Back to activity details
-    </a>
-    {{ block.super }}
-{% endblock %}
-
 {% block sign-up-status %}
     {% if is_subscribed %}
         <div class="alert alert-success">

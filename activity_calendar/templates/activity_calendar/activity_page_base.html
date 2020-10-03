@@ -5,7 +5,7 @@
 {% load calendar_tags %}
 
 {% block title %}
-    Squire - Calendar
+    Squire - {{ activity.title }}
 {% endblock title %}
 
 {% block css %}
@@ -47,10 +47,10 @@
                     <!-- Calendar Icon -->
                     <div class="">
                         <img
-                                src="{% static 'octicons/calendar.svg' %}"
-                                alt="Calendar-icon"
-                                height="16"
-                                width="16"
+                            src="{% static 'octicons/calendar.svg' %}"
+                            alt="Calendar-icon"
+                            height="16"
+                            width="16"
                         />
                     </div>
                     <!-- Event Date & Recurrence Information -->
@@ -59,10 +59,10 @@
                             <p id="event-date">
                                 {% if start_date.date == end_date.date %}
                                     <!-- Activity starts and ends on the same day -->
-                                    {{ start_date|date:"l, j E H:i" }} - {{ end_date|date:"H:i" }}
+                                    {{ start_date|date:"l j E H:i" }} - {{ end_date|date:"H:i" }}
                                 {% else %}
                                     <!-- Activity starts and ends on a different day -->
-                                    {{ start_date|date:"j E, H:i" }} - {{ end_date|date:"j E, H:i" }}
+                                    {{ start_date|date:"j E H:i" }} - {{ end_date|date:"j E H:i" }}
                                 {% endif %}
                             </p>
                         </div>
@@ -73,10 +73,10 @@
                     <!-- Location Icon -->
                     <div class="col-xs-2">
                         <img
-                                src="{% static 'octicons/location.svg' %}"
-                                alt="Location-icon"
-                                height="16"
-                                width="16"
+                            src="{% static 'octicons/location.svg' %}"
+                            alt="Location-icon"
+                            height="16"
+                            width="16"
                         />
                     </div>
                     <!-- Location -->
@@ -89,10 +89,10 @@
                     <!-- Event Participants Icon -->
                     <div class="col-xs-2">
                         <img
-                                src="{% static 'octicons/people.svg' %}"
-                                alt=""
-                                height="16"
-                                width="16"
+                            src="{% static 'octicons/people.svg' %}"
+                            alt=""
+                            height="16"
+                            width="16"
                         />
                     </div>
                     <!-- Patricipants -->
@@ -109,10 +109,10 @@
                     <!-- Text Icon -->
                     <div class="col-xs-2">
                         <img
-                                src="{% static 'octicons/three-bars.svg' %}"
-                                alt="Description-icon"
-                                height="16"
-                                width="16"
+                            src="{% static 'octicons/three-bars.svg' %}"
+                            alt="Description-icon"
+                            height="16"
+                            width="16"
                         />
                     </div>
                     <!-- Event Description -->
