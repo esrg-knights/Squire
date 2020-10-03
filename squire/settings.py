@@ -36,7 +36,8 @@ if os.getenv('SENTRY_DSN'): # pragma: no cover
 
 # Hosts on which the application will run
 ALLOWED_HOSTS = []
-
+if os.getenv('SQUIRE_ALLOWED_HOSTS'): # pragma: no cover
+    ALLOWED_HOSTS += os.getenv('SQUIRE_ALLOWED_HOSTS').split(',')
 
 # Application definition
 
@@ -248,13 +249,6 @@ MEMBERSHIP_FILE_EXPORT_PATH = os.getenv('MEMBERSHIP_FILE_EXPORT_PATH') or os.pat
 APPLICATION_NAME = 'Squire'
 COMMITTEE_ABBREVIATION = 'UUPS'
 COMMITTEE_FULL_NAME = 'UUPS Ultraviolet Programmer Squad'
-
-if not os.getenv('SENTRY_DSN'): # pragma: no cover 
-    # People who get error code notifications if Debug = False
-    ADMINS = [
-        (APPLICATION_NAME + ' Developer',       'developer@example.com'),
-        (APPLICATION_NAME + ' Administrator',   'administrator@example.com'),
-    ]
 
 # The email address that error messages come from, such as those sent to ADMINS and MANAGERS.
 SERVER_EMAIL = f'{APPLICATION_NAME} Error <{APPLICATION_NAME.lower()}-error@kotkt.nl>'
