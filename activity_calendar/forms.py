@@ -40,6 +40,11 @@ class RegisterAcitivityMixin:
         # Manually add sign_up field to fields as this is not done here automatically.
         self.fields['sign_up'] = self.sign_up
 
+    def clean_sign_up(self):
+        if 'sign_up' not in self.cleaned_data:
+            raise ValidationError("Sign_up was given", code='required')
+        return self.cleaned_data['sign_up']
+
     def clean(self):
         super(RegisterAcitivityMixin, self).clean()
 
@@ -89,7 +94,15 @@ class RegisterAcitivityMixin:
         """
         try:
             if self.is_bound:
-                self.check_validity(self.data)
+                try:
+                    self.check_validity(self.data)
+                except KeyError as e:
+                    # Any of the attributes was missing that is actually vital or required. As this method subverts
+                    # the normal clean method to improve communication feedback prior to filling in a form this can
+                    # happen. Though only in certain test-cases or when users actively start messing about
+                    # (sending custom POST requests) so it defeats the purpose
+                    # Either way, letting an error slip through here is fine. Clean() is the final safety net.
+                    pass
             else:
                 self.check_validity(self.initial)
         except ValidationError as e:

@@ -17,6 +17,8 @@ from .models import Activity, Participant
 from core.models import ExtendedUser
 
 
+__all__ = "CreateSlotView, get_activity_detail_view, activity_collection"
+
 # Renders the simple v1 calendar
 @require_safe
 def googlehtml_activity_collection(request):
@@ -279,8 +281,7 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
             messages.error(self.request, self.error_messages.get(error.code, 'An unknown error occured'))
             return HttpResponseRedirect(self.activity.get_absolute_url(self.recurrence_id))
 
-        else:
-            return super(CreateSlotView, self).render_to_response(context, **response_kwargs)
+        return super(CreateSlotView, self).render_to_response(context, **response_kwargs)
 
     def get_form_kwargs(self):
         if self.activity.slot_creation == "CREATION_NONE" and self.request.user.is_staff:
@@ -304,7 +305,6 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
             'main_activity_url': self.activity.get_absolute_url(self.recurrence_id),
             'subscribed_slots': self.activity.get_user_subscriptions(self.request.user, self.recurrence_id),
         })
-
 
     def form_valid(self, form):
         slot = form.save()

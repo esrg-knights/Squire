@@ -76,32 +76,6 @@ class ActivityAdminTest(TestCase):
         response = self.client.post('/calendar/activity/2/?date=2020-09-03T14%3A00%3A00%2B00%3A00', data={})
         self.assertEqual(response.status_code, 404)
 
-    # Test POST with invalid POST data
-    @suppress_warnings
-    @patch('django.utils.timezone.now', side_effect=mock_now(datetime.datetime(2020, 8, 15, 0, 0)))
-    def test_invalid_post_data(self, mock_tz):
-        old_count = ActivitySlot.objects.all().count()
-
-        # Cannot create slots without a title
-        response = self.client.post('/calendar/activity/2/create_slot/?date=2020-08-19T14%3A00%3A00%2B00%3A00', data={
-            # title is missing
-            'max_participants': -1,
-        }, follow=True)
-        self.assertEqual(response.status_code, 200)
-
-        # Number of slots should not have increased
-        self.assertEqual(old_count, ActivitySlot.objects.all().count())
-
-        # Cannot create slots with 0 participants
-        response = self.client.post('/calendar/activity/2/create_slot/?date=2020-08-19T14%3A00%3A00%2B00%3A00', data={
-            'title': 'Cool!',
-            'max_participants': 0,
-        })
-        self.assertEqual(response.status_code, 200)
-
-        # Number of slots should not have increased
-        self.assertEqual(old_count, ActivitySlot.objects.all().count())
-
     @patch('django.utils.timezone.now', side_effect=mock_now(datetime.datetime(2020, 8, 15, 0, 0)))
     def test_valid_post_data_recurring(self, mock_tz):
         # Clear all participant objects first so they cannot interfere

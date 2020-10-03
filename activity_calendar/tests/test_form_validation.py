@@ -226,7 +226,7 @@ class RegisterForActivitySlotFormTestCase(ActivityFormValidationMixin, TestCase)
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_required_fields(self, mock_tz):
         """ Test that the user input contains at least the required fields """
-        self.assertFormHasError({'sign_up': True}, code='required', field='slot_Xid')
+        self.assertFormHasError({'sign_up': True}, code='required', field='slot_id')
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_slot_not_found(self, mock_tz):
