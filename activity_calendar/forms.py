@@ -37,7 +37,7 @@ class RegisterAcitivityMixin:
 
         super(RegisterAcitivityMixin, self).__init__(*args, **kwargs)
 
-        # Manually add sign_up field to fields as this is not done here automatically. #TODO
+        # Manually add sign_up field to fields as this is not done here automatically.
         self.fields['sign_up'] = self.sign_up
 
     def clean(self):
@@ -88,11 +88,14 @@ class RegisterAcitivityMixin:
         :return: The error in a <message, code> format or None when preliminary form data is valid
         """
         try:
-            self.check_validity(self.initial)
+            if self.is_bound:
+                self.check_validity(self.data)
+            else:
+                self.check_validity(self.initial)
         except ValidationError as e:
-            return e.message, e.code
+            return e
         else:
-            return
+            return None
 
 class RegisterForActivityForm(RegisterAcitivityMixin, Form):
     """
@@ -220,7 +223,6 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
     class Meta:
         model = ActivitySlot
         fields = ['title', 'description', 'location', 'max_participants']
-
 
     def check_validity(self, data):
         super(RegisterNewSlotForm, self).check_validity(data)

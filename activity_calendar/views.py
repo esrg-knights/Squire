@@ -1,4 +1,3 @@
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import AccessMixin
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404
@@ -67,12 +66,19 @@ class ActivityMixin:
         kwargs.update({
             'activity': self.activity,
             'recurrence_id': self.recurrence_id,
+            # General information displayed on all relevant pages
+            'subscriptions_open': self.activity.are_subscriptions_open(recurrence_id=self.recurrence_id),
+            'num_total_participants': self.activity.get_num_subscribed_participants(recurrence_id=self.recurrence_id),
+            'num_max_participants': self.activity.max_participants,
+            'is_subscribed': self.activity.is_user_subscribed(self.request.user, self.recurrence_id),
+            'start_date': self.recurrence_id,
+            'end_date': self.recurrence_id + (self.activity.end_date - self.activity.start_date),
         })
 
         return kwargs
 
 
-class ActivityMomentView(ActivityMixin, TemplateView):
+class ActivityFormMixin:
     error_messages = {'undefined': _("Something went wrong. Please try again.")}
 
     def post(self, request, *args, **kwargs):
@@ -113,18 +119,16 @@ class ActivityMomentView(ActivityMixin, TemplateView):
         return self.error_messages.get(code, self.get_failed_message('undefined'))
 
     def get_context_data(self, **kwargs):
-        kwargs = super(ActivityMomentView, self).get_context_data(**kwargs)
+        kwargs = super(ActivityFormMixin, self).get_context_data(**kwargs)
         kwargs.update({
-            'subscriptions_open': self.activity.are_subscriptions_open(recurrence_id=self.recurrence_id),
-            'num_total_participants': self.activity.get_num_subscribed_participants(recurrence_id=self.recurrence_id),
-            'num_max_participants': self.activity.max_participants,
-            'is_subscribed': self.activity.is_user_subscribed(self.request.user, self.recurrence_id),
-            'start_date': self.recurrence_id,
-            'end_date': self.recurrence_id + (self.activity.end_date - self.activity.start_date),
             'error_messages': self.error_messages,
         })
 
         return kwargs
+
+
+class ActivityMomentView(ActivityMixin, ActivityFormMixin, TemplateView):
+    pass
 
 
 class ActivitySimpleMomentView(LoginRequiredForPostMixin, FormMixin, ActivityMomentView):
@@ -254,17 +258,53 @@ def get_activity_detail_view(request, *args, **kwargs):
 
 class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
     form_class = RegisterNewSlotForm
-    template_name = "activity_calendar/new_slot_page.html"
+    template_name = "activity_calendar/activity_page_new_slot.html"
+
+    error_messages = {
+        'undefined': _("Something went wrong. Please try again."),
+        'activity-full': _("This activity is already at maximum capacity. You can not subscribe to it."),
+        'invalid': _("You can not subscribe to this activity. Reason currently undefined"),
+        'closed': _("You can not create slots as subscriptions are currently closed"),
+        'max-slots-occupied': _("You can not create and subscribe to another slot. You are already at your maximum number of slots you can register for"),
+        'max-slots-claimed': _("You can not create a slot because this activity already has the maximum number of allowed slots"),
+        'user-slot-creation-denied': _("You can not create slots on this activity. I honestly don't know why I'm even showing you this option.")
+    }
+
+    def render_to_response(self, context, **response_kwargs):
+        # Interject the resposne method. If the form has base errors, instead of rendering. Default to the normal
+        # activity page and display the error message. As it is a base error the user can not view the slot creation
+        # page anyway
+        error = context['form'].get_base_validity_error()
+        if error:
+            messages.error(self.request, self.error_messages.get(error.code, 'An unknown error occured'))
+            return HttpResponseRedirect(self.activity.get_absolute_url(self.recurrence_id))
+
+        else:
+            return super(CreateSlotView, self).render_to_response(context, **response_kwargs)
 
     def get_form_kwargs(self):
+        if self.activity.slot_creation == "CREATION_NONE" and self.request.user.is_staff:
+            # In a none based slot mode, don't automatically register the creator to the slot
+            initial = {'sign_up': False}
+        else:
+            initial = {'sign_up': True}
+
         kwargs = super(CreateSlotView, self).get_form_kwargs()
         kwargs.update({
+            'initial': initial,
             'activity': self.activity,
             'recurrence_id': self.recurrence_id,
             'user': self.request.user,
         })
 
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        return super(CreateSlotView, self).get_context_data(**{
+            'main_activity_url': self.activity.get_absolute_url(self.recurrence_id),
+            'subscribed_slots': self.activity.get_user_subscriptions(self.request.user, self.recurrence_id),
+        })
+
 
     def form_valid(self, form):
         slot = form.save()
@@ -275,4 +315,15 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
         messages.success(self.request, message.format(activity_name=form.instance.title))
 
         return HttpResponseRedirect(slot.get_absolute_url())
+
+    def form_invalid(self, form):
+        error = form.get_base_validity_error()
+        # If any of the base errors occured, the user can not prevent or address the problem to fix it in the form
+        # Thus return it to the normal page instead of displaying the page again.
+        if error:
+            messages.error(self.request, self.error_messages.get(error.code, 'An unknown error occured'))
+            return HttpResponseRedirect(self.activity.get_absolute_url(self.recurrence_id))
+        else:
+            messages.error(self.request, _("Please correct error below"))
+            return super(CreateSlotView, self).form_invalid(form)
 

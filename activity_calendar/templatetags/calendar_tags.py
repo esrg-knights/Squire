@@ -72,13 +72,11 @@ def form_rejection_reason(context, form=None):
         # Take the default form if none is provided
         form = context['form']
 
-    error_msg, error_code = form.get_base_validity_error()
+    error = form.get_base_validity_error()
 
-    if error_msg:
+    if error:
         # Get the error code and search it up in the error_messages table
-        return context['error_messages'].get(error_code, f'Undefined error occured: {error_code}')
-        #error_code = form.get_first_error_code()
-        #return context['error_messages'].get(error_code, f'Undefined error occured: {error_code}')
+        return context['error_messages'].get(error.code, f'Undefined error occured: {error.code}')
 
     return ''
 

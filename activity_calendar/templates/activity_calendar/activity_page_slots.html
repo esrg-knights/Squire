@@ -82,7 +82,7 @@
                     </button>
                 </div>
                 <div class="modal-body" id="modal-description">
-                    {% render_form form=slot_creation_form id="create_slot_form" submit_class="btn btn-success btn-block" submit_text="Create slot" method="post" action=register_link %}
+                    {% render_form form=slot_creation_form id="create_slot_form" has_submit_button=False method="post" action=register_link %}
                 </div>
                 <div class="modal-footer">
                     <button type="submit" form="create_slot_form" id='slot-creation-btn' class="btn btn-dark greenify">
