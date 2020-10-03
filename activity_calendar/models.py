@@ -278,28 +278,30 @@ class Activity(models.Model):
             return date == self.start_date
         occurences = self.recurrences.between(date, date, dtstart=self.start_date, inc=True)
         return bool(occurences)
-    
+
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
         errors = {}
+        exclude = exclude or []
 
         # Activities must start before they can end
-        if self.start_date >= self.end_date:
+        if 'start_date' not in exclude and 'end_date' not in exclude and self.start_date >= self.end_date:
             errors.update({'start_date': 'Start date must be before the end date'})
 
-        # Subscriptions must open before they close
-        if self.subscriptions_open < self.subscriptions_close:
-            errors.update({'subscriptions_open': 'Subscriptions must open before they can close'})
+        if 'subscriptions_open' not in exclude and 'subscriptions_close' not in exclude:
+            # Subscriptions must open before they close
+            if self.subscriptions_open < self.subscriptions_close:
+                errors.update({'subscriptions_open': 'Subscriptions must open before they can close'})
 
-        # Ensure that subscriptions_open and subscriptions_close are a non-negative value
-        if self.subscriptions_open < timezone.timedelta():
-            errors.update({'subscriptions_open': 'Subscriptions must open before the activity starts'})
-        
-        if self.subscriptions_close < timezone.timedelta():
-            errors.update({'subscriptions_close': 'Subscriptions must close before the activity starts'})
+            # Ensure that subscriptions_open and subscriptions_close are a non-negative value
+            if self.subscriptions_open < timezone.timedelta():
+                errors.update({'subscriptions_open': 'Subscriptions must open before the activity starts'})
+            
+            if self.subscriptions_close < timezone.timedelta():
+                errors.update({'subscriptions_close': 'Subscriptions must close before the activity starts'})
 
         r = self.recurrences
-        if r:
+        if 'recurrences' not in exclude and r:
             recurrence_errors = []
 
             # Attempting to exclude dates if no recurrence is specified
@@ -366,10 +368,14 @@ class ActivitySlot(models.Model):
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
         errors = {}
+        exclude = exclude or []
 
-        # Activities must start before they can end
-        if self.start_date and self.end_date and self.start_date >= self.end_date:
-            errors.update({'start_date': 'Start date must be before the end date'})
+        exclude_start_or_end = 'start_date' in exclude or 'end_date' in exclude
+
+        if not exclude_start_or_end:
+            # Activities must start before they can end
+            if self.start_date and self.end_date and self.start_date >= self.end_date:
+                errors.update({'start_date': 'Start date must be before the end date'})
 
         if 'parent_activity' not in exclude:
             if self.recurrence_id is None:
@@ -383,11 +389,12 @@ class ActivitySlot(models.Model):
                 elif not self.parent_activity.has_occurence_at(self.recurrence_id):
                     errors.update({'recurrence_id': 'Parent activity has no occurence at the given date/time'})
 
-            # Start/end times must be within start/end times of parent activity
-            if self.start_date and self.start_date < self.parent_activity.start_date:
-                errors.update({'start_date': 'Start date cannot be before the start date of the parent activity'})
-            if self.start_date and self.end_date > self.parent_activity.end_date:
-                errors.update({'end_date': 'End date cannot be after the end date of the parent activity'})
+            if not exclude_start_or_end:
+                # Start/end times must be within start/end times of parent activity
+                if self.start_date and self.start_date < self.parent_activity.start_date:
+                    errors.update({'start_date': 'Start date cannot be before the start date of the parent activity'})
+                if self.start_date and self.end_date > self.parent_activity.end_date:
+                    errors.update({'end_date': 'End date cannot be after the end date of the parent activity'})
 
         if errors:
             raise ValidationError(errors)
