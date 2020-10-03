@@ -3,11 +3,11 @@
 
 <div class="card greenify activity-wide">
     <div class="row no-gutters">
-        <div class="col-md-1 activityImage">
+        <div class="col-2 col-sm-1 activityImage">
             <div class="heightener"></div>
             <img src="{{slot.image_url}}" alt="" class="card-img">
         </div>
-        <div class="col-md-7">
+        <div class="col-10 col-sm-11 col-md-9">
             <div class="card-body activityName">
                 <h5 class="card-title">
                     {{ slot.title }}
@@ -23,26 +23,23 @@
 
                 <div class="row no-gutters">
                     <div class="card-text">
-                        <small class="text-muted">
+                        <small class="text-muted">Participants:
                             {% if slot.max_participants != -1 %}
-                                {{ slot.participants.all|length }} / {{ slot.max_participants }} Participants
+                                {{ slot.participants.all|length }} / {{ slot.max_participants }}
                             {% else %}
-                                Unlimited participants ({{ slot.participants.all|length }} so far)
+                                {{ slot.participants.all|length }} / &infin;
                             {% endif %}
+                            {% if user.is_authenticated %} |
+                                {{ slot.participants.all | join:", " }}
+                            {% endif %}
+
                         </small>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-2 activityButtons">
-            {% block slot_info %}
-
-            {% endblock %}
-        </div>
-        <div class="col-6 col-md-2 activityButtons">
-            <div class="row no-gutters">
-                {% register_button slot %}
-            </div>
+        <div class="col-12 col-md-2 d-flex align-items-center pt-3 pt-md-0">
+            {% register_button slot %}
         </div>
     </div>
 </div>

@@ -89,9 +89,9 @@ class ActivityMomentView(ActivityMixin, TemplateView):
             try:
                 output = form.save()
                 if output:
-                    message = "You have succesfully been added to {activity_name}"
+                    message = "You have succesfully been added to '{activity_name}'"
                 else:
-                    message = "You have successfully been removed from {activity_name}"
+                    message = "You have successfully been removed from '{activity_name}'"
                 messages.success(self.request, message.format(activity_name=self.activity.title))
             except Exception:
                 # This should theoretically not happen, but just in case there is a write error or something.
@@ -181,6 +181,9 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
         'not-registered': _("You are not registered to this activity"),
         'closed': _("You can not subscribe, subscriptions are currently closed"),
         'max-slots-occupied': _("You can not subscribe to another slot. Maximum number of subscribable slots already reached"),
+        # Slot creation error messages
+        'max-slots-claimed': _("You can not create a slot because this activity already has the maximum number of allowed slots"),
+        'user-slot-creation-denied': _("You can not create slots on this activity. I honestly don't know why I'm even showing you this option.")
     }
 
     def get_form_kwargs(self):
@@ -193,14 +196,31 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
         return kwargs
 
     def get_context_data(self, **kwargs):
-        new_slot_form = RegisterNewSlotForm(
-            initial={
-                'sign_up': True,
-            },
-            activity=self.activity,
-            user=self.request.user,
-            recurrence_id=self.recurrence_id,
-        )
+
+        # Determine if the mode allows slot creation. If mode is None, staff users should be able to create slots
+        # Note that actual validation always takes place in the form itself, this is merely whether, without any actual
+        # input on the complex database status (i.e. relations), this button needs to be shown.
+        if self.activity.slot_creation == "CREATION_USER":
+            new_slot_form = RegisterNewSlotForm(
+                initial={
+                    'sign_up': True,
+                },
+                activity=self.activity,
+                user=self.request.user,
+                recurrence_id=self.recurrence_id,
+            )
+        elif self.activity.slot_creation == "CREATION_NONE" and self.request.user.is_staff:
+            # In a none based slot mode, don't automatically register the creator to the slot
+            new_slot_form = RegisterNewSlotForm(
+                initial={
+                    'sign_up': False,
+                },
+                activity=self.activity,
+                user=self.request.user,
+                recurrence_id=self.recurrence_id,
+            )
+        else:
+            new_slot_form = None
 
         q_str = urlencode({'date': self.recurrence_id.isoformat()})
         register_link = f"{reverse('activity_calendar:create_slot', kwargs={'activity_id': self.activity.id})}?{q_str}"
@@ -247,8 +267,12 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
         return kwargs
 
     def form_valid(self, form):
-        messages.info(request=self.request, message="form successfull")
-
         slot = form.save()
+        if form.cleaned_data['sign_up']:
+            message = _("You have succesfully created and joined '{activity_name}'")
+        else:
+            message = _("You have succesfully created '{activity_name}'")
+        messages.success(self.request, message.format(activity_name=form.instance.title))
+
         return HttpResponseRedirect(slot.get_absolute_url())
 
