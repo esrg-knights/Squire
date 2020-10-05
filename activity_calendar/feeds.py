@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.utils import timezone
-from django.urls import reverse
 
 import django_ical.feedgenerator
 

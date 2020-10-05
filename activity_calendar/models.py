@@ -321,13 +321,13 @@ class Activity(models.Model):
         :param recurrence_id: Specifies the start-time and applies that in the url for recurrent activities
         :return: the url for the activity page
         """
-        url = reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': self.id})
+        # There is currently no version of the object without recurrrence_id
+        assert recurrence_id is not None
 
-        if recurrence_id is not None:
-            q_str = http.urlencode({'date': recurrence_id.isoformat()})
-            url = f"{url}?{q_str}"
-
-        return url
+        return reverse('activity_calendar:activity_slots_on_day', kwargs={
+            'activity_id': self.id,
+            'recurrence_id': recurrence_id
+        })
         
 
 
@@ -418,8 +418,10 @@ class ActivitySlot(models.Model):
         return self.title
 
     def get_absolute_url(self):
-        q_str = http.urlencode({'date': self.recurrence_id.isoformat()})
-        return f"{reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': self.parent_activity.id})}?{q_str}"
+        return reverse('activity_calendar:activity_slots_on_day', kwargs={
+            'activity_id': self.parent_activity.id,
+            'recurrence_id': self.recurrence_id,
+        })
 
 
 class Participant(models.Model):

@@ -2,8 +2,6 @@ from django.contrib.auth.mixins import AccessMixin
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
-from django.utils import timezone, dateparse
-from django.utils.http import urlencode
 from django.utils.translation import gettext_lazy as _
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -54,14 +52,14 @@ class ActivityMixin:
         super(ActivityMixin, self).setup(request, *args, **kwargs)
         # Django calls the following line only in get(), which is too late
         self.activity = get_object_or_404(Activity, id=self.kwargs.get('activity_id'))
-        self.recurrence_id = dateparse.parse_datetime(self.request.GET.get('date', ''))
+        self.recurrence_id = self.kwargs.get('recurrence_id', None)
+
+        if self.recurrence_id is None or not self.activity.has_occurence_at(self.recurrence_id):
+            raise Http404("We could not find the activity you are trying to reach")
 
         # Odd loop-around because all logged in users should be treated as extended users
         if self.request.user.is_authenticated:
             self.request.user.__class__ = ExtendedUser
-
-        if self.recurrence_id is None or not self.activity.has_occurence_at(self.recurrence_id):
-            raise Http404("We could not find the activity you are trying to reach")
 
     def get_context_data(self, **kwargs):
         kwargs = super(ActivityMixin, self).get_context_data(**kwargs)
@@ -228,8 +226,10 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
         else:
             new_slot_form = None
 
-        q_str = urlencode({'date': self.recurrence_id.isoformat()})
-        register_link = f"{reverse('activity_calendar:create_slot', kwargs={'activity_id': self.activity.id})}?{q_str}"
+        register_link = reverse('activity_calendar:create_slot', kwargs={
+            'activity_id': self.activity.id,
+            'recurrence_id': self.recurrence_id
+        })
 
         kwargs = super(ActivityMomentWithSlotsView, self).get_context_data(**kwargs)
         kwargs.update({
