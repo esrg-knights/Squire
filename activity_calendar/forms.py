@@ -166,6 +166,9 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
             id=data.get('slot_id', -1)
         ).first()
 
+        # Store the slot object in the form. Its used by the view processing the form to retrieve the slot name
+        self.slot_obj = slot_obj
+
         self.check_slot_validity(data, slot_obj)
 
         # Can only subscribe to at most X slots

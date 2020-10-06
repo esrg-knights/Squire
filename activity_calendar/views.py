@@ -81,6 +81,15 @@ class ActivityMixin:
 class ActivityFormMixin:
     error_messages = {'undefined': _("Something went wrong. Please try again.")}
 
+    def get_success_message(self, form):
+        """ Returns the message that will be displayed to the user after form success """
+        if form.cleaned_data['sign_up']:
+            message = _("You have succesfully been added to '{activity_name}'")
+        else:
+            message = _("You have successfully been removed from '{activity_name}'")
+
+        return message
+
     def post(self, request, *args, **kwargs):
         """
         Handle POST requests: instantiate a form instance with the passed
@@ -93,15 +102,12 @@ class ActivityFormMixin:
         form = self.get_form()
         if form.is_valid():
             try:
-                output = form.save()
-                if output:
-                    message = "You have succesfully been added to '{activity_name}'"
-                else:
-                    message = "You have successfully been removed from '{activity_name}'"
-                messages.success(self.request, message.format(activity_name=self.activity.title))
+                form.save()
             except Exception:
                 # This should theoretically not happen, but just in case there is a write error or something.
                 messages.error(self.request, self.get_failed_message('undefined'))
+            else:
+                messages.success(self.request, self.get_success_message(form))
         else:
             # Print a message with the reason why request could not be handled. It uses not the validation error
             # which is normally only form-phrased, but the error codes to get the proper user-phrased error message
@@ -111,12 +117,13 @@ class ActivityFormMixin:
         # Note: Do a redirect instead of render to prevent repeated sending when refreshing the page
         return HttpResponseRedirect(self.request.get_full_path())
 
-    def get_failed_message(self, code):
+    @classmethod
+    def get_failed_message(cls, code):
         if code == 'undefined' or code is None:
             # Catch to prevent loops
-            return self.error_messages.get(code, 'Undefined error occured')
+            return cls.error_messages.get(code, 'Undefined error occured')
 
-        return self.error_messages.get(code, self.get_failed_message('undefined'))
+        return cls.error_messages.get(code, cls.get_failed_message('undefined'))
 
     def get_context_data(self, **kwargs):
         kwargs = super(ActivityFormMixin, self).get_context_data(**kwargs)
@@ -172,6 +179,10 @@ class ActivitySimpleMomentView(LoginRequiredForPostMixin, FormMixin, ActivityMom
         })
         return kwargs
 
+    def get_success_message(self, form):
+        return super(ActivitySimpleMomentView, self).get_success_message(form).format(
+            activity_name=self.activity.title
+        )
 
 class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, ActivityMomentView):
     form_class = RegisterForActivitySlotForm
@@ -184,11 +195,21 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
         'already-registered': _("You are already registered for this activity"),
         'not-registered': _("You are not registered to this activity"),
         'closed': _("You can not subscribe, subscriptions are currently closed"),
+        'slot-full': _("You can not join this slot. It's already at maximum capacity"),
         'max-slots-occupied': _("You can not subscribe to another slot. Maximum number of subscribable slots already reached"),
         # Slot creation error messages
         'max-slots-claimed': _("You can not create a slot because this activity already has the maximum number of allowed slots"),
         'user-slot-creation-denied': _("You can not create slots on this activity. I honestly don't know why I'm even showing you this option.")
     }
+
+    def get_success_message(self, form):
+        msg = super(ActivityMomentWithSlotsView, self).get_success_message(form)
+        if form.slot_obj:
+            return msg.format(
+                activity_name=form.slot_obj.title
+            )
+        else:
+            raise KeyError("Form cleaned data did not contain slot_obj. How can this form be valid?")
 
     def get_form_kwargs(self):
         kwargs = {
@@ -269,7 +290,7 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
         'closed': _("You can not create slots as subscriptions are currently closed"),
         'max-slots-occupied': _("You can not create and subscribe to another slot. You are already at your maximum number of slots you can register for"),
         'max-slots-claimed': _("You can not create a slot because this activity already has the maximum number of allowed slots"),
-        'user-slot-creation-denied': _("You can not create slots on this activity. I honestly don't know why I'm even showing you this option.")
+        'user-slot-creation-denied': _("You can not create slots on this activity.")
     }
 
     def render_to_response(self, context, **response_kwargs):
@@ -302,16 +323,15 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
 
     def get_context_data(self, **kwargs):
         return super(CreateSlotView, self).get_context_data(**{
-            'main_activity_url': self.activity.get_absolute_url(self.recurrence_id),
             'subscribed_slots': self.activity.get_user_subscriptions(self.request.user, self.recurrence_id),
         })
 
     def form_valid(self, form):
         slot = form.save()
         if form.cleaned_data['sign_up']:
-            message = _("You have succesfully created and joined '{activity_name}'")
+            message = _("You have successfully created and joined '{activity_name}'")
         else:
-            message = _("You have succesfully created '{activity_name}'")
+            message = _("You have successfully created '{activity_name}'")
         messages.success(self.request, message.format(activity_name=form.instance.title))
 
         return HttpResponseRedirect(slot.get_absolute_url())
@@ -324,6 +344,6 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
             messages.error(self.request, self.error_messages.get(error.code, 'An unknown error occured'))
             return HttpResponseRedirect(self.activity.get_absolute_url(self.recurrence_id))
         else:
-            messages.error(self.request, _("Please correct error below"))
+            messages.error(self.request, _("Some input was not valid. Please correct your data below"))
             return super(CreateSlotView, self).form_invalid(form)
 
