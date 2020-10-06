@@ -63,17 +63,19 @@
 {% endblock sign-up-status %}
 
 {% block additional-contents %}
-    {% if request.user.is_authenticated %}
-        <h2>Current participants</h2>
-        {% if participants %}
-            {% for participant in participants %}
-                <div class="">
-                    {{ participant.user.get_display_name }}
-                </div>
+    {% with request.user|to_extended_user as user %}
+        {% if user.is_authenticated %}
+            <h2>Current participants</h2>
+            {% if participants %}
+                {% for participant in participants %}
+                    <div class="">
+                        {{ participant.user.get_display_name }}
+                    </div>
 
-            {% endfor %}
-        {% else %}
-            There are currently no people signed up. {% if subscriptions_open %} Be the first! {% endif %}
+                {% endfor %}
+            {% else %}
+                There are currently no people signed up. {% if subscriptions_open %} Be the first! {% endif %}
+            {% endif %}
         {% endif %}
-    {% endif %}
+    {% endwith %}
 {% endblock %}

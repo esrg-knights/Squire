@@ -39,7 +39,9 @@
             </div>
         </div>
         <div class="col-12 col-md-2 d-flex align-items-center pt-3 pt-md-0">
-            {% register_button slot %}
+            {% if user.is_authenticated %}
+                {% register_button slot %}
+            {% endif %}
         </div>
     </div>
 </div>

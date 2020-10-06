@@ -37,7 +37,8 @@
             </div>
         </div>
     {% endif %}
-    <a href="{{ main_activity_url }}" class="btn btn-secondary greenify btn-block my-2">
+    <a href="{% url 'activity_calendar:activity_slots_on_day' activity_id=activity.id recurrence_id=recurrence_id %}"
+       class="btn btn-secondary greenify btn-block my-2">
         Back to main page
     </a>
 {% endblock sign-up-status %}

@@ -244,7 +244,7 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
         super(RegisterNewSlotForm, self).check_validity(data)
 
         # Is user allowed to create a slot
-        if self.activity.slot_creation == "CREATION_NONE" and self.user.is_superuser:
+        if self.activity.slot_creation == "CREATION_NONE" and self.user.is_staff:
             pass
         elif self.activity.slot_creation == "CREATION_USER":
             pass

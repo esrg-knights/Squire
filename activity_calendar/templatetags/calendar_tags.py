@@ -1,6 +1,7 @@
 import datetime
 
 from django import template
+from django.utils import timezone
 from django.utils.formats import date_format
 
 from activity_calendar.forms import RegisterForActivitySlotForm
@@ -32,11 +33,16 @@ def sign_up_slot_form(context, slot):
 def get_opening_time(context, filter=None):
     open_date = context['start_date'] - context['activity'].subscriptions_open
     if filter:
-        a = date_format(open_date, filter)
-        print(a)
-        return a
+        return date_format(open_date, filter)
 
     return open_date
+
+
+@register.simple_tag(takes_context=True)
+def opens_in_future(context):
+    """ Returns whether the opening time is in the future """
+    open_date = context['start_date'] - context['activity'].subscriptions_open
+    return timezone.now() < open_date
 
 
 @register.inclusion_tag("activity_calendar/slot_blocks/register_button.html", takes_context=True)
