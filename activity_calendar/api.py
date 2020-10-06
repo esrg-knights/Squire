@@ -6,8 +6,6 @@ from django.utils import timezone
 from django.views.decorators.http import require_safe
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
-from django.urls import reverse
-from django.utils.http import urlencode
 
 from django.views.decorators.http import require_POST
 
@@ -121,60 +119,3 @@ def fullcalendar_feed(request):
             ))
 
     return JsonResponse({'activities': activities})
-
-@require_POST
-@login_required
-def register(request, slot_id):
-    slot = ActivitySlot.objects.filter(id=slot_id).first()
-    parent_activity = slot.parent_activity
-    if slot is None:
-        return HttpResponseBadRequest(f"Expected the id of an existing ActivitySlot, but got <{slot_id}>")
-
-    check_join_constraints(request, parent_activity, slot.recurrence_id)
-
-    # Base check for general activity constraints: subscription period, max number of total participants, etc.
-    if not slot.parent_activity.can_user_subscribe(request.user, recurrence_id=slot.recurrence_id):
-        return HttpResponseBadRequest("Cannot subscribe")
-
-    slot_participants = slot.participants.all()
-
-    # Can only subscribe at most once to each slot
-    if request.user in slot_participants:
-        return HttpResponseBadRequest("Cannot subscribe to the same slot more than once")
-
-        # Slot participants limit
-    if slot.max_participants != -1 and len(slot_participants) >= slot.max_participants:
-        return HttpResponseBadRequest("Slot is full")
-
-    request.user.__class__ = ExtendedUser
-    # Suscribe to slot
-    participant = slot.participants.add(
-        request.user, through_defaults={}
-    )
-
-    date_moment = slot.recurrence_id or slot.parent_activity.start_date
-    q_str = urlencode({'date': date_moment.isoformat()})
-    return HttpResponseRedirect(
-        f"{reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': parent_activity.id})}?{q_str}")
-
-@require_POST
-@login_required
-def deregister(request, slot_id):
-    slot = ActivitySlot.objects.filter(id=slot_id).first()
-    parent_activity = slot.parent_activity
-    if slot is None:
-        return HttpResponseBadRequest(f"Expected the id of an existing ActivitySlot, but got <{slot_id}>")
-
-    # Subscriptions must be open
-    if not slot.are_subscriptions_open():
-        return HttpResponseBadRequest(f"Cannot unsubscribe once subscriptions are closed")
-
-    user_slot_participants = slot.participants.filter(id=request.user.id)
-
-    for usr in user_slot_participants:
-        slot.participants.remove(usr)
-
-    date_moment = slot.recurrence_id or slot.parent_activity.start_date
-    q_str = urlencode({'date': date_moment.isoformat(), 'deregister': True})
-    return HttpResponseRedirect(
-        f"{reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': parent_activity.id})}?{q_str}")

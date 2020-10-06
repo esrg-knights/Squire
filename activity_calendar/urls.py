@@ -19,6 +19,4 @@ urlpatterns = [
 
     path('api/calendar/ical', CESTEventFeed(), name='icalendar'),
     path('api/calendar/fullcalendar', api.fullcalendar_feed, name='fullcalendar_feed'),
-    path('api/calendar/register/<int:slot_id>', api.register, name='activity_register'),
-    path('api/calendar/deregister/<int:slot_id>', api.deregister, name='activity_deregister'),
 ]
