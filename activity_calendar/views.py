@@ -2,6 +2,7 @@ from django.contrib.auth.mixins import AccessMixin
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -9,6 +10,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.http import require_safe
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView, FormMixin
+
+from membership_file.util import user_to_member
 
 from .forms import RegisterForActivityForm, RegisterForActivitySlotForm, RegisterNewSlotForm
 from .models import Activity, Participant
@@ -73,9 +76,20 @@ class ActivityMixin:
             'is_subscribed': self.activity.is_user_subscribed(self.request.user, self.recurrence_id),
             'start_date': self.recurrence_id,
             'end_date': self.recurrence_id + (self.activity.end_date - self.activity.start_date),
+            'show_participants': self.show_participants(),
         })
 
         return kwargs
+
+    def show_participants(self):
+        """ Returns whether to show participant names """
+        if self.request.user.is_authenticated:
+            if user_to_member(self.request.user).is_member():
+                now = timezone.now()
+                if now <= self.recurrence_id + self.activity.get_duration():
+                    return True
+        return False
+
 
 
 class ActivityFormMixin:

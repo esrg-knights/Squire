@@ -29,7 +29,7 @@
                             {% else %}
                                 {{ slot.participants.all|length }} / &infin;
                             {% endif %}
-                            {% if user.is_authenticated %} |
+                            {% if show_participants %} |
                                 {{ slot.participants.all | join:", " }}
                             {% endif %}
 

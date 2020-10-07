@@ -182,6 +182,7 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         self.assertIn('participants', response.context)
         self.assertIn('num_max_participants', response.context)
         self.assertIn('form', response.context)
+        self.assertIn('show_participants', response.context)
         self.assertEqual(response.context['is_subscribed'], False)
         self.assertEqual(response.context['num_total_participants'], 1)
 
@@ -289,6 +290,7 @@ class ActivitySlotViewTest(TestActivityViewMixin, TestCase):
         self.assertEqual(response.context['is_subscribed'], False)
         self.assertEqual(response.context['num_total_participants'], 2)
         self.assertIn('slot_list', response.context)
+        self.assertIn('show_participants', response.context)
         self.assertIn('subscribed_slots', response.context)
         self.assertIn('slot_creation_form', response.context)
 

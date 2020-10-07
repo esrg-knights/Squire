@@ -246,22 +246,6 @@ class Activity(models.Model):
         now = timezone.now()
         return recurrence_id - self.subscriptions_open <= now and now <= recurrence_id - self.subscriptions_close
 
-    # Whether the name of participants is shown
-    def can_show_participants(self, user, recurrence_id=None):
-        if not self.is_recurring:
-            recurrence_id = self.start_date
-
-        if recurrence_id is None:
-            raise TypeError("recurrence_id cannot be None if the activity is recurring")
-
-        # TODO: Use permission system
-        if user.is_anonymous or not user_to_member(user).is_member():
-            return False
-
-        now = timezone.now()
-        return now <= recurrence_id + self.get_duration()
-
-
     # String-representation of an instance of the model
     def __str__(self):
         if self.is_recurring:
