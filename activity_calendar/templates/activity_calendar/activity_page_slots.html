@@ -62,10 +62,12 @@
                 Create Slot
             </button>
         {% else %}
-            <button type="button" class="btn btn-outline-success btn-lg disabled" data-container="body" data-toggle="popover" data-placement="bottom"
-                    data-content="{% form_rejection_reason slot_creation_form %}">
-                Create slot
-            </button>
+            <a tabindex="0"  role="button" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom"
+               data-content="{% form_rejection_reason slot_creation_form %}" style="text-decoration: none">
+                <button class="btn btn-outline-success disabled">
+                    Create slot
+                </button>
+            </a>
         {% endif %}
         </div>
     {% endif %}

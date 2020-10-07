@@ -27,10 +27,12 @@
                             <input type="submit" class="btn btn-danger btn-subscribe btn-block" value="Deregister">
                         </form>
                     {% else %}
-                        <button type="button" class="btn btn-outline-danger btn-block disabled" data-container="body" data-toggle="popover" data-placement="bottom"
-                                data-content="{% form_rejection_reason form %}">
-                            Deregister
-                        </button>
+                        <a tabindex="0"  role="button" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom"
+                           data-content="{% form_rejection_reason form %}" style="text-decoration: none">
+                            <button class="btn btn-outline-danger btn-block disabled">
+                                Deregister
+                            </button>
+                        </a>
                     {% endif %}
                 </div>
             </div>
@@ -51,10 +53,12 @@
                             <input type="submit" class="btn btn-success btn-block" value="Register">
                         </form>
                     {% else %}
-                        <button type="button" class="btn btn-outline-success btn-block disabled" data-container="body" data-toggle="popover" data-placement="bottom"
-                                data-content="{% form_rejection_reason form %}">
-                            Register
-                        </button>
+                        <a tabindex="0"  role="button" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom"
+                                data-content="{% form_rejection_reason form %}" style="text-decoration: none">
+                            <button class="btn btn-outline-success btn-block disabled">
+                                Register
+                            </button>
+                        </a>
                     {% endif %}
                 </div>
             </div>

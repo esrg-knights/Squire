@@ -2,15 +2,19 @@
 
 {% if form.get_base_validity_error %}
     {% if sign_up %}
-        <button type="button" class="btn btn-outline-success btn-block disabled btn-block" data-container="body" data-toggle="popover" data-placement="bottom"
-                data-content="{% form_rejection_reason form %}">
-            Register
-        </button>
+        <a tabindex="0"  role="button" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom"
+           data-content="{% form_rejection_reason form %}" style="text-decoration: none">
+            <button class="btn btn-outline-success btn-block disabled">
+                Register
+            </button>
+        </a>
     {% else %}
-        <button type="button" class="btn btn-outline-danger btn-block disabled btn-block" data-container="body" data-toggle="popover" data-placement="bottom"
-                data-content="{% form_rejection_reason form %}">
-            Deregister
-        </button>
+        <a tabindex="0"  role="button" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom"
+           data-content="{% form_rejection_reason form %}" style="text-decoration: none">
+            <button class="btn btn-outline-danger btn-block disabled">
+                Deregister
+            </button>
+        </a>
     {% endif %}
 {% else %}
     <form method="post" style="width: 100%;">
