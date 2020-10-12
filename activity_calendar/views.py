@@ -14,11 +14,11 @@ from django.views.generic.edit import FormView, FormMixin
 from membership_file.util import user_to_member
 
 from .forms import RegisterForActivityForm, RegisterForActivitySlotForm, RegisterNewSlotForm
-from .models import Activity, Participant
+from .models import Activity, Participant, ActivityMoment
 from core.models import ExtendedUser
 
-
 __all__ = "CreateSlotView, get_activity_detail_view, activity_collection"
+
 
 # Renders the simple v1 calendar
 @require_safe
@@ -36,12 +36,13 @@ def check_join_constraints(request, parent_activity, recurrence_id):
     # Can only subscribe to at most X slots
     if parent_activity.max_slots_join_per_participant != -1 and \
             parent_activity.get_user_subscriptions(user=request.user, recurrence_id=recurrence_id).count() \
-                >= parent_activity.max_slots_join_per_participant:
+            >= parent_activity.max_slots_join_per_participant:
         return HttpResponseBadRequest("Cannot subscribe to another slot")
 
 
 class LoginRequiredForPostMixin(AccessMixin):
     """ Requires being logged in for post events only (instead of the entire view) """
+
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return self.handle_no_permission()
@@ -57,8 +58,19 @@ class ActivityMixin:
         self.activity = get_object_or_404(Activity, id=self.kwargs.get('activity_id'))
         self.recurrence_id = self.kwargs.get('recurrence_id', None)
 
-        if self.recurrence_id is None or not self.activity.has_occurence_at(self.recurrence_id):
-            raise Http404("We could not find the activity you are trying to reach")
+        self.activity_moment = ActivityMoment.objects.filter(
+            parent_activity=self.activity,
+            recurrence_id=self.recurrence_id
+        ).first()
+
+        if self.activity_moment is None:
+            if not self.activity.has_occurence_at(self.recurrence_id):
+                raise Http404("We could not find the activity you are trying to reach")
+            else:
+                self.activity_moment = ActivityMoment(
+                    parent_activity=self.activity,
+                    recurrence_id=self.recurrence_id,
+                )
 
         # Odd loop-around because all logged in users should be treated as extended users
         if self.request.user.is_authenticated:
@@ -68,14 +80,13 @@ class ActivityMixin:
         kwargs = super(ActivityMixin, self).get_context_data(**kwargs)
         kwargs.update({
             'activity': self.activity,
+            'activity_moment': self.activity_moment,
             'recurrence_id': self.recurrence_id,
             # General information displayed on all relevant pages
-            'subscriptions_open': self.activity.are_subscriptions_open(recurrence_id=self.recurrence_id),
-            'num_total_participants': self.activity.get_num_subscribed_participants(recurrence_id=self.recurrence_id),
-            'num_max_participants': self.activity.max_participants,
-            'is_subscribed': self.activity.is_user_subscribed(self.request.user, self.recurrence_id),
-            'start_date': self.recurrence_id,
-            'end_date': self.recurrence_id + (self.activity.end_date - self.activity.start_date),
+            'subscriptions_open': self.activity_moment.is_open_for_subscriptions(),
+            'num_total_participants': self.activity_moment.get_subscribed_users().count(),
+            'num_max_participants': self.activity_moment.max_participants,
+            'user_subscriptions': self.activity_moment.get_user_subscriptions(self.request.user),
             'show_participants': self.show_participants(),
         })
 
@@ -86,10 +97,9 @@ class ActivityMixin:
         if self.request.user.is_authenticated:
             if user_to_member(self.request.user).is_member():
                 now = timezone.now()
-                if now <= self.recurrence_id + self.activity.get_duration():
+                if now <= self.activity_moment.end_time:
                     return True
         return False
-
 
 
 class ActivityFormMixin:
@@ -177,10 +187,11 @@ class ActivitySimpleMomentView(LoginRequiredForPostMixin, FormMixin, ActivityMom
             # Add some set-up data based on the current situation
             # This could be overwritten by the post data if supplied, which will yield the expected errors in that case
             'data': {
-                'sign_up': not self.activity.is_user_subscribed(self.request.user, self.recurrence_id)
+                'sign_up': not self.activity_moment.get_user_subscriptions(self.request.user).exists(),
             },
             'activity': self.activity,
             'recurrence_id': self.recurrence_id,
+            'activity_moment': self.activity_moment,
             'user': self.request.user,
         }
         kwargs.update(super(ActivitySimpleMomentView, self).get_form_kwargs())
@@ -189,14 +200,15 @@ class ActivitySimpleMomentView(LoginRequiredForPostMixin, FormMixin, ActivityMom
     def get_context_data(self, **kwargs):
         kwargs = super(ActivitySimpleMomentView, self).get_context_data(**kwargs)
         kwargs.update({
-            'participants': self.activity.get_subscribed_participants(recurrence_id=self.recurrence_id),
+            'participants': self.activity_moment.get_subscribed_users(),
         })
         return kwargs
 
     def get_success_message(self, form):
         return super(ActivitySimpleMomentView, self).get_success_message(form).format(
-            activity_name=self.activity.title
+            activity_name=self.activity_moment.title
         )
+
 
 class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, ActivityMomentView):
     form_class = RegisterForActivitySlotForm
@@ -210,10 +222,13 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
         'not-registered': _("You are not registered to this activity"),
         'closed': _("You can not subscribe, subscriptions are currently closed"),
         'slot-full': _("You can not join this slot. It's already at maximum capacity"),
-        'max-slots-occupied': _("You can not subscribe to another slot. Maximum number of subscribable slots already reached"),
+        'max-slots-occupied': _(
+            "You can not subscribe to another slot. Maximum number of subscribable slots already reached"),
         # Slot creation error messages
-        'max-slots-claimed': _("You can not create a slot because this activity already has the maximum number of allowed slots"),
-        'user-slot-creation-denied': _("You can not create slots on this activity. I honestly don't know why I'm even showing you this option.")
+        'max-slots-claimed': _(
+            "You can not create a slot because this activity already has the maximum number of allowed slots"),
+        'user-slot-creation-denied': _(
+            "You can not create slots on this activity. I honestly don't know why I'm even showing you this option.")
     }
 
     def get_success_message(self, form):
@@ -229,6 +244,7 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
         kwargs = {
             'activity': self.activity,
             'recurrence_id': self.recurrence_id,
+            'activity_moment': self.activity_moment,
             'user': self.request.user,
         }
         kwargs.update(super(ActivityMomentWithSlotsView, self).get_form_kwargs())
@@ -247,6 +263,7 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
                 activity=self.activity,
                 user=self.request.user,
                 recurrence_id=self.recurrence_id,
+                activity_moment=self.activity_moment,
             )
         elif self.activity.slot_creation == "CREATION_NONE" and self.request.user.is_staff:
             # In a none based slot mode, don't automatically register the creator to the slot
@@ -257,6 +274,7 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
                 activity=self.activity,
                 user=self.request.user,
                 recurrence_id=self.recurrence_id,
+                activity_moment=self.activity_moment,
             )
         else:
             new_slot_form = None
@@ -268,8 +286,7 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
 
         kwargs = super(ActivityMomentWithSlotsView, self).get_context_data(**kwargs)
         kwargs.update({
-            'slot_list': self.activity.get_slots(self.recurrence_id),
-            'subscribed_slots': self.activity.get_user_subscriptions(self.request.user, self.recurrence_id),
+            'slot_list': self.activity_moment.get_slots(),
             'slot_creation_form': new_slot_form,
             'register_link': register_link,
         })
@@ -302,8 +319,10 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
         'activity-full': _("This activity is already at maximum capacity. You can not subscribe to it."),
         'invalid': _("You can not subscribe to this activity. Reason currently undefined"),
         'closed': _("You can not create slots as subscriptions are currently closed"),
-        'max-slots-occupied': _("You can not create and subscribe to another slot. You are already at your maximum number of slots you can register for"),
-        'max-slots-claimed': _("You can not create a slot because this activity already has the maximum number of allowed slots"),
+        'max-slots-occupied': _(
+            "You can not create and subscribe to another slot. You are already at your maximum number of slots you can register for"),
+        'max-slots-claimed': _(
+            "You can not create a slot because this activity already has the maximum number of allowed slots"),
         'user-slot-creation-denied': _("You can not create slots on this activity.")
     }
 
@@ -330,6 +349,7 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
             'initial': initial,
             'activity': self.activity,
             'recurrence_id': self.recurrence_id,
+            'activity_moment': self.activity_moment,
             'user': self.request.user,
         })
 
@@ -360,4 +380,3 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
         else:
             messages.error(self.request, _("Some input was not valid. Please correct your data below"))
             return super(CreateSlotView, self).form_invalid(form)
-

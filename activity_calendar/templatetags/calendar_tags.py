@@ -31,7 +31,8 @@ def sign_up_slot_form(context, slot):
 
 @register.simple_tag(takes_context=True)
 def get_opening_time(context, filter=None):
-    open_date = context['start_date'] - context['activity'].subscriptions_open
+    activity_moment = context['activity_moment']
+    open_date = activity_moment.start_time - activity_moment.parent_activity.subscriptions_open
     if filter:
         return date_format(open_date, filter)
 
@@ -41,7 +42,8 @@ def get_opening_time(context, filter=None):
 @register.simple_tag(takes_context=True)
 def opens_in_future(context):
     """ Returns whether the opening time is in the future """
-    open_date = context['start_date'] - context['activity'].subscriptions_open
+    activity_moment = context['activity_moment']
+    open_date = activity_moment.start_time - activity_moment.parent_activity.subscriptions_open
     return timezone.now() < open_date
 
 
@@ -59,6 +61,7 @@ def register_button(context, slot):
         activity = context['activity'],
         user = user,
         recurrence_id=context['recurrence_id'],
+        activity_moment=context['activity_moment'],
         initial = {
             'slot_id': slot.id,
             'sign_up': sign_up,

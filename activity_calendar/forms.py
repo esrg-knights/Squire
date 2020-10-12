@@ -23,9 +23,10 @@ class RegisterAcitivityMixin:
     """
     sign_up = forms.BooleanField(required=False, widget=HiddenInput)
 
-    def __init__(self, *args, activity=None, user=None, recurrence_id=None, **kwargs):
+    def __init__(self, *args, activity=None, user=None, recurrence_id=None, activity_moment=None, **kwargs):
         assert activity is not None
         assert user is not None
+        assert activity_moment is not None
 
         if activity.is_recurring:
             # If activity is recurring, a recurring id should be given
@@ -34,6 +35,7 @@ class RegisterAcitivityMixin:
         self.activity = activity
         self.recurrence_id = recurrence_id
         self.user = user
+        self.activity_moment = activity_moment
 
         super(RegisterAcitivityMixin, self).__init__(*args, **kwargs)
 
@@ -61,18 +63,18 @@ class RegisterAcitivityMixin:
         Running it raises either ValidationError X or returns None
         :param data: Given data to validate to.
         :return: Raises ValidationError or returns None """
-        if not self.activity.are_subscriptions_open(self.recurrence_id):
+        if not self.activity_moment.is_open_for_subscriptions():
             raise ValidationError(_("Subscriptions are currently closed."), code='closed')
 
         # Check if, when signing up, there is still room (because max is limited)
-        if data['sign_up'] and self.activity.max_participants != -1:
+        if data['sign_up'] and self.activity_moment.max_participants != -1:
                 # get the number of participants
                 num_participants = Participant.objects.filter(
                     activity_slot__parent_activity=self.activity,
                     activity_slot__recurrence_id=self.recurrence_id
                 ).count()
                 # check the number of participants
-                if num_participants >= self.activity.max_participants:
+                if self.activity_moment.get_subscribed_users().count() >= self.activity_moment.max_participants:
                     raise ValidationError(
                         _(f"This activity is already at maximum capacity."),
                         code='activity-full'
@@ -110,6 +112,7 @@ class RegisterAcitivityMixin:
         else:
             return None
 
+
 class RegisterForActivityForm(RegisterAcitivityMixin, Form):
     """
     Form for registering for normal activities that do not use multiple slots
@@ -124,15 +127,15 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
                 _("Activity mode is incorrect. Please refresh the page."), code='invalid_slot_mode')
 
         # Check if user is already present in the activity
-        user_subscriptions = self.activity.get_user_subscriptions(self.user, self.recurrence_id)
+        user_subscriptions = self.activity_moment.get_user_subscriptions(self.user)
         if data.get('sign_up'):
-            if user_subscriptions.count() > 0:
+            if user_subscriptions.exists():
                 raise ValidationError(
                     _("User is already registered for this activity"),
                     code='already-registered'
                 )
         # User tries to sign out but is not present on (any of the) slot(s)
-        elif user_subscriptions.count() == 0:
+        elif not user_subscriptions.exists():
             # User tries to unsubscribe from the activity, but there is no slot so this is not possible.
             raise ValidationError(_("User was not registered to this activity"), code='not-registered')
 
@@ -150,7 +153,7 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
             activity_slot.participants.add(self.user)
             return True
         else:
-            self.activity.get_user_subscriptions(self.user, self.recurrence_id).delete()
+            self.activity_moment.get_user_subscriptions(self.user).delete()
             return False
 
 
@@ -161,8 +164,7 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
     def check_validity(self, data):
         super(RegisterForActivitySlotForm, self).check_validity(data)
 
-        slot_obj = self.activity.activity_slot_set.filter(
-            recurrence_id=self.recurrence_id,
+        slot_obj = self.activity_moment.get_slots().filter(
             id=data.get('slot_id', -1)
         ).first()
 
@@ -172,7 +174,7 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
         self.check_slot_validity(data, slot_obj)
 
         # Can only subscribe to at most X slots
-        user_subscriptions = self.activity.get_user_subscriptions(user=self.user, recurrence_id=self.recurrence_id)
+        user_subscriptions = self.activity_moment.get_user_subscriptions(user=self.user)
 
         if data['sign_up']:
             # If attempting a sign-up, test that the user is allowed to join one (additonal) slot

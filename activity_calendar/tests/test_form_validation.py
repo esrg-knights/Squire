@@ -5,7 +5,7 @@ from django.utils import dateparse
 
 from unittest.mock import patch
 
-from activity_calendar.models import ActivitySlot, Activity, Participant
+from activity_calendar.models import ActivitySlot, Activity, Participant, ActivityMoment
 from activity_calendar.forms import RegisterForActivityForm, RegisterForActivitySlotForm, RegisterNewSlotForm
 from core.models import ExtendedUser as User
 
@@ -101,11 +101,17 @@ class ActivityFormValidationMixin(FormValidityMixin):
             self.recurrence_id = dateparse.parse_datetime(self.recurrence_id)
 
     def get_form_kwargs(self, **kwargs):
+        activity_moment = ActivityMoment(
+            parent_activity=self.activity,
+            recurrence_id=self.recurrence_id,
+        )
+
         kwargs = super(ActivityFormValidationMixin, self).get_form_kwargs(**kwargs)
         kwargs.update({
             'user': self.user,
             'activity': self.activity,
             'recurrence_id': self.recurrence_id,
+            'activity_moment': activity_moment,
         })
         return kwargs
 

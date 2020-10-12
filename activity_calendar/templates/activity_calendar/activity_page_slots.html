@@ -5,18 +5,18 @@
 
 
 {% block sign-up-status %}
-    {% if is_subscribed %}
+    {% if user_subscriptions %}
         <div class="alert alert-success">
             <div class="row">
                 <div class="col-12">
                     <div class="p-1">
-                        {% if subscribed_slots.count == 1 %}
-                            You are subscribed to slot '{{ subscribed_slots.first.activity_slot.title }}'
+                        {% if user_subscriptions.count == 1 %}
+                            You are subscribed to slot '{{ user_subscriptions.first.activity_slot.title }}'
                         {% else %}
                             You are subscribed to slots:
-                            {% for slot_entry in subscribed_slots %}
+                            {% for participant_entry in user_subscriptions %}
                                 {% if forloop.last %}and {% endif %}
-                                '{{ slot_entry.activity_slot.title }}'{% if not forloop.last %},{% endif %}
+                                '{{ participant_entry.activity_slot.title }}'{% if not forloop.last %},{% endif %}
                             {% endfor %}
                         {% endif %}
                     </div>

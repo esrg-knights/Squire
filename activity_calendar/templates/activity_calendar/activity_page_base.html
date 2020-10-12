@@ -5,7 +5,7 @@
 {% load calendar_tags %}
 
 {% block title %}
-    Squire - {{ activity.title }}
+    Squire - {{ activity_moment.title }}
 {% endblock title %}
 
 {% block css %}
@@ -30,7 +30,7 @@
 
 {% block content %}
     <!-- Slots -->
-    <h1>{{ activity.title }}</h1>
+    <h1>{{ activity_moment.title }}</h1>
     <div class="row">
         <div class="col-12 col-md-7">
             {% block activity-info %}
@@ -48,12 +48,12 @@
                     <div class="col align-self-center">
                         <div class='nospace'>
                             <p id="event-date">
-                                {% if start_date.date == end_date.date %}
+                                {% if activity_moment.start_time.date == activity_moment.end_time.date %}
                                     <!-- Activity starts and ends on the same day -->
-                                    {{ start_date|date:"l j E H:i" }} - {{ end_date|date:"H:i" }}
+                                    {{ activity_moment.start_time|date:"l j E H:i" }} - {{ activity_moment.end_time|date:"H:i" }}
                                 {% else %}
                                     <!-- Activity starts and ends on a different day -->
-                                    {{ start_date|date:"j E H:i" }} - {{ end_date|date:"j E H:i" }}
+                                    {{ activity_moment.start_time|date:"j E H:i" }} - {{ activity_moment.end_time|date:"j E H:i" }}
                                 {% endif %}
                             </p>
                         </div>
@@ -72,7 +72,7 @@
                     </div>
                     <!-- Location -->
                     <div class="col nospace align-self-center">
-                        <p id="event-location">{{ activity.location }}</p>
+                        <p id="event-location">{{ activity_moment.location }}</p>
                     </div>
                 </div>
 
@@ -108,7 +108,7 @@
                     </div>
                     <!-- Event Description -->
                     <div class="col align-self-center">
-                        <p id="event-description">{{ activity.description }}</p>
+                        <p id="event-description">{{ activity_moment.description }}</p>
                     </div>
                 </div>
 
