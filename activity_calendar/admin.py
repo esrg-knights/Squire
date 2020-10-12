@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Activity, ActivitySlot, Participant
+from .models import Activity, ActivitySlot, Participant, ActivityMoment
 
 
 
@@ -13,6 +13,12 @@ class ActivityAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'title')
 
 admin.site.register(Activity, ActivityAdmin)
+
+
+@admin.register(ActivityMoment)
+class ActivityMomentAdmin(admin.ModelAdmin):
+    fields = ['parent_activity', 'recurrence_id', 'local_description', 'local_location', 'local_max_participants']
+
 
 class ParticipantInline(admin.TabularInline):
     model = Participant

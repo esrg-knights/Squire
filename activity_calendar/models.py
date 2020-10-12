@@ -1,7 +1,10 @@
+import copy
+
 from django.conf import settings
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
 from django.db.models import Count
+from django.db.models.base import ModelBase
 from django.utils import timezone, http
 from django.urls import reverse
 
@@ -81,7 +84,7 @@ class Activity(models.Model):
 
     # The maximum number of dummy slots that show up if slot_creation=CREATION_AUTO
     # Dummy slots do not exist in the DB itself, and match their title, description, etc. with the parent activity
-    MAX_NUM_AUTO_DUMMY_SLOTS = 1
+    MAX_NUM_AUTO_DUMMY_SLOTS = 1  # Todo redact
 
     # The way slots should be created
     slot_creation = models.CharField(
@@ -113,6 +116,7 @@ class Activity(models.Model):
     
     # Number of participants already subscribed
     def get_num_subscribed_participants(self, recurrence_id=None):
+        # Todo redact
         return self.get_subscribed_participants(recurrence_id).count()
     
     # Maximum number of participants
@@ -154,10 +158,12 @@ class Activity(models.Model):
     
     # Number of slots
     def get_num_slots(self, recurrence_id=None):
+        # Todo redact
         return self.get_slots(recurrence_id).count()
 
     # Maximum number of slots that can be created
     def get_max_num_slots(self, recurrence_id=None):
+        # Todo redact
         # Users can create at least one slot
         if self.slot_creation != "CREATION_NONE":
             return self.max_slots
@@ -167,10 +173,12 @@ class Activity(models.Model):
         return self.get_num_slots(recurrence_id=recurrence_id)
 
     def get_duration(self):
+        # Todo Redact
         return self.end_date - self.start_date
     
     def can_user_create_slot(self, user, recurrence_id=None, num_slots=None, num_user_registrations=None,
             num_total_participants=None, num_max_participants=None):
+        # Todo: Redact
         if num_user_registrations is None:
             num_user_registrations = self.get_num_user_subscriptions(user, recurrence_id=recurrence_id)
         
@@ -207,6 +215,7 @@ class Activity(models.Model):
     
     # Get the subscriptions of a user of a specific occurrence
     def get_num_user_subscriptions(self, user, recurrence_id=None, participants=None):
+        # Todo redact
         return self.get_user_subscriptions(user, recurrence_id, participants).count()
 
     # Whether a given user is subscribed to the activity
@@ -312,8 +321,137 @@ class Activity(models.Model):
             'activity_id': self.id,
             'recurrence_id': recurrence_id
         })
-        
 
+
+class ActivityDuplicate(ModelBase):
+    """
+    Copy fields defined in local_fields automatically from Activity to ActivityMoment. This way any future changes
+    is reflected in both the Activity and ActivityMoments and conflicts can not occur.
+    """
+    def __new__(mcs, name, bases, attrs, **kwargs):
+        # Create the fields that are copied and can be tweaked from the Activity Model
+        meta_class = attrs.get('Meta')
+        if meta_class:
+            for field_name in getattr(meta_class, 'copy_fields', []):
+                # Generate the model fields
+                for field in Activity._meta.fields:
+                    if field.name == field_name:
+                        new_field = copy.deepcopy(field)
+                        new_field.blank = True
+                        new_field.null = True
+                        new_field.default = None
+
+                        new_field_name = 'local_'+field_name
+                        new_field.name = new_field_name
+
+                        attrs[new_field_name] = new_field
+                        break
+                else:
+                    raise KeyError(f"'{field_name}' is not a property on Activity")
+
+                # Generate the method that retrieves correct values where necessary
+                attrs[field_name] = property(mcs.generate_lookup_method(field_name))
+
+            # Remove the attribute from the Meta class. It's been used and Django doesn't know what to do with it
+            del meta_class.copy_fields
+
+            for field_name in getattr(meta_class, 'link_fields', []):
+                # Generate the method that retrieves correct values where necessary
+                attrs[field_name] = property(mcs.generate_lookup_method(field_name))
+
+            del meta_class.link_fields
+
+        return super().__new__(mcs, name, bases, attrs, **kwargs)
+
+    @classmethod
+    def generate_lookup_method(cls, field_name):
+        """ Generates a lookup method that for the given field_name looks in the objects local storage before looking
+        in its parent_activity model instead for the given attribute """
+        def get_activity_attribute(self):
+            local_attr = getattr(self, 'local_'+field_name, None)
+            if local_attr is None or local_attr == '':
+                return getattr(self.parent_activity, field_name)
+            return local_attr
+
+        return get_activity_attribute
+
+
+class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
+    parent_activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+    recurrence_id = models.DateTimeField(verbose_name="parent activity date/time")
+
+    created_date = models.DateTimeField(auto_now_add=True)
+    last_updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['parent_activity', 'recurrence_id']
+        # Define the fields that can be locally be overwritten
+        copy_fields = ['description', 'location', 'max_participants']
+        # Define fields that are instantly looked for in the parent_activity
+        # If at any point in the future these must become customisable, one only has to move the field name to the
+        # copy_fields attribute
+        link_fields = ['title', 'image']
+
+    @property
+    def start_time(self):
+        return self.recurrence_id
+
+    @property
+    def end_time(self):
+        return self.recurrence_id + (self.parent_activity.end_date - self.parent_activity.start_date)
+
+    def get_subscribed_users(self):
+        """ Returns a queryest of all USERS (not participants) in this activity moment """
+        return User.objects.filter(
+            participant__activity_slot__parent_activity_id=self.parent_activity_id,
+            participant__activity_slot__recurrence_id=self.recurrence_id,
+        )
+
+    def get_user_subscriptions(self, user):
+        """
+        Get all user subscriptions on this activity
+        :param user: The user that needs to looked out for
+        :return:
+        """
+        if user.is_anonymous:
+            return Participant.objects.none()
+
+        return Participant.objects.filter(
+            activity_slot__parent_activity__id=self.parent_activity_id,
+            activity_slot__recurrence_id=self.recurrence_id,
+            user_id=user.id,
+        )
+
+    def get_slots(self):
+        """
+        Gets all slots for this activity moment
+        :return: Queryset of all slots associated with this activity at this moment
+        """
+        return ActivitySlot.objects.filter(
+            parent_activity__id=self.parent_activity_id,
+            recurrence_id=self.recurrence_id,
+        )
+
+    def is_open_for_subscriptions(self):
+        """
+        Whether this activitymoment is open for subscriptions
+        :return: Boolean
+        """
+        now = timezone.now()
+        open_date_in_past = self.recurrence_id - self.parent_activity.subscriptions_open <= now
+        close_date_in_future = self.recurrence_id - self.parent_activity.subscriptions_close >= now
+        return open_date_in_past and close_date_in_future
+
+    def get_absolute_url(self):
+        """
+        Returns the absolute url for the activity
+        :return: the url for the activity page
+        """
+
+        return reverse('activity_calendar:activity_slots_on_day', kwargs={
+            'activity_id': self.parent_activity_id,
+            'recurrence_id': self.recurrence_id
+        })
 
 class ActivitySlot(models.Model):
     title = models.CharField(max_length=255)
