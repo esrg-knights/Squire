@@ -1,14 +1,13 @@
 import copy
+import datetime
 
 from django.conf import settings
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
 from django.db.models import Count
 from django.db.models.base import ModelBase
-from django.utils import timezone, http
+from django.utils import timezone
 from django.urls import reverse
-
-from membership_file.util import user_to_member
 
 from recurrence.fields import RecurrenceField
 
@@ -102,6 +101,52 @@ class Activity(models.Model):
         if self.image is None:
             return f'{settings.STATIC_URL}images/activity_default.png'
         return self.image.image.url
+
+    def get_all_activity_moments(self, start_date, end_date):
+        """ Retrieves (or creates based on recurrences) all ActivityMoment instances in the given time frame """
+        event_start_time = self.start_date.astimezone(timezone.get_current_timezone()).time()
+        utc_start_time = self.start_date.time()
+
+        # recurrence expects each EXDATE's time to match the event's start time (in UTC; ignores DST)
+        # Why it doesn't store it that way in the first place remains a mystery
+        self.recurrences.exdates = list(map(lambda dt:
+                                       datetime.combine(timezone.localtime(dt).date(),
+                                                        utc_start_time, tzinfo=timezone.utc),
+                                            self.recurrences.exdates
+                                       ))
+        activity_moments = []
+
+        recurrence_dts = self.recurrences.between(start_date, end_date, dtstart=self.start_date, inc=True)
+
+        for occurence in recurrence_dts:
+            # recurrence does not handle daylight-saving time! If we were to keep the occurence as is,
+            # then summer events would occur an hour earlier in winter!
+            occurence = timezone.get_current_timezone().localize(
+                datetime.datetime.combine(timezone.localtime(occurence).date(), event_start_time)
+            )
+            try:
+                activity_moment = ActivityMoment.objects.get(
+                    recurrence_id=occurence,
+                    parent_activity=self,
+                )
+            except ActivityMoment.DoesNotExist:
+                activity_moment = ActivityMoment(
+                    recurrence_id=occurence,
+                    parent_activity=self,
+                )
+            activity_moments.append(activity_moment)
+
+        # Get all moment objects that are not part of the defined recurrences
+        single_activity_moments = ActivityMoment.objects.filter(
+            parent_activity=self,
+            recurrence_id__gte = start_date,
+            recurrence_id__lte = end_date,
+        ).exclude(
+            recurrence_id__in = recurrence_dts
+        )
+
+        return activity_moments + [*single_activity_moments]
+
 
     # Participants already subscribed
     def get_subscribed_participants(self, recurrence_id=None):

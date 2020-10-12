@@ -1,16 +1,11 @@
 from datetime import datetime
 
-from django.db.models import Q
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.http import require_safe
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponseBadRequest
 
-from django.views.decorators.http import require_POST
-
-from .models import Activity, Participant, ActivitySlot
-from core.models import ExtendedUser, PresetImage
+from .models import Activity
 
 
 def check_join_constraints(request, parent_activity, recurrence_id):
@@ -51,13 +46,38 @@ def get_activity_json(activity, start, end, user):
         'allDay': False,
     }
 
+def get_json_from_activity_moment(activity_moment, user=None):
+    return {
+        'groupId': activity_moment.parent_activity.id,
+        'title': activity_moment.title,
+        'description': activity_moment.description,
+        'location': activity_moment.location,
+        # use urlLink instead of url as that creates unwanted interactions with the calendar js module
+        'urlLink': activity_moment.get_absolute_url(),
+        'recurrenceInfo': {
+            'rrules': [rule.to_text() for rule in activity_moment.parent_activity.recurrences.rrules],
+            'exrules': [rule.to_text() for rule in activity_moment.parent_activity.recurrences.exrules],
+            'rdates': [occ.date().strftime("%A, %B %d, %Y") for occ in activity_moment.parent_activity.recurrences.rdates],
+            'exdates': [occ.date().strftime("%A, %B %d, %Y") for occ in activity_moment.parent_activity.recurrences.exdates],
+        },
+        'subscriptionsRequired': activity_moment.parent_activity.subscriptions_required,
+        'numParticipants': activity_moment.get_subscribed_users().count(),
+        'maxParticipants': activity_moment.max_participants,
+        'isSubscribed': activity_moment.get_user_subscriptions(user).exists(),
+        'canSubscribe': activity_moment.is_open_for_subscriptions(),
+        'start': activity_moment.start_time.isoformat(),
+        'end': activity_moment.end_time.isoformat(),
+        'allDay': False,
+    }
 
 @require_safe
 def fullcalendar_feed(request):
     start_date = request.GET.get('start', None)
     end_date = request.GET.get('end', None)
 
-    # Start and end dates should be provided
+    # ######################## #
+    # Clean start and end date #
+    # ######################## #
     if start_date is None or end_date is None:
         return HttpResponseBadRequest("start and end date must be provided")
 
@@ -72,50 +92,14 @@ def fullcalendar_feed(request):
     if (end_date - start_date).days > 42:
         return HttpResponseBadRequest("start and end date cannot differ more than 42 days")
 
-    # Obtain non-recurring activities
-    activities = []
-    non_recurring_activities = Activity.objects.filter(recurrences="", published_date__lte=timezone.now()) \
-        .filter((Q(start_date__gte=start_date) | Q(end_date__lte=end_date)))
+    # ######################################################### #
+    # Get all activity moments and convert them to JSON objects #
+    # ######################################################### #
 
-    for non_recurring_activity in non_recurring_activities:
-        activities.append(get_activity_json(
-            non_recurring_activity,
-            non_recurring_activity.start_date,
-            non_recurring_activity.end_date,
-            request.user
-        ))
+    activity_moment_jsons = []
+    for activity in Activity.objects.filter(published_date__lte=timezone.now()):
+        for activity_moment in activity.get_all_activity_moments(start_date, end_date):
+            json_instance = get_json_from_activity_moment(activity_moment, user=request.user)
+            activity_moment_jsons.append(json_instance)
 
-    # Obtain occurrences of recurring activities in the relevant timeframe
-    all_recurring_activities = Activity.objects.exclude(recurrences="").filter(published_date__lte=timezone.now())
-
-    for recurring_activity in all_recurring_activities:
-        recurrences = recurring_activity.recurrences
-        event_start_time = recurring_activity.start_date.astimezone(timezone.get_current_timezone()).time()
-        utc_start_time = recurring_activity.start_date.time()
-
-        # recurrence expects each EXDATE's time to match the event's start time (in UTC; ignores DST)
-        # Why it doesn't store it that way in the first place remains a mystery
-        recurrences.exdates = list(map(lambda dt:
-                                       datetime.combine(timezone.localtime(dt).date(),
-                                                        utc_start_time, tzinfo=timezone.utc),
-                                       recurrences.exdates
-                                       ))
-
-        # If the activity ends on a different day than it starts, this also needs to be the case for the occurrence
-        time_diff = recurring_activity.end_date - recurring_activity.start_date
-
-        for occurence in recurrences.between(start_date, end_date, dtstart=recurring_activity.start_date, inc=True):
-            # recurrence does not handle daylight-saving time! If we were to keep the occurence as is,
-            # then summer events would occur an hour earlier in winter!
-            occurence = timezone.get_current_timezone().localize(
-                datetime.combine(timezone.localtime(occurence).date(), event_start_time)
-            )
-
-            activities.append(get_activity_json(
-                recurring_activity,
-                occurence,
-                (occurence + time_diff),
-                request.user
-            ))
-
-    return JsonResponse({'activities': activities})
+    return JsonResponse({'activities': activity_moment_jsons})
