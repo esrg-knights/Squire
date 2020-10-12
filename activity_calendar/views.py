@@ -57,7 +57,9 @@ class ActivityMixin:
         self.activity = get_object_or_404(Activity, id=self.kwargs.get('activity_id'))
         self.recurrence_id = self.kwargs.get('recurrence_id', None)
 
-        if self.recurrence_id is None or not self.activity.has_occurence_at(self.recurrence_id):
+        if self.recurrence_id is None:
+            raise Http404("We could not find the activity you are trying to reach")
+        if not self.activity.has_occurence_at(self.recurrence_id):
             raise Http404("We could not find the activity you are trying to reach")
 
         # Odd loop-around because all logged in users should be treated as extended users
