@@ -5,12 +5,11 @@ from django.utils import timezone
 
 import django_ical.feedgenerator
 
-from django_ical.utils import build_rrule_from_recurrences_rrule, build_rrule_from_text
+from django_ical.utils import build_rrule_from_recurrences_rrule
 from django_ical.views import ICalFeed
 from django_ical.feedgenerator import ICal20Feed
-from icalendar.cal import Timezone, TimezoneStandard, TimezoneDaylight
 
-from .models import Activity
+from .models import Activity, ActivityMoment
 from .util import generate_vtimezone
 
 # Monkey-patch; Why is this not open for extension in the first place?
@@ -18,6 +17,15 @@ django_ical.feedgenerator.ITEM_EVENT_FIELD_MAP = (
     *(django_ical.feedgenerator.ITEM_EVENT_FIELD_MAP),
     ('recurrenceid',    'recurrence-id'),
 )
+
+def only_for(class_type, default=None):
+    def only_for_decorator(func):
+        def func_wrapper(self, item):
+            if isinstance(item, class_type):
+                return func(self, item)
+            return default
+        return func_wrapper
+    return only_for_decorator
 
 
 class ExtendedICal20Feed(ICal20Feed):
@@ -48,6 +56,13 @@ class CESTEventFeed(ICalFeed):
     product_id = '-//Squire//Activity Calendar//EN'
     file_name = "knights-calendar.ics"
 
+    # Quick overwrite to allow results to be printed in the browser instead
+    # Good for testing
+    # def __call__(self, *args, **kwargs):
+    #     response = super(CESTEventFeed, self).__call__(*args, **kwargs)
+    #     from django.http import HttpResponse
+    #     return HttpResponse(content=response._container, content_type='text')
+
     def title(self):
         # TODO: unhardcode
         return "Activiteiten Agenda - Knights"
@@ -74,11 +89,19 @@ class CESTEventFeed(ICalFeed):
 
     def items(self):
         # Only consider published activities
-        return Activity.objects.filter(published_date__lte=timezone.now()).order_by('-published_date')
+        activities = Activity.objects.filter(published_date__lte=timezone.now()).order_by('-published_date')
+        exceptions = ActivityMoment.objects.all()
+
+        return [*activities, *exceptions]
 
     def item_guid(self, item):
         # ID should be _globally_ unique
-        return f"activity-id-{item.id}@kotkt.nl"
+        if isinstance(item, Activity):
+            activity_id = item.id
+        elif isinstance(item, ActivityMoment):
+            activity_id = item.parent_activity_id
+
+        return f"local_activity-id-{activity_id}@kotkt.nl"
     
     def item_class(self, item):
         return "PUBLIC"
@@ -91,11 +114,21 @@ class CESTEventFeed(ICalFeed):
 
     def item_start_datetime(self, item):
         # Convert to Europe/Amsterdam to ensure daylight saving time is accounted for in recurring events
-        return item.start_date.astimezone(timezone.get_current_timezone())
-    
+        if isinstance(item, Activity):
+            start_dt = item.start_date
+        elif isinstance(item, ActivityMoment):
+            start_dt = item.start_time
+
+        return start_dt.astimezone(timezone.get_current_timezone())
+
     def item_end_datetime(self, item):
         # Convert to Europe/Amsterdam to ensure daylight saving time is accounted for in recurring events
-        return item.end_date.astimezone(timezone.get_current_timezone())
+        if isinstance(item, Activity):
+            end_dt = item.end_date
+        elif isinstance(item, ActivityMoment):
+            end_dt = item.end_time
+
+        return end_dt.astimezone(timezone.get_current_timezone())
     
     def item_created(self, item):
         return item.created_date
@@ -107,11 +140,12 @@ class CESTEventFeed(ICalFeed):
         # When the item was generated, which is at this moment!
         return timezone.now()
 
+    @only_for(ActivityMoment, default="api/calendar/fullcalendar")
     def item_link(self, item):
         # The local url to the activity
         # Because of the repetitition of the activity there is not 1 date. So instead let's just reroute it to the
         # app activity page for now
-        return "https://app.kotkt.nl/api/calendar/fullcalendar"
+        return item.get_absolute_url()
 
     def item_location(self, item):
         return item.location
@@ -124,6 +158,7 @@ class CESTEventFeed(ICalFeed):
     # Recurrence rules for dates to include
     # E.g. repeat the activity every 3rd wednesday of the month, repeat
     # every 2 weeks, etc.
+    @only_for(Activity)
     def item_rrule(self, item):
         if item.recurrences:
             rules = []
@@ -132,6 +167,7 @@ class CESTEventFeed(ICalFeed):
             return rules
 
     # Recurrence rules for dates to exclude
+    @only_for(Activity)
     def item_exrule(self, item):
         if item.recurrences:
             rules = []
@@ -140,11 +176,13 @@ class CESTEventFeed(ICalFeed):
             return rules
 
     # Dates to include for recurrence rules
+    @only_for(Activity)
     def item_rdate(self, item):
         if item.recurrences:
             return item.recurrences.rdates
 
     # Dates to exclude for recurrence rules
+    @only_for(Activity)
     def item_exdate(self, item):
         if item.recurrences:
             # Each EXDATE's time needs to match the event start-time, but they default to midnigth in the widget!
@@ -161,8 +199,9 @@ class CESTEventFeed(ICalFeed):
             return item.recurrences.exdates
 
     # RECURRENCE-ID
+    @only_for(ActivityMoment)
     def item_recurrenceid(self, item):
-        return None
+        return item.recurrence_id.astimezone(timezone.get_current_timezone())
 
     # Include 
     def feed_extra_kwargs(self, obj):

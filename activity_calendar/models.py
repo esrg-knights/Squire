@@ -450,7 +450,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
 
         return reverse('activity_calendar:activity_slots_on_day', kwargs={
             'activity_id': self.parent_activity_id,
-            'recurrence_id': self.recurrence_id
+            'recurrence_id': self.recurrence_id,
         })
 
 class ActivitySlot(models.Model):
