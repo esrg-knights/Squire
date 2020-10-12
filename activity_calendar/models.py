@@ -67,28 +67,21 @@ class Activity(models.Model):
     subscriptions_required = models.BooleanField(default=True,
         help_text="People are only allowed to go to the activity if they register beforehand")
 
-    # auto_create_first_slot = models.BooleanField(default=True,
-    #     help_text="The first slot is automatically created if someone registers for the activity.")
-
     # Possible slot-creation options:
     # - Never: Slots can only be created in the admin panel
     # - Auto: Slots are created automatically. They are only actually created in the DB once a participant joins.
     #                                          Until that time they do look like real slots though (in the UI)
     # - Users: Slots can be created by users. Users can be the owner of at most max_slots_join_per_participant slots
-    SLOT_CREATION_OPTIONS = [
-        ("CREATION_NONE",   "Never/By Administrators"),
-        ("CREATION_AUTO",   "Automatically"),
-        ("CREATION_USER",   "By Users"),
-    ]
-
-    # The maximum number of dummy slots that show up if slot_creation=CREATION_AUTO
-    # Dummy slots do not exist in the DB itself, and match their title, description, etc. with the parent activity
-    MAX_NUM_AUTO_DUMMY_SLOTS = 1  # Todo redact
-
-    # The way slots should be created
+    SLOT_CREATION_STAFF = "CREATION_NONE"
+    SLOT_CREATION_AUTO = "CREATION_AUTO"
+    SLOT_CREATION_USER = "CREATION_USER"
     slot_creation = models.CharField(
         max_length=15,
-        choices=SLOT_CREATION_OPTIONS,
+        choices=[
+            (SLOT_CREATION_STAFF,   "Never/By Administrators"),
+            (SLOT_CREATION_AUTO,   "Automatically"),
+            (SLOT_CREATION_USER,   "By Users"),
+        ],
         default='CREATION_AUTO',
     )
 
@@ -146,159 +139,6 @@ class Activity(models.Model):
         )
 
         return activity_moments + [*single_activity_moments]
-
-
-    # Participants already subscribed
-    def get_subscribed_participants(self, recurrence_id=None):
-        if not self.is_recurring:
-            return Participant.objects.filter(activity_slot__parent_activity__id=self.id)
-
-        if recurrence_id is None:
-            raise TypeError("recurrence_id cannot be None if the activity is recurring")
-
-        return Participant.objects.filter(activity_slot__parent_activity__id=self.id,
-                activity_slot__recurrence_id=recurrence_id)
-    
-    # Number of participants already subscribed
-    def get_num_subscribed_participants(self, recurrence_id=None):
-        # Todo redact
-        return self.get_subscribed_participants(recurrence_id).count()
-    
-    # Maximum number of participants
-    def get_max_num_participants(self, recurrence_id=None):
-        max_participants = self.max_participants
-
-        # At least one slot can (in theory) be created
-        if self.slot_creation != "CREATION_NONE" and self.max_slots != 0:
-            # New slots can actually be made (take into account the current limit)
-            if self.max_slots == -1 or self.max_slots - self.get_num_slots(recurrence_id=recurrence_id) > 0:
-                # Only limited by this activity's participants
-                return max_participants
-
-        # Otherwise we have to deal with the limitations of the already existing slots
-        cnt = 0
-        for slot in self.get_slots(recurrence_id):
-            # At least one slot allows for infinite participants
-            if slot.max_participants == -1:
-                # But may still be limited by the activity's maximum amount of participants
-                return max_participants
-            cnt += slot.max_participants 
-        
-        if max_participants == -1:
-            # Infinite activity participants means we're limited by the existing slots
-            return cnt
-        # Otherwise it's the smallest of the two
-        return min(max_participants, cnt)
-
-    # slots already created
-    def get_slots(self, recurrence_id=None):
-        if not self.is_recurring:
-            return ActivitySlot.objects.filter(parent_activity__id=self.id)
-
-        if recurrence_id is None:
-            raise TypeError("recurrence_id cannot be None if the activity is recurring")
-
-        return ActivitySlot.objects.filter(parent_activity__id=self.id,
-                recurrence_id=recurrence_id)
-    
-    # Number of slots
-    def get_num_slots(self, recurrence_id=None):
-        # Todo redact
-        return self.get_slots(recurrence_id).count()
-
-    # Maximum number of slots that can be created
-    def get_max_num_slots(self, recurrence_id=None):
-        # Todo redact
-        # Users can create at least one slot
-        if self.slot_creation != "CREATION_NONE":
-            return self.max_slots
-
-        # Slots cannot be created outside the admin panel; we have to work with
-        # the slots that already exist
-        return self.get_num_slots(recurrence_id=recurrence_id)
-
-    def get_duration(self):
-        # Todo Redact
-        return self.end_date - self.start_date
-    
-    def can_user_create_slot(self, user, recurrence_id=None, num_slots=None, num_user_registrations=None,
-            num_total_participants=None, num_max_participants=None):
-        # Todo: Redact
-        if num_user_registrations is None:
-            num_user_registrations = self.get_num_user_subscriptions(user, recurrence_id=recurrence_id)
-        
-        if num_total_participants is None:
-            num_total_participants = self.get_slots(recurrence_id=recurrence_id).aggregate(Count('participants'))['participants__count']
-        if num_max_participants is None:
-            num_max_participants = self.get_max_num_participants(recurrence_id=recurrence_id)
-
-        # Can the user (in theory) join another slot?
-        user_can_join_another_slot = (self.max_slots_join_per_participant == -1 or \
-                num_user_registrations < self.max_slots_join_per_participant)
-
-        # The activity can have more participants
-        can_have_more_participants = num_max_participants == -1 or num_total_participants < num_max_participants
-        
-        # Infinite slots
-        if self.max_slots == -1 and user_can_join_another_slot and can_have_more_participants:
-            return True
-        
-        # Finite number of slots
-        if num_slots is None:
-            num_slots = self.get_slots(recurrence_id=recurrence_id).count()
-
-        # Limited slots and can join
-        return num_slots < self.max_slots and user_can_join_another_slot and can_have_more_participants
-
-    # Get the subscriptions of a user of a specific occurrence
-    def get_user_subscriptions(self, user, recurrence_id=None, participants=None):
-        if user.is_anonymous:
-            return Participant.objects.none()
-        if participants is None:
-            participants = self.get_subscribed_participants(recurrence_id)
-        return participants.filter(user__id=user.id)
-    
-    # Get the subscriptions of a user of a specific occurrence
-    def get_num_user_subscriptions(self, user, recurrence_id=None, participants=None):
-        # Todo redact
-        return self.get_user_subscriptions(user, recurrence_id, participants).count()
-
-    # Whether a given user is subscribed to the activity
-    def is_user_subscribed(self, user, recurrence_id=None, participants=None):
-        return self.get_user_subscriptions(user, recurrence_id, participants).first() is not None
-    
-    # Whether a user can still subscribe to the activity
-    def can_user_subscribe(self, user, recurrence_id=None, participants=None, max_participants=None):
-        if user.is_anonymous:
-            # Must be logged in to register
-            return False
-        
-        if not self.are_subscriptions_open(recurrence_id):
-            # Must be open for registrations
-            return False
-
-        if max_participants is None:
-            max_participants = self.get_max_num_participants(recurrence_id)
-        
-        if max_participants == -1:
-            # Infinite participants are allowed
-            return True
-
-        if participants is None:
-            participants = self.get_subscribed_participants(recurrence_id)
-
-        return participants.count() < max_participants
-
-    # Whether subscriptions are open
-    def are_subscriptions_open(self, recurrence_id=None):
-        if not self.is_recurring:
-            recurrence_id = self.start_date
-
-        if recurrence_id is None:
-            raise TypeError("recurrence_id cannot be None if the activity is recurring")
-
-        now = timezone.now()
-        return recurrence_id - self.subscriptions_open <= now and now <= recurrence_id - self.subscriptions_close
 
     # String-representation of an instance of the model
     def __str__(self):
@@ -535,9 +375,6 @@ class ActivitySlot(models.Model):
         if self.image is None:
             return self.parent_activity.image_url
         return self.image.image.url
-
-    def are_subscriptions_open(self):
-        return self.parent_activity.are_subscriptions_open(recurrence_id=self.recurrence_id)
 
     # Participants already subscribed
     def get_subscribed_participants(self):

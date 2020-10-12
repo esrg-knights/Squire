@@ -32,14 +32,6 @@ def activity_collection(request):
     return render(request, 'activity_calendar/fullcalendar.html', {})
 
 
-def check_join_constraints(request, parent_activity, recurrence_id):
-    # Can only subscribe to at most X slots
-    if parent_activity.max_slots_join_per_participant != -1 and \
-            parent_activity.get_user_subscriptions(user=request.user, recurrence_id=recurrence_id).count() \
-            >= parent_activity.max_slots_join_per_participant:
-        return HttpResponseBadRequest("Cannot subscribe to another slot")
-
-
 class LoginRequiredForPostMixin(AccessMixin):
     """ Requires being logged in for post events only (instead of the entire view) """
 
@@ -255,7 +247,7 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
         # Determine if the mode allows slot creation. If mode is None, staff users should be able to create slots
         # Note that actual validation always takes place in the form itself, this is merely whether, without any actual
         # input on the complex database status (i.e. relations), this button needs to be shown.
-        if self.activity.slot_creation == "CREATION_USER":
+        if self.activity.slot_creation == Activity.SLOT_CREATION_USER:
             new_slot_form = RegisterNewSlotForm(
                 initial={
                     'sign_up': True,
@@ -265,7 +257,7 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
                 recurrence_id=self.recurrence_id,
                 activity_moment=self.activity_moment,
             )
-        elif self.activity.slot_creation == "CREATION_NONE" and self.request.user.is_staff:
+        elif self.activity.slot_creation == Activity.SLOT_CREATION_STAFF and self.request.user.is_staff:
             # In a none based slot mode, don't automatically register the creator to the slot
             new_slot_form = RegisterNewSlotForm(
                 initial={
@@ -300,7 +292,7 @@ def get_activity_detail_view(request, *args, **kwargs):
             raise Http404("The timestamp was not correctly written")
 
         activity = Activity.objects.get(id=kwargs.get('activity_id', -1))
-        if activity.slot_creation == "CREATION_AUTO":
+        if activity.slot_creation == Activity.SLOT_CREATION_AUTO:
             view_class = ActivitySimpleMomentView
         else:
             view_class = ActivityMomentWithSlotsView
@@ -341,7 +333,7 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
         return super(CreateSlotView, self).render_to_response(context, **response_kwargs)
 
     def get_form_kwargs(self):
-        if self.activity.slot_creation == "CREATION_NONE" and self.request.user.is_staff:
+        if self.activity.slot_creation == Activity.SLOT_CREATION_STAFF and self.request.user.is_staff:
             # In a none based slot mode, don't automatically register the creator to the slot
             initial = {'sign_up': False}
         else:
@@ -360,7 +352,7 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
 
     def get_context_data(self, **kwargs):
         return super(CreateSlotView, self).get_context_data(**{
-            'subscribed_slots': self.activity.get_user_subscriptions(self.request.user, self.recurrence_id),
+            'subscribed_slots': self.activity_moment.get_user_subscriptions(self.request.user),
         })
 
     def form_valid(self, form):

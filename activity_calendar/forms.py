@@ -122,7 +122,7 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
         super(RegisterForActivityForm, self).check_validity(data)
 
         # Subscribing directly on activities can only happen if we don't use the multiple-slots feature
-        if not self.activity.slot_creation == "CREATION_AUTO":
+        if not self.activity.slot_creation == Activity.SLOT_CREATION_AUTO:
             raise ValidationError(
                 _("Activity mode is incorrect. Please refresh the page."), code='invalid_slot_mode')
 
@@ -246,9 +246,9 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
         super(RegisterNewSlotForm, self).check_validity(data)
 
         # Is user allowed to create a slot
-        if self.activity.slot_creation == "CREATION_NONE" and self.user.is_staff:
+        if self.activity.slot_creation == Activity.SLOT_CREATION_STAFF and self.user.is_staff:
             pass
-        elif self.activity.slot_creation == "CREATION_USER":
+        elif self.activity.slot_creation == Activity.SLOT_CREATION_USER:
             pass
         else:
             raise ValidationError(
@@ -258,7 +258,7 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
         # Can the user (in theory) join another slot?
         if data.get('sign_up', False):
-            user_subscriptions = self.activity.get_user_subscriptions(user=self.user, recurrence_id=self.recurrence_id)
+            user_subscriptions = self.activity_moment.get_user_subscriptions(user=self.user)
             if self.activity.max_slots_join_per_participant != -1 and \
                     user_subscriptions.count() >= self.activity.max_slots_join_per_participant:
                 raise ValidationError(
@@ -269,7 +269,7 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
         # Check cap for number of slots
         if self.activity.max_slots != -1 and \
-                self.activity.max_slots <= self.activity.get_slots(recurrence_id=self.recurrence_id).count():
+                self.activity.max_slots <= self.activity_moment.get_slots().count():
             raise ValidationError(
                 _("Maximum number of slots already claimed"),
                 code='max-slots-claimed'

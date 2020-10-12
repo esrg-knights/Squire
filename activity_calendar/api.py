@@ -8,44 +8,6 @@ from django.http import HttpResponseBadRequest
 from .models import Activity
 
 
-def check_join_constraints(request, parent_activity, recurrence_id):
-    # Can only subscribe to at most X slots
-    if parent_activity.max_slots_join_per_participant != -1 and \
-            parent_activity.get_user_subscriptions(user=request.user, recurrence_id=recurrence_id).count() \
-            >= parent_activity.max_slots_join_per_participant:
-        return HttpResponseBadRequest("Cannot subscribe to another slot")
-
-
-# The view that is accessed by FullCalendar to retrieve events
-def get_activity_json(activity, start, end, user):
-    activity_participants = activity.get_subscribed_participants(start)
-    max_activity_participants = activity.get_max_num_participants(start)
-
-    return {
-        'groupId': activity.id,
-        'title': activity.title,
-        'description': activity.description,
-        'location': activity.location,
-        # use urlLink instead of url as that creates unwanted interactions with the calendar js module
-        'urlLink': activity.get_absolute_url(recurrence_id=start),
-        'recurrenceInfo': {
-            'rrules': [rule.to_text() for rule in activity.recurrences.rrules],
-            'exrules': [rule.to_text() for rule in activity.recurrences.exrules],
-            'rdates': [occ.date().strftime("%A, %B %d, %Y") for occ in activity.recurrences.rdates],
-            'exdates': [occ.date().strftime("%A, %B %d, %Y") for occ in activity.recurrences.exdates],
-        },
-        'subscriptionsRequired': activity.subscriptions_required,
-        'numParticipants': activity_participants.count(),
-        'maxParticipants': max_activity_participants,
-        'isSubscribed': activity.is_user_subscribed(user, start,
-                                                    participants=activity_participants),
-        'canSubscribe': activity.can_user_subscribe(user, start,
-                                                    participants=activity_participants, max_participants=max_activity_participants),
-        'start': start.isoformat(),
-        'end': end.isoformat(),
-        'allDay': False,
-    }
-
 def get_json_from_activity_moment(activity_moment, user=None):
     return {
         'groupId': activity_moment.parent_activity.id,

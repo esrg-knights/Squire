@@ -100,6 +100,11 @@ class ActivityFormValidationMixin(FormValidityMixin):
         if isinstance(self.recurrence_id, str):
             self.recurrence_id = dateparse.parse_datetime(self.recurrence_id)
 
+        self.activity_moment = ActivityMoment(
+            parent_activity_id=self.activity.id,
+            recurrence_id=self.recurrence_id,
+        )
+
     def get_form_kwargs(self, **kwargs):
         activity_moment = ActivityMoment(
             parent_activity=self.activity,
@@ -147,7 +152,7 @@ class RegisterForActivityFormTestCase(ActivityFormValidationMixin, TestCase):
         self.activity.max_participants = 1
         # There should be 1 participant already
         self.activity.save()
-        self.assertEqual(1, self.activity.get_num_subscribed_participants(self.recurrence_id))
+        self.assertEqual(1, self.activity_moment.get_subscribed_users().count())
 
         self.assertFormHasError({'sign_up': True}, code='activity-full')
 
@@ -158,22 +163,22 @@ class RegisterForActivityFormTestCase(ActivityFormValidationMixin, TestCase):
         # There should be 1 participant already
         self.activity.save()
         Participant.objects.create(user=self.user, activity_slot_id=1)
-        self.assertEqual(2, self.activity.get_num_subscribed_participants(self.recurrence_id))
+        self.assertEqual(2, self.activity_moment.get_subscribed_users().count())
 
         self.assertFormValid({'sign_up': False})
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_slot_mode(self, mock_tz):
         """ Tests that form invalidates when slot creation mode is not CREATION_AUTO """
-        self.activity.slot_creation = "CREATION_NONE"
+        self.activity.slot_creation = Activity.SLOT_CREATION_STAFF
         self.activity.save()
         self.assertFormHasError({'sign_up': True}, code='invalid_slot_mode')
 
-        self.activity.slot_creation = "CREATION_USER"
+        self.activity.slot_creation = Activity.SLOT_CREATION_USER
         self.activity.save()
         self.assertFormHasError({'sign_up': True}, code='invalid_slot_mode')
 
-        self.activity.slot_creation = "CREATION_AUTO"
+        self.activity.slot_creation = Activity.SLOT_CREATION_AUTO
         self.activity.save()
         self.assertFormValid({'sign_up': True})
 
@@ -191,11 +196,11 @@ class RegisterForActivityFormTestCase(ActivityFormValidationMixin, TestCase):
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_save_sign_up_existing_slot(self, mock_tz):
         """ Checks if the user is registered to any of the already existing slots"""
-        self.assertGreater(self.activity.get_slots(self.recurrence_id).count(), 0)
+        self.assertGreater(self.activity_moment.get_slots().count(), 0)
         form = self.assertFormValid({'sign_up': True})
-        self.assertEqual(0, self.activity.get_user_subscriptions(self.user, self.recurrence_id).count())
+        self.assertEqual(0, self.activity_moment.get_user_subscriptions(self.user).count())
         form.save()
-        self.assertEqual(1, self.activity.get_user_subscriptions(self.user, self.recurrence_id).count())
+        self.assertEqual(1, self.activity_moment.get_user_subscriptions(self.user).count())
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_save_sign_up_new_slot(self, mock_tz):
@@ -204,18 +209,18 @@ class RegisterForActivityFormTestCase(ActivityFormValidationMixin, TestCase):
         self.activity.activity_slot_set.all().delete()
 
         form = self.assertFormValid({'sign_up': True})
-        self.assertEqual(0, self.activity.get_user_subscriptions(self.user, self.recurrence_id).count())
+        self.assertEqual(0, self.activity_moment.get_user_subscriptions(self.user).count())
         form.save()
-        self.assertEqual(1, self.activity.get_user_subscriptions(self.user, self.recurrence_id).count())
+        self.assertEqual(1, self.activity_moment.get_user_subscriptions(self.user).count())
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_save_sign_out(self, mock_tz):
         """ Test saving a sign-out action """
         Participant.objects.create(user=self.user, activity_slot_id=1)
         form = self.assertFormValid({'sign_up': False})
-        self.assertEqual(1, self.activity.get_user_subscriptions(self.user, self.recurrence_id).count())
+        self.assertEqual(1, self.activity_moment.get_user_subscriptions(self.user).count())
         form.save()
-        self.assertEqual(0, self.activity.get_user_subscriptions(self.user, self.recurrence_id).count())
+        self.assertEqual(0, self.activity_moment.get_user_subscriptions(self.user).count())
 
 
 class RegisterForActivitySlotFormTestCase(ActivityFormValidationMixin, TestCase):
@@ -262,7 +267,7 @@ class RegisterForActivitySlotFormTestCase(ActivityFormValidationMixin, TestCase)
         self.activity.max_participants = 2
         # There should be 2 participant already
         self.activity.save()
-        self.assertEqual(2, self.activity.get_num_subscribed_participants(self.recurrence_id))
+        self.assertEqual(2, self.activity_moment.get_subscribed_users().count())
 
         self.assertFormHasError({'sign_up': True, 'slot_id': 7}, code='activity-full')
 
@@ -273,7 +278,7 @@ class RegisterForActivitySlotFormTestCase(ActivityFormValidationMixin, TestCase)
         # There should be 1 participant already
         self.activity.save()
         Participant.objects.create(user=self.user, activity_slot_id=7)
-        self.assertEqual(3, self.activity.get_num_subscribed_participants(self.recurrence_id))
+        self.assertEqual(3, self.activity_moment.get_subscribed_users().count())
 
         self.assertFormValid({'sign_up': False, 'slot_id': 7})
 
@@ -356,7 +361,7 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
         self.activity.max_participants = 2
         # There should be 2 participant already
         self.activity.save()
-        self.assertEqual(2, self.activity.get_num_subscribed_participants(self.recurrence_id))
+        self.assertEqual(2, self.activity_moment.get_subscribed_users().count())
 
         self.assertFormHasError({'sign_up': True, 'title': 'My slot', 'max_participants': -1}, code='activity-full')
 
@@ -369,22 +374,22 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_slot_mode(self, mock_tz):
         """ Tests that form invalidates when slot creation mode is not CREATION_AUTO """
-        self.activity.slot_creation = "CREATION_NONE"
+        self.activity.slot_creation = Activity.SLOT_CREATION_STAFF
         self.activity.save()
         self.assertFormHasError({'sign_up': True, 'title': 'My slot', 'max_participants': -1}, code='user-slot-creation-denied')
 
-        self.activity.slot_creation = "CREATION_AUTO"
+        self.activity.slot_creation = Activity.SLOT_CREATION_AUTO
         self.activity.save()
         self.assertFormHasError({'sign_up': True, 'title': 'My slot', 'max_participants': -1}, code='user-slot-creation-denied')
 
-        self.activity.slot_creation = "CREATION_USER"
+        self.activity.slot_creation = Activity.SLOT_CREATION_USER
         self.activity.save()
         self.assertFormValid({'sign_up': True, 'title': 'My slot', 'max_participants': -1})
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_slot_mode_admin_override(self, mock_tz):
         """ Tests that form validates when admin creates a slot when slot mode is CREATION_NONE """
-        self.activity.slot_creation = "CREATION_NONE"
+        self.activity.slot_creation = Activity.SLOT_CREATION_STAFF
         self.activity.save()
         self.user.is_staff = True
         self.user.save()
