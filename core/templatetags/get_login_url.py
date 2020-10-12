@@ -8,9 +8,8 @@ from django.contrib.auth.views import redirect_to_login
 register = template.Library()
 
 ##################################################################################
-# Template Tag that appends a * after a string if a given form field is required
-# This string can be a form field name, but this is not required
-# @since 05 FEB 2020
+# Template Tag that creates an url to a login page with the redirect set to the current page
+# @since SEPT 2020
 ##################################################################################
 
 
