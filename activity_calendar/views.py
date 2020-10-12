@@ -20,11 +20,6 @@ from core.models import ExtendedUser
 
 __all__ = "CreateSlotView, get_activity_detail_view, activity_collection"
 
-# Renders the simple v1 calendar
-@require_safe
-def googlehtml_activity_collection(request):
-    return render(request, 'activity_calendar/googlecalendar.html', {})
-
 
 # Renders the calendar page, which utilises FullCalendar
 @require_safe
