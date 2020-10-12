@@ -296,6 +296,9 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
 def get_activity_detail_view(request, *args, **kwargs):
     """ Returns a HTTP response object by calling the required View Class """
     try:
+        if kwargs.get('recurrence_id', None) is None:
+            raise Http404("The timestamp was not correctly written")
+
         activity = Activity.objects.get(id=kwargs.get('activity_id', -1))
         if activity.slot_creation == "CREATION_AUTO":
             view_class = ActivitySimpleMomentView
