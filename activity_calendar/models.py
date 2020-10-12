@@ -110,7 +110,7 @@ class Activity(models.Model):
         # recurrence expects each EXDATE's time to match the event's start time (in UTC; ignores DST)
         # Why it doesn't store it that way in the first place remains a mystery
         self.recurrences.exdates = list(map(lambda dt:
-                                       datetime.combine(timezone.localtime(dt).date(),
+                                       datetime.datetime.combine(timezone.localtime(dt).date(),
                                                         utc_start_time, tzinfo=timezone.utc),
                                             self.recurrences.exdates
                                        ))
