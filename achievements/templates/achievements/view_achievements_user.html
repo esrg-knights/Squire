@@ -12,8 +12,11 @@
     <link rel="stylesheet" href="{% static 'css/achievement_frames.css' %}">
 {% endblock css %}
 
+{% block content-frame-class %}
+    wideContentFrame
+{% endblock %}
+
 {% block content %}
-    <div class="wideContentFrame">
         <h1>Earned Achievements</h1>
         <p>
             These are all the achievement's you've earned; ever! Feel free to brag about them to other members.
@@ -41,5 +44,4 @@
         {% empty %}
             <p>Woops! No Achievements seem to exist!</p>
         {% endfor %}
-    </div>
 {% endblock content %}

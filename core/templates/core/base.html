@@ -71,13 +71,15 @@
 				</ul>
 			</div>
 		</nav>
-		{% bootstrap_messages %}
 
-		<main>
+		<main class="mb-5 px-3">
 			<div id='mainContent'>
-				{% block content %}
-					<!-- Other templates can add extra content here -->
-				{% endblock %}
+                <div class="{% block content-frame-class %}contentFrame{% endblock %}">
+                    {% bootstrap_messages %}
+                    {% block content %}
+                        <!-- Other templates can add extra content here -->
+                    {% endblock %}
+                </div>
 			</div>
 		</main>		
 		
@@ -87,5 +89,11 @@
 				<!-- Other templates can add extra content here -->
 			{% endblock %}
 		</footer>
+
+        {% block js_bottom %}
+            {# A block for javascript codes that will trigger after the entire page has been loaded in. #}
+            {# Ideal for when you want to activate e.g. bootstrap popovers #}
+
+        {% endblock js_bottom %}
 	</body>
 </html>

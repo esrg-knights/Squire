@@ -100,7 +100,7 @@
     "end_date": null,
     "owner": null,
     "parent_activity": 1,
-    "recurrence_id": null,
+    "recurrence_id": "2020-08-14T19:00:00Z",
     "max_participants": -1,
     "image": null
   }
@@ -186,6 +186,40 @@
   }
 },
 {
+  "model": "activity_calendar.activityslot",
+  "pk": 7,
+  "fields": {
+    "title": "Liberty the boardgame",
+    "description": "",
+    "location": null,
+    "start_date": null,
+    "end_date": null,
+    "owner": null,
+    "parent_activity": 2,
+    "recurrence_id": "2020-08-12T14:00:00Z",
+    "max_participants": -1,
+    "image": null
+  }
+},
+{
+  "model": "activity_calendar.activityslot",
+  "pk": 8,
+  "fields": {
+    "title": "Chess",
+    "description": "",
+    "location": null,
+    "start_date": null,
+    "end_date": null,
+    "owner": null,
+    "parent_activity": 2,
+    "recurrence_id": "2020-08-12T14:00:00Z",
+    "max_participants": 2,
+    "image": null
+  }
+},
+
+
+{
   "model": "activity_calendar.participant",
   "pk": 1,
   "fields": {
@@ -209,6 +243,33 @@
   "fields": {
     "user": 2,
     "activity_slot": 6,
+    "showed_up": null
+  }
+},
+{
+  "model": "activity_calendar.participant",
+  "pk": 4,
+  "fields": {
+    "user": 3,
+    "activity_slot": 1,
+    "showed_up": null
+  }
+},
+{
+  "model": "activity_calendar.participant",
+  "pk": 5,
+  "fields": {
+    "user": 1,
+    "activity_slot": 8,
+    "showed_up": null
+  }
+},
+{
+  "model": "activity_calendar.participant",
+  "pk": 6,
+  "fields": {
+    "user": 3,
+    "activity_slot": 8,
     "showed_up": null
   }
 }

@@ -108,8 +108,10 @@ class CESTEventFeed(ICalFeed):
         return timezone.now()
 
     def item_link(self, item):
-        # There is no special page for the activity
-        return ""
+        # The local url to the activity
+        # Because of the repetitition of the activity there is not 1 date. So instead let's just reroute it to the
+        # app activity page for now
+        return "https://app.kotkt.nl/api/calendar/fullcalendar"
 
     def item_location(self, item):
         return item.location

@@ -5,7 +5,6 @@ from django.test import TestCase, Client
 from django.utils import timezone
 
 from activity_calendar.models import Activity
-from activity_calendar.views import fullcalendar_feed
 from core.util import suppress_warnings
 
 class TestCaseFullCalendar(TestCase):

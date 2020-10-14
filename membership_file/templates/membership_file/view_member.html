@@ -6,7 +6,6 @@
 {% endblock title %}
 
 {% block content %}
-    <div class='contentFrame'>
         <h1>Hello {{member.first_name}}!</h1>
         <p>
             You're a member since {{member.member_since}}.
@@ -55,5 +54,4 @@
                 You can edit this information <a href="{% url 'membership_file/membership/edit' %}">here</a>.
             {% endif %}
         </p>
-    </div>
 {% endblock content %}

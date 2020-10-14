@@ -1,0 +1,82 @@
+{% extends "activity_calendar/activity_page_base.html" %}
+{% load calendar_tags %}
+{% load to_extended_user %}
+
+{% block local-messages %}
+    {# empty, this will be locally handled through Django messages framework #}
+{% endblock local-messages %}
+
+{% block total_participants %}
+    {# We don't use that on this layout #}
+{% endblock total_participants %}
+
+{% block sign-up-status %}
+    {% if is_subscribed %}
+        <div class="card border border-success greenify activity-wide">
+            <div class="row">
+                <div class="col-12 col-sm-7 col-md-12">
+                    <div class="p-1">
+                        You are registered for this activity
+                    </div>
+                </div>
+                <div class="col-12 col-sm-5 col-md-12">
+                    {% if form.is_valid %}
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form }}
+                            <input type="submit" class="btn btn-danger btn-subscribe btn-block" value="Deregister">
+                        </form>
+                    {% else %}
+                        <a tabindex="0"  role="button" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom"
+                           data-content="{% form_rejection_reason form %}" style="text-decoration: none">
+                            <button class="btn btn-outline-danger btn-block disabled">
+                                Deregister
+                            </button>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="card border border-danger activity-wide">
+            <div class="row">
+                <div class="col-12 col-sm-7 col-md-12">
+                    <div class="d-block p-2">
+                        You are not yet registered for this activity
+                    </div>
+                </div>
+                <div class="col-12 col-sm-5 col-md-12">
+                    {% if form.is_valid %}
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form }}
+                            <input type="submit" class="btn btn-success btn-block" value="Register">
+                        </form>
+                    {% else %}
+                        <a tabindex="0"  role="button" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom"
+                                data-content="{% form_rejection_reason form %}" style="text-decoration: none">
+                            <button class="btn btn-outline-success btn-block disabled">
+                                Register
+                            </button>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock sign-up-status %}
+
+{% block additional-contents %}
+    {% if show_participants %}
+        <h2>Current participants</h2>
+        {% if participants %}
+            {% for participant in participants %}
+                <div class="">
+                    {{ participant.user.get_display_name }}
+                </div>
+            {% endfor %}
+        {% else %}
+            There are currently no people signed up. {% if subscriptions_open %} Be the first! {% endif %}
+        {% endif %}
+    {% endif %}
+{% endblock %}

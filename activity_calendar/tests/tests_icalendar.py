@@ -5,12 +5,9 @@ from django.test.client import RequestFactory
 from django.utils import timezone
 
 from activity_calendar.models import Activity
-from activity_calendar.feeds import CESTEventFeed, ExtendedICal20Feed
+from activity_calendar.feeds import CESTEventFeed
 
 import icalendar
-
-from django_ical.feedgenerator import ICal20Feed
-from django_ical.views import ICalFeed
 
 
 class TestCaseICalendarExport(TestCase):

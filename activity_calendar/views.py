@@ -1,127 +1,30 @@
-from datetime import datetime
-
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Exists, OuterRef, Sum, Count
-from django.http import (JsonResponse, HttpResponseBadRequest, HttpResponse,
-        HttpResponseRedirect, HttpResponseNotFound, HttpResponseNotAllowed, HttpResponseForbidden)
-from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.mixins import AccessMixin
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
-from django.utils import timezone, dateparse
-from django.utils.http import urlencode
-from django.utils.decorators import method_decorator
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 
-from django.views.decorators.http import require_safe, require_POST
-from django.views.generic import DetailView
+from django.views.decorators.http import require_safe
+from django.views.generic import TemplateView
+from django.views.generic.edit import FormView, FormMixin
 
-from .forms import ActivitySlotForm
-from .models import Activity, Participant, ActivitySlot
-from core.models import ExtendedUser, PresetImage
+from membership_file.util import user_to_member
 
-# Renders the simple v1 calendar
-@require_safe
-def googlehtml_activity_collection(request):
-    return render(request, 'activity_calendar/googlecalendar.html', {})
+from .forms import RegisterForActivityForm, RegisterForActivitySlotForm, RegisterNewSlotForm
+from .models import Activity, Participant
+from core.models import ExtendedUser
+
+
+__all__ = "CreateSlotView, get_activity_detail_view, activity_collection"
+
 
 # Renders the calendar page, which utilises FullCalendar
 @require_safe
 def activity_collection(request):
     return render(request, 'activity_calendar/fullcalendar.html', {})
-
-# The view that is accessed by FullCalendar to retrieve events
-def get_activity_json(activity, start, end, user):
-    activity_participants = activity.get_subscribed_participants(start)
-    max_activity_participants = activity.get_max_num_participants(start)
-
-    return {
-        'groupId': activity.id,
-        'title': activity.title,
-        'description': activity.description,
-        'location': activity.location,
-        'recurrenceInfo': {
-            'rrules': [rule.to_text() for rule in activity.recurrences.rrules],
-            'exrules': [rule.to_text() for rule in activity.recurrences.exrules],
-            'rdates': [occ.date().strftime("%A, %B %d, %Y") for occ in activity.recurrences.rdates],
-            'exdates': [occ.date().strftime("%A, %B %d, %Y") for occ in activity.recurrences.exdates],
-        },
-        'subscriptionsRequired': activity.subscriptions_required,
-        'numParticipants': activity_participants.count(),
-        'maxParticipants': max_activity_participants,
-        'isSubscribed': activity.is_user_subscribed(user, start,
-                participants=activity_participants),
-        'canSubscribe': activity.can_user_subscribe(user, start,
-                participants=activity_participants, max_participants=max_activity_participants),
-        'start': start.isoformat(),
-        'end': end.isoformat(),
-        'allDay': False,
-    }
-
-@require_safe
-def fullcalendar_feed(request):
-    start_date = request.GET.get('start', None)
-    end_date = request.GET.get('end', None)
-
-    # Start and end dates should be provided
-    if start_date is None or end_date is None:
-        return HttpResponseBadRequest("start and end date must be provided")
-
-    # Start and end dates should be provided in ISO format
-    try: 
-        start_date = datetime.fromisoformat(start_date)
-        end_date = datetime.fromisoformat(end_date)
-    except ValueError:
-        return HttpResponseBadRequest("start and end date must be in yyyy-mm-ddThh:mm:ss+hh:mm format")
-    
-    # Start and end dates cannot differ more than a 'month' (7 days, 6 weeks)
-    if (end_date - start_date).days > 42:
-        return HttpResponseBadRequest("start and end date cannot differ more than 42 days")
-
-    # Obtain non-recurring activities
-    activities = []
-    non_recurring_activities = Activity.objects.filter(recurrences="", published_date__lte=timezone.now()) \
-            .filter((Q(start_date__gte=start_date) | Q(end_date__lte=end_date)))
-    
-    for non_recurring_activity in non_recurring_activities:
-        activities.append(get_activity_json(
-            non_recurring_activity,
-            non_recurring_activity.start_date,
-            non_recurring_activity.end_date,
-            request.user
-        ))
-
-    # Obtain occurrences of recurring activities in the relevant timeframe
-    all_recurring_activities = Activity.objects.exclude(recurrences="").filter(published_date__lte=timezone.now())
-
-    for recurring_activity in all_recurring_activities:
-        recurrences = recurring_activity.recurrences
-        event_start_time = recurring_activity.start_date.astimezone(timezone.get_current_timezone()).time()
-        utc_start_time = recurring_activity.start_date.time()
-
-        # recurrence expects each EXDATE's time to match the event's start time (in UTC; ignores DST)
-        # Why it doesn't store it that way in the first place remains a mystery
-        recurrences.exdates = list(map(lambda dt:
-                datetime.combine(timezone.localtime(dt).date(),
-                    utc_start_time, tzinfo=timezone.utc),
-                recurrences.exdates
-        ))
-
-        # If the activity ends on a different day than it starts, this also needs to be the case for the occurrence
-        time_diff = recurring_activity.end_date - recurring_activity.start_date
-
-        for occurence in recurrences.between(start_date, end_date, dtstart=recurring_activity.start_date, inc=True):
-            # recurrence does not handle daylight-saving time! If we were to keep the occurence as is,
-            # then summer events would occur an hour earlier in winter!
-            occurence = timezone.get_current_timezone().localize(
-                datetime.combine(timezone.localtime(occurence).date(), event_start_time)
-            )
-            
-            activities.append(get_activity_json(
-                recurring_activity,
-                occurence,
-                (occurence + time_diff),
-                request.user
-            ))
-
-    return JsonResponse({'activities': activities})
 
 
 def check_join_constraints(request, parent_activity, recurrence_id):
@@ -131,171 +34,327 @@ def check_join_constraints(request, parent_activity, recurrence_id):
                 >= parent_activity.max_slots_join_per_participant:
         return HttpResponseBadRequest("Cannot subscribe to another slot")
 
-@require_POST
-@login_required
-def register(request, slot_id):
-    slot = ActivitySlot.objects.filter(id=slot_id).first()
-    parent_activity = slot.parent_activity
-    if slot is None:
-        return HttpResponseBadRequest(f"Expected the id of an existing ActivitySlot, but got <{slot_id}>")
 
-    check_join_constraints(request, parent_activity, slot.recurrence_id)
-
-    # Base check for general activity constraints: subscription period, max number of total participants, etc.
-    if not slot.parent_activity.can_user_subscribe(request.user, recurrence_id=slot.recurrence_id):
-        return HttpResponseBadRequest("Cannot subscribe")
-
-    slot_participants = slot.participants.all()
-
-    # Can only subscribe at most once to each slot
-    if request.user in slot_participants:
-        return HttpResponseBadRequest("Cannot subscribe to the same slot more than once")    
-
-    # Slot participants limit
-    if slot.max_participants != -1 and len(slot_participants) >= slot.max_participants:
-        return HttpResponseBadRequest("Slot is full")
-    
-    request.user.__class__ = ExtendedUser
-    # Suscribe to slot
-    participant = slot.participants.add(
-       request.user, through_defaults={}
-    )
-
-    q_str = ''
-    if slot.parent_activity.is_recurring:
-        q_str = urlencode({'date': slot.recurrence_id.isoformat()})
-    else:
-        q_str = urlencode({'date': slot.parent_activity.start_date.isoformat()})
-
-    return HttpResponseRedirect(
-        f"{reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': parent_activity.id})}?{q_str}")
-
-@require_POST
-@login_required
-def deregister(request, slot_id):
-    slot = ActivitySlot.objects.filter(id=slot_id).first()
-    parent_activity = slot.parent_activity
-    if slot is None:
-        return HttpResponseBadRequest(f"Expected the id of an existing ActivitySlot, but got <{slot_id}>")
-
-    # Subscriptions must be open
-    if not slot.are_subscriptions_open():
-        return HttpResponseBadRequest(f"Cannot unsubscribe once subscriptions are closed")
-
-    user_slot_participants = slot.participants.filter(id=request.user.id)
-
-    for usr in user_slot_participants:
-        slot.participants.remove(usr)
-
-    q_str = ''
-    if slot.parent_activity.is_recurring:
-        q_str = urlencode({'date': slot.recurrence_id.isoformat(), 'deregister': True})
-    else:
-        q_str = urlencode({'date': slot.parent_activity.start_date.isoformat(), 'deregister': True})
-
-    return HttpResponseRedirect(
-        f"{reverse('activity_calendar:activity_slots_on_day', kwargs={'activity_id': parent_activity.id})}?{q_str}")
+class LoginRequiredForPostMixin(AccessMixin):
+    """ Requires being logged in for post events only (instead of the entire view) """
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        return super().post(request, *args, **kwargs)
 
 
-class ActivitySlotList(DetailView):
+class ActivityMixin:
+    """ Mixin that retrieves the data for the current selected activity """
 
-    model = Activity
-    template_name = 'activity_calendar/activity_slots.html'
-    context_object_name = 'activity'
-    pk_url_kwarg = 'activity_id'
+    def setup(self, request, *args, **kwargs):
+        super(ActivityMixin, self).setup(request, *args, **kwargs)
+        # Django calls the following line only in get(), which is too late
+        self.activity = get_object_or_404(Activity, id=self.kwargs.get('activity_id'))
+        self.recurrence_id = self.kwargs.get('recurrence_id', None)
 
-    def get(self, request, *args, **kwargs):
-        # Obtain the relevant recurrence id
-        self.object = self.get_object()
-        self.recurrence_id = dateparse.parse_datetime(self.request.GET.get('date', ''))
-        
-        if self.recurrence_id is None or not self.object.has_occurence_at(self.recurrence_id):
-            return HttpResponseNotFound()
+        if self.recurrence_id is None:
+            raise Http404("We could not find the activity you are trying to reach")
+        if not self.activity.has_occurence_at(self.recurrence_id):
+            raise Http404("We could not find the activity you are trying to reach")
 
-        return super().get(request, args, kwargs)
+        # Odd loop-around because all logged in users should be treated as extended users
+        if self.request.user.is_authenticated:
+            self.request.user.__class__ = ExtendedUser
 
     def get_context_data(self, **kwargs):
-        # Call the base implementation first to get a context
-        context = super().get_context_data(**kwargs)
-        recurrence_id = self.recurrence_id
+        kwargs = super(ActivityMixin, self).get_context_data(**kwargs)
+        kwargs.update({
+            'activity': self.activity,
+            'recurrence_id': self.recurrence_id,
+            # General information displayed on all relevant pages
+            'subscriptions_open': self.activity.are_subscriptions_open(recurrence_id=self.recurrence_id),
+            'num_total_participants': self.activity.get_num_subscribed_participants(recurrence_id=self.recurrence_id),
+            'num_max_participants': self.activity.max_participants,
+            'is_subscribed': self.activity.is_user_subscribed(self.request.user, self.recurrence_id),
+            'start_date': self.recurrence_id,
+            'end_date': self.recurrence_id + (self.activity.end_date - self.activity.start_date),
+            'show_participants': self.show_participants(),
+        })
 
-        # Obtain information that is needed by the template
-        slots = self.object.get_slots(recurrence_id=recurrence_id)
-        num_total_participants = slots.aggregate(Count('participants'))['participants__count']
-        num_max_participants = self.object.get_max_num_participants(recurrence_id=recurrence_id)
+        return kwargs
 
-        context['deregister'] = self.request.GET.get('deregister', False)
-        context['recurrence_id'] = recurrence_id
-        context['slot_list'] = slots
-        context['num_total_participants'] = num_total_participants
-        context['max_participants'] = num_max_participants
+    def show_participants(self):
+        """ Returns whether to show participant names """
+        if self.request.user.is_authenticated:
+            if user_to_member(self.request.user).is_member():
+                now = timezone.now()
+                if now <= self.recurrence_id + self.activity.get_duration():
+                    return True
+        return False
 
-        num_user_registrations = self.object.get_num_user_subscriptions(self.request.user, recurrence_id=recurrence_id)
-        context['num_registered_slots'] = num_user_registrations
-        context['can_create_slot'] = self.object.can_user_create_slot(self.request.user, recurrence_id=recurrence_id,
-                num_slots=len(slots), num_user_registrations=num_user_registrations,
-                num_total_participants=num_total_participants, num_max_participants=num_max_participants)
-        context['subscriptions_open'] = self.object.are_subscriptions_open(recurrence_id=recurrence_id)
-        context['show_participants'] = self.object.can_show_participants(self.request.user, recurrence_id)
 
-        duration = self.object.get_duration()
-        self.object.start_date = recurrence_id
-        self.object.end_date = self.object.start_date + duration
 
-        context['num_dummy_slots'] = 0
+class ActivityFormMixin:
+    error_messages = {'undefined': _("Something went wrong. Please try again.")}
 
-        if self.object.slot_creation == "CREATION_USER":
-            context['form'] = ActivitySlotForm(instance=None)
-        elif self.object.slot_creation == "CREATION_AUTO":
-            context['num_dummy_slots'] = self.object.MAX_NUM_AUTO_DUMMY_SLOTS
-            if self.object.max_slots != -1:
-                context['num_dummy_slots'] = max(0, min(self.object.MAX_NUM_AUTO_DUMMY_SLOTS, self.object.max_slots - len(slots)))
-
-        # The object is already passed as 'activity'; no need to send it over twice
-        del context['object']
-        return context
-    
-    @method_decorator(login_required)
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-
-        if self.object.slot_creation == "CREATION_NONE":
-            return HttpResponseNotAllowed(['GET'])
-
-        form = ActivitySlotForm(request.POST)
-
-        self.recurrence_id = dateparse.parse_datetime(request.GET.get('date', ''))
-        if self.recurrence_id is None or not self.object.has_occurence_at(self.recurrence_id):
-            return HttpResponseBadRequest()
-        
-        form.data._mutable = True
-        form.data['parent_activity'] = self.object.id
-
-        if self.object.is_recurring:
-            form.data['recurrence_id'] = self.recurrence_id
-        form.data['owner'] = request.user.id
-
-        if self.object.slot_creation == "CREATION_AUTO":
-            form.data.update({
-                'title':        'Slot ' + str(self.object.get_num_slots(recurrence_id=self.recurrence_id) + 1),
-                'description':  None,
-                'location':     None,
-                'start_date':   None,
-                'end_date':     None,
-                'max_participants': -1,
-                'owner':        None,
-                'image':        None,
-            })        
-
-        if form.is_valid():
-            # Save the slot and add the user
-            slot = form.save(commit=True)
-            request.user.__class__ = ExtendedUser
-            slot.participants.add(request.user, through_defaults={})
-
-            return redirect(request.get_full_path())
+    def get_success_message(self, form):
+        """ Returns the message that will be displayed to the user after form success """
+        if form.cleaned_data['sign_up']:
+            message = _("You have succesfully been added to '{activity_name}'")
         else:
-            context = context = self.get_context_data(**kwargs)
-            context['form'] = form
-            context['show_modal'] = True
-            return self.render_to_response(context=context)
+            message = _("You have successfully been removed from '{activity_name}'")
+
+        return message
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handle POST requests: instantiate a form instance with the passed
+        POST variables and then check if it's valid.
+        """
+        # Require logged in sessions
+        if not request.user.is_authenticated:
+            HttpResponseRedirect()
+
+        form = self.get_form()
+        if form.is_valid():
+            try:
+                form.save()
+            except Exception:
+                # This should theoretically not happen, but just in case there is a write error or something.
+                messages.error(self.request, self.get_failed_message('undefined'))
+            else:
+                messages.success(self.request, self.get_success_message(form))
+        else:
+            # Print a message with the reason why request could not be handled. It uses not the validation error
+            # which is normally only form-phrased, but the error codes to get the proper user-phrased error message
+            messages.error(self.request, self.get_failed_message(form.get_first_error_code()))
+
+        # Do a redirect regardless of output. Form has no user input so is automatically up-to-date
+        # Note: Do a redirect instead of render to prevent repeated sending when refreshing the page
+        return HttpResponseRedirect(self.request.get_full_path())
+
+    @classmethod
+    def get_failed_message(cls, code):
+        if code == 'undefined' or code is None:
+            # Catch to prevent loops
+            return cls.error_messages.get(code, 'Undefined error occured')
+
+        return cls.error_messages.get(code, cls.get_failed_message('undefined'))
+
+    def get_context_data(self, **kwargs):
+        kwargs = super(ActivityFormMixin, self).get_context_data(**kwargs)
+        kwargs.update({
+            'error_messages': self.error_messages,
+        })
+
+        return kwargs
+
+
+class ActivityMomentView(ActivityMixin, ActivityFormMixin, TemplateView):
+    pass
+
+
+class ActivitySimpleMomentView(LoginRequiredForPostMixin, FormMixin, ActivityMomentView):
+    form_class = RegisterForActivityForm
+    template_name = "activity_calendar/activity_page_no_slots.html"
+
+    error_messages = {
+        'undefined': _("Something went wrong. Please try again."),
+        'activity-full': _("This activity is already at maximum capacity. You can not subscribe to it."),
+        'invalid': _("You can not subscribe to this activity. Reason currently undefined"),
+        'already-registered': _("You are already registered for this activity"),
+        'not-registered': _("You are not registered to this activity"),
+        'closed': _("You can not subscribe, subscriptions are currently closed"),
+    }
+
+    def get_form(self, form_class=None):
+        # Intercept form creation for non-logged in users
+        if self.request.user.is_authenticated:
+            return super(ActivitySimpleMomentView, self).get_form(form_class=form_class)
+        else:
+            return None
+
+    def get_form_kwargs(self):
+        kwargs = {
+            # Add some set-up data based on the current situation
+            # This could be overwritten by the post data if supplied, which will yield the expected errors in that case
+            'data': {
+                'sign_up': not self.activity.is_user_subscribed(self.request.user, self.recurrence_id)
+            },
+            'activity': self.activity,
+            'recurrence_id': self.recurrence_id,
+            'user': self.request.user,
+        }
+        kwargs.update(super(ActivitySimpleMomentView, self).get_form_kwargs())
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        kwargs = super(ActivitySimpleMomentView, self).get_context_data(**kwargs)
+        kwargs.update({
+            'participants': self.activity.get_subscribed_participants(recurrence_id=self.recurrence_id),
+        })
+        return kwargs
+
+    def get_success_message(self, form):
+        return super(ActivitySimpleMomentView, self).get_success_message(form).format(
+            activity_name=self.activity.title
+        )
+
+class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, ActivityMomentView):
+    form_class = RegisterForActivitySlotForm
+    template_name = "activity_calendar/activity_page_slots.html"
+
+    error_messages = {
+        'undefined': _("Something went wrong. Please try again."),
+        'activity-full': _("This activity is already at maximum capacity. You can not subscribe to it."),
+        'invalid': _("You can not subscribe to this activity. Reason currently undefined"),
+        'already-registered': _("You are already registered for this activity"),
+        'not-registered': _("You are not registered to this activity"),
+        'closed': _("You can not subscribe, subscriptions are currently closed"),
+        'slot-full': _("You can not join this slot. It's already at maximum capacity"),
+        'max-slots-occupied': _("You can not subscribe to another slot. Maximum number of subscribable slots already reached"),
+        # Slot creation error messages
+        'max-slots-claimed': _("You can not create a slot because this activity already has the maximum number of allowed slots"),
+        'user-slot-creation-denied': _("You can not create slots on this activity. I honestly don't know why I'm even showing you this option.")
+    }
+
+    def get_success_message(self, form):
+        msg = super(ActivityMomentWithSlotsView, self).get_success_message(form)
+        if form.slot_obj:
+            return msg.format(
+                activity_name=form.slot_obj.title
+            )
+        else:
+            raise KeyError("Form cleaned data did not contain slot_obj. How can this form be valid?")
+
+    def get_form_kwargs(self):
+        kwargs = {
+            'activity': self.activity,
+            'recurrence_id': self.recurrence_id,
+            'user': self.request.user,
+        }
+        kwargs.update(super(ActivityMomentWithSlotsView, self).get_form_kwargs())
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+
+        # Determine if the mode allows slot creation. If mode is None, staff users should be able to create slots
+        # Note that actual validation always takes place in the form itself, this is merely whether, without any actual
+        # input on the complex database status (i.e. relations), this button needs to be shown.
+        if self.activity.slot_creation == "CREATION_USER":
+            new_slot_form = RegisterNewSlotForm(
+                initial={
+                    'sign_up': True,
+                },
+                activity=self.activity,
+                user=self.request.user,
+                recurrence_id=self.recurrence_id,
+            )
+        elif self.activity.slot_creation == "CREATION_NONE" and self.request.user.is_staff:
+            # In a none based slot mode, don't automatically register the creator to the slot
+            new_slot_form = RegisterNewSlotForm(
+                initial={
+                    'sign_up': False,
+                },
+                activity=self.activity,
+                user=self.request.user,
+                recurrence_id=self.recurrence_id,
+            )
+        else:
+            new_slot_form = None
+
+        register_link = reverse('activity_calendar:create_slot', kwargs={
+            'activity_id': self.activity.id,
+            'recurrence_id': self.recurrence_id
+        })
+
+        kwargs = super(ActivityMomentWithSlotsView, self).get_context_data(**kwargs)
+        kwargs.update({
+            'slot_list': self.activity.get_slots(self.recurrence_id),
+            'subscribed_slots': self.activity.get_user_subscriptions(self.request.user, self.recurrence_id),
+            'slot_creation_form': new_slot_form,
+            'register_link': register_link,
+        })
+        return kwargs
+
+
+def get_activity_detail_view(request, *args, **kwargs):
+    """ Returns a HTTP response object by calling the required View Class """
+    try:
+        activity = Activity.objects.get(id=kwargs.get('activity_id', -1))
+        if activity.slot_creation == "CREATION_AUTO":
+            view_class = ActivitySimpleMomentView
+        else:
+            view_class = ActivityMomentWithSlotsView
+
+        # Call the as_view() method as that method does more than just initialise a class
+        return view_class.as_view()(request, *args, **kwargs)
+
+    except Activity.DoesNotExist:
+        # There is no activity with the given ID
+        raise Http404("We could not find the activity you are trying to reach")
+
+
+class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
+    form_class = RegisterNewSlotForm
+    template_name = "activity_calendar/activity_page_new_slot.html"
+
+    error_messages = {
+        'undefined': _("Something went wrong. Please try again."),
+        'activity-full': _("This activity is already at maximum capacity. You can not subscribe to it."),
+        'invalid': _("You can not subscribe to this activity. Reason currently undefined"),
+        'closed': _("You can not create slots as subscriptions are currently closed"),
+        'max-slots-occupied': _("You can not create and subscribe to another slot. You are already at your maximum number of slots you can register for"),
+        'max-slots-claimed': _("You can not create a slot because this activity already has the maximum number of allowed slots"),
+        'user-slot-creation-denied': _("You can not create slots on this activity.")
+    }
+
+    def render_to_response(self, context, **response_kwargs):
+        # Interject the resposne method. If the form has base errors, instead of rendering. Default to the normal
+        # activity page and display the error message. As it is a base error the user can not view the slot creation
+        # page anyway
+        error = context['form'].get_base_validity_error()
+        if error:
+            messages.error(self.request, self.error_messages.get(error.code, 'An unknown error occured'))
+            return HttpResponseRedirect(self.activity.get_absolute_url(self.recurrence_id))
+
+        return super(CreateSlotView, self).render_to_response(context, **response_kwargs)
+
+    def get_form_kwargs(self):
+        if self.activity.slot_creation == "CREATION_NONE" and self.request.user.is_staff:
+            # In a none based slot mode, don't automatically register the creator to the slot
+            initial = {'sign_up': False}
+        else:
+            initial = {'sign_up': True}
+
+        kwargs = super(CreateSlotView, self).get_form_kwargs()
+        kwargs.update({
+            'initial': initial,
+            'activity': self.activity,
+            'recurrence_id': self.recurrence_id,
+            'user': self.request.user,
+        })
+
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        return super(CreateSlotView, self).get_context_data(**{
+            'subscribed_slots': self.activity.get_user_subscriptions(self.request.user, self.recurrence_id),
+        })
+
+    def form_valid(self, form):
+        slot = form.save()
+        if form.cleaned_data['sign_up']:
+            message = _("You have successfully created and joined '{activity_name}'")
+        else:
+            message = _("You have successfully created '{activity_name}'")
+        messages.success(self.request, message.format(activity_name=form.instance.title))
+
+        return HttpResponseRedirect(slot.get_absolute_url())
+
+    def form_invalid(self, form):
+        error = form.get_base_validity_error()
+        # If any of the base errors occured, the user can not prevent or address the problem to fix it in the form
+        # Thus return it to the normal page instead of displaying the page again.
+        if error:
+            messages.error(self.request, self.error_messages.get(error.code, 'An unknown error occured'))
+            return HttpResponseRedirect(self.activity.get_absolute_url(self.recurrence_id))
+        else:
+            messages.error(self.request, _("Some input was not valid. Please correct your data below"))
+            return super(CreateSlotView, self).form_invalid(form)
+

@@ -2,7 +2,8 @@ from django.conf import settings
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
 from django.db.models import Count
-from django.utils import timezone
+from django.utils import timezone, http
+from django.urls import reverse
 
 from membership_file.util import user_to_member
 
@@ -245,22 +246,6 @@ class Activity(models.Model):
         now = timezone.now()
         return recurrence_id - self.subscriptions_open <= now and now <= recurrence_id - self.subscriptions_close
 
-    # Whether the name of participants is shown
-    def can_show_participants(self, user, recurrence_id=None):
-        if not self.is_recurring:
-            recurrence_id = self.start_date
-
-        if recurrence_id is None:
-            raise TypeError("recurrence_id cannot be None if the activity is recurring")
-
-        # TODO: Use permission system
-        if user.is_anonymous or not user_to_member(user).is_member():
-            return False
-
-        now = timezone.now()
-        return now <= recurrence_id + self.get_duration()
-
-
     # String-representation of an instance of the model
     def __str__(self):
         if self.is_recurring:
@@ -313,6 +298,20 @@ class Activity(models.Model):
 
         if errors:
             raise ValidationError(errors)
+
+    def get_absolute_url(self, recurrence_id=None):
+        """
+        Returns the absolute url for the activity
+        :param recurrence_id: Specifies the start-time and applies that in the url for recurrent activities
+        :return: the url for the activity page
+        """
+        # There is currently no version of the object without recurrrence_id
+        assert recurrence_id is not None
+
+        return reverse('activity_calendar:activity_slots_on_day', kwargs={
+            'activity_id': self.id,
+            'recurrence_id': recurrence_id
+        })
         
 
 
@@ -333,7 +332,7 @@ class ActivitySlot(models.Model):
     # NB: The slot belongs to just a single _occurence_ of a (recurring) activity.
     #   Hence, we need to store both the foreign key and a date representing one if its occurences
     # TODO: Create a widget for the parent_activity_recurrence so editing is a bit more user-friendly
-    parent_activity = models.ForeignKey(Activity, related_name="parent_activity", on_delete=models.CASCADE)
+    parent_activity = models.ForeignKey(Activity, related_name="activity_slot_set", on_delete=models.CASCADE)
     recurrence_id = models.DateTimeField(blank=True, null=True,
         help_text="If the activity is recurring, set this to the date/time of one of its occurences. Leave this field empty if the parent activity is non-recurring.",
         verbose_name="parent activity date/time")
@@ -363,7 +362,7 @@ class ActivitySlot(models.Model):
     
     # Number of participants already subscribed
     def get_num_subscribed_participants(self):
-        return get_subscribed_participants().count()
+        return self.get_subscribed_participants().count()
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
@@ -401,6 +400,13 @@ class ActivitySlot(models.Model):
 
     def __str__(self):
         return self.title
+
+    def get_absolute_url(self):
+        return reverse('activity_calendar:activity_slots_on_day', kwargs={
+            'activity_id': self.parent_activity.id,
+            'recurrence_id': self.recurrence_id,
+        })
+
 
 class Participant(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

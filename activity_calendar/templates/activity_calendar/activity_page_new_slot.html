@@ -1,0 +1,55 @@
+{% extends "activity_calendar/activity_page_base.html" %}
+{% load render_form %}
+{% load static %}
+{% load calendar_tags %}
+
+
+{% block sign-up-status %}
+    {% if is_subscribed %}
+        <div class="alert alert-success">
+            <div class="row">
+                <div class="col-12">
+                    <div class="p-1">
+                        {% if subscribed_slots.count == 1 %}
+                            You are subscribed to slot '{{ subscribed_slots.first.activity_slot.title }}'
+                        {% else %}
+                            You are subscribed to slots:
+                            {% for slot_entry in subscribed_slots %}
+                                {% if forloop.last %}and {% endif %}
+                                '{{ slot_entry.activity_slot.title }}'{% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert bg-light border border-danger">
+            <div class="row">
+                <div class="col-12">
+                        You are not registered for this activity
+                </div>
+                <div class="col-12">
+                    Go back to main page to register on a slot{% if activity.slot_creation == "CREATION_USER" %}
+                    or create a slot below
+                    {% else %}. {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    <a href="{% url 'activity_calendar:activity_slots_on_day' activity_id=activity.id recurrence_id=recurrence_id %}"
+       class="btn btn-secondary greenify btn-block my-2">
+        Back to main page
+    </a>
+{% endblock sign-up-status %}
+
+
+{% block additional-contents %}
+    <hr>
+    <h2>Create new slot</h2>
+
+    <div class="wideContentFrame">
+        {% render_form id="create_slot_form" method="post" submit_class="btn btn-success btn-block" submit_text="Create slot" %}
+    </div>
+
+{% endblock %}

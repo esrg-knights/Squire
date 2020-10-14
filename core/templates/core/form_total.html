@@ -1,0 +1,26 @@
+{% load generic_field %}
+
+<form method="{{ form_method }}"
+      {% if form_id %}id="{{ form_id }}"{% endif %}
+      {% if form_action %}action="{{ form_action }}"{% endif%}
+      {% if form_class %}class="{{ form_class }}"{% endif%}
+    >
+    {% csrf_token %}
+
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+    {# Non field errors #}
+    {% if form.non_field_errors %}
+        {% for error in form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">{{ error }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% for field in form.visible_fields %}
+        {% generic_field field -1 %}
+    {% endfor %}
+
+    {% if submit_display %}
+        <input type="submit" class="{{ submit_class }}" value="{{ submit_text }}">
+    {% endif %}
+</form>

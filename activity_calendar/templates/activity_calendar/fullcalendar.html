@@ -19,8 +19,12 @@
     <script src="{% static 'js/fullcalendar-init.js' %}"></script>
 {% endblock js %}
 
+{% block content-frame-class %}
+    wideContentFrame
+{% endblock %}
+
 {% block content %}
-  <div class="wideContentFrame">
+
     <!-- ERROR Message -->
     <div id="error-msg">
       <div id="error-template" class="alert alert-danger alert-dismissible fade show" role="alert" style="display:none">
@@ -35,7 +39,7 @@
     <h1>Activity Calendar</h1>
     <div id='loading'>loading...</div>
     <div id='calendar'></div>
-  </div>
+
 
   <!-- Event Details Modal -->
   <div class="modal fade" id="event-modal" tabindex="-1" role="dialog" aria-labelledby="event-modal-aria" aria-hidden="true">

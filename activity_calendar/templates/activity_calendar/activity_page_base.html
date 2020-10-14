@@ -1,0 +1,199 @@
+{% extends 'core/base.html' %}
+
+{% load static %}
+{% load get_login_url %}
+{% load calendar_tags %}
+
+{% block title %}
+    Squire - {{ activity.title }}
+{% endblock title %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/slot_frames.css' %}">
+{% endblock css %}
+
+{% block js %}
+    {{ block.super }}
+    {% if show_modal %}
+        <script type="text/javascript">
+            $(window).on('load', function () {
+                $('#slot-creation-modal').modal('show');
+            });
+        </script>
+    {% endif %}
+{% endblock js %}
+
+{% block content-frame-class %}
+    wideContentFrame
+{% endblock %}
+
+{% block content %}
+    <!-- Slots -->
+    <h1>{{ activity.title }}</h1>
+    <div class="row">
+        <div class="col-12 col-md-7">
+            {% block activity-info %}
+                <div class="d-flex">
+                    <!-- Calendar Icon -->
+                    <div class="">
+                        <img
+                            src="{% static 'octicons/calendar.svg' %}"
+                            alt="Calendar-icon"
+                            height="16"
+                            width="16"
+                        />
+                    </div>
+                    <!-- Event Date & Recurrence Information -->
+                    <div class="col align-self-center">
+                        <div class='nospace'>
+                            <p id="event-date">
+                                {% if start_date.date == end_date.date %}
+                                    <!-- Activity starts and ends on the same day -->
+                                    {{ start_date|date:"l j E H:i" }} - {{ end_date|date:"H:i" }}
+                                {% else %}
+                                    <!-- Activity starts and ends on a different day -->
+                                    {{ start_date|date:"j E H:i" }} - {{ end_date|date:"j E H:i" }}
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex">
+                    <!-- Location Icon -->
+                    <div class="col-xs-2">
+                        <img
+                            src="{% static 'octicons/location.svg' %}"
+                            alt="Location-icon"
+                            height="16"
+                            width="16"
+                        />
+                    </div>
+                    <!-- Location -->
+                    <div class="col nospace align-self-center">
+                        <p id="event-location">{{ activity.location }}</p>
+                    </div>
+                </div>
+
+                <div class="d-flex">
+                    <!-- Event Participants Icon -->
+                    <div class="col-xs-2">
+                        <img
+                            src="{% static 'octicons/people.svg' %}"
+                            alt=""
+                            height="16"
+                            width="16"
+                        />
+                    </div>
+                    <!-- Patricipants -->
+                    <div class="col nospace align-self-center">
+                        <p id="event-participants">
+                            {{ num_total_participants }} /
+                            {% if num_max_participants == -1 %}&infin;
+                            {% else %}{{ num_max_participants }}{% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex">
+                    <!-- Text Icon -->
+                    <div class="col-xs-2">
+                        <img
+                            src="{% static 'octicons/three-bars.svg' %}"
+                            alt="Description-icon"
+                            height="16"
+                            width="16"
+                        />
+                    </div>
+                    <!-- Event Description -->
+                    <div class="col align-self-center">
+                        <p id="event-description">{{ activity.description }}</p>
+                    </div>
+                </div>
+
+                <div class="d-flex">
+                    <!-- Text Icon -->
+                    <div class="col-xs-2">
+                        <img
+                                src="{% static 'octicons/clippy.svg' %}"
+                                alt=""
+                                height="16"
+                                width="16"
+                        />
+                    </div>
+                    <!-- Event Description -->
+                    <div class="col align-self-center">
+                        <p id="event-status">
+                            {% if subscriptions_open %}
+                                {% if num_total_participants >= max_participants and max_participants != -1 %}
+                                    Activity is full.
+                                {% else %}
+                                    Activity is open for sign-ups
+                                {% endif %}
+                            {% else %}
+                                {% opens_in_future as opens_in_future %}
+                                {% if opens_in_future %}
+                                    Subscriptions will open on {% get_opening_time "j E, H:i" %}
+                                {% else %}
+                                    Sign-ups are closed
+                                {% endif %}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% if activity.subscriptions_required %}
+                    <strong>NB:</strong> You need to register for this activity before you can join!
+                {% endif %}
+
+                <div style="height: 4em;" class="d-none d-md-flex">
+
+                </div>
+            {% endblock activity-info %}
+        </div>
+        <div class="col-12 col-md-5">
+            {% if request.user.is_authenticated %}
+                {% block sign-up-status %}
+
+                {% endblock sign-up-status %}
+            {% else %}
+                <div class="card border border-info activity-wide">
+                    <div class="row">
+                        <div class="col-12 col-sm-7 col-md-12">
+                            <div class="d-block p-2">
+                                You are currently not logged in. Log in if you want to subscribe to this activity.
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-5 col-md-12">
+                            <a href="{% get_login_url %}"
+                               class="btn btn-success btn-block">
+                                Log in
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            <div class="alert alert-warning">
+                Corona protocol is active! Got symptoms? Stay home!<br>
+                <a href="https://beta.kotkt.nl/nextcloud/s/JpGkgdMLCGX4nHL/download">
+                    More information
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    {% block additional-contents %}
+
+
+    {% endblock additional-contents %}
+
+{% endblock content %}
+
+{% block js_bottom %}
+    <script language="JavaScript" note="Trigger bootstrap popovers">
+        $(function () {
+            $('[data-toggle="popover"]').popover()
+        })
+    </script>
+{% endblock %}
