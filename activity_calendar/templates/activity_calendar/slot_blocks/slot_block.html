@@ -23,13 +23,13 @@
 
                 <div class="row no-gutters">
                     <div class="card-text">
-                        <small class="text-muted">Participants:
+                        <small class="text-muted">
                             {% if slot.max_participants != -1 %}
                                 {{ slot.participants.all|length }} / {{ slot.max_participants }}
                             {% else %}
                                 {{ slot.participants.all|length }} / &infin;
                             {% endif %}
-                            {% if show_participants %} |
+                            participants{% if show_participants %}:
                                 {{ slot.participants.all | join:", " }}
                             {% endif %}
 
