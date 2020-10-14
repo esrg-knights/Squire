@@ -26,6 +26,12 @@ def now_rounded():
 class Activity(models.Model):
     class Meta:
         verbose_name_plural = "activities"
+        permissions = [
+            ('can_view_activity_participants_before',       "Can view an activity's participants before it ends."),
+            ('can_view_activity_participants_after',        "Can view an activity's participants after it has ended."),
+            ('can_register_outside_registration_period',    "Can (de)register for activities even if registrations are closed."),
+            ('can_manage_slots_outside_registration_period',"Can create/modify/delete slots for activities even if registrations are closed."),
+        ]
 
     # The User that created the activity
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)

@@ -245,6 +245,7 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
                 user=self.request.user,
                 recurrence_id=self.recurrence_id,
             )
+        # TODO: Permission system
         elif self.activity.slot_creation == "CREATION_NONE" and self.request.user.is_staff:
             # In a none based slot mode, don't automatically register the creator to the slot
             new_slot_form = RegisterNewSlotForm(
@@ -316,6 +317,7 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
         return super(CreateSlotView, self).render_to_response(context, **response_kwargs)
 
     def get_form_kwargs(self):
+        # TODO: Permission system
         if self.activity.slot_creation == "CREATION_NONE" and self.request.user.is_staff:
             # In a none based slot mode, don't automatically register the creator to the slot
             initial = {'sign_up': False}
