@@ -105,10 +105,6 @@ class ActivityFormMixin:
         Handle POST requests: instantiate a form instance with the passed
         POST variables and then check if it's valid.
         """
-        # Require logged in sessions
-        if not request.user.is_authenticated:
-            HttpResponseRedirect()
-
         form = self.get_form()
         if form.is_valid():
             try:
