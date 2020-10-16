@@ -37,11 +37,11 @@ class Activity(models.Model):
     description = models.TextField()
     location = models.CharField(max_length=255)
     image = models.ForeignKey(PresetImage, blank=True, null=True, related_name="activity_image", on_delete=models.SET_NULL)
-    
+
     # Creation and last update dates (handled automatically)
     created_date = models.DateTimeField(auto_now_add=True)
     last_updated_date = models.DateTimeField(auto_now=True)
-    
+
     # The date at which the activity will become visible for all users
     published_date = models.DateTimeField(default=now_rounded)
 
@@ -63,7 +63,7 @@ class Activity(models.Model):
     # Maximum number of slots that someone can join
     max_slots_join_per_participant = models.IntegerField(default=1, validators=[MinValueValidator(-1)],
         help_text="-1 denotes unlimited slots")
-    
+
     subscriptions_required = models.BooleanField(default=True,
         help_text="People are only allowed to go to the activity if they register beforehand")
 
@@ -150,7 +150,7 @@ class Activity(models.Model):
     @property
     def is_recurring(self):
         return bool(self.recurrences.rdates or self.recurrences.rrules)
-    
+
     # Whether this activity has an occurence at a specific date
     def has_occurence_at(self, date):
         if not self.is_recurring:
@@ -175,7 +175,7 @@ class Activity(models.Model):
             # Ensure that subscriptions_open and subscriptions_close are a non-negative value
             if self.subscriptions_open < timezone.timedelta():
                 errors.update({'subscriptions_open': 'Subscriptions must open before the activity starts'})
-            
+
             if self.subscriptions_close < timezone.timedelta():
                 errors.update({'subscriptions_close': 'Subscriptions must close before the activity starts'})
 
@@ -186,7 +186,7 @@ class Activity(models.Model):
             # Attempting to exclude dates if no recurrence is specified
             if not r.rrules and (r.exrules or r.exdates):
                 recurrence_errors.append('Cannot exclude dates if the activity is non-recurring')
-                
+
             if recurrence_errors:
                 errors.update({'recurrences': recurrence_errors})
 
@@ -266,7 +266,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     recurrence_id = models.DateTimeField(verbose_name="parent activity date/time")
 
     created_date = models.DateTimeField(auto_now_add=True)
-    last_updated_date = models.DateTimeField(auto_now=True)
+    last_updated = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ['parent_activity', 'recurrence_id']
@@ -290,13 +290,13 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         return User.objects.filter(
             participant__activity_slot__parent_activity_id=self.parent_activity_id,
             participant__activity_slot__recurrence_id=self.recurrence_id,
-        )
+        ).distinct()
 
     def get_user_subscriptions(self, user):
         """
         Get all user subscriptions on this activity
         :param user: The user that needs to looked out for
-        :return:
+        :return: Queryset of all participant entries
         """
         if user.is_anonymous:
             return Participant.objects.none()
@@ -338,6 +338,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
             'recurrence_id': self.recurrence_id,
         })
 
+
 class ActivitySlot(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -347,7 +348,7 @@ class ActivitySlot(models.Model):
         help_text="If left empty, matches start date with activity")
     end_date = models.DateTimeField(blank=True, null=True,
         help_text="If left empty, matches end date with activity")
-    
+
     # User that created the slot (or one that's in the slot if the original owner is no longer in the slot)
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
 
@@ -379,7 +380,7 @@ class ActivitySlot(models.Model):
     # Participants already subscribed
     def get_subscribed_participants(self):
         return self.participants
-    
+
     # Number of participants already subscribed
     def get_num_subscribed_participants(self):
         return self.get_subscribed_participants().count()

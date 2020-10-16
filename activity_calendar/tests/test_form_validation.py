@@ -100,23 +100,18 @@ class ActivityFormValidationMixin(FormValidityMixin):
         if isinstance(self.recurrence_id, str):
             self.recurrence_id = dateparse.parse_datetime(self.recurrence_id)
 
-        self.activity_moment = ActivityMoment(
+        self.activity_moment = ActivityMoment.objects.get_or_create(
             parent_activity_id=self.activity.id,
             recurrence_id=self.recurrence_id,
-        )
+        )[0]
 
     def get_form_kwargs(self, **kwargs):
-        activity_moment = ActivityMoment(
-            parent_activity=self.activity,
-            recurrence_id=self.recurrence_id,
-        )
-
         kwargs = super(ActivityFormValidationMixin, self).get_form_kwargs(**kwargs)
         kwargs.update({
             'user': self.user,
             'activity': self.activity,
             'recurrence_id': self.recurrence_id,
-            'activity_moment': activity_moment,
+            'activity_moment': self.activity_moment,
         })
         return kwargs
 
@@ -154,6 +149,14 @@ class RegisterForActivityFormTestCase(ActivityFormValidationMixin, TestCase):
         self.activity.save()
         self.assertEqual(1, self.activity_moment.get_subscribed_users().count())
 
+        self.assertFormHasError({'sign_up': True}, code='activity-full')
+
+    @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_max_capacity_offset_in_activity_moment(self, mock_tz):
+        # The local TestMoment should overwrite max participants if desired
+        self.assertFormValid({'sign_up': True})
+        self.activity_moment.local_max_participants = 0
+        self.activity_moment.save()
         self.assertFormHasError({'sign_up': True}, code='activity-full')
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
@@ -283,6 +286,14 @@ class RegisterForActivitySlotFormTestCase(ActivityFormValidationMixin, TestCase)
         self.assertFormValid({'sign_up': False, 'slot_id': 7})
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_max_capacity_offset_in_activity_moment(self, mock_tz):
+        # The local TestMoment should overwrite max participants if desired
+        self.assertFormValid({'sign_up': True, 'slot_id': 7})
+        self.activity_moment.local_max_participants = 0
+        self.activity_moment.save()
+        self.assertFormHasError({'sign_up': True, 'slot_id': 7}, code='activity-full')
+
+    @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_already_registered(self, mock_tz):
         """ Tests that the form invalidates when user is attempting registering on already registered list"""
         Participant.objects.create(user=self.user, activity_slot_id=7)
@@ -363,6 +374,14 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
         self.activity.save()
         self.assertEqual(2, self.activity_moment.get_subscribed_users().count())
 
+        self.assertFormHasError({'sign_up': True, 'title': 'My slot', 'max_participants': -1}, code='activity-full')
+
+    @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_max_capacity_offset_in_activity_moment(self, mock_tz):
+        # The local TestMoment should overwrite max participants if desired
+        self.assertFormValid({'sign_up': True, 'title': 'My slot', 'max_participants': -1})
+        self.activity_moment.local_max_participants = 0
+        self.activity_moment.save()
         self.assertFormHasError({'sign_up': True, 'title': 'My slot', 'max_participants': -1}, code='activity-full')
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
