@@ -138,7 +138,7 @@ class ActivityAdminTest(TestCase):
         self.assertIn('Betrayal', slots)
         self.assertIn('Boardgame the Boardgame', slots)
 
-        self.assertEqual(context['num_total_participants'], 3)
+        self.assertEqual(context['num_total_participants'], 2)
 
     # Test POST without a correct url
     # Even if the data is invalid, we expect a 400 bad request
