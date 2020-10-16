@@ -4,10 +4,8 @@ from django.utils.translation import gettext_lazy as _
 register = template.Library()
 
 ##################################################################################
-# Template Tag that creates standard form inputs based on a template
-# The first half of the parameters contain the fields, whereas the second half
-# contains their maximum widths (or -1 for none)
-# @since 05 FEB 2020
+# Template Tag that renders a complete form even with a possible automatic submit button
+# @since SEPT 2020
 ##################################################################################
 
 submit_text_default = "Submit"
@@ -15,6 +13,14 @@ submit_class_default = "btn btn-default"
 
 @register.inclusion_tag('core/form_total.html', takes_context=True)
 def render_form(context, form=None, has_submit_button=True, **kwargs):
+    """
+    Renders a complete form with all fields with bootstrap defined styling
+    :param context: The render context, given automatically
+    :param form: the form that needs to be rendered. If None given defaults to context['form']
+    :param has_submit_button: Whether a submit button needs to be displayed
+    :param kwargs: Other defining kwargs. Check the code for what is possible
+    :return: A fully rendered form
+    """
     if form is None:
         form = context['form']
 
