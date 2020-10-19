@@ -76,9 +76,9 @@ class CESTEventFeed(ICalFeed):
 
     def timezone(self):
         return settings.TIME_ZONE
-    
+
     #######################################################
-    # Timezone information (Daylight-saving time, etc.)    
+    # Timezone information (Daylight-saving time, etc.)
     def vtimezone(self):
         tz_info = generate_vtimezone(settings.TIME_ZONE, datetime(2020, 1, 1))
         tz_info.add('x-lic-location', settings.TIME_ZONE)
@@ -102,7 +102,7 @@ class CESTEventFeed(ICalFeed):
             activity_id = item.parent_activity_id
 
         return f"local_activity-id-{activity_id}@kotkt.nl"
-    
+
     def item_class(self, item):
         return "PUBLIC"
 
@@ -129,10 +129,10 @@ class CESTEventFeed(ICalFeed):
             end_dt = item.end_time
 
         return end_dt.astimezone(timezone.get_current_timezone())
-    
+
     def item_created(self, item):
         return item.created_date
-    
+
     def item_updateddate(self, item):
         return item.last_updated_date
 
@@ -140,7 +140,7 @@ class CESTEventFeed(ICalFeed):
         # When the item was generated, which is at this moment!
         return timezone.now()
 
-    @only_for(ActivityMoment, default="api/calendar/fullcalendar")
+    @only_for(ActivityMoment, default="/calendar/")
     def item_link(self, item):
         # The local url to the activity
         # Because of the repetitition of the activity there is not 1 date. So instead let's just reroute it to the
@@ -149,7 +149,7 @@ class CESTEventFeed(ICalFeed):
 
     def item_location(self, item):
         return item.location
-    
+
     def item_transparency(self, item):
         # Items marked as "TRANSPARENT" show up as 'free' in busy time searches
         # Items marked as "OPAQUE" show up as 'busy' in busy time searches.
@@ -203,7 +203,7 @@ class CESTEventFeed(ICalFeed):
     def item_recurrenceid(self, item):
         return item.recurrence_id.astimezone(timezone.get_current_timezone())
 
-    # Include 
+    # Include
     def feed_extra_kwargs(self, obj):
         kwargs = super().feed_extra_kwargs(obj)
         val = self._get_dynamic_attr('vtimezone', obj)
