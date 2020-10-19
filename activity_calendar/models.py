@@ -261,6 +261,15 @@ class Activity(models.Model):
     def has_occurence_at(self, date):
         if not self.is_recurring:
             return date == self.start_date
+        else:
+            start_utc_offset = timezone.localtime(self.start_date).utcoffset()
+            date_utc_offset = date.utcoffset()
+            
+            # the recurrences package does not work with DST. Since we want our activities
+            # to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00
+            # in winter), we have to account for the difference here.
+            date = date + (date_utc_offset - start_utc_offset)
+
         occurences = self.recurrences.between(date, date, dtstart=self.start_date, inc=True)
         return bool(occurences)
 

@@ -19,5 +19,4 @@ class DateTimeIsoConverter:
     def to_url(self, datetime):
         assert datetime is datetime
         return quote(datetime.isoformat())
-
-# item.start_date.astimezone(timezone.get_current_timezone())
+        
