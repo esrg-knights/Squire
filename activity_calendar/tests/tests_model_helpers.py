@@ -11,7 +11,7 @@ from core.models import ExtendedUser as User
 class ActivityRelatedModelHelpersTest(TestCase):
     fixtures = ['test_users.json']
 
-    def setUp(self):        
+    def setUp(self):
         self.activity = Activity(id=4, title="Wow")
         self.slot = ActivitySlot(id=1, parent_activity=self.activity, title="Wow2")
 

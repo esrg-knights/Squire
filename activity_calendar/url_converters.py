@@ -19,4 +19,3 @@ class DateTimeIsoConverter:
     def to_url(self, datetime):
         assert datetime is datetime
         return quote(datetime.isoformat())
-        
