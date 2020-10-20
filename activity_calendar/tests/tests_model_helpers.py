@@ -55,8 +55,6 @@ class ActivityRelatedModelHelpersTest(TestCase):
             - the queried occurence is in CEST
         """
         query_dt = timezone.make_aware(timezone.datetime(2020, 3, 31, 15, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
-        print(f"Query dt: {query_dt}")
-        print(f"Start dt: {timezone.localtime(self.activity.start_date)}")
 
         has_occurence_at_query_dt = self.activity.has_occurence_at(query_dt)
         self.assertTrue(has_occurence_at_query_dt)

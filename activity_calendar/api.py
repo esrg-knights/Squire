@@ -104,18 +104,12 @@ def fullcalendar_feed(request):
         # If the activity ends on a different day than it starts, this also needs to be the case for the occurrence
         time_diff = recurring_activity.end_date - recurring_activity.start_date
 
-        for occurence in recurrences.between(start_date, end_date, dtstart=recurring_activity.start_date, inc=True):
-            # recurrence does not handle daylight-saving time! If we were to keep the occurence as is,
-            # then summer events would occur an hour earlier in winter!
-            occurence = timezone.get_current_timezone().localize(
-                datetime.combine(timezone.localtime(occurence).date(), event_start_time)
-            )
-
+        # for occurence in recurrences.between(start_date, end_date, dtstart=recurring_activity.start_date, inc=True):
+        for occurence in recurring_activity.get_occurences_between(start_date, end_date, inc=True):
             activities.append(get_activity_json(
                 recurring_activity,
                 occurence,
                 (occurence + time_diff),
                 request.user
             ))
-
     return JsonResponse({'activities': activities})
