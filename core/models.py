@@ -1,8 +1,11 @@
+import os
+
+from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils.text import slugify
-
-import os
 
 # Proxy model based on Django's user that provides extra utility methods.
 class ExtendedUser(User):
@@ -55,6 +58,9 @@ class PublicGroupsManager(models.Manager):
         return super().get_queryset().filter(is_public=True)
 
 class ExtendedGroup(Group):
+    # Normal manager
+    objects = models.Manager()
+
     # Only contains public groups
     public_objects = PublicGroupsManager()
 
@@ -71,4 +77,10 @@ class ExtendedGroup(Group):
     # Non-public groups are not shown in the front-end
     is_public = models.BooleanField(default=False)
 
-    
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def add_to_default_group(sender, **kwargs):
+    user = kwargs["instance"]
+    if kwargs["created"]:
+        group = ExtendedGroup.objects.get(name="Users")
+        user.groups.add(group)
