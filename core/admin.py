@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import PresetImage
+from django.contrib.auth.models import Group
+from .models import PresetImage, ExtendedGroup
 
 class PresetImageAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'image', 'selectable')
@@ -7,3 +8,7 @@ class PresetImageAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'name')
 
 admin.site.register(PresetImage, PresetImageAdmin)
+
+# Register our own group model instead
+admin.site.unregister(Group)
+admin.site.register(ExtendedGroup)

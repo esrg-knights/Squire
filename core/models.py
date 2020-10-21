@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.db import models
 from django.utils.text import slugify
 
@@ -48,3 +48,27 @@ class PresetImage(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.id})"
+
+
+class PublicGroupsManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_public=True)
+
+class ExtendedGroup(Group):
+    # Only contains public groups
+    public_objects = PublicGroupsManager()
+
+    # Override the automatically created link back to the superclass
+    # so that we can provide a custom related_name
+    group_ptr = models.OneToOneField(
+        Group, on_delete=models.CASCADE,
+        parent_link=True,
+        related_name="group_info",
+    )
+
+    description = models.TextField(max_length=255)
+
+    # Non-public groups are not shown in the front-end
+    is_public = models.BooleanField(default=False)
+
+    

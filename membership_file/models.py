@@ -49,8 +49,8 @@ class Member(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete = models.SET_NULL,
         blank = True,
-        null = True,        
-        related_name = "related_user",
+        null = True,
+        related_name = "member",
         )
 
     ##################################
