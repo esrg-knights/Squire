@@ -1,7 +1,33 @@
-from django.utils.timezone import pytz
-from django.utils.timezone import now
+from django.utils.timezone import pytz, now, localtime
 import icalendar
 import datetime
+
+def dst_aware_to_dst_ignore(date, origin_date, reverse=False):
+    """
+        Takes the difference in UTC-offsets for two given dates, and applies that
+        difference to the first date. A reverse keyword indicates which direction
+        the offset should be shifted.
+        
+        Can be used to account keep times similar as if Daylight Saving Time did not exist.
+        E.g. If a date at 16.00h in CEST (UTC+2) should be considered to be the same time
+        as an origin date at 16.00h in CET (UTC+1), even though their UTC-times do not match.
+
+        :param date: The date to modify
+        :param origin_date: The origin date
+        :param reverse: If True,  shifts `date` backwards (i.e. `date` already acted as if it had
+                            the UTC-offset of `origin_date`, and we wish to reverse this change.)
+                        Otherwise, shifts `date` forward (i.e. makes the `date` act as if it had
+                            the UTC-offset of `origin_date`)
+    """
+
+    start_utc_offset = localtime(origin_date).utcoffset()
+    date_utc_offset = localtime(date).utcoffset()
+    
+    if reverse:
+        date = date - (start_utc_offset - date_utc_offset)
+    else:
+        date = date + (start_utc_offset - date_utc_offset)
+    return date
 
 # Based on: https://djangosnippets.org/snippets/10569/
 def generate_vtimezone(timezone, for_date=None, num_years=None):

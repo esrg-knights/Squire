@@ -33,19 +33,21 @@ class TestCaseFullCalendar(TestCase):
         for activity in activities:
             if activity.get('groupId') == 9:
                 self.assertEqual(activity.get('title'), 'Weekly CEST Event')
-                self.assertEqual(activity.get('start'), '2020-10-24T12:00:00+02:00')
-                self.assertEqual(activity.get('end'), '2020-10-24T17:30:00+02:00')
+                self.assertEqual(activity.get('start'), '2020-10-24T10:00:00+00:00')
+                self.assertEqual(activity.get('end'), '2020-10-24T15:30:00+00:00')
             else:
                 self.assertEqual(activity.get('groupId'), 1)
                 self.assertEqual(activity.get('title'), 'Weekly activity')
 
                 # Check pre- and post- DST-switch dates
-                if not has_seen_pre_dst and activity.get('start') == '2020-10-20T19:30:00+02:00':
+                if not has_seen_pre_dst and activity.get('start') == '2020-10-20T17:30:00+00:00':
                     has_seen_pre_dst = True
-                    self.assertEqual(activity.get('end'), '2020-10-21T04:00:00+02:00')
-                elif not has_seen_post_dst and activity.get('start') == '2020-10-27T19:30:00+01:00':
+                    self.assertEqual(activity.get('end'), '2020-10-21T02:00:00+00:00')
+                elif not has_seen_post_dst and activity.get('start') == '2020-10-27T18:30:00+00:00':
+                    # Activity should start/end an hour 'later' as to account for DST-changes from
+                    # CEST (UTC+2) to CET (UTC+1)
                     has_seen_post_dst = True
-                    self.assertEqual(activity.get('end'), '2020-10-28T04:00:00+01:00')
+                    self.assertEqual(activity.get('end'), '2020-10-28T03:00:00+00:00')
                 else:
                     self.fail(f"Found a start-time that should not occur: <{activity.get('start')}>")
 
@@ -75,8 +77,8 @@ class TestCaseFullCalendar(TestCase):
         self.assertEqual(activity.get('location'), 'Online')
         self.assertEqual(activity.get('description'), 'Occurs every week, except once during daylight saving time (dst) and once during standard time!')
         self.assertEqual(activity.get('allDay'), False)
-        self.assertEqual(activity.get('start'), '2020-10-24T12:00:00+02:00')
-        self.assertEqual(activity.get('end'), '2020-10-24T17:30:00+02:00')
+        self.assertEqual(activity.get('start'), '2020-10-24T10:00:00+00:00')
+        self.assertEqual(activity.get('end'), '2020-10-24T15:30:00+00:00')
 
     @suppress_warnings
     def test_missing_start_or_end(self):

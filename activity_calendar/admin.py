@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.utils.timezone import localtime
+
 from .models import Activity, ActivitySlot, Participant
 
 
@@ -22,7 +24,7 @@ class ParticipantInline(admin.TabularInline):
 class ActivitySlotAdmin(admin.ModelAdmin):
     def recurrence_id_with_day(self, obj):
         if obj.recurrence_id is not None:
-            return obj.recurrence_id.strftime("%a, %d %b %Y, %H:%M")
+            return localtime(obj.recurrence_id).strftime("%a, %d %b %Y, %H:%M")
         return None
     recurrence_id_with_day.admin_order_field = 'recurrence_id'
     recurrence_id_with_day.short_description = 'Activity Start Date'
