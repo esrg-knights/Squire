@@ -52,11 +52,12 @@ class PresetImage(models.Model):
     def __str__(self):
         return f"{self.name} ({self.id})"
 
-
+# Manager that only contains public groups
 class PublicGroupsManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(is_public=True)
 
+# Django's standard group, but also provides additional fields
 class ExtendedGroup(Group):
     # Normal manager
     objects = models.Manager()
@@ -78,9 +79,9 @@ class ExtendedGroup(Group):
     is_public = models.BooleanField(default=False)
 
 
+# Add newly created users to the standard "User" group.
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def add_to_default_group(sender, **kwargs):
-    user = kwargs["instance"]
-    if kwargs["created"]:
+def add_to_default_group(sender, instance, created, raw, **kwargs):
+    if created and not raw:
         group = ExtendedGroup.objects.get(name="Users")
-        user.groups.add(group)
+        instance.groups.add(group)
