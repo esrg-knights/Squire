@@ -2,29 +2,27 @@
 
 from django.db import migrations
 
+from core.util import make_default_groups
+
 
 default_groups = (
     # The default group that is given to everyone that creates an account.
     {
-        'name': "Users",
+        'name': "Account Owner",
         'description': "Default group granted to everyone who creates an account.",
         'is_public': False,
     },
 )
 
-def make_default_groups(apps, schema_editor):
-    """
-    Creates several groups that are used throughout the application
-    """
-    Group = apps.get_model('core', 'ExtendedGroup')
-    for group in default_groups:
-        Group.objects.get_or_create(**group)
 
-def give_users_default_group(apps, schema_editor):
+def handle_default_user_group(apps, schema_editor):
     """
-    Assigns each existing user who is also a member to the "Member" Group
+    Creates the default 'Account Owner' group that is granted to everyone who creates
+    an account. Also assigns all existing users to this group.
     """
-    user_group = apps.get_model('core', 'ExtendedGroup').objects.get(name='Users')
+    make_default_groups(apps, default_groups)
+
+    user_group = apps.get_model('core', 'ExtendedGroup').objects.get(name='Account Owner')
     User = apps.get_model('auth', 'User')
 
     for user in User.objects.all():
@@ -37,6 +35,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(make_default_groups),
-        migrations.RunPython(give_users_default_group),
+        migrations.RunPython(handle_default_user_group),
     ]

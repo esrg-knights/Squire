@@ -2,6 +2,8 @@
 
 from django.db import migrations
 
+from core.util import make_default_groups
+
 default_groups = (
     # The default group that is given to all users in the membership file.
     {'name': 'Member', 'description': 'Users that have verified themselves to be members.', 'is_public': True},
@@ -9,44 +11,14 @@ default_groups = (
     {'name': 'Board Member', 'description': 'Users that can manage Squire''s membership file and see its history.', 'is_public': True},
 )
 
-default_permissions = {
-    'Board Member': (
-        ('view_member', 'membership_file', 'member'),
-        ('change_member', 'membership_file', 'member'),
-        ('add_member', 'membership_file', 'member'),
-        ('delete_member', 'membership_file', 'member'),
-        ('view_memberlog', 'membership_file', 'memberlog'),
-        ('view_memberlogfield', 'membership_file', 'memberlogfield')
-    ),
-    'Member': (
-        ('can_view_membership_information_self', 'membership_file', 'member'),
-        ('can_change_membership_information_self', 'membership_file', 'member'),
-    )
-}
 
-
-def make_default_groups(apps, schema_editor):
+def handle_default_membership_file_groups(apps, schema_editor):
     """
-    Creates several groups that are used throughout the application, and applies default permissions to those
+    Creates the 'Member' and 'Board Member' groups, and assigns each existing user
+    who is also a member to the "Member" Group.
     """
-    Group = apps.get_model('core', 'ExtendedGroup')
-    Permission = apps.get_model('auth', 'Permission')
-    ContentType = apps.get_model('contenttypes', 'ContentType')
+    make_default_groups(apps, default_groups)
 
-    for group in default_groups:
-        # TODO: Special case where an (extended)group already exists with the same name (group name must be unique)
-        group, _ = Group.objects.get_or_create(**group)
-
-        for (permission_name, app_label, model_name) in default_permissions.get(group.name, (),):
-            content_type = ContentType.objects.get(app_label=app_label, model=model_name)
-            permission = Permission.objects.get(codename=permission_name, content_type=content_type)
-            group.permissions.add(permission)
-
-
-def give_members_member_groups(apps, schema_editor):
-    """
-    Assigns each existing user who is also a member to the "Member" Group
-    """
     member_group = apps.get_model('core', 'ExtendedGroup').objects.filter(name='Member').first()
     Member = apps.get_model('membership_file', 'Member')
 
@@ -61,6 +33,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(make_default_groups),
-        migrations.RunPython(give_members_member_groups),
+        migrations.RunPython(handle_default_membership_file_groups),
     ]
