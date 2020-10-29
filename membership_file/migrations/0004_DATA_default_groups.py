@@ -6,9 +6,19 @@ from core.util import make_default_groups
 
 default_groups = (
     # The default group that is given to all users in the membership file.
-    {'name': 'Member', 'description': 'Users that have verified themselves to be members.', 'is_public': True},
+    {
+        'name': 'Member',
+        'description': 'Users that have verified themselves to be members.',
+        'is_public': True,
+        'can_be_deleted': False
+    },
     # Special group that can manage Squire's membership file.
-    {'name': 'Board Member', 'description': 'Users that can manage Squire''s membership file and see its history.', 'is_public': True},
+    {
+        'name': 'Board Member',
+        'description': 'Users that can manage Squire''s membership file and see its history.',
+        'is_public': True,
+        'can_be_deleted': False
+    },
 )
 
 

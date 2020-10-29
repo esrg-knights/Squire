@@ -11,6 +11,7 @@ default_groups = (
         'name': "Account Owner",
         'description': "Default group granted to everyone who creates an account.",
         'is_public': False,
+        'can_be_deleted': False,
     },
 )
 
