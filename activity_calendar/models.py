@@ -36,6 +36,7 @@ class Activity(models.Model):
             ('can_ignore_slot_creation_type',               "[F] Can create slots for activities that normally do not allow slot creation by users."),
             ('can_ignore_max_slot_registration_limits',     "[F] Can register for more slots than the maximum allowed amount."),
             ('can_ignore_slot_creation_limits',             "[F] Can create more slots even if the maximum amount of slots is reached."),
+            ('can_select_slot_image',                       "[F] Can choose an alternative slot image when creating a slot."),
         ]
 
 

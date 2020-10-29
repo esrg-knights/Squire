@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import ValidationError
 
 from .models import ActivitySlot, Activity, Participant
+from core.models import PresetImage
 
 ##################################################################################
 # Defines forms related to the membership file.
@@ -242,7 +243,19 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
     class Meta:
         model = ActivitySlot
-        fields = ['title', 'description', 'location', 'max_participants']
+        fields = ['title', 'description', 'location', 'image', 'max_participants']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if not self.user.has_perm('achievements.can_select_slot_image'):
+            # User does not have the required permissions to select an alternative slot image
+            # Remove the field
+            del self.fields['image']
+        else:
+            # Get the PrestImages available to the user
+            self.fields['image'].queryset = PresetImage.objects.for_user(self.user)
+
 
     def check_validity(self, data):
         super(RegisterNewSlotForm, self).check_validity(data)
