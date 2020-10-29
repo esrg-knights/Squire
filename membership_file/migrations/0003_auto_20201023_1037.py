@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='member',
-            options={'permissions': [('can_view_membership_information_self', 'Can view their own membership information.'), ('can_change_membership_information_self', 'Can edit their own membership information.')]},
+            options={'permissions': [('can_view_membership_information_self', '[F] Can view their own membership information.'), ('can_change_membership_information_self', '[F] Can edit their own membership information.')]},
         ),
         migrations.AlterField(
             model_name='member',

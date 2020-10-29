@@ -46,8 +46,8 @@ class Member(models.Model):
 
     class Meta:
         permissions = [
-            ('can_view_membership_information_self',    "Can view their own membership information."),
-            ('can_change_membership_information_self',    "Can edit their own membership information."),
+            ('can_view_membership_information_self',    "[F] Can view their own membership information."),
+            ('can_change_membership_information_self',  "[F] Can edit their own membership information."),
         ]
 
     # The User that is linked to this member
