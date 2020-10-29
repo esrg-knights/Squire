@@ -13,14 +13,6 @@ from .models import Activity, Participant, ActivitySlot
 from core.models import ExtendedUser, PresetImage
 
 
-def check_join_constraints(request, parent_activity, recurrence_id):
-    # Can only subscribe to at most X slots
-    if parent_activity.max_slots_join_per_participant != -1 and \
-            parent_activity.get_user_subscriptions(user=request.user, recurrence_id=recurrence_id).count() \
-            >= parent_activity.max_slots_join_per_participant:
-        return HttpResponseBadRequest("Cannot subscribe to another slot")
-
-
 # The view that is accessed by FullCalendar to retrieve events
 def get_activity_json(activity, start, end, user):
     activity_participants = activity.get_subscribed_participants(start)

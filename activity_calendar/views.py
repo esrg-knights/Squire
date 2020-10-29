@@ -27,14 +27,6 @@ def activity_collection(request):
     return render(request, 'activity_calendar/fullcalendar.html', {})
 
 
-def check_join_constraints(request, parent_activity, recurrence_id):
-    # Can only subscribe to at most X slots
-    if parent_activity.max_slots_join_per_participant != -1 and \
-            parent_activity.get_user_subscriptions(user=request.user, recurrence_id=recurrence_id).count() \
-                >= parent_activity.max_slots_join_per_participant:
-        return HttpResponseBadRequest("Cannot subscribe to another slot")
-
-
 class LoginRequiredForPostMixin(AccessMixin):
     """ Requires being logged in for post events only (instead of the entire view) """
     def post(self, request, *args, **kwargs):
@@ -80,12 +72,15 @@ class ActivityMixin:
 
     def show_participants(self):
         """ Returns whether to show participant names """
-        if self.request.user.is_authenticated:
-            if user_to_member(self.request.user).is_member():
-                now = timezone.now()
-                if now <= self.recurrence_id + self.activity.get_duration():
-                    return True
-        return False
+        now = timezone.now()
+        start_time = self.recurrence_id
+        end_time = start_time + self.activity.get_duration()
+
+        if now < start_time:
+            return self.request.user.has_perm('activity_calendar.can_view_activity_participants_before')
+        elif now > end_time:
+            return self.request.user.has_perm('activity_calendar.can_view_activity_participants_after')
+        return self.request.user.has_perm('activity_calendar.can_view_activity_participants_during')
 
 
 
@@ -232,7 +227,6 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
         return kwargs
 
     def get_context_data(self, **kwargs):
-
         # Determine if the mode allows slot creation. If mode is None, staff users should be able to create slots
         # Note that actual validation always takes place in the form itself, this is merely whether, without any actual
         # input on the complex database status (i.e. relations), this button needs to be shown.
@@ -245,8 +239,8 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
                 user=self.request.user,
                 recurrence_id=self.recurrence_id,
             )
-        # TODO: Permission system
-        elif self.activity.slot_creation == "CREATION_NONE" and self.request.user.is_staff:
+        elif self.activity.slot_creation == "CREATION_NONE" and \
+                self.request.user.has_perm('activity_calendar.can_ignore_slot_creation_type'):
             # In a none based slot mode, don't automatically register the creator to the slot
             new_slot_form = RegisterNewSlotForm(
                 initial={
@@ -317,8 +311,8 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
         return super(CreateSlotView, self).render_to_response(context, **response_kwargs)
 
     def get_form_kwargs(self):
-        # TODO: Permission system
-        if self.activity.slot_creation == "CREATION_NONE" and self.request.user.is_staff:
+        if self.activity.slot_creation == "CREATION_NONE" and \
+                self.request.user.has_perm('activity_calendar.can_ignore_slot_creation_type'):
             # In a none based slot mode, don't automatically register the creator to the slot
             initial = {'sign_up': False}
         else:
