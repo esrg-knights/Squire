@@ -1,11 +1,7 @@
-from django.shortcuts import render, get_object_or_404
-
-# Redirect shortcuts
-from django.shortcuts import redirect
+from django.contrib.auth.decorators import permission_required
+from django.core.exceptions import PermissionDenied
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
-from django.http import HttpResponseForbidden
-
-# @require_safe only accepts HTTP GET and HEAD requests
 from django.views.decorators.http import require_safe
 
 from .models import MemberUser as User
@@ -33,25 +29,26 @@ def viewNoMember(request):
 # Renders the webpage for viewing a user's own membership information
 @require_safe
 @membership_required
+@permission_required('membership_file.can_view_membership_information_self', raise_exception=True)
 @request_member
 def viewOwnMembership(request):
     tData = {'member': request.user.get_member()}
     return render(request, 'membership_file/view_member.html', tData)
 
 
-# Renders the webpage for viewing a user's own membership information
+# Renders the webpage for editing a user's own membership information
 @membership_required
+@permission_required('membership_file.can_view_membership_information_self', raise_exception=True)
+@permission_required('membership_file.can_change_membership_information_self', raise_exception=True)
 @request_member
 def editOwnMembership(request):
     member = request.user.get_member()
 
-    # Prevent access if the user is not authenticated, or if there was no membership
-    # information linked to the user. I.e. the reuqest was forged!
-    # Also deny access if the user is marked for deletion
-    if request.user.is_anonymous or member is None or member.marked_for_deletion:
+    # Members who are marked for deletion cannot be edited
+    if member.marked_for_deletion:
         #TODO: work with permission system so board members can edit other user's info with
         # the same form, without needing to be an admin (and doing it via the admin panel)
-        return HttpResponseForbidden()
+        raise PermissionDenied
 
     # Process form data
     if request.method == 'POST':

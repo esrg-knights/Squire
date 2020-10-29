@@ -50,8 +50,10 @@
                 <br>
                 You currently <strong>cannot</strong> edit this information; your membership is about to be cancelled!
                 Please notify the board if this was a mistake.
-            {% else %}
+            {% elif perms.membership_file.can_change_membership_information_self %}
                 You can edit this information <a href="{% url 'membership_file/membership/edit' %}">here</a>.
+            {% else %}
+                You do not have the required permissions to change this information. Please contact the board.
             {% endif %}
         </p>
 {% endblock content %}

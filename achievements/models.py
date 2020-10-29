@@ -96,10 +96,7 @@ class Achievement(models.Model):
     def user_can_view_claimants(user):
         if user is None:
             return False
-        
-        # TODO: Work with Permission System
-        return user.is_authenticated and user_to_member(user).is_member()
-
+        return user.has_perm('achievements.view_claimant')
 
 # Represents a user earning an achievement
 class Claimant(models.Model):
