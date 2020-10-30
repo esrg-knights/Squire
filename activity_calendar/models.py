@@ -111,7 +111,7 @@ class Activity(models.Model):
                                        ))
         activity_moments = []
 
-        recurrence_dts = self.recurrences.between(start_date, end_date, dtstart=self.start_date, inc=True)
+        recurrence_dts = self.get_occurences_between(start_date, end_date, dtstart=self.start_date, inc=True)
 
         for occurence in recurrence_dts:
             # recurrence does not handle daylight-saving time! If we were to keep the occurence as is,

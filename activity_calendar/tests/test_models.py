@@ -169,6 +169,10 @@ class TestCaseActivityClean(TestCase):
         self.base_activity.recurrences = deserialize_recurrence_test("RDATE:19700101T230000Z")
         self.base_activity.clean_fields()
 
+    def test_time_shift_in_get_occurences(self):
+        # Todo: Write test cases for Activity.get_occurences_between() method
+        pass
+
 
 class ActivityMomentTestCase(TestCase):
     fixtures = ['test_users.json', 'test_activity_slots']
