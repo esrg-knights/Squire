@@ -11,7 +11,9 @@ from django.urls import reverse
 
 from recurrence.fields import RecurrenceField
 
+from .util import dst_aware_to_dst_ignore
 from core.models import ExtendedUser as User, PresetImage
+from membership_file.util import user_to_member
 
 # Models related to the Calendar-functionality of the application.
 # @since 29 JUN 2019
@@ -152,11 +154,23 @@ class Activity(models.Model):
         return bool(self.recurrences.rdates or self.recurrences.rrules)
 
     # Whether this activity has an occurence at a specific date
-    def has_occurence_at(self, date):
+    def has_occurence_at(self, date, is_dst_aware=False):
         if not self.is_recurring:
             return date == self.start_date
-        occurences = self.recurrences.between(date, date, dtstart=self.start_date, inc=True)
-        return bool(occurences)
+
+        if not is_dst_aware:
+            date = dst_aware_to_dst_ignore(date, self.start_date, reverse=True)
+        occurences = self.get_occurences_between(date, date, dtstart=self.start_date, inc=True)
+        return next(occurences, None) is not None
+
+    def get_occurences_between(self, after, before, inc=False, dtstart=None, dtend=None, cache=False):
+        dtstart = dtstart or self.start_date
+
+        # the recurrences package does not work with DST. Since we want our activities
+        # to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00
+        # in winter, and vice versa), we have to account for the difference here.
+        return map(lambda occurence: dst_aware_to_dst_ignore(occurence, dtstart), self.recurrences.between(after, before, inc=inc,
+                dtstart=dtstart, dtend=dtend, cache=cache))     
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
