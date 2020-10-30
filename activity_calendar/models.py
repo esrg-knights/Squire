@@ -170,7 +170,7 @@ class Activity(models.Model):
         # to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00
         # in winter, and vice versa), we have to account for the difference here.
         return map(lambda occurence: dst_aware_to_dst_ignore(occurence, dtstart), self.recurrences.between(after, before, inc=inc,
-                dtstart=dtstart, dtend=dtend, cache=cache))     
+                dtstart=dtstart, dtend=dtend, cache=cache))
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
@@ -413,14 +413,10 @@ class ActivitySlot(models.Model):
 
         if 'parent_activity' not in exclude:
             if self.recurrence_id is None:
-                # Must set a recurrence-ID if the parent activity is recurring
-                if self.parent_activity.is_recurring:
-                    errors.update({'recurrence_id': 'Must set a date/time as the parent activity is recurring'})
+                errors.update({'recurrence_id': 'Must set a date/time when this activity takes place'})
             else:
-                # Must not set a recurrence-ID if the parent activity not is recurring
-                if not self.parent_activity.is_recurring:
-                    errors.update({'recurrence_id': 'Must NOT set a date/time as the parent activity is NOT recurring'})
-                elif not self.parent_activity.has_occurence_at(self.recurrence_id):
+                if not self.parent_activity.has_occurence_at(self.recurrence_id):
+                    # Bounce activities if it is not fitting with the recurrence scheme
                     errors.update({'recurrence_id': 'Parent activity has no occurence at the given date/time'})
 
             if not exclude_start_or_end:
