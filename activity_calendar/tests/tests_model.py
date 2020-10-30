@@ -188,6 +188,98 @@ class ModelMethodsTest(TestCase):
                 self.activity.get_user_subscriptions(AnonymousUser(), recurrence_id=self.upcoming_occurence_date).values('user_id')))
         self.assertEqual(len(participants), 0)
 
+class ModelMethodsDSTDependentTests(TestCase):
+    """
+        Tests model methods that change behaviour based on Daylight Saving Time
+    """
+
+    def setUp(self):
+        activity_data = {
+            'id': 4,
+            'title': 'DST Test Event',
+            # Start/end dates are during CET (UTC+1)
+            # Start dt: 01 JAN 2020, 15.00 (CET)
+            'start_date': timezone.datetime(2020, 1, 1, 14, 0, 0, tzinfo=timezone.utc),
+            'end_date': timezone.datetime(2020, 1, 1, 18, 0, 0, tzinfo=timezone.utc),
+            'recurrences': "RRULE:FREQ=WEEKLY;BYDAY=TU"
+        }
+        self.activity = Activity(**activity_data)
+
+    @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2020, 3, 20, 0, 0)))
+    def test_has_occurence_at_same_dst(self, mock_tz):
+        """
+            Query an activity ocurrence when
+            - that activity's first occurence was in CET
+            - our current timezone is in CET
+            - the queried occurence is in CET
+        """
+        query_dt = timezone.make_aware(timezone.datetime(2020, 10, 27, 15, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
+
+        has_occurence_at_query_dt = self.activity.has_occurence_at(query_dt)
+        self.assertTrue(has_occurence_at_query_dt)
+
+    @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2020, 3, 20, 0, 0)))
+    def test_CET_has_occurence_at_CET_to_CEST(self, mock_tz):
+        """
+            Query an activity ocurrence when
+            - that activity's first occurence was in CET
+            - our current timezone is in CET
+            - the queried occurence is in CEST
+        """
+        query_dt = timezone.make_aware(timezone.datetime(2020, 3, 31, 15, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
+
+        has_occurence_at_query_dt = self.activity.has_occurence_at(query_dt)
+        self.assertTrue(has_occurence_at_query_dt)
+
+    @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2020, 3, 20, 0, 0)))
+    def test_CET_has_occurence_at_CEST_to_CET(self, mock_tz):
+        """
+            Query an activity ocurrence when
+            - that activity's first occurence was in CEST
+            - our current timezone is in CET
+            - the queried occurence is in CET
+        """
+        # Make start/end date in CEST (UTC+2)
+        # Start dt: 01 MAR 2020, 16.00 (CEST)
+        self.activity.start_date = timezone.datetime(2020, 6, 1, 14, 0, 0, tzinfo=timezone.utc)
+        self.activity.end_date = timezone.datetime(2020, 6, 1, 18, 0, 0, tzinfo=timezone.utc)
+
+        query_dt = timezone.make_aware(timezone.datetime(2020, 10, 27, 16, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
+
+        has_occurence_at_query_dt = self.activity.has_occurence_at(query_dt)
+        self.assertTrue(has_occurence_at_query_dt)
+
+    @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2020, 10, 20, 0, 0)))
+    def test_CEST_has_occurence_at_CET_to_CEST(self, mock_tz):
+        """
+            Query an activity ocurrence when
+            - that activity's first occurence was in CET
+            - our current timezone is in CEST
+            - the queried occurence is in CEST
+        """
+        query_dt = timezone.make_aware(timezone.datetime(2020, 3, 31, 15, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
+
+        has_occurence_at_query_dt = self.activity.has_occurence_at(query_dt)
+        self.assertTrue(has_occurence_at_query_dt)
+
+    @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2020, 10, 20, 0, 0)))
+    def test_CEST_has_occurence_at_CEST_to_CET(self, mock_tz):
+        """
+            Query an activity ocurrence when
+            - that activity's first occurence was in CEST
+            - our current timezone is in CET
+            - the queried occurence is in CET
+        """
+        # Make start/end date in CEST (UTC+2)
+        # Start dt: 01 MAR 2020, 16.00 (CEST)
+        self.activity.start_date = timezone.datetime(2020, 6, 1, 14, 0, 0, tzinfo=timezone.utc)
+        self.activity.end_date = timezone.datetime(2020, 6, 1, 18, 0, 0, tzinfo=timezone.utc)
+
+        query_dt = timezone.make_aware(timezone.datetime(2020, 10, 27, 16, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
+
+        has_occurence_at_query_dt = self.activity.has_occurence_at(query_dt)
+        self.assertTrue(has_occurence_at_query_dt)
+
 
 class TestCaseActivityClean(TestCase):
     fixtures = []
