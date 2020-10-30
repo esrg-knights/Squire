@@ -10,14 +10,14 @@ default_groups = (
         'name': 'Member',
         'description': 'Users that have verified themselves to be members.',
         'is_public': True,
-        'can_be_deleted': False
+        'is_core_group': True
     },
     # Special group that can manage Squire's membership file.
     {
         'name': 'Board Member',
         'description': 'Users that can manage Squire''s membership file and see its history.',
         'is_public': True,
-        'can_be_deleted': False
+        'is_core_group': True
     },
 )
 

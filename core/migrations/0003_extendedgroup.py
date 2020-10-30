@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
                 ('group_ptr', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, related_name='group_info', serialize=False, to='auth.Group')),
                 ('description', models.TextField(max_length=255)),
                 ('is_public', models.BooleanField(default=False)),
-                ('can_be_deleted', models.BooleanField(default=True, help_text="Groups that cannot be deleted are used in Squire's source code.")),
+                ('is_core_group', models.BooleanField(default=False, help_text="Core Groups are used in Squire's source code and cannot be deleted or renamed.")),
             ],
             bases=('auth.group',),
         ),

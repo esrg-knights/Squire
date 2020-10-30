@@ -95,9 +95,9 @@ class ExtendedGroup(Group):
 
     # Some models are required by the core application and are
     # referenced several times in the source code. These should
-    # never be deleted!
-    can_be_deleted = models.BooleanField(default=True,
-        help_text="Groups that cannot be deleted are used in Squire's source code.")
+    # never be deleted or renamed!
+    is_core_group = models.BooleanField(default=False,
+        help_text="Core Groups are used in Squire's source code and cannot be deleted or renamed.")
 
 
 # Add newly created users to the standard "User" group.

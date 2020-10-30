@@ -26,6 +26,16 @@
         You can change your password <a href="{% url 'core/user_accounts/password_change' %}">here</a>
       </p>
 
+      <h2>Groups</h2>
+      <p>Groups can be set up by admins and can grant you special permissions!</p>
+      <ul>
+        {% for group in request.user.groups.all %}
+            <li><b>{{ group.name }}</b>: {{ group.group_info.description }}</li>
+        {% empty %}
+          <p>You are not part of any group.</p>
+        {% endfor %}
+      </ul>
+
       {% if included_template_name %}
         {% include included_template_name %}
       {% endif %}

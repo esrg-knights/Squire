@@ -17,10 +17,20 @@ class ExtendedGroupAdmin(DjangoGroupAdmin):
     list_filter = ['is_public']
     list_display_links = ('id', 'name')
 
-    readonly_fields = ['can_be_deleted']
+    readonly_fields = ['is_core_group']
+
+    fieldsets = [
+        (None,  {'fields': ['name', 'description', 'is_core_group', 'is_public', 'permissions']}),
+    ]
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj is None or not obj.is_core_group:
+            return self.readonly_fields
+        return self.readonly_fields + ['name']
+        
     
     def has_delete_permission(self, request, obj=None):
-        return obj is None or obj.can_be_deleted
+        return obj is None or not obj.is_core_group
 
 # Register our own group model instead
 admin.site.unregister(Group)

@@ -31,6 +31,11 @@ def logoutSuccess(request):
 @require_safe
 @login_required
 def viewAccount(request):
+    # We want additional group information of public groups
+    request.user.groups.set(
+        request.user.groups.select_related('group_info').filter(group_info__is_public=True)
+    )
+
     return render(request, 'core/user_accounts/account.html', {
         'included_template_name': TemplateManager.get_template('core/user_accounts/account.html'),
     })
