@@ -285,11 +285,11 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     class Meta:
         unique_together = ['parent_activity', 'recurrence_id']
         # Define the fields that can be locally be overwritten
-        copy_fields = ['description', 'location', 'max_participants']
+        copy_fields = ['title', 'description', 'location', 'max_participants']
         # Define fields that are instantly looked for in the parent_activity
         # If at any point in the future these must become customisable, one only has to move the field name to the
         # copy_fields attribute
-        link_fields = ['title', 'image']
+        link_fields = ['image']
 
     @property
     def start_time(self):
