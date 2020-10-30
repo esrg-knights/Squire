@@ -90,7 +90,7 @@ class CESTEventFeed(ICalFeed):
     def items(self):
         # Only consider published activities
         activities = Activity.objects.filter(published_date__lte=timezone.now()).order_by('-published_date')
-        exceptions = ActivityMoment.objects.all()
+        exceptions = ActivityMoment.objects.filter(parent_activity__published_date__lte=timezone.now())
 
         return [*activities, *exceptions]
 
