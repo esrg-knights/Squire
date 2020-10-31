@@ -386,6 +386,8 @@ class EditActivityMomentView(LoginRequiredMixin, PermissionRequiredMixin, Activi
 
     def form_valid(self, form):
         form.save()
+        message = _("You have successfully changed the settings for '{activity_name}'")
+        messages.success(self.request, message.format(activity_name=form.instance.title))
         return super(EditActivityMomentView, self).form_valid(form)
 
     def get_success_url(self):

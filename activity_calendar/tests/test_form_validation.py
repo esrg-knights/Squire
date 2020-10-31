@@ -2,12 +2,14 @@ import datetime
 
 from django.test import TestCase
 from django.utils import dateparse
+from django.forms import ModelForm
 
 from unittest.mock import patch
 
-from activity_calendar.models import ActivitySlot, Activity, Participant, ActivityMoment
-from activity_calendar.forms import RegisterForActivityForm, RegisterForActivitySlotForm, RegisterNewSlotForm
+from activity_calendar.models import *
+from activity_calendar.forms import *
 from core.models import ExtendedUser as User
+from core.util import suppress_warnings
 
 
 from . import mock_now
@@ -479,3 +481,59 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
 
         # Test that there are no users registered to the slot
         self.assertEqual(slot.participants.count(), 0)
+
+
+class ActivityMomentFormTestCase(FormValidityMixin, TestCase):
+    form_class = ActivityMomentForm
+    fixtures = ['test_users.json', 'test_activity_slots.json']
+
+    def setUp(self):
+        self.activity_moment = ActivityMoment.objects.first()
+        self.form = ActivityMomentForm(instance=self.activity_moment, data={})
+
+    def test_fields(self):
+        self.assertNotIn('recurrence_id', self.form.fields.keys())
+        self.assertNotIn('parent_activity', self.form.fields.keys())
+        self.assertIn('local_title', self.form.fields.keys())
+        self.assertIn('local_description', self.form.fields.keys())
+        self.assertIn('local_location', self.form.fields.keys())
+        self.assertIn('local_max_participants', self.form.fields.keys())
+
+    def test_saves_moment_without_id(self):
+        """ Tests that it saves non-db-existing activitymoments to the database """
+        activity_moment = ActivityMoment(
+            parent_activity_id=1,
+            recurrence_id = "2020-08-28T19:00:00Z",
+        )
+        form = ActivityMomentForm(instance=activity_moment, data={})
+        form.save()
+        self.assertTrue(ActivityMoment.objects.filter(
+            parent_activity_id=1,
+            recurrence_id = "2020-08-28T19:00:00Z",
+        ).exists())
+
+    def test_validity_check(self):
+        """ Tests that normal form data is valid """
+        self.assertFormValid({
+            'local_description': 'Different title',
+            'local_description': 'Different description',
+            'local_description': 'Different location',
+            'local_description': 8,
+        }, instance=self.activity_moment)
+
+    def test_requires_instance(self):
+        """ Form requires an instnace given. Or at least, it should. """
+        try:
+            self.form_class(data={})
+        except KeyError:
+            pass
+        else:
+            raise AssertionError("Form did not require instance (of activity_moment)")
+
+    def test_django_inheritance(self):
+        """ Test that it inherits from the correct class (thus assuming inheritence consistency) """
+        self.assertIsInstance(self.form, ModelForm)
+
+
+
+

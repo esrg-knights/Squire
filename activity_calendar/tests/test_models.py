@@ -174,6 +174,14 @@ class TestCaseActivityClean(TestCase):
         pass
 
 
+class ActivityTestCase(TestCase):
+
+    def test_get_all_activity_moments(self):
+        """ Tests the Activity get_all_activity_moments method"""
+
+
+
+
 class ActivityMomentTestCase(TestCase):
     fixtures = ['test_users.json', 'test_activity_slots']
 

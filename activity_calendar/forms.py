@@ -294,8 +294,12 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
 
 class ActivityMomentForm(ModelForm):
-
-
     class Meta:
         model = ActivityMoment
         exclude = ['parent_activity', 'recurrence_id']
+
+    def __init__(self, *args, instance=None, **kwargs):
+        # Require that an instance is given as this contains the required attributes parent_activity and recurrence_id
+        if instance is None:
+            raise KeyError("Instance of ActivityMoment was not given")
+        super(ActivityMomentForm, self).__init__(*args, instance=instance, **kwargs)
