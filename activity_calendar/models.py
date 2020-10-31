@@ -115,7 +115,13 @@ class Activity(models.Model):
 
         recurrence_dts = self.get_occurences_between(start_date, end_date, dtstart=self.start_date, inc=True)
 
+        # Recurrence_dts is a map objects and thus can not later be used in the filter
+        processed_recurrences = []
+
         for occurence in recurrence_dts:
+            # Store occurence
+            processed_recurrences.append(occurence)
+
             # recurrence does not handle daylight-saving time! If we were to keep the occurence as is,
             # then summer events would occur an hour earlier in winter!
             occurence = timezone.get_current_timezone().localize(
@@ -139,7 +145,7 @@ class Activity(models.Model):
             recurrence_id__gte = start_date,
             recurrence_id__lte = end_date,
         ).exclude(
-            recurrence_id__in = recurrence_dts
+            recurrence_id__in = processed_recurrences
         )
 
         return activity_moments + [*single_activity_moments]
@@ -171,8 +177,8 @@ class Activity(models.Model):
         # the recurrences package does not work with DST. Since we want our activities
         # to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00
         # in winter, and vice versa), we have to account for the difference here.
-        return map(lambda occurence: dst_aware_to_dst_ignore(occurence, dtstart), self.recurrences.between(after, before, inc=inc,
-                dtstart=dtstart, dtend=dtend, cache=cache))
+        return map(lambda occurence: dst_aware_to_dst_ignore(occurence, dtstart),
+                   self.recurrences.between(after, before, inc=inc, dtstart=dtstart, dtend=dtend, cache=cache))
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
