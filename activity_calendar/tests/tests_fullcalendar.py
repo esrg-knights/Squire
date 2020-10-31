@@ -65,7 +65,7 @@ class TestCaseFullCalendar(TestCase):
                 else:
                     self.fail(f"Found an unexpected instance for this activity at: <{activity.get('start')}>")
 
-        if not has_seen_pre_dst or not has_seen_post_dst):
+        if not has_seen_pre_dst or not has_seen_post_dst:
             self.fail(f"The shift check was not valid. Either a pre or post timeshift instance was not found")
 
     def test_only_published(self):
