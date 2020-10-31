@@ -11,7 +11,7 @@
 {% endblock total_participants %}
 
 {% block sign-up-status %}
-    {% if is_subscribed %}
+    {% if user_subscriptions %}
         <div class="card border border-success greenify activity-wide">
             <div class="row">
                 <div class="col-12 col-sm-7 col-md-12">
@@ -72,7 +72,7 @@
         {% if participants %}
             {% for participant in participants %}
                 <div class="">
-                    {{ participant.user.get_display_name }}
+                    {{ participant.get_display_name }}
                 </div>
             {% endfor %}
         {% else %}

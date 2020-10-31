@@ -8,7 +8,7 @@ from django.urls import reverse
 
 from unittest.mock import patch
 
-from activity_calendar.models import ActivitySlot, Activity, Participant
+from activity_calendar.models import ActivitySlot, Activity, Participant, ActivityMoment
 from activity_calendar.views import CreateSlotView, ActivityMomentWithSlotsView, ActivitySimpleMomentView
 from activity_calendar.forms import RegisterForActivityForm, RegisterForActivitySlotForm, RegisterNewSlotForm
 
@@ -138,7 +138,7 @@ class ActivityAdminTest(TestCase):
         self.assertIn('Betrayal', slots)
         self.assertIn('Boardgame the Boardgame', slots)
 
-        self.assertEqual(context['num_total_participants'], 3)
+        self.assertEqual(context['num_total_participants'], 2)
 
     # Test POST without a correct url
     # Even if the data is invalid, we expect a 400 bad request
@@ -183,7 +183,7 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         self.assertIn('num_max_participants', response.context)
         self.assertIn('form', response.context)
         self.assertIn('show_participants', response.context)
-        self.assertEqual(response.context['is_subscribed'], False)
+        self.assertEqual(response.context['user_subscriptions'].exists(), False)
         self.assertEqual(response.context['num_total_participants'], 1)
 
         # Test template name
@@ -217,7 +217,10 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         }, follow=True)
 
         self.assertRedirects(response, self.base_url) # Should redirect to prevent resending the post on page refresh
-        self.assertTrue(Activity.objects.get(id=self.default_activity_id).is_user_subscribed(self.user, self.recurrence_id))
+        self.assertTrue(ActivityMoment(
+            parent_activity_id=self.default_activity_id,
+            recurrence_id=self.recurrence_id,
+        ).get_user_subscriptions(self.user).exists())
 
         self.assertTrue(ActivitySlot.objects.filter().exists())
         msg = _("You have succesfully been added to '{activity_name}'").format(activity_name="Single")
@@ -229,7 +232,10 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         }, follow=True)
 
         self.assertRedirects(response, self.base_url) # Should redirect to prevent resending the post on page refresh
-        self.assertFalse(Activity.objects.get(id=self.default_activity_id).is_user_subscribed(self.user, self.recurrence_id))
+        self.assertFalse(ActivityMoment(
+            parent_activity_id=self.default_activity_id,
+            recurrence_id=self.recurrence_id,
+        ).get_user_subscriptions(self.user).exists())
 
         self.assertTrue(ActivitySlot.objects.filter().exists())
         msg = _("You have successfully been removed from '{activity_name}'").format(activity_name="Single")
@@ -287,11 +293,10 @@ class ActivitySlotViewTest(TestActivityViewMixin, TestCase):
         self.assertEqual(response.context['activity'].id, self.default_activity_id)
         self.assertEqual(response.context['recurrence_id'], self.recurrence_id)
         self.assertEqual(response.context['subscriptions_open'], True)
-        self.assertEqual(response.context['is_subscribed'], False)
+        self.assertEqual(response.context['user_subscriptions'].exists(), False)
         self.assertEqual(response.context['num_total_participants'], 2)
         self.assertIn('slot_list', response.context)
         self.assertIn('show_participants', response.context)
-        self.assertIn('subscribed_slots', response.context)
         self.assertIn('slot_creation_form', response.context)
 
         self.assertIsInstance(response.context['slot_creation_form'], RegisterNewSlotForm)
@@ -404,7 +409,7 @@ class CreateSlotViewTest(TestActivityViewMixin, TestCase):
         self.assertIn('subscriptions_open', response.context)
         self.assertIn('num_total_participants', response.context)
         self.assertIn('num_max_participants', response.context)
-        self.assertIn('is_subscribed', response.context)
+        self.assertIn('user_subscriptions', response.context)
         self.assertIn('subscribed_slots', response.context)
 
     def test_error_codes(self):
@@ -455,7 +460,7 @@ class CreateSlotViewTest(TestActivityViewMixin, TestCase):
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_creation_none_denied(self, mock_tz):
-        Activity.objects.filter(id=2).update(slot_creation="CREATION_NONE")
+        Activity.objects.filter(id=2).update(slot_creation=Activity.SLOT_CREATION_STAFF)
         response = self.client.get(self.base_url, follow=True)
 
         self.assertEqual(response.status_code, 200)
@@ -471,7 +476,7 @@ class CreateSlotViewTest(TestActivityViewMixin, TestCase):
         # Set current user is superuser
         self.client.force_login(User.objects.get(is_superuser=True))
 
-        Activity.objects.filter(id=2).update(slot_creation="CREATION_NONE")
+        Activity.objects.filter(id=2).update(slot_creation=Activity.SLOT_CREATION_STAFF)
         response = self.client.get(self.base_url, follow=False)
         self.assertEqual(response.status_code, 200)
 
