@@ -4,12 +4,15 @@ from django.forms.widgets import HiddenInput
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import ValidationError
 
-from .models import ActivitySlot, Activity, Participant
+from .models import ActivitySlot, Activity, Participant, ActivityMoment
 
 ##################################################################################
 # Defines forms related to the membership file.
 # @since 28 AUG 2020
 ##################################################################################
+
+
+__all__ = ['RegisterNewSlotForm', 'RegisterForActivitySlotForm', 'RegisterForActivityForm', 'ActivityMomentForm']
 
 
 class RegisterAcitivityMixin:
@@ -288,3 +291,11 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
             slot_obj.participants.add(self.user)
 
         return slot_obj
+
+
+class ActivityMomentForm(ModelForm):
+
+
+    class Meta:
+        model = ActivityMoment
+        exclude = ['parent_activity', 'recurrence_id']

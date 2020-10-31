@@ -1,0 +1,58 @@
+{% extends 'core/base.html' %}
+
+{% load static %}
+{% load render_form %}
+{% load generic_field %}
+{% load activity_default_display_tag %}
+
+{% block content-frame-class %}
+    wideContentFrame
+{% endblock %}
+
+{% block content %}
+    <h2>Change specific activity moment</h2>
+    <p>
+        Below you can edit attributes for this particular activity instance. Any field can be left empty. In that case
+        it will copy the attribute from the general activity instead.
+    </p>
+
+    <h4>Edit {{ activity_moment.title }}</h4>
+
+    <form method="post" class="">
+        {% csrf_token %}
+
+        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+        {# Non field errors #}
+        {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">{{ error }}</div>
+            {% endfor %}
+        {% endif %}
+
+        {% for field in form.visible_fields %}
+            <div class="row">
+                <div class="col-md-4 order-md-2">
+                    <div class="input-group">
+                        <input class="form-control" disabled value="{% activity_default_value field.name %}">
+
+                        </input>
+                    </div>
+
+                </div>
+                <div class="col-md-8 order-md-1">
+                    {% generic_field field -1 %}
+                </div>
+            </div>
+        {% endfor %}
+
+        <div class="btn-group w-100" role="group" aria-label="Form changing">
+            <a href="{% url "activity_calendar:activity_slots_on_day" activity_id=activity.id recurrence_id=recurrence_id %}"
+               class="btn btn-secondary">Cancel</a>
+            <button type="submit" type="submit" class="btn btn-success">
+                Save changes
+            </button>
+        </div>
+    </form>
+
+{% endblock %}

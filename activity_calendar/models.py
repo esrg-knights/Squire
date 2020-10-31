@@ -18,6 +18,8 @@ from membership_file.util import user_to_member
 # Models related to the Calendar-functionality of the application.
 # @since 29 JUN 2019
 
+__all__ = ['Activity', 'ActivityMoment', 'ActivitySlot', 'Participant']
+
 # Not now, but a later time (used as a default value below)
 def later_rounded():
     return now_rounded() + timezone.timedelta(hours=2)

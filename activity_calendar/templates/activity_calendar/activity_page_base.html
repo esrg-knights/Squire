@@ -153,6 +153,14 @@
         </div>
         <div class="col-12 col-md-5">
             {% if request.user.is_authenticated %}
+                {% if perms.activity_moment.can_edit %}
+                    <a class="btn-block btn-sm btn btn-outline-primary mb-4"
+                        href="{% url "activity_calendar:edit_moment" activity_id=activity.id recurrence_id=recurrence_id %}">
+                        Edit
+                    </a>
+                {% endif %}
+
+
                 {% block sign-up-status %}
 
                 {% endblock sign-up-status %}
