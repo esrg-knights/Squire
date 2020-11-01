@@ -102,21 +102,12 @@ class Activity(models.Model):
     def get_all_activity_moments(self, start_date, end_date):
         """ Retrieves (or creates based on recurrences) all ActivityMoment instances in the given time frame """
         event_start_time = self.start_date.astimezone(timezone.get_current_timezone()).time()
-        utc_start_time = self.start_date.time()
-
-        # recurrence expects each EXDATE's time to match the event's start time (in UTC; ignores DST)
-        # Why it doesn't store it that way in the first place remains a mystery
-        self.recurrences.exdates = list(map(lambda dt:
-                                       datetime.datetime.combine(timezone.localtime(dt).date(),
-                                                        utc_start_time, tzinfo=timezone.utc),
-                                            self.recurrences.exdates
-                                       ))
-        activity_moments = []
 
         recurrence_dts = self.get_occurences_between(start_date, end_date, dtstart=self.start_date, inc=True)
 
         # Recurrence_dts is a map objects and thus can not later be used in the filter
         processed_recurrences = []
+        activity_moments = []
 
         for occurence in recurrence_dts:
             # Store occurence
@@ -127,6 +118,7 @@ class Activity(models.Model):
             occurence = timezone.get_current_timezone().localize(
                 datetime.datetime.combine(timezone.localtime(occurence).date(), event_start_time)
             )
+            # Search an instance on the database if present, otherwise generate a new instance
             try:
                 activity_moment = ActivityMoment.objects.get(
                     recurrence_id=occurence,
@@ -169,16 +161,31 @@ class Activity(models.Model):
         if not is_dst_aware:
             date = dst_aware_to_dst_ignore(date, self.start_date, reverse=True)
         occurences = self.get_occurences_between(date, date, dtstart=self.start_date, inc=True)
-        return next(occurences, None) is not None
+        return occurences
 
     def get_occurences_between(self, after, before, inc=False, dtstart=None, dtend=None, cache=False):
         dtstart = dtstart or self.start_date
 
+        # recurrence expects each EXDATE's time to match the event's start time (in UTC; ignores DST)
+        # Why it doesn't store it that way in the first place remains a mystery
+        self.recurrences.exdates = list(map(
+            lambda exclude_date:
+                datetime.datetime.combine(
+                    timezone.localtime(exclude_date).date(),
+                    dtstart.time(),
+                    tzinfo=timezone.utc,
+                ),
+            self.recurrences.exdates
+        ))
+
+        # Get all occurences according to the recurrence module
+        occurences = self.recurrences.between(after, before, inc=inc, dtstart=dtstart, dtend=dtend, cache=cache)
         # the recurrences package does not work with DST. Since we want our activities
         # to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00
         # in winter, and vice versa), we have to account for the difference here.
-        return map(lambda occurence: dst_aware_to_dst_ignore(occurence, dtstart),
-                   self.recurrences.between(after, before, inc=inc, dtstart=dtstart, dtend=dtend, cache=cache))
+        occurences = list(map(lambda occurence: dst_aware_to_dst_ignore(occurence, dtstart), occurences))
+
+        return occurences
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
