@@ -303,3 +303,8 @@ class ActivityMomentForm(ModelForm):
         if instance is None:
             raise KeyError("Instance of ActivityMoment was not given")
         super(ActivityMomentForm, self).__init__(*args, instance=instance, **kwargs)
+
+        # Set a placeholder on all fields
+        for key, field in self.fields.items():
+            attr_name = key[len('local_'):]
+            field.widget.attrs['placeholder'] = getattr(self.instance.parent_activity, attr_name)

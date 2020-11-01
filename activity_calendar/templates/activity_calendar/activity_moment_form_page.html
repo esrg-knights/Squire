@@ -2,57 +2,83 @@
 
 {% load static %}
 {% load render_form %}
-{% load generic_field %}
-{% load activity_default_display_tag %}
+
+{% block title %}
+    Squire - Edit {{ activity_moment.title }} occurence
+{% endblock title %}
 
 {% block content-frame-class %}
     wideContentFrame
 {% endblock %}
 
 {% block content %}
-    <h2>Change specific activity moment</h2>
+    <h1>{{ activity_moment.title }}</h1>
+    <div class="d-flex">
+        <!-- Calendar Icon -->
+        <div class="">
+            <img
+                src="{% static 'octicons/info.svg' %}"
+                alt="Info-icon"
+                height="16"
+                width="16"
+            />
+        </div>
+        <!-- Event Date & Recurrence Information -->
+        <div class="col align-self-center">
+            <div class='nospace'>
+                <p id="event-name">
+                    Part of: {{ activity_moment.parent_activity.title }}
+                    {% if activity_moment.parent_activity.recurrences.rrules %}
+                        <br>
+                        Repeats:
+                        {% for rule in activity_moment.parent_activity.recurrences.rrules %}
+                            {{ rule.to_text }}
+                        {% endfor %}
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex">
+        <!-- Calendar Icon -->
+        <div class="">
+            <img
+                src="{% static 'octicons/calendar.svg' %}"
+                alt="Calendar-icon"
+                height="16"
+                width="16"
+            />
+        </div>
+        <!-- Event Date -->
+        <div class="col align-self-center">
+            <div class='nospace'>
+                <p id="event-date">
+                    {% if activity_moment.start_time.date == activity_moment.end_time.date %}
+                        <!-- Activity starts and ends on the same day -->
+                        {{ activity_moment.start_time|date:"l j E H:i" }} - {{ activity_moment.end_time|date:"H:i" }}
+                    {% else %}
+                        <!-- Activity starts and ends on a different day -->
+                        {{ activity_moment.start_time|date:"j E H:i" }} - {{ activity_moment.end_time|date:"j E H:i" }}
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <h4>Edit occurence data</h4>
     <p>
-        Below you can edit attributes for this particular activity instance. Any field can be left empty. In that case
+        Below you can edit attributes for this particular activity occurence. Any field can be left empty. In that case
         it will copy the attribute from the general activity instead.
     </p>
 
-    <h4>Edit {{ activity_moment.title }}</h4>
+    {% render_form form_id="submit_form" has_submit_button=False %}
 
-    <form method="post" class="">
-        {% csrf_token %}
-
-        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
-
-        {# Non field errors #}
-        {% if form.non_field_errors %}
-            {% for error in form.non_field_errors %}
-                <div class="alert alert-danger" role="alert">{{ error }}</div>
-            {% endfor %}
-        {% endif %}
-
-        {% for field in form.visible_fields %}
-            <div class="row">
-                <div class="col-md-4 order-md-2">
-                    <div class="input-group">
-                        <input class="form-control" disabled value="{% activity_default_value field.name %}">
-
-                        </input>
-                    </div>
-
-                </div>
-                <div class="col-md-8 order-md-1">
-                    {% generic_field field -1 %}
-                </div>
-            </div>
-        {% endfor %}
-
-        <div class="btn-group w-100" role="group" aria-label="Form changing">
-            <a href="{% url "activity_calendar:activity_slots_on_day" activity_id=activity.id recurrence_id=recurrence_id %}"
-               class="btn btn-secondary">Cancel</a>
-            <button type="submit" type="submit" class="btn btn-success">
-                Save changes
-            </button>
-        </div>
-    </form>
+    <div class="btn-group w-100" role="group" aria-label="Form changing">
+        <a href="{% url "activity_calendar:activity_slots_on_day" activity_id=activity.id recurrence_id=recurrence_id %}"
+           class="btn btn-secondary">Cancel</a>
+        <button type="submit_form" form="submit" type="submit" class="btn btn-success">
+            Save changes
+        </button>
+    </div>
 
 {% endblock %}
