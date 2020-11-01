@@ -367,6 +367,9 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
             'recurrence_id': self.recurrence_id,
         })
 
+    def __str__(self):
+        return f"{self.title} @ {self.recurrence_id}"
+
 
 class ActivitySlot(models.Model):
     title = models.CharField(max_length=255)
