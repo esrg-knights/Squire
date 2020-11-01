@@ -515,10 +515,10 @@ class ActivityMomentFormTestCase(FormValidityMixin, TestCase):
     def test_validity_check(self):
         """ Tests that normal form data is valid """
         self.assertFormValid({
-            'local_description': 'Different title',
+            'local_title': 'Different title',
             'local_description': 'Different description',
-            'local_description': 'Different location',
-            'local_description': 8,
+            'local_location': 'Different location',
+            'local_max_participants': 8,
         }, instance=self.activity_moment)
 
     def test_requires_instance(self):
