@@ -506,7 +506,7 @@ class EditActivityMomentDataView(TestActivityViewMixin, TestCase):
 
     def test_requires_permission(self):
         self.assertTrue(issubclass(EditActivityMomentView, PermissionRequiredMixin))
-        self.assertIn('activity_moment.can_edit', EditActivityMomentView.permission_required)
+        self.assertIn('activity_calendar.change_activitymoment', EditActivityMomentView.permission_required)
 
     def test_successful_post(self):
         """ Tests that a successful post is processed correctly """
