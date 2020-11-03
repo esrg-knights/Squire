@@ -377,12 +377,6 @@ class EditActivityMomentView(LoginRequiredMixin, PermissionRequiredMixin, Activi
     template_name = "activity_calendar/activity_moment_form_page.html"
     permission_required = ('activity_calendar.change_activitymoment',)
 
-    def dispatch(self, request, *args, **kwargs):
-        for perm in request.user.user_permissions.all():
-            print(perm.codename)
-
-        return super(EditActivityMomentView, self).dispatch(request, *args, **kwargs)
-
     def get_form_kwargs(self):
         kwargs = super(EditActivityMomentView, self).get_form_kwargs()
         kwargs.update({
