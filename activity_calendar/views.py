@@ -311,8 +311,7 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
         return super(CreateSlotView, self).render_to_response(context, **response_kwargs)
 
     def get_form_kwargs(self):
-        if self.activity.slot_creation == "CREATION_NONE" and \
-                self.request.user.has_perm('activity_calendar.can_ignore_slot_creation_type'):
+        if self.activity.slot_creation == "CREATION_NONE":
             # In a none based slot mode, don't automatically register the creator to the slot
             initial = {'sign_up': False}
         else:

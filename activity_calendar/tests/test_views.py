@@ -2,6 +2,7 @@ import datetime
 
 from django.test import TestCase, Client
 from django.contrib import messages
+from django.contrib.auth.models import Permission
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
@@ -255,6 +256,40 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(response.context['subscriptions_open'], False)
+
+    def _verify_show_participants(self, recurrence_id, permissions, should_show_participants):
+        # Grant relevant permission and remove others
+        self.user.user_permissions.clear()
+        self.user.save()
+        self.user.user_permissions.add(*permissions)
+
+        # Modify activity start/end time
+        self.activity.start_date = datetime.datetime.fromisoformat(recurrence_id)
+        self.activity.end_date = self.activity.start_date + datetime.timedelta(hours=2)
+        self.activity.save()
+
+        response = self.build_get_response(iso_dt=recurrence_id)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['show_participants'], should_show_participants)
+
+    @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_test_show_participants(self, mock_tz):
+        """
+            Tests if activity participants show only to users with the relevant permissions
+        """
+        before_perm = Permission.objects.get(codename='can_view_activity_participants_before')
+        during_perm = Permission.objects.get(codename='can_view_activity_participants_during')
+        after_perm = Permission.objects.get(codename='can_view_activity_participants_after')
+
+        # User does NOT have the relevant permission to view registrations
+        self._verify_show_participants(self.default_iso_dt, [during_perm, after_perm], False)
+        self._verify_show_participants('2020-08-10T21:00:00+00:00', [before_perm, after_perm], False)
+        self._verify_show_participants('2020-08-01T00:00:00+00:00', [before_perm, during_perm], False)
+        
+        # User HAS the relevant permission to view registrations
+        self._verify_show_participants(self.default_iso_dt, [before_perm], True)
+        self._verify_show_participants('2020-08-10T21:00:00+00:00', [during_perm], True)
+        self._verify_show_participants('2020-08-01T00:00:00+00:00', [after_perm], True)
 
 
 class ActivitySlotViewTest(TestActivityViewMixin, TestCase):

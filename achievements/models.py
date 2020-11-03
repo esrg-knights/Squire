@@ -90,13 +90,7 @@ class Achievement(models.Model):
 
     def __str__(self):
         return self.name
-
-    # Checks whether a given user can view this achievement's claimants
-    @staticmethod
-    def user_can_view_claimants(user):
-        if user is None:
-            return False
-        return user.has_perm('achievements.view_claimant')
+        
 
 # Represents a user earning an achievement
 class Claimant(models.Model):
