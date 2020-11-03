@@ -4,7 +4,6 @@ from django.dispatch import receiver
 
 from .serializers import MemberSerializer
 from .models import Member, MemberLog, MemberLogField
-from core.models import ExtendedGroup
 
 ##################################################################################
 # Methods that automatically create Log data when a Member gets updated
@@ -93,46 +92,3 @@ def post_delete_member(sender, instance, **kwargs):
     # (I.e. they belonged to the just-deleted member)
     # Not enforced through a models.CASCADE as to circumvent permissions to keep the logs read only
     pMemberLogs = MemberLog.objects.filter(member=None).delete()
-
-
-###########################################
-
-@receiver(pre_save, sender=Member)
-def pre_save_member_give_role(sender, instance, raw, **kwargs):
-    if raw:
-        return
-
-    instance._old_user_id = None
-    instance._old_user_was_considered_member = False
-
-    if instance.id:
-        # Member is being updated (id already existed)
-        old_member_info = Member.objects.get(pk=instance.id)
-        instance._old_user_was_considered_member = old_member_info.is_considered_member()
-        if old_member_info.user is not None:
-            instance._old_user_id = old_member_info.user.id
-        
-@receiver(post_save, sender=Member)
-def post_save_member_give_role(sender, instance, created, raw, **kwargs):
-    # Do not create logs if the database is not yet in a consistent state
-    if raw:
-        return
-
-    members_group = ExtendedGroup.objects.get(name='Member')
-    new_user_is_considered_member = instance.user is not None and instance.is_considered_member()
-    new_user_id = None
-    if instance.user:
-        new_user_id = instance.user.id
-
-    # Only need to modify things if important things actually changed
-    if instance._old_user_id != new_user_id \
-            or instance._old_user_was_considered_member != new_user_is_considered_member:
-
-        if instance._old_user_id is not None and instance._old_user_was_considered_member:
-            # Remove the 'Member' group from the user previously linked to this member
-            user = get_user_model().objects.get(id=instance._old_user_id)
-            user.groups.remove(members_group)
-
-        if new_user_is_considered_member:
-            # Add the 'Member' group to to the newly linked user (if needed)
-            instance.user.groups.add(members_group)

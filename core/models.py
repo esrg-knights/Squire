@@ -1,10 +1,8 @@
 import os
 
 from django.conf import settings
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django.utils.text import slugify
 
 # Proxy model based on Django's user that provides extra utility methods.
@@ -65,44 +63,3 @@ class PresetImage(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.id})"
-
-
-# Manager that only contains public groups
-class PublicGroupsManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(is_public=True)
-
-# Django's standard group, but also provides additional fields
-class ExtendedGroup(Group):
-    # Normal manager
-    objects = models.Manager()
-
-    # Only contains public groups
-    public_objects = PublicGroupsManager()
-
-    # Override the automatically created link back to the superclass
-    # so that we can provide a custom related_name
-    group_ptr = models.OneToOneField(
-        Group, on_delete=models.CASCADE,
-        parent_link=True,
-        related_name="group_info",
-    )
-
-    description = models.TextField(max_length=255)
-
-    # Non-public groups are not shown in the front-end
-    is_public = models.BooleanField(default=False)
-
-    # Some models are required by the core application and are
-    # referenced several times in the source code. These should
-    # never be deleted or renamed!
-    is_core_group = models.BooleanField(default=False,
-        help_text="Core Groups are used in Squire's source code and cannot be deleted or renamed.")
-
-
-# Add newly created users to the standard "User" group.
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def add_to_default_group(sender, instance, created, raw, **kwargs):
-    if created and not raw:
-        group = ExtendedGroup.objects.get(name="Users")
-        instance.groups.add(group)

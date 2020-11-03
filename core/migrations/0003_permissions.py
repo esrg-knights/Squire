@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0005_auto_20201021_2050'),
+        ('core', '0002_presetimage'),
     ]
 
     operations = [
