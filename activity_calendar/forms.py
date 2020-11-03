@@ -68,18 +68,17 @@ class RegisterAcitivityMixin:
 
         # Check if, when signing up, there is still room (because max is limited)
         if data['sign_up'] and self.activity.max_participants != -1:
-            if not self.user.has_perm('activity_calendar.can_ignore_activity_participants_limits'):
-                # get the number of participants
-                num_participants = Participant.objects.filter(
-                    activity_slot__parent_activity=self.activity,
-                    activity_slot__recurrence_id=self.recurrence_id
-                ).count()
-                # check the number of participants
-                if num_participants >= self.activity.max_participants:
-                    raise ValidationError(
-                        _(f"This activity is already at maximum capacity."),
-                        code='activity-full'
-                )
+            # get the number of participants
+            num_participants = Participant.objects.filter(
+                activity_slot__parent_activity=self.activity,
+                activity_slot__recurrence_id=self.recurrence_id
+            ).count()
+            # check the number of participants
+            if num_participants >= self.activity.max_participants:
+                raise ValidationError(
+                    _(f"This activity is already at maximum capacity."),
+                    code='activity-full'
+            )
 
     def get_first_error_code(self):
         """ Returns the error code from the first invalidation error found"""
@@ -175,18 +174,17 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
         self.check_slot_validity(data, slot_obj)
 
         if data['sign_up']:
-            if not self.user.has_perm('activity_calendar.can_ignore_max_slot_registration_limits'):
-                # Can only subscribe to at most X slots
-                user_subscriptions = self.activity.get_user_subscriptions(user=self.user, recurrence_id=self.recurrence_id)
+            # Can only subscribe to at most X slots
+            user_subscriptions = self.activity.get_user_subscriptions(user=self.user, recurrence_id=self.recurrence_id)
 
-                # If attempting a sign-up, test that the user is allowed to join one (additonal) slot
-                if self.activity.max_slots_join_per_participant != -1 and \
-                        user_subscriptions.count() >= self.activity.max_slots_join_per_participant:
-                    raise ValidationError(
-                        _("User is already subscribed to the max number of slots (%(max_slots))"),
-                        code='max-slots-occupied',
-                        params={'max_slots': self.activity.max_slots_join_per_participant}
-                    )
+            # If attempting a sign-up, test that the user is allowed to join one (additonal) slot
+            if self.activity.max_slots_join_per_participant != -1 and \
+                    user_subscriptions.count() >= self.activity.max_slots_join_per_participant:
+                raise ValidationError(
+                    _("User is already subscribed to the max number of slots (%(max_slots))"),
+                    code='max-slots-occupied',
+                    params={'max_slots': self.activity.max_slots_join_per_participant}
+                )
 
     def check_slot_validity(self, data, slot_obj):
         """ Runs cleaning code for the slot related restrictions
@@ -211,12 +209,11 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
                 )
 
             # There is still room in this slot
-            if not self.user.has_perm('activity_calendar.can_ignore_slot_participants_limits'):
-                if slot_obj.max_participants != -1 and slot_obj.participants.count() >= slot_obj.max_participants:
-                    raise ValidationError(
-                        _("This slot is already at maximum capacity. You cannot subscribe to it."),
-                        code='slot-full'
-                    )
+            if slot_obj.max_participants != -1 and slot_obj.participants.count() >= slot_obj.max_participants:
+                raise ValidationError(
+                    _("This slot is already at maximum capacity. You cannot subscribe to it."),
+                    code='slot-full'
+                )
         else:
             # User tries to unsubscribe from slot he/she was not registered to
             if self.user not in slot_obj.participants.all():
@@ -248,7 +245,7 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if not self.user.has_perm('achievements.can_select_slot_image'):
+        if not self.user.has_perm('activity_calendar.can_select_slot_image'):
             # User does not have the required permissions to select an alternative slot image
             # Remove the field
             del self.fields['image']
@@ -264,7 +261,7 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
         if self.activity.slot_creation == "CREATION_USER":
             pass
         elif self.activity.slot_creation == "CREATION_NONE" \
-                and self.user.has_perm('activity_calendar.can_ignore_slot_creation_type'):
+                and self.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type'):
             pass
         else:
             raise ValidationError(
@@ -274,15 +271,14 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
         # Can the user (in theory) join another slot?
         if data.get('sign_up', False):
-            if not self.user.has_perm('activity_calendar.can_ignore_max_slot_registration_limits'):
-                user_subscriptions = self.activity.get_user_subscriptions(user=self.user, recurrence_id=self.recurrence_id)
-                if self.activity.max_slots_join_per_participant != -1 and \
-                        user_subscriptions.count() >= self.activity.max_slots_join_per_participant:
-                    raise ValidationError(
-                        _("User is already subscribed to the max number of slots (%(max_slots)s)"),
-                        code='max-slots-occupied',
-                        params={'max_slots': self.activity.max_slots_join_per_participant}
-                    )
+            user_subscriptions = self.activity.get_user_subscriptions(user=self.user, recurrence_id=self.recurrence_id)
+            if self.activity.max_slots_join_per_participant != -1 and \
+                    user_subscriptions.count() >= self.activity.max_slots_join_per_participant:
+                raise ValidationError(
+                    _("User is already subscribed to the max number of slots (%(max_slots)s)"),
+                    code='max-slots-occupied',
+                    params={'max_slots': self.activity.max_slots_join_per_participant}
+                )
 
         # Check cap for number of slots
         if not self.user.has_perm('activity_calendar.can_ignore_slot_creation_limits'):

@@ -381,7 +381,7 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
         """ Tests that form validates when admin creates a slot when slot mode is CREATION_NONE """
         self.activity.slot_creation = "CREATION_NONE"
         self.activity.save()
-        self.user.user_permissions.add(Permission.objects.get(codename='can_ignore_slot_creation_type'))
+        self.user.user_permissions.add(Permission.objects.get(codename='can_ignore_none_slot_creation_type'))
         self.user.save()
         self.assertFormValid({'sign_up': True, 'title': 'My slot', 'max_participants': -1})
 

@@ -240,7 +240,7 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
                 recurrence_id=self.recurrence_id,
             )
         elif self.activity.slot_creation == "CREATION_NONE" and \
-                self.request.user.has_perm('activity_calendar.can_ignore_slot_creation_type'):
+                self.request.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type'):
             # In a none based slot mode, don't automatically register the creator to the slot
             new_slot_form = RegisterNewSlotForm(
                 initial={
