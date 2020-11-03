@@ -32,6 +32,7 @@ class ActivityMomentAdmin(admin.ModelAdmin):
                 if local_value is not None and local_value != "":
                     return True
         return False
+    activity_moment_has_changes.boolean = True
     activity_moment_has_changes.short_description = 'Is tweaked'
     list_display = ["title", "recurrence_id", "last_updated", activity_moment_has_changes]
 
