@@ -50,13 +50,12 @@ def opens_in_future(context):
 @register.inclusion_tag("activity_calendar/slot_blocks/register_button.html", takes_context=True)
 def register_button(context, slot):
     user = context['request'].user
-    participants = context['participants']
 
     # There is no logged in user, so return nothing instead
     if not user.is_authenticated:
         return None
 
-    sign_up = user not in participants
+    sign_up = not slot.participants.filter(id=user.id).exists()
 
     form = RegisterForActivitySlotForm(
         activity = context['activity'],

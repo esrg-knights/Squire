@@ -1,56 +1,54 @@
 {% load static %}
 {% load calendar_tags %}
 
-{% with participants=slot.participants.all %}
-    <div class="card greenify activity-wide">
-        <div class="row no-gutters">
-            <div class="col-2 col-sm-1 activityImage">
-                <div class="heightener"></div>
-                <img src="{{slot.image_url}}" alt="" class="card-img">
-            </div>
-            <div class="col-10 col-sm-11 col-md-9">
-                <div class="card-body activityName">
-                    <h5 class="card-title">
-                        {{ slot.title }}
-                    </h5>
-                    {% if slot.location %}
-                        <div class="row no-gutters">
-                            <small class="text-muted">
-                                Alternative Location: {{ sign_up }}
-                                {% if not slot.location_is_private or user in slot.participants.all %}
-                                    {{ slot.location }}
-                                    {% if slot.location_is_private %}
-                                        <i>(private)</i>
-                                    {% endif %}
-                                {% else %}
-                                    <i>Hidden until registered for this slot</i>
-                                {% endif %}
-                            </small>
-                        </div>
-                    {% endif %}
-                    <p class="card-text">{{ slot.description }}</p>
-
+<div class="card greenify activity-wide">
+    <div class="row no-gutters">
+        <div class="col-2 col-sm-1 activityImage">
+            <div class="heightener"></div>
+            <img src="{{slot.image_url}}" alt="" class="card-img">
+        </div>
+        <div class="col-10 col-sm-11 col-md-9">
+            <div class="card-body activityName">
+                <h5 class="card-title">
+                    {{ slot.title }}
+                </h5>
+                {% if slot.location %}
                     <div class="row no-gutters">
-                        <div class="card-text">
-                            <small class="text-muted">
-                                {% if slot.max_participants != -1 %}
-                                    {{ participants|length }} / {{ slot.max_participants }}
-                                {% else %}
-                                    {{ participants|length }} / &infin;
+                        <small class="text-muted">
+                            Alternative Location: {{ sign_up }}
+                            {% if not slot.location_is_private or user in slot.participants.all %}
+                                {{ slot.location }}
+                                {% if slot.location_is_private %}
+                                    <i>(private)</i>
                                 {% endif %}
-                                participants{% if show_participants %}:
-                                    {{ participants | join:", " }}
-                                {% endif %}
-                            </small>
-                        </div>
+                            {% else %}
+                                <i>Hidden until registered for this slot</i>
+                            {% endif %}
+                        </small>
+                    </div>
+                {% endif %}
+                <p class="card-text">{{ slot.description }}</p>
+
+                <div class="row no-gutters">
+                    <div class="card-text">
+                        <small class="text-muted">
+                            {% if slot.max_participants != -1 %}
+                                {{ slot.participants.all|length }} / {{ slot.max_participants }}
+                            {% else %}
+                                {{ slot.participants.all|length }} / &infin;
+                            {% endif %}
+                            participants{% if show_participants %}:
+                                {{ slot.participants.all | join:", " }}
+                            {% endif %}
+                        </small>
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-md-2 d-flex align-items-center pt-3 pt-md-0">
-                {% if user.is_authenticated %}
-                    {% register_button slot %}
-                {% endif %}
-            </div>
+        </div>
+        <div class="col-12 col-md-2 d-flex align-items-center pt-3 pt-md-0">
+            {% if user.is_authenticated %}
+                {% register_button slot %}
+            {% endif %}
         </div>
     </div>
-{% endwith %}
+</div>
