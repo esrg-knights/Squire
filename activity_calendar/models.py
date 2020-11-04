@@ -15,12 +15,10 @@ from .util import dst_aware_to_dst_ignore
 from core.models import ExtendedUser as User, PresetImage
 from membership_file.util import user_to_member
 
+#############################################################################
 # Models related to the Calendar-functionality of the application.
 # @since 29 JUN 2019
-
-# Not now, but a later time (used as a default value below)
-def later_rounded():
-    return now_rounded() + timezone.timedelta(hours=2)
+#############################################################################
 
 # Rounds the current time (used as a default value below)
 def now_rounded():
@@ -356,12 +354,16 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
 class ActivitySlot(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    location = models.CharField(max_length=255, blank=True, null=True,
-        help_text="If left empty, matches location with activity")
     start_date = models.DateTimeField(blank=True, null=True,
         help_text="If left empty, matches start date with activity")
     end_date = models.DateTimeField(blank=True, null=True,
         help_text="If left empty, matches end date with activity")
+
+
+    location = models.CharField(max_length=255, blank=True, null=True,
+        help_text="If left empty, matches location with activity")
+    location_is_private = models.BooleanField(default=False,
+        help_text="Private locations are hidden for users not registered to this slot", verbose_name="private location?")
 
     # User that created the slot (or one that's in the slot if the original owner is no longer in the slot)
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)

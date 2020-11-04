@@ -240,7 +240,7 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
     class Meta:
         model = ActivitySlot
-        fields = ['title', 'description', 'location', 'max_participants']
+        fields = ['title', 'description', 'location', 'location_is_private', 'max_participants']
 
     def check_validity(self, data):
         super(RegisterNewSlotForm, self).check_validity(data)
