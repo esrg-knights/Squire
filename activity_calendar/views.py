@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
 from django.views.decorators.http import require_safe
 from django.views.generic import TemplateView
@@ -13,7 +13,7 @@ from django.views.generic.edit import FormView, FormMixin
 
 from membership_file.util import user_to_member
 
-from .forms import RegisterForActivityForm, RegisterForActivitySlotForm, RegisterNewSlotForm
+from .forms import *
 from .models import Activity, Participant, ActivityMoment
 from core.models import ExtendedUser
 
@@ -365,3 +365,30 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
         else:
             messages.error(self.request, _("Some input was not valid. Please correct your data below"))
             return super(CreateSlotView, self).form_invalid(form)
+
+
+# #######################################
+# ######   Activity Editing View   ######
+# #######################################
+
+
+class EditActivityMomentView(LoginRequiredMixin, PermissionRequiredMixin, ActivityMixin, FormView):
+    form_class = ActivityMomentForm
+    template_name = "activity_calendar/activity_moment_form_page.html"
+    permission_required = ('activity_calendar.change_activitymoment',)
+
+    def get_form_kwargs(self):
+        kwargs = super(EditActivityMomentView, self).get_form_kwargs()
+        kwargs.update({
+            'instance': self.activity_moment,
+        })
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+        message = _("You have successfully changed the settings for '{activity_name}'")
+        messages.success(self.request, message.format(activity_name=form.instance.title))
+        return super(EditActivityMomentView, self).form_valid(form)
+
+    def get_success_url(self):
+        return self.activity_moment.get_absolute_url()

@@ -133,8 +133,9 @@ class CESTEventFeed(ICalFeed):
     def item_created(self, item):
         return item.created_date
 
+    @only_for(ActivityMoment)
     def item_updateddate(self, item):
-        return item.last_updated_date
+        return item.last_updated
 
     def item_timestamp(self, item):
         # When the item was generated, which is at this moment!
