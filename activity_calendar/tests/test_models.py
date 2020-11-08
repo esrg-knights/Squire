@@ -174,6 +174,67 @@ class TestCaseActivityClean(TestCase):
         pass
 
 
+class ActivityTestCase(TestCase):
+    fixtures = ['test_users.json', 'test_activity_slots']
+
+    def setUp(self):
+        self.activity = Activity.objects.get(id=2)
+
+    def test_get_all_activity_moments(self):
+        """ Tests the Activity get_all_activity_moments method"""
+        after = timezone.datetime(2020, 10, 2, 0, 0, 0, tzinfo=timezone.utc)
+        before = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
+        activity_moments = self.activity.get_all_activity_moments(after, before)
+
+        # There are three activities, two from the recurring activities, one as an extra one
+        self.assertEqual(len(activity_moments), 3)
+        dts = [
+            timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc),
+            timezone.datetime(2020, 10, 10, 19, 30, 0, tzinfo=timezone.utc),
+            timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc),
+        ]
+        # Check if all expected dates are present and not a single one more
+        for activity_moment in activity_moments:
+            for i in range(len(dts)):
+                if activity_moment.recurrence_id == dts[i]:
+                    del dts[i]
+                    break
+            else:
+                raise AssertionError(f"ActivityMoment at {activity_moment.recurrence_id} was unexpected")
+        for i in range(len(dts)):
+            raise AssertionError(f'dts[i] was not found in the ActivityMoment instances')
+
+        # Test that the data was indeed retrieved from the server
+        for activity_moment in activity_moments:
+            if activity_moment.id == 4:
+                if activity_moment.local_title != "Different_boardgame_title":
+                    raise AssertionError("ActivityMoment corresponding with rrule was not accurate from the database")
+                else:
+                    break
+        else:
+            raise AssertionError("ActivityMoments from rrule overwritten database instances or were not obtained")
+
+
+    def test_get_occurence_between(self):
+        """ Tests the get_occurence_between method, returning all activities according to the recurring rules """
+        after = timezone.datetime(2020, 10, 2, 0, 0, 0, tzinfo=timezone.utc)
+        before = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
+        recurrences = self.activity.get_occurences_between(after, before)
+
+        self.assertEqual(len(recurrences), 2)
+        self.assertEqual(recurrences[0], timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc))
+        self.assertEqual(recurrences[1], timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc))
+
+    def test_get_occurence_between_exclude(self):
+        """ Tests the get_occurence_between method, confirms that excluded dates are processed accurately """
+        after = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
+        before = timezone.datetime(2020, 10, 23, 0, 0, 0, tzinfo=timezone.utc)
+        recurrences = self.activity.get_occurences_between(after, before)
+
+        # There is normally an activity on the 21st, but it's excluded so it doesn't happen.
+        self.assertEqual(len(recurrences), 0)
+
+
 class ActivityMomentTestCase(TestCase):
     fixtures = ['test_users.json', 'test_activity_slots']
 

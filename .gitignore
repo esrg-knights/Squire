@@ -129,5 +129,9 @@ htdocs/media/images/presets
 # Visual Studio Code
 .vscode
 
+# IntelliJ
+/.idea/
+Squire.iml
+
 # coverage.py files
 /coverage
