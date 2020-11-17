@@ -243,7 +243,7 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
     class Meta:
         model = ActivitySlot
-        fields = ['title', 'description', 'location', 'location_is_private', 'max_participants']
+        fields = ['title', 'description', 'location', 'max_participants']
 
     def check_validity(self, data):
         super(RegisterNewSlotForm, self).check_validity(data)
@@ -306,5 +306,23 @@ class ActivityMomentForm(ModelForm):
 
         # Set a placeholder on all fields
         for key, field in self.fields.items():
-            attr_name = key[len('local_'):]
-            field.widget.attrs['placeholder'] = getattr(self.instance.parent_activity, attr_name)
+            attr_name = key[len('local_'):]            
+
+            if isinstance(field.widget, forms.Select):
+                # Replace the "-------" option for <select> fields
+
+                # Obtain value from parent_activity.get_FOO_display() if it exists
+                # Otherwise, we must be working with a true/false value from a BooleanField without custom options
+                get_parent_field_display_value = getattr(self.instance.parent_activity, f"get_{attr_name}_display", 
+                    lambda: _('Yes') if getattr(self.instance.parent_activity, attr_name) else _('No')
+                )
+
+                null_choice_text = _(f'{get_parent_field_display_value()} (Inherited from base activity)')
+
+                # Replace the "-------" option by our newly generated text
+                field.widget.choices = [
+                    ((k, null_choice_text) if k == '' else (k, v)) for (k, v) in field.widget.choices
+                ]
+            else:
+                # Set HTML Placeholder for all other fields
+                field.widget.attrs['placeholder'] = getattr(self.instance.parent_activity, attr_name)

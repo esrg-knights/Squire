@@ -6,7 +6,9 @@ from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
 from django.db.models import Count
 from django.db.models.base import ModelBase
+from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 
 from recurrence.fields import RecurrenceField
@@ -66,6 +68,9 @@ class Activity(models.Model):
     # Maximum number of slots that someone can join
     max_slots_join_per_participant = models.IntegerField(default=1, validators=[MinValueValidator(-1)],
         help_text="-1 denotes unlimited slots")
+
+    private_slot_locations = models.BooleanField(default=False,
+        help_text="Private locations are hidden for users not registered to the relevant slot")
 
     subscriptions_required = models.BooleanField(default=True,
         help_text="People are only allowed to go to the activity if they register beforehand")
@@ -258,6 +263,14 @@ class ActivityDuplicate(ModelBase):
                         new_field.name = new_field_name
 
                         attrs[new_field_name] = new_field
+
+                        if isinstance(field, models.BooleanField):
+                            # Override choices for BooleanField with null=True.
+                            # Without this, the null-selection shows up as 'unknown' (which is misleading)
+                            new_field.choices = BLANK_CHOICE_DASH + [
+                                (True,  _('Yes')),
+                                (False, _('No')),
+                            ]
                         break
                 else:
                     raise KeyError(f"'{field_name}' is not a property on Activity")
@@ -299,7 +312,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     class Meta:
         unique_together = ['parent_activity', 'recurrence_id']
         # Define the fields that can be locally be overwritten
-        copy_fields = ['title', 'description', 'location', 'max_participants']
+        copy_fields = ['title', 'description', 'location', 'max_participants', 'private_slot_locations', 'slot_creation']
         # Define fields that are instantly looked for in the parent_activity
         # If at any point in the future these must become customisable, one only has to move the field name to the
         # copy_fields attribute
@@ -373,16 +386,12 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
 class ActivitySlot(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    location = models.CharField(max_length=255, blank=True, null=True,
+        help_text="If left empty, matches location with activity")
     start_date = models.DateTimeField(blank=True, null=True,
         help_text="If left empty, matches start date with activity")
     end_date = models.DateTimeField(blank=True, null=True,
-        help_text="If left empty, matches end date with activity")
-
-
-    location = models.CharField(max_length=255, blank=True, null=True,
-        help_text="If left empty, matches location with activity")
-    location_is_private = models.BooleanField(default=False,
-        help_text="Private locations are hidden for users not registered to this slot", verbose_name="private location?")
+        help_text="If left empty, matches end date with activity")   
 
     # User that created the slot (or one that's in the slot if the original owner is no longer in the slot)
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
