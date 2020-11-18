@@ -4,6 +4,7 @@ from django.test import TestCase, Client
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.models import Permission
+from django.test.utils import override_settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
@@ -281,7 +282,8 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         self.assertEqual(response.context['show_participants'], should_show_participants)
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
-    def test_test_show_participants(self, mock_tz):
+    @override_settings(AUTHENTICATION_BACKENDS=('django.contrib.auth.backends.ModelBackend',))
+    def test_show_participants(self, mock_tz):
         """
             Tests if activity participants show only to users with the relevant permissions
         """

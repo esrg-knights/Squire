@@ -180,7 +180,7 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
 
         if data['sign_up']:
             # Can only subscribe to at most X slots
-            user_subscriptions = self.activity.get_user_subscriptions(user=self.user, recurrence_id=self.recurrence_id)
+            user_subscriptions = self.activity_moment.get_user_subscriptions(user=self.user)
 
             # If attempting a sign-up, test that the user is allowed to join one (additonal) slot
             if self.activity.max_slots_join_per_participant != -1 and \
@@ -265,7 +265,7 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
         # Is user allowed to create a slot
         if self.activity.slot_creation == Activity.SLOT_CREATION_USER:
             pass
-        elif self.activity.slot_creation == Activity.SLOT_CREATION_NONE \
+        elif self.activity.slot_creation == Activity.SLOT_CREATION_STAFF \
                 and self.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type'):
             pass
         else:

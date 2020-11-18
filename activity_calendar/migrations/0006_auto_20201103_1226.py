@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('activity_calendar', '0003_auto_20200921_1554'),
+        ('activity_calendar', '0005_activitymoment_local_title'),
     ]
 
     operations = [
