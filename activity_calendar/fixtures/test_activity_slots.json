@@ -55,7 +55,7 @@
     "published_date": "2020-08-05T14:00:00Z",
     "start_date": "2020-08-12T14:00:00Z",
     "end_date": "2020-08-12T16:00:00Z",
-    "recurrences": "RRULE:FREQ=WEEKLY;BYDAY=WE",
+    "recurrences": "RRULE:FREQ=WEEKLY;BYDAY=WE\nEXDATE:20201021T140000Z",
     "max_slots": -1,
     "max_participants": 30,
     "max_slots_join_per_participant": 1,
@@ -88,6 +88,60 @@
     "subscriptions_open": "7 00:00:00",
     "subscriptions_close": "00:30:00"
   }
+},
+{
+    "model": "activity_calendar.activitymoment",
+    "pk": 1,
+    "fields": {
+        "parent_activity": 1,
+        "recurrence_id": "2020-08-14T19:00:00Z",
+        "created_date": "2020-08-08T19:00:00Z",
+        "last_updated": "2020-08-08T19:00:00Z"
+    }
+},
+{
+    "model": "activity_calendar.activitymoment",
+    "pk": 2,
+    "fields": {
+        "parent_activity": 2,
+        "recurrence_id": "2020-08-12T14:00:00Z",
+        "created_date": "2020-08-08T19:00:00Z",
+        "last_updated": "2020-08-08T19:00:00Z",
+        "local_title": "Different_title"
+    }
+},
+{
+    "model": "activity_calendar.activitymoment",
+    "pk": 3,
+    "fields": {
+        "parent_activity": 2,
+        "recurrence_id": "2020-08-19T14:00:00Z",
+        "created_date": "2020-08-08T19:00:00Z",
+        "last_updated": "2020-08-08T19:00:00Z"
+    }
+},
+{
+    "model": "activity_calendar.activitymoment",
+    "pk": 4,
+    "fields": {
+        "parent_activity": 2,
+        "recurrence_id": "2020-10-07T14:00:00Z",
+        "created_date": "2020-10-08T19:00:00Z",
+        "last_updated": "2020-10-08T19:00:00Z",
+        "local_title": "Different_boardgame_title"
+    }
+},
+{
+    "_comment": "This AM is an extra location that does not fit the rrule",
+    "model": "activity_calendar.activitymoment",
+    "pk": 5,
+    "fields": {
+        "parent_activity": 2,
+        "recurrence_id": "2020-10-10T19:30:00Z",
+        "created_date": "2020-10-01T19:00:00Z",
+        "last_updated": "2020-10-01T19:00:00Z",
+        "local_title": "Extra boardgame"
+    }
 },
 {
   "model": "activity_calendar.activityslot",

@@ -3,12 +3,14 @@ import datetime
 from django.contrib.auth.models import Permission
 from django.test import TestCase
 from django.utils import dateparse
+from django.forms import ModelForm
 
 from unittest.mock import patch
 
-from activity_calendar.models import ActivitySlot, Activity, Participant
-from activity_calendar.forms import RegisterForActivityForm, RegisterForActivitySlotForm, RegisterNewSlotForm
+from activity_calendar.models import *
+from activity_calendar.forms import *
 from core.models import ExtendedUser as User
+from core.util import suppress_warnings
 
 
 from . import mock_now
@@ -101,12 +103,18 @@ class ActivityFormValidationMixin(FormValidityMixin):
         if isinstance(self.recurrence_id, str):
             self.recurrence_id = dateparse.parse_datetime(self.recurrence_id)
 
+        self.activity_moment = ActivityMoment.objects.get_or_create(
+            parent_activity_id=self.activity.id,
+            recurrence_id=self.recurrence_id,
+        )[0]
+
     def get_form_kwargs(self, **kwargs):
         kwargs = super(ActivityFormValidationMixin, self).get_form_kwargs(**kwargs)
         kwargs.update({
             'user': self.user,
             'activity': self.activity,
             'recurrence_id': self.recurrence_id,
+            'activity_moment': self.activity_moment,
         })
         return kwargs
 
@@ -142,8 +150,16 @@ class RegisterForActivityFormTestCase(ActivityFormValidationMixin, TestCase):
         self.activity.max_participants = 1
         # There should be 1 participant already
         self.activity.save()
-        self.assertEqual(1, self.activity.get_num_subscribed_participants(self.recurrence_id))
+        self.assertEqual(1, self.activity_moment.get_subscribed_users().count())
 
+        self.assertFormHasError({'sign_up': True}, code='activity-full')
+
+    @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_max_capacity_offset_in_activity_moment(self, mock_tz):
+        # The local TestMoment should overwrite max participants if desired
+        self.assertFormValid({'sign_up': True})
+        self.activity_moment.local_max_participants = 0
+        self.activity_moment.save()
         self.assertFormHasError({'sign_up': True}, code='activity-full')
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
@@ -153,22 +169,22 @@ class RegisterForActivityFormTestCase(ActivityFormValidationMixin, TestCase):
         # There should be 1 participant already
         self.activity.save()
         Participant.objects.create(user=self.user, activity_slot_id=1)
-        self.assertEqual(2, self.activity.get_num_subscribed_participants(self.recurrence_id))
+        self.assertEqual(2, self.activity_moment.get_subscribed_users().count())
 
         self.assertFormValid({'sign_up': False})
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_slot_mode(self, mock_tz):
         """ Tests that form invalidates when slot creation mode is not CREATION_AUTO """
-        self.activity.slot_creation = "CREATION_NONE"
+        self.activity.slot_creation = Activity.SLOT_CREATION_STAFF
         self.activity.save()
         self.assertFormHasError({'sign_up': True}, code='invalid_slot_mode')
 
-        self.activity.slot_creation = "CREATION_USER"
+        self.activity.slot_creation = Activity.SLOT_CREATION_USER
         self.activity.save()
         self.assertFormHasError({'sign_up': True}, code='invalid_slot_mode')
 
-        self.activity.slot_creation = "CREATION_AUTO"
+        self.activity.slot_creation = Activity.SLOT_CREATION_AUTO
         self.activity.save()
         self.assertFormValid({'sign_up': True})
 
@@ -186,11 +202,11 @@ class RegisterForActivityFormTestCase(ActivityFormValidationMixin, TestCase):
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_save_sign_up_existing_slot(self, mock_tz):
         """ Checks if the user is registered to any of the already existing slots"""
-        self.assertGreater(self.activity.get_slots(self.recurrence_id).count(), 0)
+        self.assertGreater(self.activity_moment.get_slots().count(), 0)
         form = self.assertFormValid({'sign_up': True})
-        self.assertEqual(0, self.activity.get_user_subscriptions(self.user, self.recurrence_id).count())
+        self.assertEqual(0, self.activity_moment.get_user_subscriptions(self.user).count())
         form.save()
-        self.assertEqual(1, self.activity.get_user_subscriptions(self.user, self.recurrence_id).count())
+        self.assertEqual(1, self.activity_moment.get_user_subscriptions(self.user).count())
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_save_sign_up_new_slot(self, mock_tz):
@@ -199,18 +215,18 @@ class RegisterForActivityFormTestCase(ActivityFormValidationMixin, TestCase):
         self.activity.activity_slot_set.all().delete()
 
         form = self.assertFormValid({'sign_up': True})
-        self.assertEqual(0, self.activity.get_user_subscriptions(self.user, self.recurrence_id).count())
+        self.assertEqual(0, self.activity_moment.get_user_subscriptions(self.user).count())
         form.save()
-        self.assertEqual(1, self.activity.get_user_subscriptions(self.user, self.recurrence_id).count())
+        self.assertEqual(1, self.activity_moment.get_user_subscriptions(self.user).count())
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_save_sign_out(self, mock_tz):
         """ Test saving a sign-out action """
         Participant.objects.create(user=self.user, activity_slot_id=1)
         form = self.assertFormValid({'sign_up': False})
-        self.assertEqual(1, self.activity.get_user_subscriptions(self.user, self.recurrence_id).count())
+        self.assertEqual(1, self.activity_moment.get_user_subscriptions(self.user).count())
         form.save()
-        self.assertEqual(0, self.activity.get_user_subscriptions(self.user, self.recurrence_id).count())
+        self.assertEqual(0, self.activity_moment.get_user_subscriptions(self.user).count())
 
 
 class RegisterForActivitySlotFormTestCase(ActivityFormValidationMixin, TestCase):
@@ -257,7 +273,7 @@ class RegisterForActivitySlotFormTestCase(ActivityFormValidationMixin, TestCase)
         self.activity.max_participants = 2
         # There should be 2 participant already
         self.activity.save()
-        self.assertEqual(2, self.activity.get_num_subscribed_participants(self.recurrence_id))
+        self.assertEqual(2, self.activity_moment.get_subscribed_users().count())
 
         self.assertFormHasError({'sign_up': True, 'slot_id': 7}, code='activity-full')
 
@@ -268,9 +284,17 @@ class RegisterForActivitySlotFormTestCase(ActivityFormValidationMixin, TestCase)
         # There should be 1 participant already
         self.activity.save()
         Participant.objects.create(user=self.user, activity_slot_id=7)
-        self.assertEqual(3, self.activity.get_num_subscribed_participants(self.recurrence_id))
+        self.assertEqual(3, self.activity_moment.get_subscribed_users().count())
 
         self.assertFormValid({'sign_up': False, 'slot_id': 7})
+
+    @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_max_capacity_offset_in_activity_moment(self, mock_tz):
+        # The local TestMoment should overwrite max participants if desired
+        self.assertFormValid({'sign_up': True, 'slot_id': 7})
+        self.activity_moment.local_max_participants = 0
+        self.activity_moment.save()
+        self.assertFormHasError({'sign_up': True, 'slot_id': 7}, code='activity-full')
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_already_registered(self, mock_tz):
@@ -351,8 +375,16 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
         self.activity.max_participants = 2
         # There should be 2 participant already
         self.activity.save()
-        self.assertEqual(2, self.activity.get_num_subscribed_participants(self.recurrence_id))
+        self.assertEqual(2, self.activity_moment.get_subscribed_users().count())
 
+        self.assertFormHasError({'sign_up': True, 'title': 'My slot', 'max_participants': -1}, code='activity-full')
+
+    @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_max_capacity_offset_in_activity_moment(self, mock_tz):
+        # The local TestMoment should overwrite max participants if desired
+        self.assertFormValid({'sign_up': True, 'title': 'My slot', 'max_participants': -1})
+        self.activity_moment.local_max_participants = 0
+        self.activity_moment.save()
         self.assertFormHasError({'sign_up': True, 'title': 'My slot', 'max_participants': -1}, code='activity-full')
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
@@ -364,22 +396,22 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_slot_mode(self, mock_tz):
         """ Tests that form invalidates when slot creation mode is not CREATION_AUTO """
-        self.activity.slot_creation = "CREATION_NONE"
+        self.activity.slot_creation = Activity.SLOT_CREATION_STAFF
         self.activity.save()
         self.assertFormHasError({'sign_up': True, 'title': 'My slot', 'max_participants': -1}, code='user-slot-creation-denied')
 
-        self.activity.slot_creation = "CREATION_AUTO"
+        self.activity.slot_creation = Activity.SLOT_CREATION_AUTO
         self.activity.save()
         self.assertFormHasError({'sign_up': True, 'title': 'My slot', 'max_participants': -1}, code='user-slot-creation-denied')
 
-        self.activity.slot_creation = "CREATION_USER"
+        self.activity.slot_creation = Activity.SLOT_CREATION_USER
         self.activity.save()
         self.assertFormValid({'sign_up': True, 'title': 'My slot', 'max_participants': -1})
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_slot_mode_admin_override(self, mock_tz):
         """ Tests that form validates when admin creates a slot when slot mode is CREATION_NONE """
-        self.activity.slot_creation = "CREATION_NONE"
+        self.activity.slot_creation = Activity.SLOT_CREATION_STAFF
         self.activity.save()
         self.user.user_permissions.add(Permission.objects.get(codename='can_ignore_none_slot_creation_type'))
         self.user.save()
@@ -450,3 +482,59 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
 
         # Test that there are no users registered to the slot
         self.assertEqual(slot.participants.count(), 0)
+
+
+class ActivityMomentFormTestCase(FormValidityMixin, TestCase):
+    form_class = ActivityMomentForm
+    fixtures = ['test_users.json', 'test_activity_slots.json']
+
+    def setUp(self):
+        self.activity_moment = ActivityMoment.objects.first()
+        self.form = ActivityMomentForm(instance=self.activity_moment, data={})
+
+    def test_fields(self):
+        self.assertNotIn('recurrence_id', self.form.fields.keys())
+        self.assertNotIn('parent_activity', self.form.fields.keys())
+        self.assertIn('local_title', self.form.fields.keys())
+        self.assertIn('local_description', self.form.fields.keys())
+        self.assertIn('local_location', self.form.fields.keys())
+        self.assertIn('local_max_participants', self.form.fields.keys())
+
+    def test_saves_moment_without_id(self):
+        """ Tests that it saves non-db-existing activitymoments to the database """
+        activity_moment = ActivityMoment(
+            parent_activity_id=1,
+            recurrence_id = "2020-08-28T19:00:00Z",
+        )
+        form = ActivityMomentForm(instance=activity_moment, data={})
+        form.save()
+        self.assertTrue(ActivityMoment.objects.filter(
+            parent_activity_id=1,
+            recurrence_id = "2020-08-28T19:00:00Z",
+        ).exists())
+
+    def test_validity_check(self):
+        """ Tests that normal form data is valid """
+        self.assertFormValid({
+            'local_title': 'Different title',
+            'local_description': 'Different description',
+            'local_location': 'Different location',
+            'local_max_participants': 8,
+        }, instance=self.activity_moment)
+
+    def test_requires_instance(self):
+        """ Form requires an instnace given. Or at least, it should. """
+        try:
+            self.form_class(data={})
+        except KeyError:
+            pass
+        else:
+            raise AssertionError("Form did not require instance (of activity_moment)")
+
+    def test_django_inheritance(self):
+        """ Test that it inherits from the correct class (thus assuming inheritence consistency) """
+        self.assertIsInstance(self.form, ModelForm)
+
+
+
+

@@ -4,13 +4,16 @@ from django.forms.widgets import HiddenInput
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import ValidationError
 
-from .models import ActivitySlot, Activity, Participant
+from .models import ActivitySlot, Activity, Participant, ActivityMoment
 from core.models import PresetImage
 
 ##################################################################################
 # Defines forms related to the membership file.
 # @since 28 AUG 2020
 ##################################################################################
+
+
+__all__ = ['RegisterNewSlotForm', 'RegisterForActivitySlotForm', 'RegisterForActivityForm', 'ActivityMomentForm']
 
 
 class RegisterAcitivityMixin:
@@ -24,9 +27,10 @@ class RegisterAcitivityMixin:
     """
     sign_up = forms.BooleanField(required=False, widget=HiddenInput)
 
-    def __init__(self, *args, activity=None, user=None, recurrence_id=None, **kwargs):
+    def __init__(self, *args, activity=None, user=None, recurrence_id=None, activity_moment=None, **kwargs):
         assert activity is not None
         assert user is not None
+        assert activity_moment is not None
 
         if activity.is_recurring:
             # If activity is recurring, a recurring id should be given
@@ -35,6 +39,7 @@ class RegisterAcitivityMixin:
         self.activity = activity
         self.recurrence_id = recurrence_id
         self.user = user
+        self.activity_moment = activity_moment
 
         super(RegisterAcitivityMixin, self).__init__(*args, **kwargs)
 
@@ -62,19 +67,19 @@ class RegisterAcitivityMixin:
         Running it raises either ValidationError X or returns None
         :param data: Given data to validate to.
         :return: Raises ValidationError or returns None """
-        if not self.activity.are_subscriptions_open(self.recurrence_id):
+        if not self.activity_moment.is_open_for_subscriptions():
             if not self.user.has_perm('activity_calendar.can_register_outside_registration_period'):
                 raise ValidationError(_("Subscriptions are currently closed."), code='closed')
 
         # Check if, when signing up, there is still room (because max is limited)
-        if data['sign_up'] and self.activity.max_participants != -1:
+        if data['sign_up'] and self.activity_moment.max_participants != -1:
             # get the number of participants
             num_participants = Participant.objects.filter(
                 activity_slot__parent_activity=self.activity,
                 activity_slot__recurrence_id=self.recurrence_id
             ).count()
             # check the number of participants
-            if num_participants >= self.activity.max_participants:
+            if self.activity_moment.get_subscribed_users().count() >= self.activity_moment.max_participants:
                 raise ValidationError(
                     _(f"This activity is already at maximum capacity."),
                     code='activity-full'
@@ -112,6 +117,7 @@ class RegisterAcitivityMixin:
         else:
             return None
 
+
 class RegisterForActivityForm(RegisterAcitivityMixin, Form):
     """
     Form for registering for normal activities that do not use multiple slots
@@ -121,20 +127,20 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
         super(RegisterForActivityForm, self).check_validity(data)
 
         # Subscribing directly on activities can only happen if we don't use the multiple-slots feature
-        if not self.activity.slot_creation == "CREATION_AUTO":
+        if not self.activity.slot_creation == Activity.SLOT_CREATION_AUTO:
             raise ValidationError(
                 _("Activity mode is incorrect. Please refresh the page."), code='invalid_slot_mode')
 
         # Check if user is already present in the activity
-        user_subscriptions = self.activity.get_user_subscriptions(self.user, self.recurrence_id)
+        user_subscriptions = self.activity_moment.get_user_subscriptions(self.user)
         if data.get('sign_up'):
-            if user_subscriptions.count() > 0:
+            if user_subscriptions.exists():
                 raise ValidationError(
                     _("User is already registered for this activity"),
                     code='already-registered'
                 )
         # User tries to sign out but is not present on (any of the) slot(s)
-        elif user_subscriptions.count() == 0:
+        elif not user_subscriptions.exists():
             # User tries to unsubscribe from the activity, but there is no slot so this is not possible.
             raise ValidationError(_("User was not registered to this activity"), code='not-registered')
 
@@ -152,7 +158,7 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
             activity_slot.participants.add(self.user)
             return True
         else:
-            self.activity.get_user_subscriptions(self.user, self.recurrence_id).delete()
+            self.activity_moment.get_user_subscriptions(self.user).delete()
             return False
 
 
@@ -163,8 +169,7 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
     def check_validity(self, data):
         super(RegisterForActivitySlotForm, self).check_validity(data)
 
-        slot_obj = self.activity.activity_slot_set.filter(
-            recurrence_id=self.recurrence_id,
+        slot_obj = self.activity_moment.get_slots().filter(
             id=data.get('slot_id', -1)
         ).first()
 
@@ -258,9 +263,9 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
         super(RegisterNewSlotForm, self).check_validity(data)
 
         # Is user allowed to create a slot
-        if self.activity.slot_creation == "CREATION_USER":
+        if self.activity.slot_creation == Activity.SLOT_CREATION_USER:
             pass
-        elif self.activity.slot_creation == "CREATION_NONE" \
+        elif self.activity.slot_creation == Activity.SLOT_CREATION_NONE \
                 and self.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type'):
             pass
         else:
@@ -271,7 +276,7 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
         # Can the user (in theory) join another slot?
         if data.get('sign_up', False):
-            user_subscriptions = self.activity.get_user_subscriptions(user=self.user, recurrence_id=self.recurrence_id)
+            user_subscriptions = self.activity_moment.get_user_subscriptions(user=self.user)
             if self.activity.max_slots_join_per_participant != -1 and \
                     user_subscriptions.count() >= self.activity.max_slots_join_per_participant:
                 raise ValidationError(
@@ -283,7 +288,7 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
         # Check cap for number of slots
         if not self.user.has_perm('activity_calendar.can_ignore_slot_creation_limits'):
             if self.activity.max_slots != -1 and \
-                    self.activity.max_slots <= self.activity.get_slots(recurrence_id=self.recurrence_id).count():
+                    self.activity.max_slots <= self.activity_moment.get_slots().count():
                 raise ValidationError(
                     _("Maximum number of slots already claimed"),
                     code='max-slots-claimed'
@@ -302,3 +307,20 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
             slot_obj.participants.add(self.user)
 
         return slot_obj
+
+
+class ActivityMomentForm(ModelForm):
+    class Meta:
+        model = ActivityMoment
+        exclude = ['parent_activity', 'recurrence_id']
+
+    def __init__(self, *args, instance=None, **kwargs):
+        # Require that an instance is given as this contains the required attributes parent_activity and recurrence_id
+        if instance is None:
+            raise KeyError("Instance of ActivityMoment was not given")
+        super(ActivityMomentForm, self).__init__(*args, instance=instance, **kwargs)
+
+        # Set a placeholder on all fields
+        for key, field in self.fields.items():
+            attr_name = key[len('local_'):]
+            field.widget.attrs['placeholder'] = getattr(self.instance.parent_activity, attr_name)

@@ -13,6 +13,7 @@ urlpatterns = [
         path('activity/<int:activity_id>/<dt:recurrence_id>/', include([
             path('', views.get_activity_detail_view, name='activity_slots_on_day'),
             path('create_slot/', views.CreateSlotView.as_view(), name='create_slot'),
+            path('edit/', views.EditActivityMomentView.as_view(), name='edit_moment')
         ])),
     ])),
 

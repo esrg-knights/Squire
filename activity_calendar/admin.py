@@ -1,13 +1,12 @@
 from django.contrib import admin
+from .models import Activity, ActivitySlot, Participant, ActivityMoment
 from django.utils.timezone import localtime
-
-from .models import Activity, ActivitySlot, Participant
 
 
 
 class ActivityAdmin(admin.ModelAdmin):
     def is_recurring(self, obj):
-        return obj.is_recurring        
+        return obj.is_recurring
     is_recurring.boolean = True
 
     list_display = ('id', 'title', 'start_date', 'is_recurring', 'subscriptions_required', )
@@ -15,6 +14,31 @@ class ActivityAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'title')
 
 admin.site.register(Activity, ActivityAdmin)
+
+
+
+
+@admin.register(ActivityMoment)
+class ActivityMomentAdmin(admin.ModelAdmin):
+    list_filter = ['parent_activity']
+    fields = ['parent_activity', 'recurrence_id', 'local_description', 'local_location', 'local_max_participants']
+
+    def activity_moment_has_changes(obj):
+        """ Check if this ActivityModel has any data it overwrites """
+        for field in obj._meta.local_fields:
+            # Check for all local_ fields if it is None, if not, it overwrites an attribute
+            if field.name.startswith("local_"):
+                local_value = getattr(obj, field.name)
+                if local_value is not None and local_value != "":
+                    return True
+        return False
+    activity_moment_has_changes.boolean = True
+    activity_moment_has_changes.short_description = 'Is tweaked'
+    list_display = ["title", "recurrence_id", "last_updated", activity_moment_has_changes]
+
+
+
+
 
 class ParticipantInline(admin.TabularInline):
     model = Participant
