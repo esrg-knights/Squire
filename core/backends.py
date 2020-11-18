@@ -9,35 +9,34 @@ from membership_file.models import MemberUser
 # @since 03 NOV 2020
 # #####################################################################################
 
-# Permissions for everyone (including anonymous users)
-base_permissions = (),
-
-# Permissions for users who are logged in
-logged_in_user_permissions = (
-    'activity_calendar.can_view_activity_participants_during',
-)
-
-# Permissions for users who are members
-member_permissions = (
-    'achievements.can_view_claimants',
-    'activity_calendar.can_view_activity_participants_before',
-    'membership_file.can_view_membership_information_self',
-    'membership_file.can_change_membership_information_self',
-)
-
-
 class BaseUserBackend(ModelBackend):
+    # Permissions for everyone (including anonymous users)
+    base_permissions = (),
+
+    # Permissions for users who are logged in
+    logged_in_user_permissions = (
+        'activity_calendar.can_view_activity_participants_during',
+    )
+
+    # Permissions for users who are members
+    member_permissions = (
+        'achievements.can_view_claimants',
+        'activity_calendar.can_view_activity_participants_before',
+        'membership_file.can_view_membership_information_self',
+        'membership_file.can_change_membership_information_self',
+    )
+
     def has_perm(self, user, perm, obj=None):
         # Permissions for everyone
-        if perm in base_permissions:
+        if perm in BaseUserBackend.base_permissions:
             return True
         
         # Permissions for logged in users
-        if user.is_authenticated and perm in logged_in_user_permissions:
+        if user.is_authenticated and perm in BaseUserBackend.logged_in_user_permissions:
             return True
 
         # Permissions for members
-        if MemberUser(user.id).is_member() and perm in member_permissions:
+        if MemberUser(user.id).is_member() and perm in BaseUserBackend.member_permissions:
             return True
         
         return False

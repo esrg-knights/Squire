@@ -46,9 +46,9 @@ def editOwnMembership(request):
 
     # Members who are marked for deletion cannot be edited
     if member.marked_for_deletion:
-        #TODO: work with permission system so board members can edit other user's info with
+        # TODO: work with permission system so board members can edit other user's info with
         # the same form, without needing to be an admin (and doing it via the admin panel)
-        raise HttpResponseForbidden()
+        return HttpResponseForbidden()
 
     # Process form data
     if request.method == 'POST':

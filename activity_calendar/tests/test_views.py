@@ -344,6 +344,34 @@ class ActivitySlotViewTest(TestActivityViewMixin, TestCase):
         self.assertEqual(response.template_name[0], ActivityMomentWithSlotsView.template_name)
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_get_page_slot_mode(self, mock_tz):
+        # User can create slots, as all users can create slots for it
+        # User should also be automatically signed up for it
+        response = self.build_get_response()
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('slot_creation_form', response.context)
+        self.assertIsInstance(response.context['slot_creation_form'], RegisterNewSlotForm)
+        self.assertTrue(response.context['slot_creation_form'].initial.get('sign_up'))
+
+        # User cannot create slots, as it does not have the relevant permissions
+        self.activity.slot_creation = Activity.SLOT_CREATION_STAFF
+        self.activity.save()
+        response = self.build_get_response()
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('slot_creation_form', response.context)
+        self.assertIsNone(response.context['slot_creation_form'])
+
+        # User can create slots, as it has the relevant permission
+        # User should NOT automatically be signed up for it
+        self.user.user_permissions.add(Permission.objects.get(codename='can_ignore_none_slot_creation_type'))
+        response = self.build_get_response()
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('slot_creation_form', response.context)
+        self.assertIsInstance(response.context['slot_creation_form'], RegisterNewSlotForm)
+        self.assertFalse(response.context['slot_creation_form'].initial.get('sign_up'))
+
+
+    @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_normal_get_page_signed_up(self, mock_tz):
         # Add the user
         slot = ActivitySlot.objects.filter(

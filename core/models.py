@@ -44,7 +44,7 @@ def get_image_upload_path(instance, filename):
 
 class PresetImageManager(models.Manager):
     def for_user(self, user):
-        if user.has_perm('achievements.can_select_presetimage_any'):
+        if user.has_perm('core.can_select_presetimage_any'):
             return self.get_queryset()
         return self.get_queryset().filter(selectable=True)
 
