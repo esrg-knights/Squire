@@ -3,7 +3,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission, AnonymousUser
 
-from core.backends import BaseUserBackend
+from dynamic_preferences.registries import global_preferences_registry
+
 from membership_file.models import Member
 
 User = get_user_model()
@@ -19,9 +20,16 @@ class BaseBackendTest(TestCase):
     @override_settings(MEMBERSHIP_FILE_EXPORT_PATH=None)
     def test_default_permissions(self):
         # Override default permissions with test permissions
-        BaseUserBackend.base_permissions = ('core.add_presetimage',)
-        BaseUserBackend.logged_in_user_permissions = ('core.change_presetimage',)
-        BaseUserBackend.member_permissions = ('core.delete_presetimage',)
+        global_preferences = global_preferences_registry.manager()
+
+        global_preferences['permissions__base_permissions'] = \
+            Permission.objects.filter(content_type__app_label='core', codename='add_presetimage')
+
+        global_preferences['permissions__user_permissions'] = \
+            Permission.objects.filter(content_type__app_label='core', codename='change_presetimage')
+
+        global_preferences['permissions__member_permissions'] = \
+            Permission.objects.filter(content_type__app_label='core', codename='delete_presetimage')
 
         # Anonymous user permissions
         user = AnonymousUser()
