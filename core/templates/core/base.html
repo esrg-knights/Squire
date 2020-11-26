@@ -30,7 +30,7 @@
 	<body class='d-flex flex-column'>
 		<nav class="navbar navbar-expand-lg navbar-dark greenify">
 			<a class="navbar-brand" href="/">
-				<img src="{% static 'images/logo_black_dragon_white_text.png' %}" alt="Modified Knights Logo" height=85px>
+				<img src="{% static 'images/logo_black_dragon_white_text.png' %}" alt="Modified Knights Logo" height="85px">
 				<span class="brand-text">Squire</span>
 			</a>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,11 @@
 					<li>
 						<a class="nav-link" href="/calendar">Activity Calendar</a>
 					</li>
+					{% if user.is_authenticated %}
+						<li>
+							<a class="nav-link" href="/newsletters">Newsletter</a>
+						</li>
+					{% endif %}
 				</ul>
 				<ul class="navbar-nav navbar-right">
 					{% if user.is_authenticated %}
@@ -67,7 +72,7 @@
 						<li class="nav-item">
 							<a class="nav-link" href="{% url 'core/user_accounts/login' %}">Sign in</a>
 						</li>
-					{% endif %}					
+					{% endif %}
 				</ul>
 			</div>
 		</nav>
