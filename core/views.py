@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render
 from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.shortcuts import redirect
@@ -26,6 +27,13 @@ def logoutSuccess(request):
     if request.user.is_authenticated:
         return redirect(reverse('core/user_accounts/logout'))
     return render(request, 'core/user_accounts/logout-success.html', {})
+
+@require_safe
+@login_required
+def viewNewsletters(request):
+    return render(request, 'core/newsletters.html', {
+        'NEWSLETTER_ARCHIVE_URL': settings.NEWSLETTER_ARCHIVE_URL,
+    })
 
 
 @require_safe

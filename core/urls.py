@@ -65,5 +65,6 @@ urlpatterns = [
     path('account', views.viewAccount, name='core/user_accounts/account'),
     path('register', views.register, name='core/user_accounts/register'),
     path('register/success', views.registerSuccess, name='core/user_accounts/register/success'),
+    path('newsletters/', views.viewNewsletters, name='core/newsletters'),
     path('', views.homePage, name='core/homepage'),
 ]
