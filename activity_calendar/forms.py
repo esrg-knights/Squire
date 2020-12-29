@@ -12,7 +12,10 @@ from .models import ActivitySlot, Activity, Participant, ActivityMoment
 ##################################################################################
 
 
-__all__ = ['RegisterNewSlotForm', 'RegisterForActivitySlotForm', 'RegisterForActivityForm', 'ActivityMomentForm']
+__all__ = [
+    'RegisterNewSlotForm', 'RegisterForActivitySlotForm', 'RegisterForActivityForm',
+    'ActivityMomentForm', 'ActivityMomentAdminForm'
+]
 
 
 class RegisterAcitivityMixin:
@@ -292,11 +295,13 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
         return slot_obj
 
-
 class ActivityMomentForm(ModelForm):
     class Meta:
         model = ActivityMoment
-        exclude = ['parent_activity', 'recurrence_id']
+        fields = ['local_title', 'local_description',
+            'local_location', 'local_max_participants', 'local_subscriptions_required',
+            'local_slot_creation', 'local_private_slot_locations'
+        ]
 
     def __init__(self, *args, instance=None, **kwargs):
         # Require that an instance is given as this contains the required attributes parent_activity and recurrence_id
@@ -309,7 +314,7 @@ class ActivityMomentForm(ModelForm):
             attr_name = key[len('local_'):]            
 
             if isinstance(field.widget, forms.Select):
-                # Replace the "-------" option for <select> fields
+                # Replace the "-------" or "unknown" option for <select> fields
 
                 # Obtain value from parent_activity.get_FOO_display() if it exists
                 # Otherwise, we must be working with a true/false value from a BooleanField without custom options
@@ -319,10 +324,16 @@ class ActivityMomentForm(ModelForm):
 
                 null_choice_text = _(f'{get_parent_field_display_value()} (Inherited from base activity)')
 
-                # Replace the "-------" option by our newly generated text
+                # Replace the "-------" or "unknown" option by our newly generated text
                 field.widget.choices = [
-                    ((k, null_choice_text) if k == '' else (k, v)) for (k, v) in field.widget.choices
+                    ((k, null_choice_text) if k in ['', 'unknown'] else (k, v)) for (k, v) in field.widget.choices
                 ]
             else:
                 # Set HTML Placeholder for all other fields
-                field.widget.attrs['placeholder'] = getattr(self.instance.parent_activity, attr_name)
+                field.widget.attrs['placeholder'] = getattr(self.instance.parent_activity, attr_name, None)
+
+# The ActivityMoment admin form is identical to the form used in the front-end,
+#   but also allows changing the parent_activity and recurrence_id
+class ActivityMomentAdminForm(ActivityMomentForm):
+    class Meta():
+        fields = ['parent_activity', 'recurrence_id'] + ActivityMomentForm.Meta.fields

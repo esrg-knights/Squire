@@ -263,14 +263,6 @@ class ActivityDuplicate(ModelBase):
                         new_field.name = new_field_name
 
                         attrs[new_field_name] = new_field
-
-                        if isinstance(field, models.BooleanField):
-                            # Override choices for BooleanField with null=True.
-                            # Without this, the null-selection shows up as 'unknown' (which is misleading)
-                            new_field.choices = BLANK_CHOICE_DASH + [
-                                (True,  _('Yes')),
-                                (False, _('No')),
-                            ]
                         break
                 else:
                     raise KeyError(f"'{field_name}' is not a property on Activity")
@@ -312,7 +304,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     class Meta:
         unique_together = ['parent_activity', 'recurrence_id']
         # Define the fields that can be locally be overwritten
-        copy_fields = ['title', 'description', 'location', 'max_participants', 'private_slot_locations', 'slot_creation']
+        copy_fields = ['title', 'description', 'location', 'max_participants', 'subscriptions_required', 'slot_creation', 'private_slot_locations']
         # Define fields that are instantly looked for in the parent_activity
         # If at any point in the future these must become customisable, one only has to move the field name to the
         # copy_fields attribute

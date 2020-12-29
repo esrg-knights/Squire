@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import Activity, ActivitySlot, Participant, ActivityMoment
 from django.utils.timezone import localtime
 
+from .forms import ActivityMomentAdminForm
 
 
 class ActivityAdmin(admin.ModelAdmin):
@@ -20,9 +21,8 @@ admin.site.register(Activity, ActivityAdmin)
 
 @admin.register(ActivityMoment)
 class ActivityMomentAdmin(admin.ModelAdmin):
+    form = ActivityMomentAdminForm
     list_filter = ['parent_activity']
-    fields = ['parent_activity', 'recurrence_id', 'local_title', 'local_description',
-        'local_location', 'local_private_slot_locations', 'local_max_participants']
 
     def activity_moment_has_changes(obj):
         """ Check if this ActivityModel has any data it overwrites """
