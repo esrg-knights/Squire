@@ -15,7 +15,7 @@
                 {% if slot.location %}
                     <div class="row no-gutters">
                         <small class="text-muted">
-                            Alternative Location: {{ sign_up }}
+                            Alternative Location:
                             {% if not activity_moment.private_slot_locations or user in slot.participants.all %}
                                 {{ slot.location }}
                                 {% if slot.location_is_private %}
