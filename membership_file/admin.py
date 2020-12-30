@@ -1,6 +1,8 @@
 from django.contrib import admin
-from .models import Member, MemberLog, MemberLogField
 from django.utils.html import format_html
+
+from .forms import RoomAdminForm
+from .models import Member, MemberLog, MemberLogField, Room
 
 
 class HideRelatedNameAdmin(admin.ModelAdmin):
@@ -25,6 +27,10 @@ class DisableModifications():
     def has_delete_permission(self, request, obj=None):
         return False
 
+class RoomInline(admin.TabularInline):
+    model = Room.members_with_access.through
+    extra = 0
+
 
 class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
     model = MemberLog
@@ -42,16 +48,35 @@ class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
 
 # Ensures that the last_updated_by field is also updated properly from the Django admin panel
 class MemberWithLog(HideRelatedNameAdmin):
+    form = RoomAdminForm
 
     list_display = ('id', 'user', 'first_name', 'tussenvoegsel', 'last_name', 'educational_institution', 'is_deregistered', 'marked_for_deletion')
-    list_filter = ['educational_institution', 'is_deregistered', 'marked_for_deletion']
+    list_filter = ['educational_institution', 'marked_for_deletion', 'is_deregistered', 'has_paid_membership_fee', 'is_honorary_member']
     list_display_links = ('id', 'user', 'first_name')
+    search_fields = ['first_name', 'last_name', 'email', 'phone_number', 'external_card_number']
+
+    # Display a search box instead of a dropdown menu
+    autocomplete_fields = ['user']
 
     fieldsets = [
-        (None,               {'fields': ['user', ('first_name', 'tussenvoegsel', 'last_name'), 'date_of_birth', ('last_updated_date', 'last_updated_by'), 'is_deregistered', 'marked_for_deletion']}),
-        ('Contact Details', {'fields': ['email', 'phone_number', ('street', 'house_number', 'house_number_addition'), 'city', ('state', 'country')]}),
-        ('Card Access', {'fields': ['tue_card_number', ('external_card_number', 'external_card_digits', 'external_card_cluster')]}),
-        ('Student Information', {'fields': ['initials', 'educational_institution', 'student_number']}),
+        (None, {'fields':
+            ['user', ('first_name', 'tussenvoegsel', 'last_name'),
+            'marked_for_deletion', 'preferred_pronoun',
+            ('last_updated_date', 'last_updated_by'),]}),
+        ('Membership Status', {'fields': 
+            ['is_deregistered', 'has_paid_membership_fee', 'is_honorary_member', 'member_since']}),
+        ('Contact Details', {'fields': 
+            ['email', 'phone_number',
+            ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
+        ('Room Access', {'fields':
+            ['tue_card_number', 
+            ('external_card_number', 'external_card_digits', 'external_card_cluster'),
+            'external_card_deposit', 'accessible_rooms', 'normally_accessible_rooms']}),
+        ('Legal Information', {'fields':
+            ['educational_institution', 'student_number',
+            'date_of_birth', 'legal_name']}),
+        ('Notes', {'fields':
+            ['notes']}),
     ]
 
     inlines = [MemberLogReadOnlyInline]
@@ -110,6 +135,17 @@ class MemberLogReadOnly(DisableModifications, HideRelatedNameAdmin):
 
     inlines = [MemberLogFieldReadOnlyInline]
 
+class RoomAdmin(admin.ModelAdmin):
+    model = Room
+    
+    list_display = ('id', 'name', 'access')
+    list_display_links = ('id', 'name')
+    search_fields = ['name', 'access']
+
+    ordering = ("access",)
+    filter_horizontal = ('members_with_access', 'members_with_access_removed')
+
 # Register the special models, making them show up in the Django admin panel
 admin.site.register(Member, MemberWithLog)
 admin.site.register(MemberLog, MemberLogReadOnly)
+admin.site.register(Room, RoomAdmin)
