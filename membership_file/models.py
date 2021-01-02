@@ -87,10 +87,13 @@ class Member(models.Model):
     external_card_cluster = models.CharField(max_length=255, blank=True, verbose_name="cluster") 
 
     # External cards require a deposit, which has changed over the years
-    external_card_deposit = models.DecimalField(validators=[MinValueValidator(0)], max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="deposit", help_text="External cards require a deposit.")
+    external_card_deposit = models.DecimalField(validators=[MinValueValidator(0)], max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="deposit (€)", help_text="External cards require a deposit.")
 
     # External card number and digit-pairs are a unique combination
     unique_together = [['external_card_number', 'external_card_digits']]
+
+    key_id_regex = RegexValidator(regex=r'^[0-9]{4}$', message="Key IDs consist of exaclty 4 digits. E.g. 0123")
+    key_id = models.CharField(validators=[key_id_regex], max_length=7, blank=True, null=True, unique=True, help_text="A 4-digit code used to access the keysafe.")
 
     ##################################
     # CONTACT INFORMATION
@@ -191,12 +194,14 @@ class Member(models.Model):
                 house_number += '-'
             house_number += self.house_number_addition
 
-        return "{0} {1}, {2}, {3}{4}".format(self.street, house_number, self.city, 
-            "" if self.state is None else f"{self.state}, ", self.country)
+        return "{0} {1}, {2}, {3}".format(self.street, house_number, self.city, self.country)
 
 ##################################################################################
 
 class Room(models.Model):
+    class Meta:
+        ordering = ['access', 'id']
+
     name = models.CharField(max_length=63)
     access = models.CharField(max_length=15, help_text="How access is provided. E.g. 'Key 12' or 'Campus Card'")
     notes = models.TextField(blank=True)

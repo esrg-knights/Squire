@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .forms import RoomAdminForm
+from .forms import MemberRoomForm
 from .models import Member, MemberLog, MemberLogField, Room
 
 
@@ -48,7 +48,7 @@ class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
 
 # Ensures that the last_updated_by field is also updated properly from the Django admin panel
 class MemberWithLog(HideRelatedNameAdmin):
-    form = RoomAdminForm
+    form = MemberRoomForm
 
     list_display = ('id', 'user', 'first_name', 'tussenvoegsel', 'last_name', 'educational_institution', 'is_deregistered', 'marked_for_deletion')
     list_filter = ['educational_institution', 'marked_for_deletion', 'is_deregistered', 'has_paid_membership_fee', 'is_honorary_member']
@@ -69,7 +69,7 @@ class MemberWithLog(HideRelatedNameAdmin):
             ['email', 'phone_number',
             ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
         ('Room Access', {'fields':
-            ['tue_card_number', 
+            ['key_id', 'tue_card_number', 
             ('external_card_number', 'external_card_digits', 'external_card_cluster'),
             'external_card_deposit', 'accessible_rooms', 'normally_accessible_rooms']}),
         ('Legal Information', {'fields':

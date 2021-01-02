@@ -2,6 +2,7 @@ from .models import Member, MemberUser
 from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import AccessMixin
 from django.contrib.auth import REDIRECT_FIELD_NAME, get_user
 from django.http import HttpResponseRedirect
 from django.shortcuts import resolve_url
@@ -57,3 +58,15 @@ def membership_required(function=None, fail_url=None, redirect_field_name=REDIRE
     if function:
         return decorator(function)
     return decorator
+
+
+class MembershipRequiredMixin(AccessMixin):
+    """
+        Verifies that the current user is a member.
+        Mixin-equivalent of the membership_required decorator
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_member():
+            resolved_fail_url = resolve_url(getattr(self, 'fail_url', settings.MEMBERSHIP_FAIL_URL))
+            return HttpResponseRedirect(resolved_fail_url)
+        return super().dispatch(request, *args, **kwargs)

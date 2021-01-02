@@ -1,4 +1,7 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.decorators import method_decorator
 from django.shortcuts import render, get_object_or_404
+from django.views.generic import DetailView
 
 # Redirect shortcuts
 from django.shortcuts import redirect
@@ -8,10 +11,10 @@ from django.http import HttpResponseForbidden
 # @require_safe only accepts HTTP GET and HEAD requests
 from django.views.decorators.http import require_safe
 
-from .models import MemberUser as User
+from .models import MemberUser
 from .models import Member, MemberLog
 from .forms import MemberForm
-from .util import membership_required, request_member
+from .util import membership_required, request_member, MembershipRequiredMixin
 
 from core.views import TemplateManager
 
@@ -30,16 +33,25 @@ def viewNoMember(request):
     return render(request, 'membership_file/no_member.html', {})
 
 
-# Renders the webpage for viewing a user's own membership information
-@require_safe
-@membership_required
-@request_member
-def viewOwnMembership(request):
-    tData = {'member': request.user.get_member()}
-    return render(request, 'membership_file/view_member.html', tData)
+# Page for viewing membership information
+class MemberView(LoginRequiredMixin, MembershipRequiredMixin, DetailView):
+    model = Member
+    template_name = 'membership_file/view_member.html'
+
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+
+        # Odd loop-around because all logged in users should be treated as memberusers
+        if self.request.user.is_authenticated:
+            self.request.user.__class__ = MemberUser
+            self.object = request.user.get_member()
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
 
 
-# Renders the webpage for viewing a user's own membership information
+# Renders the webpage for editing a user's own membership information
 @membership_required
 @request_member
 def editOwnMembership(request):

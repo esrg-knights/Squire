@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='member',
             name='external_card_deposit',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='External cards require a deposit.', max_digits=5, null=True, validators=[django.core.validators.MinValueValidator(0)], verbose_name='deposit'),
+            field=models.DecimalField(blank=True, decimal_places=2, help_text='External cards require a deposit.', max_digits=5, null=True, validators=[django.core.validators.MinValueValidator(0)], verbose_name='deposit (€)'),
         ),
         migrations.AddField(
             model_name='member',
@@ -29,6 +29,11 @@ class Migration(migrations.Migration):
             model_name='member',
             name='is_honorary_member',
             field=models.BooleanField(default=False, help_text='Honorary members can stay members forever and do not need to pay a membership fee.'),
+        ),
+        migrations.AddField(
+            model_name='member',
+            name='key_id',
+            field=models.CharField(blank=True, help_text='A 4-digit code used to access the keysafe.', max_length=7, null=True, unique=True, validators=[django.core.validators.RegexValidator(message='Key IDs consist of exaclty 4 digits. E.g. 0123', regex='^[0-9]{4}$')]),
         ),
         migrations.AddField(
             model_name='member',
@@ -125,5 +130,8 @@ class Migration(migrations.Migration):
                 ('members_with_access', models.ManyToManyField(blank=True, related_name='accessible_rooms', to='membership_file.Member')),
                 ('members_with_access_removed', models.ManyToManyField(blank=True, related_name='normally_accessible_rooms', to='membership_file.Member')),
             ],
+            options={
+                'ordering': ['access', 'id'],
+            },
         ),
     ]

@@ -6,37 +6,57 @@
 {% endblock title %}
 
 {% block content %}
-        <h1>Hello {{member.first_name}}!</h1>
+        <h1>Hello {{member.user}}!</h1>
         <p>
-            You're a member since {{member.member_since}}.
+            This page shows everything Squire knows about you.
+            While you can edit most of it yourself, do contact the board if uneditable information is incorrect.
         </p>
 
         <h3>Basic Information</h3>
         <p>
-            Name: <i>{{member.get_full_name}}</i><br>
-            Date of Birth: <i>{{member.date_of_birth}}</i><br>
-            Address: <i>{{member.display_address}}</i><br>
+            Name: <i>{{ member.get_full_name }}</i><br>
+            Preferred Pronoun: <i>{{ member.preferred_pronoun }}</i>
+        </p>
+
+        <h3>Membership Status</h3>
+        <p>
+            You're a member since {{ member.member_since }}.<br>
+            {% if member.is_honorary_member %}
+                You are a honorary member.
+            {% else %}
+            Your membership fee for this year has {% if member.has_paid_membership_fee %}<b>not</b> yet{% endif %} been paid.
+            {% endif %}
         </p>
 
         <h3>Contact Details</h3>
         <p>
             Email: <i>{{member.email}}</i><br>
-            Phone Number: <i>{{member.phone_number|default:"No phone number provided"}}</i>
+            Phone Number: <i>{{member.phone_number}}</i><br>
+            Address: <i>{{member.display_address}}</i><br>
         </p>
 
-        <h3>Student Information</h3>
+        <h3>Room Access</h3>
         <p>
-            Initials: <i>{{member.initials|default:"No initials known"}}</i><br>
-            Student Number: <i>{{member.student_number|default:"No student number provided"}}</i><br>
+            Key-ID: <i>{{member.key_id}}</i><br>
+            TU/e Card Number: <i>{{member.tue_card_number}}</i><br>
+            External Card Number: <i>{{member.display_external_card_number}}</i><br>
+            {% if member.external_card_number %}
+                External Card Deposit: <i>€{{member.external_card_deposit}}</i>
+            {% endif %}
+        </p>
+        <strong>Accessible Rooms:</strong>
+        <ul>
+            {% for room in member.accessible_rooms.all %}
+            <li>{{ room }}</li>
+            {% endfor %}
+        </ul>
+
+        <h3>Legal Information</h3>
+        <p>
+            Legal Name: <i>{{member.legal_name}}</i><br>
+            Date of Birth: <i>{{member.date_of_birth}}</i><br>
+            Student Number: <i>{{member.student_number}}</i><br>
             Educational Institution: <i>{{member.educational_institution}}</i>
-        </p>
-
-        <h3>Card Numbers</h3>
-        <p>
-            Tu/e Card: <i>{{member.tue_card_number|default:"No Tu/e card in possession"}}</i><br>
-            External Card: <i>{{member.display_external_card_number|default:"No external card in possession"}}</i><br>
-
-            <small class="form-text text-muted">External cards are blue, whereas Tu/e cards are (currently) orange.</small>
         </p>
 
         <p>
