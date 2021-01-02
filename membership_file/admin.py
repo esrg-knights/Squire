@@ -49,6 +49,7 @@ class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
 # Ensures that the last_updated_by field is also updated properly from the Django admin panel
 class MemberWithLog(HideRelatedNameAdmin):
     form = MemberRoomForm
+    save_on_top = True
 
     list_display = ('id', 'user', 'first_name', 'tussenvoegsel', 'last_name', 'educational_institution', 'is_deregistered', 'marked_for_deletion')
     list_filter = ['educational_institution', 'marked_for_deletion', 'is_deregistered', 'has_paid_membership_fee', 'is_honorary_member']

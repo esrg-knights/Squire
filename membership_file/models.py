@@ -218,6 +218,9 @@ class Room(models.Model):
 
 # The MemberLog Model represents a log entry that is created whenever membership data is updated
 class MemberLog(models.Model):
+
+    MEMBERLOG_IGNORE_FIELDS = ['last_updated_date', 'last_updated_by', 'preferred_pronoun', 'normally_accessible_rooms']
+
     # The user that updated the information
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

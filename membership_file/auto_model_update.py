@@ -36,9 +36,6 @@ def post_save_member(sender, instance, created, raw, **kwargs):
     old_values_that_changed = {}
     iterableMember = MemberSerializer(instance).data
 
-    # Ignore fields that make no sense to keep track of
-    ignore_fields = ['last_updated_date', 'last_updated_by']
-
     update_type = "UPDATE"
 
     # New Member created
@@ -48,7 +45,7 @@ def post_save_member(sender, instance, created, raw, **kwargs):
     # Loop over all fields in the member, and store updated values
     for field in iterableMember: 
         # Skip fields that should be ignored
-        if field in ignore_fields:
+        if field in MemberLog.MEMBERLOG_IGNORE_FIELDS:
             continue
         # Obtain the old value
         oldValue = instance.old_values[field] if (field in instance.old_values) else None
