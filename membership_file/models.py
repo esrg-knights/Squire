@@ -118,7 +118,7 @@ class Member(models.Model):
     # OTHER INFORMATION
     ##################################
     # The date of birth of the member
-    date_of_birth = models.DateField(blank=True)
+    date_of_birth = models.DateField(blank=True, null=True)
 
     # The date at which the member became a member (automatically handled, but is overridable)
     member_since = models.DateField(default=date.today)
@@ -158,7 +158,7 @@ class Member(models.Model):
 
     # Gets the name of the member
     def get_full_name(self):
-        if self.tussenvoegsel is not None:
+        if self.tussenvoegsel:
             return "{0} {1} {2}".format(self.first_name, self.tussenvoegsel, self.last_name)
         return "{0} {1}".format(self.first_name, self.last_name)
 

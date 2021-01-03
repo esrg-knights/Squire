@@ -14,6 +14,26 @@ from .models import MemberUser as User
 # @since 05 FEB 2020
 ##################################################################################
 
+class RequestUserForm():
+
+    user = None
+
+    def __init__(self, *args, user=None, **kwargs):
+        # User that created the form (request.user in the relevant view)
+        self.user = user
+
+        # We explicitly do not pass 'user' down the Form-chain,
+        #   as it's an unexpected kwarg (for some Forms)
+        super().__init__(*args, **kwargs)
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.last_updated_by = self.user
+
+        if commit:
+            instance.save()
+        return instance
+
 class MemberRoomForm(forms.ModelForm):
     """
     ModelForm that adds an additional multiple select field for managing
@@ -44,19 +64,30 @@ class MemberRoomForm(forms.ModelForm):
             if exclude_field in self.Meta.exclude:
                 del self.fields[exclude_field]
 
-    def save(self, *args, **kwargs):
-        kwargs['commit'] = True
-        return super().save(*args, **kwargs)
+    def save(self, commit=True):
+        instance = super().save(commit=False)
 
-    def save_m2m(self):
-        self.instance.accessible_rooms.clear()
-        self.instance.accessible_rooms.add(*self.cleaned_data['accessible_rooms'])
-        self.instance.normally_accessible_rooms.clear()
-        self.instance.normally_accessible_rooms.add(*self.cleaned_data['normally_accessible_rooms'])
+        if commit:
+            instance.save()
+            self.save_m2m()
+        else:
+            # Defer saving the m2m-relation; the member might not yet exist at this point
+            self.save_m2m = self._save_m2m
+        return instance
+    
+    def _save_m2m(self):
+        super()._save_m2m()
+        for field in ['accessible_rooms', 'normally_accessible_rooms']:
+            if field not in self.Meta.exclude:
+                getattr(self.instance, field).clear()
+                getattr(self.instance, field).add(*self.cleaned_data[field])
 
+
+class AdminMemberForm(RequestUserForm, MemberRoomForm):
+    pass
 
 # A form that allows a member to be updated or created
-class MemberForm(MemberRoomForm):
+class MemberForm(RequestUserForm, MemberRoomForm):
     class Meta:
         model = Member
         exclude = ('last_updated_by', 'last_updated_date', 'marked_for_deletion', 'user', 'notes', 'normally_accessible_rooms', 'is_deregistered')

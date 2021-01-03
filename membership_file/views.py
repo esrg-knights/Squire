@@ -29,7 +29,7 @@ class RequestMemberMixin():
             self.request.user.__class__ = MemberUser
     
     def get_object(self, queryset=None):
-        return self.request.user.get_member()
+        return None if not self.request.user.is_authenticated else self.request.user.get_member()
 
 
 # Page that loads whenever a user tries to access a member-page
@@ -49,9 +49,15 @@ class MemberChangeView(LoginRequiredMixin, RequestMemberMixin, MembershipRequire
     form_class = MemberForm
     success_url = reverse_lazy('membership_file/membership')
 
+    def get_form_kwargs(self, *args, **kwargs):
+        kwargs = super().get_form_kwargs(*args, **kwargs)
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def dispatch(self, request, *args, **kwargs):
         # Members who are marked for deletion cannot edit their membership information
-        if self.get_object().marked_for_deletion:
+        obj = self.get_object()
+        if obj is not None and obj.marked_for_deletion:
             return HttpResponseForbidden()
         return super().dispatch(request, *args, **kwargs)
 

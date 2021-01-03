@@ -1,7 +1,9 @@
+import functools
+
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .forms import MemberRoomForm
+from .forms import MemberRoomForm, AdminMemberForm
 from .models import Member, MemberLog, MemberLogField, Room
 
 
@@ -48,7 +50,7 @@ class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
 
 # Ensures that the last_updated_by field is also updated properly from the Django admin panel
 class MemberWithLog(HideRelatedNameAdmin):
-    form = MemberRoomForm
+    form = AdminMemberForm
     save_on_top = True
 
     list_display = ('id', 'user', 'first_name', 'tussenvoegsel', 'last_name', 'educational_institution', 'is_deregistered', 'marked_for_deletion')
@@ -82,12 +84,11 @@ class MemberWithLog(HideRelatedNameAdmin):
 
     inlines = [MemberLogReadOnlyInline]
 
-    # Show the date and user that last updated the member
-    # Override the admin panel's save method to automatically include the user that updated the member
-    def save_model(self, request, obj, form, change):
-        obj.last_updated_by = request.user
-        super().save_model(request, obj, form, change)
-
+    def get_form(self, request, obj=None, **kwargs):
+        # Pass request.user to the form
+        Form = super().get_form(request, obj=None, **kwargs)
+        return functools.partial(Form, user=request.user)
+        
     # Disable field editing if the member was marked for deletion (except the marked_for_deletion field)
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = ['last_updated_by', 'last_updated_date']

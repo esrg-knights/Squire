@@ -118,7 +118,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='member',
             name='date_of_birth',
-            field=models.DateField(blank=True),
+            field=models.DateField(blank=True, null=True),
         ),
         migrations.CreateModel(
             name='Room',
