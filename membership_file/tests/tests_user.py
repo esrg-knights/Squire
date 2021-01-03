@@ -67,7 +67,7 @@ class MemberfileEditTest(TestCase):
 
         # Test Member Data
         self.member_data = {
-            "initials": "J.D.",
+            "legal_name": "J.D.",
             "first_name": "John",
             "last_name": "Doe",
             "date_of_birth": "1970-01-01",
@@ -89,7 +89,7 @@ class MemberfileEditTest(TestCase):
     # Tests correct edit
     def test_correct_edit(self):
         form_data = {
-            "initials": "J.D.",
+            "legal_name": "J.D.",
             "first_name": "John",
             "last_name": "Doe",
             "date_of_birth": "1970-01-01",
@@ -128,7 +128,7 @@ class MemberfileEditTest(TestCase):
     # Tests an invalid edit
     def test_invalid_edit(self):
         form_data = {
-            "initials": "J.D.",
+            "legal_name": "J.D.",
             "first_name": "John",
             "last_name": "Doe",
             "date_of_birth": "1970-01-01",
@@ -157,7 +157,7 @@ class MemberfileEditTest(TestCase):
     # Tests if redirected if an unauthenticated user tries to edit information
     def test_unauthenticated_user_redirect(self):
         form_data = {
-            "initials": "J.D.",
+            "legal_name": "J.D.",
             "first_name": "John",
             "last_name": "Doe",
             "date_of_birth": "1970-01-01",
@@ -188,7 +188,7 @@ class MemberfileEditTest(TestCase):
         other_user = User.objects.create(username="user2", password="password")
         other_user.save()
         form_data = {
-            "initials": "J.D.",
+            "legal_name": "J.D.",
             "first_name": "John",
             "last_name": "Doe",
             "date_of_birth": "1970-01-01",
@@ -263,6 +263,7 @@ class MemberRenderTest(TestCase):
             "email": "johndoe@example.com",
             "street": "Main Street",
             "house_number": "42",
+            "postal_code": "1395 AB",
             "city": "New York",
             "country": "U.S.A.",
             "member_since": "1970-01-01",
@@ -287,6 +288,7 @@ class MemberRenderTest(TestCase):
             "country": "The Netherlands",
             "member_since": "1970-01-01",
             "educational_institution": "TU/e",
+            "legal_name": "De Bunker",
         }
         updater_member = Member.objects.create(**memberData)
         updater = User.objects.create_user(username="updater_username", password="password")
@@ -335,32 +337,18 @@ class MemberRenderTest(TestCase):
 
     # Tests the address display method
     def test_address(self):
-        # Display without state and house number addition
+        # Display without house number addition
         self.member_to_run_tests_on.house_number_addition = None
-        self.member_to_run_tests_on.state = None
-        self.assertEqual("Main Street 42, New York, U.S.A.", self.member_to_run_tests_on.display_address())
+        self.assertEqual("Main Street 42; 1395 AB, New York (U.S.A.)", self.member_to_run_tests_on.display_address())
 
-        # Display with state and house number (alphabet character) addition
+        # Display with house number (alphabet character) addition
         self.member_to_run_tests_on.house_number_addition = "a"
-        self.member_to_run_tests_on.state = "West Virginia"
-        self.assertEqual("Main Street 42a, New York, West Virginia, U.S.A.", self.member_to_run_tests_on.display_address())
+        self.assertEqual("Main Street 42a; 1395 AB, New York (U.S.A.)", self.member_to_run_tests_on.display_address())
 
-        # Display with state and house number (non-alphabet character) addition
+        # Display with house number (non-alphabet character) addition
         self.member_to_run_tests_on.house_number_addition = "0456"
-        self.member_to_run_tests_on.state = "West Virginia"
-        self.assertEqual("Main Street 42-0456, New York, West Virginia, U.S.A.", self.member_to_run_tests_on.display_address())
+        self.assertEqual("Main Street 42-0456; 1395 AB, New York (U.S.A.)", self.member_to_run_tests_on.display_address())
 
-        # Display without state and with house number (alphabet character) addition
-        self.member_to_run_tests_on.house_number_addition = "a"
-        self.member_to_run_tests_on.state = None
-        self.assertEqual("Main Street 42a, New York, U.S.A.", self.member_to_run_tests_on.display_address())
-
-        # Display without state and with house number (non-alphabet character) addition
-        self.member_to_run_tests_on.house_number_addition = "0456"
-        self.member_to_run_tests_on.state = None
-        self.assertEqual("Main Street 42-0456, New York, U.S.A.", self.member_to_run_tests_on.display_address())
-
-        # Display with state and without house number addition
-        self.member_to_run_tests_on.house_number_addition = None
-        self.member_to_run_tests_on.state = "West Virginia"
-        self.assertEqual("Main Street 42, New York, West Virginia, U.S.A.", self.member_to_run_tests_on.display_address())
+        # Display nothing; no address provided
+        self.member_to_run_tests_on.city = None
+        self.assertIsNone(self.member_to_run_tests_on.display_address())

@@ -84,7 +84,15 @@ class MemberRoomForm(forms.ModelForm):
 
 
 class AdminMemberForm(RequestUserForm, MemberRoomForm):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Disable all fields if the member is marked for deletion
+        if self.instance.marked_for_deletion:
+            for field in self.fields:
+                self.fields[field].disabled = True
+            self.fields['marked_for_deletion'].disabled = False
+        
 
 # A form that allows a member to be updated or created
 class MemberForm(RequestUserForm, MemberRoomForm):

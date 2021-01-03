@@ -58,6 +58,8 @@ class MemberWithLog(HideRelatedNameAdmin):
     list_display_links = ('id', 'user', 'first_name')
     search_fields = ['first_name', 'last_name', 'email', 'phone_number', 'external_card_number']
 
+    readonly_fields = ['last_updated_by', 'last_updated_date']
+
     # Display a search box instead of a dropdown menu
     autocomplete_fields = ['user']
 
@@ -89,18 +91,6 @@ class MemberWithLog(HideRelatedNameAdmin):
         Form = super().get_form(request, obj=None, **kwargs)
         return functools.partial(Form, user=request.user)
         
-    # Disable field editing if the member was marked for deletion (except the marked_for_deletion field)
-    def get_readonly_fields(self, request, obj=None):
-        readonly_fields = ['last_updated_by', 'last_updated_date']
-        if obj is None or not obj.marked_for_deletion:
-            return readonly_fields
-        readonly_fields = list(set(
-            readonly_fields +
-            [field.name for field in self.opts.local_fields] +
-            [field.name for field in self.opts.local_many_to_many]
-        ))
-        readonly_fields.remove('marked_for_deletion')
-        return readonly_fields
 
     # Disable deletion if the member was not marked for deletion
     # Disable deletion for the user that marked the member for deletion

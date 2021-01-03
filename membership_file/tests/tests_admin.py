@@ -35,6 +35,7 @@ class MemberLogCleanupTest(TestCase):
             "country": "The Netherlands",
             "member_since": "1970-01-01",
             "educational_institution": "TU/e",
+            "legal_name": "Lunafest",
         }
         self.member = Member.objects.create(**self.memberData)
 
@@ -70,27 +71,6 @@ class MemberLogTest(TestCase):
 
         # An empty dictionary of all fields that are set when making a POST request for a member
         cls.emptyMemberDictionary = {
-            "user": "",
-            "initials": "",
-            "first_name": "",
-            "tussenvoegsel": "",
-            "last_name": "",
-            "tue_card_number": "",
-            "external_card_number": "",
-            "external_card_digits": "",
-            "external_card_cluster": "",
-            "date_of_birth": "",
-            "email": "",
-            "phone_number": "",
-            "street": "",
-            "house_number": "",
-            "house_number_addition": "",
-            "city": "",
-            "state": "",
-            "country": "",
-            "member_since": "",
-            "educational_institution": "",
-            "is_deregistered": "",
             "updated_member-TOTAL_FORMS": 0,
             "updated_member-INITIAL_FORMS": 0,
             "updated_member-MIN_NUM_FORMS": 0,
@@ -110,7 +90,7 @@ class MemberLogTest(TestCase):
 
         # Create a Member
         self.memberData = {
-            "initials": "F.C.",
+            "legal_name": "F.C.",
             "first_name": "Fantasy",
             "last_name": "Court",
             "date_of_birth": "1970-01-01",
@@ -136,25 +116,31 @@ class MemberLogTest(TestCase):
 
         # Define test data
         self.email = "info-kotkt@example.com"
-        self.data = fillDictKeys(self.emptyMemberDictionary, {
-            "user": "",
-            "initials": "E.S.R.G.",
+        self.data = {
+            "legal_name": "E.S.R.G.",
             "first_name": "Knights",
             "tussenvoegsel": "of the",
             "last_name": "Kitchen Table",
-            "date_of_birth": "1970-01-01",
+            "student_number": "",
+            "educational_institution": "TU/e",
+            "external_card_digits": "",
+            "external_card_cluster": "",
             "email": self.email,
             "street": "De Lampendriessen",
             "house_number": "31",
             "house_number_addition": "11",
+            "postal_code": "1228 AB",
             "city": "Eindhoven",
-            "state": "Noord-Brabant",
             "country": "The Netherlands",
+            "date_of_birth": "1970-01-01",
             "member_since": "1970-01-01",
-            "educational_institution": "TU/e",
             "is_deregistered": True,
-        })
-        self.numNonEmptyFields = getNumNonEmptyFields(self.data)
+            "is_honorary_member": False,
+            "has_paid_membership_fee": False,
+            "notes": "",
+        }
+        self.numNonEmptyFields = len(self.data)
+        self.data = fillDictKeys(self.emptyMemberDictionary, self.data)
 
     # Tests if an INSERT MemberLog is created after creating a new member
     # but without marked_for_deletion
@@ -408,6 +394,7 @@ class DeleteMemberTest(TestCase):
             "country": "The Netherlands",
             "member_since": "1970-01-01",
             "educational_institution": "TU/e",
+            "legal_name": "Hackmanite Turbotyping Programming Squad",
         }
         self.member = Member.objects.create(**self.memberData)
 
@@ -492,12 +479,12 @@ class DeleteMemberTest(TestCase):
         self.member.last_updated_by = self.admin2
         self.memberData['marked_for_deletion'] = 'on'
 
-        Member.save(self.member)
+        self.member.save()
 
         # Remove MemberLogs that were created during this update
         MemberLog.objects.all().delete()
 
-        # The member's data got updated, even tho marked_for_deletion = True!
+        # Try to update this member's, even though marked_for_deletion = True
         updatedFields = {
             'first_name': 'NewFirstName',
         }
@@ -514,5 +501,3 @@ class DeleteMemberTest(TestCase):
 
         # Ensure that no memberlog got created
         self.assertEqual(MemberLog.objects.all().count(), 0)
-
-    
