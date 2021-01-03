@@ -1,7 +1,9 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseForbidden
 from django.views.generic import DetailView, TemplateView, UpdateView
 from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 
 from .models import MemberUser, Member
 from .forms import MemberForm
@@ -52,3 +54,8 @@ class MemberChangeView(LoginRequiredMixin, RequestMemberMixin, MembershipRequire
         if self.get_object().marked_for_deletion:
             return HttpResponseForbidden()
         return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        message = _("Your membership information has been saved successfully!")
+        messages.success(self.request, message)
+        return super().form_valid(form)
