@@ -177,24 +177,32 @@ class Member(models.Model):
     def display_external_card_number(self):
         if self.external_card_number is None:
             return None
-        if self.external_card_cluster is None:
+        
+        display_card = self.external_card_number
+        if self.external_card_digits:
+            # Not all external card have a 3-digit code (E.g. parking cards)
+            display_card += f"-{self.external_card_digits}"
+        
+        if self.external_card_cluster:
             # Not all external cards have a cluster
-            return "{0}-{1}".format(self.external_card_number, self.external_card_digits)
-        if self.external_card_digits is None:
-            # Not all external cards have a 3-digit code (E.g. parking cards)
-            return "{0} ({1})".format(self.external_card_number, self.external_card_cluster)
-        return "{0}-{1} ({2})".format(self.external_card_number, self.external_card_digits, self.external_card_cluster)
+            display_card += f" ({self.external_card_cluster})"
+        
+        return display_card
 
     # Displays a user's address
     def display_address(self):
+        if not self.city:
+            # Return nothing if the address is not provided
+            return None
+
         house_number = str(self.house_number)
         if self.house_number_addition is not None:
             # If the house number starts with a number, add a dash
             if not self.house_number_addition[:1].isalpha():
                 house_number += '-'
             house_number += self.house_number_addition
-
-        return "{0} {1}, {2}, {3}".format(self.street, house_number, self.city, self.country)
+        # <Street> <Number><Addition>; <Postal>, <City> (<Country>)
+        return "{0} {1}; {2}, {3} ({4})".format(self.street, house_number, self.postal_code, self.city, self.country)
 
 ##################################################################################
 

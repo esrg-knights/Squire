@@ -6,7 +6,7 @@
 {% endblock title %}
 
 {% block content %}
-        <h1>Hello {{member.user}}!</h1>
+        <h1>Hello {{ member.user }}!</h1>
         <p>
             This page shows everything Squire knows about you.
             While you can edit most of it yourself, do contact the board if uneditable information is incorrect.
@@ -15,7 +15,7 @@
         <h3>Basic Information</h3>
         <p>
             Name: <i>{{ member.get_full_name }}</i><br>
-            Preferred Pronoun: <i>{{ member.preferred_pronoun }}</i>
+            Preferred Pronoun: <i>{{ member.preferred_pronoun|default:"Not provided" }}</i>
         </p>
 
         <h3>Membership Status</h3>
@@ -24,39 +24,47 @@
             {% if member.is_honorary_member %}
                 You are a honorary member.
             {% else %}
-            Your membership fee for this year has {% if member.has_paid_membership_fee %}<b>not</b> yet{% endif %} been paid.
+            Your membership fee for this year has {% if not member.has_paid_membership_fee %}<b>not</b> yet{% endif %} been paid.
             {% endif %}
         </p>
 
         <h3>Contact Details</h3>
         <p>
-            Email: <i>{{member.email}}</i><br>
-            Phone Number: <i>{{member.phone_number}}</i><br>
-            Address: <i>{{member.display_address}}</i><br>
+            Email: <i>{{ member.email }}</i><br>
+            Phone Number: <i>{{ member.phone_number|default:"Not provided" }}</i><br>
+            Address: <i>{{ member.display_address|default:"Not provided" }}</i><br>
         </p>
 
         <h3>Room Access</h3>
         <p>
-            Key-ID: <i>{{member.key_id}}</i><br>
-            TU/e Card Number: <i>{{member.tue_card_number}}</i><br>
-            External Card Number: <i>{{member.display_external_card_number}}</i><br>
+            Key-ID: <i>{{ member.key_id|default:"None" }}</i><br>
+            TU/e Card Number: <i>{{ member.tue_card_number|default:"None" }}</i><br>
+            External Card Number: <i>{{ member.display_external_card_number|default:"None" }}</i><br>
             {% if member.external_card_number %}
-                External Card Deposit: <i>€{{member.external_card_deposit}}</i>
+                External Card Deposit: <i>€{{ member.external_card_deposit|default:"THIS SHOULD BE FILLED IN; PLEASE CONTACT THE BOARD" }}</i>
             {% endif %}
+            <br><small>External Cards can be used by non-TU/e students to access certain rooms.</small>
         </p>
         <strong>Accessible Rooms:</strong>
-        <ul>
-            {% for room in member.accessible_rooms.all %}
-            <li>{{ room }}</li>
-            {% endfor %}
-        </ul>
+        {% if member.accessible_rooms.exists %}
+            <ul>
+                {% for room in member.accessible_rooms.all %}
+                <li>{{ room }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>None</p>
+        {% endif %}
 
         <h3>Legal Information</h3>
         <p>
-            Legal Name: <i>{{member.legal_name}}</i><br>
-            Date of Birth: <i>{{member.date_of_birth}}</i><br>
-            Student Number: <i>{{member.student_number}}</i><br>
-            Educational Institution: <i>{{member.educational_institution}}</i>
+            Legal Name: <i>{{ member.legal_name }}</i><br>
+            Date of Birth: <i>{{ member.date_of_birth }}</i><br>
+            {% if member.educational_institution %}
+                <!-- Only show student number of the member is studying -->
+                Student Number: <i>{{ member.student_number|default:"Not provided" }}</i><br>
+            {% endif %}
+            Educational Institution: <i>{{ member.educational_institution|default:"None" }}</i>
         </p>
 
         <p>
