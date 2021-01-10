@@ -5,12 +5,13 @@ document.addEventListener('DOMContentLoaded', function() {
         locale: 'en-gb', // We want dd/mm/yyy formatting
         firstDay: 1, // Weeks start on monday
         nowIndicator: true,
+        allDaySlot: false, // We don't have All Day slots at the moment, disable this bar
         eventTimeFormat: {
             hour: '2-digit',
             minute: '2-digit',
             meridiem: false, // AM/PM display
         },
-        initialView: $(window).width() < 992 ? 'listWeek' : 'timeGridWeek',
+        initialView: $(window).width() < 992 ? 'listWeek' : 'dayGridMonth',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
@@ -18,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         // Determines how far forward the scroll pane is initially scrolled.
         // This value ensures that evening-activities are visible without needing to scroll
-        scrollTime: '19:00:00',
+        scrollTime: '14:30:00',
         // customize the button names,
         // otherwise they'd all just say "list"
         views: {
