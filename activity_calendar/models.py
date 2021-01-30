@@ -383,7 +383,7 @@ class ActivitySlot(models.Model):
     start_date = models.DateTimeField(blank=True, null=True,
         help_text="If left empty, matches start date with activity")
     end_date = models.DateTimeField(blank=True, null=True,
-        help_text="If left empty, matches end date with activity")   
+        help_text="If left empty, matches end date with activity")
 
     # User that created the slot (or one that's in the slot if the original owner is no longer in the slot)
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
