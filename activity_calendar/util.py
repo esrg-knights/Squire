@@ -30,20 +30,29 @@ def dst_aware_to_dst_ignore(date, origin_date, reverse=False):
     return date
 
 
-def set_time_for_dates(dates, time):
+def set_time_for_RDATE_EXDATE(dates, time):
     """
         Sets the time (with the corresponding timezone) for a given set of dates.
+
+        Note: These dates (RDATEs or EXDATEs) are already DST-aware, but later down the
+            road (after obtaining the resulting occurences) all occurences are made DST-aware.
+            This would mean these dates are made DST-aware twice, so we prevent that by making
+            these dates dst-ignore.
 
         :param dates: Collection of datetime objects of which the time should be set
         :param time: A datetime object whose date and timezone are set to the collection of dates
     """
     local_time = time.astimezone(get_current_timezone()).time()
     return map(lambda date:
-        get_current_timezone().localize(
-            datetime.datetime.combine(localtime(date).date(), local_time)
+        dst_aware_to_dst_ignore(
+            get_current_timezone().localize(
+                datetime.datetime.combine(localtime(date).date(), local_time),
+            ),
+            time, reverse=True
         ),
         dates
     )
+
 
 # Based on: https://djangosnippets.org/snippets/10569/
 def generate_vtimezone(timezone, for_date=None, num_years=None):

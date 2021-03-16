@@ -180,13 +180,13 @@ class CESTEventFeed(ICalFeed):
     @only_for(Activity)
     def item_rdate(self, item):
         if item.recurrences:
-            return list(util.set_time_for_dates(item.recurrences.rdates, item.start_date))
+            return list(util.set_time_for_RDATE_EXDATE(item.recurrences.rdates, item.start_date))
 
     # Dates to exclude for recurrence rules
     @only_for(Activity)
     def item_exdate(self, item):
         if item.recurrences:
-            return list(util.set_time_for_dates(item.recurrences.exdates, item.start_date))
+            return list(util.set_time_for_RDATE_EXDATE(item.recurrences.exdates, item.start_date))
 
     # RECURRENCE-ID
     @only_for(ActivityMoment)

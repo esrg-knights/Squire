@@ -171,8 +171,8 @@ class Activity(models.Model):
         # Since there is no possibility to select the RDATE/EXDATE time in the UI either, we need to
         #   override their time here so that it matches the event's start time. Their timezones are
         #   also changed into that of the event's start date
-        self.recurrences.exdates = list(util.set_time_for_dates(self.recurrences.exdates, dtstart))
-        self.recurrences.rdates = list(util.set_time_for_dates(self.recurrences.rdates, dtstart))
+        self.recurrences.exdates = list(util.set_time_for_RDATE_EXDATE(self.recurrences.exdates, dtstart))
+        self.recurrences.rdates = list(util.set_time_for_RDATE_EXDATE(self.recurrences.rdates, dtstart))
 
         # Get all occurences according to the recurrence module
         occurences = self.recurrences.between(after, before, inc=inc, dtstart=dtstart, dtend=dtend, cache=cache)
