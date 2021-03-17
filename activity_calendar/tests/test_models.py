@@ -289,16 +289,26 @@ class TestCaseActivityClean(TestCase):
         with self.assertRaises(ValidationError) as error:
             self.base_activity.clean_fields()
 
-    # Must do nothing if everything is defined correctly
+    # EXRULEs are no longer supported
+    def test_clean_deprecated_EXRULE(self):
+        self.base_activity.recurrences = deserialize_recurrence_test("EXRULE:FREQ=WEEKLY;BYDAY=TU")
+
+        with self.assertRaises(ValidationError) as error:
+            self.base_activity.clean_fields()
+
+    # Multiple RRULES are not supported
+    def test_clean_multiple_RRULEs(self):
+        self.base_activity.recurrences = deserialize_recurrence_test("RRULE:FREQ=WEEKLY;BYDAY=TU\nRRULE:FREQ=WEEKLY;BYDAY=MO")
+
+        with self.assertRaises(ValidationError) as error:
+            self.base_activity.clean_fields()
+
+    # Must not throw validation errors if everything is defined correctly
     def test_clean_correct(self):
         self.base_activity.clean_fields()
 
         self.base_activity.recurrences = deserialize_recurrence_test("RDATE:19700101T230000Z")
         self.base_activity.clean_fields()
-
-    def test_time_shift_in_get_occurences(self):
-        # Todo: Write test cases for Activity.get_occurences_between() method
-        pass
 
 
 class ActivityTestCase(TestCase):
