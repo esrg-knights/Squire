@@ -55,9 +55,9 @@ class TestCaseICalendarExport(TestCase):
         self.assertEquals(vevent["DTEND"].to_ical(), b"20200816T173000")
         self.assertEquals(vevent["DTEND"].params["TZID"], "Europe/Amsterdam")
 
-        # EXDATEs converted to 'local' time.
-        # NB: Their start times must match the start time of the event, regardless of
-        # daylight saving time!
+        # EXDATEs converted to local time.
+        # NB: Their start times must match the start time of the event, as dst
+        #   is automatically accounted for by calendar software
         self.assertEquals(vevent["EXDATE"].to_ical(), b"20201017T120000,20201114T120000")
         self.assertEquals(vevent["EXDATE"].params["TZID"], "Europe/Amsterdam")
 
@@ -92,4 +92,3 @@ class TestCaseICalendarExport(TestCase):
                 self.assertEqual(sub["TZOFFSETTO"].to_ical(), "+0100")
             else:
                 self.fail(f"Only STANDARD or DAYLIGHT components must appear in VTIMEZONE. Got <{str(type(sub))}> instead!")
-        
