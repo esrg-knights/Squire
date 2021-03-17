@@ -213,6 +213,14 @@ class Activity(models.Model):
             if not r.rrules and (r.exrules or r.exdates):
                 recurrence_errors.append('Cannot exclude dates if the activity is non-recurring')
 
+            # At most one RRULE (RFC 5545)
+            if len(r.rrules) > 1:
+                recurrence_errors.append(f'Can add at most one recurrence rule, but got {len(r.rrules)} (Can still add multiple Recurring Dates)')
+
+            # EXRULEs (RFC 2445) are deprecated (per RFC 5545)
+            if len(r.exrules) > 0:
+                recurrence_errors.append(f'Exclusion Rules are unsupported (Exclusion Dates can still be used)')
+
             if recurrence_errors:
                 errors.update({'recurrences': recurrence_errors})
 
