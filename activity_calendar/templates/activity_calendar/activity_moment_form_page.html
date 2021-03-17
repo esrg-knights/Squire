@@ -7,6 +7,13 @@
     Squire - Edit {{ activity_moment.title }} occurence
 {% endblock title %}
 
+{% block og-title %}
+    Edit - {{ activity_moment.title }}
+{% endblock og-title %}
+{% block og-description %}
+    Edit occurrence taking place on {{ activity_moment.start_time|date:"l j E H:i" }}
+{% endblock og-description %}
+
 {% block content-frame-class %}
     wideContentFrame
 {% endblock %}
