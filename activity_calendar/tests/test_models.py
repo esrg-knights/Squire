@@ -3,7 +3,7 @@ from datetime import datetime
 from django.contrib.auth.models import AnonymousUser
 from django.core.validators import ValidationError
 from django.conf import settings
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.utils import timezone
 
 from unittest.mock import patch
@@ -20,14 +20,7 @@ class ModelMethodsTest(TestCase):
     fixtures = ['test_users.json', 'test_activity_methods']
 
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.filter(username='test_user').first()
-        self.client.force_login(self.user)
-
         self.activity = Activity.objects.get(id=2)
-        self.simple_activity = Activity.objects.get(id=1)
-
-        self.upcoming_occurence_date = datetime.fromisoformat('2020-08-19T14:00:00').replace(tzinfo=timezone.utc)
 
     # Should provide the correct url if the activity has an image, or the default image if no image is given
     def test_image_url(self):
@@ -35,7 +28,6 @@ class ModelMethodsTest(TestCase):
 
         self.activity.image = None
         self.assertEqual(self.activity.image_url, f"{settings.STATIC_URL}images/activity_default.png")
-
 
 class ModelMethodsDSTDependentTests(TestCase):
     """
@@ -129,6 +121,141 @@ class ModelMethodsDSTDependentTests(TestCase):
         has_occurence_at_query_dt = self.activity.has_occurence_at(query_dt)
         self.assertTrue(has_occurence_at_query_dt)
 
+class EXDATEandRDATEwithDSTTests(TestCase):
+    """
+        Tests RDATEs and EXDATEs in combination with Daylight Saving Time
+    """
+
+    def setUp(self):
+        self.recurrence_iso = "RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=TU"
+
+        activity_data = {
+            'id': 4,
+            'title': 'DST Test Event 2: Electric Boogaloo',
+            # Start/end dates are during CET (UTC+1)
+            # Start dt: 03 NOV 2020, 19.00 (CET)
+            'start_date': timezone.datetime(2020, 11, 3, 18, 0, 0, tzinfo=timezone.utc),
+            'end_date': timezone.datetime(2020, 11, 3, 23, 30, 0, tzinfo=timezone.utc),
+            'recurrences': self.recurrence_iso
+        }
+        self.activity = Activity(**activity_data)
+
+    @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2020, 12, 3, 0, 0)))
+    def test_RDATE_EXDATE_at_same_dst(self, mock_tz):
+        """
+            Query RDATEs and EXDATEs when:
+            - the activity's first occurence was in CET
+            - our current timezone is in CET
+            - RDATE/EXDATE are in CET
+
+            RDATEs: Wednesday 30 December 2020
+            EXDATEs: Tuesday 29 December 2020, Tuesday 12 January 2020
+        """
+        self.recurrence_iso += "\n\nRDATE:20201229T230000Z"
+        self.recurrence_iso += "\nEXDATE:20201228T230000Z\nEXDATE:20210111T230000Z"
+        self.activity.recurrences = deserialize_recurrence_test(self.recurrence_iso)
+
+        # 30 December RDATE
+        rdate_dt = timezone.make_aware(timezone.datetime(2020, 12, 30, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
+        self.assertTrue(self.activity.has_occurence_at(rdate_dt))
+
+        # 29 December EXDATE
+        exdate_dt = timezone.make_aware(timezone.datetime(2020, 12, 29, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
+        self.assertFalse(self.activity.has_occurence_at(exdate_dt))
+
+        # 12 January EXDATE
+        exdate_dt = timezone.make_aware(timezone.datetime(2021, 1, 12, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
+        self.assertFalse(self.activity.has_occurence_at(exdate_dt))
+
+    @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2020, 12, 3, 0, 0)))
+    def test_CET_RDATE_EXDATE_CET_to_CEST(self, mock_tz):
+        """
+            Query RDATEs and EXDATEs when:
+            - the activity's first occurence was in CET
+            - our current timezone is in CET
+            - RDATE/EXDATE are in CEST
+        """
+        self._test_RDATE_EXDATE_CET_to_CEST()
+
+    @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2021, 5, 1, 0, 0)))
+    def test_CEST_RDATE_EXDATE_CET_to_CEST(self, mock_tz):
+        """
+            Query RDATEs and EXDATEs when:
+            - the activity's first occurence was in CET
+            - our current timezone is in CEST
+            - RDATE/EXDATE are in CEST
+        """
+        self._test_RDATE_EXDATE_CET_to_CEST()
+
+    def _test_RDATE_EXDATE_CET_to_CEST(self):
+        """
+            Query RDATEs and EXDATEs when:
+            - the activity's first occurence was in CET
+            - RDATE/EXDATE are in CEST
+
+            The current timezone is set in a calling function
+
+            RDATEs: Monday 17 April 2021
+            EXDATE: Tuesday 4 April 2021
+        """
+        self.recurrence_iso += "\n\nRDATE:20210416T220000Z"
+        self.recurrence_iso += "\nEXDATE:20210403T220000Z"
+        self.activity.recurrences = deserialize_recurrence_test(self.recurrence_iso)
+
+        # 17 April RDATE
+        rdate_dt = timezone.make_aware(timezone.datetime(2021, 4, 17, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
+        self.assertTrue(self.activity.has_occurence_at(rdate_dt))
+
+        # 04 April EXDATE
+        exdate_dt = timezone.make_aware(timezone.datetime(2021, 4, 4, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
+        self.assertFalse(self.activity.has_occurence_at(exdate_dt))
+
+    @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2020, 12, 3, 0, 0)))
+    def test_CET_RDATE_EXDATE_CEST_to_CET(self, mock_tz):
+        """
+            Query RDATEs and EXDATEs when:
+            - the activity's first occurence was in CEST
+            - our current timezone is in CET
+            - RDATE/EXDATE are in CET
+        """
+        self._test_RDATE_EXDATE_CEST_to_CET()
+
+    @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2021, 5, 1, 0, 0)))
+    def test_CEST_RDATE_EXDATE_CEST_to_CET(self, mock_tz):
+        """
+            Query RDATEs and EXDATEs when:
+            - the activity's first occurence was in CEST
+            - our current timezone is in CET
+            - RDATE/EXDATE are in CET
+        """
+        self._test_RDATE_EXDATE_CEST_to_CET()
+
+    def _test_RDATE_EXDATE_CEST_to_CET(self):
+        """
+            Query RDATEs and EXDATEs when:
+            - the activity's first occurence was in CEST
+            - RDATE/EXDATE are in CET
+
+            The current timezone is set in a calling function
+
+            RDATEs: Thursday 22 October 2020
+            EXDATE: Tuesday 27 October 2020
+        """
+        # Start dt: 20 OCT 2020, 19.00 (CEST; UTC+2)
+        self.activity.start_date = timezone.datetime(2020, 10, 20, 17, 0, 0, tzinfo=timezone.utc)
+
+        self.recurrence_iso += "\n\nRDATE:20201021T230000Z"
+        self.recurrence_iso += "\nEXDATE:20201026T230000Z"
+        self.activity.recurrences = deserialize_recurrence_test(self.recurrence_iso)
+
+        # 22 October RDATE
+        rdate_dt = timezone.make_aware(timezone.datetime(2020, 10, 22, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
+        self.assertTrue(self.activity.has_occurence_at(rdate_dt))
+
+        # 27 October EXDATE
+        exdate_dt = timezone.make_aware(timezone.datetime(2020, 10, 27, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
+        self.assertFalse(self.activity.has_occurence_at(exdate_dt))
+
 
 class TestCaseActivityClean(TestCase):
     fixtures = []
@@ -162,16 +289,26 @@ class TestCaseActivityClean(TestCase):
         with self.assertRaises(ValidationError) as error:
             self.base_activity.clean_fields()
 
-    # Must do nothing if everything is defined correctly
+    # EXRULEs are no longer supported
+    def test_clean_deprecated_EXRULE(self):
+        self.base_activity.recurrences = deserialize_recurrence_test("EXRULE:FREQ=WEEKLY;BYDAY=TU")
+
+        with self.assertRaises(ValidationError) as error:
+            self.base_activity.clean_fields()
+
+    # Multiple RRULES are not supported
+    def test_clean_multiple_RRULEs(self):
+        self.base_activity.recurrences = deserialize_recurrence_test("RRULE:FREQ=WEEKLY;BYDAY=TU\nRRULE:FREQ=WEEKLY;BYDAY=MO")
+
+        with self.assertRaises(ValidationError) as error:
+            self.base_activity.clean_fields()
+
+    # Must not throw validation errors if everything is defined correctly
     def test_clean_correct(self):
         self.base_activity.clean_fields()
 
         self.base_activity.recurrences = deserialize_recurrence_test("RDATE:19700101T230000Z")
         self.base_activity.clean_fields()
-
-    def test_time_shift_in_get_occurences(self):
-        # Todo: Write test cases for Activity.get_occurences_between() method
-        pass
 
 
 class ActivityTestCase(TestCase):
