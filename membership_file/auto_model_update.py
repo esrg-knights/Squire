@@ -1,6 +1,7 @@
-# Allows methods to fire automatically if a DB-model is updated
+from django.contrib.auth import get_user_model
 from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
+
 from .serializers import MemberSerializer
 from .models import Member, MemberLog, MemberLogField
 

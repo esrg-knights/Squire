@@ -6,7 +6,9 @@
     {% if memberuser.is_member %}
         <p>
             You are a Knights Member; hooray!<br>
-            You can view your membership information <a href="{% url 'membership_file/membership' %}">here</a>.
+            {% if perms.membership_file.can_view_membership_information_self %}
+                You can view your membership information <a href="{% url 'membership_file/membership' %}">here</a>.
+            {% endif %}
             <p>
     {% else %}
         <p>You are not a Knights Member. Please notify the board so they can link your Squire account to your membership information.</p>

@@ -25,7 +25,7 @@ def viewAchievementsUser(request):
 # View all Achievements Page
 @require_safe
 def viewAchievementsAll(request):
-    show_claimants = Achievement.user_can_view_claimants(request.user)
+    show_claimants = request.user.has_perm('achievements.can_view_claimants')
     serializer = CategorySerializer(Category.objects.all(), many=True, context={
         "obtain_claimants": show_claimants,
     })

@@ -1,5 +1,6 @@
 import datetime
 
+from django.contrib.auth.models import Permission
 from django.test import TestCase
 from django.utils import dateparse
 from django.forms import ModelForm
@@ -412,7 +413,7 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
         """ Tests that form validates when admin creates a slot when slot mode is CREATION_NONE """
         self.activity.slot_creation = Activity.SLOT_CREATION_STAFF
         self.activity.save()
-        self.user.is_staff = True
+        self.user.user_permissions.add(Permission.objects.get(codename='can_ignore_none_slot_creation_type'))
         self.user.save()
         self.assertFormValid({'sign_up': True, 'title': 'My slot', 'max_participants': -1})
 

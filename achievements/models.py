@@ -38,6 +38,12 @@ def get_achievement_image_upload_path(instance, filename):
 
 # Achievements that can be earned by users
 class Achievement(models.Model):
+    class Meta:
+        ordering = ['name','id']
+        permissions = [
+            ("can_view_claimants", "[F] Can view the claimants of Achievements."),
+        ]
+
     # Basic Information
     name = models.CharField(max_length=63)
     description = models.TextField(max_length=255)
@@ -82,24 +88,9 @@ class Achievement(models.Model):
     # Whether the achievement can be accessed outside the admin panel
     is_public = models.BooleanField(default=True)
 
-    class Meta:
-        permissions = [
-            ("can_view_claimants", "Can view the claimants of Achievements"),
-        ]
-        ordering = ['name','id']
-
     def __str__(self):
         return self.name
-
-    # Checks whether a given user can view this achievement's claimants
-    @staticmethod
-    def user_can_view_claimants(user):
-        if user is None:
-            return False
         
-        # TODO: Work with Permission System
-        return user.is_authenticated and user_to_member(user).is_member()
-
 
 # Represents a user earning an achievement
 class Claimant(models.Model):

@@ -80,12 +80,13 @@ class ActivityMixin:
 
     def show_participants(self):
         """ Returns whether to show participant names """
-        if self.request.user.is_authenticated:
-            if user_to_member(self.request.user).is_member():
-                now = timezone.now()
-                if now <= self.activity_moment.end_time:
-                    return True
-        return False
+        now = timezone.now()
+
+        if now < self.activity_moment.start_time:
+            return self.request.user.has_perm('activity_calendar.can_view_activity_participants_before')
+        elif now > self.activity_moment.end_time:
+            return self.request.user.has_perm('activity_calendar.can_view_activity_participants_after')
+        return self.request.user.has_perm('activity_calendar.can_view_activity_participants_during')
 
 
 class ActivityFormMixin:
@@ -233,7 +234,6 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
         return kwargs
 
     def get_context_data(self, **kwargs):
-
         # Determine if the mode allows slot creation. If mode is None, staff users should be able to create slots
         # Note that actual validation always takes place in the form itself, this is merely whether, without any actual
         # input on the complex database status (i.e. relations), this button needs to be shown.
@@ -247,7 +247,8 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
                 recurrence_id=self.recurrence_id,
                 activity_moment=self.activity_moment,
             )
-        elif self.activity.slot_creation == Activity.SLOT_CREATION_STAFF and self.request.user.is_staff:
+        elif self.activity.slot_creation == Activity.SLOT_CREATION_STAFF and \
+                self.request.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type'):
             # In a none based slot mode, don't automatically register the creator to the slot
             new_slot_form = RegisterNewSlotForm(
                 initial={
@@ -323,7 +324,7 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
         return super(CreateSlotView, self).render_to_response(context, **response_kwargs)
 
     def get_form_kwargs(self):
-        if self.activity.slot_creation == Activity.SLOT_CREATION_STAFF and self.request.user.is_staff:
+        if self.activity.slot_creation == Activity.SLOT_CREATION_STAFF:
             # In a none based slot mode, don't automatically register the creator to the slot
             initial = {'sign_up': False}
         else:

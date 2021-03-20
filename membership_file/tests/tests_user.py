@@ -1,6 +1,7 @@
 from django.test import TestCase, override_settings
 from django import forms
 from django.conf import settings
+from django.contrib.auth.models import Permission
 from django.core import serializers
 from django.template import Context, Template
 
@@ -64,6 +65,9 @@ class MemberfileEditTest(TestCase):
     def setUp(self):
         # Create a user
         self.user = User.objects.create(username="username", password="password")
+        self.user.user_permissions.add(Permission.objects.get(codename='can_view_membership_information_self'))
+        self.user.user_permissions.add(Permission.objects.get(codename='can_change_membership_information_self'))
+        self.user.save()
 
         # Test Member Data
         self.member_data = {
