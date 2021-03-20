@@ -1,4 +1,4 @@
-  
+
 #loading {
     display: none;
     position: absolute;
@@ -27,7 +27,7 @@
         }
     }
 
-    
+
 #event-modal .modal-body {
     padding-top: 10px;
 }
@@ -42,10 +42,6 @@
 
 #event-modal .largespace {
     margin-bottom: 15px;
-}
-
-#event-description {
-    white-space: pre-line;
 }
 
 /*

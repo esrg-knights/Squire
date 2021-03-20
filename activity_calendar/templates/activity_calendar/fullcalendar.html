@@ -10,6 +10,9 @@
   {{ block.super }}
   <link href="{% static 'fullcalendar/main.min.css' %}" rel='stylesheet'/>
   <link href="{% static 'css/fullcalendar-customisation.css' %}" rel='stylesheet'/>
+  <!-- Martor -->
+  <link href="{% static 'plugins/css/ace.min.css' %}" type="text/css" media="all" rel="stylesheet" />
+  <link href="{% static 'martor/css/martor.bootstrap.min.css' %}" type="text/css" media="all" rel="stylesheet" />
 {% endblock css %}
 
 {% block js %}
@@ -17,6 +20,9 @@
     <script src="{% static 'fullcalendar/main.min.js' %}"></script>
     <script src="{% static 'fullcalendar/locales/en-gb.js' %}"></script>
     <script src="{% static 'js/fullcalendar-init.js' %}"></script>
+
+    <!-- Martor (code block highlighting) -->
+    <script type="text/javascript" src="{% static 'plugins/js/highlight.min.js' %}"></script>
 {% endblock js %}
 
 {% block content-frame-class %}
@@ -57,7 +63,7 @@
               <!-- Calendar Icon -->
               <div class="col-xs-2">
                 <img
-                  src="{% static 'octicons/calendar.svg' %}" 
+                  src="{% static 'octicons/calendar.svg' %}"
                   alt="Calendar-icon"
                   height="16"
                   width="16"
@@ -85,7 +91,7 @@
               <!-- Location Icon -->
               <div class="col-xs-2">
                 <img
-                  src="{% static 'octicons/location.svg' %}" 
+                  src="{% static 'octicons/location.svg' %}"
                   alt="Location-icon"
                   height="16"
                   width="16"
@@ -136,12 +142,12 @@
                 </small>
               </div>
             </div>
-          
+
             <div class="row">
               <!-- Calendar Icon -->
               <div class="col-xs-2">
                 <img
-                  src="{% static 'octicons/three-bars.svg' %}" 
+                  src="{% static 'octicons/three-bars.svg' %}"
                   alt="Description-icon"
                   height="16"
                   width="16"
@@ -149,7 +155,7 @@
               </div>
               <!-- Event Description -->
               <div class="col align-self-center">
-                <p id="event-description"></p>
+                <div id="event-description" class="martor-preview override-martor"></div>
               </div>
             </div>
           </div>

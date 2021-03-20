@@ -29,13 +29,23 @@
 
     <!-- Martor -->
     <script type="text/javascript" src="{% static 'plugins/js/highlight.min.js' %}"></script>
+{% endblock js %}
+
+{% block js_bottom %}
+    {{ block.super }}
+    <script language="JavaScript" note="Trigger bootstrap popovers">
+        $(function () {
+            $('[data-toggle="popover"]').popover()
+        })
+    </script>
+
+    <!-- Martor (code block highlighting) -->
     <script>
         $('.martor-preview pre').each(function(i, block){
             hljs.highlightBlock(block);
-            console.log('fire fire fire!')
         });
     </script>
-{% endblock js %}
+{% endblock js_bottom %}
 
 {% block content-frame-class %}
     wideContentFrame
@@ -121,7 +131,7 @@
                     </div>
                     <!-- Event Description -->
                     <div class="col align-self-center">
-                        <div id="event-description">{{ activity_moment.description|safe_markdown  }}</div>
+                        <div id="event-description" class="martor-preview override-martor">{{ activity_moment.description|safe_markdown  }}</div>
                     </div>
                 </div>
 
@@ -210,11 +220,3 @@
     {% endblock additional-contents %}
 
 {% endblock content %}
-
-{% block js_bottom %}
-    <script language="JavaScript" note="Trigger bootstrap popovers">
-        $(function () {
-            $('[data-toggle="popover"]').popover()
-        })
-    </script>
-{% endblock %}

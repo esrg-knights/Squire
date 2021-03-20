@@ -7,12 +7,15 @@ from django.http import HttpResponseBadRequest
 
 from .models import Activity
 
+from martor.utils import markdownify
+
 
 def get_json_from_activity_moment(activity_moment, user=None):
     return {
         'groupId': activity_moment.parent_activity.id,
         'title': activity_moment.title,
-        'description': activity_moment.description,
+        # Pass the event's description through Martor's markdown renderer
+        'description': markdownify(activity_moment.description),
         'location': activity_moment.location,
         # use urlLink instead of url as that creates unwanted interactions with the calendar js module
         'urlLink': activity_moment.get_absolute_url(),

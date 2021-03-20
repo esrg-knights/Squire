@@ -65,7 +65,7 @@ body {
 
 footer {
     /* Align footer to the bottom of the page (non-sticky) */
-    margin-top: auto; 
+    margin-top: auto;
 
     /* Footer is centered */
     text-align: center;
@@ -82,7 +82,7 @@ footer {
         margin-left: 10px;
         margin-right: 10px;
     }
-    
+
 /* Main content is centered and cannot exceed a certain width */
 .contentFrame {
     max-width: 800px;
@@ -107,4 +107,16 @@ footer {
 
 .heightener {
     min-height: 64px;
+}
+
+/*********************************************************************************************
+MARTOR OVERRIDES
+*********************************************************************************************/
+/* We want most of the preview formatting, but some things just don't work out for us */
+
+.martor-preview.override-martor {
+    padding: initial;
+    font-size: inherit;
+    line-height: inherit;
+    background: initial;
 }
