@@ -15,7 +15,15 @@
                 {% if slot.location %}
                     <div class="row no-gutters">
                         <small class="text-muted">
-                            Alternative Location: {{ slot.location }}
+                            Alternative Location:
+                            {% if not activity_moment.private_slot_locations or user in slot.participants.all %}
+                                {{ slot.location }}
+                                {% if activity_moment.private_slot_locations %}
+                                    <i>(private)</i>
+                                {% endif %}
+                            {% else %}
+                                <i>Hidden until registered for this slot</i>
+                            {% endif %}
                         </small>
                     </div>
                 {% endif %}
@@ -32,7 +40,6 @@
                             participants{% if show_participants %}:
                                 {{ slot.participants.all | join:", " }}
                             {% endif %}
-
                         </small>
                     </div>
                 </div>
