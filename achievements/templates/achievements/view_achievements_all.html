@@ -6,6 +6,13 @@
   Squire - Achievements
 {% endblock title %}
 
+{% block og-title %}
+    Knights Achievements
+{% endblock og-title %}
+{% block og-description %}
+    Earn achievements to show off milestones in boardgames, weird situations in roleplaying games, or your general bond with the association!
+{% endblock og-description %}
+
 {% block css %}
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'css/achievement_frames.css' %}">
@@ -20,7 +27,7 @@
         <!-- Show Achievements per Category -->
         {% for category in categories %}
             <h2>
-                {{category.name}} 
+                {{category.name}}
             </h2>
             <p>{{category.description}}</p>
             <!-- List Achievements -->

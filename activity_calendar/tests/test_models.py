@@ -27,7 +27,7 @@ class ModelMethodsTest(TestCase):
         self.assertEqual(self.activity.image_url, f"{settings.MEDIA_URL}images/presets/rpg.jpg")
 
         self.activity.image = None
-        self.assertEqual(self.activity.image_url, f"{settings.STATIC_URL}images/activity_default.png")
+        self.assertEqual(self.activity.image_url, f"{settings.STATIC_URL}images/default_logo.png")
 
 class ModelMethodsDSTDependentTests(TestCase):
     """

@@ -6,6 +6,13 @@
   Squire - Calendar
 {% endblock title %}
 
+{% block og-title %}
+    Knights Activity Calendar
+{% endblock og-title %}
+{% block og-description %}
+    These are all activities taking place at ESRG Knights of the Kitchen Table.
+{% endblock og-description %}
+
 {% block css %}
   {{ block.super }}
   <link href="{% static 'fullcalendar/main.min.css' %}" rel='stylesheet'/>
@@ -57,7 +64,7 @@
               <!-- Calendar Icon -->
               <div class="col-xs-2">
                 <img
-                  src="{% static 'octicons/calendar.svg' %}" 
+                  src="{% static 'octicons/calendar.svg' %}"
                   alt="Calendar-icon"
                   height="16"
                   width="16"
@@ -85,7 +92,7 @@
               <!-- Location Icon -->
               <div class="col-xs-2">
                 <img
-                  src="{% static 'octicons/location.svg' %}" 
+                  src="{% static 'octicons/location.svg' %}"
                   alt="Location-icon"
                   height="16"
                   width="16"
@@ -136,12 +143,12 @@
                 </small>
               </div>
             </div>
-          
+
             <div class="row">
               <!-- Calendar Icon -->
               <div class="col-xs-2">
                 <img
-                  src="{% static 'octicons/three-bars.svg' %}" 
+                  src="{% static 'octicons/three-bars.svg' %}"
                   alt="Description-icon"
                   height="16"
                   width="16"
