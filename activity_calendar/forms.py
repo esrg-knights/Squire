@@ -3,6 +3,7 @@ from django.forms import ModelForm, Form
 from django.forms.widgets import HiddenInput
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import ValidationError
+from martor.widgets import AdminMartorWidget
 
 from .models import ActivitySlot, Activity, Participant, ActivityMoment
 
@@ -308,3 +309,11 @@ class ActivityMomentForm(ModelForm):
         for key, field in self.fields.items():
             attr_name = key[len('local_'):]
             field.widget.attrs['placeholder'] = getattr(self.instance.parent_activity, attr_name)
+
+class ActivityAdminForm(ModelForm):
+    class Meta:
+        model = Activity
+        fields = '__all__'
+        widgets = {
+            'description': AdminMartorWidget
+        }

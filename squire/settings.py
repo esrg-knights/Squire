@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # External Libraries
     'bootstrap4',
+    'martor',
     'recurrence',
     'rest_framework',
     # Internal Components
@@ -222,7 +223,7 @@ util.create_coverage_directory(COVERAGE_REPORT_DIR)
 # The URL or named URL pattern where requests are redirected for login
 # when using the login_required() decorator.
 # Also used to specify the location of the login page
-LOGIN_URL = '/login' 
+LOGIN_URL = '/login'
 
 # The URL or named URL pattern where requests are redirected after
 # login when the LoginView doesn’t get a next GET parameter.
@@ -242,6 +243,57 @@ MEMBERSHIP_FAIL_URL = '/no_member'
 
 # Where the membership file will be exported to. Can be set to None to disable this functionality
 MEMBERSHIP_FILE_EXPORT_PATH = os.getenv('MEMBERSHIP_FILE_EXPORT_PATH') or os.path.join(BASE_DIR, "output")
+
+####################################################################
+# Martor settings (Markdown Editor)
+# https://github.com/agusmakmun/django-markdown-editor
+
+# Global martor settings
+MARTOR_ENABLE_CONFIGS = {
+    'emoji': 'true',        # to enable/disable emoji icons.
+    'imgur': 'false',       # to enable/disable imgur/custom uploader.
+    'mention': 'false',     # to enable/disable mention
+    'jquery': 'true',       # to include/revoke jquery (require for admin default django)
+    'living': 'false',      # to enable/disable live updates in preview
+    'spellcheck': 'true',   # to enable/disable spellcheck in form textareas
+    'hljs': 'true',         # to enable/disable hljs highlighting in preview
+}
+
+# To show the toolbar buttons
+MARTOR_TOOLBAR_BUTTONS = [
+    'bold', 'italic', 'horizontal', 'heading', 'pre-code',
+    'blockquote', 'unordered-list', 'ordered-list',
+    'link', 'image-link', 'image-upload', 'emoji',
+    #'direct-mention',
+    'toggle-maximize', 'help'
+]
+
+# Markdown extensions
+MARTOR_MARKDOWN_EXTENSIONS = [
+    'markdown.extensions.extra',
+    'markdown.extensions.nl2br',
+    'markdown.extensions.smarty',
+    'markdown.extensions.fenced_code', # Code blocks
+
+    # Custom markdown extensions.
+    'martor.extensions.urlize',
+    'martor.extensions.del_ins',      # ~~strikethrough~~ and ++underscores++
+    #'martor.extensions.mention',      # to parse markdown mention
+    'martor.extensions.emoji',        # to parse markdown emoji
+    #'martor.extensions.mdx_video',    # to parse embed/iframe video
+    'martor.extensions.escape_html',  # to handle the XSS vulnerabilities
+]
+
+# Markdown Extensions Configs
+MARTOR_MARKDOWN_EXTENSION_CONFIGS = {}
+
+# Markdown urls
+MARTOR_UPLOAD_URL = '/martor/uploader/' # for imgur
+MARTOR_SEARCH_USERS_URL = '/martor/search-user/' # for mention
+
+# Markdown Extensions
+MARTOR_MARKDOWN_BASE_EMOJI_URL = 'https://github.githubassets.com/images/icons/emoji/'  # default from github
+MARTOR_MARKDOWN_BASE_MENTION_URL = ''
 
 ####################################################################
 # Other Settings

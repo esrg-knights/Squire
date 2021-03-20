@@ -1,10 +1,17 @@
 from django.contrib import admin
-from .models import Activity, ActivitySlot, Participant, ActivityMoment
 from django.utils.timezone import localtime
 
-
+from .forms import ActivityAdminForm
+from .models import Activity, ActivitySlot, Participant, ActivityMoment
 
 class ActivityAdmin(admin.ModelAdmin):
+    form = ActivityAdminForm
+
+    class Media:
+        css = {
+             'all': ('css/martor.css',)
+        }
+
     def is_recurring(self, obj):
         return obj.is_recurring
     is_recurring.boolean = True

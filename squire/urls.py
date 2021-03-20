@@ -30,6 +30,9 @@ urlpatterns = [
     # Membership File
     path('', include('membership_file.urls')),
 
+    # Martor
+    path('martor/', include('martor.urls')),
+
     # Redirect all other paths to the core module
     path('', include('core.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

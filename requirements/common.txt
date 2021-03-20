@@ -10,3 +10,4 @@ Pillow~=7.2.0 # ImageField support
 django-ical~=1.7.1 # iCalendar export
 django-recurrence~=1.10.3 # Recurring Dates
 django-import-export~=2.3.0 # Import/Export models
+martor~=1.6.0 # Markdown Editor

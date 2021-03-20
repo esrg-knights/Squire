@@ -1,0 +1,10 @@
+
+.main-martor:not(.main-martor-fullscreen) {
+    max-width: 75em;
+}
+
+/* HACK: Override same rule from the Martor admin css as it messes up how the other fields
+are displayed */
+html fieldset .form-row div>label {
+    display: block!important;
+}

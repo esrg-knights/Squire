@@ -3,6 +3,7 @@
 {% load static %}
 {% load get_login_url %}
 {% load calendar_tags %}
+{% load martortags %}
 
 {% block title %}
     Squire - {{ activity_moment.title }}
@@ -11,6 +12,9 @@
 {% block css %}
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'css/slot_frames.css' %}">
+    <!-- Martor -->
+    <link href="{% static 'plugins/css/ace.min.css' %}" type="text/css" media="all" rel="stylesheet" />
+    <link href="{% static 'martor/css/martor.bootstrap.min.css' %}" type="text/css" media="all" rel="stylesheet" />
 {% endblock css %}
 
 {% block js %}
@@ -22,6 +26,15 @@
             });
         </script>
     {% endif %}
+
+    <!-- Martor -->
+    <script type="text/javascript" src="{% static 'plugins/js/highlight.min.js' %}"></script>
+    <script>
+        $('.martor-preview pre').each(function(i, block){
+            hljs.highlightBlock(block);
+            console.log('fire fire fire!')
+        });
+    </script>
 {% endblock js %}
 
 {% block content-frame-class %}
@@ -108,7 +121,7 @@
                     </div>
                     <!-- Event Description -->
                     <div class="col align-self-center">
-                        <p id="event-description">{{ activity_moment.description|linebreaksbr }}</p>
+                        <div id="event-description">{{ activity_moment.description|safe_markdown  }}</div>
                     </div>
                 </div>
 
