@@ -272,18 +272,23 @@ MARTOR_TOOLBAR_BUTTONS = [
 
 # Markdown extensions
 MARTOR_MARKDOWN_EXTENSIONS = [
-    'markdown.extensions.extra',
-    'markdown.extensions.nl2br',
-    'markdown.extensions.smarty',
-    'markdown.extensions.fenced_code', # Code blocks
+    'markdown.extensions.abbr',         # Abbreviations: *[ABBR]
+    'markdown.extensions.fenced_code',  # Code blocks: ```CODE```
+    # 'markdown.extensions.footnotes',  # Footnotes: [^LABEL]
+                                        #   NB: These cause a severe slowdown
+    'markdown.extensions.tables',       # Tables
+    'markdown.extensions.nl2br',        # New lines as hard breaks (like GitHub)
+    'markdown.extensions.sane_lists',   # Prevent mixing (un)ordered lists
+    'markdown.extensions.smarty',       # ASCII dashes, quotes and ellipses to their HTML entity equivalents
 
     # Custom markdown extensions.
-    'martor.extensions.urlize',
-    'martor.extensions.del_ins',      # ~~strikethrough~~ and ++underscores++
-    #'martor.extensions.mention',      # to parse markdown mention
-    'martor.extensions.emoji',        # to parse markdown emoji
-    #'martor.extensions.mdx_video',    # to parse embed/iframe video
-    'martor.extensions.escape_html',  # to handle the XSS vulnerabilities
+    'pymdownx.details',                 # <details> and <summary>: ???+ "SUMMARY TITLE"
+    'martor.extensions.urlize',         # Convert urls to links
+    'martor.extensions.del_ins',        # ~~strikethrough~~ and ++underscores++
+    #'martor.extensions.mention',       # Martor mentions
+    'martor.extensions.emoji',          # Martor emoji
+    # 'martor.extensions.mdx_video',    # Embed/iframe video (E.g. Youtube, Vimeo, etc.)
+    'martor.extensions.escape_html',    # Handle XSS vulnerabilities
 ]
 
 # Markdown Extensions Configs
