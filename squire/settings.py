@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+from time import strftime
+
 from . import util
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -251,7 +253,7 @@ MEMBERSHIP_FILE_EXPORT_PATH = os.getenv('MEMBERSHIP_FILE_EXPORT_PATH') or os.pat
 # Global martor settings
 MARTOR_ENABLE_CONFIGS = {
     'emoji': 'true',        # to enable/disable emoji icons.
-    'imgur': 'false',       # to enable/disable imgur/custom uploader.
+    'imgur': 'true',        # to enable/disable imgur/custom uploader.
     'mention': 'false',     # to enable/disable mention
     'jquery': 'true',       # to include/revoke jquery (require for admin default django)
     'living': 'false',      # to enable/disable live updates in preview
@@ -294,6 +296,21 @@ MARTOR_SEARCH_USERS_URL = '/martor/search-user/' # for mention
 # Markdown Extensions
 MARTOR_MARKDOWN_BASE_EMOJI_URL = 'https://github.githubassets.com/images/icons/emoji/'  # default from github
 MARTOR_MARKDOWN_BASE_MENTION_URL = ''
+
+# Upload images to local storage
+MARTOR_UPLOAD_PATH = os.path.join('images', 'uploads')
+MARTOR_UPLOAD_URL = '/api/image_uploader/'
+
+# Maximum Upload Image
+# 2.5MB - 2621440
+# 5MB - 5242880
+# 10MB - 10485760
+# 20MB - 20971520
+# 50MB - 5242880
+# 100MB 104857600
+# 250MB - 214958080
+# 500MB - 429916160
+MAX_IMAGE_UPLOAD_SIZE = 2621440  # 2.5MB
 
 ####################################################################
 # Other Settings

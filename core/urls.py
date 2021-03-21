@@ -1,10 +1,16 @@
 from django.urls import path
 from django.conf import settings
 from django.contrib.auth import views as djangoViews
+from martor.views import markdownfy_view
+
 from .forms import LoginForm, PasswordResetForm, PasswordChangeForm, PasswordResetConfirmForm
-from . import views as views
+from . import views
 
 urlpatterns = [
+    # Martor
+    path('martor/markdownify/', markdownfy_view, name='martor_markdownfy'),
+    path('api/image_uploader/', views.markdown_uploader, name='markdown_uploader_page'),
+
     # Login and logout
     path('login', djangoViews.LoginView.as_view(
             template_name='core/user_accounts/login.html',
