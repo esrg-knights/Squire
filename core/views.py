@@ -3,9 +3,10 @@ from time import strftime
 import uuid
 
 from django.conf import settings
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login as auth_login, logout as auth_logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import default_storage
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
@@ -15,6 +16,7 @@ from django.views.decorators.http import require_safe
 
 from .forms import LoginForm, RegisterForm
 from .managers import TemplateManager
+from .models import MarkdownImage
 
 ##################################################################################
 # Contains render-code for displaying general pages.
@@ -74,7 +76,7 @@ def register(request):
 # Based on: https://github.com/agusmakmun/django-markdown-editor/wiki
 
 @login_required
-@staff_member_required # TODO: Utilise Django's permission system
+@permission_required('core.can_upload_martor_images')
 def markdown_uploader(request):
     """
     Makdown image upload for local storage
@@ -82,6 +84,20 @@ def markdown_uploader(request):
     """
     if request.method == 'POST' and request.is_ajax():
         if 'markdown-image-upload' in request.FILES:
+
+            # Obtain POST data (object_id will be None if the object does not exist yet)
+            object_id = request.POST.get('martor_image_upload_object_id', None)
+            content_type_id = request.POST.get('martor_image_upload_content_type_id', None)
+
+            # Verify POST data (valid content_type_id and object_id)
+            try:
+                content_type = ContentType.objects.get_for_id(content_type_id)
+                if object_id is not None:
+                    obj = content_type.get_object_for_this_type(id=object_id)
+            except (ObjectDoesNotExist, ValueError):
+                # Catch invalid ints or bogus data
+                return HttpResponseBadRequest(_('Invalid request!'))
+
             uploaded_file = request.FILES['markdown-image-upload']
 
             # Verify upload size
@@ -113,16 +129,17 @@ def markdown_uploader(request):
                 }
                 return JsonResponse(data, status=400)
 
-            img_uuid = "{1}-{0}.{2}".format(uuid.uuid4().hex[:10], strftime("%H%M%S"), image.format.lower())
-            storage_path = os.path.join(settings.MARTOR_UPLOAD_PATH,
-                str(request.user.id), strftime("%Y{0}%m{0}%d".format(os.path.sep)), img_uuid)
-            default_storage.save(storage_path, uploaded_file)
-            img_url = os.path.join(settings.MEDIA_URL, storage_path)
+            markdown_img = MarkdownImage.objects.create(
+                uploader=request.user,
+                content_type_id=content_type_id,
+                object_id=object_id,
+                image=uploaded_file
+            )
 
             data = {
                 'status': 200,
-                'link': img_url,
-                'name': uploaded_file.name
+                'link':  markdown_img.image.url,
+                'name': os.path.splitext(uploaded_file.name)[0]
             }
             return JsonResponse(data)
         return HttpResponseBadRequest(_('Invalid request!'))

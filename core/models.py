@@ -1,8 +1,15 @@
-from django.contrib.auth.models import User
-from django.db import models
-from django.utils.text import slugify
-
 import os
+import uuid
+
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
+from django.utils.text import slugify
 
 # Proxy model based on Django's user that provides extra utility methods.
 class ExtendedUser(User):
@@ -12,7 +19,7 @@ class ExtendedUser(User):
     # Gets the display name of the user
     def get_display_name(self):
         return self.display_name_method()
-    
+
     # Simplistic and default way to display a user
     def get_simple_display_name(self):
         if self.first_name:
@@ -48,3 +55,51 @@ class PresetImage(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.id})"
+
+
+# Specifies the upload path for MarkdownImages
+#   This could not be defined in the class itself due to a self-reference at initalisation
+def _get_markdown_image_upload_path_for_instance(instance, filename):
+    file_extension = os.path.splitext(filename)[1]
+    img_uuid = "{0}{1}".format(uuid.uuid4().hex[:10], file_extension)
+    storage_path = os.path.join(settings.MARTOR_UPLOAD_PATH, str(instance.uploader.id), img_uuid)
+
+    # storage_path: MEDIA_ROOT/uploads/<uploader_id>/<uuid>.<file_extension>
+    return storage_path
+
+# Each instance represents an image uploaded in Martor's markdown editor
+# This allows admins to easily delete these images
+class MarkdownImage(models.Model):
+    class Meta():
+        permissions = [
+            ("can_upload_martor_images", "Can upload images using the Martor Markdown editor"),
+        ]
+
+    # Date and uploader of the image. Cannot be edited
+    upload_date = models.DateTimeField(auto_now_add=True)
+    uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    image = models.ImageField(upload_to=_get_markdown_image_upload_path_for_instance)
+
+    # Object that uses this MarkdownImage (E.g. an Activity or ActivityMoment)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField(blank=True, null=True)
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    def clean(self):
+        super().clean()
+
+        # Cannot have an content_type - object_id combination that does not exist
+        if self.object_id is not None and self.content_object is None:
+            raise ValidationError({'object_id': 'The selected Content type does not have an object with this id'})
+
+    def __str__(self):
+        return f"{self.content_type}-MarkdownImage ({self.id})"
+
+
+@receiver(pre_delete)
+def remove_orphan_markdown_images(sender, instance, **kwargs):
+    # GenericForeignKey does not support on_delete=models.CASCADE without
+    #   a GenericRelation (that signifies the backwards relation), so
+    #   we delete these relations ourselves
+    content_type = ContentType.objects.get_for_model(sender)
+    MarkdownImage.objects.filter(content_type=content_type, object_id=instance.pk).delete()

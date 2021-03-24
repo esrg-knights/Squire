@@ -1,11 +1,14 @@
 from django.contrib import admin
 from django.utils.timezone import localtime
 
-from .forms import ActivityAdminForm
+from .forms import ActivityAdminForm, ActivityMomentAdminForm
 from .models import Activity, ActivitySlot, Participant, ActivityMoment
+
+from core.admin import MarkdownImageInline
 
 class ActivityAdmin(admin.ModelAdmin):
     form = ActivityAdminForm
+    inlines = [MarkdownImageInline]
 
     class Media:
         css = {
@@ -27,6 +30,14 @@ admin.site.register(Activity, ActivityAdmin)
 
 @admin.register(ActivityMoment)
 class ActivityMomentAdmin(admin.ModelAdmin):
+    form = ActivityMomentAdminForm
+    inlines = [MarkdownImageInline]
+
+    class Media:
+        css = {
+             'all': ('css/martor.css',)
+        }
+
     list_filter = ['parent_activity']
     fields = ['parent_activity', 'recurrence_id', 'local_description', 'local_location', 'local_max_participants']
 
@@ -43,7 +54,7 @@ class ActivityMomentAdmin(admin.ModelAdmin):
     activity_moment_has_changes.short_description = 'Is tweaked'
     list_display = ["title", "recurrence_id", "last_updated", activity_moment_has_changes]
 
-
+    inlines = [MarkdownImageInline]
 
 
 

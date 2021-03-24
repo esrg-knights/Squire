@@ -1,0 +1,5 @@
+{% if object_id is not None %}
+    <input type="hidden" id="martor-image-upload:id" name="martor_image_upload_object_id" value="{{ object_id }}">
+{% endif %}
+<input type="hidden" id="martor-image-upload:content_type" name="martor_image_upload_content_type_id" value="{{ content_type }}">
+{{ widget }}
