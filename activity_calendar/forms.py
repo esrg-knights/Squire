@@ -1,12 +1,12 @@
 from django import forms
-from django.contrib.contenttypes.models import ContentType
 from django.forms import ModelForm, Form
 from django.forms.widgets import HiddenInput
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import ValidationError
 
 from .models import ActivitySlot, Activity, Participant, ActivityMoment
-from core.widgets import ImageUploadMartorWidget
+from core.forms import MarkdownForm
+
 
 ##################################################################################
 # Defines forms related to the membership file.
@@ -14,7 +14,8 @@ from core.widgets import ImageUploadMartorWidget
 ##################################################################################
 
 
-__all__ = ['RegisterNewSlotForm', 'RegisterForActivitySlotForm', 'RegisterForActivityForm', 'ActivityMomentForm']
+__all__ = ['RegisterNewSlotForm', 'RegisterForActivitySlotForm', 'RegisterForActivityForm', 'ActivityMomentForm',
+    'ActivityAdminForm', 'ActivityMomentAdminForm']
 
 
 class RegisterAcitivityMixin:
@@ -311,28 +312,15 @@ class ActivityMomentForm(ModelForm):
             attr_name = key[len('local_'):]
             field.widget.attrs['placeholder'] = getattr(self.instance.parent_activity, attr_name)
 
-class ActivityAdminForm(ModelForm):
+
+class ActivityAdminForm(MarkdownForm):
     class Meta:
         model = Activity
         fields = '__all__'
-        widgets = {
-            'description': ImageUploadMartorWidget(ContentType.objects.get_for_model(Activity))
-        }
+        markdown_field_names = ['description']
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['description'].widget.object_id = self.instance.id
-
-
-class ActivityMomentAdminForm(ModelForm):
+class ActivityMomentAdminForm(MarkdownForm):
     class Meta:
         model = ActivityMoment
         fields = '__all__'
-        widgets = {
-            'local_description': ImageUploadMartorWidget(ContentType.objects.get_for_model(ActivityMoment))
-        }
-
-    def __init__(self, *args, **kwargs):
-
-        super().__init__(*args, **kwargs)
-        self.fields['local_description'].widget.object_id = self.instance.id
+        markdown_field_names = ['local_description']

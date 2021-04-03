@@ -3,10 +3,14 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.forms import (AuthenticationForm, UserCreationForm,
     PasswordChangeForm as DjangoPasswordChangeForm, PasswordResetForm as DjangoPasswordResetForm,
     SetPasswordForm as DjangoPasswordResetConfirmForm)
-from django.core.exceptions import ValidationError
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError, ImproperlyConfigured
+from django.forms import ModelForm
 from django.utils.translation import gettext, gettext_lazy as _
 
 from .models import ExtendedUser as User
+from core.models import MarkdownImage
+from core.widgets import ImageUploadMartorWidget
 
 ##################################################################################
 # Defines general-purpose forms.
@@ -79,3 +83,52 @@ class PasswordResetForm(DjangoPasswordResetForm):
 
 class PasswordResetConfirmForm(DjangoPasswordResetConfirmForm):
     pass
+
+
+class RequestUserFormMixin():
+    """ Form Mixin that sets a user, which can be used in other methods """
+    user = None
+
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+
+        # We explicitly do not pass 'user' down the Form-chain,
+        #   as it's an unexpected kwarg (for some Forms)
+        super().__init__(*args, **kwargs)
+
+
+class MarkdownForm(RequestUserFormMixin, ModelForm):
+    class Meta:
+        markdown_field_names = []
+
+    is_new_instance = True
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_new_instance = self.instance.id is None
+
+        for field_name in self.Meta.markdown_field_names:
+            if field_name not in self.fields:
+                raise ImproperlyConfigured(
+                    "Form '%s' does not have a field '%s', "
+                    "but this was passed in markdown_field_names." % (
+                        self.__class__.__name__,
+                        field_name,
+                    )
+                )
+
+            self.fields[field_name].widget = ImageUploadMartorWidget(
+                ContentType.objects.get_for_model(self.instance),
+                self.instance.id
+            )
+
+    def _save_m2m(self):
+        super()._save_m2m()
+
+        if self.is_new_instance and self.user is not None:
+            # Assign MarkdownImages for this contenttype, and uploaded by the requesting user
+            content_type = ContentType.objects.get_for_model(self.instance)
+            MarkdownImage.objects.filter(content_type=content_type, object_id__isnull=True).update(
+                object_id=self.instance.id,
+                uploader=self.user
+            )

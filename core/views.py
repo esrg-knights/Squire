@@ -98,6 +98,10 @@ def markdown_uploader(request):
                 # Catch invalid ints or bogus data
                 return HttpResponseBadRequest(_('Invalid request!'))
 
+            # Can only upload MarkdownImages for specific models
+            if f"{content_type.app_label}.{content_type.model}" not in settings.MARKDOWN_IMAGE_MODELS:
+                return HttpResponseBadRequest(_('Invalid request!'))
+
             uploaded_file = request.FILES['markdown-image-upload']
 
             # Verify upload size

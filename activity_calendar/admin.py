@@ -1,3 +1,5 @@
+import functools
+
 from django.contrib import admin
 from django.utils.timezone import localtime
 
@@ -6,14 +8,50 @@ from .models import Activity, ActivitySlot, Participant, ActivityMoment
 
 from core.admin import MarkdownImageInline
 
-class ActivityAdmin(admin.ModelAdmin):
-    form = ActivityAdminForm
-    inlines = [MarkdownImageInline]
 
+class MarkdownImageInlineAdmin(admin.ModelAdmin):
     class Media:
         css = {
              'all': ('css/martor.css',)
         }
+
+    # Add MarkdownImages to the Admin's Inline models
+    # TODO: Remove in Django 3.0
+    def get_inline_instances(self, request, obj=None):
+        instances = super().get_inline_instances(request, obj=obj)
+        instances.append(MarkdownImageInline(self.model, self.admin_site))
+        return instances
+
+    # Add MarkdownImages to the Admin's Inline models
+    # TODO: Django 3.0
+    # def get_inlines(self, request, obj):
+    #     inlines = super().get_inlines(request, obj=obj)
+    #     inlines.append(MarkdownImageInline)
+    #     return inlines
+
+    # Pass the requesting user to the form
+    #   NB: This method should return a _class_
+    #   Ideally, we'd only need to provide form kwargs somewhere instead of
+    #       using this hacky structure. However, for some reason, Django
+    #       does not seem to provide any way to do so within the admin panel:
+    #       - For normal view-based classes, there's get_form_kwargs(..)
+    #       - For Inlines (in a future version of Django 3.x), there's get_formset_kwargs(..)
+    #       Neither of these work for the standard admin views
+    # Related links:
+    # - https://stackoverflow.com/questions/2864955/django-how-to-get-current-user-in-admin-forms
+    # - https://code.djangoproject.com/ticket/26607
+    def get_form(self, request, obj=None, **kwargs):
+        MarkdownForm = super().get_form(request, obj, **kwargs)
+
+        class MarkdownFormWithKwargs(MarkdownForm):
+            def __new__(cls, *args, **kwargs):
+                return MarkdownForm(*args, user=request.user, **kwargs)
+        return MarkdownFormWithKwargs
+
+
+class ActivityAdmin(MarkdownImageInlineAdmin):
+    form = ActivityAdminForm
+    # inlines = [MarkdownImageInline]
 
     def is_recurring(self, obj):
         return obj.is_recurring
@@ -26,17 +64,9 @@ class ActivityAdmin(admin.ModelAdmin):
 admin.site.register(Activity, ActivityAdmin)
 
 
-
-
 @admin.register(ActivityMoment)
-class ActivityMomentAdmin(admin.ModelAdmin):
+class ActivityMomentAdmin(MarkdownImageInlineAdmin):
     form = ActivityMomentAdminForm
-    inlines = [MarkdownImageInline]
-
-    class Media:
-        css = {
-             'all': ('css/martor.css',)
-        }
 
     list_filter = ['parent_activity']
     fields = ['parent_activity', 'recurrence_id', 'local_description', 'local_location', 'local_max_participants']
@@ -53,8 +83,6 @@ class ActivityMomentAdmin(admin.ModelAdmin):
     activity_moment_has_changes.boolean = True
     activity_moment_has_changes.short_description = 'Is tweaked'
     list_display = ["title", "recurrence_id", "last_updated", activity_moment_has_changes]
-
-    inlines = [MarkdownImageInline]
 
 
 
