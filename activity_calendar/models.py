@@ -96,7 +96,7 @@ class Activity(models.Model):
     @property
     def image_url(self):
         if self.image is None:
-            return f'{settings.STATIC_URL}images/activity_default.png'
+            return f'{settings.STATIC_URL}images/default_logo.png'
         return self.image.image.url
 
     def get_all_activity_moments(self, start_date, end_date):

@@ -1,12 +1,24 @@
 <!DOCTYPE html>
 {% load bootstrap4 %}
 {% load static %}
+{% load build_absolute_uri %}
 {% load to_member %}
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>{% block title %}Hey! You forgot to add a title block!{% endblock %}</title>
+
+		<!-- Open Graph (for link previews in Discord, Telegram, etc.) -->
+		<meta property="og:title" content="{% block og-title %}Squire{% endblock %}" />
+		<meta property="og:description" content="{% block og-description %}Squire is the new webapp developed by the UUPS-committee of ESRG Knights of the Kitchen Table.{% endblock %}" />
+		<meta property="og:image" content="{% block og-image %}{% build_absolute_image_uri request 'images/default_logo.png' %}{% endblock %}" />
+		<meta property="og:image:alt" content="{% block og-image-alt %}Knights Logo{% endblock %}" />
+		<meta property="og:site_name" content="Squire" />
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="{% block og-url %}{{ request.get_full_path }}{% endblock %}" />
+		<meta property="og:locale" content="en_GB" />
+		<meta property="og:locale:alternate" content="nl_NL" />
 
 		<!-- Define Bootstrap imports (contains popper.js and jQuery) -->
 		{% bootstrap_css %}
@@ -30,7 +42,7 @@
 	<body class='d-flex flex-column'>
 		<nav class="navbar navbar-expand-lg navbar-dark greenify">
 			<a class="navbar-brand" href="/">
-				<img src="{% static 'images/logo_black_dragon_white_text.png' %}" alt="Modified Knights Logo" height="85px">
+				<img src="{% static 'images/header_logo.png' %}" alt="Modified Knights Logo" height="85px">
 				<span class="brand-text">Squire</span>
 			</a>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,8 +98,8 @@
                     {% endblock %}
                 </div>
 			</div>
-		</main>		
-		
+		</main>
+
 		<!-- Show footer at bottom of the page -->
 		<footer class='greenify'>
 			{% block footer %}
