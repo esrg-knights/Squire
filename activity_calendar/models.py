@@ -13,7 +13,7 @@ from django.urls import reverse
 
 from recurrence.fields import RecurrenceField
 
-from .util import dst_aware_to_dst_ignore
+import activity_calendar.util as util
 from core.models import ExtendedUser as User, PresetImage
 from membership_file.util import user_to_member
 
@@ -100,7 +100,7 @@ class Activity(models.Model):
     @property
     def image_url(self):
         if self.image is None:
-            return f'{settings.STATIC_URL}images/activity_default.png'
+            return f'{settings.STATIC_URL}images/default_logo.png'
         return self.image.image.url
 
     def get_all_activity_moments(self, start_date, end_date):
@@ -163,31 +163,28 @@ class Activity(models.Model):
             return date == self.start_date
 
         if not is_dst_aware:
-            date = dst_aware_to_dst_ignore(date, self.start_date, reverse=True)
+            date = util.dst_aware_to_dst_ignore(date, self.start_date, reverse=True)
         occurences = self.get_occurences_between(date, date, dtstart=self.start_date, inc=True)
         return occurences
 
     def get_occurences_between(self, after, before, inc=False, dtstart=None, dtend=None, cache=False):
         dtstart = dtstart or self.start_date
 
-        # recurrence expects each EXDATE's time to match the event's start time (in UTC; ignores DST)
-        # Why it doesn't store it that way in the first place remains a mystery
-        self.recurrences.exdates = list(map(
-            lambda exclude_date:
-                datetime.datetime.combine(
-                    timezone.localtime(exclude_date).date(),
-                    dtstart.time(),
-                    tzinfo=timezone.utc,
-                ),
-            self.recurrences.exdates
-        ))
+        # EXDATEs and RDATEs should match the event's start time, but in the recurrence-widget they
+        #   occur at midnight!
+        # Since there is no possibility to select the RDATE/EXDATE time in the UI either, we need to
+        #   override their time here so that it matches the event's start time. Their timezones are
+        #   also changed into that of the event's start date
+        self.recurrences.exdates = list(util.set_time_for_RDATE_EXDATE(self.recurrences.exdates, dtstart, make_dst_ignore=True))
+        self.recurrences.rdates = list(util.set_time_for_RDATE_EXDATE(self.recurrences.rdates, dtstart, make_dst_ignore=True))
 
         # Get all occurences according to the recurrence module
         occurences = self.recurrences.between(after, before, inc=inc, dtstart=dtstart, dtend=dtend, cache=cache)
+
         # the recurrences package does not work with DST. Since we want our activities
-        # to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00
-        # in winter, and vice versa), we have to account for the difference here.
-        occurences = list(map(lambda occurence: dst_aware_to_dst_ignore(occurence, dtstart), occurences))
+        #   to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00
+        #   in winter, and vice versa), we have to account for the difference here.
+        occurences = list(map(lambda occurence: util.dst_aware_to_dst_ignore(occurence, dtstart), occurences))
 
         return occurences
 
@@ -219,6 +216,14 @@ class Activity(models.Model):
             # Attempting to exclude dates if no recurrence is specified
             if not r.rrules and (r.exrules or r.exdates):
                 recurrence_errors.append('Cannot exclude dates if the activity is non-recurring')
+
+            # At most one RRULE (RFC 5545)
+            if len(r.rrules) > 1:
+                recurrence_errors.append(f'Can add at most one recurrence rule, but got {len(r.rrules)} (Can still add multiple Recurring Dates)')
+
+            # EXRULEs (RFC 2445) are deprecated (per RFC 5545)
+            if len(r.exrules) > 0:
+                recurrence_errors.append(f'Exclusion Rules are unsupported (Exclusion Dates can still be used)')
 
             if recurrence_errors:
                 errors.update({'recurrences': recurrence_errors})

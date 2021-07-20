@@ -105,7 +105,7 @@ class Member(models.Model):
     city = models.CharField(max_length=255)
     #NB: States/Province are not always necessary for addresses
     state = models.CharField(max_length=255, blank=True, null=True, verbose_name="state/province")
-    country = models.CharField(max_length=255)
+    country = models.CharField(max_length=255, default="NL")
 
     ##################################
     # OTHER INFORMATION

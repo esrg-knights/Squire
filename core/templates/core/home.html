@@ -7,6 +7,11 @@
 
 {% load to_extended_user %}
 
+{% block og-title %}
+    Squire Homepage
+{% endblock og-title %}
+
+
 {% block content %}
     <!-- Welcome Message -->
     <h1>Welcome to Squire!</h1>
@@ -17,7 +22,7 @@
     {% else %}
         <p>Have a nice day day!</p>
     {% endif %}
-    
+
     <!-- Application Description -->
     <h3>What is Squire?</h3>
     <p>
