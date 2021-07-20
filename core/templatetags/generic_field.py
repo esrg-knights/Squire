@@ -23,15 +23,13 @@ def generic_field(*args):
 
         # Update the css classes of all widgets and apply bootstrap
         for widget in widgets:
-            old_classes = ''
-            if 'class' in widget.attrs:
-                old_classes = widget.attrs['class'] + ' '
+            old_classes = widget.attrs.get('class', '')
 
             input_type = getattr(widget, 'input_type', None)
             if input_type == 'checkbox':
-                widget.attrs['class'] = old_classes + 'form-check-input'
+                widget.attrs['class'] = old_classes + ' form-check-input'
             else:
-                widget.attrs['class'] = old_classes + 'form-control'
+                widget.attrs['class'] = old_classes + ' form-control'
                 only_checkboxes = False
 
     return {
