@@ -14,18 +14,21 @@ class PresetImageAdmin(admin.ModelAdmin):
 
 admin.site.register(PresetImage, PresetImageAdmin)
 
-
-# We want to hide some global preference fields in the admin panel
+# Global preferences admin panel.
+#   We want to change the way some preference fields are rendered
 class SquireGlobalPreferencesAdmin(GlobalPreferenceAdmin):
-    list_display = ('id', 'verbose_name', 'section_name')
+    list_display = ('id', 'verbose_name', 'description', 'section_name')
     list_display_links = ('id', 'verbose_name')
 
-    fields = ('raw_value', 'default_value', 'section_name')
-    readonly_fields = ('section_name', 'default_value')
-    search_fields = ['name', 'section']
+    fields = ('verbose_name', 'description', 'raw_value', 'default_value', 'section_name')
+    readonly_fields = ('verbose_name', 'description', 'section_name', 'default_value')
+    search_fields = ['name', 'verbose_name', 'description', 'section']
 
-    # For "MtM" relations, we have a more user-friendly display method
-    # that we want to show instead
+    # Description of the permission
+    def description(self, obj):
+        return obj.preference.description or '-'
+
+    # For MtM-relations, display text instead of primary keys
     def default_value(self, obj):
         if hasattr(obj.preference, 'default_display'):
             return obj.preference.default_display
@@ -34,5 +37,6 @@ class SquireGlobalPreferencesAdmin(GlobalPreferenceAdmin):
         return obj.preference.default
     default_value.short_description = _("Default Value")
 
+# Use our custom admin panel instead
 admin.site.unregister(GlobalPreferenceModel)
 admin.site.register(GlobalPreferenceModel, SquireGlobalPreferencesAdmin)

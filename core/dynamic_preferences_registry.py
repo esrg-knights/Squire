@@ -27,12 +27,12 @@ DEFAULT_MEMBER_PERMISSIONS = (
 )
 
 class AbstractUserTypePermission(ModelMultipleChoicePreference):
-
     # Obtains the default values from above
     def get_default(self):
         if not self.encoded_default_permissions:
             return Permission.objects.none()
 
+        # Fetch permission objects based on their code (e.g., achievements.can_view_claimants)
         q_objects = Q()
         for encoded_name in self.encoded_default_permissions:
             app_label, codename = encoded_name.split('.')
@@ -48,6 +48,8 @@ class AbstractUserTypePermission(ModelMultipleChoicePreference):
     section = permissions
     required = False
     widget = FilteredSelectMultiple("permissions", is_stacked=False)
+    description = None
+    help_text = _('Hold down "Control", or "Command" on a Mac, to select more than one.')
 
 
 @global_preferences_registry.register
@@ -55,21 +57,18 @@ class BasePermissions(AbstractUserTypePermission):
     encoded_default_permissions = DEFAULT_BASE_PERMISSIONS
     name = 'base_permissions'
     verbose_name = 'Base Permissions'
-    help_text = 'Permissions granted to everyone, including site visitors that are not logged in. ' \
-        + str(_('Hold down "Control", or "Command" on a Mac, to select more than one.'))
+    description = 'Permissions granted to everyone, including site visitors that are not logged in.'
 
 @global_preferences_registry.register
 class UserPermissions(AbstractUserTypePermission):
     encoded_default_permissions = DEFAULT_USER_PERMISSIONS
     name = 'user_permissions'
     verbose_name = 'User Permissions'
-    help_text = 'Permissions granted to everyone that is logged in. ' \
-        + str(_('Hold down "Control", or "Command" on a Mac, to select more than one.'))
+    description = 'Permissions granted to everyone that is logged in.'
 
 @global_preferences_registry.register
 class MemberPermissions(AbstractUserTypePermission):
     encoded_default_permissions = DEFAULT_MEMBER_PERMISSIONS
     name = 'member_permissions'
     verbose_name = 'Member Permissions'
-    help_text = 'Permissions granted to all users that are in the membership file. ' \
-        + str(_('Hold down "Control", or "Command" on a Mac, to select more than one.'))
+    description = 'Permissions granted to all users that are in the membership file.'
