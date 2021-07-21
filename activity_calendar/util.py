@@ -1,4 +1,4 @@
-from django.utils.timezone import pytz, now, localtime
+from django.utils.timezone import pytz, now, localtime, get_current_timezone
 import icalendar
 import datetime
 
@@ -7,7 +7,7 @@ def dst_aware_to_dst_ignore(date, origin_date, reverse=False):
         Takes the difference in UTC-offsets for two given dates, and applies that
         difference to the first date. A reverse keyword indicates which direction
         the offset should be shifted.
-        
+
         Can be used to account keep times similar as if Daylight Saving Time did not exist.
         E.g. If a date at 16.00h in CEST (UTC+2) should be considered to be the same time
         as an origin date at 16.00h in CET (UTC+1), even though their UTC-times do not match.
@@ -22,12 +22,38 @@ def dst_aware_to_dst_ignore(date, origin_date, reverse=False):
 
     start_utc_offset = localtime(origin_date).utcoffset()
     date_utc_offset = localtime(date).utcoffset()
-    
+
     if reverse:
         date = date - (start_utc_offset - date_utc_offset)
     else:
         date = date + (start_utc_offset - date_utc_offset)
     return date
+
+
+def set_time_for_RDATE_EXDATE(dates, time, make_dst_ignore=False):
+    """
+        Sets the time (with the corresponding timezone) for a given set of dates.
+
+        Note:
+
+        :param dates: Collection of datetime objects of which the time should be set
+        :param time: A datetime object whose date and timezone are set to the collection of dates
+        :param make_dst_ignore: If these dates (RDATES or EXDATEs) are made dst-aware later on,
+            then this difference can be accounted here by offsetting this change backwards.
+    """
+    local_time = time.astimezone(get_current_timezone()).time()
+
+    set_time_fn = (lambda date:
+            get_current_timezone().localize(
+                datetime.datetime.combine(localtime(date).date(), local_time),
+            )
+        )
+
+    if not make_dst_ignore:
+        return map(set_time_fn, dates)
+
+    return map(lambda date: dst_aware_to_dst_ignore(set_time_fn(date), time, reverse=True), dates)
+
 
 # Based on: https://djangosnippets.org/snippets/10569/
 def generate_vtimezone(timezone, for_date=None, num_years=None):
@@ -71,7 +97,7 @@ def _vtimezone_with_dst(tzswitches, timezone):
     _, prev_transition_info = next(tzswitches, None)
 
     if prev_transition_info is not None:
-        
+
         for (transition_time, transition_info) in tzswitches:
             utc_offset, dst_offset, tz_name = transition_info
 

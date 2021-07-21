@@ -1,0 +1,27 @@
+
+{% extends 'core/base.html' %}
+
+{% load static %}
+
+{% block title %}
+  Squire - Newsletter Archive
+{% endblock title %}
+
+{% block og-title %}
+    Knights Newsletter Archive
+{% endblock og-title %}
+{% block og-description %}
+    A central location where all newsletters are stored together. Don't miss out on anything!
+{% endblock og-description %}
+
+{% block content %}
+    <img src="{% static 'images/newsletter_header.png' %}" alt="Knights newsletter header image" width="100%" />
+
+    <h1>Newsletter Archive</h1>
+    <p>
+        Currently, all newsletters are hosted elsewhere. We plan on changing this in the future, but for now you can view them in pdf format <a href="{{ NEWSLETTER_ARCHIVE_URL }}">here</a>.
+    </p>
+    <p>
+        Newsletters are still sent via email as per usual. Are you a member but are you not receiving the newsletter? Contact the board!
+    </p>
+{% endblock content %}

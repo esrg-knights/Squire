@@ -3,6 +3,12 @@
 {% load static %}
 {% load calendar_tags %}
 
+{% block og-title %}
+    Create Slot - {{ activity_moment.title }}
+{% endblock og-title %}
+{% block og-description %}
+    Create a slot for this activity on {{ activity_moment.start_time|date:"l j E H:i" }}. {{ activity_moment.description|truncatewords:20 }}
+{% endblock og-description %}
 
 {% block sign-up-status %}
     {% if user_subscriptions %}

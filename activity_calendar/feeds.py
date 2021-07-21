@@ -10,7 +10,7 @@ from django_ical.views import ICalFeed
 from django_ical.feedgenerator import ICal20Feed
 
 from .models import Activity, ActivityMoment
-from .util import generate_vtimezone
+import activity_calendar.util as util
 
 # Monkey-patch; Why is this not open for extension in the first place?
 django_ical.feedgenerator.ITEM_EVENT_FIELD_MAP = (
@@ -80,7 +80,7 @@ class CESTEventFeed(ICalFeed):
     #######################################################
     # Timezone information (Daylight-saving time, etc.)
     def vtimezone(self):
-        tz_info = generate_vtimezone(settings.TIME_ZONE, datetime(2020, 1, 1))
+        tz_info = util.generate_vtimezone(settings.TIME_ZONE, datetime(2020, 1, 1))
         tz_info.add('x-lic-location', settings.TIME_ZONE)
         return tz_info
 
@@ -180,24 +180,13 @@ class CESTEventFeed(ICalFeed):
     @only_for(Activity)
     def item_rdate(self, item):
         if item.recurrences:
-            return item.recurrences.rdates
+            return list(util.set_time_for_RDATE_EXDATE(item.recurrences.rdates, item.start_date))
 
     # Dates to exclude for recurrence rules
     @only_for(Activity)
     def item_exdate(self, item):
         if item.recurrences:
-            # Each EXDATE's time needs to match the event start-time, but they default to midnigth in the widget!
-            # Since there's no possibility to select the time in the UI either, we're overriding it here
-            # and enforce each EXDATE's time to be equal to the event's start time
-            event_start_time = item.start_date.astimezone(timezone.get_current_timezone()).time()
-            item.recurrences.exdates = list(map(lambda dt:
-                    timezone.get_current_timezone().localize(
-                        datetime.combine(timezone.localtime(dt).date(),
-                        event_start_time)
-                    ),
-                    item.recurrences.exdates
-            ))
-            return item.recurrences.exdates
+            return list(util.set_time_for_RDATE_EXDATE(item.recurrences.exdates, item.start_date))
 
     # RECURRENCE-ID
     @only_for(ActivityMoment)

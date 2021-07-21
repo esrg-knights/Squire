@@ -14,24 +14,33 @@
             {% endfor %}
         </ul>
     {% endif %}
-    
+
     <div class="input-group">
-        <div class="input-group-prepend">
-            <!-- Field Names -->
+        {% if only_checkboxes %}
             {% for field, _ in fields %}
-                <span class="input-group-text{% if field.errors %} alert-danger{% endif %}">
-                    {% field_label field.label|title field %}
-                </span>
+                <div class="form-check form-check-inline{% if field.errors %} alert-danger{% endif %}">
+                    {{ field }}
+                    <label class="form-check-label" for="{{ field.auto_id }}">{{ field.label|title }}</label>
+                </div>
             {% endfor %}
-        </div>
-        <!-- HTML Inputs -->
-        {% for field, max_px_width in fields %}
-            {{ field|set_max_width:max_px_width }}
-        {% endfor %}
+        {% else %}
+            <div class="input-group-prepend">
+                <!-- Field Names -->
+                {% for field, _ in fields %}
+                    <span class="input-group-text{% if field.errors %} alert-danger{% endif %}">
+                        {% field_label field.label|title field %}
+                    </span>
+                {% endfor %}
+            </div>
+            <!-- HTML Inputs -->
+            {% for field, max_px_width in fields %}
+                {{ field|set_max_width:max_px_width }}
+            {% endfor %}
+        {% endif %}
     </div>
+
     <!-- Field Help Texts -->
     {% for field, _ in fields %}
         <small class="form-text text-muted">{{ field.help_text }}</small>
     {% endfor %}
 </div>
-
