@@ -49,7 +49,7 @@ class Member(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete = models.SET_NULL,
         blank = True,
-        null = True,        
+        null = True,
         related_name = "related_user",
         )
 
@@ -57,12 +57,10 @@ class Member(models.Model):
     # NAME
     ##################################
     legal_name = models.CharField(max_length=255, help_text="Legal name as known by your Educational Institution or on your ID-card.")
-    first_name = models.CharField(max_length=255, verbose_name="preferred name")
+    first_name = models.CharField(max_length=255, verbose_name="given name")
     tussenvoegsel = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255)
 
-    preferred_pronoun = models.CharField(max_length=7, blank=True, help_text="This is how you will be referred to in GMM minutes.")
-    
     ##################################
     # STUDENT INFORMATION
     ##################################
@@ -76,15 +74,15 @@ class Member(models.Model):
     ##################################
     tue_card_number_regex = RegexValidator(regex=r'^[0-9]{7}$', message="TUe card numbers must only consist of exactly 7 numbers. E.g. 1234567")
     tue_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, blank=True, null=True, unique=True, verbose_name="TUe card number")
-    
+
     external_card_digits_regex = RegexValidator(regex=r'^[0-9]{3}$', message="External card digits must consist of exactly 3 digits. E.g. 012")
-    
+
     # External card uses the same number formatting as Tue cards, but its number does not necessarily need to be unique
     external_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, null=True, blank=True, help_text="External cards are blue, whereas Tu/e cards are (currently) orange.")
     # 3-digit code at the bottom of a card
     external_card_digits = models.CharField(validators=[external_card_digits_regex], max_length=3, blank=True, verbose_name="digits")
     # The cluster contains additional information of an external card
-    external_card_cluster = models.CharField(max_length=255, blank=True, verbose_name="cluster") 
+    external_card_cluster = models.CharField(max_length=255, blank=True, verbose_name="cluster")
 
     # External cards require a deposit, which has changed over the years
     external_card_deposit = models.DecimalField(validators=[MinValueValidator(0)], max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="deposit (€)", help_text="External cards require a deposit.")
@@ -109,7 +107,7 @@ class Member(models.Model):
     street = models.CharField(max_length=255, blank=True)
     house_number = models.IntegerField(validators=[MinValueValidator(1)], blank=True, null=True)
     house_number_addition = models.CharField(max_length=255, blank=True, verbose_name="addition")
-    # No postal code RegEx as those have different formats in different countries (e.g. Belgium)
+    # No postal code RegEx as those have different formats in different countries (e.g. Belgium doesn't use two trailing letters)
     postal_code = models.CharField(max_length=15, blank=True)
     city = models.CharField(max_length=255, blank=True, default="Eindhoven")
     country = models.CharField(max_length=255, blank=True, default="The Netherlands")
@@ -132,7 +130,7 @@ class Member(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete = models.SET_NULL,
         blank = True,
-        null = True,        
+        null = True,
         related_name = "last_updated_by_user",
     )
 
@@ -145,8 +143,8 @@ class Member(models.Model):
     is_honorary_member = models.BooleanField(default=False, help_text="Honorary members can stay members forever and do not need to pay a membership fee.")
     has_paid_membership_fee = models.BooleanField(default=False)
 
-    # Any additional information that cannot be stored in other fields
-    notes = models.TextField(blank=True)
+    # Any additional information that cannot be stored in other fields (e.g., preferred pronouns)
+    notes = models.TextField(blank=True, help_text="Notes are invisible to members.")
 
 
     ##################################
@@ -172,21 +170,21 @@ class Member(models.Model):
         if updater.id == self.id:
             return 'You'
         return updater.get_full_name()
-    
+
     # Displays the external card number of the member
     def display_external_card_number(self):
         if self.external_card_number is None:
             return None
-        
+
         display_card = self.external_card_number
         if self.external_card_digits:
             # Not all external card have a 3-digit code (E.g. parking cards)
             display_card += f"-{self.external_card_digits}"
-        
+
         if self.external_card_cluster:
             # Not all external cards have a cluster
             display_card += f" ({self.external_card_cluster})"
-        
+
         return display_card
 
     # Displays a user's address
@@ -196,7 +194,7 @@ class Member(models.Model):
             return None
 
         house_number = str(self.house_number)
-        if self.house_number_addition is not None:
+        if self.house_number_addition:
             # If the house number starts with a number, add a dash
             if not self.house_number_addition[:1].isalpha():
                 house_number += '-'
@@ -214,10 +212,10 @@ class Room(models.Model):
     access = models.CharField(max_length=15, help_text="How access is provided. E.g. 'Key 12' or 'Campus Card'")
     notes = models.TextField(blank=True)
 
-    # Members who have access to this room, and those who have their access temporarily
-    #   revoked (e.g. due to a suspension)
+    # Members who have access to this room
+    #   If access should be revoked temporarily (e.g., due to a suspension), this can be stored
+    #   in the member's notes-field instead
     members_with_access = models.ManyToManyField(Member, blank=True, related_name='accessible_rooms')
-    members_with_access_removed = models.ManyToManyField(Member, blank=True, related_name='normally_accessible_rooms')
 
     def __str__(self):
         return f"{self.name} ({self.access})"
@@ -227,7 +225,7 @@ class Room(models.Model):
 # The MemberLog Model represents a log entry that is created whenever membership data is updated
 class MemberLog(models.Model):
 
-    MEMBERLOG_IGNORE_FIELDS = ['last_updated_date', 'last_updated_by', 'preferred_pronoun', 'normally_accessible_rooms']
+    MEMBERLOG_IGNORE_FIELDS = ['last_updated_date', 'last_updated_by']
 
     # The user that updated the information
     user = models.ForeignKey(
@@ -236,7 +234,7 @@ class MemberLog(models.Model):
         related_name = "user_that_updated",
         null = True,
         )
-    
+
     # The member whose information was updated
     member = models.ForeignKey(
         Member,
@@ -265,7 +263,7 @@ class MemberLog(models.Model):
     # String-representation of an instance of a MemberLog
     def __str__(self):
         return "[{3}] {1} updated {2}'s information ({0})".format(self.id, self.user, self.member, self.log_type)
-    
+
 
 # The MemberLogField Model represents an updated field in a MemberLog object
 class MemberLogField(models.Model):

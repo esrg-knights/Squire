@@ -20,7 +20,7 @@ class DisableModifications():
     # Disable creation
     def has_add_permission(self, request):
         return False
-    
+
     # Disable editing
     def has_change_permission(self, request, obj=None):
         return False
@@ -56,7 +56,7 @@ class MemberWithLog(HideRelatedNameAdmin):
     list_display = ('id', 'user', 'first_name', 'tussenvoegsel', 'last_name', 'educational_institution', 'is_deregistered', 'marked_for_deletion')
     list_filter = ['educational_institution', 'marked_for_deletion', 'is_deregistered', 'has_paid_membership_fee', 'is_honorary_member']
     list_display_links = ('id', 'user', 'first_name')
-    search_fields = ['first_name', 'last_name', 'email', 'phone_number', 'external_card_number']
+    search_fields = ['first_name', 'last_name', 'email', 'phone_number', 'tue_card_number', 'external_card_number', 'key_id']
 
     readonly_fields = ['last_updated_by', 'last_updated_date']
 
@@ -66,17 +66,17 @@ class MemberWithLog(HideRelatedNameAdmin):
     fieldsets = [
         (None, {'fields':
             ['user', ('first_name', 'tussenvoegsel', 'last_name'),
-            'marked_for_deletion', 'preferred_pronoun',
+            'marked_for_deletion',
             ('last_updated_date', 'last_updated_by'),]}),
-        ('Membership Status', {'fields': 
+        ('Membership Status', {'fields':
             ['is_deregistered', 'has_paid_membership_fee', 'is_honorary_member', 'member_since']}),
-        ('Contact Details', {'fields': 
+        ('Contact Details', {'fields':
             ['email', 'phone_number',
             ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
         ('Room Access', {'fields':
-            ['key_id', 'tue_card_number', 
+            ['key_id', 'tue_card_number',
             ('external_card_number', 'external_card_digits', 'external_card_cluster'),
-            'external_card_deposit', 'accessible_rooms', 'normally_accessible_rooms']}),
+            'external_card_deposit', 'accessible_rooms']}),
         ('Legal Information', {'fields':
             ['educational_institution', 'student_number',
             'date_of_birth', 'legal_name']}),
@@ -90,7 +90,7 @@ class MemberWithLog(HideRelatedNameAdmin):
         # Pass request.user to the form
         Form = super().get_form(request, obj=None, **kwargs)
         return functools.partial(Form, user=request.user)
-        
+
 
     # Disable deletion if the member was not marked for deletion
     # Disable deletion for the user that marked the member for deletion
@@ -98,7 +98,7 @@ class MemberWithLog(HideRelatedNameAdmin):
         # User is normally allowed to delete these objects
         if obj is None:
             return True
-        
+
         # If the member was not marked for deletion, disable deletion
         if not obj.marked_for_deletion:
             return False
@@ -129,13 +129,13 @@ class MemberLogReadOnly(DisableModifications, HideRelatedNameAdmin):
 
 class RoomAdmin(admin.ModelAdmin):
     model = Room
-    
+
     list_display = ('id', 'name', 'access')
     list_display_links = ('id', 'name')
     search_fields = ['name', 'access']
 
     ordering = ("access",)
-    filter_horizontal = ('members_with_access', 'members_with_access_removed')
+    filter_horizontal = ('members_with_access',)
 
 # Register the special models, making them show up in the Django admin panel
 admin.site.register(Member, MemberWithLog)

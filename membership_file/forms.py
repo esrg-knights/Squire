@@ -25,7 +25,7 @@ class RequestUserForm():
         # We explicitly do not pass 'user' down the Form-chain,
         #   as it's an unexpected kwarg (for some Forms)
         super().__init__(*args, **kwargs)
-    
+
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.last_updated_by = self.user
@@ -44,11 +44,6 @@ class MemberRoomForm(forms.ModelForm):
         widget=admin.widgets.FilteredSelectMultiple('Rooms', False),
         required=False,
     )
-    normally_accessible_rooms = forms.ModelMultipleChoiceField(
-        Room.objects.all(),
-        widget=admin.widgets.FilteredSelectMultiple('Rooms', False),
-        required=False,
-    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -56,11 +51,9 @@ class MemberRoomForm(forms.ModelForm):
             # Set initial values (not needed if creating a new instance)
             initial_rooms = self.instance.accessible_rooms.values_list('pk', flat=True)
             self.initial['accessible_rooms'] = initial_rooms
-            initial_removed_rooms = self.instance.normally_accessible_rooms.values_list('pk', flat=True)
-            self.initial['normally_accessible_rooms'] = initial_removed_rooms
-        
+
         # Remove Room-fields if they're in the 'exclude'-list
-        for exclude_field in ['accessible_rooms', 'normally_accessible_rooms']:
+        for exclude_field in ['accessible_rooms']:
             if exclude_field in self.Meta.exclude:
                 del self.fields[exclude_field]
 
@@ -74,10 +67,10 @@ class MemberRoomForm(forms.ModelForm):
             # Defer saving the m2m-relation; the member might not yet exist at this point
             self.save_m2m = self._save_m2m
         return instance
-    
+
     def _save_m2m(self):
         super()._save_m2m()
-        for field in ['accessible_rooms', 'normally_accessible_rooms']:
+        for field in ['accessible_rooms']:
             if field not in self.Meta.exclude:
                 getattr(self.instance, field).clear()
                 getattr(self.instance, field).add(*self.cleaned_data[field])
@@ -86,19 +79,19 @@ class MemberRoomForm(forms.ModelForm):
 class AdminMemberForm(RequestUserForm, MemberRoomForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
         # Disable all fields if the member is marked for deletion
         if self.instance.marked_for_deletion:
             for field in self.fields:
                 self.fields[field].disabled = True
             self.fields['marked_for_deletion'].disabled = False
-        
+
 
 # A form that allows a member to be updated or created
 class MemberForm(RequestUserForm, MemberRoomForm):
     class Meta:
         model = Member
-        exclude = ('last_updated_by', 'last_updated_date', 'marked_for_deletion', 'user', 'notes', 'normally_accessible_rooms', 'is_deregistered')
+        exclude = ('last_updated_by', 'last_updated_date', 'marked_for_deletion', 'user', 'notes', 'is_deregistered')
         readonly_fields = ['accessible_rooms', 'member_since', 'has_paid_membership_fee', 'is_honorary_member', 'external_card_deposit', 'key_id']
 
     def __init__(self, *args, **kwargs):

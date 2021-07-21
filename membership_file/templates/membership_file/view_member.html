@@ -22,7 +22,6 @@
         <h3>Basic Information</h3>
         <p>
             Name: <i>{{ member.get_full_name }}</i><br>
-            Preferred Pronoun: <i>{{ member.preferred_pronoun|default:"Not provided" }}</i>
         </p>
 
         <h3>Membership Status</h3>
@@ -48,9 +47,9 @@
             TU/e Card Number: <i>{{ member.tue_card_number|default:"None" }}</i><br>
             External Card Number: <i>{{ member.display_external_card_number|default:"None" }}</i><br>
             {% if member.external_card_number %}
-                External Card Deposit: <i>€{{ member.external_card_deposit|default:"THIS SHOULD BE FILLED IN; PLEASE CONTACT THE BOARD" }}</i>
+                External Card Deposit: <i>€{{ member.external_card_deposit|default:"THIS SHOULD BE FILLED IN; PLEASE CONTACT THE BOARD" }}</i><br>
             {% endif %}
-            <br><small>External Cards can be used by non-TU/e students to access certain rooms.</small>
+            <small>External Cards can be used by non-TU/e students to access certain rooms.</small>
         </p>
         <strong>Accessible Rooms:</strong>
         {% if member.accessible_rooms.exists %}
