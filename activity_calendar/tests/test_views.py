@@ -295,7 +295,7 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         self._verify_show_participants(self.default_iso_dt, [during_perm, after_perm], False)
         self._verify_show_participants('2020-08-10T21:00:00+00:00', [before_perm, after_perm], False)
         self._verify_show_participants('2020-08-01T00:00:00+00:00', [before_perm, during_perm], False)
-        
+
         # User HAS the relevant permission to view registrations
         self._verify_show_participants(self.default_iso_dt, [before_perm], True)
         self._verify_show_participants('2020-08-10T21:00:00+00:00', [during_perm], True)
@@ -413,7 +413,7 @@ class ActivitySlotViewTest(TestActivityViewMixin, TestCase):
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_invalid_post(self, mock_tz):
-        # Can not unsubscribe from an activity you are not regitered to.
+        # Can not unsubscribe from an activity you are not registered to.
         response = self.build_post_response({
             'sign_up': True,
             'slot_id': 8
@@ -424,6 +424,48 @@ class ActivitySlotViewTest(TestActivityViewMixin, TestCase):
         self.assertHasMessage(response,
                               level=messages.ERROR,
                               text=ActivityMomentWithSlotsView.error_messages['slot-full'])
+
+
+    # Tests in which cases a user can view private slot locations
+    def test_private_slot_locations(self):
+        # Add some private slot locations
+        self.activity.private_slot_locations = True
+        self.activity.save()
+
+        slots = ActivitySlot.objects.filter(
+            parent_activity_id=self.default_activity_id,
+            recurrence_id=self.recurrence_id,
+        )
+        for slot in slots:
+            slot.location = f"Secret Location #{slot.id}"
+            slot.save()
+
+        # Should not be able to see private slot locations (not registered, no permission)
+        response = self.build_get_response()
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Hidden until registered for this slot", count=len(slots))
+        self.assertContains(response, "Secret Location #", count=0)
+
+        # Should only be able to see private slot location of slots a user is registered for
+        first_slot = slots.first()
+        first_slot.participants.add(self.user)
+
+        response = self.build_get_response()
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Hidden until registered for this slot", count=len(slots)-1)
+        self.assertContains(response, f"Secret Location #{first_slot.id}", count=1)
+
+        # Should be able to see all private slot locations with the relevant
+        #   permission, regardless of registration status
+        view_private_perm = Permission.objects.get(codename='can_view_private_slot_locations')
+        self.user.user_permissions.clear()
+        self.user.save()
+        self.user.user_permissions.add(view_private_perm)
+
+        response = self.build_get_response()
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Hidden until registered for this slot", count=0)
+        self.assertContains(response, "Secret Location #", count=len(slots))
 
 
 class CreateSlotViewTest(TestActivityViewMixin, TestCase):
