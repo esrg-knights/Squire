@@ -6,6 +6,12 @@
   Squire - Register
 {% endblock title %}
 
+{% block og-title %}
+    Squire Register
+{% endblock og-title %}
+{% block og-description %}
+    Register for Squire to access your personal information and earn achievements.
+{% endblock og-description %}
 
 {% block content %}
     <div class='contentFrame'>
@@ -15,7 +21,7 @@
 
         <form method="post">
             {% csrf_token %}
-            
+
             {% if form.non_field_errors %}
                 <ul class="errorlist alert alert-danger">
                     {% for error in form.non_field_errors %}
