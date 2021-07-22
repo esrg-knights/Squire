@@ -6,7 +6,9 @@ from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
 from django.db.models import Count
 from django.db.models.base import ModelBase
+from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 
 from recurrence.fields import RecurrenceField
@@ -15,14 +17,13 @@ import activity_calendar.util as util
 from core.models import ExtendedUser as User, PresetImage
 from membership_file.util import user_to_member
 
+#############################################################################
 # Models related to the Calendar-functionality of the application.
 # @since 29 JUN 2019
+#############################################################################
 
 __all__ = ['Activity', 'ActivityMoment', 'ActivitySlot', 'Participant']
 
-# Not now, but a later time (used as a default value below)
-def later_rounded():
-    return now_rounded() + timezone.timedelta(hours=2)
 
 # Rounds the current time (used as a default value below)
 def now_rounded():
@@ -68,6 +69,9 @@ class Activity(models.Model):
     max_slots_join_per_participant = models.IntegerField(default=1, validators=[MinValueValidator(-1)],
         help_text="-1 denotes unlimited slots")
 
+    private_slot_locations = models.BooleanField(default=False,
+        help_text="Private locations are hidden for users not registered to the relevant slot")
+
     subscriptions_required = models.BooleanField(default=True,
         help_text="People are only allowed to go to the activity if they register beforehand")
 
@@ -96,7 +100,7 @@ class Activity(models.Model):
     @property
     def image_url(self):
         if self.image is None:
-            return f'{settings.STATIC_URL}images/activity_default.png'
+            return f'{settings.STATIC_URL}images/default_logo.png'
         return self.image.image.url
 
     def get_all_activity_moments(self, start_date, end_date):
@@ -305,7 +309,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     class Meta:
         unique_together = ['parent_activity', 'recurrence_id']
         # Define the fields that can be locally be overwritten
-        copy_fields = ['title', 'description', 'location', 'max_participants']
+        copy_fields = ['title', 'description', 'location', 'max_participants', 'subscriptions_required', 'slot_creation', 'private_slot_locations']
         # Define fields that are instantly looked for in the parent_activity
         # If at any point in the future these must become customisable, one only has to move the field name to the
         # copy_fields attribute

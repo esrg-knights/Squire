@@ -6,6 +6,13 @@
   Squire - Calendar
 {% endblock title %}
 
+{% block og-title %}
+    Knights Activity Calendar
+{% endblock og-title %}
+{% block og-description %}
+    These are all activities taking place at ESRG Knights of the Kitchen Table.
+{% endblock og-description %}
+
 {% block css %}
   {{ block.super }}
   <link href="{% static 'fullcalendar/main.min.css' %}" rel='stylesheet'/>

@@ -7,6 +7,13 @@
   Squire - Your Achievements
 {% endblock title %}
 
+{% block og-title %}
+    Personal Achievements
+{% endblock og-title %}
+{% block og-description %}
+    View all achievements earned by you at the Knights.
+{% endblock og-description %}
+
 {% block css %}
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'css/achievement_frames.css' %}">

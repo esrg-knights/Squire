@@ -69,7 +69,6 @@ class ActivityMomentAdmin(MarkdownImageInlineAdmin):
     form = ActivityMomentAdminForm
 
     list_filter = ['parent_activity']
-    fields = ['parent_activity', 'recurrence_id', 'local_description', 'local_location', 'local_max_participants']
 
     def activity_moment_has_changes(obj):
         """ Check if this ActivityModel has any data it overwrites """
