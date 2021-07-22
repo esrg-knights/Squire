@@ -3,26 +3,3 @@
 .main-martor:not(.main-martor-fullscreen) {
     max-width: 75em;
 }
-
-/*********************************************************************************************/
-/* HACK: Override same rule from the Martor admin css as it messes up how the other fields
-are displayed */
-html fieldset .form-row div>label {
-    display: block!important;
-}
-
-html .aligned .vCheckboxLabel {
-    float: left;
-    width: 160px;
-    padding: initial;
-}
-
-html table tr.form-row {
-    display: table-row;
-}
-
-html .inline-group .tabular td.original p {
-    /* display: table-cell; */
-    /* padding: initial; */
-    overflow: initial;
-}
