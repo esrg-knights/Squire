@@ -32,7 +32,10 @@
             "is_active": true,
             "date_joined": "1970-01-01T12:00:00Z",
             "groups": [],
-            "user_permissions": []
+            "user_permissions": [
+                ["can_view_membership_information_self", "membership_file", "member"],
+                ["can_change_membership_information_self", "membership_file", "member"]
+            ]
         }
     },
     {
@@ -50,7 +53,10 @@
             "is_active": true,
             "date_joined": "1970-01-01T12:00:00Z",
             "groups": [],
-            "user_permissions": []
+            "user_permissions": [
+                ["can_view_membership_information_self", "membership_file", "member"],
+                ["can_change_membership_information_self", "membership_file", "member"]
+            ]
         }
     }
 ]

@@ -1,11 +1,14 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
+from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponseForbidden
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.decorators.http import require_safe
 from django.views.generic import DetailView, TemplateView, UpdateView
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
-from .models import MemberUser, Member
+from .models import Member, MemberLog, MemberUser, 
 from .forms import MemberForm
 from .util import MembershipRequiredMixin
 
@@ -38,17 +41,20 @@ class NotAMemberView(TemplateView):
 
 
 # Page for viewing membership information
-class MemberView(LoginRequiredMixin, RequestMemberMixin, MembershipRequiredMixin, DetailView):
+class MemberView(LoginRequiredMixin, RequestMemberMixin, MembershipRequiredMixin, PermissionRequiredMixin, DetailView):
     model = Member
     template_name = 'membership_file/view_member.html'
-
+    permission_required = 'membership_file.can_view_membership_information_self'
+    raise_exception = True
 
 # Page for changing membership information using a form
-class MemberChangeView(LoginRequiredMixin, RequestMemberMixin, MembershipRequiredMixin, UpdateView):
+class MemberChangeView(LoginRequiredMixin, RequestMemberMixin, MembershipRequiredMixin, PermissionRequiredMixin, UpdateView):
     template_name = 'membership_file/edit_member.html'
     form_class = MemberForm
     success_url = reverse_lazy('membership_file/membership')
-
+    permission_required = ('membership_file.can_view_membership_information_self', 'membership_file.can_change_membership_information_self')
+    raise_exception = True
+    
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super().get_form_kwargs(*args, **kwargs)
         kwargs['user'] = self.request.user

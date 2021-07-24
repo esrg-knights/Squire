@@ -36,13 +36,20 @@ class MemberUser(User):
     # Checks whether a given user is a member
     def is_member(self):
         member = self.get_member()
-        return member is not None and not member.is_deregistered
+        return member is not None and member.is_considered_member()
 
 
 ##################################################################################
 
 # The Member model represents a Member in the membership file
 class Member(models.Model):
+
+    class Meta:
+        permissions = [
+            ('can_view_membership_information_self',    "[F] Can view their own membership information."),
+            ('can_change_membership_information_self',  "[F] Can edit their own membership information."),
+        ]
+
     # The User that is linked to this member
     # NB: Only one user can be linked to one member at the same time!
     user = models.OneToOneField(
@@ -50,7 +57,7 @@ class Member(models.Model):
         on_delete = models.SET_NULL,
         blank = True,
         null = True,
-        related_name = "related_user",
+        related_name = "member",
         )
 
     ##################################
@@ -145,7 +152,9 @@ class Member(models.Model):
 
     # Any additional information that cannot be stored in other fields (e.g., preferred pronouns)
     notes = models.TextField(blank=True, help_text="Notes are invisible to members.")
-
+  
+    def is_considered_member(self):
+        return not self.is_deregistered
 
     ##################################
     # STRING REPRESENTATION METHODS
