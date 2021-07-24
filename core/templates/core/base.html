@@ -51,14 +51,14 @@
 			<div class="collapse navbar-collapse" id="navbarSupportedContent">
 				<ul class="navbar-nav mr-auto">
 					<li class="nav-item">
-						<a class="nav-link" href="/achievements">Achievements</a>
+						<a class="nav-link" href="{% url 'achievements/all' %}">Achievements</a>
 					</li>
 					<li>
-						<a class="nav-link" href="/calendar">Activity Calendar</a>
+						<a class="nav-link" href="{% url 'activity_calendar:calendar' %}">Activity Calendar</a>
 					</li>
 					{% if user.is_authenticated %}
 						<li>
-							<a class="nav-link" href="/newsletters">Newsletter</a>
+							<a class="nav-link" href="{% url 'core/newsletters' %}">Newsletter</a>
 						</li>
 					{% endif %}
 				</ul>
