@@ -20,7 +20,7 @@ class Item(models.Model):
         abstract = True
 
     def currently_in_possession(self):
-        return self.ownerships.count()
+        return self.ownerships.filter(is_active=True).count()
 
     def __str__(self):
         return f'{self.__class__.__name__}: {self.name}'

@@ -1,0 +1,17 @@
+[
+    {
+        "model": "auth.group",
+        "pk": 1,
+        "fields": {
+            "name": "UUPS"
+        }
+    },
+    {
+        "model": "auth.user_groups",
+        "pk": 1,
+        "fields": {
+            "user_id": 1,
+            "group_id": 1
+        }
+    }
+]

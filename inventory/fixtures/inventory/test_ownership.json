@@ -1,0 +1,88 @@
+[
+    {
+        "model": "inventory.boardgame",
+        "pk": 1,
+        "fields": {
+            "name": "Terraforming Mars",
+            "note": "",
+            "bgg_id": 167791
+        }
+    },
+    {
+        "model": "inventory.boardgame",
+        "pk": 2,
+        "fields": {
+            "name": "Gaia Project",
+            "note": "",
+            "bgg_id": 220308
+        }
+    },
+    {
+        "model": "inventory.boardgame",
+        "pk": 3,
+        "fields": {
+            "name": "Pak speelkaarten",
+            "note": "in rood jasje",
+            "bgg_id": null
+        }
+    },
+    {
+        "model": "inventory.boardgame",
+        "pk": 4,
+        "fields": {
+            "name": "Verloren spel",
+            "note": "Niet fysiek aanwezig, wel in ons hoofd",
+            "bgg_id": null
+        }
+    },
+
+
+    {
+        "model": "inventory.ownership",
+        "pk": 1,
+        "fields": {
+            "member": 1,
+            "group": null,
+            "added_since": "2020-08-14",
+            "is_active": true,
+            "content_type": ["inventory", "boardgame"],
+            "object_id": 1
+        }
+    },
+    {
+        "model": "inventory.ownership",
+        "pk": 2,
+        "fields": {
+            "member": 2,
+            "group": null,
+            "added_since": "2020-09-01",
+            "is_active": false,
+            "content_type": ["inventory", "boardgame"],
+            "object_id": 1
+        }
+    },
+    {
+        "model": "inventory.ownership",
+        "pk": 3,
+        "fields": {
+            "member": null,
+            "group": 1,
+            "added_since": "2020-08-14",
+            "is_active": true,
+            "content_type": ["inventory", "boardgame"],
+            "object_id": 1
+        }
+    },
+    {
+        "model": "inventory.ownership",
+        "pk": 4,
+        "fields": {
+            "member": null,
+            "group": 1,
+            "added_since": "2020-08-14",
+            "is_active": true,
+            "content_type": ["inventory", "boardgame"],
+            "object_id": 2
+        }
+    }
+]
