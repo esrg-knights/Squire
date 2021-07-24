@@ -33,6 +33,17 @@ def now_rounded():
 class Activity(models.Model):
     class Meta:
         verbose_name_plural = "activities"
+        permissions = [
+            ('can_view_activity_participants_before',       "[F] Can view an activity's participants before it starts."),
+            ('can_view_activity_participants_during',       "[F] Can view an activity's participants during it."),
+            ('can_view_activity_participants_after',        "[F] Can view an activity's participants after it has ended."),
+            ('can_register_outside_registration_period',    "[F] Can (de)register for activities if registrations are closed."),
+            ('can_ignore_none_slot_creation_type',          "[F] Can create slots for activities with slots that normally do not allow slot creation by users."),
+            ('can_ignore_slot_creation_limits',             "[F] Can create more slots even if the maximum amount of slots is reached."),
+            ('can_select_slot_image',                       "[F] Can choose an alternative slot image when creating a slot."),
+            ('can_view_private_slot_locations',             "[F] Can view a slot's location even if they are marked as 'private' by the activity."),
+        ]
+
 
     # The User that created the activity
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
