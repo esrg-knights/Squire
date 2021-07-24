@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'achievements',
     'activity_calendar',
     'membership_file',
+    'inventory',
     # More External Libraries
     'django_cleanup.apps.CleanupConfig',
     'import_export',
@@ -231,7 +232,7 @@ util.create_coverage_directory(COVERAGE_REPORT_DIR)
 # The URL or named URL pattern where requests are redirected for login
 # when using the login_required() decorator.
 # Also used to specify the location of the login page
-LOGIN_URL = '/login' 
+LOGIN_URL = '/login'
 
 # The URL or named URL pattern where requests are redirected after
 # login when the LoginView doesn’t get a next GET parameter.
