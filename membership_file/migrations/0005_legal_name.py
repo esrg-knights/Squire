@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('membership_file', '0003_auto_20201207_1432'),
+        ('membership_file', '0004_permissions'),
     ]
 
     operations = [

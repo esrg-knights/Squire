@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('membership_file', '0004_legal_name'),
+        ('membership_file', '0005_legal_name'),
     ]
 
     operations = [
