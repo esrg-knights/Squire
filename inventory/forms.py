@@ -4,7 +4,7 @@ from django.forms import Form, ValidationError, ModelForm
 
 from inventory.models import *
 
-__all__ = ['OwnershipRemovalForm', 'OwnershipActivationForm', 'OwnershipNoteForm']
+__all__ = ['OwnershipRemovalForm', 'OwnershipActivationForm', 'OwnershipNoteForm', 'OwnershipCommitteeForm']
 
 
 class OwnershipRemovalForm(Form):
@@ -45,4 +45,9 @@ class OwnershipNoteForm(ModelForm):
         model = Ownership
         fields = ['note']
 
+
+class OwnershipCommitteeForm(ModelForm):
+    class Meta:
+        model = Ownership
+        fields = ['note', 'added_since']
 

@@ -12,7 +12,13 @@ urlpatterns = [
         path('<int:ownership_id>/', include([
             path('take_ome/', MemberItemRemovalFormView.as_view(), name='member_take_home'),
             path('give_out/', MemberItemLoanFormView.as_view(), name='member_loan_out'),
-            path('edit_note/', MemberOwnershipAlterView.as_view(), name='member_edit_note'),
+            path('edit_note/', MemberOwnershipAlterView.as_view(), name='owner_link_edit'),
+        ])),
+    ])),
+    path('committee/<int:group_id>/', include([
+        path('items/', GroupItemsOverview.as_view(), name='committee_items'),
+        path('<int:ownership_id>/', include([
+            path('edit_note/', GroupItemLinkUpdateView.as_view(), name='owner_link_edit'),
         ])),
     ])),
 

@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-    Squire - {{ Boardgames }}
+    Squire - Inventory
 {% endblock title %}
 
 {% block content-frame-class %}
@@ -48,7 +48,7 @@
                         <td class="col-4">
                             {{ ownership.note }}
                             <a class="btn btn-sm btn-outline-secondary"
-                               href="{% url "inventory:member_edit_note" ownership_id=ownership.id %}">
+                               href="{% url "inventory:owner_link_edit" ownership_id=ownership.id %}">
                                 Edit
                             </a>
                         </td>
@@ -107,7 +107,7 @@
                     <td class="col-4">
                         {{ ownership.note }}
                         <a class="btn btn-sm btn-outline-secondary"
-                           href="{% url "inventory:member_edit_note" ownership_id=ownership.id %}">
+                           href="{% url "inventory:owner_link_edit" ownership_id=ownership.id %}">
                             Edit
                         </a>
                     </td>

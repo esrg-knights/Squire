@@ -1,0 +1,69 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}
+    Squire - Inventory
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    <h1>{{ group.name }} items</h1>
+    <p>
+       Below is a list of all items owned by this committee
+    </p>
+    <hr>
+
+    {% if ownerships %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                <tr class="">
+                    <th scope="col-auto">Name</th>
+                    <th scope="col-auto">Type</th>
+                    <th scope="col-auto">Added on</th>
+                    <th scope="col-4">Note</th>
+                    <th scope="col-auto">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for ownership in ownerships %}
+                    <tr class="">
+                        <td class="col-auto">
+                            {% if ownership.content_object.image %}
+                                <img style="height: 2em;" src={{ ownership.content_object.image.url }}>
+                            {% endif %}
+                            {{ ownership.content_object.name }}
+                        </td>
+                        <td class="col-auto">
+                            {{ ownership.content_type }}
+                        </td>
+                        <td class="col-auto">
+                            {{ ownership.added_since }}
+                        </td >
+                        <td class="col-4">
+                            {{ ownership.note }}
+                        </td>
+                        <td class="col-auto">
+                            <div class="btn-group" role="group" aria-label="Basic example">
+                                <!-- Left open for additional actions -->
+                                <a href="{% url "inventory:owner_link_edit" ownership_id=ownership.id group_id=group.id %}"
+                                    class="btn btn-outline-secondary">Edit link</a>
+
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="font-weight-bold">You currently do not have any items loaned to the Knights</p>
+        <div style="height: 10em;"></div>
+    {% endif %}
+
+{% endblock %}

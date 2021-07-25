@@ -1,9 +1,11 @@
-from django.http.response import HttpResponseForbidden, HttpResponseRedirect
 from django.contrib import messages
-from django.views.generic import TemplateView, ListView
-from django.views.generic.edit import FormView, FormMixin
-from django.urls import reverse_lazy
+from django.contrib.auth.models import Group
+from django.core.exceptions import PermissionDenied
+from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
+from django.views.generic import TemplateView, ListView
+from django.views.generic.edit import FormView, UpdateView
 
 from inventory.models import BoardGame, Ownership
 from inventory.forms import *
@@ -39,19 +41,16 @@ class OwnershipMixin:
 
     def dispatch(self, request, *args, **kwargs):
         self.ownership = get_object_or_404(Ownership, id=self.kwargs['ownership_id'])
-        if not self.can_access():
-            return HttpResponseForbidden()
-
+        self.check_access()
         return super(OwnershipMixin, self).dispatch(request, *args, **kwargs)
 
-    def can_access(self):
+    def check_access(self):
         if self.ownership.member:
             if self.request.user.member != self.ownership.member:
-                return False
+                raise PermissionDenied
         else:
             if self.ownership.group not in self.request.user.groups.all():
-                return False
-        return True
+                raise PermissionDenied
 
     def get_context_data(self, **kwargs):
         context = super(OwnershipMixin, self).get_context_data(**kwargs)
@@ -115,3 +114,49 @@ class MemberOwnershipAlterView(OwnershipMixin, FormView):
         form.save()
         messages.success(self.request, f"Your version of {self.ownership.content_object} has been updated")
         return super(MemberOwnershipAlterView, self).form_valid(form)
+
+
+
+###########################################################
+###############   Groups / Committees   ###################
+###########################################################
+
+
+class GroupMixin:
+    def dispatch(self, request, *args, **kwargs):
+        self.group = get_object_or_404(Group, id=self.kwargs['group_id'])
+        if self.group not in self.request.user.groups.all():
+            raise PermissionDenied()
+
+        return super(GroupMixin, self).dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(GroupMixin, self).get_context_data(**kwargs)
+        context['group'] = self.group
+        return context
+
+
+class GroupItemsOverview(GroupMixin, ListView):
+    template_name = "inventory/committee_inventory.html"
+    context_object_name = 'ownerships'
+
+    def get_queryset(self):
+        return Ownership.objects.filter(group=self.group).filter(is_active=True)
+
+
+class GroupItemLinkUpdateView(GroupMixin, OwnershipMixin, UpdateView):
+    template_name = "inventory/committee_link_edit.html"
+    model = Ownership
+    fields = ['note', 'added_since']
+
+    def get_object(self, queryset=None):
+        return self.ownership
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Link data has been updated")
+        return super(GroupItemLinkUpdateView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("inventory:committee_items", kwargs={'group_id': self.group.id})
+
+
