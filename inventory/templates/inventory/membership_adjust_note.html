@@ -1,0 +1,31 @@
+{% extends 'core/base.html' %}
+{% load render_form %}
+
+{% block title %}
+    Squire - {{ Boardgames }}
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+{% block content %}
+<h1>My items</h1>
+<p>
+    Below is a list of your items stored at the Knights. Want to add a new boardgame? Send an e-mail to
+    <a href="mailto:zg@kotkt.nl">zg@kotkt.nl</a> to inform them and they'll update it below.
+</p>
+
+
+
+{% render_form method="post" id="submit_form"  has_submit_button=False %}
+
+<div class="btn-group w-100" role="group" aria-label="Form changing">
+    <a href="{% url "inventory:member_items" %}"
+       class="btn btn-secondary">Cancel</a>
+    <button form="submit_form" type="submit" class="btn btn-success">
+        Save changes
+    </button>
+</div>
+
+{% endblock %}

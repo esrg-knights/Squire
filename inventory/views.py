@@ -99,3 +99,19 @@ class MemberItemLoanFormView(OwnershipMixin, FormView):
         message = f"This action was not possible: {form.non_field_errors()[0]}"
         messages.error(self.request, message)
         return HttpResponseRedirect(self.get_success_url())
+
+
+class MemberOwnershipAlterView(OwnershipMixin, FormView):
+    template_name = "inventory/membership_adjust_note.html"
+    form_class = OwnershipNoteForm
+    success_url = reverse_lazy("inventory:member_items")
+
+    def get_form_kwargs(self):
+        kwargs = super(MemberOwnershipAlterView, self).get_form_kwargs()
+        kwargs['instance'] = self.ownership
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, f"Your version of {self.ownership.content_object} has been updated")
+        return super(MemberOwnershipAlterView, self).form_valid(form)

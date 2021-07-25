@@ -18,36 +18,41 @@
     </p>
     <hr>
 
+    {% if ownerships %}
     <div class="table-responsive">
         <table class="table table-striped table-hover">
             <thead>
-            <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Type</th>
-                <th scope="col">Added on</th>
-                <th scope="col">Note</th>
-                <th scope="col">Actions</th>
-            </tr>
+                <tr class="">
+                    <th scope="col-auto">Name</th>
+                    <th scope="col-auto">Type</th>
+                    <th scope="col-auto">Added on</th>
+                    <th scope="col-4">Note</th>
+                    <th scope="col-auto">Actions</th>
+                </tr>
             </thead>
             <tbody>
                 {% for ownership in ownerships %}
-                    <tr>
-                        <td>
+                    <tr class="">
+                        <td class="col-auto">
                             {% if ownership.content_object.image %}
                                 <img style="height: 2em;" src={{ ownership.content_object.image.url }}>
                             {% endif %}
                             {{ ownership.content_object.name }}
                         </td>
-                        <td>
+                        <td class="col-auto">
                             {{ ownership.content_type }}
                         </td>
-                        <td>
+                        <td class="col-auto">
                             {{ ownership.added_since }}
-                        </td>
-                        <td>
+                        </td >
+                        <td class="col-4">
                             {{ ownership.note }}
+                            <a class="btn btn-sm btn-outline-secondary"
+                               href="{% url "inventory:member_edit_note" ownership_id=ownership.id %}">
+                                Edit
+                            </a>
                         </td>
-                        <td>
+                        <td class="col-auto">
                             <a class="btn btn-sm btn-warning"
                                 href="{% url "inventory:member_take_home" ownership_id=ownership.id %}">
                                 Take home
@@ -59,7 +64,12 @@
             </tbody>
         </table>
     </div>
+    {% else %}
+        <p class="font-weight-bold">You currently do not have any items loaned to the Knights</p>
+        <div style="height: 10em;"></div>
+    {% endif %}
 
+    {% if ownerships_history %}
     <hr>
     <h3>
         Previous items
@@ -72,32 +82,36 @@
         <table class="table table-striped table-hover">
             <thead>
             <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Type</th>
-                <th scope="col">Taken home on</th>
-                <th scope="col">Note</th>
-                <th scope="col">Actions</th>
+                <th class="col-auto">Name</th>
+                <th class="col-auto">Type</th>
+                <th class="col-auto">Taken home on</th>
+                <th class="col-4">Note</th>
+                <th class="col-auto">Actions</th>
             </tr>
             </thead>
             <tbody>
             {% for ownership in ownerships_history %}
                 <tr>
-                    <td>
+                    <td class="col-auto">
                         {% if ownership.content_object.image %}
                             <img style="height: 2em;" src={{ ownership.content_object.image.url }}>
                         {% endif %}
                         {{ ownership.content_object.name }}
                     </td>
-                    <td>
+                    <td class="col-auto">
                         {{ ownership.content_type }}
                     </td>
-                    <td>
+                    <td class="col-auto">
                         {{ ownership.added_since }}
                     </td>
-                    <td>
+                    <td class="col-4">
                         {{ ownership.note }}
+                        <a class="btn btn-sm btn-outline-secondary"
+                           href="{% url "inventory:member_edit_note" ownership_id=ownership.id %}">
+                            Edit
+                        </a>
                     </td>
-                    <td>
+                    <td class="col-auto">
                         <a class="btn btn-sm btn-secondary"
                            href="{% url "inventory:member_loan_out" ownership_id=ownership.id %}">
                             Leave at Knights
@@ -109,13 +123,6 @@
             </tbody>
         </table>
     </div>
-
-    <div class="row">
-        <div class="col">
-
-        </div>
-    </div>
-
-
+    {% endif %}
 
 {% endblock %}

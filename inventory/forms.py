@@ -1,10 +1,10 @@
 import datetime
-from django.forms import Form, ValidationError
+from django.forms import Form, ValidationError, ModelForm
 
 
 from inventory.models import *
 
-__all__ = ['OwnershipRemovalForm', 'OwnershipActivationForm']
+__all__ = ['OwnershipRemovalForm', 'OwnershipActivationForm', 'OwnershipNoteForm']
 
 
 class OwnershipRemovalForm(Form):
@@ -40,5 +40,9 @@ class OwnershipActivationForm(Form):
         return self.cleaned_data
 
 
+class OwnershipNoteForm(ModelForm):
+    class Meta:
+        model = Ownership
+        fields = ['note']
 
 
