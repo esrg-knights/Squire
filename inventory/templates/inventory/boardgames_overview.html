@@ -11,6 +11,7 @@
 
 
 {% block content %}
+    <h1>Availlable board games</h1>
     <div class="row gx-4">
         {% for boardgame in boardgames %}
                 <div class="col-12 col-lg-6 p-2">
@@ -59,10 +60,12 @@
                                        {% endif %}
                                     </div>
                                     <div class="col-4 d-none d-md-inline pr-0">
-                                        <a class="btn btn-sm btn-block btn-outline-primary mb-2 disabled"
-                                           href="">
-                                            Achievement?
-                                        </a>
+                                        {% if boardgame.achievements.all %}
+                                            <a class="btn btn-sm btn-block btn-outline-primary mb-2"
+                                               href="{% url "achievements/all" %}">
+                                                Achievement
+                                            </a>
+                                        {% endif %}
                                         {% if boardgame.bgg_id %}
                                         <a class="btn btn-sm btn-block btn-outline-info"
                                            target="_blank" rel="noopener noreferrer"
@@ -77,10 +80,12 @@
                         <div class="col-4 d-md-none p-2">
                             <div class="row">
                                 <div class="col-12">
-                                    <a class="btn btn-sm btn-block btn-outline-primary mb-2 disabled"
-                                       href="">
-                                        Achievement?
-                                    </a>
+                                    {% if boardgame.achievements.all %}
+                                        <a class="btn btn-sm btn-block btn-outline-primary mb-2"
+                                           href="{% url "achievements/all" %}">
+                                            Achievement
+                                        </a>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="row">

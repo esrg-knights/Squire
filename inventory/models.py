@@ -9,6 +9,9 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from membership_file.models import Member
 
 
+__all__ = ['valid_item_class_ids', 'BoardGame', 'Ownership']
+
+
 class ItemManager(models.Manager):
 
     def get_all_in_possession(self):
@@ -45,6 +48,7 @@ class Item(models.Model):
     image = models.ImageField(blank=True, null=True)
 
     ownerships = GenericRelation('Ownership')
+    achievements = GenericRelation('achievements.AchievementItemLink')
 
     objects = ItemManager()
 
