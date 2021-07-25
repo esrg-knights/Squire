@@ -1,0 +1,53 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}
+    Squire - {{ Boardgames }}
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    <h1>Take home {{ ownership.content_object.name }}</h1>
+    <p>
+        Confirm below that you will/have taken this item home. It is your responsibility to verify you took the right
+        item.<br>
+        You can always make it availlable again later if you want to
+    </p>
+    <div class="alert alert-warning" role="alert">
+        Due to Corona measures, please inform the board when wanting to access the Knights room outside of regular hours
+    </div>
+
+    <form id="main_form" method="post">
+        {% csrf_token %}
+    </form>
+
+    <div class="row">
+        {% if ownership.content_object.image %}
+        <div class="col-auto">
+            <img style="height: 5em;" src={{ ownership.content_object.image.url }}>
+        </div>
+        {% endif %}
+        <div class="col">
+            <div class="row">
+                <div class="col-12">
+                    <div class="h3">{{ ownership.content_object.name }}</div>
+                    <div>
+                        {{ ownership.note }}
+                    </div>
+                </div>
+                <div class="col-12">
+                    <input type="submit" class="btn btn-warning" form="main_form" value="Yes, I shall take it home">
+                    <a class="btn btn-secondary" href="{% url "inventory:member_items" %}">
+                        No, leave it at the Knights
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}

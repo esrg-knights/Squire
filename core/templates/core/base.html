@@ -77,6 +77,7 @@
 								{% with memberuser=user|to_member %}
 									{% if memberuser.is_member %}
 										<a class="dropdown-item greenify" href="{% url 'membership_file/membership' %}">Membership Information</a>
+                                        <a class="dropdown-item greenify" href="{% url 'inventory:member_items' %}">My inventory</a>
 									{% endif %}
 								{% endwith %}
                                 {% if user.is_staff %}

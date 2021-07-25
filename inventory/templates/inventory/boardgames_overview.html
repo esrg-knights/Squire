@@ -21,7 +21,7 @@
                             {% if boardgame.image %}
                                 <div
                                     style="background-size: contain; background-position: center;
-                                        background-image: url('{{ boardgame.image }}');
+                                        background-image: url('{{ boardgame.image.url }}');
                                         background-repeat: no-repeat; width: 4em; height: 4em;"></div>
                             {% else %}
                                 <div
@@ -53,7 +53,7 @@
                                             {% else %}
                                                 Supplied by:
                                             {% endif %}
-                                               {% for owner in boardgame.ownerships.all %}
+                                               {% for owner in boardgame.currently_in_possession %}
                                                    {{ owner.owner }}{% if not forloop.last %}, {% endif %}
                                                {% endfor %}
                                            </small>

@@ -1,10 +1,12 @@
 import datetime
+import os
 
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.utils.text import slugify
 
 from membership_file.models import Member
 
@@ -16,8 +18,6 @@ class ItemManager(models.Manager):
 
     def get_all_in_possession(self):
         """ Returns all items currently in posssession (owned or burrowed) """
-        print(f'-----{self.model}')
-
         content_type = ContentType.objects.get_for_model(self.model)
         ownerships = Ownership.objects.filter(content_type=content_type, is_active=True)
         return self.get_queryset().filter(ownerships__in=ownerships).distinct()
@@ -41,11 +41,25 @@ class ItemManager(models.Manager):
         return self.get_queryset().filter(ownerships__in=ownerships).distinct()
 
 
+# File path to upload achievement images to
+def get_item_image_upload_path(instance, filename):
+    # Obtain extension
+    # NB: A file can be renamed to have ANY extension
+    _, extension = os.path.splitext(filename)
+
+    # file will be uploaded to MEDIA_ROOT / images/item/<item_type>/<id>.<file_extension>
+    return 'images/item/{type}/{id}{extension}'.format(
+        type=slugify(instance.__class__.__name__),
+        id=instance.id,
+        extension=extension,
+    )
+
+
 class Item(models.Model):
     """ Item in the inventory system. Abstract root class. """
     name = models.CharField(max_length=128)
     note = models.TextField(max_length=512, blank=True, null=True)
-    image = models.ImageField(blank=True, null=True)
+    image = models.ImageField(upload_to=get_item_image_upload_path, blank=True, null=True)
 
     ownerships = GenericRelation('Ownership')
     achievements = GenericRelation('achievements.AchievementItemLink')
@@ -57,7 +71,7 @@ class Item(models.Model):
         ordering = ("name",)
 
     def currently_in_possession(self):
-        return self.ownerships.filter(is_active=True).count()
+        return self.ownerships.filter(is_active=True)
 
     def is_owned_by_association(self):
         return self.ownerships.filter(is_active=True).filter(group__isnull=False).exists()
@@ -87,6 +101,7 @@ class Ownership(models.Model):
     added_since = models.DateField(default=datetime.date.today)
     is_active = models.BooleanField(default=True,
                                     help_text="Whether item is currently at the Knights")
+    note = models.TextField(max_length=256, blank=True, null=True)
 
     # The owned item
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, limit_choices_to=valid_item_class_ids)

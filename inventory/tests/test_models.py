@@ -46,5 +46,5 @@ class ModelRelationTest(TestCase):
         """ Test the ownership link from the item side. Tested on boardgame item """
         self.assertEqual(3, BoardGame.objects.get(id=1).ownerships.count())
         # Currently in possession also checks for is_active
-        self.assertEqual(2, BoardGame.objects.get(id=1).currently_in_possession())
-        self.assertEqual(1, BoardGame.objects.get(id=2).currently_in_possession())
+        self.assertEqual(2, BoardGame.objects.get(id=1).currently_in_possession().count())
+        self.assertEqual(1, BoardGame.objects.get(id=2).currently_in_possession().count())
