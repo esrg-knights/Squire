@@ -68,7 +68,7 @@ class Member(models.Model):
     first_name = models.CharField(max_length=255)
     tussenvoegsel = models.CharField(max_length=255, blank=True, null=True)
     last_name = models.CharField(max_length=255)
-    
+
     ##################################
     # STUDENT INFORMATION
     ##################################
@@ -82,15 +82,15 @@ class Member(models.Model):
     ##################################
     tue_card_number_regex = RegexValidator(regex=r'^[0-9]{7}$', message="TUe card numbers must only consist of exactly 7 numbers. E.g. 1234567")
     tue_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, blank=True, null=True, unique=True, verbose_name="TUe card number")
-    
+
     external_card_digits_regex = RegexValidator(regex=r'^[0-9]{3}$', message="External card digits must consist of exactly 3 digits. E.g. 012")
-    
+
     # External card uses the same number formatting as Tue cards, but its number does not necessarily need to be unique
     external_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, blank=True, null=True, help_text="External cards are blue, whereas Tu/e cards are (currently) orange.")
     # 3-digit code at the bottom of a card
     external_card_digits = models.CharField(validators=[external_card_digits_regex], max_length=3, blank=True, null=True, verbose_name="digits")
     # The cluster contains additional information of an external card
-    external_card_cluster = models.CharField(max_length=255, blank=True, null=True, verbose_name="cluster") 
+    external_card_cluster = models.CharField(max_length=255, blank=True, null=True, verbose_name="cluster")
 
     # External card number and digit-pairs are a unique combination
     unique_together = [['external_card_number', 'external_card_digits']]
@@ -132,7 +132,7 @@ class Member(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete = models.SET_NULL,
         blank = True,
-        null = True,        
+        null = True,
         related_name = "last_updated_by_user",
     )
 
@@ -141,7 +141,7 @@ class Member(models.Model):
     marked_for_deletion = models.BooleanField(default=False)
 
     is_deregistered = models.BooleanField(default=False, help_text="Use this if you need to store (contact) information of someone who is not a member anymore.")
-  
+
     def is_considered_member(self):
         return not self.is_deregistered
 
@@ -150,7 +150,7 @@ class Member(models.Model):
     ##################################
     # String-representation of an instance of a Member
     def __str__(self):
-        return self.get_full_name() + " ({0})".format(self.id)
+        return self.get_full_name()
 
     # Gets the name of the member
     def get_full_name(self):
@@ -168,7 +168,7 @@ class Member(models.Model):
         if updater.id == self.id:
             return 'You'
         return updater.get_full_name()
-    
+
     # Displays the external card number of the member
     def display_external_card_number(self):
         if self.external_card_number is None:
@@ -190,7 +190,7 @@ class Member(models.Model):
                 house_number += '-'
             house_number += self.house_number_addition
 
-        return "{0} {1}, {2}, {3}{4}".format(self.street, house_number, self.city, 
+        return "{0} {1}, {2}, {3}{4}".format(self.street, house_number, self.city,
             "" if self.state is None else f"{self.state}, ", self.country)
 
 ##################################################################################
@@ -204,7 +204,7 @@ class MemberLog(models.Model):
         related_name = "user_that_updated",
         null = True,
         )
-    
+
     # The member whose information was updated
     member = models.ForeignKey(
         Member,
@@ -233,7 +233,7 @@ class MemberLog(models.Model):
     # String-representation of an instance of a MemberLog
     def __str__(self):
         return "[{3}] {1} updated {2}'s information ({0})".format(self.id, self.user, self.member, self.log_type)
-    
+
 
 # The MemberLogField Model represents an updated field in a MemberLog object
 class MemberLogField(models.Model):

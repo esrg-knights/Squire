@@ -56,6 +56,9 @@
 					<li>
 						<a class="nav-link" href="{% url 'activity_calendar:calendar' %}">Activity Calendar</a>
 					</li>
+                    <li>
+                        <a class="nav-link" href="{% url 'inventory:home' %}">Inventory</a>
+                    </li>
 					{% if user.is_authenticated %}
 						<li>
 							<a class="nav-link" href="{% url 'core/newsletters' %}">Newsletter</a>
