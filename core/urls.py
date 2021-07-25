@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from django.conf import settings
 from django.contrib.auth import views as djangoViews
 from .forms import LoginForm, PasswordResetForm, PasswordChangeForm, PasswordResetConfirmForm
@@ -67,4 +67,10 @@ urlpatterns = [
     path('register/success', views.registerSuccess, name='core/user_accounts/register/success'),
     path('newsletters/', views.viewNewsletters, name='core/newsletters'),
     path('', views.homePage, name='core/homepage'),
+
+    # Mock 403 and 404 views for display testing in production
+    path('mock/', include([
+        path('404/', views.show_error_404),
+        path('403/', views.show_error_403),
+    ])),
 ]
