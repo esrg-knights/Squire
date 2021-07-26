@@ -67,8 +67,8 @@ def register(request):
 
 
 def show_error_403(request, exception=None):
-    return render(request, 'core/errors/error403.html', {})
+    return render(request, 'core/errors/error403.html', status=403)
 
 
 def show_error_404(request, exception=None):
-    return render(request, 'core/errors/error404.html', {})
+    return render(request, 'core/errors/error404.html', status=404)
