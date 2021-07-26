@@ -1,13 +1,14 @@
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 
-from inventory.models import Item, BoardGame, Ownership, valid_item_class_ids
+from membership_file.models import Member
+from inventory.models import Item, BoardGame, Ownership, valid_item_class_ids, ItemManager
 
 
-class ModelRelationTest(TestCase):
+class TestOwnership(TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-
 
     def test_ownership_validation(self):
         """ Test the custom clean criteria related to member/group """
@@ -42,9 +43,56 @@ class ModelRelationTest(TestCase):
         # There is only 1 item implemented: Boardgame
         self.assertEqual(len(valid_ids['id__in']), 1)
 
-    def test_ownership_count(self):
-        """ Test the ownership link from the item side. Tested on boardgame item """
+    def test_owner(self):
+        self.assertEqual(Ownership.objects.get(id=1).owner, Member.objects.get(id=2))
+        self.assertEqual(Ownership.objects.get(id=3).owner, Group.objects.get(id=2))
+
+
+class TestItem(TestCase):
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+
+    def test_ownerships_relation(self):
+        # We use Boardgames as a proxy
         self.assertEqual(3, BoardGame.objects.get(id=1).ownerships.count())
-        # Currently in possession also checks for is_active
+
+    def test_currently_in_possession(self):
+        """ Test the ownership link from the item side. Tested on boardgame item """
+        # We use Boardgames as a proxy
         self.assertEqual(2, BoardGame.objects.get(id=1).currently_in_possession().count())
         self.assertEqual(1, BoardGame.objects.get(id=2).currently_in_possession().count())
+        self.assertEqual(0, BoardGame.objects.get(id=4).currently_in_possession().count())
+
+    def test_is_owned_by_association(self):
+        """ Test the check if the item is owned by the association """
+        self.assertTrue(BoardGame.objects.get(id=1).is_owned_by_association())
+        # There is an ownership, but it is not active
+        self.assertFalse(BoardGame.objects.get(id=4).is_owned_by_association())
+
+    def test_objects_manager(self):
+        self.assertIsInstance(BoardGame.objects, ItemManager)
+
+
+class TestItemManager(TestCase):
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+
+    def setUp(self):
+        self.manager = ItemManager()
+        self.manager.model = BoardGame
+
+
+    def test_get_all_in_possession(self):
+        self.assertEqual(2, self.manager.get_all_in_possession().count())
+
+    def test_get_all_owned(self):
+        self.assertEqual(2, self.manager.get_all_in_possession().count())
+
+    def test_get_all_owned_by(self):
+        member = Member.objects.get(id=1)
+        self.assertEqual(0, self.manager.get_all_owned_by(member=member).count())
+        member = Member.objects.get(id=2)
+        self.assertEqual(1, self.manager.get_all_owned_by(member=member).count())
+
+        group = Group.objects.get(id=1)
+        self.assertEqual(0, self.manager.get_all_owned_by(group=group).count())
+        group = Group.objects.get(id=2)
+        self.assertEqual(2, self.manager.get_all_owned_by(group=group).count())

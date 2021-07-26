@@ -62,6 +62,7 @@ class Item(models.Model):
     image = models.ImageField(upload_to=get_item_image_upload_path, blank=True, null=True)
 
     ownerships = GenericRelation('Ownership')
+    # An achievement can also apply to roleplay items
     achievements = GenericRelation('achievements.AchievementItemLink')
 
     objects = ItemManager()
