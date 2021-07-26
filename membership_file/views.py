@@ -60,7 +60,7 @@ def editOwnMembership(request):
         # check whether the entered data was valid:
         if form.is_valid():
             # Save the updated info
-            form.save(commit=True)      
+            form.save(commit=True)
             # Redirect back to the view membership info page
             # TODO: Provide a nice notification upon doing so
             return redirect(reverse('membership_file/membership'))
@@ -70,3 +70,13 @@ def editOwnMembership(request):
         form = MemberForm(instance=request.user.get_member())
 
     return render(request, 'membership_file/edit_member.html', {'form': form})
+
+
+# Renders the webpage for viewing a user's own membership information
+@require_safe
+@membership_required
+@permission_required('membership_file.can_view_membership_information_self', raise_exception=True)
+@request_member
+def viewGroups(request):
+    tData = {'member': request.user.get_member()}
+    return render(request, 'membership_file/member_group_overview.html', tData)
