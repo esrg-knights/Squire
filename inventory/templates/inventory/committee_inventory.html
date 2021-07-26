@@ -16,6 +16,17 @@
        Below is a list of all items owned by this committee
     </p>
     <hr>
+    <div class="row">
+        <div class="col justify-content-end d-flex">
+            {% for content_type in content_types %}
+                <a href="{% url "inventory:catalogue" type_id=content_type.id %}"
+                    class="btn btn-primary">
+                    Add new {{ content_type }}
+                </a>
+           {% endfor %}
+        </div>
+    </div>
+
 
     {% if ownerships %}
         <div class="table-responsive">
@@ -48,7 +59,7 @@
                             {{ ownership.note }}
                         </td>
                         <td class="col-auto">
-                            <div class="btn-group" role="group" aria-label="Basic example">
+                            <div class="btn-group" role="group" aria-label="">
                                 <!-- Left open for additional actions -->
                                 <a href="{% url "inventory:owner_link_edit" ownership_id=ownership.id group_id=group.id %}"
                                     class="btn btn-outline-secondary">Edit link</a>
@@ -62,7 +73,7 @@
             </table>
         </div>
     {% else %}
-        <p class="font-weight-bold">You currently do not have any items loaned to the Knights</p>
+        <p class="font-weight-bold">There are no items in the inventory of this committee</p>
         <div style="height: 10em;"></div>
     {% endif %}
 

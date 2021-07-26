@@ -1,15 +1,19 @@
 from django.contrib import messages
 from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView
-from django.views.generic.edit import FormView, UpdateView
+from django.views.generic.edit import FormView, UpdateView, CreateView
 
 from inventory.models import BoardGame, Ownership
 from inventory.forms import *
 
+from utils.forms import get_basic_filter_by_field_form
+from utils.views import SearchFormMixin
 
 class BoardgameView(ListView):
     template_name = "inventory/boardgames_overview.html"
@@ -143,6 +147,17 @@ class GroupItemsOverview(GroupMixin, ListView):
     def get_queryset(self):
         return Ownership.objects.filter(group=self.group).filter(is_active=True)
 
+    def get_context_data(self, **kwargs):
+        addable_item_types = [BoardGame]
+        content_types = []
+        for content_type in addable_item_types:
+            content_types.append(ContentType.objects.get_for_model(content_type))
+
+        return super(GroupItemsOverview, self).get_context_data(
+            content_types=content_types,
+            **kwargs,
+        )
+
 
 class GroupItemLinkUpdateView(GroupMixin, OwnershipMixin, UpdateView):
     template_name = "inventory/committee_link_edit.html"
@@ -159,4 +174,85 @@ class GroupItemLinkUpdateView(GroupMixin, OwnershipMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy("inventory:committee_items", kwargs={'group_id': self.group.id})
 
+
+
+###########################################################
+###############        Catalogue        ###################
+###########################################################
+
+
+class CatalogueMixin:
+    item_type = None    # Item item for this catalogue
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            self.item_type = ContentType.objects.get_for_id(self.kwargs['type_id'])
+        except ContentType.DoesNotExist:
+            raise Http404
+
+        return super(CatalogueMixin, self).dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, *args, object_list=None, **kwargs):
+        context = super(CatalogueMixin, self).get_context_data(*args, object_list=None, **kwargs)
+        context.update({
+            'item_type': self.item_type,
+        })
+        return context
+
+
+class ItemMixin:
+    item = None
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            self.item = self.item_type.get_object_for_this_type(id=self.kwargs['object_id'])
+        except self.item_type.model_class().DoesNotExist:
+            raise Http404
+
+        return super(ItemMixin, self).dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, *args, object_list=None, **kwargs):
+        context = super(ItemMixin, self).get_context_data(*args, object_list=None, **kwargs)
+        context.update({
+            'item': self.item,
+        })
+        return context
+
+
+class TypeCatalogue(CatalogueMixin, SearchFormMixin, ListView):
+    template_name = "inventory/catalogue_for_type.html"
+    filter_field_name = 'name'
+
+    @property
+    def model(self):
+        # model as parameter is called by the list queryset
+        # This patch is needed to let listview catalogue and searchform work
+        return self.item_type.model_class()
+
+
+class AddLinkMixin:
+    template_name = "inventory/catalogue_add_link.html"
+
+    def get_form_kwargs(self):
+        kwargs = super(AddLinkMixin, self).get_form_kwargs()
+        kwargs['item'] = self.item
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, f"{self.item} has been placed in {form.instance.owner}'s inventory")
+        return super(AddLinkMixin, self).form_valid(form)
+
+class AddLinkCommitteeView(CatalogueMixin, ItemMixin, AddLinkMixin, CreateView):
+    form_class = AddOwnershipCommitteeLink
+
+    def get_success_url(self):
+        return reverse_lazy("inventory:committee_items", kwargs={'group_id': self.object.group.id})
+
+class AddLinkMemberView(CatalogueMixin, ItemMixin, AddLinkMixin, FormView):
+    form_class = AddOwnershipMemberLink
+
+    def get_success_url(self):
+        return reverse_lazy("inventory:catalogue", kwargs={'type_id': self.item_type.id})
 

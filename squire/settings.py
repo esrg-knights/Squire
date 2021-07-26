@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     # More External Libraries
     'django_cleanup.apps.CleanupConfig',
     'import_export',
+    'utils',
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,18 @@
+{% load generic_field %}
+
+<form method="get">
+    <div class="row justify-content-end">
+        <div class="col-auto">
+            {% for field in form.visible_fields %}
+                {% generic_field field -1 %}
+            {% endfor %}
+        </div>
+        <div class="col-auto">
+            <div class="btn-group" role="group" aria-label="Search">
+                <input type="submit" value="search" class="btn btn-info"/>
+                <a class="btn btn-secondary"
+                   href="{{ request.path }}">Reset</a>
+            </div>
+        </div>
+    </div>
+</form>

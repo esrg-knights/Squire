@@ -22,4 +22,15 @@ urlpatterns = [
         ])),
     ])),
 
+    path('catalogue/<int:type_id>/', include([
+        path('', TypeCatalogue.as_view(), name="catalogue"),
+        path('<int:object_id>/', include([
+            path('add_link/', include([
+                path('group/', AddLinkCommitteeView.as_view(), name='catalogue_add_group_link'),
+                path('member/', AddLinkMemberView.as_view(), name='catalogue_add_member_link')
+            ])),
+
+        ])),
+    ])),
+
 ]

@@ -1,0 +1,29 @@
+{% extends 'core/base.html' %}
+{% load render_form %}
+
+{% block title %}
+    Squire - Inventory
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+{% block content %}
+    <h1>Add link to {{ item }}</h1>
+    <p>
+        Below you can make a new link to {{ item.name }}.
+    </p>
+
+
+    {% render_form method="post" id="submit_form"  has_submit_button=False %}
+
+    <div class="btn-group" role="group" aria-label="Form changing">
+        <a href="{% url "inventory:catalogue" type_id=item_type.id %}"
+           class="btn btn-secondary">Cancel</a>
+        <button form="submit_form" type="submit" class="btn btn-success">
+            Save ownership link
+        </button>
+    </div>
+
+{% endblock %}

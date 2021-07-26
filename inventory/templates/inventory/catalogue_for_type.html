@@ -1,0 +1,61 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}
+    Squire - Boardgames
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    <h1>Item catalogue for {{ item_type }}</h1>
+
+    {% include "utils/snippets/filter_form_snippet.html" with form=filter_form %}
+
+    <table class="table table-striped table-hover">
+        <thead>
+        <tr class="">
+            <th class="col-4 col-md-auto">Name</th>
+            <th class="col-auto">Owners</th>
+            <th class="col-auto"></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in object_list %}
+            <tr class="">
+                <td class="col-4 col-md-auto">
+                    {% if item.image %}
+                        <img style="height: 2em;" src={{ item.image.url }}>
+                    {% endif %}
+                    {{ item.name }}
+                </td>
+                <td class="col-auto">
+                    {% for ownership in item.currently_in_possession %}
+                        {{ ownership.owner }}{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                </td>
+                <td class="col-auto">
+                    <div class="d-lg-flex justify-content-end">
+                        <a href="{% url "inventory:catalogue_add_group_link" type_id=item_type.id object_id=item.id %}"
+                           class="btn btn-sm btn-primary mb-2 mb-lg-0">
+                            Add to committee
+                        </a>
+                        <a href="{% url "inventory:catalogue_add_member_link" type_id=item_type.id object_id=item.id %}"
+                           class="btn btn-sm btn-secondary">
+                            Add to member
+                        </a>
+                    </div>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="2">There are no results for this query</td>
+            </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+{% endblock %}
