@@ -3,7 +3,7 @@ import os
 
 from django.db import models
 from django.core.exceptions import ValidationError
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.utils.text import slugify
@@ -99,6 +99,7 @@ class Ownership(models.Model):
     group = models.ForeignKey(Group, on_delete=models.PROTECT, null=True, blank=True)
 
     added_since = models.DateField(default=datetime.date.today)
+    added_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     is_active = models.BooleanField(default=True,
                                     help_text="Whether item is currently at the Knights")
     note = models.TextField(max_length=256, blank=True, null=True)
