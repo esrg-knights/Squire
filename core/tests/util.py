@@ -1,15 +1,15 @@
-from core.util import get_permission_objects_from_string
-from enum import Enum, auto
 from collections import Collection
+import logging
+from functools import wraps
 
-from membership_file.models import Member
-from django.test import TestCase
 from django.conf import settings
-from django.contrib.auth.models import AnonymousUser, Permission
-from django.core.exceptions import ImproperlyConfigured
+from django.contrib.auth.models import AnonymousUser
+from django.test import TestCase
 from dynamic_preferences.registries import global_preferences_registry
 
 from core.models import ExtendedUser as User
+from core.util import get_permission_objects_from_string
+
 
 ##################################################################################
 # Utility Methods for testcases
@@ -106,3 +106,30 @@ def check_http_response_with_login_redirect(test, url, http_method, **kwargs):
         check_http_response(test, url, http_method, squire_user=TestPublicUser,
             response_status=200, redirect_url=(f"{settings.LOGIN_URL}?next={url}"), **kwargs)
     )
+
+
+def suppress_warnings(function=None, logger_name='django.request'):
+    """
+    Decorator that surpresses Django-warnings when calling a function.
+    Useful for testcases where warnings are triggered on purpose and only
+    clutter the command prompt.
+    Source: https://stackoverflow.com/a/46079090
+    """
+    def decorator(original_func):
+        @wraps(original_func)
+        def _wrapped_view(*args, **kwargs):
+            # raise logging level to ERROR
+            logger = logging.getLogger(logger_name)
+            previous_logging_level = logger.getEffectiveLevel()
+            logger.setLevel(logging.ERROR)
+
+            # trigger original function that would throw warning
+            original_func(*args, **kwargs)
+
+            # lower logging level back to previous
+            logger.setLevel(previous_logging_level)
+        return _wrapped_view
+
+    if function:
+        return decorator(function)
+    return decorator

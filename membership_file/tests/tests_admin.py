@@ -1,12 +1,11 @@
-from django.test import Client, TestCase, override_settings
-from django.contrib.admin.sites import AdminSite
 from django.contrib.admin import ModelAdmin
+from django.contrib.admin.sites import AdminSite
+from django.test import Client, TestCase, override_settings
 
-from core.util import suppress_warnings
-from membership_file.tests.util import fillDictKeys, getNumNonEmptyFields
+from core.tests.util import suppress_warnings
+from membership_file.tests.util import fillDictKeys
 from membership_file.models import Member, MemberLog, MemberLogField
 from membership_file.models import MemberUser as User
-from membership_file.serializers import MemberSerializer
 
 
 ##################################################################################
@@ -159,7 +158,7 @@ class MemberLogTest(TestCase):
 
         # Only 1 log should exist
         self.assertEqual(1, MemberLog.objects.all().count())
-        
+
 
     # Tests if an INSERT MemberLog is created after creating a new member
     # Should also create a DELETE MemberLog afterwards
@@ -198,7 +197,7 @@ class MemberLogTest(TestCase):
         self.assertGreater(deleteLog.id, insertLog.id)
 
     # Tests if a DELETE MemberLog is created when setting marked_for_deletion = True
-    def test_set_marked_for_deletion(self): 
+    def test_set_marked_for_deletion(self):
         # Ensure the admin is logged in
         self.client.force_login(self.admin)
 
@@ -250,7 +249,7 @@ class MemberLogTest(TestCase):
 
         # Only 1 log should exist
         self.assertEqual(1, MemberLog.objects.all().count())
-        
+
 
     # Tests if an UPDATE MemberLog is created after updating a member
     # Should also create a DELETE MemberLog afterwards
@@ -426,7 +425,7 @@ class DeleteMemberTest(TestCase):
         # The member should not be deleted
         self.assertEqual(1, Member.objects.all().count())
 
-        
+
 
     # Tests if a member cannot be deleted by the user that marked it for deletion
     @suppress_warnings
@@ -448,7 +447,7 @@ class DeleteMemberTest(TestCase):
 
         # The member should not be deleted
         self.assertEqual(1, Member.objects.all().count())
-    
+
     # Tests if a member can be deleted if it was marked for deletion by another user
     def test_delete_member_allowed(self):
         # Ensure the admin is logged in
@@ -468,7 +467,7 @@ class DeleteMemberTest(TestCase):
 
         # The member should be deleted
         self.assertEqual(0, Member.objects.all().count())
-        
+
     # Tests if a member cannot have its information updated if it is marked for deletion
     def test_update_member_when_marked_for_deletion(self):
         # Ensure the admin is logged in

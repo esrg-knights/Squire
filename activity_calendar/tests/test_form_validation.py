@@ -10,7 +10,7 @@ from unittest.mock import patch
 from activity_calendar.models import *
 from activity_calendar.forms import *
 from core.models import ExtendedUser as User
-from core.util import suppress_warnings
+from core.tests.util import suppress_warnings
 
 
 from . import mock_now
