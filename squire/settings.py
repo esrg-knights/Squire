@@ -52,7 +52,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # External Libraries
     'bootstrap4',
-    'martor',
     'recurrence',
     'rest_framework',
     # Internal Components
@@ -62,6 +61,7 @@ INSTALLED_APPS = [
     'membership_file',
     # More External Libraries
     'django_cleanup.apps.CleanupConfig',
+    'martor',
     'import_export',
 ]
 

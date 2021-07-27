@@ -8,7 +8,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import pre_delete
-from django.dispatch import receiver
 from django.utils.text import slugify
 
 # Proxy model based on Django's user that provides extra utility methods.
@@ -75,7 +74,7 @@ class MarkdownImage(models.Model):
             ("can_upload_martor_images", "Can upload images using the Martor Markdown editor"),
         ]
 
-    # Date and uploader of the image. Cannot be edited
+    # Date and uploader of the image
     upload_date = models.DateTimeField(auto_now_add=True)
     uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     image = models.ImageField(upload_to=_get_markdown_image_upload_path_for_instance)
@@ -88,7 +87,7 @@ class MarkdownImage(models.Model):
     def clean(self):
         super().clean()
 
-        # Cannot have an content_type - object_id combination that does not exist
+        # Cannot have a content_type - object_id combination that does not exist
         if self.object_id is not None and self.content_object is None:
             raise ValidationError({'object_id': 'The selected Content type does not have an object with this id'})
 
@@ -96,10 +95,14 @@ class MarkdownImage(models.Model):
         return f"{self.content_type}-MarkdownImage ({self.id})"
 
 
-@receiver(pre_delete)
+# When deleting a model with MarkdownImages, delete its related MarkdownImages manually
 def remove_orphan_markdown_images(sender, instance, **kwargs):
     # GenericForeignKey does not support on_delete=models.CASCADE without
-    #   a GenericRelation (that signifies the backwards relation), so
-    #   we delete these relations ourselves
+    #   a GenericRelation (that signifies the backwards relation).
+    # We do not really need this backwards relation, and adding it in means we'd
+    #   need to add a field to each model that can use a MarkdownImage.
     content_type = ContentType.objects.get_for_model(sender)
     MarkdownImage.objects.filter(content_type=content_type, object_id=instance.pk).delete()
+
+for model in settings.MARKDOWN_IMAGE_MODELS:
+    pre_delete.connect(remove_orphan_markdown_images, sender=model)

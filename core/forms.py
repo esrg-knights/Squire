@@ -98,6 +98,17 @@ class RequestUserFormMixin():
 
 
 class MarkdownForm(RequestUserFormMixin, ModelForm):
+    """
+        Changes fields listed in markdown_field_names to use Martor's Markdown widget
+        instead of their normal widget. Ideally, those fields should be TextFields, but this
+        is not enforced.
+
+        Also ensures that any images uploaded through Martor's widget are properly linked
+        to the object that is being edited (if any). If an image is uploaded for an object
+        that does not yet exist, then these images are temporarily unlinked (and do not reference)
+        any object. Upon saving, if such "orphan" images exist (for the current model, and uploaded by
+        the current user), they are linked to the newly created instance.
+    """
     class Meta:
         markdown_field_names = []
 
@@ -108,6 +119,7 @@ class MarkdownForm(RequestUserFormMixin, ModelForm):
         self.is_new_instance = self.instance.id is None
 
         for field_name in self.Meta.markdown_field_names:
+            # Check if the passed field actually exists
             if field_name not in self.fields:
                 raise ImproperlyConfigured(
                     "Form '%s' does not have a field '%s', "
@@ -117,6 +129,7 @@ class MarkdownForm(RequestUserFormMixin, ModelForm):
                     )
                 )
 
+            # Replace the field's widgt by Martor's markdown widget
             self.fields[field_name].widget = ImageUploadMartorWidget(
                 ContentType.objects.get_for_model(self.instance),
                 self.instance.id
@@ -125,6 +138,8 @@ class MarkdownForm(RequestUserFormMixin, ModelForm):
     def _save_m2m(self):
         super()._save_m2m()
 
+        # Handle "orphan" images that were uploaded when the instance was not yet saved
+        #   to the database.
         if self.is_new_instance and self.user is not None:
             # Assign MarkdownImages for this contenttype, and uploaded by the requesting user
             content_type = ContentType.objects.get_for_model(self.instance)
