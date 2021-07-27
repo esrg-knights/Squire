@@ -33,7 +33,7 @@ class TestOwnershipRemovalForm(FormValidityMixin, TestCase):
         self.assertEqual(ownership_obj.added_since, now().date())
 
 
-class TestOwnershipRemovalForm(FormValidityMixin, TestCase):
+class TestOwnershipActivationForm(FormValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     form_class = OwnershipActivationForm
 
