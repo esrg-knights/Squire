@@ -15,6 +15,7 @@ __all__ = ['valid_item_class_ids', 'BoardGame', 'Ownership']
 
 
 class ItemManager(models.Manager):
+    """ Manager for any object related to Item. Replaces standard manager in <Item>.objects """
 
     def get_all_in_possession(self):
         """ Returns all items currently in posssession (owned or burrowed) """
@@ -72,9 +73,11 @@ class Item(models.Model):
         ordering = ("name",)
 
     def currently_in_possession(self):
+        """ Returns all ownership items that are currently at the Knights """
         return self.ownerships.filter(is_active=True)
 
     def is_owned_by_association(self):
+        """ Returns boolean stating whether this item is owned by the association """
         return self.ownerships.filter(is_active=True).filter(group__isnull=False).exists()
 
     def __str__(self):
@@ -87,7 +90,7 @@ class BoardGame(Item):
 
 
 def valid_item_class_ids():
-    """ Returns a query parameter for ids of valid Items """
+    """ Returns a query parameter for ids of valid Item classes. Used for Ownership Content type validity """
     valid_ids = []
     for content_type in ContentType.objects.all():
         if issubclass(content_type.model_class(), Item):
@@ -112,6 +115,7 @@ class Ownership(models.Model):
 
     @property
     def owner(self):
+        """ Returns the owner of the item """
         if self.member:
             return self.member
         else:
@@ -119,6 +123,7 @@ class Ownership(models.Model):
 
     def clean(self):
         super(Ownership, self).clean()
+        # Validate that EITHER member or group must be defined
         if self.member is None and self.group is None:
             raise ValidationError("Either a member or a group has to be defined", code='required')
         if self.member and self.group:

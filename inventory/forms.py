@@ -12,6 +12,7 @@ __all__ = ['OwnershipRemovalForm', 'OwnershipActivationForm', 'OwnershipNoteForm
 
 
 class OwnershipRemovalForm(forms.Form):
+    """ Fieldless form to allow members to set a loaned item as taken home """
     def __init__(self, *args, ownership=None, **kwargs):
         super(OwnershipRemovalForm, self).__init__(*args, **kwargs)
         self.ownership = ownership
@@ -28,6 +29,8 @@ class OwnershipRemovalForm(forms.Form):
 
 
 class OwnershipActivationForm(forms.Form):
+    """ Fieldless form to allow members to re-loan their items to the association """
+
     def __init__(self, *args, ownership=None, **kwargs):
         super(OwnershipActivationForm, self).__init__(*args, **kwargs)
         self.ownership = ownership
@@ -45,23 +48,25 @@ class OwnershipActivationForm(forms.Form):
 
 
 class OwnershipNoteForm(forms.ModelForm):
+    """ Form used by members to adjust the written note at their owned items """
     class Meta:
         model = Ownership
         fields = ['note']
 
 
 class OwnershipCommitteeForm(forms.ModelForm):
+    """ Form used by groups/committees to adjust ownership data """
     class Meta:
         model = Ownership
         fields = ['note', 'added_since']
 
 
 class AddOwnerShipLinkMixin:
+    """ Simple mixin that sets Ownership instance settings """
     def __init__(self, *args, item=None, user=None, **kwargs):
         super(AddOwnerShipLinkMixin, self).__init__(*args, **kwargs)
         self.instance.content_object = item
         self.instance.added_by = user
-
 
 
 class AddOwnershipCommitteeLinkForm(AddOwnerShipLinkMixin, forms.ModelForm):
@@ -73,6 +78,8 @@ class AddOwnershipCommitteeLinkForm(AddOwnerShipLinkMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(AddOwnershipCommitteeLinkForm, self).__init__(*args, **kwargs)
+        # Adjust committee field depending on the number of groups a user is in.
+        # There is no reason to change group if only one is possible
         self.fields['committee'].queryset = self.instance.added_by.groups.all()
         if self.instance.added_by.groups.count() == 1:
             self.fields['committee'].initial = self.instance.added_by.groups.first().id
@@ -89,7 +96,6 @@ class AddOwnershipMemberLinkForm(AddOwnerShipLinkMixin, forms.ModelForm):
     class Meta:
         model = Ownership
         fields = ['member', 'note', 'is_active']
-
 
     def clean(self):
         self.instance.member = self.cleaned_data['member']
