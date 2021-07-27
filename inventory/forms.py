@@ -1,14 +1,14 @@
-import datetime
 from django import forms
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 
 from membership_file.models import Member
 from inventory.models import *
 
 __all__ = ['OwnershipRemovalForm', 'OwnershipActivationForm', 'OwnershipNoteForm', 'OwnershipCommitteeForm',
-           'AddOwnershipCommitteeLink', 'AddOwnershipMemberLink']
+           'AddOwnershipCommitteeLinkForm', 'AddOwnershipMemberLinkForm']
 
 
 class OwnershipRemovalForm(forms.Form):
@@ -18,7 +18,7 @@ class OwnershipRemovalForm(forms.Form):
 
     def save(self):
         self.ownership.is_active = False
-        self.ownership.added_since = datetime.date.today()
+        self.ownership.added_since = timezone.now().date()
         self.ownership.save()
 
     def clean(self):
@@ -34,7 +34,7 @@ class OwnershipActivationForm(forms.Form):
 
     def save(self):
         self.ownership.is_active = True
-        self.ownership.added_since = datetime.date.today()
+        self.ownership.added_since = timezone.now().date()
         self.ownership.save()
 
     def clean(self):
@@ -64,7 +64,7 @@ class AddOwnerShipLinkMixin:
 
 
 
-class AddOwnershipCommitteeLink(AddOwnerShipLinkMixin, forms.ModelForm):
+class AddOwnershipCommitteeLinkForm(AddOwnerShipLinkMixin, forms.ModelForm):
     committee = forms.ModelChoiceField(queryset=Group.objects.none())
 
     class Meta:
@@ -72,7 +72,7 @@ class AddOwnershipCommitteeLink(AddOwnerShipLinkMixin, forms.ModelForm):
         fields = ['committee', 'note', 'is_active']
 
     def __init__(self, *args, **kwargs):
-        super(AddOwnershipCommitteeLink, self).__init__(*args, **kwargs)
+        super(AddOwnershipCommitteeLinkForm, self).__init__(*args, **kwargs)
         self.fields['committee'].queryset = self.instance.added_by.groups.all()
         if self.instance.added_by.groups.count() == 1:
             self.fields['committee'].initial = self.instance.added_by.groups.first().id
@@ -80,10 +80,10 @@ class AddOwnershipCommitteeLink(AddOwnerShipLinkMixin, forms.ModelForm):
 
     def clean(self):
         self.instance.group = self.cleaned_data['committee']
-        return super(AddOwnershipCommitteeLink, self).clean()
+        return super(AddOwnershipCommitteeLinkForm, self).clean()
 
 
-class AddOwnershipMemberLink(AddOwnerShipLinkMixin, forms.ModelForm):
+class AddOwnershipMemberLinkForm(AddOwnerShipLinkMixin, forms.ModelForm):
     member = forms.ModelChoiceField(queryset=Member.objects.filter(is_deregistered=False).order_by('first_name'))
 
     class Meta:
@@ -93,7 +93,7 @@ class AddOwnershipMemberLink(AddOwnerShipLinkMixin, forms.ModelForm):
 
     def clean(self):
         self.instance.member = self.cleaned_data['member']
-        return super(AddOwnershipMemberLink, self).clean()
+        return super(AddOwnershipMemberLinkForm, self).clean()
 
 
 

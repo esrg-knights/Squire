@@ -245,13 +245,13 @@ class AddLinkMixin:
         return super(AddLinkMixin, self).form_valid(form)
 
 class AddLinkCommitteeView(CatalogueMixin, ItemMixin, AddLinkMixin, CreateView):
-    form_class = AddOwnershipCommitteeLink
+    form_class = AddOwnershipCommitteeLinkForm
 
     def get_success_url(self):
         return reverse_lazy("inventory:committee_items", kwargs={'group_id': self.object.group.id})
 
 class AddLinkMemberView(CatalogueMixin, ItemMixin, AddLinkMixin, FormView):
-    form_class = AddOwnershipMemberLink
+    form_class = AddOwnershipMemberLinkForm
 
     def get_success_url(self):
         return reverse_lazy("inventory:catalogue", kwargs={'type_id': self.item_type.id})
