@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='member',
             name='key_id',
-            field=models.CharField(blank=True, help_text='A 4-digit code used to access the keysafe.', max_length=7, null=True, unique=True, validators=[django.core.validators.RegexValidator(message='Key IDs consist of exaclty 4 digits. E.g. 0123', regex='^[0-9]{4}$')]),
+            field=models.CharField(blank=True, help_text='A 4-digit code used to access the keysafe.', max_length=7, null=True, unique=True, validators=[django.core.validators.RegexValidator(message='Key IDs consist of exactly 4 digits. E.g. 0123', regex='^[0-9]{4}$')]),
         ),
         migrations.AddField(
             model_name='member',

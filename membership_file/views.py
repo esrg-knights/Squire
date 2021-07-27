@@ -1,14 +1,11 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
-from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponseForbidden
-from django.shortcuts import render, get_object_or_404, redirect
-from django.views.decorators.http import require_safe
 from django.views.generic import DetailView, TemplateView, UpdateView
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
-from .models import Member, MemberLog, MemberUser, 
+from .models import Member, MemberUser
 from .forms import MemberForm
 from .util import MembershipRequiredMixin
 
@@ -30,7 +27,7 @@ class RequestMemberMixin():
         # Odd loop-around because all logged in users should be treated as memberusers
         if self.request.user.is_authenticated:
             self.request.user.__class__ = MemberUser
-    
+
     def get_object(self, queryset=None):
         return None if not self.request.user.is_authenticated else self.request.user.get_member()
 
@@ -54,7 +51,7 @@ class MemberChangeView(LoginRequiredMixin, RequestMemberMixin, MembershipRequire
     success_url = reverse_lazy('membership_file/membership')
     permission_required = ('membership_file.can_view_membership_information_self', 'membership_file.can_change_membership_information_self')
     raise_exception = True
-    
+
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super().get_form_kwargs(*args, **kwargs)
         kwargs['user'] = self.request.user

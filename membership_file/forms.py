@@ -1,13 +1,9 @@
 from django import forms
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib import admin
-from django.forms import ModelForm
-from django.forms.models import ModelFormMetaclass
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .models import Member, Room
-from .models import MemberUser as User
 
 ##################################################################################
 # Defines forms related to the membership file.

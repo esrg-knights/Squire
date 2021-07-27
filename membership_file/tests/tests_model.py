@@ -17,12 +17,12 @@ class MemberModelTest(TestCase):
     # Tests whether a member is displayed correctly
     def test_member_display_method(self):
         # Member has the correct display method
-        user = User.objects.filter(username="test_user").first()
+        user = User.objects.filter(username="test_member").first()
         display_str = get_member_display_name(user)
-        self.assertEqual(display_str, Member.objects.filter(user__username="test_user").first().get_full_name())
+        self.assertEqual(display_str, Member.objects.filter(user__username="test_member").first().get_full_name())
 
         # Non-Member has the correct display method
-        user = User.objects.filter(username="test_user_alt").first()
+        user = User.objects.filter(username="test_user").first()
         display_str = get_member_display_name(user)
         self.assertEqual(display_str, user.get_simple_display_name())
 

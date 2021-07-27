@@ -97,7 +97,7 @@ class Member(models.Model):
     # External card number and digit-pairs are a unique combination
     unique_together = [['external_card_number', 'external_card_digits']]
 
-    key_id_regex = RegexValidator(regex=r'^[0-9]{4}$', message="Key IDs consist of exaclty 4 digits. E.g. 0123")
+    key_id_regex = RegexValidator(regex=r'^[0-9]{4}$', message="Key IDs consist of exactly 4 digits. E.g. 0123")
     key_id = models.CharField(validators=[key_id_regex], max_length=7, blank=True, null=True, unique=True, help_text="A 4-digit code used to access the keysafe.")
 
     ##################################
@@ -152,7 +152,7 @@ class Member(models.Model):
 
     # Any additional information that cannot be stored in other fields (e.g., preferred pronouns)
     notes = models.TextField(blank=True, help_text="Notes are invisible to members.")
-  
+
     def is_considered_member(self):
         return not self.is_deregistered
 

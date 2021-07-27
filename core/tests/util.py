@@ -1,97 +1,108 @@
-from django.test import TestCase
-from django.test import Client
-from django.conf import settings
+from core.util import get_permission_objects_from_string
+from enum import Enum, auto
+from collections import Collection
 
-from enum import Enum
+from membership_file.models import Member
+from django.test import TestCase
+from django.conf import settings
+from django.contrib.auth.models import AnonymousUser, Permission
+from django.core.exceptions import ImproperlyConfigured
+from dynamic_preferences.registries import global_preferences_registry
 
 from core.models import ExtendedUser as User
-from core.util import OrderedEnum
 
 ##################################################################################
 # Utility Methods for testcases
 # @since 15 AUG 2019
 ##################################################################################
 
-class PermissionLevel(OrderedEnum):
-    LEVEL_PUBLIC = 1
-    LEVEL_USER = 2
-    LEVEL_ADMIN = 3
+class TestSquireUser():
+    instance = None
+    fixtures = []
 
-#
-# Checks whether a given url can be accessed with a given HTTP Method by a user with a given permissionLevel
-# 
-# @param test A testcase instance used to make Assertions
-# @param url URL to make the request to
-# @param httpMethod HTTP Method to make the request with E.g. get, post, put, etc. 
-# @param permissionLevel Which type of user should be able to access the page
-# @param user The user to use in the request (or empty if a new one should be created)
-# @param redirectUrl The Url to redirect to
-# @param data Additional data to pass to the request
-# 
-# @throws AssertionError iff a user of the given permission level can NOT access the given url using the given HTTP method
-#
-def checkAccessPermissions(test: TestCase, url: str, httpMethod: str, permissionLevel: PermissionLevel,
-        user: User = None, redirectUrl: str = "", data: dict = {}) -> None:
-    client = Client()
-    
-    # Ensure the correct type of user makes the request
-    if permissionLevel == PermissionLevel.LEVEL_USER:
-        if user is None:
-            user = User.objects.get(username='test_user')
-        elif user.is_superuser:
-            user.is_superuser = False
-            User.save(user)
-    elif permissionLevel == PermissionLevel.LEVEL_ADMIN:
-        if user is None:
-            user = User.objects.get(username='test_admin')
-        elif not user.is_superuser:
-            user.is_superuser = True
-            User.save(user)
+    @classmethod
+    def get_fixtures(cls):
+        return cls.fixtures
 
-    # Ensure the correct user is logged in
-    if user:
+    @classmethod
+    def get_user_object(cls):
+        user = AnonymousUser()
+        if cls.instance is not None:
+            user = User.objects.get(username=cls.instance)
+        return user
+
+class TestPublicUser(TestSquireUser):
+    pass
+
+class TestAccountUser(TestPublicUser):
+    instance = 'test_user'
+
+    @classmethod
+    def get_fixtures(cls):
+        return super().get_fixtures() + ['test_users.json']
+
+
+def check_http_response(test: TestCase, url: str, http_method: str, squire_user: TestSquireUser,
+        permissions: Collection = [], response_status: int = 200, redirect_url: str = None,
+        data: dict = {}, **kwargs):
+    """
+    Checks whether a given url can be accessed with a given HTTP Method by a
+        given Squire User (e.g. account holders, anonymous users, etc.)
+
+    :param test:            A testcase instance used to make Assertions
+    :param url:             URL to make the request to
+    :param http_method:     HTTP Method to make the request with E.g. get, post, put, ...
+    :param squire_user:     The type of user that makes the request
+    :param permissions:     Any permissions given to the user prior to making the request
+    :param response_status: The expected response status
+    :param redirect_url:    The expected url to be redirected to
+    :param data:            Additional data to pass to the request
+
+    :throws AssertionError: The user of the given type did not receive the expected response,
+                                or was not redirected to the expected page
+    :returns:               The response.
+    """
+
+    client = test.client
+    user = squire_user.get_user_object()
+
+    # Grant the user the required permissions, and log in if needed
+    if not user.is_anonymous:
         client.force_login(user)
+        user.user_permissions.add(*list(get_permission_objects_from_string(permissions)))
+    elif permissions:
+        # Anonymous users cannot be assigned Permissions directly. Use Django Dynamic Preferences instead.
+        global_preferences = global_preferences_registry.manager()
+        global_preferences['permissions__base_permissions'] = get_permission_objects_from_string(permissions)
 
-    # Issue a HTTP request.
-    response = getattr(client, httpMethod)(url, data=data, follow=(bool(redirectUrl)), secure=True)
+    # Issue an HTTP request
+    response = getattr(client, http_method)(url, data=data, follow=(redirect_url is not None), secure=True, **kwargs)
 
-    # Ensure that a 200 OK response is received
-    test.assertEqual(response.status_code, 200)
+    # Ensure that the expected response is received
+    test.assertEqual(response.status_code, response_status)
 
-    # Ensure we were redirected to the correct page
-    if redirectUrl:
-        # Ensure a redirection to the expected URL took place
-        test.assertRedirects(response, redirectUrl)
+    # Ensure we were redirected to the expected page
+    if redirect_url is not None:
+        test.assertRedirects(response, redirect_url)
 
-    # Check if we get redirected to the login page if not logged in, but a login is required
-    # Skip this check if we expect a different redirect (which was already checked earlier)
-    if permissionLevel <= PermissionLevel.LEVEL_PUBLIC or redirectUrl:
-        return
-    
-    # Ensure the client is not logged in
+    # Reset state
     client.logout()
+    return response
 
-    # Issue a HTTP request.
-    response = getattr(client, httpMethod)(url, data=data, follow=True, secure=True)
 
-    # Ensure that a 200 OK response is received
-    test.assertEqual(response.status_code, 200)
+def check_http_response_with_login_redirect(test, url, http_method, **kwargs):
+    """
+    Tests whether an Squire Account User can access a given page, and whether someone without an
+        account is redirected to the login page when accessing that same page.
+        Method has otherwise the same parameters as check_http_response
 
-    # Ensure a redirection to the login page took place
-    test.assertRedirects(response, '{0}?next={1}'.format(settings.LOGIN_URL, url))
-
-    # Check if we get redirected to the login page if we're not an admin
-    if permissionLevel <= PermissionLevel.LEVEL_USER:
-        return
-
-    # Ensure the client is not logged in
-    client.force_login(user)
-
-    # Issue a HTTP request.
-    response = getattr(client, httpMethod)(url, data=data, follow=True, secure=True)
-
-    # Ensure that a 200 OK response is received
-    test.assertEqual(response.status_code, 200)
-
-    # Ensure a redirection to the login page took place
-    test.assertRedirects(response, '{0}?next={1}'.format(settings.LOGIN_URL, url))
+    :throws AssertionError: The account holder could not access the page,
+                                or the public user was not redirected to the login page.
+    :returns:               A tuple of both responses (account user first).
+    """
+    return (
+        check_http_response(test, url, http_method, squire_user=TestAccountUser,
+            response_status=200, **kwargs),
+        check_http_response(test, url, http_method, squire_user=TestPublicUser,
+            response_status=200, redirect_url=(f"{settings.LOGIN_URL}?next={url}"), **kwargs)
+    )

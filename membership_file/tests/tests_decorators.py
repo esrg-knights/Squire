@@ -69,8 +69,8 @@ class MembershipRequiredDecoratorTest(TestCase):
     fixtures = ['test_users.json', 'test_members.json']
 
     def setUp(self):
-        self.member_user = User.objects.filter(username="test_user").first()
-        self.nonmember_user = User.objects.filter(username="test_user_alt").first()
+        self.member_user = User.objects.filter(username="test_member").first()
+        self.nonmember_user = User.objects.filter(username="test_user").first()
         self.factory = RequestFactory()
 
     # Tests if members are not redirected to the fail page
@@ -106,7 +106,7 @@ class RequestMemberDecoratorTest(TestCase):
     fixtures = ['test_users.json', 'test_members.json']
 
     def setUp(self):
-        self.member_user = User.objects.filter(username="test_user").first()
+        self.member_user = User.objects.filter(username="test_member").first()
         self.factory = RequestFactory()
 
     # Tests if request.user becomes a MemberUser if logged in users make a request

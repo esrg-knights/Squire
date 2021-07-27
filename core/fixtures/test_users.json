@@ -32,10 +32,7 @@
             "is_active": true,
             "date_joined": "1970-01-01T12:00:00Z",
             "groups": [],
-            "user_permissions": [
-                ["can_view_membership_information_self", "membership_file", "member"],
-                ["can_change_membership_information_self", "membership_file", "member"]
-            ]
+            "user_permissions": []
         }
     },
     {
@@ -45,7 +42,7 @@
             "password": "pbkdf2_sha256$150000$FQNl6kahiWF9$UMJi+YpgjsAidu6lhrQen5qPyHVa2JBSH6Ve2/WKy/k=",
             "last_login": "1970-01-01T12:00:00Z",
             "is_superuser": false,
-            "username": "test_user_alt",
+            "username": "test_user_2",
             "first_name": "",
             "last_name": "",
             "email": "",
@@ -53,10 +50,7 @@
             "is_active": true,
             "date_joined": "1970-01-01T12:00:00Z",
             "groups": [],
-            "user_permissions": [
-                ["can_view_membership_information_self", "membership_file", "member"],
-                ["can_change_membership_information_self", "membership_file", "member"]
-            ]
+            "user_permissions": []
         }
     }
 ]

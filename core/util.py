@@ -1,31 +1,12 @@
 import logging
-
-from enum import Enum
 from functools import wraps
+
+from django.contrib.auth.models import Permission
+from django.db.models.query_utils import Q
 
 """
 Contains various utility functions for the whole application.
 """
-
-# An enumeration that allows comparison
-# See: https://docs.python.org/3/library/enum.html#orderedenum
-class OrderedEnum(Enum):
-    def __ge__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value >= other.value
-        return NotImplemented
-    def __gt__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value > other.value
-        return NotImplemented
-    def __le__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value <= other.value
-        return NotImplemented
-    def __lt__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value < other.value
-        return NotImplemented
 
 def suppress_warnings(function=None, logger_name='django.request'):
     """
@@ -48,7 +29,24 @@ def suppress_warnings(function=None, logger_name='django.request'):
             # lower logging level back to previous
             logger.setLevel(previous_logging_level)
         return _wrapped_view
-    
+
     if function:
         return decorator(function)
     return decorator
+
+
+def get_permission_objects_from_string(permission_strings):
+    """
+        Transform a list of permission codenames into a queryset containing those permissions.
+
+        :param permission_strings: A collection of permissions in the form of `app_label.codename`
+        :returns: A queryset of permission objects corresponding to those in the queryset.
+    """
+    if not permission_strings:
+        return Permission.objects.none()
+
+    q_objects = Q()
+    for encoded_name in permission_strings:
+        app_label, codename = encoded_name.split('.')
+        q_objects |= Q(content_type__app_label=app_label, codename=codename)
+    return Permission.objects.filter(q_objects)
