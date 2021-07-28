@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -10,7 +11,7 @@ from inventory.models import Item, BoardGame, Ownership, valid_item_class_ids, I
 class TestOwnership(TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
 
-    def test_ownership_validation(self):
+    def test_ownership_owner_validation(self):
         """ Test the custom clean criteria related to member/group """
         boardgame = BoardGame.objects.first()
         ownership = Ownership(
@@ -31,6 +32,16 @@ class TestOwnership(TestCase):
         with self.assertRaises(ValidationError) as error:
             ownership.clean()
         self.assertEqual(error.exception.code, 'invalid')
+
+    def test_ownership_item_validation(self):
+        ownership = Ownership(
+            member_id = 2,
+            content_type_id=ContentType.objects.get_for_model(BoardGame).id,
+            object_id = 999,
+        )
+        with self.assertRaises(ValidationError) as error:
+            ownership.clean()
+        self.assertEqual(error.exception.code, 'item_nonexistent')
 
     def test_valid_item_class_ids(self):
         """ Tests the method to return the right class ids """

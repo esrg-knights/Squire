@@ -88,6 +88,13 @@ class BoardGame(Item):
     """ Defines boardgames """
     bgg_id = models.IntegerField(blank=True, null=True)
 
+    class Meta(Item.Meta):
+        permissions = [
+            ('can_add_boardgame_for_group',    "Can add boardgames item ownership for a group."),
+            ('can_add_boardgame_for_member',  "Can add boardgames item ownership for members."),
+            ('can_maintain_boardgame_ownerships',  "Can maintain boardgame ownerships."),
+        ]
+
 
 def valid_item_class_ids():
     """ Returns a query parameter for ids of valid Item classes. Used for Ownership Content type validity """
@@ -102,7 +109,7 @@ class Ownership(models.Model):
     member = models.ForeignKey(Member, on_delete=models.CASCADE, null=True, blank=True)
     group = models.ForeignKey(Group, on_delete=models.PROTECT, null=True, blank=True)
 
-    added_since = models.DateField(default=timezone.now().today())
+    added_since = models.DateField(default=timezone.now)
     added_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     is_active = models.BooleanField(default=True,
                                     help_text="Whether item is currently at the Knights")
@@ -128,6 +135,9 @@ class Ownership(models.Model):
             raise ValidationError("Either a member or a group has to be defined", code='required')
         if self.member and self.group:
             raise ValidationError("An item can't belong both to a user and a group", code='invalid')
+        # Validate that content_object exists
+        if self.content_object is None:
+            raise ValidationError("The connected item does not exist", code='item_nonexistent')
 
     def __str__(self):
         if self.member:
