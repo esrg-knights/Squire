@@ -57,9 +57,18 @@ def get_item_image_upload_path(instance, filename):
 
 
 class Item(models.Model):
-    """ Item in the inventory system. Abstract root class. """
+    """ Item in the inventory system. Abstract root class.
+
+    Note, for children of this class to work they need to add two permissions:
+    'can_add_<item>_for_group'
+    'can_add_<item>_for_member'
+    where <item> is replaced by a slugified version of the class name (just the name in lowercase)
+
+    This grants access to assigning items to groups or members respectively
+
+    """
     name = models.CharField(max_length=128)
-    note = models.TextField(max_length=512, blank=True, null=True)
+    description = models.TextField(max_length=512, blank=True, null=True)
     image = models.ImageField(upload_to=get_item_image_upload_path, blank=True, null=True)
 
     ownerships = GenericRelation('Ownership')

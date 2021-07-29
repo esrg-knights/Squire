@@ -19,7 +19,7 @@
         <thead>
         <tr class="">
             <th class="col-4 col-md-auto">Name</th>
-            <th class="col-auto">Owners</th>
+            <th class="col-auto">Description</th>
             <th class="col-auto"></th>
         </tr>
         </thead>
@@ -33,20 +33,22 @@
                     {{ item.name }}
                 </td>
                 <td class="col-auto">
-                    {% for ownership in item.currently_in_possession %}
-                        {{ ownership.owner }}{% if not forloop.last %},{% endif %}
-                    {% endfor %}
+                    {{ item.description }}
                 </td>
                 <td class="col-auto">
                     <div class="d-lg-flex justify-content-end">
-                        <a href="{% url "inventory:catalogue_add_group_link" type_id=item_type.id object_id=item.id %}"
-                           class="btn btn-sm btn-primary mb-2 mb-lg-0">
-                            Add to committee
+                        {% if can_add_to_group %}
+                            <a href="{% url "inventory:catalogue_add_group_link" type_id=item_type.id object_id=item.id %}"
+                               class="btn btn-sm btn-primary mb-2 mb-lg-0">
+                                Add to committee
+                            </a>
+                        {% endif %}
+                        {% if can_add_to_member %}
+                            <a href="{% url "inventory:catalogue_add_member_link" type_id=item_type.id object_id=item.id %}"
+                               class="btn btn-sm btn-secondary">
+                                Add to member
                         </a>
-                        <a href="{% url "inventory:catalogue_add_member_link" type_id=item_type.id object_id=item.id %}"
-                           class="btn btn-sm btn-secondary">
-                            Add to member
-                        </a>
+                        {% endif %}
                     </div>
                 </td>
             </tr>

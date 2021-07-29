@@ -1,21 +1,24 @@
 from django.contrib import messages
-from django.contrib.auth.models import Group
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
+from django.utils.text import slugify
 from django.views.generic import TemplateView, ListView
 from django.views.generic.edit import FormView, UpdateView, CreateView
+
+from committees.views import GroupMixin
+from membership_file.util import MembershipRequiredMixin
+from utils.views import SearchFormMixin
 
 from inventory.models import BoardGame, Ownership
 from inventory.forms import *
 
-from utils.forms import get_basic_filter_by_field_form
-from utils.views import SearchFormMixin
 
-class BoardgameView(ListView):
+class BoardGameView(ListView):
     template_name = "inventory/boardgames_overview.html"
     context_object_name = 'boardgames'
 
@@ -25,7 +28,7 @@ class BoardgameView(ListView):
         return BoardGame.objects.get_all_in_possession()
 
 
-class MemberItemsOverview(ListView):
+class MemberItemsOverview(MembershipRequiredMixin, ListView):
     template_name = "inventory/membership_inventory.html"
     context_object_name = 'ownerships'
 
@@ -44,6 +47,7 @@ class MemberItemsOverview(ListView):
 class OwnershipMixin:
     """ A mixin for views that deal with Ownership items through the url ownership_id keyword """
     ownership = None
+    allow_access_through_group = False
 
     def dispatch(self, request, *args, **kwargs):
         self.ownership = get_object_or_404(Ownership, id=self.kwargs['ownership_id'])
@@ -52,11 +56,12 @@ class OwnershipMixin:
 
     def check_access(self):
         if self.ownership.member:
-            if self.request.user.member != self.ownership.member:
-                raise PermissionDenied
-        else:
-            if self.ownership.group not in self.request.user.groups.all():
-                raise PermissionDenied
+            if self.request.user.member == self.ownership.member:
+                return
+        elif self.allow_access_through_group:
+            if self.ownership.group in self.request.user.groups.all():
+                return
+        raise PermissionDenied
 
     def get_context_data(self, **kwargs):
         context = super(OwnershipMixin, self).get_context_data(**kwargs)
@@ -64,7 +69,7 @@ class OwnershipMixin:
         return context
 
 
-class MemberItemRemovalFormView(OwnershipMixin, FormView):
+class MemberItemRemovalFormView(MembershipRequiredMixin, OwnershipMixin, FormView):
     template_name = "inventory/membership_take_home.html"
     form_class = OwnershipRemovalForm
     success_url = reverse_lazy("inventory:member_items")
@@ -86,7 +91,7 @@ class MemberItemRemovalFormView(OwnershipMixin, FormView):
         return HttpResponseRedirect(self.get_success_url())
 
 
-class MemberItemLoanFormView(OwnershipMixin, FormView):
+class MemberItemLoanFormView(MembershipRequiredMixin, OwnershipMixin, FormView):
     template_name = "inventory/membership_loan_out.html"
     form_class = OwnershipActivationForm
     success_url = reverse_lazy("inventory:member_items")
@@ -108,7 +113,7 @@ class MemberItemLoanFormView(OwnershipMixin, FormView):
         return HttpResponseRedirect(self.get_success_url())
 
 
-class MemberOwnershipAlterView(OwnershipMixin, FormView):
+class MemberOwnershipAlterView(MembershipRequiredMixin, OwnershipMixin, FormView):
     template_name = "inventory/membership_adjust_note.html"
     form_class = OwnershipNoteForm
     success_url = reverse_lazy("inventory:member_items")
@@ -127,23 +132,6 @@ class MemberOwnershipAlterView(OwnershipMixin, FormView):
 ###########################################################
 ###############   Groups / Committees   ###################
 ###########################################################
-
-
-class GroupMixin:
-    """ Mixin that stores the retrieved group from the url group_id keyword """
-    group = None
-
-    def dispatch(self, request, *args, **kwargs):
-        self.group = get_object_or_404(Group, id=self.kwargs['group_id'])
-        if self.group not in self.request.user.groups.all():
-            raise PermissionDenied()
-
-        return super(GroupMixin, self).dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super(GroupMixin, self).get_context_data(**kwargs)
-        context['group'] = self.group
-        return context
 
 
 class GroupItemsOverview(GroupMixin, ListView):
@@ -171,6 +159,7 @@ class GroupItemLinkUpdateView(GroupMixin, OwnershipMixin, UpdateView):
     template_name = "inventory/committee_link_edit.html"
     model = Ownership
     fields = ['note', 'added_since']
+    allow_access_through_group = True
 
     def get_object(self, queryset=None):
         return self.ownership
@@ -229,7 +218,7 @@ class ItemMixin:
         return context
 
 
-class TypeCatalogue(CatalogueMixin, SearchFormMixin, ListView):
+class TypeCatalogue(MembershipRequiredMixin, CatalogueMixin, SearchFormMixin, ListView):
     template_name = "inventory/catalogue_for_type.html"
     filter_field_name = 'name'
 
@@ -238,6 +227,16 @@ class TypeCatalogue(CatalogueMixin, SearchFormMixin, ListView):
         # model as attribute is called by the list queryset
         # This patch is needed to let listview catalogue and searchform work
         return self.item_type.model_class()
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(TypeCatalogue, self).get_context_data(*args, **kwargs)
+
+        item_class_name = slugify(self.item_type.model_class().__name__)
+        context.update({
+            'can_add_to_group': self.request.user.has_perm(f'inventory.can_add_{item_class_name}_for_group'),
+            'can_add_to_member': self.request.user.has_perm(f'inventory.can_add_{item_class_name}_for_member'),
+        })
+        return context
 
 
 class AddLinkMixin:
@@ -256,16 +255,26 @@ class AddLinkMixin:
         return super(AddLinkMixin, self).form_valid(form)
 
 
-class AddLinkCommitteeView(CatalogueMixin, ItemMixin, AddLinkMixin, CreateView):
+class AddLinkCommitteeView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, AddLinkMixin,
+                           PermissionRequiredMixin, CreateView):
     form_class = AddOwnershipCommitteeLinkForm
+
+    def get_permission_required(self):
+        item_class_name = slugify(self.item_type.model_class().__name__)
+        return [f'inventory.can_add_{item_class_name}_for_group']
 
     def get_success_url(self):
         # Go back to the committee page
         return reverse_lazy("inventory:committee_items", kwargs={'group_id': self.object.group.id})
 
 
-class AddLinkMemberView(CatalogueMixin, ItemMixin, AddLinkMixin, FormView):
+class AddLinkMemberView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, AddLinkMixin,
+                        PermissionRequiredMixin, FormView):
     form_class = AddOwnershipMemberLinkForm
+
+    def get_permission_required(self):
+        item_class_name = slugify(self.item_type.model_class().__name__)
+        return [f'inventory.can_add_{item_class_name}_for_member']
 
     def get_success_url(self):
         # Go back to the catalogue page

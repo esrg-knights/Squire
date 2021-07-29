@@ -1,7 +1,9 @@
 from .models import Member, MemberUser
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import AccessMixin
 from django.contrib.auth import REDIRECT_FIELD_NAME, get_user
 from django.http import HttpResponseRedirect
 from django.shortcuts import resolve_url
@@ -27,7 +29,7 @@ def request_member(function=None):
                 request.user = user_to_member(request.user)
             return view_func(request, *args, **kwargs)
         return _wrapped_view
-    
+
     if function:
         return decorator(function)
     return decorator
@@ -47,13 +49,27 @@ def membership_required(function=None, fail_url=None, redirect_field_name=REDIRE
             # If the user is authenticated and a member with the same userID exists, continue
             if request.user.is_authenticated and MemberUser(request.user.id).is_member():
                 return view_func(request, *args, **kwargs)
-            
+
             # Otherwise show the "Not a member" error page
             resolved_fail_url = resolve_url(fail_url or settings.MEMBERSHIP_FAIL_URL)
             return HttpResponseRedirect(resolved_fail_url)
         # Wrap inside the login_required decorator (as non-logged in users can never be members)
         return login_required(_wrapped_view, login_url=login_url, redirect_field_name=redirect_field_name)
-    
+
     if function:
         return decorator(function)
     return decorator
+
+
+class MembershipRequiredMixin(AccessMixin):
+    """
+        Verifies that the current user is a member.
+        Mixin-equivalent of the membership_required decorator
+    """
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            if not request.user.is_authenticated or not request.user.member:
+                raise PermissionDenied("You are not registered as a member")
+        except Member.DoesNotExist:
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
