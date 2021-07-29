@@ -1,6 +1,6 @@
 from django import forms
+from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.core.exceptions import ImproperlyConfigured
-from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from .models import Member, Room
@@ -10,25 +10,25 @@ from .models import Member, Room
 # @since 05 FEB 2020
 ##################################################################################
 
-class RequestUserForm():
-
-    user = None
+class UpdatingUserFormMixin():
+    """
+        Form Mixin that updates a customizable field with a user passed at form
+        initialisation. For example, this user can be the requesting user of a
+        FormView that uses a form with this Mixin.
+    """
+    updating_user_field = 'last_updated_by'
 
     def __init__(self, *args, user=None, **kwargs):
-        # User that created the form (request.user in the relevant view)
-        self.user = user
-
         # We explicitly do not pass 'user' down the Form-chain,
         #   as it's an unexpected kwarg (for some Forms)
         super().__init__(*args, **kwargs)
 
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        instance.last_updated_by = self.user
+        # Sanity check
+        assert hasattr(self.instance, self.updating_user_field)
 
-        if commit:
-            instance.save()
-        return instance
+        # Update the field
+        setattr(self.instance, self.updating_user_field, user)
+
 
 class MemberRoomForm(forms.ModelForm):
     """
@@ -37,7 +37,7 @@ class MemberRoomForm(forms.ModelForm):
     """
     accessible_rooms = forms.ModelMultipleChoiceField(
         Room.objects.all(),
-        widget=admin.widgets.FilteredSelectMultiple('Rooms', False),
+        widget=FilteredSelectMultiple('Rooms', False),
         required=False,
     )
 
@@ -48,31 +48,13 @@ class MemberRoomForm(forms.ModelForm):
             initial_rooms = self.instance.accessible_rooms.values_list('pk', flat=True)
             self.initial['accessible_rooms'] = initial_rooms
 
-        # Remove Room-fields if they're in the 'exclude'-list
-        for exclude_field in ['accessible_rooms']:
-            if exclude_field in self.Meta.exclude:
-                del self.fields[exclude_field]
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-
-        if commit:
-            instance.save()
-            self.save_m2m()
-        else:
-            # Defer saving the m2m-relation; the member might not yet exist at this point
-            self.save_m2m = self._save_m2m
-        return instance
-
     def _save_m2m(self):
         super()._save_m2m()
-        for field in ['accessible_rooms']:
-            if field not in self.Meta.exclude:
-                getattr(self.instance, field).clear()
-                getattr(self.instance, field).add(*self.cleaned_data[field])
+        self.instance.accessible_rooms.clear()
+        self.instance.accessible_rooms.add(*self.cleaned_data['accessible_rooms'])
 
 
-class AdminMemberForm(RequestUserForm, MemberRoomForm):
+class AdminMemberForm(UpdatingUserFormMixin, MemberRoomForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -84,7 +66,7 @@ class AdminMemberForm(RequestUserForm, MemberRoomForm):
 
 
 # A form that allows a member to be updated or created
-class MemberForm(RequestUserForm, MemberRoomForm):
+class MemberForm(UpdatingUserFormMixin, MemberRoomForm):
     class Meta:
         model = Member
         exclude = ('last_updated_by', 'last_updated_date', 'marked_for_deletion', 'user', 'notes', 'is_deregistered')
@@ -93,7 +75,7 @@ class MemberForm(RequestUserForm, MemberRoomForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Make fields marked as 'readonly' actually readonly
+        # Disable fields marked as 'readonly' for clarity's sake
         #   Note that Django automagically ignores these fields as well
         #   in case they are tampered with by the client
         for field in self.Meta.readonly_fields:
@@ -109,7 +91,7 @@ class MemberForm(RequestUserForm, MemberRoomForm):
             self.fields[field].widget.attrs['placeholder'] = "(None)"
 
     def is_valid(self):
-        ret = forms.Form.is_valid(self)
+        ret = super().is_valid()
         # Add an 'error' class to input elements that contain an error
         for field in self.errors:
             self.fields[field].widget.attrs.update({'class': self.fields[field].widget.attrs.get('class', '') + ' alert-danger'})

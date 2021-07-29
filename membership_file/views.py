@@ -1,12 +1,12 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import HttpResponseForbidden
-from django.views.generic import DetailView, TemplateView, UpdateView
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
+from django.views.generic import DetailView, TemplateView, UpdateView
 
-from .models import Member, MemberUser
 from .forms import MemberForm
+from .models import Member
 from .util import MembershipRequiredMixin
 
 from core.views import TemplateManager
@@ -19,17 +19,14 @@ from .export import *
 # Add a link to each user's Account page leading to its Membership page
 TemplateManager.set_template('core/user_accounts/account.html', 'membership_file/account_membership.html')
 
-# Makes the requesting user a MemberUser, and sets it as the relevant object
-class RequestMemberMixin():
-    def setup(self, request, *args, **kwargs):
-        super().setup(request, *args, **kwargs)
 
-        # Odd loop-around because all logged in users should be treated as memberusers
-        if self.request.user.is_authenticated:
-            self.request.user.__class__ = MemberUser
-
+class MemberMixin(MembershipRequiredMixin):
+    """
+        Sets the view's object to the Member corresponding to the user that makes
+        the request.
+    """
     def get_object(self, queryset=None):
-        return None if not self.request.user.is_authenticated else self.request.user.get_member()
+        return self._get_member_from_request()
 
 
 # Page that loads whenever a user tries to access a member-page
@@ -38,14 +35,14 @@ class NotAMemberView(TemplateView):
 
 
 # Page for viewing membership information
-class MemberView(LoginRequiredMixin, RequestMemberMixin, MembershipRequiredMixin, PermissionRequiredMixin, DetailView):
+class MemberView(MemberMixin, PermissionRequiredMixin, DetailView):
     model = Member
     template_name = 'membership_file/view_member.html'
     permission_required = 'membership_file.can_view_membership_information_self'
     raise_exception = True
 
 # Page for changing membership information using a form
-class MemberChangeView(LoginRequiredMixin, RequestMemberMixin, MembershipRequiredMixin, PermissionRequiredMixin, UpdateView):
+class MemberChangeView(MemberMixin, PermissionRequiredMixin, UpdateView):
     template_name = 'membership_file/edit_member.html'
     form_class = MemberForm
     success_url = reverse_lazy('membership_file/membership')
@@ -61,7 +58,7 @@ class MemberChangeView(LoginRequiredMixin, RequestMemberMixin, MembershipRequire
         # Members who are marked for deletion cannot edit their membership information
         obj = self.get_object()
         if obj is not None and obj.marked_for_deletion:
-            return HttpResponseForbidden()
+            return HttpResponseForbidden("Your membership is about to be cancelled. Please contact the board if this was a mistake.")
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
