@@ -4,7 +4,7 @@
         "pk": 1,
         "fields": {
             "name": "Terraforming Mars",
-            "note": "",
+            "description": "",
             "bgg_id": 167791
         }
     },
@@ -13,7 +13,7 @@
         "pk": 2,
         "fields": {
             "name": "Gaia Project",
-            "note": "",
+            "description": "",
             "bgg_id": 220308
         }
     },
@@ -22,7 +22,7 @@
         "pk": 3,
         "fields": {
             "name": "Pak speelkaarten",
-            "note": "in rood jasje",
+            "description": "in rood jasje",
             "bgg_id": null
         }
     },
@@ -31,7 +31,7 @@
         "pk": 4,
         "fields": {
             "name": "Verloren spel",
-            "note": "Niet fysiek aanwezig, wel in ons hoofd",
+            "description": "Niet fysiek aanwezig, wel in ons hoofd",
             "bgg_id": null
         }
     },
@@ -41,7 +41,7 @@
         "model": "inventory.ownership",
         "pk": 1,
         "fields": {
-            "member": 2,
+            "member": 1,
             "group": null,
             "added_since": "2020-08-14",
             "is_active": true,
@@ -53,7 +53,7 @@
         "model": "inventory.ownership",
         "pk": 2,
         "fields": {
-            "member": 2,
+            "member": 1,
             "group": null,
             "added_since": "2020-09-01",
             "is_active": false,

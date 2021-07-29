@@ -55,7 +55,7 @@ class TestOwnership(TestCase):
         self.assertEqual(len(valid_ids['id__in']), 1)
 
     def test_owner(self):
-        self.assertEqual(Ownership.objects.get(id=1).owner, Member.objects.get(id=2))
+        self.assertEqual(Ownership.objects.get(id=1).owner, Member.objects.get(id=1))
         self.assertEqual(Ownership.objects.get(id=3).owner, Group.objects.get(id=2))
 
 
@@ -99,9 +99,9 @@ class TestItemManager(TestCase):
 
     def test_get_all_owned_by(self):
         member = Member.objects.get(id=1)
-        self.assertEqual(0, self.manager.get_all_owned_by(member=member).count())
-        member = Member.objects.get(id=2)
         self.assertEqual(1, self.manager.get_all_owned_by(member=member).count())
+        member = Member.objects.get(id=2)
+        self.assertEqual(0, self.manager.get_all_owned_by(member=member).count())
 
         group = Group.objects.get(id=1)
         self.assertEqual(0, self.manager.get_all_owned_by(group=group).count())
