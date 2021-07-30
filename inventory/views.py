@@ -204,7 +204,7 @@ class ItemMixin:
 
     def dispatch(self, request, *args, **kwargs):
         try:
-            self.item = self.item_type.get_object_for_this_type(id=self.kwargs['object_id'])
+            self.item = self.item_type.get_object_for_this_type(id=self.kwargs['item_id'])
         except self.item_type.model_class().DoesNotExist:
             raise Http404
 
@@ -239,12 +239,12 @@ class TypeCatalogue(MembershipRequiredMixin, CatalogueMixin, SearchFormMixin, Li
         return context
 
 
-class AddLinkMixin:
+class AddLinkFormMixin:
     """ Mixin for the two AddLink Views that initialise common properties """
     template_name = "inventory/catalogue_add_link.html"
 
     def get_form_kwargs(self):
-        kwargs = super(AddLinkMixin, self).get_form_kwargs()
+        kwargs = super(AddLinkFormMixin, self).get_form_kwargs()
         kwargs['item'] = self.item
         kwargs['user'] = self.request.user
         return kwargs
@@ -252,10 +252,10 @@ class AddLinkMixin:
     def form_valid(self, form):
         form.save()
         messages.success(self.request, f"{self.item} has been placed in {form.instance.owner}'s inventory")
-        return super(AddLinkMixin, self).form_valid(form)
+        return super(AddLinkFormMixin, self).form_valid(form)
 
 
-class AddLinkCommitteeView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, AddLinkMixin,
+class AddLinkCommitteeView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, AddLinkFormMixin,
                            PermissionRequiredMixin, CreateView):
     form_class = AddOwnershipCommitteeLinkForm
 
@@ -268,7 +268,7 @@ class AddLinkCommitteeView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, A
         return reverse_lazy("inventory:committee_items", kwargs={'group_id': self.object.group.id})
 
 
-class AddLinkMemberView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, AddLinkMixin,
+class AddLinkMemberView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, AddLinkFormMixin,
                         PermissionRequiredMixin, FormView):
     form_class = AddOwnershipMemberLinkForm
 

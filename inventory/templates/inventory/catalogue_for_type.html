@@ -38,13 +38,13 @@
                 <td class="col-auto">
                     <div class="d-lg-flex justify-content-end">
                         {% if can_add_to_group %}
-                            <a href="{% url "inventory:catalogue_add_group_link" type_id=item_type.id object_id=item.id %}"
+                            <a href="{% url "inventory:catalogue_add_group_link" type_id=item_type.id item_id=item.id %}"
                                class="btn btn-sm btn-primary mb-2 mb-lg-0">
                                 Add to committee
                             </a>
                         {% endif %}
                         {% if can_add_to_member %}
-                            <a href="{% url "inventory:catalogue_add_member_link" type_id=item_type.id object_id=item.id %}"
+                            <a href="{% url "inventory:catalogue_add_member_link" type_id=item_type.id item_id=item.id %}"
                                class="btn btn-sm btn-secondary">
                                 Add to member
                         </a>

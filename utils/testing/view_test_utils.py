@@ -56,6 +56,7 @@ class ViewValidityMixin:
 class TestMixinMixin:
     mixin_class = None
     base_user_id = None
+    pre_inherit_classes = []
     view = None
 
     def _build_get_response(self, url=None, url_kwargs=None, save_view = True):
@@ -83,7 +84,9 @@ class TestMixinMixin:
         return {}
 
     def get_as_full_class(self):
-        class MixinTestView(self.mixin_class, TemplateView):
+        classes = self.pre_inherit_classes + [self.mixin_class]
+
+        class MixinTestView(*classes, TemplateView):
             template_name = "utils/testing/test_mixin_template.html"
 
         return MixinTestView

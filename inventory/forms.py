@@ -70,7 +70,7 @@ class AddOwnerShipLinkMixin:
 
 
 class AddOwnershipCommitteeLinkForm(AddOwnerShipLinkMixin, forms.ModelForm):
-    committee = forms.ModelChoiceField(queryset=Group.objects.none())
+    committee = forms.ModelChoiceField(queryset=Group.objects.none(), required=True)
 
     class Meta:
         model = Ownership
@@ -86,19 +86,22 @@ class AddOwnershipCommitteeLinkForm(AddOwnerShipLinkMixin, forms.ModelForm):
             self.fields['committee'].disabled = True
 
     def clean(self):
-        self.instance.group = self.cleaned_data['committee']
+        self.instance.group = self.cleaned_data.get('committee', None)
         return super(AddOwnershipCommitteeLinkForm, self).clean()
 
 
 class AddOwnershipMemberLinkForm(AddOwnerShipLinkMixin, forms.ModelForm):
-    member = forms.ModelChoiceField(queryset=Member.objects.filter(is_deregistered=False).order_by('first_name'))
+    member = forms.ModelChoiceField(
+        required=True,
+        queryset=Member.objects.filter(is_deregistered=False).order_by('first_name')
+    )
 
     class Meta:
         model = Ownership
         fields = ['member', 'note', 'is_active']
 
     def clean(self):
-        self.instance.member = self.cleaned_data['member']
+        self.instance.member = self.cleaned_data.get('member', None)
         return super(AddOwnershipMemberLinkForm, self).clean()
 
 
