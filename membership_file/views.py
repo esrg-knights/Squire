@@ -1,13 +1,13 @@
-from django.contrib.auth.decorators import permission_required
+from django.contrib import messages
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import HttpResponseForbidden
-from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse
-from django.views.decorators.http import require_safe
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+from django.views.generic import DetailView, TemplateView, UpdateView
 
-from .models import MemberUser as User
-from .models import Member, MemberLog
 from .forms import MemberForm
-from .util import membership_required, request_member
+from .models import Member
+from .util import MembershipRequiredMixin
 
 from core.views import TemplateManager
 
@@ -20,53 +20,48 @@ from .export import *
 TemplateManager.set_template('core/user_accounts/account.html', 'membership_file/account_membership.html')
 
 
+class MemberMixin(MembershipRequiredMixin):
+    """
+        Sets the view's object to the Member corresponding to the user that makes
+        the request.
+    """
+    def get_object(self, queryset=None):
+        return self._get_member_from_request()
+
+
 # Page that loads whenever a user tries to access a member-page
-@require_safe
-def viewNoMember(request):
-    return render(request, 'membership_file/no_member.html', {})
+class NotAMemberView(TemplateView):
+    template_name = 'membership_file/no_member.html'
 
 
-# Renders the webpage for viewing a user's own membership information
-@require_safe
-@membership_required
-@permission_required('membership_file.can_view_membership_information_self', raise_exception=True)
-@request_member
-def viewOwnMembership(request):
-    tData = {'member': request.user.get_member()}
-    return render(request, 'membership_file/view_member.html', tData)
+# Page for viewing membership information
+class MemberView(MemberMixin, PermissionRequiredMixin, DetailView):
+    model = Member
+    template_name = 'membership_file/view_member.html'
+    permission_required = 'membership_file.can_view_membership_information_self'
+    raise_exception = True
 
+# Page for changing membership information using a form
+class MemberChangeView(MemberMixin, PermissionRequiredMixin, UpdateView):
+    template_name = 'membership_file/edit_member.html'
+    form_class = MemberForm
+    success_url = reverse_lazy('membership_file/membership')
+    permission_required = ('membership_file.can_view_membership_information_self', 'membership_file.can_change_membership_information_self')
+    raise_exception = True
 
-# Renders the webpage for editing a user's own membership information
-@membership_required
-@permission_required('membership_file.can_view_membership_information_self', raise_exception=True)
-@permission_required('membership_file.can_change_membership_information_self', raise_exception=True)
-@request_member
-def editOwnMembership(request):
-    member = request.user.get_member()
+    def get_form_kwargs(self, *args, **kwargs):
+        kwargs = super().get_form_kwargs(*args, **kwargs)
+        kwargs['user'] = self.request.user
+        return kwargs
 
-    # Members who are marked for deletion cannot be edited
-    if member.marked_for_deletion:
-        # TODO: work with permission system so board members can edit other user's info with
-        # the same form, without needing to be an admin (and doing it via the admin panel)
-        return HttpResponseForbidden()
+    def dispatch(self, request, *args, **kwargs):
+        # Members who are marked for deletion cannot edit their membership information
+        obj = self.get_object()
+        if obj is not None and obj.marked_for_deletion:
+            return HttpResponseForbidden("Your membership is about to be cancelled. Please contact the board if this was a mistake.")
+        return super().dispatch(request, *args, **kwargs)
 
-    # Process form data
-    if request.method == 'POST':
-        member.last_updated_by = request.user
-
-        # Obtain the form that was entered
-        form = MemberForm(request.POST, instance=member)
-
-        # check whether the entered data was valid:
-        if form.is_valid():
-            # Save the updated info
-            form.save(commit=True)      
-            # Redirect back to the view membership info page
-            # TODO: Provide a nice notification upon doing so
-            return redirect(reverse('membership_file/membership'))
-
-    # if a GET (or any other method) we'll create a blank form
-    else:
-        form = MemberForm(instance=request.user.get_member())
-
-    return render(request, 'membership_file/edit_member.html', {'form': form})
+    def form_valid(self, form):
+        message = _("Your membership information has been saved successfully!")
+        messages.success(self.request, message)
+        return super().form_valid(form)

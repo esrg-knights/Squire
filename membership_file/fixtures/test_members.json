@@ -1,10 +1,27 @@
 [
    {
+      "model": "auth.user",
+      "pk": 100,
+      "fields": {
+         "password": "pbkdf2_sha256$150000$FQNl6kahiWF9$UMJi+YpgjsAidu6lhrQen5qPyHVa2JBSH6Ve2/WKy/k=",
+         "last_login": "1970-01-01T12:00:00Z",
+         "is_superuser": false,
+         "username": "test_member",
+         "first_name": "",
+         "last_name": "",
+         "email": "",
+         "is_staff": false,
+         "is_active": true,
+         "date_joined": "1970-01-01T12:00:00Z",
+         "groups": []
+      }
+   },
+   {
       "model": "membership_file.member",
       "pk": 1,
       "fields": {
-         "user": 2,
-         "initials": "A.B.",
+         "user": 100,
+         "legal_name": "A.B.",
          "first_name": "Charlie",
          "tussenvoegsel": "van der",
          "last_name": "Dommel",
@@ -12,21 +29,22 @@
          "educational_institution": "TUe",
          "tue_card_number": "1234567",
          "external_card_number": null,
-         "external_card_digits": null,
-         "external_card_cluster": null,
+         "external_card_digits": "",
+         "external_card_cluster": "",
          "email": "linked_member@example.com",
          "phone_number": null,
          "street": "John F. Kennedylaan",
          "house_number": 1,
-         "house_number_addition": null,
+         "house_number_addition": "",
          "city": "Eindhoven",
-         "state": null,
          "country": "The Netherlands",
          "date_of_birth": "1970-01-01",
          "member_since": "2020-01-01",
          "last_updated_date": "1970-01-01T12:00:00Z",
          "last_updated_by": null,
-         "marked_for_deletion": false
+         "marked_for_deletion": false,
+         "notes": "",
+         "postal_code": ""
       }
    },
    {
@@ -34,29 +52,30 @@
       "pk": 2,
       "fields": {
          "user": null,
-         "initials": "Z.Y.",
+         "legal_name": "Z.Y.",
          "first_name": "Xena",
-         "tussenvoegsel": null,
+         "tussenvoegsel": "",
          "last_name": "Wolf",
-         "student_number": null,
+         "student_number": "",
          "educational_institution": "Summa",
          "tue_card_number": null,
          "external_card_number": null,
-         "external_card_digits": null,
-         "external_card_cluster": null,
+         "external_card_digits": "",
+         "external_card_cluster": "",
          "email": "nonlinked_member@example.com",
          "phone_number": null,
          "street": "Limbopad",
          "house_number": 2,
-         "house_number_addition": null,
+         "house_number_addition": "",
          "city": "Eindhoven",
-         "state": null,
          "country": "The Netherlands",
          "date_of_birth": "1970-01-01",
          "member_since": "2020-01-01",
          "last_updated_date": "1970-01-01T12:00:00Z",
          "last_updated_by": null,
-         "marked_for_deletion": false
+         "marked_for_deletion": false,
+         "notes": "",
+         "postal_code": ""
       }
    }
 ]

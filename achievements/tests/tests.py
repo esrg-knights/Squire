@@ -1,13 +1,11 @@
 from django.test import TestCase
 
-from achievements.serializers import AchievementSerializer, CategorySerializer
 from achievements.models import Achievement, Category
-from core.tests.util import checkAccessPermissions, PermissionLevel
+from core.tests.util import check_http_response, TestPublicUser, TestAccountUser, check_http_response_with_login_redirect
 
 
-# Create your tests here.
 class TestCaseAchievementFrontEndViews(TestCase):
-    fixtures = ['test_users.json']
+    fixtures = TestAccountUser.get_fixtures()
 
     def setUp(self):
 
@@ -32,10 +30,9 @@ class TestCaseAchievementFrontEndViews(TestCase):
 
 
     def test_public_achievements(self):
-        checkAccessPermissions(self, '/achievements', 'get', PermissionLevel.LEVEL_PUBLIC)
-    
+        check_http_response(self, '/achievements', 'get', TestPublicUser)
+
     def test_account_achievements(self):
-        checkAccessPermissions(self, '/account/achievements', 'get', PermissionLevel.LEVEL_USER)
+        check_http_response_with_login_redirect(self, '/account/achievements', 'get')
 
 
-    

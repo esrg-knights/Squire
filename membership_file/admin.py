@@ -1,6 +1,10 @@
+import functools
+
 from django.contrib import admin
-from .models import Member, MemberLog, MemberLogField
 from django.utils.html import format_html
+
+from .forms import AdminMemberForm
+from .models import Member, MemberLog, MemberLogField, Room
 
 
 class HideRelatedNameAdmin(admin.ModelAdmin):
@@ -16,7 +20,7 @@ class DisableModifications():
     # Disable creation
     def has_add_permission(self, request):
         return False
-    
+
     # Disable editing
     def has_change_permission(self, request, obj=None):
         return False
@@ -24,6 +28,10 @@ class DisableModifications():
     # Disable deletion
     def has_delete_permission(self, request, obj=None):
         return False
+
+class RoomInline(admin.TabularInline):
+    model = Room.members_with_access.through
+    extra = 0
 
 
 class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
@@ -42,38 +50,47 @@ class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
 
 # Ensures that the last_updated_by field is also updated properly from the Django admin panel
 class MemberWithLog(HideRelatedNameAdmin):
+    form = AdminMemberForm
+    save_on_top = True
 
     list_display = ('id', 'user', 'first_name', 'tussenvoegsel', 'last_name', 'educational_institution', 'is_deregistered', 'marked_for_deletion')
-    list_filter = ['educational_institution', 'is_deregistered', 'marked_for_deletion']
+    list_filter = ['educational_institution', 'marked_for_deletion', 'is_deregistered', 'has_paid_membership_fee', 'is_honorary_member']
     list_display_links = ('id', 'user', 'first_name')
+    search_fields = ['first_name', 'last_name', 'email', 'phone_number', 'tue_card_number', 'external_card_number', 'key_id']
+
+    readonly_fields = ['last_updated_by', 'last_updated_date']
+
+    # Display a search box instead of a dropdown menu
+    autocomplete_fields = ['user']
 
     fieldsets = [
-        (None,               {'fields': ['user', ('first_name', 'tussenvoegsel', 'last_name'), 'date_of_birth', ('last_updated_date', 'last_updated_by'), 'is_deregistered', 'marked_for_deletion']}),
-        ('Contact Details', {'fields': ['email', 'phone_number', ('street', 'house_number', 'house_number_addition'), 'city', ('state', 'country')]}),
-        ('Card Access', {'fields': ['tue_card_number', ('external_card_number', 'external_card_digits', 'external_card_cluster')]}),
-        ('Student Information', {'fields': ['initials', 'educational_institution', 'student_number']}),
+        (None, {'fields':
+            ['user', ('first_name', 'tussenvoegsel', 'last_name'),
+            'marked_for_deletion',
+            ('last_updated_date', 'last_updated_by'),]}),
+        ('Membership Status', {'fields':
+            ['is_deregistered', 'has_paid_membership_fee', 'is_honorary_member', 'member_since']}),
+        ('Contact Details', {'fields':
+            ['email', 'phone_number',
+            ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
+        ('Room Access', {'fields':
+            ['key_id', 'tue_card_number',
+            ('external_card_number', 'external_card_digits', 'external_card_cluster'),
+            'external_card_deposit', 'accessible_rooms']}),
+        ('Legal Information', {'fields':
+            ['educational_institution', 'student_number',
+            'date_of_birth', 'legal_name']}),
+        ('Notes', {'fields':
+            ['notes']}),
     ]
 
     inlines = [MemberLogReadOnlyInline]
 
-    # Show the date and user that last updated the member
-    # Override the admin panel's save method to automatically include the user that updated the member
-    def save_model(self, request, obj, form, change):
-        obj.last_updated_by = request.user
-        super().save_model(request, obj, form, change)
+    def get_form(self, request, obj=None, **kwargs):
+        # Pass request.user to the form
+        Form = super().get_form(request, obj=None, **kwargs)
+        return functools.partial(Form, user=request.user)
 
-    # Disable field editing if the member was marked for deletion (except the marked_for_deletion field)
-    def get_readonly_fields(self, request, obj=None):
-        readonly_fields = ['last_updated_by', 'last_updated_date']
-        if obj is None or not obj.marked_for_deletion:
-            return readonly_fields
-        readonly_fields = list(set(
-            readonly_fields +
-            [field.name for field in self.opts.local_fields] +
-            [field.name for field in self.opts.local_many_to_many]
-        ))
-        readonly_fields.remove('marked_for_deletion')
-        return readonly_fields
 
     # Disable deletion if the member was not marked for deletion
     # Disable deletion for the user that marked the member for deletion
@@ -81,7 +98,7 @@ class MemberWithLog(HideRelatedNameAdmin):
         # User is normally allowed to delete these objects
         if obj is None:
             return True
-        
+
         # If the member was not marked for deletion, disable deletion
         if not obj.marked_for_deletion:
             return False
@@ -110,6 +127,17 @@ class MemberLogReadOnly(DisableModifications, HideRelatedNameAdmin):
 
     inlines = [MemberLogFieldReadOnlyInline]
 
+class RoomAdmin(admin.ModelAdmin):
+    model = Room
+
+    list_display = ('id', 'name', 'access')
+    list_display_links = ('id', 'name')
+    search_fields = ['name', 'access']
+
+    ordering = ("access",)
+    filter_horizontal = ('members_with_access',)
+
 # Register the special models, making them show up in the Django admin panel
 admin.site.register(Member, MemberWithLog)
 admin.site.register(MemberLog, MemberLogReadOnly)
+admin.site.register(Room, RoomAdmin)

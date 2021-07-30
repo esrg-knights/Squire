@@ -1,8 +1,8 @@
-from .models import Member, MemberUser
+from .models import MemberUser
 from django.conf import settings
-from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import REDIRECT_FIELD_NAME, get_user
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.http import HttpResponseRedirect
 from django.shortcuts import resolve_url
 from functools import wraps
@@ -27,7 +27,7 @@ def request_member(function=None):
                 request.user = user_to_member(request.user)
             return view_func(request, *args, **kwargs)
         return _wrapped_view
-    
+
     if function:
         return decorator(function)
     return decorator
@@ -47,13 +47,35 @@ def membership_required(function=None, fail_url=None, redirect_field_name=REDIRE
             # If the user is authenticated and a member with the same userID exists, continue
             if request.user.is_authenticated and MemberUser(request.user.id).is_member():
                 return view_func(request, *args, **kwargs)
-            
+
             # Otherwise show the "Not a member" error page
             resolved_fail_url = resolve_url(fail_url or settings.MEMBERSHIP_FAIL_URL)
             return HttpResponseRedirect(resolved_fail_url)
         # Wrap inside the login_required decorator (as non-logged in users can never be members)
         return login_required(_wrapped_view, login_url=login_url, redirect_field_name=redirect_field_name)
-    
+
     if function:
         return decorator(function)
     return decorator
+
+class MembershipRequiredMixin(LoginRequiredMixin):
+    """
+        Verifies that the current user is a member, redirecting to a special page if needed.
+        Mixin-equivalent of the @membership_required decorator.
+    """
+    fail_url = settings.MEMBERSHIP_FAIL_URL
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and self._get_member_from_request() is None:
+            return HttpResponseRedirect(resolve_url(self.fail_url))
+        return super().dispatch(request, *args, **kwargs)
+
+    def _get_member_from_request(self):
+        """
+            Gets the member object of the user making the request, or None if the requesting user
+            is not a member.
+        """
+        member = getattr(self.request.user, 'member', None)
+        if member is None or not member.is_considered_member():
+            return None
+        return member
