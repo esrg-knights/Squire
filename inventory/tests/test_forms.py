@@ -119,3 +119,26 @@ class TestAddOwnershipMemberLink(FormValidityMixin, TestCase):
         form = self.build_form({'member': 2, 'is_active': True})
         self.assertTrue(form.is_valid())
         self.assertEqual(form.instance.member.id, 2)
+
+
+class TestFilterOwnershipThroughRelatedItems(FormValidityMixin, TestCase):
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    form_class = FilterOwnershipThroughRelatedItems
+
+    def test_fields(self):
+        self.assertHasField('search_field')
+
+    def test_filtering(self):
+        ownerships = Ownership.objects.all()
+
+        # Test no filtering
+        filtered_ownerships = self.assertFormValid({}).get_filtered_items(ownerships)
+        self.assertEqual(5, filtered_ownerships.count())
+
+        # Test terraforming mars (3 ownership instances)
+        filtered_ownerships = self.assertFormValid({'search_field': 'mars'}).get_filtered_items(ownerships)
+        self.assertEqual(3, filtered_ownerships.count())
+
+        # Test 'ai' is in 'Gaia Project' and 'Pak speelkaarten (ai)'
+        filtered_ownerships = self.assertFormValid({'search_field': 'ai'}).get_filtered_items(ownerships)
+        self.assertEqual(2, filtered_ownerships.count())

@@ -134,12 +134,14 @@ class MemberOwnershipAlterView(MembershipRequiredMixin, OwnershipMixin, FormView
 ###########################################################
 
 
-class GroupItemsOverview(GroupMixin, ListView):
+class GroupItemsOverview(GroupMixin, SearchFormMixin, ListView):
     template_name = "inventory/committee_inventory.html"
     context_object_name = 'ownerships'
+    search_form_class = FilterOwnershipThroughRelatedItems
 
     def get_queryset(self):
-        return Ownership.objects.filter(group=self.group).filter(is_active=True)
+        ownerships = Ownership.objects.filter(group=self.group).filter(is_active=True)
+        return self.filter_data(ownerships)
 
     def get_context_data(self, **kwargs):
         # Set a list of availlable content types

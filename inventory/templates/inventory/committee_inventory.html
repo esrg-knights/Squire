@@ -16,14 +16,22 @@
        Below is a list of all items owned by this committee
     </p>
     <hr>
+
     <div class="row">
-        <div class="col justify-content-end d-flex">
-            {% for content_type in content_types %}
-                <a href="{% url "inventory:catalogue" type_id=content_type.id %}"
-                    class="btn btn-primary">
-                    Add new {{ content_type }}
-                </a>
-           {% endfor %}
+        <div class="col">
+            {% include "utils/snippets/filter_form_snippet.html" with form=filter_form %}
+        </div>
+        <div class="col  d-flex">
+            <div class="row w-100 justify-content-end">
+                <div class="col-auto">
+                {% for content_type in content_types %}
+                    <a href="{% url "inventory:catalogue" type_id=content_type.id %}"
+                        class="btn btn-primary">
+                        Add new {{ content_type }}
+                    </a>
+               {% endfor %}
+                </div>
+            </div>
         </div>
     </div>
 

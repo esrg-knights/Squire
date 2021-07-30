@@ -201,7 +201,9 @@ class TestGroupItemOverview(ViewValidityMixin, TestCase):
 
     def test_class(self):
         self.assertTrue(issubclass(GroupItemsOverview, GroupMixin))
+        self.assertTrue(issubclass(GroupItemsOverview, SearchFormMixin))
         self.assertTrue(issubclass(GroupItemsOverview, ListView))
+        self.assertEqual(TestGroupItemOverview.search_form_class, FilterOwnershipThroughRelatedItems)
         self.assertEqual(GroupItemsOverview.template_name, "inventory/committee_inventory.html")
 
     def test_successful_get(self):

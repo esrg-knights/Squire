@@ -30,7 +30,7 @@
         "model": "inventory.boardgame",
         "pk": 4,
         "fields": {
-            "name": "Verloren spel",
+            "name": "Verloren spel (ai)",
             "description": "Niet fysiek aanwezig, wel in ons hoofd",
             "bgg_id": null
         }

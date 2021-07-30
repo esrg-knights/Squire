@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
@@ -8,7 +9,7 @@ from membership_file.models import Member
 from inventory.models import *
 
 __all__ = ['OwnershipRemovalForm', 'OwnershipActivationForm', 'OwnershipNoteForm', 'OwnershipCommitteeForm',
-           'AddOwnershipCommitteeLinkForm', 'AddOwnershipMemberLinkForm']
+           'AddOwnershipCommitteeLinkForm', 'AddOwnershipMemberLinkForm', 'FilterOwnershipThroughRelatedItems']
 
 
 class OwnershipRemovalForm(forms.Form):
@@ -105,4 +106,23 @@ class AddOwnershipMemberLinkForm(AddOwnerShipLinkMixin, forms.ModelForm):
         return super(AddOwnershipMemberLinkForm, self).clean()
 
 
+
+class FilterOwnershipThroughRelatedItems(forms.Form):
+    search_field = forms.CharField(max_length=100, required=False)
+
+    def get_filtered_items(self, queryset):
+        item_types = [BoardGame]
+
+        ownerships = Ownership.objects.none()
+
+        for item_type in item_types:
+            content_type = ContentType.objects.get_for_model(item_type)
+
+            sub_items = item_type.objects.filter(name__icontains=self.cleaned_data['search_field'])
+            sub_ownerships = queryset.filter(
+                content_type=content_type,
+                object_id__in=sub_items.values_list('id', flat=True)
+            )
+            ownerships = ownerships.union(sub_ownerships)
+        return ownerships
 

@@ -24,6 +24,9 @@ class SearchFormMixin:
 
     def get_queryset(self):
         queryset = super(SearchFormMixin, self).get_queryset()
+        return self.filter_data(queryset)
+
+    def filter_data(self, queryset):
         if self.search_form.is_valid():
             return self.search_form.get_filtered_items(queryset)
         else:
