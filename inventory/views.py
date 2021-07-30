@@ -224,6 +224,8 @@ class TypeCatalogue(MembershipRequiredMixin, CatalogueMixin, SearchFormMixin, Li
     template_name = "inventory/catalogue_for_type.html"
     filter_field_name = 'name'
 
+    paginate_by = 15
+
     @property
     def model(self):
         # model as attribute is called by the list queryset
