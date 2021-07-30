@@ -16,7 +16,7 @@ class UpdatingUserFormMixin():
         initialisation. For example, this user can be the requesting user of a
         FormView that uses a form with this Mixin.
     """
-    updating_user_field = 'last_updated_by'
+    updating_user_field_name = 'last_updated_by'
 
     def __init__(self, *args, user=None, **kwargs):
         # We explicitly do not pass 'user' down the Form-chain,
@@ -24,10 +24,10 @@ class UpdatingUserFormMixin():
         super().__init__(*args, **kwargs)
 
         # Sanity check
-        assert hasattr(self.instance, self.updating_user_field)
+        assert hasattr(self.instance, self.updating_user_field_name)
 
         # Update the field
-        setattr(self.instance, self.updating_user_field, user)
+        setattr(self.instance, self.updating_user_field_name, user)
 
 
 class MemberRoomForm(forms.ModelForm):
