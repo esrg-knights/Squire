@@ -49,9 +49,9 @@ def get_item_image_upload_path(instance, filename):
     _, extension = os.path.splitext(filename)
 
     # file will be uploaded to MEDIA_ROOT / images/item/<item_type>/<id>.<file_extension>
-    return 'images/item/{type}/{id}{extension}'.format(
-        type=slugify(instance.__class__.__name__),
-        id=instance.id,
+    return 'images/item/{type_str}/{item_id}{extension}'.format(
+        type_str=slugify(instance.__class__.__name__),
+        item_id=instance.id,
         extension=extension,
     )
 

@@ -1,7 +1,4 @@
-import datetime
-
 from django import forms
-from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Group, User
 from django.utils.timezone import now
 from django.test import TestCase
@@ -142,3 +139,29 @@ class TestFilterOwnershipThroughRelatedItems(FormValidityMixin, TestCase):
         # Test 'ai' is in 'Gaia Project' and 'Pak speelkaarten (ai)'
         filtered_ownerships = self.assertFormValid({'search_field': 'ai'}).get_filtered_items(ownerships)
         self.assertEqual(2, filtered_ownerships.count())
+
+class TestDeleteItemForm(FormValidityMixin, TestCase):
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    form_class = DeleteItemForm
+
+    def setUp(self):
+        self.item = BoardGame.objects.get(id=1)
+        self.ignore_active_links = False
+
+    def get_form_kwargs(self, **kwargs):
+        kwargs = super(TestDeleteItemForm, self).get_form_kwargs(**kwargs)
+        kwargs.setdefault('item', self.item)
+        kwargs.setdefault('ignore_active_links', False)
+        return kwargs
+
+    def test_form_invalid(self):
+        self.item=BoardGame.objects.get(id=1)
+        self.assertFormHasError({}, 'active_ownerships', ignore_active_links=False)
+        self.assertFormValid({}, ignore_active_links=True)
+
+    def test_form_valid(self):
+        form = self.assertFormValid({}, item=BoardGame.objects.get(id=4))
+        form.delete_item()
+        self.assertFalse(BoardGame.objects.filter(id=4).exists())
+
+

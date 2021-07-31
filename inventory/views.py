@@ -7,8 +7,8 @@ from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.utils.text import slugify
-from django.views.generic import TemplateView, ListView
-from django.views.generic.edit import FormView, UpdateView, CreateView, DeleteView
+from django.views.generic import ListView
+from django.views.generic.edit import FormView, UpdateView, CreateView
 
 from committees.views import GroupMixin
 from membership_file.util import MembershipRequiredMixin
@@ -17,6 +17,10 @@ from utils.views import SearchFormMixin
 from inventory.models import BoardGame, Ownership
 from inventory.forms import *
 
+
+__all__ = ['BoardGameView', 'MemberItemsOverview', 'MemberItemRemovalFormView', 'MemberItemLoanFormView',
+           'MemberOwnershipAlterView', 'GroupItemsOverview', 'GroupItemLinkUpdateView', 'TypeCatalogue',
+           'AddLinkCommitteeView', 'AddLinkMemberView', 'CreateItemView', 'UpdateItemView', 'DeleteItemView']
 
 class BoardGameView(ListView):
     template_name = "inventory/boardgames_overview.html"

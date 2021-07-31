@@ -1,22 +1,24 @@
-import datetime
-
-
-from django.core.exceptions import ValidationError
+from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.models import Group, User, Permission
-from django.http import HttpResponse
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import QuerySet
 from django.test import TestCase, Client
-from django.utils import timezone
 from django.urls import reverse
-from django.views.generic.base import View
+from django.views.generic.edit import FormView, UpdateView, CreateView
+from django.views.generic.list import ListView
 
+from committees.views import GroupMixin
 from core.util import suppress_warnings
 from membership_file.models import Member
+from membership_file.util import MembershipRequiredMixin
 from utils.testing.view_test_utils import ViewValidityMixin, TestMixinMixin
+from utils.views import SearchFormMixin
 
 from inventory.forms import *
 from inventory.models import Ownership, BoardGame
 from inventory.views import *
+from inventory.views import OwnershipMixin, CatalogueMixin, ItemMixin
 
 
 class TestMemberItemsView(TestCase):
@@ -459,3 +461,215 @@ class TestAddLinkMemberView(ViewValidityMixin, TestCase):
             owner=Member.objects.get(id=member_id),
         )
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
+
+
+class TestItemCreateView(ViewValidityMixin, TestCase):
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    base_user_id = 2
+
+    def setUp(self):
+        self.content_type = ContentType.objects.get_for_model(BoardGame)
+        super(TestItemCreateView, self).setUp()
+        self.user.user_permissions.add(Permission.objects.get(codename='add_boardgame'))
+
+    def get_base_url(self, content_type=None, item_id=None):
+        content_type = content_type or self.content_type.id
+        return reverse('inventory:catalogue_add_new_item', kwargs={
+            'type_id':content_type,
+        })
+
+    def test_class(self):
+        self.assertTrue(issubclass(CreateItemView, MembershipRequiredMixin))
+        self.assertTrue(issubclass(CreateItemView, CatalogueMixin))
+        self.assertTrue(issubclass(CreateItemView, PermissionRequiredMixin))
+        self.assertTrue(issubclass(CreateItemView, CreateView))
+        self.assertEqual(CreateItemView.template_name, "inventory/catalogue_add_item.html")
+        self.assertEqual(CreateItemView.fields, '__all__')
+
+    @suppress_warnings
+    def test_not_authorised_get(self):
+        self.user.user_permissions.remove(Permission.objects.get(codename='add_boardgame'))
+        response = self.client.get(self.get_base_url(), data={})
+        self.assertEqual(response.status_code, 403)
+
+    def test_successful_get(self):
+        response = self.client.get(self.get_base_url(), data={})
+        self.assertEqual(response.status_code, 200)
+
+    def test_post_successful(self):
+        data = {'name': 'test_create_view_item'}
+        response = self.client.post(self.get_base_url(), data=data, follow=True)
+        # Test success message
+        msg = "{item_name} has been created".format(item_name=data['name'])
+        self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
+
+        # Test item creation
+        self.assertTrue(BoardGame.objects.filter(name='test_create_view_item').exists())
+
+    def test_success_url(self):
+        data = {'name': 'test_create_view_item'}
+        response = self.client.post(self.get_base_url(), data=data, follow=True)
+        self.assertRedirects(response, reverse('inventory:catalogue', kwargs={'type_id': self.content_type.id}))
+
+        # Pressed '& add to member' button
+        data = {'name': 'test_create_view_item_member', 'btn_save_to_member': True}
+        response = self.client.post(self.get_base_url(), data=data)
+        self.assertRedirects(response, reverse('inventory:catalogue_add_member_link', kwargs={
+            'type_id': self.content_type.id,
+            'item_id': BoardGame.objects.get(name='test_create_view_item_member').id,
+        }), fetch_redirect_response=False)
+
+        # Pressed '& add to group' button
+        data = {'name': 'test_create_view_item_group', 'btn_save_to_group': True}
+        response = self.client.post(self.get_base_url(), data=data)
+        self.assertRedirects(response, reverse('inventory:catalogue_add_group_link', kwargs={
+            'type_id': self.content_type.id,
+            'item_id': BoardGame.objects.get(name='test_create_view_item_group').id,
+        }), fetch_redirect_response=False)
+
+
+class TestItemUpdateView(ViewValidityMixin, TestCase):
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    base_user_id = 2
+
+    def setUp(self):
+        self.content_type = ContentType.objects.get_for_model(BoardGame)
+        self.item = BoardGame.objects.get(id=4)
+        super(TestItemUpdateView, self).setUp()
+        self.user.user_permissions.add(Permission.objects.get(codename='change_boardgame'))
+
+    def get_base_url(self, content_type=None, item_id=None):
+        content_type = content_type or self.content_type.id
+        item_id = item_id or self.item.id
+        return reverse('inventory:catalogue_update_item', kwargs={
+            'type_id':content_type,
+            'item_id': item_id,
+        })
+
+    def test_class(self):
+        self.assertTrue(issubclass(UpdateItemView, MembershipRequiredMixin))
+        self.assertTrue(issubclass(UpdateItemView, CatalogueMixin))
+        self.assertTrue(issubclass(UpdateItemView, ItemMixin))
+        self.assertTrue(issubclass(UpdateItemView, PermissionRequiredMixin))
+        self.assertTrue(issubclass(UpdateItemView, UpdateView))
+        self.assertEqual(UpdateItemView.template_name, "inventory/catalogue_change_item.html")
+        self.assertEqual(UpdateItemView.fields, '__all__')
+
+    @suppress_warnings
+    def test_not_authorised_get(self):
+        self.user.user_permissions.remove(Permission.objects.get(codename='change_boardgame'))
+        response = self.client.get(self.get_base_url(), data={})
+        self.assertEqual(response.status_code, 403)
+
+    def test_successful_get(self):
+        response = self.client.get(self.get_base_url(), data={})
+        self.assertEqual(response.status_code, 200)
+
+    def test_post_successful(self):
+        data = {'name': 'test_update_view_item'}
+        response = self.client.post(self.get_base_url(), data=data, follow=True)
+        # Test success message
+        msg = "{item_name} has been updated".format(item_name=data['name'])
+        self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
+
+        # Test item update
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.name, data['name'])
+
+    def test_success_url(self):
+        data = {'name': 'test_update_view_item'}
+        response = self.client.post(self.get_base_url(), data=data, follow=True)
+        self.assertRedirects(response, reverse('inventory:catalogue', kwargs={'type_id': self.content_type.id}))
+
+        # Pressed '& add to member' button
+        data = {'name': 'test_update_view_item_member', 'btn_save_to_member': True}
+        response = self.client.post(self.get_base_url(), data=data)
+        self.assertRedirects(response, reverse('inventory:catalogue_add_member_link', kwargs={
+            'type_id': self.content_type.id,
+            'item_id': BoardGame.objects.get(name='test_update_view_item_member').id,
+        }), fetch_redirect_response=False)
+
+        # Pressed '& add to group' button
+        data = {'name': 'test_update_view_item_group', 'btn_save_to_group': True}
+        response = self.client.post(self.get_base_url(), data=data)
+        self.assertRedirects(response, reverse('inventory:catalogue_add_group_link', kwargs={
+            'type_id': self.content_type.id,
+            'item_id': BoardGame.objects.get(name='test_update_view_item_group').id,
+        }), fetch_redirect_response=False)
+
+
+class TestItemDeleteView(ViewValidityMixin, TestCase):
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    base_user_id = 2
+
+    def setUp(self):
+        self.content_type = ContentType.objects.get_for_model(BoardGame)
+        self.item = BoardGame.objects.get(id=4)
+        super(TestItemDeleteView, self).setUp()
+        self.user.user_permissions.add(Permission.objects.get(codename='delete_boardgame'))
+
+    def get_base_url(self, content_type=None, item_id=None):
+        content_type = content_type or self.content_type.id
+        item_id = item_id or self.item.id
+        return reverse('inventory:catalogue_delete_item', kwargs={
+            'type_id':content_type,
+            'item_id': item_id,
+        })
+
+    def test_class(self):
+        self.assertTrue(issubclass(DeleteItemView, MembershipRequiredMixin))
+        self.assertTrue(issubclass(DeleteItemView, CatalogueMixin))
+        self.assertTrue(issubclass(DeleteItemView, ItemMixin))
+        self.assertTrue(issubclass(DeleteItemView, PermissionRequiredMixin))
+        self.assertTrue(issubclass(DeleteItemView, FormView))
+        self.assertEqual(DeleteItemView.template_name, "inventory/catalogue_delete_item.html")
+        self.assertEqual(DeleteItemView.form_class, DeleteItemForm)
+
+    @suppress_warnings
+    def test_not_authorised_get(self):
+        self.user.user_permissions.remove(Permission.objects.get(codename='delete_boardgame'))
+        response = self.client.get(self.get_base_url(), data={})
+        self.assertEqual(response.status_code, 403)
+
+    def test_successful_get(self):
+        response = self.client.get(self.get_base_url(), data={})
+        self.assertEqual(response.status_code, 200)
+
+    def test_post_successful(self):
+        """ Tests a succesful post on a non-conflicted item type """
+        response = self.client.post(self.get_base_url(), data={}, follow=True)
+        success_url = reverse('inventory:catalogue', kwargs={'type_id': self.content_type.id})
+        self.assertRedirects(response, success_url)
+
+        # Test success message
+        msg = "{item_name} has been deleted".format(item_name=self.item.name)
+        self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
+
+        # Test item deletion
+        self.assertFalse(BoardGame.objects.filter(id=self.item.id).exists())
+
+    def test_can_maintain_ownerships(self):
+        """ Tests that can_maintain_ownerships is handed to the form """
+        return
+        permission = f'can_maintain_{slugify(self.item.__class__.__name__)}_ownerships'
+        permission = Permission.objects.get(codename=permission)
+        self.user.user_permissions.remove(Permission.objects.get(codename=permission))
+
+        response = self.client.post(self.get_base_url(item_id=1), data={})
+        self.assertEqual(response.status_code, 200)
+
+        # Test when it is authorised
+        self.user.user_permissions.add(permission)
+        response = self.client.post(self.get_base_url(item_id=1), data={})
+        self.assertNotEqual(response.status_code, 200)
+
+    def test_template_context(self):
+        response  = self.client.get(self.get_base_url(item_id=1), data={})
+        context = response.context
+
+        self.assertIn('active_links', context.keys())
+        self.assertIn('can_maintain_ownerships', context.keys())
+
+        self.assertIsInstance(context['active_links'], QuerySet)
+        self.assertEqual(context['active_links'].last().id, 3)
+        self.assertEqual(context['can_maintain_ownerships'], False)

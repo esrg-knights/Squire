@@ -2,10 +2,11 @@ from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils.text import slugify
 
 
 from membership_file.models import Member
-from inventory.models import Item, BoardGame, Ownership, valid_item_class_ids, ItemManager
+from inventory.models import Item, BoardGame, Ownership, valid_item_class_ids, ItemManager, get_item_image_upload_path
 
 
 class TestOwnership(TestCase):
@@ -58,9 +59,28 @@ class TestOwnership(TestCase):
         self.assertEqual(Ownership.objects.get(id=1).owner, Member.objects.get(id=1))
         self.assertEqual(Ownership.objects.get(id=3).owner, Group.objects.get(id=2))
 
+    def test_str(self):
+        ownership = Ownership.objects.filter(member__isnull=False).first()
+        self.assertEqual(ownership.__str__(), f'{ownership.content_object} supplied by {ownership.member}')
+
+        ownership = Ownership.objects.filter(group__isnull=False).first()
+        self.assertEqual(ownership.__str__(), f'{ownership.content_object} owned ({ownership.group})')
+
 
 class TestItem(TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+
+    # Tests if the achievement images are uploaded to the correct location
+    def test_item_upload_path(self):
+        item = BoardGame.objects.get(id=1)
+        str_expected_upload_path = "images/item/{type_str}/{item_id}.png"
+
+        str_expected_upload_path = str_expected_upload_path.format(
+            item_id=item.id,
+            type_str=slugify(item.__class__.__name__),
+        )
+        str_actual_upload_path = get_item_image_upload_path(item, "some_file_name.png")
+        self.assertEqual(str_expected_upload_path, str_actual_upload_path)
 
     def test_ownerships_relation(self):
         # We use Boardgames as a proxy
@@ -90,12 +110,15 @@ class TestItemManager(TestCase):
         self.manager = ItemManager()
         self.manager.model = BoardGame
 
-
     def test_get_all_in_possession(self):
+        self.assertEqual(2, self.manager.get_all_in_possession().count())
+        Ownership.objects.filter(id=3).update(is_active=False)
         self.assertEqual(2, self.manager.get_all_in_possession().count())
 
     def test_get_all_owned(self):
-        self.assertEqual(2, self.manager.get_all_in_possession().count())
+        self.assertEqual(2, self.manager.get_all_owned().count())
+        Ownership.objects.filter(id=3).update(is_active=False)
+        self.assertEqual(1, self.manager.get_all_owned().count())\
 
     def test_get_all_owned_by(self):
         member = Member.objects.get(id=1)
