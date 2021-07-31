@@ -5,10 +5,10 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.utils.text import slugify
 from django.views.generic import TemplateView, ListView
-from django.views.generic.edit import FormView, UpdateView, CreateView
+from django.views.generic.edit import FormView, UpdateView, CreateView, DeleteView
 
 from committees.views import GroupMixin
 from membership_file.util import MembershipRequiredMixin
@@ -239,6 +239,8 @@ class TypeCatalogue(MembershipRequiredMixin, CatalogueMixin, SearchFormMixin, Li
         context.update({
             'can_add_to_group': self.request.user.has_perm(f'inventory.can_add_{item_class_name}_for_group'),
             'can_add_to_member': self.request.user.has_perm(f'inventory.can_add_{item_class_name}_for_member'),
+            'can_add_items': self.request.user.has_perm(f'inventory.add_{item_class_name}'),
+            'can_change_items': self.request.user.has_perm(f'inventory.change_{item_class_name}'),
         })
         return context
 
@@ -283,4 +285,117 @@ class AddLinkMemberView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, AddL
     def get_success_url(self):
         # Go back to the catalogue page
         return reverse_lazy("inventory:catalogue", kwargs={'type_id': self.item_type.id})
+
+
+class CreateItemView(MembershipRequiredMixin, CatalogueMixin, PermissionRequiredMixin, CreateView):
+    template_name = "inventory/catalogue_add_item.html"
+    fields = '__all__'
+
+    @property
+    def model(self):
+        return self.item_type.model_class()
+
+    def get_permission_required(self):
+        item_class_name = slugify(self.item_type.model_class().__name__)
+        return [f'inventory.add_{item_class_name}']
+
+    def form_valid(self, form):
+        msg = "{item_name} has been created".format(item_name=form.instance.name)
+        messages.success(self.request, msg)
+        self.instance = form.instance
+        return super(CreateItemView, self).form_valid(form)
+
+    def get_success_url(self):
+        if self.instance:  # Safety catch in case get_success_url is called while form was not valid
+            if 'btn_save_to_member' in self.request.POST.keys():
+                return reverse('inventory:catalogue_add_member_link', kwargs={
+                    'type_id': self.item_type.id,
+                    'item_id': self.instance.id,
+                })
+            elif 'btn_save_to_group' in self.request.POST.keys():
+                return reverse('inventory:catalogue_add_group_link', kwargs={
+                    'type_id': self.item_type.id,
+                    'item_id': self.instance.id,
+                })
+        return reverse('inventory:catalogue', kwargs={'type_id': self.item_type.id})
+
+
+class UpdateItemView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, PermissionRequiredMixin, UpdateView):
+    template_name = "inventory/catalogue_change_item.html"
+    fields = '__all__'
+
+    @property
+    def model(self):
+        return self.item_type.model_class()
+
+    def get_object(self, queryset=None):
+        return self.item
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(UpdateItemView, self).get_context_data(*args, **kwargs)
+        permission_name = f'inventory.delete_{slugify(self.item.__class__.__name__)}'
+        context['can_delete'] = self.request.user.has_perm(permission_name)
+        return context
+
+    def get_permission_required(self):
+        item_class_name = slugify(self.item_type.model_class().__name__)
+        return [f'inventory.change_{item_class_name}']
+
+    def form_valid(self, form):
+        msg = "{item_name} has been updated".format(item_name=form.instance.name)
+        messages.success(self.request, msg)
+        return super(UpdateItemView, self).form_valid(form)
+
+    def get_success_url(self):
+        if 'btn_save_to_member' in self.request.POST.keys():
+            return reverse('inventory:catalogue_add_member_link', kwargs={
+                'type_id': self.item_type.id,
+                'item_id': self.item.id,
+            })
+        elif 'btn_save_to_group' in self.request.POST.keys():
+            return reverse('inventory:catalogue_add_group_link', kwargs={
+                'type_id': self.item_type.id,
+                'item_id': self.item.id,
+            })
+
+        return reverse('inventory:catalogue', kwargs={'type_id': self.item_type.id})
+
+
+class DeleteItemView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, PermissionRequiredMixin, FormView):
+    template_name = "inventory/catalogue_delete_item.html"
+    form_class = DeleteItemForm
+
+    def get_form_kwargs(self):
+        # Check user delete_links_permission
+        permission_name = f'inventory.can_maintain_{slugify(self.item.__class__.__name__)}_ownerships'
+        ignore_active_links = self.request.user.has_perm(permission_name)
+
+        kwargs = super(DeleteItemView, self).get_form_kwargs()
+        kwargs.update({
+            'item': self.item,
+            'ignore_active_links': ignore_active_links,
+        })
+        return kwargs
+
+    def get_context_data(self, *args, **kwargs):
+        permission_name = f'inventory.can_maintain_{slugify(self.item.__class__.__name__)}_ownerships'
+
+        return super(DeleteItemView, self).get_context_data(
+            active_links=self.item.currently_in_possession(),
+            can_maintain_ownerships=self.request.user.has_perm(permission_name),
+            **kwargs
+        )
+
+    def get_permission_required(self):
+        item_class_name = slugify(self.item_type.model_class().__name__)
+        return [f'inventory.delete_{item_class_name}']
+
+    def form_valid(self, form):
+        msg = "{item_name} has been deleted".format(item_name=self.item.name)
+        messages.success(self.request, msg)
+        form.delete_item()
+        return super(DeleteItemView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse('inventory:catalogue', kwargs={'type_id': self.item_type.id})
 

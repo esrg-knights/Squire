@@ -9,7 +9,8 @@ from membership_file.models import Member
 from inventory.models import *
 
 __all__ = ['OwnershipRemovalForm', 'OwnershipActivationForm', 'OwnershipNoteForm', 'OwnershipCommitteeForm',
-           'AddOwnershipCommitteeLinkForm', 'AddOwnershipMemberLinkForm', 'FilterOwnershipThroughRelatedItems']
+           'AddOwnershipCommitteeLinkForm', 'AddOwnershipMemberLinkForm', 'FilterOwnershipThroughRelatedItems',
+           'DeleteItemForm']
 
 
 class OwnershipRemovalForm(forms.Form):
@@ -125,4 +126,31 @@ class FilterOwnershipThroughRelatedItems(forms.Form):
             )
             ownerships = ownerships.union(sub_ownerships)
         return ownerships
+
+class DeleteItemForm(forms.Form):
+
+    def __init__(self, *args, item=None, ignore_active_links, **kwargs):
+        """
+        Form for the deletion of items
+        :param args:
+        :param user: The user that tries to delete it
+        :param kwargs:
+        """
+        self.item = item
+        self.ignore_active_links = ignore_active_links
+        super(DeleteItemForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        if not self.ignore_active_links:
+            if self.item.currently_in_possession().exists():
+                raise ValidationError("There are currently {number} instances of this item at the association."
+                                      "You are not allowed to remove this without deleting those first",
+                                      code='active_ownerships')
+
+    def delete_item(self):
+        self.item.delete()
+
+
+
+
 

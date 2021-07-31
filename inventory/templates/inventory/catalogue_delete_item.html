@@ -1,0 +1,52 @@
+{% extends 'core/base.html' %}
+{% load render_form %}
+
+{% block title %}
+    Squire - Inventory
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+{% block content %}
+    <h1>Delete {{ item }}</h1>
+    {% if active_links and not can_maintain_ownerships %}
+        <p>
+            There are currently one or more instnaces of {{ item }} at the Knights. This item can not be removed.
+        </p>
+        <a href="{% url "inventory:catalogue" type_id=item_type.id %}"
+           class="btn btn-secondary">Go back</a>
+    {% else %}
+        {% if active_links %}
+            <p>
+                There are currently one or more items stored at the Knights. Deleting this item will also remove
+                the link{{ active_links|pluralize }} to the following owner{{ active_links|pluralize }}
+            </p>
+            <li>
+                {% for ownership in active_links %}
+                    <ul>
+                        {{ ownership.owner }} {% if ownership.note %} - {{ ownership.note }}{% endif %}
+
+                    </ul>
+                {% endfor %}
+            </li>
+        {% endif %}
+
+        <p>
+        Are you sure you want to delete {{ item }}?
+        </p>
+
+        <div class="btn-group" role="group" aria-label="Form changing">
+            <a href="{% url "inventory:catalogue" type_id=item_type.id %}"
+               class="btn btn-secondary">Cancel</a>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    Yes, delete {{ item.name }}
+                </button>
+            </form>
+        </div>
+    {% endif %}
+
+{% endblock %}
