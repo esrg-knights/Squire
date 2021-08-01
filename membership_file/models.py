@@ -161,7 +161,7 @@ class Member(models.Model):
     ##################################
     # String-representation of an instance of a Member
     def __str__(self):
-        return self.get_full_name() + " ({0})".format(self.id)
+        return self.get_full_name()
 
     # Gets the name of the member
     def get_full_name(self):
