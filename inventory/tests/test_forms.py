@@ -87,7 +87,7 @@ class TestAddOwnershipCommitteeLink(FormValidityMixin, TestCase):
 
     def test_committee_queryset_more_group(self):
         """ Tests that a user belong to more than one group has choices to select the right group """
-        form = self.build_form(None, user=User.objects.get(id=2))
+        form = self.build_form(None, user=User.objects.get(id=100))
         self.assertEqual(2, form.fields['committee'].queryset.count())
         self.assertFalse(form.fields['committee'].disabled)
 
@@ -139,6 +139,7 @@ class TestFilterOwnershipThroughRelatedItems(FormValidityMixin, TestCase):
         # Test 'ai' is in 'Gaia Project' and 'Pak speelkaarten (ai)'
         filtered_ownerships = self.assertFormValid({'search_field': 'ai'}).get_filtered_items(ownerships)
         self.assertEqual(2, filtered_ownerships.count())
+
 
 class TestDeleteItemForm(FormValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']

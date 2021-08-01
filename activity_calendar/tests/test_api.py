@@ -1,14 +1,6 @@
 import datetime
 
-from django.test import TestCase, Client
-from django.conf import settings
-from django.utils import timezone, dateparse
-from django.utils.http import urlencode
-from unittest.mock import patch
-
-from activity_calendar.models import ActivitySlot, Activity, Participant
-from core.models import ExtendedUser as User
-from core.util import suppress_warnings
+from django.utils import timezone
 
 ##################################################################################
 # Test cases for the activity views

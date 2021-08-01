@@ -1,15 +1,13 @@
 from django.test import TestCase
 
-from core.tests.util import checkAccessPermissions, PermissionLevel
+from core.tests.util import check_http_response, TestPublicUser
 
 
-# Create your tests here.
-class TestCaseActivityCalendarFrontEndViews(TestCase):
-    fixtures = []
+class TestActivityCalendarFrontEndViews(TestCase):
 
+    # Calendar page should be accessible
     def test_public_calendar(self):
-        checkAccessPermissions(self, '/calendar/', 'get', PermissionLevel.LEVEL_PUBLIC)
+        check_http_response(self, '/calendar/', 'get', TestPublicUser)
 
 
 
-    

@@ -1,3 +1,4 @@
+from core.util import get_permission_objects_from_string
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 from django.db.models import Q
@@ -29,15 +30,8 @@ DEFAULT_MEMBER_PERMISSIONS = (
 class AbstractUserTypePermission(ModelMultipleChoicePreference):
     # Obtains the default values from above
     def get_default(self):
-        if not self.encoded_default_permissions:
-            return Permission.objects.none()
-
         # Fetch permission objects based on their code (e.g., achievements.can_view_claimants)
-        q_objects = Q()
-        for encoded_name in self.encoded_default_permissions:
-            app_label, codename = encoded_name.split('.')
-            q_objects |= Q(content_type__app_label=app_label, codename=codename)
-        return Permission.objects.filter(q_objects)
+        return get_permission_objects_from_string(self.encoded_default_permissions)
 
     # Alternative display method that shows the permissions in
     # human-readable format, rather than just their primary keys

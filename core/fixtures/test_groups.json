@@ -25,7 +25,7 @@
         "model": "auth.user_groups",
         "pk": 2,
         "fields": {
-            "user_id": 2,
+            "user_id": 100,
             "group_id": 1
         }
     },
@@ -33,7 +33,7 @@
         "model": "auth.user_groups",
         "pk": 3,
         "fields": {
-            "user_id": 2,
+            "user_id": 100,
             "group_id": 2
         }
     }

@@ -1,10 +1,8 @@
-from .models import Member, MemberUser
+from .models import MemberUser
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
-from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import AccessMixin
-from django.contrib.auth import REDIRECT_FIELD_NAME, get_user
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.http import HttpResponseRedirect
 from django.shortcuts import resolve_url
 from functools import wraps
@@ -60,16 +58,24 @@ def membership_required(function=None, fail_url=None, redirect_field_name=REDIRE
         return decorator(function)
     return decorator
 
+class MembershipRequiredMixin(LoginRequiredMixin):
+    """
+        Verifies that the current user is a member, redirecting to a special page if needed.
+        Mixin-equivalent of the @membership_required decorator.
+    """
+    fail_url = settings.MEMBERSHIP_FAIL_URL
 
-class MembershipRequiredMixin(AccessMixin):
-    """
-        Verifies that the current user is a member.
-        Mixin-equivalent of the membership_required decorator
-    """
     def dispatch(self, request, *args, **kwargs):
-        try:
-            if not request.user.is_authenticated or not request.user.member:
-                raise PermissionDenied("You are not registered as a member")
-        except Member.DoesNotExist:
-            raise PermissionDenied
+        if request.user.is_authenticated and self._get_member_from_request() is None:
+            return HttpResponseRedirect(resolve_url(self.fail_url))
         return super().dispatch(request, *args, **kwargs)
+
+    def _get_member_from_request(self):
+        """
+            Gets the member object of the user making the request, or None if the requesting user
+            is not a member.
+        """
+        member = getattr(self.request.user, 'member', None)
+        if member is None or not member.is_considered_member():
+            return None
+        return member

@@ -9,7 +9,7 @@ from django.views.generic.edit import FormView, UpdateView, CreateView
 from django.views.generic.list import ListView
 
 from committees.views import GroupMixin
-from core.util import suppress_warnings
+from core.tests.util import suppress_warnings
 from membership_file.models import Member
 from membership_file.util import MembershipRequiredMixin
 from utils.testing.view_test_utils import ViewValidityMixin, TestMixinMixin
@@ -21,26 +21,24 @@ from inventory.views import *
 from inventory.views import OwnershipMixin, CatalogueMixin, ItemMixin
 
 
-class TestMemberItemsView(TestCase):
+class TestMemberItemsOverview(TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.get(id=2)
+        self.user = User.objects.get(id=100)
         self.client.force_login(self.user)
 
         self.base_url = reverse('inventory:member_items')
         # self.base_response = self.client.get(self.base_url, data={})
 
+    def test_class(self):
+        self.assertTrue(issubclass(MemberItemsOverview, MembershipRequiredMixin))
+
     @suppress_warnings  # Testing 403 raises a warning that 403 was triggered
     def test_member_items_validity(self):
         response = self.client.get(self.base_url, data={})
         self.assertEqual(response.status_code, 200)
-
-        # Test a user taht is not a member
-        self.client.force_login(User.objects.get(id=3))
-        response = self.client.get(self.base_url, data={})
-        self.assertEqual(response.status_code, 403)
 
     def test_template_context(self):
         response  = self.client.get(self.base_url, data={})
@@ -53,7 +51,7 @@ class TestMemberItemsView(TestCase):
 class TestOwnershipMixin(TestMixinMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     mixin_class = OwnershipMixin
-    base_user_id = 2
+    base_user_id = 100
 
     def setUp(self):
         self.ownership = Ownership.objects.get(id=2)
@@ -86,7 +84,7 @@ class TestOwnershipMixin(TestMixinMixin, TestCase):
 
 class TestMemberItemRemovalFormView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-    base_user_id = 2
+    base_user_id = 100
 
     def setUp(self):
         self.ownership = Ownership.objects.get(id=1)
@@ -123,7 +121,7 @@ class TestMemberItemRemovalFormView(ViewValidityMixin, TestCase):
 
 class TestMemberItemLoanFormView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-    base_user_id = 2
+    base_user_id = 100
 
     def setUp(self):
         self.ownership = Ownership.objects.get(id=2)
@@ -160,7 +158,7 @@ class TestMemberItemLoanFormView(ViewValidityMixin, TestCase):
 
 class TestMemberOwnershipAlterView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-    base_user_id = 2
+    base_user_id = 100
 
     def setUp(self):
         self.ownership = Ownership.objects.get(id=2)
@@ -191,7 +189,7 @@ class TestMemberOwnershipAlterView(ViewValidityMixin, TestCase):
 
 class TestGroupItemOverview(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-    base_user_id = 2
+    base_user_id = 100
 
     def setUp(self):
         self.group = Group.objects.get(id=2)
@@ -227,7 +225,7 @@ class TestGroupItemOverview(ViewValidityMixin, TestCase):
 
 class TestGroupItemLinkUpdateView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-    base_user_id = 2
+    base_user_id = 100
 
     def setUp(self):
         self.group = Group.objects.get(id=2)
@@ -323,7 +321,7 @@ class TestItemMixin(TestMixinMixin, TestCase):
 
 class TestTypeCatalogue(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-    base_user_id = 2
+    base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(BoardGame)
@@ -369,7 +367,7 @@ class TestTypeCatalogue(ViewValidityMixin, TestCase):
 
 class TestAddLinkCommitteeView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-    base_user_id = 2
+    base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(BoardGame)
@@ -417,7 +415,7 @@ class TestAddLinkCommitteeView(ViewValidityMixin, TestCase):
 
 class TestAddLinkMemberView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-    base_user_id = 2
+    base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(BoardGame)
@@ -465,7 +463,7 @@ class TestAddLinkMemberView(ViewValidityMixin, TestCase):
 
 class TestItemCreateView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-    base_user_id = 2
+    base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(BoardGame)
@@ -530,7 +528,7 @@ class TestItemCreateView(ViewValidityMixin, TestCase):
 
 class TestItemUpdateView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-    base_user_id = 2
+    base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(BoardGame)
@@ -600,7 +598,7 @@ class TestItemUpdateView(ViewValidityMixin, TestCase):
 
 class TestItemDeleteView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-    base_user_id = 2
+    base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(BoardGame)

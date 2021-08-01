@@ -1,7 +1,3 @@
-from enum import Enum
-
-from core.util import OrderedEnum
-
 
 class TemplateManager():
     # Stores extra templates to display inside another template
