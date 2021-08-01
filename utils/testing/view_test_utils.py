@@ -1,10 +1,8 @@
 
-from django.core.exceptions import ValidationError, PermissionDenied
+from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import Group, User
-from django.http import HttpResponse, Http404
-from django.test import TestCase, Client, RequestFactory
-from django.utils import timezone
-from django.urls import reverse
+from django.http import Http404
+from django.test import Client, RequestFactory
 from django.views.generic.base import TemplateView
 
 
@@ -25,7 +23,7 @@ class ViewValidityMixin:
         return self.base_url
 
     @staticmethod
-    def assertHasMessage(response, level=None, text=None, print_all=False):
+    def assertHasMessage(response, level=None, text=None):
         """
         Assert that the response contains a specific message
         :param response: The response object
@@ -35,8 +33,8 @@ class ViewValidityMixin:
         :return: Raises AssertionError if not asserted
         """
         for message in response.context['messages']:
-            if print_all:
-                print(message)
+            # if print_all:
+            #     print(message)
             if message.level == level or level is None:
                 if text is None or str(text) in message.message:
                     return
@@ -67,9 +65,9 @@ class TestMixinMixin:
         if self.base_user_id:
             request.user = User.objects.get(id=self.base_user_id)
 
-        view = self.get_as_full_class()()
+        view = self.get_as_full_view_class()()
         view.setup(request, **url_kwargs)
-        response = view.dispatch(request)
+        response = view.dispatch(request, **url_kwargs)
 
         if save_view:
             self.view = view
@@ -83,7 +81,7 @@ class TestMixinMixin:
     def get_base_url_kwargs(self):
         return {}
 
-    def get_as_full_class(self):
+    def get_as_full_view_class(self):
         classes = self.pre_inherit_classes + [self.mixin_class]
 
         class MixinTestView(*classes, TemplateView):
@@ -105,4 +103,4 @@ class TestMixinMixin:
         except PermissionDenied:
             pass
         else:
-            raise AssertionError("No '404: Page not Found' error was raised")
+            raise AssertionError("No '403: Permission Denied' error was raised")

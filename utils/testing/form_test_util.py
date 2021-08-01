@@ -20,7 +20,8 @@ class FormValidityMixin:
         :return: raises AssertionError if not asserted, otherwise returns empty
         """
         form = self.build_form({})
-        self.assertIn(field_name, form.fields)
+        message = f"{field_name} was not a field in {form.__class__.__name__}"
+        self.assertIn(field_name, form.fields, msg=message)
 
     def assertFormValid(self, data, form_class=None, **kwargs):
         """ Asserts that the form is valid otherwise raises AssertionError mentioning the form error
@@ -70,7 +71,7 @@ class FormValidityMixin:
                         return
 
         if field:
-            raise AssertionError(f"Form did not encounter an error in '{field}'.'")
+            raise AssertionError(f"Form did not encounter an error in '{field}'.")
 
         error_message = f"Form did not contain an error with code '{code}'."
         if form.errors:
