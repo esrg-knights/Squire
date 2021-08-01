@@ -4,7 +4,11 @@ from inventory.models import *
 
 
 class BoardGameAdmin(admin.ModelAdmin):
-    list_display = ('id', '__str__', 'currently_in_possession')
+    list_display = ('id', '__str__', 'current_possession_count')
+
+    def current_possession_count(self, obj):
+        return obj.currently_in_possession().count()
+    current_possession_count.short_description = 'Number of items at the association'
 
 
 
