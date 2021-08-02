@@ -1,6 +1,5 @@
 
-{% load field_label %}
-{% load set_max_width %}
+{% load field_tags %}
 {% load contains_any_error %}
 
 <div class="form-group">
@@ -15,29 +14,36 @@
         </ul>
     {% endif %}
 
-    <div class="input-group">
-        {% if only_checkboxes %}
-            {% for field, _ in fields %}
-                <div class="form-check form-check-inline{% if field.errors %} alert-danger{% endif %}">
-                    {{ field }}
-                    <label class="form-check-label" for="{{ field.auto_id }}">{{ field.label|title }}</label>
-                </div>
-            {% endfor %}
-        {% else %}
-            <div class="input-group-prepend">
-                <!-- Field Names -->
+    {% if is_markdown %}
+        {% with fields.0.0 as field %}
+            <h4>{{ field.label|title }}</h4>
+            {{ field }}
+        {% endwith %}
+    {% else %}
+        <div class="input-group">
+            {% if only_checkboxes %}
                 {% for field, _ in fields %}
-                    <span class="input-group-text{% if field.errors %} alert-danger{% endif %}">
-                        {% field_label field.label|title field %}
-                    </span>
+                    <div class="form-check form-check-inline{% if field.errors %} alert-danger{% endif %}">
+                        {{ field }}
+                        <label class="form-check-label" for="{{ field.auto_id }}">{{ field.label|title }}</label>
+                    </div>
                 {% endfor %}
-            </div>
-            <!-- HTML Inputs -->
-            {% for field, max_px_width in fields %}
-                {{ field|set_max_width:max_px_width }}
-            {% endfor %}
-        {% endif %}
-    </div>
+            {% else %}
+                <div class="input-group-prepend">
+                    <!-- Field Names -->
+                    {% for field, _ in fields %}
+                        <span class="input-group-text{% if field.errors %} alert-danger{% endif %}">
+                            {{ field.label|title }}{{ field|get_required_indicator }}
+                        </span>
+                    {% endfor %}
+                </div>
+                <!-- HTML Inputs -->
+                {% for field, max_px_width in fields %}
+                    {{ field|set_max_width:max_px_width }}
+                {% endfor %}
+            {% endif %}
+        </div>
+    {% endif %}
 
     <!-- Field Help Texts -->
     {% for field, _ in fields %}

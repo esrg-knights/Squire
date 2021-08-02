@@ -1,3 +1,4 @@
+from core.widgets import ImageUploadMartorWidget
 from django import forms
 from django.forms import ModelForm, Form
 from django.forms.widgets import HiddenInput
@@ -295,13 +296,15 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
         return slot_obj
 
-class ActivityMomentForm(ModelForm):
+class ActivityMomentForm(MarkdownForm):
     class Meta:
         model = ActivityMoment
         fields = ['local_title', 'local_description',
             'local_location', 'local_max_participants', 'local_subscriptions_required',
             'local_slot_creation', 'local_private_slot_locations'
         ]
+        markdown_field_names = ['local_description']
+        placeholder_detail_title = "Base Activity %s"
 
     def __init__(self, *args, instance=None, **kwargs):
         # Require that an instance is given as this contains the required attributes parent_activity and recurrence_id
@@ -328,6 +331,8 @@ class ActivityMomentForm(ModelForm):
                 field.widget.choices = [
                     ((k, null_choice_text) if k in ['', 'unknown'] else (k, v)) for (k, v) in field.widget.choices
                 ]
+            elif isinstance(field.widget, ImageUploadMartorWidget):
+                field.widget.placeholder = getattr(self.instance.parent_activity, attr_name, None)
             else:
                 # Set HTML Placeholder for all other fields
                 field.widget.attrs['placeholder'] = getattr(self.instance.parent_activity, attr_name, None)

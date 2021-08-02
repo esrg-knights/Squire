@@ -237,8 +237,16 @@ class Activity(models.Model):
         :param recurrence_id: Specifies the start-time and applies that in the url for recurrent activities
         :return: the url for the activity page
         """
-        # There is currently no version of the object without recurrrence_id
-        assert recurrence_id is not None
+        if recurrence_id is None:
+            # There is currently no version of the object without recurrrence_id
+            if self.is_recurring:
+                # The Django admin calls this method without any parameters for
+                #   its "view on site" functionality.
+                return None
+            else:
+                # If the activity is non-recurring, there's just a single occurrence we
+                #   can link back to
+                recurrence_id = self.start_date
 
         return reverse('activity_calendar:activity_slots_on_day', kwargs={
             'activity_id': self.id,

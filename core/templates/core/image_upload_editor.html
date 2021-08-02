@@ -1,3 +1,16 @@
+{% load martortags %}
+
+{% if placeholder is not None %}
+    <!-- Placeholder text is shown on-screen above the widget -->
+    <div style="border: 1px solid #ced4da; background-color: #e9ecef; color:grey; width: 100%; padding: 0px 5px;">
+        <details><summary style="color: black; border-bottom: 1px solid #ced4da; padding: 2px 0px;">{{ placeholder_detail_title }} (<i>click to expand/hide</i>)</summary>
+            <div style="padding-top: 4px;">
+                {{ placeholder|safe_markdown }}
+            </div>
+        </details>
+    </div>
+    <button onclick="// TODO: copy to clipboard & prevent form submit">Copy field's Markdown to Clipboard</button>
+{% endif %}
 {% if object_id is not None %}
     <input type="hidden" id="martor-image-upload:id" name="martor_image_upload_object_id" value="{{ object_id }}">
 {% endif %}

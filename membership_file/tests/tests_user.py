@@ -20,14 +20,14 @@ from membership_file.serializers import MemberSerializer
 # TEMPLATE TAGS
 ################################################################
 # Dummy form used during test cases
-class DummyForm(forms.Form): 
-    test_required_field = forms.CharField(required = True) 
+class DummyForm(forms.Form):
+    test_required_field = forms.CharField(required = True)
     test_optional_field = forms.CharField(required = False)
 
 # Tests usage of custom template tags
 class TemplateTagsTest(TestCase):
-    # Tests the field_label template tag
-    def test_field_label(self):
+    # Tests the get_required_indicator filter
+    def test_get_required_indicator(self):
         form_data = {
             'test_required_field': 'unused_filler_text',
             'test_optional_field': 'unused_filler_text',
@@ -36,21 +36,21 @@ class TemplateTagsTest(TestCase):
 
         # Test required field
         out = Template(
-            "{% load field_label %}"
-            "{% field_label 'MyFormFieldName' form.test_required_field %}"
+            "{% load field_tags %}"
+            "{{ form.test_required_field|get_required_indicator }}"
         ).render(Context({
             'form': form,
         }))
-        self.assertEqual(out, "MyFormFieldName*")
+        self.assertEqual(out, "*")
 
         # Test optional field
         out = Template(
-            "{% load field_label %}"
-            "{% field_label 'MyFormFieldName' form.test_optional_field %}"
+            "{% load field_tags %}"
+            "{{ form.test_optional_field|get_required_indicator }}"
         ).render(Context({
             'form': form,
         }))
-        self.assertEqual(out, "MyFormFieldName")
+        self.assertEqual(out, "")
 
 ################################################################
 # VIEWS
@@ -104,7 +104,7 @@ class MemberfileEditTest(TestCase):
 
         checkAccessPermissionsMember(self, '/account/membership/edit', 'post', PermissionType.TYPE_MEMBER,
                 user=self.user, redirectUrl='/account/membership', data=form_data)
-        
+
         member = Member.objects.filter(id=self.member_to_run_tests_on.id).first()
         self.assertIsNotNone(member)
 
@@ -123,8 +123,8 @@ class MemberfileEditTest(TestCase):
                 self.assertEqual(new_serialized_data['user'], self.user.id)
             else:
                 # All other fields remain the same
-                self.assertEqual(value, new_serialized_data[field], f"{field} did not match!")       
-    
+                self.assertEqual(value, new_serialized_data[field], f"{field} did not match!")
+
     # Tests an invalid edit
     def test_invalid_edit(self):
         form_data = {
@@ -143,7 +143,7 @@ class MemberfileEditTest(TestCase):
 
         checkAccessPermissionsMember(self, '/account/membership/edit', 'post', PermissionType.TYPE_MEMBER,
                 user=self.user, data=form_data)
-        
+
         member = Member.objects.filter(id=self.member_to_run_tests_on.id).first()
         self.assertIsNotNone(member)
 
@@ -152,7 +152,7 @@ class MemberfileEditTest(TestCase):
         new_serialized_data = MemberSerializer(member).data
         for field, value in old_serialized_data.items():
             # All other fields remain the same
-            self.assertEqual(value, new_serialized_data[field], f"{field} did not match!")  
+            self.assertEqual(value, new_serialized_data[field], f"{field} did not match!")
 
     # Tests if redirected if an unauthenticated user tries to edit information
     def test_unauthenticated_user_redirect(self):
@@ -172,7 +172,7 @@ class MemberfileEditTest(TestCase):
 
         checkAccessPermissionsMember(self, '/account/membership/edit', 'post', PermissionType.TYPE_NO_MEMBER,
                 data=form_data, redirectUrl='/no_member')
-        
+
         member = Member.objects.filter(id=self.member_to_run_tests_on.id).first()
         self.assertIsNotNone(member)
 
@@ -181,7 +181,7 @@ class MemberfileEditTest(TestCase):
         new_serialized_data = MemberSerializer(member).data
         for field, value in old_serialized_data.items():
             # All other fields remain the same
-            self.assertEqual(value, new_serialized_data[field], f"{field} did not match!")  
+            self.assertEqual(value, new_serialized_data[field], f"{field} did not match!")
 
     # Tests if certain fields are properly ignored
     def test_ignore_fields(self):
@@ -225,7 +225,7 @@ class MemberfileViewTest(TestCase):
     # Tests if the no-member page can be reached
     def test_no_member_page(self):
         checkAccessPermissions(self, '/no_member', 'get', PermissionLevel.LEVEL_PUBLIC)
-        
+
     # Tests if members can view their info
     def test_member_view_info_page(self):
         checkAccessPermissionsMember(self, '/account/membership', 'get', PermissionType.TYPE_MEMBER)
@@ -290,10 +290,10 @@ class MemberRenderTest(TestCase):
         }
         updater_member = Member.objects.create(**memberData)
         updater = User.objects.create_user(username="updater_username", password="password")
-        
+
         # Display None if no-one updated
         self.assertIsNone(self.member_to_run_tests_on.display_last_updated_name())
-        
+
         # Display username if the updater is not a member
         self.member_to_run_tests_on.last_updated_by = updater
         self.assertEqual("updater_username", self.member_to_run_tests_on.display_last_updated_name())

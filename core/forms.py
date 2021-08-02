@@ -111,6 +111,7 @@ class MarkdownForm(RequestUserFormMixin, ModelForm):
     """
     class Meta:
         markdown_field_names = []
+        placeholder_detail_title = "%s"
 
     is_new_instance = True
 
@@ -119,8 +120,9 @@ class MarkdownForm(RequestUserFormMixin, ModelForm):
         self.is_new_instance = self.instance.id is None
 
         for field_name in self.Meta.markdown_field_names:
-            # Check if the passed field actually exists
+            # Basic validation
             if field_name not in self.fields:
+                # The passed field must actually exists
                 raise ImproperlyConfigured(
                     "Form '%s' does not have a field '%s', "
                     "but this was passed in markdown_field_names." % (
@@ -128,11 +130,24 @@ class MarkdownForm(RequestUserFormMixin, ModelForm):
                         field_name,
                     )
                 )
+            elif not isinstance(self.fields[field_name], forms.CharField):
+                # The passed field must be a Charfield, as there is no point to Markdown otherwise
+                raise ImproperlyConfigured(
+                    "Markdown cannot be rendered for Field %s of Form %s as it is not a Charfield, "
+                    "but this field was passed in markdown_field_names." % (
+                        field_name,
+                        self.__class__.__name__,
+                    )
+                )
+
+            # Add the field's label to the placeholder title
+            label = self.fields[field_name].label
+            placeholder_title = self.Meta.placeholder_detail_title % label.capitalize()
 
             # Replace the field's widgt by Martor's markdown widget
             self.fields[field_name].widget = ImageUploadMartorWidget(
                 ContentType.objects.get_for_model(self.instance),
-                self.instance.id
+                self.instance.id, placeholder_detail_title=placeholder_title
             )
 
     def _save_m2m(self):
