@@ -354,12 +354,12 @@ class TestTypeCatalogue(ViewValidityMixin, TestCase):
         self.assertFalse(context['can_add_to_member'])
 
         # Test that the actual permissions are updated in the context
-        self.user.user_permissions.add(Permission.objects.get(codename='can_add_boardgame_for_group'))
+        self.user.user_permissions.add(Permission.objects.get(codename='add_group_ownership_for_boardgame'))
         context = self.client.get(self.get_base_url(), data={}).context
         self.assertTrue(context['can_add_to_group'])
         self.assertFalse(context['can_add_to_member'])
 
-        self.user.user_permissions.add(Permission.objects.get(codename='can_add_boardgame_for_member'))
+        self.user.user_permissions.add(Permission.objects.get(codename='add_member_ownership_for_boardgame'))
         context = self.client.get(self.get_base_url(), data={}).context
         self.assertTrue(context['can_add_to_group'])
         self.assertTrue(context['can_add_to_member'])
@@ -373,7 +373,7 @@ class TestAddLinkCommitteeView(ViewValidityMixin, TestCase):
         self.content_type = ContentType.objects.get_for_model(BoardGame)
         self.item = BoardGame.objects.get(id=4)
         super(TestAddLinkCommitteeView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='can_add_boardgame_for_group'))
+        self.user.user_permissions.add(Permission.objects.get(codename='add_group_ownership_for_boardgame'))
 
     def get_base_url(self, content_type=None, item_id=None):
         content_type = content_type or self.content_type.id
@@ -398,7 +398,7 @@ class TestAddLinkCommitteeView(ViewValidityMixin, TestCase):
 
     @suppress_warnings
     def test_not_authorised_get(self):
-        self.user.user_permissions.remove(Permission.objects.get(codename='can_add_boardgame_for_group'))
+        self.user.user_permissions.remove(Permission.objects.get(codename='add_group_ownership_for_boardgame'))
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 403)
 
@@ -421,7 +421,7 @@ class TestAddLinkMemberView(ViewValidityMixin, TestCase):
         self.content_type = ContentType.objects.get_for_model(BoardGame)
         self.item = BoardGame.objects.get(id=4)
         super(TestAddLinkMemberView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='can_add_boardgame_for_member'))
+        self.user.user_permissions.add(Permission.objects.get(codename='add_member_ownership_for_boardgame'))
 
     def get_base_url(self, content_type=None, item_id=None):
         content_type = content_type or self.content_type.id
@@ -442,7 +442,7 @@ class TestAddLinkMemberView(ViewValidityMixin, TestCase):
 
     @suppress_warnings
     def test_not_authorised_get(self):
-        self.user.user_permissions.remove(Permission.objects.get(codename='can_add_boardgame_for_member'))
+        self.user.user_permissions.remove(Permission.objects.get(codename='add_member_ownership_for_boardgame'))
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 403)
 

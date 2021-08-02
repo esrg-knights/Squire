@@ -59,10 +59,13 @@ def get_item_image_upload_path(instance, filename):
 class Item(models.Model):
     """ Item in the inventory system. Abstract root class.
 
-    Note, for children of this class to work they need to add two permissions:
-    'can_add_<item>_for_group'
-    'can_add_<item>_for_member'
-    where <item> is replaced by a slugified version of the class name (just the name in lowercase)
+    On permissions:
+    There are several unique default permissions used for Items
+    add_group_ownership_for_<item>: Allows users to add new ownerships to groups they are part of
+    add_member_ownership_for_<item>: Allows users to add new ownerships to any active member
+    maintain_ownerships_for_<item>: Adds additional control rights
+
+    Furthermore the default permissions edit_<item> and delete_<item> are also used in the front-end
 
     This grants access to assigning items to groups or members respectively
 
@@ -81,6 +84,12 @@ class Item(models.Model):
         abstract = True
         ordering = ("name",)
 
+        # Set the default permissions. Each item has a couple of addiotional default permissions
+        default_permissions = ('add', 'change', 'delete', 'view',
+                               'add_group_ownership_for',
+                               'add_member_ownership_for',
+                               'maintain_ownerships_for')
+
     def currently_in_possession(self):
         """ Returns all ownership items that are currently at the Knights """
         return self.ownerships.filter(is_active=True)
@@ -96,13 +105,6 @@ class Item(models.Model):
 class BoardGame(Item):
     """ Defines boardgames """
     bgg_id = models.IntegerField(blank=True, null=True)
-
-    class Meta(Item.Meta):
-        permissions = [
-            ('can_add_boardgame_for_group',    "Can add boardgames item ownership for a group."),
-            ('can_add_boardgame_for_member',  "Can add boardgames item ownership for members."),
-            ('can_maintain_boardgame_ownerships',  "Can maintain boardgame ownerships."),
-        ]
 
 
 def valid_item_class_ids():
