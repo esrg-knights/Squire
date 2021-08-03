@@ -56,6 +56,9 @@
 					<li>
 						<a class="nav-link" href="{% url 'activity_calendar:calendar' %}">Activity Calendar</a>
 					</li>
+                    <li>
+                        <a class="nav-link" href="{% url 'inventory:home' %}">Boardgames</a>
+                    </li>
 					{% if user.is_authenticated %}
 						<li>
 							<a class="nav-link" href="{% url 'core/newsletters' %}">Newsletter</a>
@@ -74,6 +77,10 @@
 								{% with memberuser=user|to_member %}
 									{% if memberuser.is_member %}
 										<a class="dropdown-item greenify" href="{% url 'membership_file/membership' %}">Membership Information</a>
+                                        <a class="dropdown-item greenify" href="{% url 'inventory:member_items' %}">My inventory</a>
+                                        {% if user.groups %}
+                                            <a class="dropdown-item greenify" href="{% url 'membership_file/groups' %}">My groups</a>
+                                        {% endif %}
 									{% endif %}
 								{% endwith %}
                                 {% if user.is_staff %}

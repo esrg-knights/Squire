@@ -1,0 +1,56 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}
+    Squire - Inventory
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    <h1>Loan out {{ ownership.content_object.name }}</h1>
+    <p>
+        Confirm that you have left this for use at the Knights.
+    </p>
+    <div class="alert alert-warning" role="alert">
+        While we will take care of all items stored with us. We can not guarantee safety. Loaning out items is
+        at your own risk.
+    </div>
+    <div class="alert alert-warning" role="alert">
+        Due to Corona measures, please inform the board when wanting to access the Knights room outside of regular hours
+    </div>
+
+    <form id="main_form" method="post">
+        {% csrf_token %}
+    </form>
+
+    <div class="row">
+        {% if ownership.content_object.image %}
+        <div class="col-auto">
+            <img style="height: 5em;" src={{ ownership.content_object.image.url }}>
+        </div>
+        {% endif %}
+        <div class="col">
+            <div class="row">
+                <div class="col-12">
+                    <div class="h3">{{ ownership.content_object.name }}</div>
+                    <div>
+                        {{ ownership.note }}
+                    </div>
+                </div>
+                <div class="col-12">
+                    <input type="submit" class="btn btn-success" form="main_form"
+                           value="Yes, I shall leave it at the Knights">
+                    <a class="btn btn-secondary" href="{% url "inventory:member_items" %}">
+                        No, I'll keep it at home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}

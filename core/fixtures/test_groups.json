@@ -1,0 +1,40 @@
+[
+    {
+        "model": "auth.group",
+        "pk": 1,
+        "fields": {
+            "name": "UUPS"
+        }
+    },
+    {
+        "model": "auth.group",
+        "pk": 2,
+        "fields": {
+            "name": "ZG"
+        }
+    },
+    {
+        "model": "auth.user_groups",
+        "pk": 1,
+        "fields": {
+            "user_id": 1,
+            "group_id": 1
+        }
+    },
+    {
+        "model": "auth.user_groups",
+        "pk": 2,
+        "fields": {
+            "user_id": 100,
+            "group_id": 1
+        }
+    },
+    {
+        "model": "auth.user_groups",
+        "pk": 3,
+        "fields": {
+            "user_id": 100,
+            "group_id": 2
+        }
+    }
+]

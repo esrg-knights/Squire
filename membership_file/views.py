@@ -1,13 +1,16 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import HttpResponseForbidden
+from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, TemplateView, UpdateView
+from django.views.decorators.http import require_safe
 
 from .forms import MemberForm
 from .models import Member
-from .util import MembershipRequiredMixin
+from .util import MembershipRequiredMixin, membership_required, request_member
 
 from core.views import TemplateManager
 
@@ -65,3 +68,13 @@ class MemberChangeView(MemberMixin, PermissionRequiredMixin, UpdateView):
         message = _("Your membership information has been saved successfully!")
         messages.success(self.request, message)
         return super().form_valid(form)
+
+
+# Renders the webpage for viewing a user's own membership information
+@require_safe
+@membership_required
+@permission_required('membership_file.can_view_membership_information_self', raise_exception=True)
+@request_member
+def viewGroups(request):
+    tData = {'member': request.user.get_member()}
+    return render(request, 'membership_file/member_group_overview.html', tData)

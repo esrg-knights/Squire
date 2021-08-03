@@ -1,9 +1,15 @@
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+
+from inventory.models import valid_item_class_ids
 
 from core.models import ExtendedUser as User
 from membership_file.util import user_to_member
+
+__all__ = ['Category', 'Achievement', 'Claimant', 'AchievementItemLink']
 
 import os
 
@@ -12,7 +18,7 @@ class Category(models.Model):
     class Meta:
         # Enabled proper plurality
         verbose_name_plural = "categories"
-        
+
         # Sort by priority, then name, then Id
         ordering = ['priority', 'name','id']
 
@@ -24,7 +30,7 @@ class Category(models.Model):
         return self.name
 
 # Gets or creates the default Category
-def get_or_create_default_category():  
+def get_or_create_default_category():
     return Category.objects.get_or_create(name='General', description='Contains Achievements that do not belong to any other Category.')[0]
 
 # File path to upload achievement images to
@@ -53,7 +59,7 @@ class Achievement(models.Model):
     claimants = models.ManyToManyField(User, blank=True, through="Claimant", related_name="claimant_info")
 
     # Achievement Icon
-    image = models.ImageField(upload_to=get_achievement_image_upload_path) 
+    image = models.ImageField(upload_to=get_achievement_image_upload_path)
 
     # Text used to display unlocked status. Can be used to display extra data for high scores.
     # {0} User
@@ -90,7 +96,17 @@ class Achievement(models.Model):
 
     def __str__(self):
         return self.name
-        
+
+class AchievementItemLink(models.Model):
+    """ Links an achievement with an item (e.g. boardgame) """
+    achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, limit_choices_to=valid_item_class_ids)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    def __str__(self):
+        return f'{self.achievement} linked to {self.content_object}'
+
 
 # Represents a user earning an achievement
 class Claimant(models.Model):

@@ -1,0 +1,25 @@
+{% extends 'core/base.html' %}
+
+
+
+{% block content %}
+    <h1> My groups </h1>
+    Below are the groups you are part of, be it committee, order or board.
+    Note: according to the system, system might not be complete.
+
+    {% for group in user.groups.all %}
+        <div class="border border-dark rounded my-2 p-2">
+            <div class="row">
+                <div class="col-12 h3">
+                    {{ group }}
+                </div>
+                <div class="col">
+                    <a class="btn btn-info" href="{% url "inventory:committee_items" group_id=group.id %}">
+                        View commitee inventory
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+{% endblock %}

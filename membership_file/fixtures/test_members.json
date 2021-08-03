@@ -1,22 +1,5 @@
 [
    {
-      "model": "auth.user",
-      "pk": 100,
-      "fields": {
-         "password": "pbkdf2_sha256$150000$FQNl6kahiWF9$UMJi+YpgjsAidu6lhrQen5qPyHVa2JBSH6Ve2/WKy/k=",
-         "last_login": "1970-01-01T12:00:00Z",
-         "is_superuser": false,
-         "username": "test_member",
-         "first_name": "",
-         "last_name": "",
-         "email": "",
-         "is_staff": false,
-         "is_active": true,
-         "date_joined": "1970-01-01T12:00:00Z",
-         "groups": []
-      }
-   },
-   {
       "model": "membership_file.member",
       "pk": 1,
       "fields": {
@@ -77,5 +60,22 @@
          "notes": "",
          "postal_code": ""
       }
-   }
+   },
+    {
+        "model": "membership_file.member",
+        "pk": 3,
+        "fields": {
+            "user": null,
+            "is_deregistered": true,
+            "legal_name": "J.C.H.",
+            "first_name": "Julius",
+            "tussenvoegsel": "",
+            "last_name": "Penterman",
+            "email": "jchpenterman@example.com",
+            "member_since": "2020-01-01",
+            "last_updated_date": "1970-01-01T12:00:00Z",
+            "last_updated_by": null,
+            "marked_for_deletion": false
+        }
+    }
 ]

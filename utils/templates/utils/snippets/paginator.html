@@ -1,0 +1,60 @@
+{% load paginator %}
+
+{# Works with the Django Paginator class. #}
+
+{% if total_pages > 1 %}
+
+    {# Create the pagination layout #}
+    <ul class="pagination justify-content-center">
+
+        {# Create the first page #}
+        {% if display_first %}
+            <li class="page-item">
+                <a class="page-link" href="{% get_url_for_page 1 %}">
+                    {% if display_first_with_gap %}
+                        1...
+                    {% else %}
+                        1
+                    {% endif %}
+                </a>
+            </li>
+        {% endif %}
+
+        {# Create all entries between the first page and the current page #}
+        {% for page_number in low_pages %}
+            <li class="page-item">
+                <a class="page-link" href="{% get_url_for_page page_number %}">
+                    {{ page_number }}
+                </a>
+            </li>
+        {% endfor %}
+
+        {# Add the current page entry #}
+        <li class="page-item disabled">
+            <a class="page-link" href="#">{{ current_page }}</a>
+        </li>
+
+        {# Create all entries between the current page and the last page #}
+        {% for page_number in high_pages %}
+            <li class="page-item">
+                <a class="page-link" href="{% get_url_for_page page_number %}">
+                    {{ page_number }}
+                </a>
+            </li>
+        {% endfor %}
+
+        {# Create the last page #}
+
+        {% if display_last %}
+            <li class="page-item">
+                <a class="page-link" href="{% get_url_for_page total_pages %}">
+                    {% if display_last_with_gap %}
+                        ...{{ total_pages }}
+                    {% else %}
+                        {{ total_pages }}
+                    {% endif %}
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+{% endif %}

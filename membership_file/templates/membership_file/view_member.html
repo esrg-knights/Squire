@@ -73,21 +73,21 @@
             Educational Institution: <i>{{ member.educational_institution|default:"None" }}</i>
         </p>
 
-        <p>
-            {% if member.last_updated_by is not None %}
-                This information was last changed {{member.last_updated_date|date:"\o\n M j, Y \a\t H\:i"}} by {{member.display_last_updated_name}}
-            {% else %}
-                This information was never updated since its creation {{member.last_updated_date|date:"\o\n M j, Y \a\t H\:i"}}
-            {% endif %}
+    <p>
+        {% if member.last_updated_by is not None %}
+            This information was last changed {{member.last_updated_date|date:"\o\n M j, Y \a\t H\:i"}} by {{member.display_last_updated_name}}
+        {% else %}
+            This information was never updated since its creation {{member.last_updated_date|date:"\o\n M j, Y \a\t H\:i"}}
+        {% endif %}
+        <br>
+        {% if member.marked_for_deletion %}
             <br>
-            {% if member.marked_for_deletion %}
-                <br>
-                You currently <strong>cannot</strong> edit this information; your membership is about to be cancelled!
-                Please notify the board if this was a mistake.
-            {% elif perms.membership_file.can_change_membership_information_self %}
-                You can edit this information <a href="{% url 'membership_file/membership/edit' %}">here</a>.
-            {% else %}
-                You do not have the required permissions to change this information. Please contact the board.
-            {% endif %}
-        </p>
+            You currently <strong>cannot</strong> edit this information; your membership is about to be cancelled!
+            Please notify the board if this was a mistake.
+        {% elif perms.membership_file.can_change_membership_information_self %}
+            You can edit this information <a href="{% url 'membership_file/membership/edit' %}">here</a>.
+        {% else %}
+            You do not have the required permissions to change this information. Please contact the board.
+        {% endif %}
+    </p>
 {% endblock content %}

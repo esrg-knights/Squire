@@ -56,7 +56,7 @@ def register(request):
         # check whether it's valid:
         if form.is_valid():
             # Save the user
-            form.save(commit=True)            
+            form.save(commit=True)
             return redirect(reverse('core/user_accounts/register/success'))
 
     # if a GET (or any other method) we'll create a blank form
@@ -64,3 +64,11 @@ def register(request):
         form = RegisterForm()
 
     return render(request, 'core/user_accounts/register/register.html', {'form': form})
+
+
+def show_error_403(request, exception=None):
+    return render(request, 'core/errors/error403.html', status=403)
+
+
+def show_error_404(request, exception=None):
+    return render(request, 'core/errors/error404.html', status=404)

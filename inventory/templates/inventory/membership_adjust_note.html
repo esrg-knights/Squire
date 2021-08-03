@@ -1,0 +1,31 @@
+{% extends 'core/base.html' %}
+{% load render_form %}
+
+{% block title %}
+    Squire - Inventory
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+{% block content %}
+    <h1>Adjust note {{ ownership.content_object.name }}</h1>
+    <p>
+        Adjust the note related to your ownership. You can place comments here about how to distinguish your version,
+        or criteria on usage. Generally owners are always asked first before items are taken outside of normal locations.
+    </p>
+
+
+
+    {% render_form method="post" id="submit_form"  has_submit_button=False %}
+
+    <div class="btn-group w-100" role="group" aria-label="Form changing">
+        <a href="{% url "inventory:member_items" %}"
+           class="btn btn-secondary">Cancel</a>
+        <button form="submit_form" type="submit" class="btn btn-success">
+            Save changes
+        </button>
+    </div>
+
+{% endblock %}
