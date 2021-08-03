@@ -112,12 +112,10 @@ class FilterOwnershipThroughRelatedItems(forms.Form):
     search_field = forms.CharField(max_length=100, required=False)
 
     def get_filtered_items(self, queryset):
-        item_types = [BoardGame]
-
         ownerships = Ownership.objects.none()
 
-        for item_type in item_types:
-            content_type = ContentType.objects.get_for_model(item_type)
+        for content_type in Item.get_item_contenttypes():
+            item_type = content_type.model_class()
 
             sub_items = item_type.objects.filter(name__icontains=self.cleaned_data['search_field'])
             sub_ownerships = queryset.filter(

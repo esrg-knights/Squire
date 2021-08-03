@@ -156,13 +156,8 @@ class GroupItemsOverview(GroupMixin, SearchFormMixin, ListView):
     def get_context_data(self, **kwargs):
         # Set a list of availlable content types
         # Used for url creation to add-item pages
-        addable_item_types = [BoardGame]
-        content_types = []
-        for content_type in addable_item_types:
-            content_types.append(ContentType.objects.get_for_model(content_type))
-
         return super(GroupItemsOverview, self).get_context_data(
-            content_types=content_types,
+            content_types=Item.get_item_contenttypes(),
             **kwargs,
         )
 

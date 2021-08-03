@@ -11,7 +11,7 @@ from django.utils.text import slugify
 from membership_file.models import Member
 
 
-__all__ = ['valid_item_class_ids', 'BoardGame', 'Ownership']
+__all__ = ['valid_item_class_ids', 'BoardGame', 'Ownership', 'Item', 'MiscellaneousItem']
 
 
 class ItemManager(models.Manager):
@@ -90,6 +90,14 @@ class Item(models.Model):
                                'add_member_ownership_for',
                                'maintain_ownerships_for')
 
+    @classmethod
+    def get_item_contenttypes(cls):
+        """ Returns all contenttypes for all items """
+        content_types = []
+        for item_class in cls.__subclasses__():
+            content_types.append(ContentType.objects.get_for_model(item_class))
+        return content_types
+
     def currently_in_possession(self):
         """ Returns all ownership items that are currently at the Knights """
         return self.ownerships.filter(is_active=True)
@@ -105,9 +113,8 @@ class Item(models.Model):
 def valid_item_class_ids():
     """ Returns a query parameter for ids of valid Item classes. Used for Ownership Content type validity """
     valid_ids = []
-    for content_type in ContentType.objects.all():
-        if issubclass(content_type.model_class(), Item):
-            valid_ids.append(content_type.id)
+    for content_type in Item.get_item_contenttypes():
+        valid_ids.append(content_type.id)
     return {'id__in': valid_ids}
 
 
@@ -151,6 +158,9 @@ class Ownership(models.Model):
         else:
             return f'{self.content_object} owned ({self.group})'
 
+
+class MiscellaneousItem(Item):
+    pass
 
 class BoardGame(Item):
     """ Defines boardgames """

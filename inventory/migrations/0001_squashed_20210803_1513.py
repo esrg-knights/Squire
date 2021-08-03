@@ -47,7 +47,6 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
                 'ordering': ('name',),
-                'permissions': [('can_add_boardgame_for_group', 'Can add boardgames item ownership for a group.'), ('can_add_boardgame_for_member', 'Can add boardgames item ownership for members.'), ('can_maintain_boardgame_ownerships', 'Can maintain boardgame ownerships.')],
                 'default_permissions': ('add', 'change', 'delete', 'view', 'add_group_ownership_for', 'add_member_ownership_for', 'maintain_ownerships_for'),
             },
         ),
