@@ -1,0 +1,53 @@
+import os
+
+from django.db import models
+from django.contrib.contenttypes.fields import GenericRelation
+from django.utils.text import slugify
+
+from inventory.models import Item
+
+
+
+# File path to upload achievement images to
+def get_system_image_upload_path(instance, filename):
+    # Obtain extension
+    # NB: A file can be renamed to have ANY extension
+    _, extension = os.path.splitext(filename)
+
+    # file will be uploaded to MEDIA_ROOT / images/item/<item_type>/<id>.<file_extension>
+    return 'images/roleplaying/system/{system_id}{extension}'.format(
+        system_id=instance.id,
+        extension=extension,
+    )
+
+class RoleplayingSystem(models.Model):
+    name = models.CharField(max_length=128)
+    short_description = models.CharField(max_length=128)
+    long_description = models.TextField(blank=True, null=True)
+
+    image = models.ImageField(upload_to=get_system_image_upload_path, null=True, blank=True)
+    is_live = models.BooleanField(default=False)
+
+    achievements = GenericRelation('achievements.AchievementItemLink')
+
+    def __str__(self):
+        return self.name
+
+# File path to upload achievement images to
+def get_item_image_upload_path(instance, filename):
+    # Obtain extension
+    # NB: A file can be renamed to have ANY extension
+    _, extension = os.path.splitext(filename)
+
+    # file will be uploaded to MEDIA_ROOT / images/item/<item_type>/<id>.<file_extension>
+    return 'files/item/roleplay/{item_id}{extension}'.format(
+        item_id=instance.id,
+        extension=extension,
+    )
+
+class RoleplayingItem(Item):
+    system = models.ForeignKey(RoleplayingSystem, related_name='items',
+                              on_delete=models.SET_NULL, null=True, blank=True)
+
+    digital_version = models.FileField(null=True, blank=True, upload_to=get_item_image_upload_path)
+    digital_version_file_name = models.CharField(max_length=32, null=True, blank=True)

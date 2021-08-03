@@ -28,6 +28,9 @@ urlpatterns = [
     path('', include('achievements.urls')),
     # Inventory
     path('inventory/', include(('inventory.urls', 'inventory'), namespace='inventory')),
+    # Roleplaying
+    path('roleplay/', include(('roleplaying.urls', 'roleplaying'), namespace='roleplaying')),
+
     # Activity Calendar
     path('', include(('activity_calendar.urls', 'activity_calendar'), namespace='activity_calendar')),
     # Membership File

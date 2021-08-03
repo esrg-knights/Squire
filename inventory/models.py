@@ -74,7 +74,7 @@ class Item(models.Model):
     description = models.TextField(max_length=512, blank=True, null=True)
     image = models.ImageField(upload_to=get_item_image_upload_path, blank=True, null=True)
 
-    ownerships = GenericRelation('Ownership')
+    ownerships = GenericRelation('inventory.Ownership')
     # An achievement can also apply to roleplay items
     achievements = GenericRelation('achievements.AchievementItemLink')
 
@@ -102,16 +102,12 @@ class Item(models.Model):
         return f'{self.__class__.__name__}: {self.name}'
 
 
-class BoardGame(Item):
-    """ Defines boardgames """
-    bgg_id = models.IntegerField(blank=True, null=True)
-
-
 def valid_item_class_ids():
     """ Returns a query parameter for ids of valid Item classes. Used for Ownership Content type validity """
     valid_ids = []
     for content_type in ContentType.objects.all():
-        if issubclass(content_type.model_class(), Item):
+        model_class = content_type.model_class()
+        if model_class is not None and issubclass(model_class, Item):
             valid_ids.append(content_type.id)
     return {'id__in': valid_ids}
 
@@ -156,3 +152,7 @@ class Ownership(models.Model):
         else:
             return f'{self.content_object} owned ({self.group})'
 
+
+class BoardGame(Item):
+    """ Defines boardgames """
+    bgg_id = models.IntegerField(blank=True, null=True)

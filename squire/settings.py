@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'import_export',
     'committees',
     'utils',
+    'roleplaying'
 ]
 
 MIDDLEWARE = [

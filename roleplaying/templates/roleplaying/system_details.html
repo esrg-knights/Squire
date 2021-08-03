@@ -1,0 +1,105 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load paginator %}
+{% load inventory_tags %}
+
+{% block title %}
+    Squire - Boardgames
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+<h1>{{ system.name }}</h1>
+
+    <div class="card my-3">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-auto">
+                    {% if system.image %}
+                        <a class="enlargable_image">
+                            <img style="height: 4em;" src={{ system.image.url }}>
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="col">
+                    <div class="h3">{{ system.name }}</div>
+                    <div>{{ system.short_description }}</div>
+                </div>
+            </div>
+
+
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-6 col-md-8">
+                    <p>
+                        {{ system.long_description }}
+                    </p>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="row">
+                        <div class="col-4">
+                            Complexity:
+                        </div>
+                        <div class="col-8">
+                            2/5
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-4">
+                            Dice:
+                        </div>
+                        <div class="col-8">
+                            Many
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                {% if system.items.all %}
+                    <div class="font-weight-bold">
+                        Availlable items:
+                    </div>
+                    <table class="table table-sm table-hover">
+                        <tbody>
+
+                        {% for item in system.items.get_all_in_possession %}
+                            <tr>
+                                <td scope="row" style="width: 15em;">
+                                    {{ item.name }}
+                                </td>
+                                <td>
+                                    {{ item.description }}
+                                </td>
+                                <td>
+                                    {% if item.digital_version %}
+                                        <a class="btn btn-sm btn-outline-info"
+                                           target="_blank" rel="noopener noreferrer"
+                                           href="{% url "roleplaying:download_roleplay_item" item_id=item.id %}">
+                                            Download
+                                        </a>
+                                    {% else %}
+                                        In Luna
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+
+
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
+
+
+

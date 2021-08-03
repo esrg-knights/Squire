@@ -59,6 +59,9 @@
                     <li>
                         <a class="nav-link" href="{% url 'inventory:home' %}">Boardgames</a>
                     </li>
+                    <li>
+                        <a class="nav-link" href="{% url 'roleplaying:home' %}">Roleplay</a>
+                    </li>
 					{% if user.is_authenticated %}
 						<li>
 							<a class="nav-link" href="{% url 'core/newsletters' %}">Newsletter</a>

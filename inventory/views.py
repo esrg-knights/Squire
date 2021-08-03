@@ -14,7 +14,7 @@ from committees.views import GroupMixin
 from membership_file.util import MembershipRequiredMixin
 from utils.views import SearchFormMixin
 
-from inventory.models import BoardGame, Ownership
+from inventory.models import BoardGame, Ownership, Item
 from inventory.forms import *
 
 
@@ -151,12 +151,21 @@ class GroupItemsOverview(GroupMixin, SearchFormMixin, ListView):
 
     def get_queryset(self):
         ownerships = Ownership.objects.filter(group=self.group).filter(is_active=True)
-        return self.filter_data(ownerships)
+        # print(ownerships)
+        ownerships =  self.filter_data(ownerships)
+        # print(ownerships)
+        return ownerships
 
     def get_context_data(self, **kwargs):
         # Set a list of availlable content types
         # Used for url creation to add-item pages
-        addable_item_types = [BoardGame]
+        addable_item_types = []
+        for content_type in ContentType.objects.all():
+            mc = content_type.model_class()
+            if mc is not None and issubclass(mc, Item):
+                addable_item_types.append(content_type.model_class())
+
+        # addable_item_types = [BoardGame, ]
         content_types = []
         for content_type in addable_item_types:
             content_types.append(ContentType.objects.get_for_model(content_type))

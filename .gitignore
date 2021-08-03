@@ -124,6 +124,8 @@ local_settings.py
 htdocs/media/images/achievements
 htdocs/media/images/presets
 htdocs/media/images/item/*
+htdocs/media/images/roleplaying/*
+htdocs/media/files/item/*
 /output/
 /test/output/
 
