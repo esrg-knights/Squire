@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-    Squire - Inventory
+    Squire - {{ group.name }}: inventory
 {% endblock title %}
 
 {% block content-frame-class %}
@@ -24,12 +24,19 @@
         <div class="col  d-flex">
             <div class="row w-100 justify-content-end">
                 <div class="col-auto">
-                {% for content_type in content_types %}
-                    <a href="{% url "inventory:catalogue" type_id=content_type.id %}"
-                        class="btn btn-primary">
-                        Add new {{ content_type }}
-                    </a>
-               {% endfor %}
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Go to catalogue
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            {% for content_type in content_types %}
+                                <a href="{% url "inventory:catalogue" type_id=content_type.id %}"
+                                   class="dropdown-item">
+                                    {{ content_type }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -13,7 +13,7 @@
     <h1>Delete {{ item }}</h1>
     {% if active_links and not can_maintain_ownerships %}
         <p>
-            There are currently one or more instnaces of {{ item }} at the Knights. This item can not be removed.
+            There are currently one or more instances of {{ item }} at the Knights. This item can not be removed.
         </p>
         <a href="{% url "inventory:catalogue" type_id=item_type.id %}"
            class="btn btn-secondary">Go back</a>

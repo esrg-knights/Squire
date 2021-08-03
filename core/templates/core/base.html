@@ -81,6 +81,9 @@
 									{% if memberuser.is_member %}
 										<a class="dropdown-item greenify" href="{% url 'membership_file/membership' %}">Membership Information</a>
                                         <a class="dropdown-item greenify" href="{% url 'inventory:member_items' %}">My inventory</a>
+                                        {% if user.groups %}
+                                            <a class="dropdown-item greenify" href="{% url 'membership_file/groups' %}">My groups</a>
+                                        {% endif %}
 									{% endif %}
 								{% endwith %}
                                 {% if user.is_staff %}

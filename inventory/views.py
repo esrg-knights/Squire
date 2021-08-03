@@ -151,27 +151,13 @@ class GroupItemsOverview(GroupMixin, SearchFormMixin, ListView):
 
     def get_queryset(self):
         ownerships = Ownership.objects.filter(group=self.group).filter(is_active=True)
-        # print(ownerships)
-        ownerships =  self.filter_data(ownerships)
-        # print(ownerships)
-        return ownerships
+        return self.filter_data(ownerships)
 
     def get_context_data(self, **kwargs):
         # Set a list of availlable content types
         # Used for url creation to add-item pages
-        addable_item_types = []
-        for content_type in ContentType.objects.all():
-            mc = content_type.model_class()
-            if mc is not None and issubclass(mc, Item):
-                addable_item_types.append(content_type.model_class())
-
-        # addable_item_types = [BoardGame, ]
-        content_types = []
-        for content_type in addable_item_types:
-            content_types.append(ContentType.objects.get_for_model(content_type))
-
         return super(GroupItemsOverview, self).get_context_data(
-            content_types=content_types,
+            content_types=Item.get_item_contenttypes(),
             **kwargs,
         )
 
@@ -207,6 +193,8 @@ class CatalogueMixin:
         try:
             self.item_type = ContentType.objects.get_for_id(self.kwargs['type_id'])
         except ContentType.DoesNotExist:
+            raise Http404
+        if not issubclass(self.item_type.model_class(), Item):
             raise Http404
 
         return super(CatalogueMixin, self).dispatch(request, *args, **kwargs)

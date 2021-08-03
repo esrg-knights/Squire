@@ -2,7 +2,7 @@ from django.urls import path, include
 
 from inventory.views import *
 
-namespace = 'inventory'
+app_name = 'inventory'
 
 urlpatterns = [
     # Change Language helper view

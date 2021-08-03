@@ -17,7 +17,6 @@ class TestOwnershipRemovalForm(FormValidityMixin, TestCase):
         # This one is already taken home
         self.assertFormHasError({}, 'invalid', ownership=Ownership.objects.get(id=2))
 
-    # @patch('django.utils.timezone.now', side_effect=timezone.datetime(2020, 3, 20, 0, 0)))
     def test_saving(self):
         ownership_obj = Ownership.objects.get(id=1)
         form = self.build_form({}, ownership=ownership_obj)
@@ -39,7 +38,6 @@ class TestOwnershipActivationForm(FormValidityMixin, TestCase):
         # This one is already at the Knights
         self.assertFormHasError({}, 'invalid', ownership=Ownership.objects.get(id=1))
 
-    # @patch('django.utils.timezone.now', side_effect=timezone.datetime(2020, 3, 20, 0, 0)))
     def test_saving(self):
         ownership_obj = Ownership.objects.get(id=2)
         form = self.build_form({}, ownership=ownership_obj)

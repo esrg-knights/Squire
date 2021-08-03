@@ -31,8 +31,6 @@ def render_paginator(context, display_range=None, **kwargs):
     num_display_pages_below = min(current_page_number-1, num_display_pages_below + correction_upper)
     num_display_pages_above = min(total_pages-current_page_number, num_display_pages_above + correction_lower)
 
-    # disp_high=num_display_pages_above|add:show_range|subtract:min_low|minimum:high_num
-
     display_first = True if current_page_number - num_display_pages_below > 1 else False
     display_last = True if current_page_number + num_display_pages_above < total_pages else False
 

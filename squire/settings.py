@@ -61,12 +61,12 @@ INSTALLED_APPS = [
     'activity_calendar',
     'membership_file',
     'inventory',
+    'committees',
+    'utils',
+    'roleplaying',
     # More External Libraries
     'django_cleanup.apps.CleanupConfig',
     'import_export',
-    'committees',
-    'utils',
-    'roleplaying'
 ]
 
 MIDDLEWARE = [

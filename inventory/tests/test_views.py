@@ -35,8 +35,7 @@ class TestMemberItemsOverview(TestCase):
     def test_class(self):
         self.assertTrue(issubclass(MemberItemsOverview, MembershipRequiredMixin))
 
-    @suppress_warnings  # Testing 403 raises a warning that 403 was triggered
-    def test_member_items_validity(self):
+    def test_member_items_successful(self):
         response = self.client.get(self.base_url, data={})
         self.assertEqual(response.status_code, 200)
 
@@ -277,6 +276,11 @@ class TestCatalogueMixin(TestMixinMixin, TestCase):
     def test_get_non_existent(self):
         self.assertRaises404(url_kwargs={
             'type_id': 99,
+        })
+
+    def test_get_not_an_item(self):
+        self.assertRaises404(url_kwargs={
+            'type_id': ContentType.objects.get_for_model(User).id,
         })
 
     def test_context_data(self):

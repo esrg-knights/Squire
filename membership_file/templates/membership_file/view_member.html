@@ -90,10 +90,4 @@
             You do not have the required permissions to change this information. Please contact the board.
         {% endif %}
     </p>
-
-    {% if user.groups %}
-        <a href="{% url "membership_file/groups" %}" class="btn btn-outline-info">
-            My groups
-        </a>
-    {% endif %}
 {% endblock content %}

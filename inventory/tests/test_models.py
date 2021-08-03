@@ -6,7 +6,8 @@ from django.utils.text import slugify
 
 
 from membership_file.models import Member
-from inventory.models import Item, BoardGame, Ownership, valid_item_class_ids, ItemManager, get_item_image_upload_path
+from inventory.models import Item, BoardGame, Ownership, valid_item_class_ids, ItemManager,\
+    get_item_image_upload_path, MiscellaneousItem
 
 
 class TestOwnership(TestCase):
@@ -53,7 +54,7 @@ class TestOwnership(TestCase):
         self.assertIn('id__in', valid_ids.keys())
 
         # There is only 1 item implemented: Boardgame
-        self.assertEqual(len(valid_ids['id__in']), 1)
+        self.assertEqual(len(valid_ids['id__in']), len(Item.get_item_contenttypes()))
 
     def test_owner(self):
         self.assertEqual(Ownership.objects.get(id=1).owner, Member.objects.get(id=1))
@@ -81,6 +82,13 @@ class TestItem(TestCase):
         )
         str_actual_upload_path = get_item_image_upload_path(item, "some_file_name.png")
         self.assertEqual(str_expected_upload_path, str_actual_upload_path)
+
+    def test_get_item_contenttypes(self):
+        item_contenttypes = Item.get_item_contenttypes()
+        self.assertEqual(len(item_contenttypes), len(Item.__subclasses__()))
+
+        self.assertIn(ContentType.objects.get_for_model(BoardGame), item_contenttypes)
+        self.assertIn(ContentType.objects.get_for_model(MiscellaneousItem), item_contenttypes)
 
     def test_ownerships_relation(self):
         # We use Boardgames as a proxy
