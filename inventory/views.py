@@ -14,7 +14,7 @@ from committees.views import GroupMixin
 from membership_file.util import MembershipRequiredMixin
 from utils.views import SearchFormMixin
 
-from inventory.models import BoardGame, Ownership
+from inventory.models import BoardGame, Ownership, Item
 from inventory.forms import *
 
 
@@ -198,6 +198,8 @@ class CatalogueMixin:
         try:
             self.item_type = ContentType.objects.get_for_id(self.kwargs['type_id'])
         except ContentType.DoesNotExist:
+            raise Http404
+        if not issubclass(self.item_type.model_class(), Item):
             raise Http404
 
         return super(CatalogueMixin, self).dispatch(request, *args, **kwargs)

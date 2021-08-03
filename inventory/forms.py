@@ -63,15 +63,15 @@ class OwnershipCommitteeForm(forms.ModelForm):
         fields = ['note', 'added_since']
 
 
-class AddOwnerShipLinkMixin:
+class AddOwnershipLinkMixin:
     """ Simple mixin that sets Ownership instance settings """
     def __init__(self, *args, item=None, user=None, **kwargs):
-        super(AddOwnerShipLinkMixin, self).__init__(*args, **kwargs)
+        super(AddOwnershipLinkMixin, self).__init__(*args, **kwargs)
         self.instance.content_object = item
         self.instance.added_by = user
 
 
-class AddOwnershipCommitteeLinkForm(AddOwnerShipLinkMixin, forms.ModelForm):
+class AddOwnershipCommitteeLinkForm(AddOwnershipLinkMixin, forms.ModelForm):
     committee = forms.ModelChoiceField(queryset=Group.objects.none(), required=True)
 
     class Meta:
@@ -92,7 +92,7 @@ class AddOwnershipCommitteeLinkForm(AddOwnerShipLinkMixin, forms.ModelForm):
         return super(AddOwnershipCommitteeLinkForm, self).clean()
 
 
-class AddOwnershipMemberLinkForm(AddOwnerShipLinkMixin, forms.ModelForm):
+class AddOwnershipMemberLinkForm(AddOwnershipLinkMixin, forms.ModelForm):
     member = forms.ModelChoiceField(
         required=True,
         queryset=Member.objects.filter(is_deregistered=False).order_by('first_name')

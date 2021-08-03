@@ -104,6 +104,9 @@ class AchievementItemLink(models.Model):
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
 
+    def __str__(self):
+        return f'{self.achievement} linked to {self.content_object}'
+
 
 # Represents a user earning an achievement
 class Claimant(models.Model):

@@ -18,7 +18,7 @@ class ItemManager(models.Manager):
     """ Manager for any object related to Item. Replaces standard manager in <Item>.objects """
 
     def get_all_in_possession(self):
-        """ Returns all items currently in posssession (owned or burrowed) """
+        """ Returns all items currently in possession (owned or borrowed) """
         content_type = ContentType.objects.get_for_model(self.model)
         ownerships = Ownership.objects.filter(content_type=content_type, is_active=True)
         return self.get_queryset().filter(ownerships__in=ownerships).distinct()
@@ -102,11 +102,6 @@ class Item(models.Model):
         return f'{self.__class__.__name__}: {self.name}'
 
 
-class BoardGame(Item):
-    """ Defines boardgames """
-    bgg_id = models.IntegerField(blank=True, null=True)
-
-
 def valid_item_class_ids():
     """ Returns a query parameter for ids of valid Item classes. Used for Ownership Content type validity """
     valid_ids = []
@@ -156,3 +151,7 @@ class Ownership(models.Model):
         else:
             return f'{self.content_object} owned ({self.group})'
 
+
+class BoardGame(Item):
+    """ Defines boardgames """
+    bgg_id = models.IntegerField(blank=True, null=True)
