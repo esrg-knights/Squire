@@ -1,13 +1,21 @@
 from django.template.loader import get_template
-from martor.widgets import AdminMartorWidget
+from martor.widgets import AdminMartorWidget, get_theme
 
 class ImageUploadMartorWidget(AdminMartorWidget):
     """
         An AdminMartorWidget that also passes a ContentType and (possibly) ID
         of the model instance that is being edited or changed when an image is uploaded.
+
+        Also provides the option to provides placeholder-equivalent Markdown.
+        :param content_type:
+        :param object_id:
+        :param placeholder: A string that is rendered in a <details>-element above the widget to
+            function as a sort of placeholder. This string can contain markdown.
+        :param placeholder_detail_title: The text in the <summary>-element of the placeholder. Can
+            be left empty.
     """
     def __init__(self, content_type, object_id=None,
-            placeholder=None, placeholder_detail_title="Placeholder Markdown", **kwargs):
+            placeholder=None, placeholder_detail_title=None, **kwargs):
         self.content_type = content_type
         self.object_id = object_id
         self.placeholder = placeholder

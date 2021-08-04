@@ -6,11 +6,11 @@ from django.contrib.auth.forms import (AuthenticationForm, UserCreationForm,
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError, ImproperlyConfigured
 from django.forms import ModelForm
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .models import ExtendedUser as User
 from core.models import MarkdownImage
-from core.widgets import ImageUploadMartorWidget
+from core.widgets import  ImageUploadMartorWidget
 
 ##################################################################################
 # Defines general-purpose forms.
@@ -109,9 +109,8 @@ class MarkdownForm(RequestUserFormMixin, ModelForm):
         any object. Upon saving, if such "orphan" images exist (for the current model, and uploaded by
         the current user), they are linked to the newly created instance.
     """
-    class Meta:
-        markdown_field_names = []
-        placeholder_detail_title = "%s"
+    markdown_field_names = []
+    placeholder_detail_title = "Field %s"
 
     is_new_instance = True
 
@@ -119,7 +118,7 @@ class MarkdownForm(RequestUserFormMixin, ModelForm):
         super().__init__(*args, **kwargs)
         self.is_new_instance = self.instance.id is None
 
-        for field_name in self.Meta.markdown_field_names:
+        for field_name in self.markdown_field_names:
             # Basic validation
             if field_name not in self.fields:
                 # The passed field must actually exists
@@ -142,9 +141,9 @@ class MarkdownForm(RequestUserFormMixin, ModelForm):
 
             # Add the field's label to the placeholder title
             label = self.fields[field_name].label
-            placeholder_title = self.Meta.placeholder_detail_title % label.capitalize()
+            placeholder_title = self.placeholder_detail_title % label.capitalize()
 
-            # Replace the field's widgt by Martor's markdown widget
+            # Replace the field's widget by Martor's markdown widget
             self.fields[field_name].widget = ImageUploadMartorWidget(
                 ContentType.objects.get_for_model(self.instance),
                 self.instance.id, placeholder_detail_title=placeholder_title

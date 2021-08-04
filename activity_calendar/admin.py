@@ -1,5 +1,3 @@
-import functools
-
 from django.contrib import admin
 from django.utils.timezone import localtime
 
@@ -41,17 +39,16 @@ class MarkdownImageInlineAdmin(admin.ModelAdmin):
     # - https://stackoverflow.com/questions/2864955/django-how-to-get-current-user-in-admin-forms
     # - https://code.djangoproject.com/ticket/26607
     def get_form(self, request, obj=None, **kwargs):
-        MarkdownForm = super().get_form(request, obj, **kwargs)
+        MDForm = super().get_form(request, obj, **kwargs)
 
-        class MarkdownFormWithKwargs(MarkdownForm):
+        class MarkdownFormWithKwargs(MDForm):
             def __new__(cls, *args, **kwargs):
-                return MarkdownForm(*args, user=request.user, **kwargs)
+                return MDForm(*args, user=request.user, **kwargs)
         return MarkdownFormWithKwargs
 
 
 class ActivityAdmin(MarkdownImageInlineAdmin):
     form = ActivityAdminForm
-    # inlines = [MarkdownImageInline]
 
     def is_recurring(self, obj):
         return obj.is_recurring
@@ -60,6 +57,11 @@ class ActivityAdmin(MarkdownImageInlineAdmin):
     list_display = ('id', 'title', 'start_date', 'is_recurring', 'subscriptions_required', )
     list_filter = ['subscriptions_required']
     list_display_links = ('id', 'title')
+
+    def get_view_on_site_url(self, obj=None):
+        if hasattr(obj, 'get_absolute_url') and obj.get_absolute_url() is None:
+            return None
+        return super().get_view_on_site_url(obj=obj)
 
 admin.site.register(Activity, ActivityAdmin)
 

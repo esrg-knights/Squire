@@ -3,7 +3,10 @@
 {% if placeholder is not None %}
     <!-- Placeholder text is shown on-screen above the widget -->
     <div style="border: 1px solid #ced4da; background-color: #e9ecef; color:grey; width: 100%; padding: 0px 5px;">
-        <details><summary style="color: black; border-bottom: 1px solid #ced4da; padding: 2px 0px;">{{ placeholder_detail_title }} (<i>click to expand/hide</i>)</summary>
+        <details>
+            {% if placeholder_detail_title is not None %}
+                <summary style="color: black; border-bottom: 1px solid #ced4da; padding: 2px 0px;">{{ placeholder_detail_title }} (<i>click to expand/hide</i>)</summary>
+            {% endif %}
             <div style="padding-top: 4px;">
                 {{ placeholder|safe_markdown }}
             </div>

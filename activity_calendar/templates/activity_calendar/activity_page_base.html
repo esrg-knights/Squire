@@ -15,7 +15,7 @@
     {{ activity_moment.title }}
 {% endblock og-title %}
 {% block og-description %}
-    [{{ activity_moment.start_time|date:"l j E H:i" }}] {{ activity_moment.description|truncatewords:20 }}
+    [{{ activity_moment.start_time|date:"l j E H:i" }}] {{ activity_moment.description|safe_markdown|striptags|truncatewords:20 }}
 {% endblock og-description %}
 {% block og-image %}{% build_absolute_uri request activity.image_url %}{% endblock og-image %}
 {% block og-image-alt %}

@@ -20,9 +20,19 @@
 		<meta property="og:locale" content="en_GB" />
 		<meta property="og:locale:alternate" content="nl_NL" />
 
+		<!-- Form Media -->
+		{# These are loaded before the application to make overriding them easier #}
+		{% block form_media %}
+			{{ form.media }}
+		{% endblock form_media %}
+
 		<!-- Define Bootstrap imports (contains popper.js and jQuery) -->
-		{% bootstrap_css %}
-		{% bootstrap_javascript jquery='full' %}
+		{% block bootstrap_css %}
+			{% bootstrap_css %}
+		{% endblock %}
+		{% block bootstrap_js %}
+			{% bootstrap_javascript jquery='full' %}
+		{% endblock %}
 
 		<!-- Css -->
 		{% block css %}
@@ -33,11 +43,6 @@
 		<!-- Js -->
 		{% block js %}
 		{% endblock js %}
-
-		<!-- Form Media -->
-		{% block form_media %}
-			{{ form.media }}
-		{% endblock form_media %}
 	</head>
 	<body class='d-flex flex-column'>
 		<nav class="navbar navbar-expand-lg navbar-dark greenify">
