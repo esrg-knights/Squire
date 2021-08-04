@@ -510,8 +510,10 @@ class TestItemCreateView(ViewValidityMixin, TestCase):
 
     def test_success_url(self):
         data = {'name': 'test_create_view_item'}
-        response = self.client.post(self.get_base_url(), data=data, follow=True)
-        self.assertRedirects(response, reverse('inventory:catalogue', kwargs={'type_id': self.content_type.id}))
+        self.assertValidPostResponse(
+            data=data,
+            redirect_url=reverse('inventory:catalogue', kwargs={'type_id': self.content_type.id})
+        )
 
         # Pressed '& add to member' button
         data = {'name': 'test_create_view_item_member', 'btn_save_to_member': True}

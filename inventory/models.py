@@ -74,7 +74,7 @@ class Item(models.Model):
     description = models.TextField(max_length=512, blank=True, null=True)
     image = models.ImageField(upload_to=get_item_image_upload_path, blank=True, null=True)
 
-    ownerships = GenericRelation('Ownership')
+    ownerships = GenericRelation('inventory.Ownership')
     # An achievement can also apply to roleplay items
     achievements = GenericRelation('achievements.AchievementItemLink')
 
