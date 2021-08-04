@@ -2,6 +2,10 @@ from django.template.loader import get_template
 from martor.widgets import AdminMartorWidget, get_theme
 
 class ImageUploadMartorWidget(AdminMartorWidget):
+    class Media:
+        css = {
+            'all': ('css/martor-placeholder.css',),
+        }
     """
         An AdminMartorWidget that also passes a ContentType and (possibly) ID
         of the model instance that is being edited or changed when an image is uploaded.

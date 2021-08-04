@@ -2,17 +2,28 @@
 
 {% if placeholder is not None %}
     <!-- Placeholder text is shown on-screen above the widget -->
-    <div style="border: 1px solid #ced4da; background-color: #e9ecef; color:grey; width: 100%; padding: 0px 5px;">
+    <div class="md-placeholder">
         <details>
             {% if placeholder_detail_title is not None %}
-                <summary style="color: black; border-bottom: 1px solid #ced4da; padding: 2px 0px;">{{ placeholder_detail_title }} (<i>click to expand/hide</i>)</summary>
+                <summary>{{ placeholder_detail_title }} (<i>click to expand/hide</i>)</summary>
             {% endif %}
-            <div style="padding-top: 4px;">
-                {{ placeholder|safe_markdown }}
+            <div class="row">
+                <a class="ml-auto toggle-md-source btn btn-secondary greenify" data-toggle="collapse"
+                        href=".md-{{ content_type }}-{{ object_id }}" role="button" aria-expanded="false"
+                        aria-controls="md-{{ content_type }}-{{ object_id }}">
+                    Toggle Rendered Markdown
+                </a>
+            </div>
+            <div class="md-box">
+                <div class="md-content md-{{ content_type }}-{{ object_id }} collapse show">
+                    {{ placeholder|safe_markdown }}
+                </div>
+                <div class="md-source md-{{ content_type }}-{{ object_id }} collapse" disabled>
+                    {{ placeholder }}
+                </div>
             </div>
         </details>
     </div>
-    <button onclick="// TODO: copy to clipboard & prevent form submit">Copy field's Markdown to Clipboard</button>
 {% endif %}
 {% if object_id is not None %}
     <input type="hidden" id="martor-image-upload:id" name="martor_image_upload_object_id" value="{{ object_id }}">

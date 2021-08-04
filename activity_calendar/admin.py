@@ -10,7 +10,7 @@ from core.admin import MarkdownImageInline
 class MarkdownImageInlineAdmin(admin.ModelAdmin):
     class Media:
         css = {
-             'all': ('css/martor.css',)
+             'all': ('css/martor-admin.css',)
         }
 
     # Add MarkdownImages to the Admin's Inline models
