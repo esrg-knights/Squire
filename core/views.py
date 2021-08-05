@@ -28,7 +28,7 @@ def homePage(request):
 @require_safe
 def logoutSuccess(request):
     if request.user.is_authenticated:
-        return redirect(reverse('core/user_accounts/logout'))
+        return redirect(reverse('core:user_accounts/logout'))
     return render(request, 'core/user_accounts/logout-success.html', {})
 
 @require_safe
@@ -60,7 +60,7 @@ def register(request):
         if form.is_valid():
             # Save the user
             form.save(commit=True)
-            return redirect(reverse('core/user_accounts/register/success'))
+            return redirect(reverse('core:user_accounts/register/success'))
 
     # if a GET (or any other method) we'll create a blank form
     else:

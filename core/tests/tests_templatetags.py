@@ -14,6 +14,15 @@ from core.widgets import ImageUploadMartorWidget
 
 # A form containing three common input options (text, select, checkbox)
 class DummyForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # We're only assigning the widget here as we don't have database-access
+        #   at the time this form is created, and we need to pass the
+        #   MarkdownImage's ContentType
+        self.fields['test_martorfield'].widget = ImageUploadMartorWidget(
+        ContentType.objects.get_for_model(MarkdownImage)
+    )
+
     test_charfield = forms.CharField()
     test_select = forms.ChoiceField(choices=[
         ('A', 'Alpha'),
@@ -23,9 +32,7 @@ class DummyForm(forms.Form):
     test_booleanfield = forms.BooleanField()
     # We can't actually upload MarkdownImages for other MarkdownImages,
     #   but that's not what we're trying to test here so it's fine.
-    test_martorfield = forms.CharField(widget=ImageUploadMartorWidget(
-        ContentType.objects.get_for_model(MarkdownImage)
-    ))
+    test_martorfield = forms.CharField()
 
 # Tests generic_field. Used by most forms
 class GenericFieldTemplateTagTest(TestCase):
