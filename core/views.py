@@ -1,20 +1,18 @@
 import os
-from time import strftime
-import uuid
 
 from django.conf import settings
-from django.contrib.auth import login as auth_login, logout as auth_logout
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.storage import default_storage
-from django.http import HttpResponseBadRequest, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
+from django.views import View
 from django.views.decorators.http import require_safe
 
-from .forms import LoginForm, RegisterForm
+from .forms import RegisterForm
 from .managers import TemplateManager
 from .models import MarkdownImage
 
@@ -73,78 +71,93 @@ def register(request):
 
 ##################################################################################
 # Martor Image Uploader
-# Based on: https://github.com/agusmakmun/django-markdown-editor/wiki
+# Converted to class-based views, but based on:
+#   https://github.com/agusmakmun/django-markdown-editor/wiki
 
-@login_required
-@permission_required('core.can_upload_martor_images')
-def markdown_uploader(request):
+class MartorImageUploadAPIView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """
-    Makdown image upload for local storage
-    and represent as json to markdown editor.
+        View for uploading images using Martor's Markdown Editor.
     """
-    if request.method == 'POST' and request.is_ajax():
-        if 'markdown-image-upload' in request.FILES:
+    # There's no point in creating per-ContentType permissions, as users can just
+    #   upload MarkdownImages for one ContentType they have permissions for and use
+    #   that upload in another ContentType.
+    permission_required = ('core.can_upload_martor_images',)
+    raise_exception = True
 
-            # Obtain POST data (object_id will be None if the object does not exist yet)
-            object_id = request.POST.get('martor_image_upload_object_id', None)
-            content_type_id = request.POST.get('martor_image_upload_content_type_id', None)
+    def _json_bad_request(self, message):
+        """
+            Return a JsonResponse with a status-code of 400 (Bad Request)
+            and an error message.
+        """
+        data = {
+            'status': 400,
+            'error': message
+        }
+        return JsonResponse(data, status=400)
 
-            # Verify POST data (valid content_type_id and object_id)
-            try:
-                content_type = ContentType.objects.get_for_id(content_type_id)
-                if object_id is not None:
-                    obj = content_type.get_object_for_this_type(id=object_id)
-            except (ObjectDoesNotExist, ValueError):
-                # Catch invalid ints or bogus data
-                return HttpResponseBadRequest(_('Invalid request!'))
+    def post(self, request, *args, **kwargs):
+        # Must actually upload a file
+        if 'markdown-image-upload' not in request.FILES:
+            return self._json_bad_request('Could not find an uploaded file.')
 
-            # Can only upload MarkdownImages for specific models
-            if f"{content_type.app_label}.{content_type.model}" not in settings.MARKDOWN_IMAGE_MODELS:
-                return HttpResponseBadRequest(_('Invalid request!'))
+        # Obtain POST data (object_id will be None if the object does not exist yet)
+        object_id = request.POST.get('martor_image_upload_object_id', None)
+        content_type_id = request.POST.get('martor_image_upload_content_type_id', None)
 
-            uploaded_file = request.FILES['markdown-image-upload']
+        # Verify POST data
+        try:
+            # Get the ContentType corresponding to the passed ID
+            content_type = ContentType.objects.get_for_id(content_type_id)
+            if object_id is not None:
+                # Get the object for that ContentType
+                obj = content_type.get_object_for_this_type(id=object_id)
+        except (ObjectDoesNotExist, ValueError):
+            # Catch invalid contentType-object combinatinos or bogus data
+            return self._json_bad_request('Invalid content_type/object_id combination passed.')
 
-            # Verify upload size
-            if uploaded_file.size > settings.MAX_IMAGE_UPLOAD_SIZE:
-                to_MB = settings.MAX_IMAGE_UPLOAD_SIZE / (1024 * 1024)
-                data = {
-                    'status': 400,
-                    'error': _('Maximum image file is %(size) MB.') % {'size': to_MB}
-                }
-                return JsonResponse(data, status=400)
+        # Can only upload MarkdownImages for specific models
+        if f"{content_type.app_label}.{content_type.model}" not in settings.MARKDOWN_IMAGE_MODELS:
+            return self._json_bad_request("Cannot upload MarkdownImages for this model.")
 
-            # Use Pillow to verify that a valid image was uploaded (just like in ImageField)
-            # NB: Pillow cannot identify this in all cases. E.g. html files with valid png headers
-            #   see: https://docs.djangoproject.com/en/3.1/topics/security/#user-uploaded-content-security
-            from PIL import Image
+        uploaded_file = request.FILES['markdown-image-upload']
 
-            try:
-                # load() could spot a truncated JPEG, but it loads the entire
-                # image in memory, which is a DoS vector. See #3848 and #18520.
-                image = Image.open(uploaded_file)
-                # verify() must be called immediately after the constructor.
-                image.verify()
+        # Verify upload size
+        if uploaded_file.size > settings.MAX_IMAGE_UPLOAD_SIZE:
+            to_MB = settings.MAX_IMAGE_UPLOAD_SIZE / (1024 * 1024)
+            return self._json_bad_request('Maximum image file size is %(size)s MB.' % {'size': str(to_MB)})
 
-            except Exception as exc:
-                # Pillow doesn't recognize it as an image.
-                data = {
-                    'status': 400,
-                    'error': _('Bad image format.')
-                }
-                return JsonResponse(data, status=400)
+        ##############
+        ## BEGINCOPY
+        # Copied from Django's ImageField.to_python(..)
+        #
+        # Use Pillow to verify that a valid image was uploaded (just like in ImageField)
+        # NB: Pillow cannot identify this in all cases. E.g. html files with valid png headers
+        #   see: https://docs.djangoproject.com/en/3.1/topics/security/#user-uploaded-content-security
+        from PIL import Image
 
-            markdown_img = MarkdownImage.objects.create(
-                uploader=request.user,
-                content_type_id=content_type_id,
-                object_id=object_id,
-                image=uploaded_file
-            )
+        try:
+            # load() could spot a truncated JPEG, but it loads the entire
+            # image in memory, which is a DoS vector. See #3848 and #18520.
+            image = Image.open(uploaded_file)
+            # verify() must be called immediately after the constructor.
+            image.verify()
+        except Exception as exc:
+            return self._json_bad_request(_('Bad image format.'))
+        #
+        ## ENDCOPY
+        ##############
 
-            data = {
-                'status': 200,
-                'link':  markdown_img.image.url,
-                'name': os.path.splitext(uploaded_file.name)[0]
-            }
-            return JsonResponse(data)
-        return HttpResponseBadRequest(_('Invalid request!'))
-    return HttpResponseBadRequest(_('Invalid request!'))
+        # Create a new MarkdownImage for the uploaded image
+        markdown_img = MarkdownImage.objects.create(
+            uploader=request.user,
+            content_type_id=content_type_id,
+            object_id=object_id,
+            image=uploaded_file
+        )
+
+        # Everything was okay; report back to Martor
+        return JsonResponse({
+            'status': 200,
+            'link':  markdown_img.image.url,
+            'name': os.path.splitext(uploaded_file.name)[0]
+        })

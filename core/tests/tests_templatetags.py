@@ -1,7 +1,12 @@
 from django import forms
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.template import Context, Template
+
+from core.models import MarkdownImage
+from core.widgets import ImageUploadMartorWidget
 
 ###########################################################
 # Tests usage of custom template tags and filters
@@ -16,6 +21,11 @@ class DummyForm(forms.Form):
         ('C', 'Charlie'),
     ])
     test_booleanfield = forms.BooleanField()
+    # We can't actually upload MarkdownImages for other MarkdownImages,
+    #   but that's not what we're trying to test here so it's fine.
+    test_martorfield = forms.CharField(widget=ImageUploadMartorWidget(
+        ContentType.objects.get_for_model(MarkdownImage)
+    ))
 
 # Tests generic_field. Used by most forms
 class GenericFieldTemplateTagTest(TestCase):
@@ -90,6 +100,22 @@ class GenericFieldTemplateTagTest(TestCase):
         self.assertEqual(out.count('<input type="checkbox"'), 1)
         self.assertNotIn('<div class="form-check form-check-inline', out)
         self.assertNotIn('<label class="form-check-label"', out)
+
+    # Tests that passing the wrong number of parameters
+    def test_generic_field_wrong_parameter(self):
+        with self.assertRaisesMessage(ImproperlyConfigured, "wrong parameter"):
+            # Pass something that isn't actually a field
+            Template("{% load generic_field %}{% generic_field 3 -1 %}"
+                ).render(Context({ 'form': self.form }))
+
+    # Tests that fields with Markdown cannot be rendered together with other fields
+    def test_generic_field_inline_martor(self):
+        with self.assertRaisesMessage(ImproperlyConfigured,
+                "Cannot include field Test martorfield with a Markdown-widget together with other fields."):
+            # Pass something that isn't actually a field
+            Template("{% load generic_field %}{% generic_field form.test_charfield form.test_martorfield -1 -1 %}"
+                ).render(Context({ 'form': self.form }))
+
 
 # Build absolute uri's (used for OpenGraph Link Previews)
 class BuildAbsoluteURITemplateTagTest(TestCase):

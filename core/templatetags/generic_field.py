@@ -24,16 +24,19 @@ def generic_field(*args):
 
     # Ensure the correct bootstrap classes are added to input fields
     for boundfield, _ in fields:
-        # Catch errors made when passing wrong parameters
+        # Catch errors made when passing wrong parameters, which can happen during development
         if not isinstance(boundfield, BoundField):
-            raise ImproperlyConfigured('xxx')
+            raise ImproperlyConfigured('Passed a wrong parameter to generic_field; exepected a Field but got %s.' % str(boundfield))
 
         multi_or_single_widget = boundfield.field.widget
 
-        if isinstance(multi_or_single_widget, ImageUploadMartorWidget):
+        if multi_or_single_widget is not None and isinstance(multi_or_single_widget, ImageUploadMartorWidget):
             # It does not make sense to place a Markdown-editor in line with other fields
             if len(fields) > 1:
-                raise ImproperlyConfigured('yyy')
+                raise ImproperlyConfigured(
+                    'Cannot include field %s with a Markdown-widget together with other fields.'
+                    % boundfield.label
+                )
             is_markdown = True
             # No need to add bootstrap classes; Martor doesn't need any
             break

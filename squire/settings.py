@@ -295,8 +295,8 @@ MARTOR_MARKDOWN_EXTENSIONS = [
 MARTOR_MARKDOWN_EXTENSION_CONFIGS = {}
 
 # Markdown urls
-MARTOR_UPLOAD_URL = '/martor/uploader/' # for imgur
-MARTOR_SEARCH_USERS_URL = '/martor/search-user/' # for mention
+MARTOR_MARKDOWNIFY_URL = '/api/martor/markdownify/'
+# MARTOR_SEARCH_USERS_URL = '/martor/search-user/' # for mention
 
 # Markdown Extensions
 MARTOR_MARKDOWN_BASE_EMOJI_URL = 'https://github.githubassets.com/images/icons/emoji/'  # default from github
@@ -304,7 +304,7 @@ MARTOR_MARKDOWN_BASE_MENTION_URL = ''
 
 # Upload images to local storage
 MARTOR_UPLOAD_PATH = os.path.join('images', 'uploads')
-MARTOR_UPLOAD_URL = '/api/image_uploader/'
+MARTOR_UPLOAD_URL = '/api/martor/image_uploader/'
 
 # Maximum Upload Image
 # 2.5MB - 2621440
