@@ -162,9 +162,3 @@ function onEventClick(info, calendar) {
 
     $('#event-modal').modal()
 }
-
-function martorhljs(selector) {
-    $(selector + '.martor-preview pre').each(function(i, block){
-        hljs.highlightBlock(block);
-    });
-}

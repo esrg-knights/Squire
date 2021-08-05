@@ -4,6 +4,7 @@
 {% load get_login_url %}
 {% load calendar_tags %}
 {% load martortags %}
+{% load martor_render %}
 {% load build_absolute_uri %}
 
 {% block title %}
@@ -25,9 +26,7 @@
 {% block css %}
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'css/slot_frames.css' %}">
-    <!-- Martor -->
-    <link href="{% static 'plugins/css/ace.min.css' %}" type="text/css" media="all" rel="stylesheet" />
-    <link href="{% static 'martor/css/martor.bootstrap.min.css' %}" type="text/css" media="all" rel="stylesheet" />
+    {% martor_render_css %}
 {% endblock css %}
 
 {% block js %}
@@ -40,8 +39,7 @@
         </script>
     {% endif %}
 
-    <!-- Martor -->
-    <script type="text/javascript" src="{% static 'plugins/js/highlight.min.js' %}"></script>
+    {% martor_render_js %}
 {% endblock js %}
 
 {% block js_bottom %}
@@ -52,12 +50,7 @@
         })
     </script>
 
-    <!-- Martor (code block highlighting) -->
-    <script>
-        $('.martor-preview pre').each(function(i, block){
-            hljs.highlightBlock(block);
-        });
-    </script>
+    {% martor_render_js import_hljs=False invoke_hljs_method=True method_param="''" %}
 {% endblock js_bottom %}
 
 {% block content-frame-class %}

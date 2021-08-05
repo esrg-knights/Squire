@@ -1,0 +1,18 @@
+{% load static %}
+{% if import_hljs %}
+    <script type="text/javascript" src="{% static 'plugins/js/highlight.min.js' %}"></script>
+{% endif %}
+{% if invoke_hljs_method %}
+    <script>
+        // Method that invokes Martor's highlight-js (for code-block syntax highlighting)
+        function martorhljs(selector) {
+            $(selector + '.martor-preview pre').each(function(i, block){
+                hljs.highlightBlock(block);
+                console.log('henlo there!')
+            });
+        }
+        {% if method_param is not None %}
+            martorhljs({{ method_param }});
+        {% endif %}
+    </script>
+{% endif %}
