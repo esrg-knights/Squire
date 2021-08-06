@@ -10,7 +10,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from core.models import MarkdownImage
-from core.util import suppress_warnings
+from core.tests.util import suppress_warnings
 
 import shutil
 
