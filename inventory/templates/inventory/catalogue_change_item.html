@@ -12,7 +12,7 @@
 {% block content %}
     <h1>Update {{ item }}</h1>
 
-    {% render_form method="post" id="submit_form"  has_submit_button=False %}
+    {% render_form method="post" id="submit_form"  has_submit_button=False uses_file_field=True %}
 
     <div class="btn-group" role="group" aria-label="Form changing">
         <a href="{% url "inventory:catalogue" type_id=item_type.id %}"
