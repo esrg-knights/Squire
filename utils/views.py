@@ -2,6 +2,37 @@
 from utils.forms import get_basic_filter_by_field_form
 
 
+
+class RedirectMixin:
+    """ A mixin that takes 'redirect_to' from the GET parameters and applies that when necessary """
+    redirect_url_name = "redirect_to"
+
+    def __init__(self, *args, **kwargs):
+        self.redirect_to = None
+        super(RedirectMixin, self).__init__(*args, **kwargs)
+
+    def setup(self, request, *args, **kwargs):
+        super(RedirectMixin, self).setup(request, *args, **kwargs)
+        if self.redirect_url_name in request.GET.keys():
+            self.redirect_to = self.request.GET.get(self.redirect_url_name)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(RedirectMixin, self).get_context_data(*args, **kwargs)
+        print(f'---{self.redirect_to}')
+        context['redirect_to_url'] = self.redirect_to
+        return context
+
+    def get_success_url(self):
+        if self.redirect_to:
+            return self.redirect_to
+        else:
+            return super(RedirectMixin, self).get_success_url()
+
+
+
+
+
+
 class SearchFormMixin:
     """ A mixin for ListViews that allow filtering of the data in the queryset through a form """
     search_form_class = None

@@ -25,9 +25,10 @@
     <table class="table table-striped table-hover">
         <thead>
         <tr class="">
+            <th></th>
             <th scope="col">Name</th>
             {% if can_change_items %}<th></th>{% endif %}
-            <th scope="col">Description</th>
+            <th>Owned</th>
             <th scope="col"></th>
         </tr>
         </thead>
@@ -37,22 +38,48 @@
                 <td>
                     {% if item.image %}
                         <a class="enlargable_image">
-                            <img style="height: 2em;" src={{ item.image.url }}>
+                            <img style="width: 2em;" src={{ item.image.url }}>
                         </a>
                     {% endif %}
-                    {{ item.name }}
+                </td>
+                <td style="width: 20%;">
+                    <div class="" data-toggle="tooltip" data-placement="bottom" title="{{ item.description }}">
+                        {{ item.name }}
+                    </div>
 
                 </td>
-                {% if can_change_items %}
-                    <td>
+                <td>
+                    {% if can_change_items %}
                         <a href="{% url "inventory:catalogue_update_item" type_id=item_type.id item_id=item.id %}"
                            class="btn btn-sm btn-primary">
                             Edit
                         </a>
-                    </td>
-                {% endif %}
-                <td class="w-50">
-                    {{ item.description }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if can_maintain_ownerships %}
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                {% for owner in item.currently_in_possession %}
+                                    <small>
+                                    {{ owner.owner }}{% if not forloop.last %}, {% endif %}
+                                    </small>
+                                {% endfor %}
+                            </div>
+                            <div>
+                                <a class="btn btn-sm btn-info"
+                                   href="{% url "inventory:catalogue_item_links" type_id=item_type.id item_id=item.id %}">
+                                    Edit
+                                </a>
+                            </div>
+                        </div>
+                    {% else %}
+                        {% if boardgame.is_owned_by_association %}
+                            Knights
+                        {% else %}
+                            Loaned by member
+                        {% endif %}
+                    {% endif %}
                 </td>
                 <td>
                     <div class="d-lg-flex justify-content-end">
@@ -90,4 +117,10 @@
 {% block js_bottom %}
     {{ block.super }}
     <script src="{% static "js/enlarge_item_image.js" %}"></script>
+
+    <script language="JavaScript">
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
 {% endblock %}

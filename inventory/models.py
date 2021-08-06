@@ -109,6 +109,19 @@ class Item(models.Model):
     def __str__(self):
         return f'{self.__class__.__name__}: {self.name}'
 
+    def other_fields(self):
+        """ Returns a list of dicts with the model fields that are not defined in Item """
+        other_fields = []
+        exclude_names = ('id', 'name', 'description', 'image')
+        for field in self._meta.local_fields:
+            if field.name not in exclude_names:
+                other_fields.append({
+                    'name': field.name,
+                    'verbose_name': field.verbose_name,
+                    'value': getattr(self, field.name),
+                })
+        return other_fields
+
 
 def valid_item_class_ids():
     """ Returns a query parameter for ids of valid Item classes. Used for Ownership Content type validity """
