@@ -87,9 +87,14 @@ class MarkdownImage(models.Model):
     def clean(self):
         super().clean()
 
+        # Can only upload MarkdownImages for specific models
+        if self.content_type is not None:
+            if f"{self.content_type.app_label}.{self.content_type.model}" not in settings.MARKDOWN_IMAGE_MODELS:
+                raise ValidationError({'content_type': "MarkdownImages cannot be uploaded for this ContentType"})
+
         # Cannot have a content_type - object_id combination that does not exist
         if self.object_id is not None and self.content_object is None:
-            raise ValidationError({'object_id': 'The selected Content type does not have an object with this id'})
+            raise ValidationError({'object_id': 'The selected ContentType does not have an object with this id'})
 
     def __str__(self):
         return f"{self.content_type}-MarkdownImage ({self.id})"

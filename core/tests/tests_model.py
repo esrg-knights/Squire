@@ -1,7 +1,11 @@
-from django.test import TestCase
-from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
+from django.test import TestCase, override_settings
 
-from core.models import ExtendedUser, get_image_upload_path, PresetImage
+from core.models import ExtendedUser, get_image_upload_path, PresetImage, MarkdownImage
+
+User = get_user_model()
 
 ##################################################################################
 # Test cases for the models in core
@@ -13,7 +17,7 @@ class ExtendedUserTest(TestCase):
     def setUp(self):
         self.user = ExtendedUser(username='the_rock', password='password',
             first_name='Dwayne', last_name='Johnson', email='test@example.com')
-    
+
     # Tests the get_simple_display_name method
     def test_get_simple_display_name(self):
         user = ExtendedUser(username='blurp', password='password')
@@ -35,3 +39,34 @@ class PresetImageTest(TestCase):
         str_expected_upload_path = "images/presets/name-with-weird-characters.png"
         str_actual_upload_path = get_image_upload_path(presetimage, "filename.png")
         self.assertEqual(str_expected_upload_path, str_actual_upload_path)
+
+
+@override_settings(MARKDOWN_IMAGE_MODELS=['core.markdownimage'])
+class MarkdownImageTest(TestCase):
+    """
+        Tests related to the MarkdownImage class
+    """
+
+    def setUp(self):
+        self.content_type = ContentType.objects.get_for_model(MarkdownImage)
+
+    def test_clean_invalid_content_type(self):
+        """ Tests if objects cannot be created for ContentTypes not in the settings """
+        # Cannot create MarkdownImages for Users
+        md_img = MarkdownImage(content_type=ContentType.objects.get_for_model(User))
+        with self.assertRaisesMessage(ValidationError,
+                "MarkdownImages cannot be uploaded for this ContentType"):
+            md_img.clean()
+
+    def test_clean_invalid_content_object(self):
+        """ Tests if invalid ContentType-Object_id combinations are not allowed """
+        md_img = MarkdownImage(content_type=self.content_type, object_id=1234)
+        with self.assertRaisesMessage(ValidationError,
+                "The selected ContentType does not have an object with this id"):
+            md_img.clean()
+
+    def test_clean_ok(self):
+        """ Tests if the clean method passes if everything is valid """
+        rel_obj = MarkdownImage.objects.create(content_type=self.content_type)
+        md_img = MarkdownImage(content_type=self.content_type, object_id=rel_obj.id)
+        md_img.clean()
