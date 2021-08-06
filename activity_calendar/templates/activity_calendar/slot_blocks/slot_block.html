@@ -16,7 +16,7 @@
                     <div class="row no-gutters">
                         <small class="text-muted">
                             Alternative Location:
-                            {% if not activity_moment.private_slot_locations or user in slot.participants.all %}
+                            {% if not activity_moment.private_slot_locations or user in slot.participants.all or perms.activity_calendar.can_view_private_slot_locations %}
                                 {{ slot.location }}
                                 {% if activity_moment.private_slot_locations %}
                                     <i>(private)</i>

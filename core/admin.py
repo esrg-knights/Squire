@@ -1,18 +1,21 @@
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.admin.options import IncorrectLookupParameters
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import CharField, Value, Q
+from django.db.models import CharField, Q, Value
 from django.db.models.functions import Concat
 from django.urls import reverse
-from django.utils.html import escape, mark_safe
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
+from dynamic_preferences.admin import GlobalPreferenceAdmin
+from dynamic_preferences.models import GlobalPreferenceModel
 
-from .models import PresetImage, MarkdownImage
+from .models import MarkdownImage, PresetImage
 
 ###################################################
-from django.utils.translation import gettext_lazy as _
-
 # Backport of Django 3.1
 class EmptyFieldListFilter(admin.FieldListFilter): # pragma: no cover
     def __init__(self, field, request, params, model, model_admin, field_path):
@@ -122,3 +125,31 @@ class MarkdownImageAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 admin.site.register(MarkdownImage, MarkdownImageAdmin)
+
+
+# Global preferences admin panel.
+#   We want to change the way some preference fields are rendered
+class SquireGlobalPreferencesAdmin(GlobalPreferenceAdmin):
+    list_display = ('id', 'verbose_name', 'description', 'section_name')
+    list_display_links = ('id', 'verbose_name')
+
+    fields = ('verbose_name', 'description', 'raw_value', 'default_value', 'section_name')
+    readonly_fields = ('verbose_name', 'description', 'section_name', 'default_value')
+    search_fields = ['name', 'verbose_name', 'description', 'section']
+
+    # Description of the permission
+    def description(self, obj):
+        return obj.preference.description or '-'
+
+    # For MtM-relations, display text instead of primary keys
+    def default_value(self, obj):
+        if hasattr(obj.preference, 'default_display'):
+            return obj.preference.default_display
+        if hasattr(obj.preference, 'get_default_display'):
+            return obj.preference.get_default_display()
+        return obj.preference.default
+    default_value.short_description = _("Default Value")
+
+# Use our custom admin panel instead
+admin.site.unregister(GlobalPreferenceModel)
+admin.site.register(GlobalPreferenceModel, SquireGlobalPreferencesAdmin)

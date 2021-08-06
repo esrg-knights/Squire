@@ -1,9 +1,12 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
+from django.test.utils import override_settings
 
-from core.models import ExtendedUser, get_image_upload_path, PresetImage, MarkdownImage
+from core.models import (ExtendedUser, MarkdownImage, PresetImage,
+                         get_image_upload_path)
 
 User = get_user_model()
 
@@ -32,6 +35,7 @@ class ExtendedUserTest(TestCase):
         ExtendedUser.set_display_name_method(lambda x: f"{x.first_name} 'the Rock' {x.last_name}")
         self.assertEqual(self.user.get_display_name(), "Dwayne 'the Rock' Johnson")
 
+
 class PresetImageTest(TestCase):
     # Tests if the preset images are uploaded to the correct location
     def test_image_upload_path(self):
@@ -39,6 +43,23 @@ class PresetImageTest(TestCase):
         str_expected_upload_path = "images/presets/name-with-weird-characters.png"
         str_actual_upload_path = get_image_upload_path(presetimage, "filename.png")
         self.assertEqual(str_expected_upload_path, str_actual_upload_path)
+
+    @override_settings(AUTHENTICATION_BACKENDS=('django.contrib.auth.backends.ModelBackend',))
+    def test_get_images_for_user(self):
+        user = User.objects.create_user(username='user', password='password')
+        public_image = PresetImage.objects.create(name="public-image", image="", selectable=True)
+        non_selectable_image = PresetImage.objects.create(name="non-public-image", image="", selectable=False)
+
+        # User only has permission to choose selectable presetImages
+        images = set(PresetImage.objects.for_user(user))
+        self.assertSetEqual(images, {public_image})
+
+        # User can select all presetImages with the right permissions
+        user.user_permissions.add(Permission.objects.get(codename='can_select_presetimage_any'))
+        # Re-fetch user from database because of permission caching
+        user = User.objects.get(username=user)
+        images = set(PresetImage.objects.for_user(user))
+        self.assertSetEqual(images, {public_image, non_selectable_image})
 
 
 @override_settings(MARKDOWN_IMAGE_MODELS=['core.markdownimage'])
@@ -70,3 +91,4 @@ class MarkdownImageTest(TestCase):
         rel_obj = MarkdownImage.objects.create(content_type=self.content_type)
         md_img = MarkdownImage(content_type=self.content_type, object_id=rel_obj.id)
         md_img.clean()
+

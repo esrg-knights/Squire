@@ -17,6 +17,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from django.conf.urls import handler403, handler404
 
 urlpatterns = [
     #Change Language helper view
@@ -25,6 +26,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # Achievements
     path('', include('achievements.urls')),
+    # Inventory
+    path('inventory/', include(('inventory.urls', 'inventory'), namespace='inventory')),
     # Activity Calendar
     path('', include(('activity_calendar.urls', 'activity_calendar'), namespace='activity_calendar')),
     # Membership File
@@ -37,3 +40,7 @@ urlpatterns = [
 # https://docs.djangoproject.com/en/3.0/howto/static-files/#serving-files-uploaded-by-a-user
 # https://docs.djangoproject.com/en/3.0/howto/static-files/deployment/
 #
+
+
+handler403 = 'core.views.show_error_403'
+handler404 = 'core.views.show_error_404'

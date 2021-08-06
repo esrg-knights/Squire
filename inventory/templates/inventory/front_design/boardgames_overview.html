@@ -1,0 +1,128 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load paginator %}
+{% load inventory_tags %}
+{% load to_member %}
+
+{% block title %}
+    Squire - Boardgames
+{% endblock title %}
+
+{% block content-frame-class %}
+ container
+{% endblock %}
+
+
+{% block content %}
+    <h1>Availlable board games</h1>
+
+
+    {% include "utils/snippets/filter_form_snippet.html" with form=filter_form %}
+
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr class="">
+                    <th scope="col"></th>
+                    <th scope="col">Title</th>
+                    <th scope="col">Owned by</th>
+                    <th scope="col" colspan="2" class="text-center">Info</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for boardgame in boardgames %}
+                <tr>
+                    <td>
+                        {% if boardgame.image %}
+                            <a class="enlargable_image" data-imgurl="{{ boardgame.image.url }}">
+                            <div class="enlargable_image"
+                                style="background-size: contain; background-position: center;
+                                    background-image: url('{{ boardgame.image.url }}');
+                                    background-repeat: no-repeat; width: 4em; height: 4em;"></div>
+                            </a>
+                        {% else %}
+                            <div
+                                style="background-size: contain; background-position: center;
+                                    background-image: url('{% static 'images/header_logo.png' %}');
+                                    background-repeat: no-repeat; width: 4em; height: 4em;"></div>
+
+                        {% endif %}
+                    </td>
+                    <td class="w-50">
+                        <div class="font-weight-bold">{{ boardgame.name }}
+                            {% if boardgame.is_owned_by_association %}
+                                <img style="height: 1em;" src="{% static 'images/header_logo.png' %}">
+                            {% endif %}
+                            {% if boardgame|get_owned_by:user %}
+                                <span class="badge badge-pill badge-light">Yours</span>
+                            {% endif %}
+                        </div>
+                        <div><small>{{ boardgame.description }}</small></div>
+                    </td>
+                    <td>
+                        <small>
+                            {% if user|is_member %}
+                                {% for owner in boardgame.currently_in_possession %}
+                                    {{ owner.owner }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                {% if boardgame.is_owned_by_association %}
+                                    Knights
+                                {% else %}
+                                    Loaned by member
+                                {% endif %}
+                            {% endif %}
+                        </small>
+                    </td>
+                    <td>
+                        {% if boardgame.achievements.all %}
+                            <div class="d-flex flex-row justify-content-end">
+                                <div>
+                                <a class="btn btn-sm btn-outline-primary"
+                                   href="{% url "achievements/all" %}">
+                                    Achievement
+                                </a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td class="pl-0">
+                        {% if boardgame.bgg_id %}
+                            <div class="d-flex flex-row justify-content-end">
+                                <div>
+                                    <a class="btn btn-sm btn-outline-info"
+                                       target="_blank" rel="noopener noreferrer"
+                                       href="https://boardgamegeek.com/boardgame/{{ boardgame.bgg_id }}/">Check on
+                                        <img style="height: 1em;" src="https://cf.geekdo-static.com/icons/favicon2.ico">BGG
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% render_paginator %}
+
+    {% if perms.inventory.can_maintain_boardgame_ownerships %}
+        <div class="d-flex justify-content-end">
+            <a href="{% url "inventory:catalogue" type_id=content_type.id %}"
+               class="btn btn-secondary">
+                Maintain catalogue
+            </a>
+        </div>
+    {% endif %}
+
+    {% include "inventory/snippets/snippet_enlarged_image_modal.html" %}
+
+{% endblock %}
+
+
+{% block js_bottom %}
+    {{ block.super }}
+    <script src="{% static "js/enlarge_item_image.js" %}"></script>
+{% endblock %}

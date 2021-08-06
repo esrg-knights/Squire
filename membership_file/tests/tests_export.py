@@ -3,7 +3,7 @@ import os
 from django.conf import settings
 from django.test import TestCase, override_settings
 
-from core.util import suppress_warnings
+from core.tests.util import suppress_warnings
 from membership_file.models import Member
 
 output_path = os.path.join(settings.BASE_DIR, 'test', 'output')

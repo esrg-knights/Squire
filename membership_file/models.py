@@ -36,37 +36,43 @@ class MemberUser(User):
     # Checks whether a given user is a member
     def is_member(self):
         member = self.get_member()
-        return member is not None and not member.is_deregistered
+        return member is not None and member.is_considered_member()
 
 
 ##################################################################################
 
 # The Member model represents a Member in the membership file
 class Member(models.Model):
+
+    class Meta:
+        permissions = [
+            ('can_view_membership_information_self',    "[F] Can view their own membership information."),
+            ('can_change_membership_information_self',  "[F] Can edit their own membership information."),
+        ]
+
     # The User that is linked to this member
     # NB: Only one user can be linked to one member at the same time!
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete = models.SET_NULL,
         blank = True,
-        null = True,        
-        related_name = "related_user",
+        null = True,
+        related_name = "member",
         )
 
     ##################################
     # NAME
     ##################################
-    initials_regex = RegexValidator(regex=r'^([A-Z]\.)+$', message="Initials must be capital letters only, and must be separated by dots. E.g. A.B.")
-    initials = models.CharField(validators=[initials_regex], max_length=15, null=True, help_text="Initials as known by your Educational Institution.")
-    first_name = models.CharField(max_length=255)
-    tussenvoegsel = models.CharField(max_length=255, blank=True, null=True)
+    legal_name = models.CharField(max_length=255, help_text="Legal name as known by your Educational Institution or on your ID-card.")
+    first_name = models.CharField(max_length=255, verbose_name="given name")
+    tussenvoegsel = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255)
-    
+
     ##################################
     # STUDENT INFORMATION
     ##################################
-    student_number = models.CharField(max_length=15, blank=True, null=True, unique=True)
-    educational_institution = models.CharField(max_length=255)
+    student_number = models.CharField(max_length=15, blank=True)
+    educational_institution = models.CharField(max_length=255, blank=True, default="TU/e")
 
     ##################################
     # CARD NUMBERS
@@ -75,18 +81,24 @@ class Member(models.Model):
     ##################################
     tue_card_number_regex = RegexValidator(regex=r'^[0-9]{7}$', message="TUe card numbers must only consist of exactly 7 numbers. E.g. 1234567")
     tue_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, blank=True, null=True, unique=True, verbose_name="TUe card number")
-    
+
     external_card_digits_regex = RegexValidator(regex=r'^[0-9]{3}$', message="External card digits must consist of exactly 3 digits. E.g. 012")
-    
+
     # External card uses the same number formatting as Tue cards, but its number does not necessarily need to be unique
-    external_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, blank=True, null=True, help_text="External cards are blue, whereas Tu/e cards are (currently) orange.")
+    external_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, null=True, blank=True, help_text="External cards are blue, whereas Tu/e cards are (currently) orange.")
     # 3-digit code at the bottom of a card
-    external_card_digits = models.CharField(validators=[external_card_digits_regex], max_length=3, blank=True, null=True, verbose_name="digits")
+    external_card_digits = models.CharField(validators=[external_card_digits_regex], max_length=3, blank=True, verbose_name="digits")
     # The cluster contains additional information of an external card
-    external_card_cluster = models.CharField(max_length=255, blank=True, null=True, verbose_name="cluster") 
+    external_card_cluster = models.CharField(max_length=255, blank=True, verbose_name="cluster")
+
+    # External cards require a deposit, which has changed over the years
+    external_card_deposit = models.DecimalField(validators=[MinValueValidator(0)], max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="deposit (€)", help_text="External cards require a deposit.")
 
     # External card number and digit-pairs are a unique combination
     unique_together = [['external_card_number', 'external_card_digits']]
+
+    key_id_regex = RegexValidator(regex=r'^[0-9]{4}$', message="Key IDs consist of exactly 4 digits. E.g. 0123")
+    key_id = models.CharField(validators=[key_id_regex], max_length=7, blank=True, null=True, unique=True, help_text="A 4-digit code used to access the keysafe.")
 
     ##################################
     # CONTACT INFORMATION
@@ -99,19 +111,19 @@ class Member(models.Model):
     phone_number = models.CharField(validators=[phone_regex], max_length=16, blank=True, null=True, unique=True, help_text="A phone number is required if you want access to our rooms.")
 
     # Address of the member
-    street = models.CharField(max_length=255)
-    house_number = models.IntegerField(validators=[MinValueValidator(1)], default=1)
-    house_number_addition = models.CharField(max_length=255, blank=True, null=True, verbose_name="addition")
-    city = models.CharField(max_length=255)
-    #NB: States/Province are not always necessary for addresses
-    state = models.CharField(max_length=255, blank=True, null=True, verbose_name="state/province")
-    country = models.CharField(max_length=255, default="NL")
+    street = models.CharField(max_length=255, blank=True)
+    house_number = models.IntegerField(validators=[MinValueValidator(1)], blank=True, null=True)
+    house_number_addition = models.CharField(max_length=255, blank=True, verbose_name="addition")
+    # No postal code RegEx as those have different formats in different countries (e.g. Belgium doesn't use two trailing letters)
+    postal_code = models.CharField(max_length=15, blank=True)
+    city = models.CharField(max_length=255, blank=True, default="Eindhoven")
+    country = models.CharField(max_length=255, blank=True, default="The Netherlands")
 
     ##################################
     # OTHER INFORMATION
     ##################################
     # The date of birth of the member
-    date_of_birth = models.DateField(default=datetime.date(1970,1,1))
+    date_of_birth = models.DateField(blank=True, null=True)
 
     # The date at which the member became a member (automatically handled, but is overridable)
     member_since = models.DateField(default=date.today)
@@ -125,7 +137,7 @@ class Member(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete = models.SET_NULL,
         blank = True,
-        null = True,        
+        null = True,
         related_name = "last_updated_by_user",
     )
 
@@ -133,18 +145,27 @@ class Member(models.Model):
     # can permanently delete the member
     marked_for_deletion = models.BooleanField(default=False)
 
+    # Other membership statuses
     is_deregistered = models.BooleanField(default=False, help_text="Use this if you need to store (contact) information of someone who is not a member anymore.")
-    
+    is_honorary_member = models.BooleanField(default=False, help_text="Honorary members can stay members forever and do not need to pay a membership fee.")
+    has_paid_membership_fee = models.BooleanField(default=False)
+
+    # Any additional information that cannot be stored in other fields (e.g., preferred pronouns)
+    notes = models.TextField(blank=True, help_text="Notes are invisible to members.")
+
+    def is_considered_member(self):
+        return not self.is_deregistered
+
     ##################################
     # STRING REPRESENTATION METHODS
     ##################################
     # String-representation of an instance of a Member
     def __str__(self):
-        return self.get_full_name() + " ({0})".format(self.id)
+        return self.get_full_name()
 
     # Gets the name of the member
     def get_full_name(self):
-        if self.tussenvoegsel is not None:
+        if self.tussenvoegsel:
             return "{0} {1} {2}".format(self.first_name, self.tussenvoegsel, self.last_name)
         return "{0} {1}".format(self.first_name, self.last_name)
 
@@ -158,35 +179,63 @@ class Member(models.Model):
         if updater.id == self.id:
             return 'You'
         return updater.get_full_name()
-    
+
     # Displays the external card number of the member
     def display_external_card_number(self):
         if self.external_card_number is None:
             return None
-        if self.external_card_cluster is None:
+
+        display_card = self.external_card_number
+        if self.external_card_digits:
+            # Not all external card have a 3-digit code (E.g. parking cards)
+            display_card += f"-{self.external_card_digits}"
+
+        if self.external_card_cluster:
             # Not all external cards have a cluster
-            return "{0}-{1}".format(self.external_card_number, self.external_card_digits)
-        if self.external_card_digits is None:
-            # Not all external cards have a 3-digit code (E.g. parking cards)
-            return "{0} ({1})".format(self.external_card_number, self.external_card_cluster)
-        return "{0}-{1} ({2})".format(self.external_card_number, self.external_card_digits, self.external_card_cluster)
+            display_card += f" ({self.external_card_cluster})"
+
+        return display_card
 
     # Displays a user's address
     def display_address(self):
+        if not self.city:
+            # Return nothing if the address is not provided
+            return None
+
         house_number = str(self.house_number)
-        if self.house_number_addition is not None:
+        if self.house_number_addition:
             # If the house number starts with a number, add a dash
             if not self.house_number_addition[:1].isalpha():
                 house_number += '-'
             house_number += self.house_number_addition
+        # <Street> <Number><Addition>; <Postal>, <City> (<Country>)
+        return "{0} {1}; {2}, {3} ({4})".format(self.street, house_number, self.postal_code, self.city, self.country)
 
-        return "{0} {1}, {2}, {3}{4}".format(self.street, house_number, self.city, 
-            "" if self.state is None else f"{self.state}, ", self.country)
+##################################################################################
+
+class Room(models.Model):
+    class Meta:
+        ordering = ['access', 'id']
+
+    name = models.CharField(max_length=63)
+    access = models.CharField(max_length=15, help_text="How access is provided. E.g. 'Key 12' or 'Campus Card'")
+    notes = models.TextField(blank=True)
+
+    # Members who have access to this room
+    #   If access should be revoked temporarily (e.g., due to a suspension), this can be stored
+    #   in the member's notes-field instead
+    members_with_access = models.ManyToManyField(Member, blank=True, related_name='accessible_rooms')
+
+    def __str__(self):
+        return f"{self.name} ({self.access})"
 
 ##################################################################################
 
 # The MemberLog Model represents a log entry that is created whenever membership data is updated
 class MemberLog(models.Model):
+
+    MEMBERLOG_IGNORE_FIELDS = ['last_updated_date', 'last_updated_by']
+
     # The user that updated the information
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -194,7 +243,7 @@ class MemberLog(models.Model):
         related_name = "user_that_updated",
         null = True,
         )
-    
+
     # The member whose information was updated
     member = models.ForeignKey(
         Member,
@@ -223,7 +272,7 @@ class MemberLog(models.Model):
     # String-representation of an instance of a MemberLog
     def __str__(self):
         return "[{3}] {1} updated {2}'s information ({0})".format(self.id, self.user, self.member, self.log_type)
-    
+
 
 # The MemberLogField Model represents an updated field in a MemberLog object
 class MemberLogField(models.Model):

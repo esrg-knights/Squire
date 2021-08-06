@@ -1,9 +1,15 @@
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+
+from inventory.models import valid_item_class_ids
 
 from core.models import ExtendedUser as User
 from membership_file.util import user_to_member
+
+__all__ = ['Category', 'Achievement', 'Claimant', 'AchievementItemLink']
 
 import os
 
@@ -12,7 +18,7 @@ class Category(models.Model):
     class Meta:
         # Enabled proper plurality
         verbose_name_plural = "categories"
-        
+
         # Sort by priority, then name, then Id
         ordering = ['priority', 'name','id']
 
@@ -24,7 +30,7 @@ class Category(models.Model):
         return self.name
 
 # Gets or creates the default Category
-def get_or_create_default_category():  
+def get_or_create_default_category():
     return Category.objects.get_or_create(name='General', description='Contains Achievements that do not belong to any other Category.')[0]
 
 # File path to upload achievement images to
@@ -38,6 +44,12 @@ def get_achievement_image_upload_path(instance, filename):
 
 # Achievements that can be earned by users
 class Achievement(models.Model):
+    class Meta:
+        ordering = ['name','id']
+        permissions = [
+            ("can_view_claimants", "[F] Can view the claimants of Achievements."),
+        ]
+
     # Basic Information
     name = models.CharField(max_length=63)
     description = models.TextField(max_length=255)
@@ -47,7 +59,7 @@ class Achievement(models.Model):
     claimants = models.ManyToManyField(User, blank=True, through="Claimant", related_name="claimant_info")
 
     # Achievement Icon
-    image = models.ImageField(upload_to=get_achievement_image_upload_path) 
+    image = models.ImageField(upload_to=get_achievement_image_upload_path)
 
     # Text used to display unlocked status. Can be used to display extra data for high scores.
     # {0} User
@@ -82,23 +94,18 @@ class Achievement(models.Model):
     # Whether the achievement can be accessed outside the admin panel
     is_public = models.BooleanField(default=True)
 
-    class Meta:
-        permissions = [
-            ("can_view_claimants", "Can view the claimants of Achievements"),
-        ]
-        ordering = ['name','id']
-
     def __str__(self):
         return self.name
 
-    # Checks whether a given user can view this achievement's claimants
-    @staticmethod
-    def user_can_view_claimants(user):
-        if user is None:
-            return False
-        
-        # TODO: Work with Permission System
-        return user.is_authenticated and user_to_member(user).is_member()
+class AchievementItemLink(models.Model):
+    """ Links an achievement with an item (e.g. boardgame) """
+    achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, limit_choices_to=valid_item_class_ids)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    def __str__(self):
+        return f'{self.achievement} linked to {self.content_object}'
 
 
 # Represents a user earning an achievement

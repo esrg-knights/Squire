@@ -7,7 +7,7 @@ from django.core.validators import ValidationError
 
 from .models import ActivitySlot, Activity, Participant, ActivityMoment
 from core.forms import MarkdownForm
-
+from core.models import PresetImage
 
 ##################################################################################
 # Defines forms related to the membership file.
@@ -71,21 +71,22 @@ class RegisterAcitivityMixin:
         :param data: Given data to validate to.
         :return: Raises ValidationError or returns None """
         if not self.activity_moment.is_open_for_subscriptions():
-            raise ValidationError(_("Subscriptions are currently closed."), code='closed')
+            if not self.user.has_perm('activity_calendar.can_register_outside_registration_period'):
+                raise ValidationError(_("Subscriptions are currently closed."), code='closed')
 
         # Check if, when signing up, there is still room (because max is limited)
         if data['sign_up'] and self.activity_moment.max_participants != -1:
-                # get the number of participants
-                num_participants = Participant.objects.filter(
-                    activity_slot__parent_activity=self.activity,
-                    activity_slot__recurrence_id=self.recurrence_id
-                ).count()
-                # check the number of participants
-                if self.activity_moment.get_subscribed_users().count() >= self.activity_moment.max_participants:
-                    raise ValidationError(
-                        _(f"This activity is already at maximum capacity."),
-                        code='activity-full'
-                )
+            # get the number of participants
+            num_participants = Participant.objects.filter(
+                activity_slot__parent_activity=self.activity,
+                activity_slot__recurrence_id=self.recurrence_id
+            ).count()
+            # check the number of participants
+            if self.activity_moment.get_subscribed_users().count() >= self.activity_moment.max_participants:
+                raise ValidationError(
+                    _(f"This activity is already at maximum capacity."),
+                    code='activity-full'
+            )
 
     def get_first_error_code(self):
         """ Returns the error code from the first invalidation error found"""
@@ -180,10 +181,10 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
 
         self.check_slot_validity(data, slot_obj)
 
-        # Can only subscribe to at most X slots
-        user_subscriptions = self.activity_moment.get_user_subscriptions(user=self.user)
-
         if data['sign_up']:
+            # Can only subscribe to at most X slots
+            user_subscriptions = self.activity_moment.get_user_subscriptions(user=self.user)
+
             # If attempting a sign-up, test that the user is allowed to join one (additonal) slot
             if self.activity.max_slots_join_per_participant != -1 and \
                     user_subscriptions.count() >= self.activity.max_slots_join_per_participant:
@@ -218,7 +219,7 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
             # There is still room in this slot
             if slot_obj.max_participants != -1 and slot_obj.participants.count() >= slot_obj.max_participants:
                 raise ValidationError(
-                    _("This slot is already at maximum capacity. You can not subscribe to it."),
+                    _("This slot is already at maximum capacity. You cannot subscribe to it."),
                     code='slot-full'
                 )
         else:
@@ -247,15 +248,28 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
     class Meta:
         model = ActivitySlot
-        fields = ['title', 'description', 'location', 'max_participants']
+        fields = ['title', 'description', 'location', 'image', 'max_participants']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if not self.user.has_perm('activity_calendar.can_select_slot_image'):
+            # User does not have the required permissions to select an alternative slot image
+            # Remove the field
+            del self.fields['image']
+        else:
+            # Get the PrestImages available to the user
+            self.fields['image'].queryset = PresetImage.objects.for_user(self.user)
+
 
     def check_validity(self, data):
         super(RegisterNewSlotForm, self).check_validity(data)
 
         # Is user allowed to create a slot
-        if self.activity.slot_creation == Activity.SLOT_CREATION_STAFF and self.user.is_staff:
+        if self.activity.slot_creation == Activity.SLOT_CREATION_USER:
             pass
-        elif self.activity.slot_creation == Activity.SLOT_CREATION_USER:
+        elif self.activity.slot_creation == Activity.SLOT_CREATION_STAFF \
+                and self.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type'):
             pass
         else:
             raise ValidationError(
@@ -275,12 +289,13 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
                 )
 
         # Check cap for number of slots
-        if self.activity.max_slots != -1 and \
-                self.activity.max_slots <= self.activity_moment.get_slots().count():
-            raise ValidationError(
-                _("Maximum number of slots already claimed"),
-                code='max-slots-claimed'
-            )
+        if not self.user.has_perm('activity_calendar.can_ignore_slot_creation_limits'):
+            if self.activity.max_slots != -1 and \
+                    self.activity.max_slots <= self.activity_moment.get_slots().count():
+                raise ValidationError(
+                    _("Maximum number of slots already claimed"),
+                    code='max-slots-claimed'
+                )
 
     def save(self, commit=True):
         # Set fixed attributes

@@ -52,6 +52,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # External Libraries
     'bootstrap4',
+    'dynamic_preferences',
+    # comment the following line if you don't want to use user preferences
+    # 'dynamic_preferences.users.apps.UserPreferencesConfig',
     'recurrence',
     'rest_framework',
     # Internal Components
@@ -59,6 +62,9 @@ INSTALLED_APPS = [
     'achievements',
     'activity_calendar',
     'membership_file',
+    'inventory',
+    'committees',
+    'utils',
     # More External Libraries
     'django_cleanup.apps.CleanupConfig',
     'martor',
@@ -76,6 +82,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'core.backends.BaseUserBackend',
+]
+
 ROOT_URLCONF = 'squire.urls'
 
 TEMPLATES = [
@@ -91,6 +102,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'dynamic_preferences.processors.global_preferences',
             ],
         },
     },

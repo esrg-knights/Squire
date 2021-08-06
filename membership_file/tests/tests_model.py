@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from membership_file.models import Member, get_member_display_name, MemberLog, MemberLogField
+from membership_file.models import Member, get_member_display_name, MemberLog, MemberLogField, Room
 from membership_file.models import MemberUser as User
 
 
@@ -17,12 +17,12 @@ class MemberModelTest(TestCase):
     # Tests whether a member is displayed correctly
     def test_member_display_method(self):
         # Member has the correct display method
-        user = User.objects.filter(username="test_user").first()
+        user = User.objects.filter(username="test_member").first()
         display_str = get_member_display_name(user)
-        self.assertEqual(display_str, Member.objects.filter(user__username="test_user").first().get_full_name())
+        self.assertEqual(display_str, Member.objects.filter(user__username="test_member").first().get_full_name())
 
         # Non-Member has the correct display method
-        user = User.objects.filter(username="test_user_alt").first()
+        user = User.objects.filter(username="test_user").first()
         display_str = get_member_display_name(user)
         self.assertEqual(display_str, user.get_simple_display_name())
 
@@ -35,3 +35,11 @@ class MemberModelTest(TestCase):
     def test_memberlogfield_display(self):
         memberlogfield = MemberLogField(id=2, field="name", old_value="Bob", new_value="Charlie")
         self.assertEqual(str(memberlogfield), f"name was updated: <Bob> -> <Charlie> (2)")
+
+
+# Tests methods related to the Room model
+class RoomModelTest(TestCase):
+    # Tests the display method of Room
+    def test_room_display(self):
+        room = Room(id=2, name='Basement', access='Keycard')
+        self.assertEqual(str(room), "Basement (Keycard)")

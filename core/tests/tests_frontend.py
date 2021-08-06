@@ -3,7 +3,7 @@ from django.conf import settings
 
 from core.forms import LoginForm, RegisterForm
 from core.models import ExtendedUser as User
-from core.tests.util import checkAccessPermissions, PermissionLevel
+from core.tests.util import check_http_response, TestPublicUser, TestAccountUser
 
 ##################################################################################
 # Test cases for core
@@ -12,39 +12,41 @@ from core.tests.util import checkAccessPermissions, PermissionLevel
 
 # Tests whether front-end pages can be accessed
 class FrontEndTest(TestCase):
-    fixtures = ['test_users.json']
+    fixtures = TestAccountUser.get_fixtures()
 
     # Tests if the homepage can be accessed
     def test_homepage(self):
-        checkAccessPermissions(self, '/', 'get', PermissionLevel.LEVEL_PUBLIC)
+        check_http_response(self, '/', 'get', TestPublicUser)
 
     # Tests if the login page can be accessed
     def test_login(self):
-        checkAccessPermissions(self, settings.LOGIN_URL, 'get', PermissionLevel.LEVEL_PUBLIC)
+        check_http_response(self, settings.LOGIN_URL, 'get', TestPublicUser)
 
     # Tests if the logout-success page can be accessed
     def test_logout_success(self):
-        checkAccessPermissions(self, settings.LOGOUT_REDIRECT_URL, 'get', PermissionLevel.LEVEL_PUBLIC)
-    
+        check_http_response(self, settings.LOGOUT_REDIRECT_URL, 'get', TestPublicUser)
+
     # Tests if the logout-success page can be accessed if logged in
     def test_logout_success_when_logged_in(self):
-        checkAccessPermissions(self, settings.LOGOUT_REDIRECT_URL, 'get', PermissionLevel.LEVEL_USER, redirectUrl=settings.LOGOUT_REDIRECT_URL)
+        check_http_response(self, settings.LOGOUT_REDIRECT_URL, 'get', TestAccountUser,
+            redirect_url=settings.LOGOUT_REDIRECT_URL)
 
     # Tests if the account page can be accessed
     def test_account(self):
-        checkAccessPermissions(self, '/account', 'get', PermissionLevel.LEVEL_USER)
+        check_http_response(self, '/account', 'get', TestAccountUser)
 
     # Tests if the logout page can be accessed if not logged in
     def test_logout_redirect(self):
-        checkAccessPermissions(self, settings.LOGOUT_URL, 'get', PermissionLevel.LEVEL_PUBLIC, redirectUrl=settings.LOGOUT_REDIRECT_URL)
+        check_http_response(self, settings.LOGOUT_URL, 'get', TestPublicUser,
+            redirect_url=settings.LOGOUT_REDIRECT_URL)
 
     # Tests if the register-page can be accessed
     def test_register(self):
-        checkAccessPermissions(self, '/register', 'get', PermissionLevel.LEVEL_PUBLIC)
+        check_http_response(self, '/register', 'get', TestPublicUser)
 
     # Tests if the register-success page can be accessed
     def test_register_success(self):
-        checkAccessPermissions(self, '/register/success', 'get', PermissionLevel.LEVEL_PUBLIC)
+        check_http_response(self, '/register/success', 'get', TestPublicUser)
 
 
 # Tests the login form
@@ -59,20 +61,20 @@ class LoginFormTest(TestCase):
     def test_form_correct(self):
         form_data = {
             'username': 'its-a-me',
-            'password': 'mario',        
+            'password': 'mario',
         }
         form = LoginForm(data=form_data)
         # Data that was entered is correct
         self.assertTrue(form.is_valid())
-    
+
     # Test if a login is disallowed if the username-password pair are incorrect
     def test_form_incorrect(self):
         form_data = {
             'username': 'its-a-me',
-            'password': 'luigi',        
+            'password': 'luigi',
         }
         form = LoginForm(data=form_data)
-        
+
         # Data that was entered is incorrect
         self.assertFalse(form.is_valid())
 
@@ -80,17 +82,17 @@ class LoginFormTest(TestCase):
         self.assertEqual(len(form.errors.as_data()), 1)
         self.assertEqual(len(form.non_field_errors().as_data()), 1)
         self.assertEqual(form.non_field_errors().as_data()[0].code, 'ERROR_INVALID_LOGIN')
-        
+
     # Test if a login is disallowed if the username is missing
     def test_form_username_missing(self):
         form_data = {
-            'password': 'wario',        
+            'password': 'wario',
         }
         form = LoginForm(data=form_data)
-        
+
         # Data that was entered is incorrect
         self.assertFalse(form.is_valid())
-        
+
         # Ensure that only one error was given
         self.assertTrue(form.has_error('username'))
         self.assertEqual(len(form.errors.as_data()), 1)
@@ -110,7 +112,7 @@ class RegisterFormTest(TestCase):
             'username': 'schaduwkandi',
             'password1': 'bestaatookniet',
             'password2': 'bestaatookniet',
-            'email': 'kandi@example.com', 
+            'email': 'kandi@example.com',
             'nickname': 'wijbestaanniet',
         }
         form = RegisterForm(data=form_data)
@@ -129,7 +131,7 @@ class RegisterFormTest(TestCase):
         self.assertIsNone(user)
 
         # Ensure the correct data is saved
-        form.save(commit=True)  
+        form.save(commit=True)
         user = User.objects.filter(username='schaduwkandi').first()
         self.assertIsNotNone(user)
         self.assertEquals(user.email, 'kandi@example.com')
@@ -139,13 +141,13 @@ class RegisterFormTest(TestCase):
     # Test if a registering fails if required fields are missing
     def test_form_fields_missing(self):
         form_data = {
-            'nickname': 'empty',       
+            'nickname': 'empty',
         }
         form = RegisterForm(data=form_data)
-        
+
         # Data that was entered is incorrect
         self.assertFalse(form.is_valid())
-        
+
         # Ensure that only one error was given per missing field
         self.assertTrue(form.has_error('username'))
         self.assertEqual(len(form.errors.as_data()['username']), 1)
@@ -163,32 +165,32 @@ class RegisterFormTest(TestCase):
             'username': 'schaduwkandi',
             'password1': 'bestaatookniet',
             'password2': 'nomatch',
-            'email': 'kandi@example.com', 
+            'email': 'kandi@example.com',
             'nickname': 'wijbestaanniet',
         }
         form = RegisterForm(data=form_data)
-        
+
         # Data that was entered is incorrect
         self.assertFalse(form.is_valid())
-        
+
         # Ensure that only one error was given
         self.assertTrue(form.has_error('password2'))
         self.assertEqual(len(form.errors.as_data()['password2']), 1)
-   
+
     # Test if a registering fails if username or email was already chosen by another user
     def test_form_duplicate_field(self):
         form_data = {
             'username': 'schaduwbestuur',
             'password1': 'secret',
             'password2': 'secret',
-            'email': 'rva@example.com', 
+            'email': 'rva@example.com',
             'nickname': 'wijbestaanniet',
         }
         form = RegisterForm(data=form_data)
-        
+
         # Data that was entered is incorrect
         self.assertFalse(form.is_valid())
-        
+
         # Ensure that only one error was given
         self.assertTrue(form.has_error('username'))
         self.assertEqual(len(form.errors.as_data()['username']), 1)
@@ -198,7 +200,7 @@ class RegisterFormTest(TestCase):
 
 # Tests the registerForm view
 class RegisterFormViewTest(TestCase):
-    fixtures = ['test_users.json']
+    fixtures = TestAccountUser.get_fixtures()
 
     # Tests if redirected when form data was entered correctly
     def test_success_redirect(self):
@@ -208,9 +210,9 @@ class RegisterFormViewTest(TestCase):
             'password2': 'thisactuallyneedstobeagoodpassword',
             'email': 'email@example.com',
         }
-        checkAccessPermissions(self, '/register', 'post', PermissionLevel.LEVEL_PUBLIC,
-                redirectUrl='/register/success', data=form_data)
-        
+        check_http_response(self, '/register', 'post', TestPublicUser,
+                redirect_url='/register/success', data=form_data)
+
         user = User.objects.filter(username='username').first()
         self.assertIsNotNone(user)
         self.assertEquals(user.email, 'email@example.com')
@@ -225,7 +227,7 @@ class RegisterFormViewTest(TestCase):
             'password2': 'password',
             'email': 'email@example.com',
         }
-        checkAccessPermissions(self, '/register', 'post', PermissionLevel.LEVEL_PUBLIC, data=form_data)
+        check_http_response(self, '/register', 'post', TestPublicUser, data=form_data)
 
         user = User.objects.filter(username='username').first()
         self.assertIsNone(user)

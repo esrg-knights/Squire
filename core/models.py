@@ -36,6 +36,7 @@ class ExtendedUser(User):
     def __str__(self):
         return self.get_display_name()
 
+
 # File path to upload achievement images to
 def get_image_upload_path(instance, filename):
     # Obtain extension
@@ -46,8 +47,21 @@ def get_image_upload_path(instance, filename):
     return 'images/presets/{0}{1}'.format(slugify(instance.name), extension)
 
 
+class PresetImageManager(models.Manager):
+    def for_user(self, user):
+        if user.has_perm('core.can_select_presetimage_any'):
+            return self.get_queryset()
+        return self.get_queryset().filter(selectable=True)
+
 # A general model allowing the storage of images
 class PresetImage(models.Model):
+    class Meta:
+        permissions = [
+            ('can_select_presetimage_any',  "[F] Can choose PresetImages that are normally not selectable."),
+        ]
+
+    objects = PresetImageManager()
+
     name = models.CharField(max_length=63)
     image = models.ImageField(upload_to=get_image_upload_path)
     selectable = models.BooleanField(default=True)

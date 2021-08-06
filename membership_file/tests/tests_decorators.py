@@ -24,13 +24,26 @@ def test_decorator(test, decorator, decorator_params={}, request_url="/some_url"
 
     if user is None:
         user = AnonymousUser()
-    
-    # Apply the decorator with the given parameters
-    @decorator(**decorator_params)
-    def some_view(request):
-        if view is None:
-            return HttpResponse()
-        return view(request)
+
+    if decorator_params is None:
+        # Apply the decorator without parameters
+        @decorator
+        def some_view(request):
+            if view is None:
+                return HttpResponse()
+            return view(request)
+    else:
+        # If no parameters are passed, also test @decorator syntax (note the absense of brackets after the decorator)
+        if not decorator_params:
+            test_decorator(test, decorator, decorator_params=None, request_url=request_url, view=view,
+                factory=factory, user=user, redirect_url=redirect_url)
+
+        # Apply the decorator with the given parameters
+        @decorator(**decorator_params)
+        def some_view(request):
+            if view is None:
+                return HttpResponse()
+            return view(request)
 
     # Make the request
     request = factory.get(request_url)
@@ -45,7 +58,7 @@ def test_decorator(test, decorator, decorator_params={}, request_url="/some_url"
     else:
         # Should not be redirected
         test.assertEqual(response.status_code, 200)
-    
+
     # Return the response in case the calling method wants to test more
     return response
 
@@ -56,8 +69,8 @@ class MembershipRequiredDecoratorTest(TestCase):
     fixtures = ['test_users.json', 'test_members.json']
 
     def setUp(self):
-        self.member_user = User.objects.filter(username="test_user").first()
-        self.nonmember_user = User.objects.filter(username="test_user_alt").first()
+        self.member_user = User.objects.filter(username="test_member").first()
+        self.nonmember_user = User.objects.filter(username="test_user").first()
         self.factory = RequestFactory()
 
     # Tests if members are not redirected to the fail page
@@ -93,7 +106,7 @@ class RequestMemberDecoratorTest(TestCase):
     fixtures = ['test_users.json', 'test_members.json']
 
     def setUp(self):
-        self.member_user = User.objects.filter(username="test_user").first()
+        self.member_user = User.objects.filter(username="test_member").first()
         self.factory = RequestFactory()
 
     # Tests if request.user becomes a MemberUser if logged in users make a request

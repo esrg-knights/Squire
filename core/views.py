@@ -161,3 +161,10 @@ class MartorImageUploadAPIView(LoginRequiredMixin, PermissionRequiredMixin, View
             'link':  markdown_img.image.url,
             'name': os.path.splitext(uploaded_file.name)[0]
         })
+
+def show_error_403(request, exception=None):
+    return render(request, 'core/errors/error403.html', status=403)
+
+
+def show_error_404(request, exception=None):
+    return render(request, 'core/errors/error404.html', status=404)

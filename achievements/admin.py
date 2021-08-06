@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Achievement, Claimant
+from .models import *
 
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
@@ -19,4 +19,4 @@ class AchievementAdmin(admin.ModelAdmin):
     inlines = [ClaimantInline]
 
 admin.site.register(Achievement, AchievementAdmin)
-
+admin.site.register(AchievementItemLink)
