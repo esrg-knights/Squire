@@ -406,6 +406,12 @@ class TestAddLinkCommitteeView(ViewValidityMixin, TestCase):
         )
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
 
+    def test_success_url(self):
+        # Test redirect_param
+        data = {'committee': 2}
+        url = self.get_base_url()+'?redirect_to=/alt_url/'
+        response = self.client.post(url, data=data, follow=False)
+        self.assertRedirects(response, '/alt_url/', fetch_redirect_response=False)
 
 class TestAddLinkMemberView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
@@ -455,6 +461,12 @@ class TestAddLinkMemberView(ViewValidityMixin, TestCase):
         )
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
 
+    def test_success_url(self):
+        # Test redirect_param
+        data = {'member': 2}
+        url = self.get_base_url()+'?redirect_to=/alt_url/'
+        response = self.client.post(url, data=data, follow=False)
+        self.assertRedirects(response, '/alt_url/', fetch_redirect_response=False)
 
 class TestItemCreateView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
@@ -500,6 +512,7 @@ class TestItemCreateView(ViewValidityMixin, TestCase):
         self.assertTrue(BoardGame.objects.filter(name='test_create_view_item').exists())
 
     def test_success_url(self):
+        # Test normal save
         data = {'name': 'test_create_view_item'}
         self.assertValidPostResponse(
             data=data,
@@ -573,6 +586,12 @@ class TestItemUpdateView(ViewValidityMixin, TestCase):
         self.assertEqual(self.item.name, data['name'])
 
     def test_success_url(self):
+        # Test redirect_param
+        data = {'name': 'test_update_view_item'}
+        response = self.client.post(self.get_base_url()+'?redirect_to=/alt_url/', data=data, follow=False)
+        self.assertRedirects(response, '/alt_url/', fetch_redirect_response=False)
+
+        # Test normal save
         data = {'name': 'test_update_view_item'}
         response = self.client.post(self.get_base_url(), data=data, follow=True)
         self.assertRedirects(response, reverse('inventory:catalogue', kwargs={'type_id': self.content_type}))

@@ -313,17 +313,16 @@ class CreateItemView(MembershipRequiredMixin, CatalogueMixin, PermissionRequired
         return super(CreateItemView, self).form_valid(form)
 
     def get_success_url(self):
-        if self.instance:  # Safety catch in case get_success_url is called while form was not valid
-            if 'btn_save_to_member' in self.request.POST.keys():
-                return reverse('inventory:catalogue_add_member_link', kwargs={
-                    'type_id': self.item_type,
-                    'item_id': self.instance.id,
-                })
-            elif 'btn_save_to_group' in self.request.POST.keys():
-                return reverse('inventory:catalogue_add_group_link', kwargs={
-                    'type_id': self.item_type,
-                    'item_id': self.instance.id,
-                })
+        if 'btn_save_to_member' in self.request.POST.keys():
+            return reverse('inventory:catalogue_add_member_link', kwargs={
+                'type_id': self.item_type,
+                'item_id': self.instance.id,
+            })
+        elif 'btn_save_to_group' in self.request.POST.keys():
+            return reverse('inventory:catalogue_add_group_link', kwargs={
+                'type_id': self.item_type,
+                'item_id': self.instance.id,
+            })
         return reverse('inventory:catalogue', kwargs={'type_id': self.item_type})
 
 
