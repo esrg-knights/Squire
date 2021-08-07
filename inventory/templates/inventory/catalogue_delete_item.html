@@ -48,7 +48,7 @@
                     </div>
                 </div>
             {% endfor %}
-            <a href="{% url "inventory:catalogue_update_item" type_id=item_type.id item_id=item.id %}?redirect_to={{ request.path }}"
+            <a href="{% url "inventory:catalogue_update_item" type_id=item_type item_id=item.id %}?redirect_to={{ request.path }}"
                class="btn btn-outline-primary btn-sm mt-2">
                 Edit
             </a>
@@ -61,7 +61,7 @@
         <p>
             There are currently one or more instances of {{ item }} at the Knights. This item can not be removed.
         </p>
-        <a href="{% url "inventory:catalogue" type_id=item_type.id %}"
+        <a href="{% url "inventory:catalogue" type_id=item_type %}"
            class="btn btn-secondary">Go back</a>
     {% else %}
         {% if active_links %}
@@ -99,7 +99,7 @@
                 <a href="{{ redirect_to_url }}"
                    class="btn btn-secondary">Cancel</a>
             {% else %}
-                <a href="{% url "inventory:catalogue" type_id=item_type.id %}"
+                <a href="{% url "inventory:catalogue" type_id=item_type %}"
                    class="btn btn-secondary">Cancel</a>
             {% endif %}
             <form method="post">

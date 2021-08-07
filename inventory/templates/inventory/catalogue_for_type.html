@@ -15,7 +15,7 @@
     <h1>Item catalogue for {{ item_type }}</h1>
 
     {% if can_add_to_member %}
-        <a href="{% url "inventory:catalogue_add_new_item" type_id=item_type.id %}"
+        <a href="{% url "inventory:catalogue_add_new_item" type_id=item_type %}"
            class="btn btn-sm btn-primary">
             Add new {{ item_type }}
         </a>
@@ -50,7 +50,7 @@
                 </td>
                 <td>
                     {% if can_change_items %}
-                        <a href="{% url "inventory:catalogue_update_item" type_id=item_type.id item_id=item.id %}"
+                        <a href="{% url "inventory:catalogue_update_item" type_id=item_type item_id=item.id %}"
                            class="btn btn-sm btn-primary">
                             Edit
                         </a>
@@ -68,7 +68,7 @@
                             </div>
                             <div>
                                 <a class="btn btn-sm btn-info"
-                                   href="{% url "inventory:catalogue_item_links" type_id=item_type.id item_id=item.id %}">
+                                   href="{% url "inventory:catalogue_item_links" type_id=item_type item_id=item.id %}">
                                     Edit
                                 </a>
                             </div>
@@ -84,13 +84,13 @@
                 <td>
                     <div class="d-lg-flex justify-content-end">
                         {% if can_add_to_group %}
-                            <a href="{% url "inventory:catalogue_add_group_link" type_id=item_type.id item_id=item.id %}"
+                            <a href="{% url "inventory:catalogue_add_group_link" type_id=item_type item_id=item.id %}"
                                class="btn btn-sm btn-primary mb-2 mb-lg-0">
                                 Add to committee
                             </a>
                         {% endif %}
                         {% if can_add_to_member %}
-                            <a href="{% url "inventory:catalogue_add_member_link" type_id=item_type.id item_id=item.id %}"
+                            <a href="{% url "inventory:catalogue_add_member_link" type_id=item_type item_id=item.id %}"
                                class="btn btn-sm btn-secondary">
                                 Add to member
                         </a>

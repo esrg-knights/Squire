@@ -190,15 +190,9 @@ class CatalogueMixin:
     """ Mixin that stores the retrieved item type from the url type_id keyword """
     item_type = None    # Item item for this catalogue
 
-    def dispatch(self, request, *args, **kwargs):
-        try:
-            self.item_type = ContentType.objects.get_for_id(self.kwargs['type_id'])
-        except ContentType.DoesNotExist:
-            raise Http404
-        if not issubclass(self.item_type.model_class(), Item):
-            raise Http404
-
-        return super(CatalogueMixin, self).dispatch(request, *args, **kwargs)
+    def setup(self, request, *args, **kwargs):
+        super(CatalogueMixin, self).setup(request, *args, **kwargs)
+        self.item_type = kwargs.get('type_id')
 
     def get_context_data(self, *args, **kwargs):
         context = super(CatalogueMixin, self).get_context_data(*args, **kwargs)
@@ -297,7 +291,7 @@ class AddLinkMemberView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, AddL
         if self.redirect_to:
             return self.redirect_to
         # Go back to the catalogue page
-        return reverse_lazy("inventory:catalogue", kwargs={'type_id': self.item_type.id})
+        return reverse_lazy("inventory:catalogue", kwargs={'type_id': self.item_type})
 
 
 class CreateItemView(MembershipRequiredMixin, CatalogueMixin, PermissionRequiredMixin, CreateView):
@@ -322,15 +316,15 @@ class CreateItemView(MembershipRequiredMixin, CatalogueMixin, PermissionRequired
         if self.instance:  # Safety catch in case get_success_url is called while form was not valid
             if 'btn_save_to_member' in self.request.POST.keys():
                 return reverse('inventory:catalogue_add_member_link', kwargs={
-                    'type_id': self.item_type.id,
+                    'type_id': self.item_type,
                     'item_id': self.instance.id,
                 })
             elif 'btn_save_to_group' in self.request.POST.keys():
                 return reverse('inventory:catalogue_add_group_link', kwargs={
-                    'type_id': self.item_type.id,
+                    'type_id': self.item_type,
                     'item_id': self.instance.id,
                 })
-        return reverse('inventory:catalogue', kwargs={'type_id': self.item_type.id})
+        return reverse('inventory:catalogue', kwargs={'type_id': self.item_type})
 
 
 class UpdateItemView(RedirectMixin, MembershipRequiredMixin, CatalogueMixin, ItemMixin, PermissionRequiredMixin, UpdateView):
@@ -365,16 +359,16 @@ class UpdateItemView(RedirectMixin, MembershipRequiredMixin, CatalogueMixin, Ite
 
         if 'btn_save_to_member' in self.request.POST.keys():
             return reverse('inventory:catalogue_add_member_link', kwargs={
-                'type_id': self.item_type.id,
+                'type_id': self.item_type,
                 'item_id': self.item.id,
             })
         elif 'btn_save_to_group' in self.request.POST.keys():
             return reverse('inventory:catalogue_add_group_link', kwargs={
-                'type_id': self.item_type.id,
+                'type_id': self.item_type,
                 'item_id': self.item.id,
             })
 
-        return reverse('inventory:catalogue', kwargs={'type_id': self.item_type.id})
+        return reverse('inventory:catalogue', kwargs={'type_id': self.item_type})
 
 
 class DeleteItemView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, RedirectMixin, PermissionRequiredMixin, FormView):
@@ -413,7 +407,7 @@ class DeleteItemView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, Redirec
         return super(DeleteItemView, self).form_valid(form)
 
     def get_success_url(self):
-        return reverse('inventory:catalogue', kwargs={'type_id': self.item_type.id})
+        return reverse('inventory:catalogue', kwargs={'type_id': self.item_type})
 
 
 ###############  Catalogue link editing  ###################
@@ -471,7 +465,7 @@ class UpdateCatalogueLinkView(MembershipRequiredMixin, CatalogueMixin, ItemMixin
 
     def get_success_url(self):
         return reverse("inventory:catalogue_item_links",
-                       kwargs={'type_id':self.item_type.id, 'item_id':self.item.id})
+                       kwargs={'type_id':self.item_type, 'item_id':self.item.id})
 
 
 class LinkActivationStateView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, OwnershipCatalogueLinkMixin, PermissionRequiredMixin, FormView):
@@ -485,7 +479,7 @@ class LinkActivationStateView(MembershipRequiredMixin, CatalogueMixin, ItemMixin
 
     def get_success_url(self):
         return reverse("inventory:catalogue_item_links",
-                       kwargs={'type_id':self.item_type.id, 'item_id':self.item.id})
+                       kwargs={'type_id':self.item_type, 'item_id':self.item.id})
 
     def form_valid(self, form):
         form.save()
@@ -509,7 +503,7 @@ class LinkDeletionView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, Owner
 
     def get_success_url(self):
         return reverse("inventory:catalogue_item_links",
-                       kwargs={'type_id':self.item_type.id, 'item_id':self.item.id})
+                       kwargs={'type_id':self.item_type, 'item_id':self.item.id})
 
     def form_valid(self, form):
         messages.success(self.request, f"{self.ownership} has been removed")

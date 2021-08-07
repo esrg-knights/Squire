@@ -19,11 +19,11 @@
             <a href="{{ redirect_to_url }}"
                class="btn btn-outline-secondary">Cancel</a>
         {% else %}
-            <a href="{% url "inventory:catalogue" type_id=item_type.id %}"
+            <a href="{% url "inventory:catalogue" type_id=item_type %}"
                class="btn btn-outline-secondary">Cancel</a>
         {% endif %}
         {% if can_delete %}
-        <a href="{% url "inventory:catalogue_delete_item" type_id=item_type.id item_id=item.id %}"
+        <a href="{% url "inventory:catalogue_delete_item" type_id=item_type item_id=item.id %}"
            class="btn btn-outline-danger">Delete</a>
         {% endif %}
         <button form="submit_form" type="submit" class="btn btn-primary" name="btn_save">

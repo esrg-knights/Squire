@@ -1,7 +1,32 @@
-from django.urls import path, include
+from django.urls import path, include, register_converter
+from django.contrib.contenttypes.models import ContentType
+from django.utils.text import slugify
 
 from inventory.views import *
 from inventory.forms import OwnershipRemovalForm, OwnershipActivationForm
+from inventory.models import Item
+
+
+class CatalogueConverter:
+    regex = '[\w.-]+'
+
+    def to_python(self, value):
+        content_types = Item.get_item_contenttypes()
+        for item_type in content_types:
+            # item_type = ContentType.objects.get()
+            if value == slugify(item_type.model_class().__name__):
+                return item_type
+
+        raise ValueError(f"There was no Item with name {value}")
+
+    def to_url(self, value):
+        return slugify(value.model_class().__name__)
+
+register_converter(CatalogueConverter, 'cat_item')
+
+
+####################################################
+
 
 app_name = 'inventory'
 
@@ -23,7 +48,7 @@ urlpatterns = [
         ])),
     ])),
 
-    path('catalogue/<int:type_id>/', include([
+    path('catalogue/<cat_item:type_id>/', include([
         path('', TypeCatalogue.as_view(), name="catalogue"),
         path('add_new/', CreateItemView.as_view(), name='catalogue_add_new_item'),
         path('<int:item_id>/', include([

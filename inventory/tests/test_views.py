@@ -266,21 +266,11 @@ class TestCatalogueMixin(TestMixinMixin, TestCase):
         super(TestCatalogueMixin, self).setUp()
 
     def get_base_url_kwargs(self):
-        return {'type_id': self.content_type.id}
+        return {'type_id': self.content_type}
 
     def test_get_successful(self):
         response = self._build_get_response()
         self.assertEqual(response.status_code, 200)
-
-    def test_get_non_existent(self):
-        self.assertRaises404(url_kwargs={
-            'type_id': 99,
-        })
-
-    def test_get_not_an_item(self):
-        self.assertRaises404(url_kwargs={
-            'type_id': ContentType.objects.get_for_model(User).id,
-        })
 
     def test_context_data(self):
         self._build_get_response(save_view=True)
@@ -301,7 +291,7 @@ class TestItemMixin(TestMixinMixin, TestCase):
 
     def get_base_url_kwargs(self):
         return {
-            'type_id': self.content_type.id,
+            'type_id': self.content_type,
             'item_id': self.item.id,
         }
 
@@ -311,7 +301,7 @@ class TestItemMixin(TestMixinMixin, TestCase):
 
     def test_get_non_existent(self):
         self.assertRaises404(url_kwargs={
-            'type_id':self.content_type.id,
+            'type_id':self.content_type,
             'item_id': 99,
         })
 
@@ -331,7 +321,7 @@ class TestTypeCatalogue(ViewValidityMixin, TestCase):
         super(TestTypeCatalogue, self).setUp()
 
     def get_base_url(self, content_type=None):
-        content_type = content_type or self.content_type.id
+        content_type = content_type or self.content_type
         return reverse('inventory:catalogue', kwargs={'type_id':content_type,})
 
     def test_class(self):
@@ -379,7 +369,7 @@ class TestAddLinkCommitteeView(ViewValidityMixin, TestCase):
         self.user.user_permissions.add(Permission.objects.get(codename='add_group_ownership_for_boardgame'))
 
     def get_base_url(self, content_type=None, item_id=None):
-        content_type = content_type or self.content_type.id
+        content_type = content_type or self.content_type
         item_id = item_id or self.item.id
         return reverse('inventory:catalogue_add_group_link', kwargs={
             'type_id':content_type,
@@ -428,7 +418,7 @@ class TestAddLinkMemberView(ViewValidityMixin, TestCase):
         self.user.user_permissions.add(Permission.objects.get(codename='add_member_ownership_for_boardgame'))
 
     def get_base_url(self, content_type=None, item_id=None):
-        content_type = content_type or self.content_type.id
+        content_type = content_type or self.content_type
         item_id = item_id or self.item.id
         return reverse('inventory:catalogue_add_member_link', kwargs={
             'type_id':content_type,
@@ -458,7 +448,7 @@ class TestAddLinkMemberView(ViewValidityMixin, TestCase):
     def test_post_successful(self):
         member_id = 2
         response = self.client.post(self.get_base_url(), data={'member': member_id}, follow=True)
-        self.assertRedirects(response, reverse('inventory:catalogue', kwargs={'type_id': self.content_type.id}))
+        self.assertRedirects(response, reverse('inventory:catalogue', kwargs={'type_id': self.content_type}))
         msg = "{item} has been placed in {owner}'s inventory".format(
             item = self.item,
             owner=Member.objects.get(id=member_id),
@@ -476,7 +466,7 @@ class TestItemCreateView(ViewValidityMixin, TestCase):
         self.user.user_permissions.add(Permission.objects.get(codename='add_boardgame'))
 
     def get_base_url(self, content_type=None, item_id=None):
-        content_type = content_type or self.content_type.id
+        content_type = content_type or self.content_type
         return reverse('inventory:catalogue_add_new_item', kwargs={
             'type_id':content_type,
         })
@@ -513,14 +503,14 @@ class TestItemCreateView(ViewValidityMixin, TestCase):
         data = {'name': 'test_create_view_item'}
         self.assertValidPostResponse(
             data=data,
-            redirect_url=reverse('inventory:catalogue', kwargs={'type_id': self.content_type.id})
+            redirect_url=reverse('inventory:catalogue', kwargs={'type_id': self.content_type})
         )
 
         # Pressed '& add to member' button
         data = {'name': 'test_create_view_item_member', 'btn_save_to_member': True}
         response = self.client.post(self.get_base_url(), data=data)
         self.assertRedirects(response, reverse('inventory:catalogue_add_member_link', kwargs={
-            'type_id': self.content_type.id,
+            'type_id': self.content_type,
             'item_id': BoardGame.objects.get(name='test_create_view_item_member').id,
         }), fetch_redirect_response=False)
 
@@ -528,7 +518,7 @@ class TestItemCreateView(ViewValidityMixin, TestCase):
         data = {'name': 'test_create_view_item_group', 'btn_save_to_group': True}
         response = self.client.post(self.get_base_url(), data=data)
         self.assertRedirects(response, reverse('inventory:catalogue_add_group_link', kwargs={
-            'type_id': self.content_type.id,
+            'type_id': self.content_type,
             'item_id': BoardGame.objects.get(name='test_create_view_item_group').id,
         }), fetch_redirect_response=False)
 
@@ -544,7 +534,7 @@ class TestItemUpdateView(ViewValidityMixin, TestCase):
         self.user.user_permissions.add(Permission.objects.get(codename='change_boardgame'))
 
     def get_base_url(self, content_type=None, item_id=None):
-        content_type = content_type or self.content_type.id
+        content_type = content_type or self.content_type
         item_id = item_id or self.item.id
         return reverse('inventory:catalogue_update_item', kwargs={
             'type_id':content_type,
@@ -585,13 +575,13 @@ class TestItemUpdateView(ViewValidityMixin, TestCase):
     def test_success_url(self):
         data = {'name': 'test_update_view_item'}
         response = self.client.post(self.get_base_url(), data=data, follow=True)
-        self.assertRedirects(response, reverse('inventory:catalogue', kwargs={'type_id': self.content_type.id}))
+        self.assertRedirects(response, reverse('inventory:catalogue', kwargs={'type_id': self.content_type}))
 
         # Pressed '& add to member' button
         data = {'name': 'test_update_view_item_member', 'btn_save_to_member': True}
         response = self.client.post(self.get_base_url(), data=data)
         self.assertRedirects(response, reverse('inventory:catalogue_add_member_link', kwargs={
-            'type_id': self.content_type.id,
+            'type_id': self.content_type,
             'item_id': BoardGame.objects.get(name='test_update_view_item_member').id,
         }), fetch_redirect_response=False)
 
@@ -599,7 +589,7 @@ class TestItemUpdateView(ViewValidityMixin, TestCase):
         data = {'name': 'test_update_view_item_group', 'btn_save_to_group': True}
         response = self.client.post(self.get_base_url(), data=data)
         self.assertRedirects(response, reverse('inventory:catalogue_add_group_link', kwargs={
-            'type_id': self.content_type.id,
+            'type_id': self.content_type,
             'item_id': BoardGame.objects.get(name='test_update_view_item_group').id,
         }), fetch_redirect_response=False)
 
@@ -615,7 +605,7 @@ class TestItemDeleteView(ViewValidityMixin, TestCase):
         self.user.user_permissions.add(Permission.objects.get(codename='delete_boardgame'))
 
     def get_base_url(self, content_type=None, item_id=None):
-        content_type = content_type or self.content_type.id
+        content_type = content_type or self.content_type
         item_id = item_id or self.item.id
         return reverse('inventory:catalogue_delete_item', kwargs={
             'type_id':content_type,
@@ -644,7 +634,7 @@ class TestItemDeleteView(ViewValidityMixin, TestCase):
     def test_post_successful(self):
         """ Tests a succesful post on a non-conflicted item type """
         response = self.client.post(self.get_base_url(), data={}, follow=True)
-        success_url = reverse('inventory:catalogue', kwargs={'type_id': self.content_type.id})
+        success_url = reverse('inventory:catalogue', kwargs={'type_id': self.content_type})
         self.assertRedirects(response, success_url)
 
         # Test success message
@@ -694,8 +684,8 @@ class TestItemLinkMaintenanceView(ViewValidityMixin, TestCase):
         super(TestItemLinkMaintenanceView, self).setUp()
         self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_boardgame'))
 
-    def get_base_url(self, content_type_id=None, item_id=None):
-        content_type = content_type_id or self.content_type.id
+    def get_base_url(self, content_type=None, item_id=None):
+        content_type = content_type or self.content_type
         item = item_id or self.item.id
         return reverse('inventory:catalogue_item_links', kwargs={'type_id':content_type, 'item_id': item})
 
@@ -753,7 +743,7 @@ class TestOwnershipCatalogueLinkMixin(TestMixinMixin, TestCase):
 
     def get_base_url_kwargs(self):
         return {
-            'type_id': self.content_type.id,
+            'type_id': self.content_type,
             'item_id': self.item.id,
             'link_id': self.ownership.id,
         }
@@ -765,7 +755,7 @@ class TestOwnershipCatalogueLinkMixin(TestMixinMixin, TestCase):
     def test_invalid_item(self):
         """ Tests that the Ownership instance has to be part of the known item """
         self.assertRaises404(url_kwargs={
-            'type_id': self.content_type.id,
+            'type_id': self.content_type,
             'item_id': 2,
             'link_id': 1,
         })
@@ -773,7 +763,7 @@ class TestOwnershipCatalogueLinkMixin(TestMixinMixin, TestCase):
     def test_get_non_existent(self):
         """ Assert that a nonexistent ownership throws a 404 page """
         self.assertRaises404(url_kwargs={
-            'type_id':self.content_type.id,
+            'type_id':self.content_type,
             'item_id': self.item.id,
             'link_id': 404,
         })
@@ -796,12 +786,12 @@ class TestUpdateCatalogueLinkView(ViewValidityMixin, TestCase):
         super(TestUpdateCatalogueLinkView, self).setUp()
         self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_boardgame'))
 
-    def get_base_url(self, content_type_id=None, item_id=None, ownership_id=None):
-        content_type_id = content_type_id or self.content_type.id
+    def get_base_url(self, content_type=None, item_id=None, ownership_id=None):
+        content_type = content_type or self.content_type
         item_id = item_id or self.item.id
         ownership_id = ownership_id or self.ownership.id
         return reverse('inventory:catalogue_item_links', kwargs={
-            'type_id':content_type_id,
+            'type_id':content_type,
             'item_id': item_id,
             'link_id': ownership_id,
         })
@@ -823,7 +813,7 @@ class TestUpdateCatalogueLinkView(ViewValidityMixin, TestCase):
     def test_post_successful(self):
         """ Tests a succesful post """
         response = self.client.post(self.get_base_url(), data={'added_since': '2021-08-07'}, follow=True)
-        success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type.id, 'item_id': 1})
+        success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type, 'item_id': 1})
         self.assertRedirects(response, success_url)
 
 
@@ -839,12 +829,12 @@ class TestLinkActivationStateView(ViewValidityMixin, TestCase):
         super(TestLinkActivationStateView, self).setUp()
         self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_boardgame'))
 
-    def get_base_url(self, content_type_id=None, item_id=None, ownership_id=None):
-        content_type_id = content_type_id or self.content_type.id
+    def get_base_url(self, content_type=None, item_id=None, ownership_id=None):
+        content_type = content_type or self.content_type
         item_id = item_id or self.item.id
         ownership_id = ownership_id or self.ownership.id
         return reverse('inventory:catalogue_item_link_activation', kwargs={
-            'type_id':content_type_id,
+            'type_id':content_type,
             'item_id': item_id,
             'link_id': ownership_id,
         })
@@ -866,7 +856,7 @@ class TestLinkActivationStateView(ViewValidityMixin, TestCase):
     def test_post_successful(self):
         """ Tests a succesful post """
         response = self.client.post(self.get_base_url(), data={}, follow=True)
-        success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type.id, 'item_id': 1})
+        success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type, 'item_id': 1})
         self.assertRedirects(response, success_url)
         msg = f"{self.item} has been marked as taken home"
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
@@ -874,18 +864,18 @@ class TestLinkActivationStateView(ViewValidityMixin, TestCase):
 
     def test_post_unsuccesful(self):
         response = self.client.post(self.get_base_url(ownership_id=1), data={}, follow=True)
-        success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type.id, 'item_id': 1})
+        success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type, 'item_id': 1})
         self.assertRedirects(response, success_url)
         self.assertHasMessage(response, level=messages.ERROR, text="This action was not possible")
 
     def test_deactivation_post(self):
         url = reverse('inventory:catalogue_item_link_deactivation', kwargs={
-            'type_id': self.content_type.id,
+            'type_id': self.content_type,
             'item_id': 1,
             'link_id': 1,
         })
         response = self.client.post(url, data={}, follow=True)
-        success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type.id, 'item_id': 1})
+        success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type, 'item_id': 1})
         self.assertRedirects(response, success_url)
         self.assertFalse(Ownership.objects.get(id=1).is_active)
 
@@ -901,12 +891,12 @@ class TestLinkDeletionView(ViewValidityMixin, TestCase):
         super(TestLinkDeletionView, self).setUp()
         self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_boardgame'))
 
-    def get_base_url(self, content_type_id=None, item_id=None, ownership_id=None):
-        content_type_id = content_type_id or self.content_type.id
+    def get_base_url(self, content_type=None, item_id=None, ownership_id=None):
+        content_type = content_type or self.content_type
         item_id = item_id or self.item.id
         ownership_id = ownership_id or self.ownership.id
         return reverse('inventory:catalogue_item_link_deletion', kwargs={
-            'type_id': content_type_id,
+            'type_id': content_type,
             'item_id': item_id,
             'link_id': ownership_id,
         })
@@ -928,5 +918,5 @@ class TestLinkDeletionView(ViewValidityMixin, TestCase):
     def test_post_successful(self):
         """ Tests a succesful post """
         response = self.client.post(self.get_base_url(), data={}, follow=True)
-        success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type.id, 'item_id': self.item.id})
+        success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type, 'item_id': self.item.id})
         self.assertRedirects(response, success_url)

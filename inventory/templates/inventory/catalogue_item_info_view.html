@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block content %}
-    <a href="{% url "inventory:catalogue" type_id=item_type.id %}"
+    <a href="{% url "inventory:catalogue" type_id=item_type %}"
        class="btn btn-primary">
         Back to catalogue
     </a>
@@ -54,7 +54,7 @@
                 </div>
             </div>
             {% endfor %}
-            <a href="{% url "inventory:catalogue_update_item" type_id=item_type.id item_id=item.id %}?redirect_to={{ request.path }}"
+            <a href="{% url "inventory:catalogue_update_item" type_id=item_type item_id=item.id %}?redirect_to={{ request.path }}"
                class="btn btn-outline-primary btn-sm mt-2">
                 Edit
             </a>
@@ -70,13 +70,13 @@
         <div class="col-auto">
             <div class="d-lg-flex justify-content-end">
                 {% if can_add_to_group %}
-                    <a href="{% url "inventory:catalogue_add_group_link" type_id=item_type.id item_id=item.id %}?redirect_to={{ request.path }}"
+                    <a href="{% url "inventory:catalogue_add_group_link" type_id=item_type item_id=item.id %}?redirect_to={{ request.path }}"
                        class="btn btn-sm btn-primary mb-2 mb-lg-0">
                         Add to committee
                     </a>
                 {% endif %}
                 {% if can_add_to_member %}
-                    <a href="{% url "inventory:catalogue_add_member_link" type_id=item_type.id item_id=item.id %}?redirect_to={{ request.path }}"
+                    <a href="{% url "inventory:catalogue_add_member_link" type_id=item_type item_id=item.id %}?redirect_to={{ request.path }}"
                        class="btn btn-sm btn-secondary">
                         Add to member
                     </a>
@@ -104,11 +104,11 @@
                 <td>
                     <div class="btn-group" role="group" aria-label="Basic example">
                         <a class="btn btn-secondary"
-                           href="{% url "inventory:catalogue_item_links" type_id=item_type.id item_id=item.id link_id=link.id %}"
+                           href="{% url "inventory:catalogue_item_links" type_id=item_type item_id=item.id link_id=link.id %}"
 
                         >Edit</a>
                         <form method="post" id="deactivate-{{ link.id }}"
-                              action="{% url "inventory:catalogue_item_link_deactivation" type_id=item_type.id item_id=item.id link_id=link.id %}">
+                              action="{% url "inventory:catalogue_item_link_deactivation" type_id=item_type item_id=item.id link_id=link.id %}">
                             {% csrf_token %}
                         </form>
                         <input type="submit" form="deactivate-{{ link.id }}"
@@ -145,16 +145,16 @@
                 <td>
                     <div class="btn-group" role="group" aria-label="Basic example">
                         <a class="btn btn-secondary"
-                           href="{% url "inventory:catalogue_item_links" type_id=item_type.id item_id=item.id link_id=link.id %}"
+                           href="{% url "inventory:catalogue_item_links" type_id=item_type item_id=item.id link_id=link.id %}"
 
                         >Edit</a>
                         <form method="post" id="activate-{{ link.id }}"
-                              action="{% url "inventory:catalogue_item_link_activation" type_id=item_type.id item_id=item.id link_id=link.id %}">
+                              action="{% url "inventory:catalogue_item_link_activation" type_id=item_type item_id=item.id link_id=link.id %}">
                             {% csrf_token %}
                         </form>
                         <input type="submit" form="activate-{{ link.id }}"
                                class="btn btn-warning" value="Activate">
-                        <a href="{% url "inventory:catalogue_item_link_deletion" type_id=item_type.id item_id=item.id link_id=link.id %}"
+                        <a href="{% url "inventory:catalogue_item_link_deletion" type_id=item_type item_id=item.id link_id=link.id %}"
                            class="btn btn-danger">
                             Delete
                         </a>

@@ -23,7 +23,7 @@
             <a href="{{ redirect_to_url }}"
                class="btn btn-secondary">Cancel</a>
         {% else %}
-            <a href="{% url "inventory:catalogue" type_id=item_type.id %}"
+            <a href="{% url "inventory:catalogue" type_id=item_type %}"
                class="btn btn-secondary">Cancel</a>
         {% endif %}
         <button form="submit_form" type="submit" class="btn btn-success">
