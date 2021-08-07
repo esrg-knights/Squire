@@ -74,7 +74,7 @@ class Item(models.Model):
     description = models.TextField(max_length=512, blank=True, null=True)
     image = models.ImageField(upload_to=get_item_image_upload_path, blank=True, null=True)
 
-    ownerships = GenericRelation('Ownership')
+    ownerships = GenericRelation('inventory.Ownership')
     # An achievement can also apply to roleplay items
     achievements = GenericRelation('achievements.AchievementItemLink')
 
@@ -141,6 +141,15 @@ class Ownership(models.Model):
         else:
             return self.group
 
+    def clean_fields(self, exclude=None):
+        super().clean_fields(exclude=exclude)
+        # Make exlude a list to prevent complex if statements
+        exclude = exclude or []
+
+        if 'content_type' not in exclude and 'object_id' not in exclude:
+            if self.content_object is None:
+                raise ValidationError("The connected item does not exist", code='item_nonexistent')
+
     def clean(self):
         super(Ownership, self).clean()
         # Validate that EITHER member or group must be defined
@@ -148,9 +157,6 @@ class Ownership(models.Model):
             raise ValidationError("Either a member or a group has to be defined", code='required')
         if self.member and self.group:
             raise ValidationError("An item can't belong both to a user and a group", code='invalid')
-        # Validate that content_object exists
-        if self.content_object is None:
-            raise ValidationError("The connected item does not exist", code='item_nonexistent')
 
     def __str__(self):
         if self.member:

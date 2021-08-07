@@ -7,6 +7,11 @@ from django.views.generic.base import TemplateView
 
 
 class ViewValidityMixin:
+    """ A mixin for testing views. Takes over a bit of behind the scenes overheasd
+    base_user_id: the id for the user running the sessions normally
+    base_url: The basic url to navigate to
+    """
+
     client = None
     user = None
     base_user_id = None
@@ -21,6 +26,37 @@ class ViewValidityMixin:
 
     def get_base_url(self):
         return self.base_url
+
+    def assertValidGetResponse(self, data=None, url=None):
+        """
+        Assert that there is a valid HTTP200 response returned
+        :param data: Get data, defaults to an empty dict
+        :param url: The url, defaults to self.get_base_url
+        :return: Either a raised assertion error or the HttpResponse instance
+        """
+        url = url or self.get_base_url()
+        data = data or {}
+        response = self.client.get(url, data=data)
+        self.assertEqual(response.status_code, 200, "Response was not a valid Http200 response")
+        return response
+
+    def assertValidPostResponse(self, data=None, url=None, redirect_url=None, fetch_redirect_response=True):
+        """
+        Assert that a post does not create errors
+        :param data: Get data, defaults to an empty dict
+        :param url: The url, defaults to self.get_base_url
+        :param redirect_url: Check the url it redirects to
+        :param fetch_redirect_response: Whether the page that it redirects to needs to be checked for errors. (True)
+        :return: Either a raised assertion error or the HttpResponse instance
+        """
+        url = url or self.get_base_url()
+        data = data or {}
+        response = self.client.post(url, data=data)
+        if redirect_url:
+            self.assertRedirects(response, redirect_url, fetch_redirect_response=fetch_redirect_response)
+        else:
+            self.assertEqual(response.status_code, 200, "Response was not a valid Http200 response")
+        return response
 
     @staticmethod
     def assertHasMessage(response, level=None, text=None):
