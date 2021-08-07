@@ -27,23 +27,31 @@ class TestOwnership(TestCase):
 
         # Member and group can't both be defined
         ownership = Ownership(
-            content_object = boardgame,
+            # content_object = boardgame,
+            added_by_id=2,
             member_id = 2,
             group_id = 1,
+            content_type_id=ContentType.objects.get_for_model(BoardGame).id,
+            object_id = boardgame.id,
         )
         with self.assertRaises(ValidationError) as error:
-            ownership.clean()
-        self.assertEqual(error.exception.code, 'invalid')
+            ownership.full_clean()
+        error_dict = error.exception.error_dict
+        error = error_dict['__all__'][0]
+        self.assertEqual(error.code, 'invalid')
 
     def test_ownership_item_validation(self):
         ownership = Ownership(
             member_id = 2,
+            added_by_id=2,
             content_type_id=ContentType.objects.get_for_model(BoardGame).id,
             object_id = 999,
         )
         with self.assertRaises(ValidationError) as error:
-            ownership.clean()
-        self.assertEqual(error.exception.code, 'item_nonexistent')
+            ownership.full_clean()
+        error_dict = error.exception.error_dict
+        error = error_dict['__all__'][0]
+        self.assertEqual(error.code, 'item_nonexistent')
 
     def test_valid_item_class_ids(self):
         """ Tests the method to return the right class ids """

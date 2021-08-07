@@ -5,21 +5,9 @@ from django.contrib.contenttypes.forms import BaseGenericInlineFormSet
 from inventory.models import *
 
 
-class BaseGenericTweakedInlineFormSet(BaseGenericInlineFormSet):
-
-    def is_valid(self):
-        # Ownership items require an existing Item model. Formsets however set the link after cleaning
-        # This is a bit annoying as it causes the instance to fail.
-        # Thus we inject the instance before form validation into all new forms.
-        for new_form in self.extra_forms:
-            # Save the current instance in all objects
-            new_form.instance.content_object = self.instance
-        return super(BaseGenericTweakedInlineFormSet, self).is_valid()
-
 class OwnershipInline(GenericTabularInline):
     model = Ownership
     extra = 0
-    formset = BaseGenericTweakedInlineFormSet
 
 
 class BoardGameAdmin(admin.ModelAdmin):
