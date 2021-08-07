@@ -1,10 +1,49 @@
 
 from django.contrib.auth.models import Group
 from django.test import TestCase, RequestFactory
-from django.views.generic import ListView
+from django.views.generic import ListView, FormView
+from django.forms import Form
 
 
-from utils.views import SearchFormMixin
+from utils.views import SearchFormMixin, RedirectMixin
+
+class TestForm(Form):
+    pass
+
+class TestRedirectMixin(TestCase):
+    class TestView(RedirectMixin, FormView):
+        success_url = "/success/"
+        form_class = TestForm
+
+    def _build_for_url(self, url, **init_kwargs):
+        request = RequestFactory().get(url)
+
+        view = self.TestView(**init_kwargs)
+        view.setup(request)
+        return view
+
+    def test_succes_url_normal(self):
+        # No redirect, so normal success_url needs to be used
+        view = self._build_for_url('')
+        url = view.get_success_url()
+        self.assertEqual(url, "/success/")
+
+    def test_succes_url_redirect(self):
+        view = self._build_for_url('?redirect_to=/to_other/')
+        url = view.get_success_url()
+        self.assertEqual(url, "/to_other/")
+
+    def test_redirect_url_name(self):
+        url = '?on_success=/test_detour/'
+        view = self._build_for_url(url, redirect_url_name='on_success' )
+        url = view.get_success_url()
+        self.assertEqual(url, "/test_detour/")
+
+    def test_context_data(self):
+        view = self._build_for_url('?redirect_to=/test_url/')
+        context = view.get_context_data()
+        self.assertIn('redirect_to_url', context.keys())
+        self.assertEqual(context['redirect_to_url'], "/test_url/")
 
 
 class TestSearchFormMixin(TestCase):

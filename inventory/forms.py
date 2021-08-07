@@ -115,7 +115,7 @@ class DeleteOwnershipForm(forms.Form):
 
     def clean(self):
         if self.ownership.is_active:
-            raise ValidationError("Links may not be deleted while they are at the Knights")
+            raise ValidationError("Links may not be deleted while they are at the Knights", code="is_active")
 
     def delete_link(self):
         self.ownership.delete()

@@ -30,9 +30,9 @@ urlpatterns = [
             path('update/', UpdateItemView.as_view(), name='catalogue_update_item'),
             path('delete/', DeleteItemView.as_view(), name='catalogue_delete_item'),
             path('links/', include([
-                path('', ItemLinkInfoView.as_view(), name='catalogue_item_links'),
+                path('', ItemLinkMaintenanceView.as_view(), name='catalogue_item_links'),
                 path('<int:link_id>/', include([
-                    path('edit/', UpdateLinkView.as_view(), name='catalogue_item_links'),
+                    path('edit/', UpdateCatalogueLinkView.as_view(), name='catalogue_item_links'),
                     path('activate/', LinkActivationStateView.as_view(
                         form_class=OwnershipActivationForm), name='catalogue_item_link_activation'),
                     path('deactivate/', LinkActivationStateView.as_view(
