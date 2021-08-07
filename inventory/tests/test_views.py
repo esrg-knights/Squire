@@ -920,3 +920,11 @@ class TestLinkDeletionView(ViewValidityMixin, TestCase):
         response = self.client.post(self.get_base_url(), data={}, follow=True)
         success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type, 'item_id': self.item.id})
         self.assertRedirects(response, success_url)
+        self.assertHasMessage(response, level=messages.SUCCESS, text=f"{self.ownership} has been removed")
+
+    def test_post_unsuccessful(self):
+        """ Tests a succesful post """
+        response = self.client.post(self.get_base_url(ownership_id=1), data={}, follow=True)
+        faillure_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type, 'item_id': self.item.id})
+        self.assertRedirects(response, faillure_url)
+        self.assertHasMessage(response, level=messages.ERROR, text="This action was not possible")
