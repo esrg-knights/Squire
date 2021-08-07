@@ -15,6 +15,9 @@ from dynamic_preferences.models import GlobalPreferenceModel
 
 from .models import MarkdownImage, PresetImage
 
+from core.forms import MarkdownImageAdminForm
+from utils.forms import RequestUserToFormModelAdminMixin
+
 ###################################################
 # Backport of Django 3.1
 class EmptyFieldListFilter(admin.FieldListFilter): # pragma: no cover
@@ -87,9 +90,9 @@ class MarkdownImageInline(GenericTabularInline):
     def has_change_permission(self, request, obj=None):
         return False
 
-
-class MarkdownImageAdmin(admin.ModelAdmin):
+class MarkdownImageAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmin):
     date_hierarchy = 'upload_date'
+    form = MarkdownImageAdminForm
 
     list_display = ('id', 'content_type', 'content_object', 'uploader', 'upload_date', 'image')
     list_display_links = ('id', 'content_type')
@@ -118,11 +121,6 @@ class MarkdownImageAdmin(admin.ModelAdmin):
                 .annotate(model_name=Concat('app_label', Value('.'), 'model', output_field=CharField())) \
                 .filter(model_name__in=settings.MARKDOWN_IMAGE_MODELS)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-    # Set the image's uploader (the user that last edited the instance)
-    def save_model(self, request, obj, form, change):
-        obj.uploader = request.user
-        super().save_model(request, obj, form, change)
 
 admin.site.register(MarkdownImage, MarkdownImageAdmin)
 

@@ -11,6 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from .models import ExtendedUser as User
 from core.models import MarkdownImage
 from core.widgets import  ImageUploadMartorWidget
+from utils.forms import UpdatingUserFormMixin, UserFormMixin
 
 ##################################################################################
 # Defines general-purpose forms.
@@ -84,20 +85,7 @@ class PasswordResetForm(DjangoPasswordResetForm):
 class PasswordResetConfirmForm(DjangoPasswordResetConfirmForm):
     pass
 
-
-class RequestUserFormMixin():
-    """ Form Mixin that sets a user, which can be used in other methods """
-    user = None
-
-    def __init__(self, *args, user=None, **kwargs):
-        self.user = user
-
-        # We explicitly do not pass 'user' down the Form-chain,
-        #   as it's an unexpected kwarg (for some Forms)
-        super().__init__(*args, **kwargs)
-
-
-class MarkdownForm(RequestUserFormMixin, ModelForm):
+class MarkdownForm(UserFormMixin, ModelForm):
     """
         Changes fields listed in markdown_field_names to use Martor's Markdown widget
         instead of their normal widget. Ideally, those fields should be TextFields, but this
@@ -161,3 +149,10 @@ class MarkdownForm(RequestUserFormMixin, ModelForm):
                 object_id=self.instance.id,
                 uploader=self.user
             )
+
+class MarkdownImageAdminForm(UpdatingUserFormMixin, ModelForm):
+    class Meta:
+        model = MarkdownImage
+        fields = "__all__"
+
+    updating_user_field_name = "uploader"

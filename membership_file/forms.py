@@ -4,31 +4,12 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 
 from .models import Member, Room
+from utils.forms import UpdatingUserFormMixin
 
 ##################################################################################
 # Defines forms related to the membership file.
 # @since 05 FEB 2020
 ##################################################################################
-
-class UpdatingUserFormMixin():
-    """
-        Form Mixin that updates a customizable field with a user passed at form
-        initialisation. For example, this user can be the requesting user of a
-        FormView that uses a form with this Mixin.
-    """
-    updating_user_field_name = 'last_updated_by'
-
-    def __init__(self, *args, user=None, **kwargs):
-        # We explicitly do not pass 'user' down the Form-chain,
-        #   as it's an unexpected kwarg (for some Forms)
-        super().__init__(*args, **kwargs)
-
-        # Sanity check
-        assert hasattr(self.instance, self.updating_user_field_name)
-
-        # Update the field
-        setattr(self.instance, self.updating_user_field_name, user)
-
 
 class MemberRoomForm(forms.ModelForm):
     """

@@ -5,9 +5,9 @@ from .forms import ActivityAdminForm, ActivityMomentAdminForm
 from .models import Activity, ActivitySlot, Participant, ActivityMoment
 
 from core.admin import MarkdownImageInline
+from utils.forms import RequestUserToFormModelAdminMixin
 
-
-class MarkdownImageInlineAdmin(admin.ModelAdmin):
+class MarkdownImageInlineAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmin):
     class Media:
         css = {
              'all': ('css/martor-admin.css',)
@@ -26,25 +26,6 @@ class MarkdownImageInlineAdmin(admin.ModelAdmin):
     #     inlines = super().get_inlines(request, obj=obj)
     #     inlines.append(MarkdownImageInline)
     #     return inlines
-
-    # Pass the requesting user to the form
-    #   NB: This method should return a _class_
-    #   Ideally, we'd only need to provide form kwargs somewhere instead of
-    #       using this hacky structure. However, for some reason, Django
-    #       does not seem to provide any way to do so within the admin panel:
-    #       - For normal view-based classes, there's get_form_kwargs(..)
-    #       - For Inlines (in a future version of Django 3.x), there's get_formset_kwargs(..)
-    #       Neither of these work for the standard admin views
-    # Related links:
-    # - https://stackoverflow.com/questions/2864955/django-how-to-get-current-user-in-admin-forms
-    # - https://code.djangoproject.com/ticket/26607
-    def get_form(self, request, obj=None, **kwargs):
-        MDForm = super().get_form(request, obj, **kwargs)
-
-        class MarkdownFormWithKwargs(MDForm):
-            def __new__(cls, *args, **kwargs):
-                return MDForm(*args, user=request.user, **kwargs)
-        return MarkdownFormWithKwargs
 
 
 class ActivityAdmin(MarkdownImageInlineAdmin):

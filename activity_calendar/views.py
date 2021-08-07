@@ -1,5 +1,5 @@
 from django.contrib.auth.mixins import AccessMixin
-from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
@@ -11,11 +11,10 @@ from django.views.decorators.http import require_safe
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView, FormMixin
 
-from membership_file.util import user_to_member
-
 from .forms import *
-from .models import Activity, Participant, ActivityMoment
+from .models import Activity, ActivityMoment
 from core.models import ExtendedUser
+from utils.forms import RequestUserToFormViewMixin
 
 __all__ = "CreateSlotView, get_activity_detail_view, activity_collection"
 
@@ -373,7 +372,7 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
 # #######################################
 
 
-class EditActivityMomentView(LoginRequiredMixin, PermissionRequiredMixin, ActivityMixin, FormView):
+class EditActivityMomentView(LoginRequiredMixin, PermissionRequiredMixin, ActivityMixin, RequestUserToFormViewMixin, FormView):
     form_class = ActivityMomentForm
     template_name = "activity_calendar/activity_moment_form_page.html"
     permission_required = ('activity_calendar.change_activitymoment',)
