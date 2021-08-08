@@ -2,6 +2,7 @@
 {% load static %}
 {% load paginator %}
 {% load inventory_tags %}
+{% load to_member %}
 
 {% block title %}
     Squire - Boardgames
@@ -61,9 +62,17 @@
                     </td>
                     <td>
                         <small>
-                            {% for owner in boardgame.currently_in_possession %}
-                                {{ owner.owner }}{% if not forloop.last %}, {% endif %}
-                            {% endfor %}
+                            {% if user|is_member %}
+                                {% for owner in boardgame.currently_in_possession %}
+                                    {{ owner.owner }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                {% if boardgame.is_owned_by_association %}
+                                    Knights
+                                {% else %}
+                                    Loaned by member
+                                {% endif %}
+                            {% endif %}
                         </small>
                     </td>
                     <td>
@@ -101,7 +110,7 @@
 
     {% if perms.inventory.can_maintain_boardgame_ownerships %}
         <div class="d-flex justify-content-end">
-            <a href="{% url "inventory:catalogue" type_id=content_type.id %}"
+            <a href="{% url "inventory:catalogue" type_id=content_type %}"
                class="btn btn-secondary">
                 Maintain catalogue
             </a>

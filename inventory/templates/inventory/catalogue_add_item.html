@@ -18,7 +18,7 @@
     {% render_form method="post" id="submit_form"  has_submit_button=False %}
 
     <div class="btn-group" role="group" aria-label="Form changing">
-        <a href="{% url "inventory:catalogue" type_id=item_type.id %}"
+        <a href="{% url "inventory:catalogue" type_id=item_type %}"
            class="btn btn-secondary">Cancel</a>
         <button form="submit_form" type="submit" class="btn btn-primary" name="btn_save_to_group">
             Save and assign to group

@@ -109,6 +109,19 @@ class Item(models.Model):
     def __str__(self):
         return f'{self.__class__.__name__}: {self.name}'
 
+    def other_fields(self):
+        """ Returns a list of dicts with the model fields that are not defined in Item """
+        other_fields = []
+        exclude_names = ('id', 'name', 'description', 'image')
+        for field in self._meta.local_fields:
+            if field.name not in exclude_names:
+                other_fields.append({
+                    'name': field.name,
+                    'verbose_name': field.verbose_name,
+                    'value': getattr(self, field.name),
+                })
+        return other_fields
+
 
 def valid_item_class_ids():
     """ Returns a query parameter for ids of valid Item classes. Used for Ownership Content type validity """
@@ -141,6 +154,15 @@ class Ownership(models.Model):
         else:
             return self.group
 
+    def clean_fields(self, exclude=None):
+        super().clean_fields(exclude=exclude)
+        # Make exlude a list to prevent complex if statements
+        exclude = exclude or []
+
+        if 'content_type' not in exclude and 'object_id' not in exclude:
+            if self.content_object is None:
+                raise ValidationError("The connected item does not exist", code='item_nonexistent')
+
     def clean(self):
         super(Ownership, self).clean()
         # Validate that EITHER member or group must be defined
@@ -148,9 +170,6 @@ class Ownership(models.Model):
             raise ValidationError("Either a member or a group has to be defined", code='required')
         if self.member and self.group:
             raise ValidationError("An item can't belong both to a user and a group", code='invalid')
-        # Validate that content_object exists
-        if self.content_object is None:
-            raise ValidationError("The connected item does not exist", code='item_nonexistent')
 
     def __str__(self):
         if self.member:

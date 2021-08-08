@@ -10,7 +10,7 @@ from inventory.models import *
 
 __all__ = ['OwnershipRemovalForm', 'OwnershipActivationForm', 'OwnershipNoteForm', 'OwnershipCommitteeForm',
            'AddOwnershipCommitteeLinkForm', 'AddOwnershipMemberLinkForm', 'FilterOwnershipThroughRelatedItems',
-           'DeleteItemForm']
+           'DeleteItemForm', 'DeleteOwnershipForm']
 
 
 class OwnershipRemovalForm(forms.Form):
@@ -107,6 +107,20 @@ class AddOwnershipMemberLinkForm(AddOwnershipLinkMixin, forms.ModelForm):
         return super(AddOwnershipMemberLinkForm, self).clean()
 
 
+class DeleteOwnershipForm(forms.Form):
+
+    def __init__(self, *args, ownership=None, **kwargs):
+        self.ownership = ownership
+        super(DeleteOwnershipForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        if self.ownership.is_active:
+            raise ValidationError("Links may not be deleted while they are at the Knights", code="is_active")
+
+    def delete_link(self):
+        self.ownership.delete()
+
+
 
 class FilterOwnershipThroughRelatedItems(forms.Form):
     search_field = forms.CharField(max_length=100, required=False)
@@ -124,6 +138,7 @@ class FilterOwnershipThroughRelatedItems(forms.Form):
             )
             ownerships = ownerships.union(sub_ownerships)
         return ownerships
+
 
 class DeleteItemForm(forms.Form):
 

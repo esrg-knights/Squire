@@ -11,11 +11,57 @@
 
 {% block content %}
     <h1>Delete {{ item }}</h1>
+    <div class="row">
+        <div class="col-md-3">
+            {% if item.image %}
+                <div class="w-100 h-100"
+                     style="background-image: url('{{ item.image.url }}'); background-repeat: no-repeat; background-size: contain;">
+
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-9">
+            <div class="row">
+                <div class="col-3">
+                    {{ item_type|capfirst }}
+                </div>
+                <div class="col-9">
+                    {{ item.name }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    Description
+                </div>
+                <div class="col-9">
+                    {{ item.description }}
+                </div>
+            </div>
+            {% for other_field in item.other_fields %}
+                <div class="row">
+                    <div class="col-3">
+                        {{ other_field.verbose_name }}
+                    </div>
+                    <div class="col-9">
+                        {{ other_field.value }}
+                    </div>
+                </div>
+            {% endfor %}
+            <a href="{% url "inventory:catalogue_update_item" type_id=item_type item_id=item.id %}?redirect_to={{ request.path }}"
+               class="btn btn-outline-primary btn-sm mt-2">
+                Edit
+            </a>
+        </div>
+    </div>
+
+    <hr>
+
     {% if active_links and not can_maintain_ownerships %}
         <p>
             There are currently one or more instances of {{ item }} at the Knights. This item can not be removed.
         </p>
-        <a href="{% url "inventory:catalogue" type_id=item_type.id %}"
+        <a href="{% url "inventory:catalogue" type_id=item_type %}"
            class="btn btn-secondary">Go back</a>
     {% else %}
         {% if active_links %}
@@ -23,14 +69,25 @@
                 There are currently one or more items stored at the Knights. Deleting this item will also remove
                 the link{{ active_links|pluralize }} to the following owner{{ active_links|pluralize }}
             </p>
-            <li>
-                {% for ownership in active_links %}
-                    <ul>
-                        {{ ownership.owner }} {% if ownership.note %} - {{ ownership.note }}{% endif %}
 
-                    </ul>
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th scope="col">Owned by</th>
+                    <th scope="col">Note</th>
+                    <th scope="col">Added</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for link in active_links %}
+                    <tr class="table-warning">
+                        <td>{{ link.owner }}</td>
+                        <td>{{ link.note }}</td>
+                        <td>{{ link.added_since }} by {{ link.added_by }}</td>
+                    </tr>
                 {% endfor %}
-            </li>
+                </tbody>
+            </table>
         {% endif %}
 
         <p>
@@ -38,8 +95,13 @@
         </p>
 
         <div class="btn-group" role="group" aria-label="Form changing">
-            <a href="{% url "inventory:catalogue" type_id=item_type.id %}"
-               class="btn btn-secondary">Cancel</a>
+            {% if redirect_to_url %}
+                <a href="{{ redirect_to_url }}"
+                   class="btn btn-secondary">Cancel</a>
+            {% else %}
+                <a href="{% url "inventory:catalogue" type_id=item_type %}"
+                   class="btn btn-secondary">Cancel</a>
+            {% endif %}
             <form method="post">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger">

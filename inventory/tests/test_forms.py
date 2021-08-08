@@ -116,6 +116,27 @@ class TestAddOwnershipMemberLink(FormValidityMixin, TestCase):
         self.assertEqual(form.instance.member.id, 2)
 
 
+class TestDeleteOwnershipForm(FormValidityMixin, TestCase):
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    form_class = DeleteOwnershipForm
+
+    def test_form_invalid(self):
+        # Assert that links that are active are not deleted
+        ownership = Ownership.objects.get(id=1)
+        self.assertFormHasError({}, 'is_active', ownership=ownership)
+
+    def test_form_valid(self):
+        # Check for a member-owned link
+        form = self.assertFormValid({}, ownership=Ownership.objects.get(id=2))
+        form.delete_link()
+        self.assertFalse(Ownership.objects.filter(id=2).exists())
+
+        # Check for a group-owned link
+        form = self.assertFormValid({}, ownership=Ownership.objects.get(id=5))
+        form.delete_link()
+        self.assertFalse(Ownership.objects.filter(id=5).exists())
+
+
 class TestFilterOwnershipThroughRelatedItems(FormValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     form_class = FilterOwnershipThroughRelatedItems
