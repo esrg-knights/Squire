@@ -1,10 +1,16 @@
-
+from django import forms
+from django.contrib.admin import ModelAdmin, AdminSite
+from django.contrib.admin.models import LogEntry, ADDITION
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.test import TestCase
+from django.forms.models import model_to_dict
+from django.views.generic.edit import FormView
+from django.test import TestCase, RequestFactory
 
-from utils.forms import get_basic_filter_by_field_form
+from utils.forms import RequestUserToFormModelAdminMixin, RequestUserToFormViewMixin, UpdatingUserFormMixin, get_basic_filter_by_field_form
 from utils.testing import FormValidityMixin
 
+User = get_user_model()
 
 class TestBasicFilterForm(FormValidityMixin, TestCase):
 
@@ -34,8 +40,70 @@ class TestBasicFilterForm(FormValidityMixin, TestCase):
         raise AssertionError("Somehow form was not deemed valid?")
 
 
+class DummyForm(UpdatingUserFormMixin, forms.ModelForm):
+    """
+        Modelform for Django's LogEntry model. Used for testing UpdatingUserFormMixin.
+    """
+    class Meta:
+        model = LogEntry
+        fields = "__all__"
+    updating_user_field_name = "user"
 
+class UpdatingUserFormMixinTest(TestCase):
+    """ Tests for UpdatingUserFormMixin """
+    def setUp(self):
+        self.initial_user = User.objects.create(username="initial_user")
+        self.new_user = User.objects.create(username="new_user")
 
+        # Use an Admin-panel LogEntry object to test (it has a FK to user)
+        self.obj = LogEntry.objects.create(user=self.initial_user, action_flag=ADDITION, object_repr="My new object")
 
+    def test_field_updates(self):
+        """ Tests if the user does not change before saving, and is updated after saving """
+        form = DummyForm(model_to_dict(self.obj), instance=self.obj, user=self.new_user)
 
+        # Initial user is unchanged
+        self.assertEqual(form['user'].value(), self.initial_user.id)
+        self.assertEqual(LogEntry.objects.get(id=self.obj.id).user, self.initial_user)
+        self.assertTrue(form.is_valid())
 
+        # User changes after update
+        form.save()
+        self.assertEqual(LogEntry.objects.get(id=self.obj.id).user, self.new_user)
+
+class DummyView(RequestUserToFormViewMixin, FormView):
+    """ Dummy view for testing RequestUserToFormViewMixin """
+    form_class = DummyForm
+    template_name = "testing/test_mixin_template.html"
+
+class DummyModelAdmin(RequestUserToFormModelAdminMixin, ModelAdmin):
+    """ Dummy Modeladmin for testing RequestUserToFormModelAdminMixin """
+    form = DummyForm
+
+class RequestUserToFormMixinTest(TestCase):
+    """ Tests for RequestUserToFormViewMixin and RequestUserToFormModelAdminMixin """
+    def setUp(self):
+        self.user = User.objects.create(username="test_user")
+
+        # Use an Admin-panel LogEntry object to test (it has a FK to user)
+        self.obj = LogEntry.objects.create(user=self.user, action_flag=ADDITION, object_repr="My new object")
+
+        # Create a request
+        self.factory = RequestFactory()
+        self.request = self.factory.get('/testurl/')
+        self.request.user = self.user
+
+    def test_view_form_has_request_user(self):
+        """ Tests if the View's form's user is set to the requesting user """
+        # We must get an OK-response, and the form must have the user
+        response = DummyView.as_view()(self.request)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context_data.get('form', False))
+        self.assertEqual(response.context_data.get('form').user, self.user)
+
+    def test_model_admin_form_has_request_user(self):
+        """ Tests if the ModelAdmin's form's user is set to the requesting user """
+        # The form must have the user
+        model_admin = DummyModelAdmin(model=LogEntry, admin_site=AdminSite())
+        form = model_admin.get_form(self.request)()
+        self.assertEqual(form.user, self.user)

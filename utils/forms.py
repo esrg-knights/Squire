@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ObjectDoesNotExist
 
 
 def get_basic_filter_by_field_form(field_name):
@@ -41,8 +42,15 @@ class UpdatingUserFormMixin(UserFormMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Sanity check
-        assert hasattr(self.instance, self.updating_user_field_name)
+        # Sanity check (hasattr doesn't do the trick due to Foo.RelatedObjectDoesNotExist)
+        try:
+            getattr(self.instance, self.updating_user_field_name)
+        except ObjectDoesNotExist:
+            # This is fine; the field exists but there's just no object there yet
+            pass
+        except AttributeError:
+            # This is not fine; the field does not exist for the instance!
+            assert False, "%s has no field %s" % (self.instance.__class__, self.updating_user_field_name)
 
     def save(self, commit=True):
         # Update the field
