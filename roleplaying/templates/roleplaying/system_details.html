@@ -93,29 +93,52 @@
             {% if system.achievements %}
                 <hr>
                 <p>
-                Achievements belonging to this system:
+                    Achievements related to this system:
                 </p>
                 <div class="row">
-                {% for ach_link in system.achievements.all %}
-                    <div class="col">
-                    {% include "achievements/snippets/achievement_external_ref_snippet.html" with achievement=ach_link.achievement %}
-                    </div>
-                {% endfor %}
+                    {% for ach_link in system.achievements.all %}
+                        <div class="col">
+                            {% include "achievements/snippets/achievement_external_ref_snippet.html" with achievement=ach_link.achievement %}
+                        </div>
+                    {% endfor %}
                 </div>
             {% endif %}
 
+
+            <hr>
             <div>
-                {% if system.items.all %}
+                <div class="d-flex justify-content-between">
                     <div class="font-weight-bold mt-3">
                         Availlable items:
                     </div>
+                    <div>{% if perms.roleplaying.can_maintain_ownership_roleplayingitem %}
+                        <a href="{% url "inventory:catalogue" type_id=item_type %}"
+                           class="btn btn-sm btn-outline-primary">
+                            Catalogue
+                        </a>
+                    {% endif %}
+                    </div>
+                </div>
+                {% if owned_items %}
                     <table class="table table-sm table-hover">
                         <tbody>
 
-                        {% for item in system.items.get_all_in_possession %}
+                        {% for item in owned_items %}
                             <tr>
                                 <td scope="row" style="width: 15em;">
-                                    {{ item.name }}
+                                    <div class="d-flex">
+                                        <div style="width: 2em;">
+                                            {% if item.image %}
+                                                <a class="enlargable_image" data-imgurl="{{ item.image.url }}">
+                                                    <div style="background-size: contain; background-position: center;
+                                                        background-image: url('{{ item.image.url }}');
+                                                        background-repeat: no-repeat; width: 2em; height: 2em;">
+                                                    </div>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                        <div>{{ item.name }}</div>
+                                    </div>
                                 </td>
                                 <td>
                                     {{ item.description }}
@@ -131,19 +154,33 @@
                                         In Luna
                                     {% endif %}
                                 </td>
+                                {% if can_maintain_ownership %}
+                                    <td style="padding-right: 0;">
+                                        <div class="d-flex justify-content-end">
+                                            <a class="btn btn-sm btn-outline-primary"
+                                               href="{% url "inventory:catalogue_item_links" type_id=item_type item_id=item.id %}">
+                                                Edit
+                                            </a>
+                                        </div>
+                                    </td>
+                                {% endif %}
                             </tr>
                         {% endfor %}
                         </tbody>
                     </table>
-
-
+                {% else %}
+                    <p>There are no items for this at the association</p>
                 {% endif %}
             </div>
         </div>
     </div>
 
-
+    {% include "inventory/snippets/snippet_enlarged_image_modal.html" %}
 {% endblock %}
 
 
+{% block js_bottom %}
+    {{ block.super }}
+    <script src="{% static "js/enlarge_item_image.js" %}"></script>
+{% endblock %}
 

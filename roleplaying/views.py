@@ -34,6 +34,20 @@ class SystemDetailView(MembershipRequiredMixin, DetailView):
     pk_url_kwarg = 'system_id'
     context_object_name = 'system'
 
+    def get_context_data(self, **kwargs):
+        item_type = ContentType.objects.get_for_model(RoleplayingItem)
+        item_class_name = slugify(item_type.model_class().__name__)
+
+        context = super(SystemDetailView, self).get_context_data(**kwargs)
+        system = context['system']
+        context.update({
+            'item_type': ContentType.objects.get_for_model(RoleplayingItem),
+            'can_maintain_ownership': self.request.user.has_perm(f'inventory.change_{item_class_name}'),
+            'owned_items': system.items.get_all_in_possession(),
+        })
+        return context
+
+
 
 class RoleplayingItemMixin:
     roleplay_item = None
