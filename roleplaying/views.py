@@ -19,9 +19,10 @@ from membership_file.views import MembershipRequiredMixin
 from roleplaying.models import RoleplayingItem, RoleplayingSystem
 
 
-class RoleplaySystemView(ListView):
+class RoleplaySystemView(SearchFormMixin, ListView):
     template_name = "roleplaying/system_overview.html"
     context_object_name = 'roleplay_systems'
+    filter_field_name = "name"
     model = RoleplayingSystem
 
     paginate_by = 10

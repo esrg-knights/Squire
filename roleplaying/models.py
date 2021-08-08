@@ -1,8 +1,8 @@
 import os
 
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.contenttypes.fields import GenericRelation
-from django.utils.text import slugify
 
 from inventory.models import Item
 
@@ -28,6 +28,21 @@ class RoleplayingSystem(models.Model):
     image = models.ImageField(upload_to=get_system_image_upload_path, null=True, blank=True)
     is_live = models.BooleanField(default=False)
 
+    # Other system properties
+    RULE_COMPLEXITY = [
+        (1, 'No rules'),
+        (2, 'Rules-light'),
+        (3, 'Average'),
+        (4, 'Rule-heavy'),
+        (5, 'Robust'),
+    ]
+    rate_complexity = models.IntegerField(choices=RULE_COMPLEXITY, blank=True, null=True)
+    rate_lore = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)],
+                                     blank=True, null=True)
+    player_count = models.CharField(max_length=8, null=True, blank=True)
+    dice = models.TextField(max_length=32, null=True, blank=True)
+
+    # Relations
     achievements = GenericRelation('achievements.AchievementItemLink')
 
     def __str__(self):

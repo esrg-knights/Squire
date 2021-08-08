@@ -13,7 +13,10 @@
 
 
 {% block content %}
-<h1>{{ system.name }}</h1>
+    <a href="{% url "roleplaying:home" %}"
+       class="btn btn-primary">
+        Back to overview
+    </a>
 
     <div class="card my-3">
         <div class="card-header">
@@ -37,32 +40,73 @@
             <div class="row">
                 <div class="col-6 col-md-8">
                     <p>
-                        {{ system.long_description }}
+                        {{ system.long_description|linebreaksbr }}
                     </p>
                 </div>
                 <div class="col-6 col-md-4">
-                    <div class="row">
-                        <div class="col-4">
-                            Complexity:
+                    {% if system.rate_complexity %}
+                        <div class="row">
+                            <div class="col-4">
+                                Complexity:
+                            </div>
+                            <div class="col-8">
+                                {{ system.get_rate_complexity_display }}
+                            </div>
                         </div>
-                        <div class="col-8">
-                            2/5
+                    {% endif %}
+                    {% if system.rate_lore %}
+                        <div class="row">
+                            <div class="col-4">
+                                Lore:
+                            </div>
+                            <div class="col-8">
+                                {{ system.rate_lore }}/5
+                            </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-4">
-                            Dice:
+                    {% endif %}
+
+                    <hr>
+
+                    {% if system.player_count %}
+                        <div class="row">
+                            <div class="col-4">
+                                Players:
+                            </div>
+                            <div class="col-8">
+                                {{ system.player_count }}
+                            </div>
                         </div>
-                        <div class="col-8">
-                            Many
+                    {% endif %}
+                    {% if system.dice %}
+                        <div class="row">
+                            <div class="col-4">
+                                Dice:
+                            </div>
+                            <div class="col-8">
+                                {{ system.dice|linebreaksbr }}
+                            </div>
                         </div>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
 
+            {% if system.achievements %}
+                <hr>
+                <p>
+                Achievements belonging to this system:
+                </p>
+                <div class="row">
+                {% for ach_link in system.achievements.all %}
+                    <div class="col">
+                    {% include "achievements/snippets/achievement_external_ref_snippet.html" with achievement=ach_link.achievement %}
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+
             <div>
                 {% if system.items.all %}
-                    <div class="font-weight-bold">
+                    <div class="font-weight-bold mt-3">
                         Availlable items:
                     </div>
                     <table class="table table-sm table-hover">
