@@ -1,0 +1,53 @@
+{% extends 'core/base.html' %}
+{% load render_form %}
+
+{% block title %}
+    Squire - Inventory
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+{% block content %}
+    <h1>{{ ownership }}</h1>
+    <div class="mb-3">
+        <div class="row">
+            <div class="col-3">
+                {{ item_type|capfirst }}
+            </div>
+            <div class="col-9">
+                {{ item.name }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-3">
+                Owner
+            </div>
+            <div class="col-9">
+                {{ ownership.owner }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-3">
+                Currently at Knights:
+            </div>
+            <div class="col-9">
+                {% if ownership.is_active %}Yes{% else %}No{% endif %}
+            </div>
+        </div>
+    </div>
+
+
+
+    {% render_form method="post" id="submit_form"  has_submit_button=False %}
+
+    <div class="btn-group w-100" role="group" aria-label="Form changing">
+        <a href="{% url "inventory:catalogue_item_links" type_id=item_type item_id=item.id %}"
+           class="btn btn-secondary">Cancel</a>
+        <button form="submit_form" type="submit" class="btn btn-success">
+            Save changes
+        </button>
+    </div>
+
+{% endblock %}

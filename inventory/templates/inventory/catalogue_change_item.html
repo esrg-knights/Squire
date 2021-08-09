@@ -15,18 +15,13 @@
     {% render_form method="post" id="submit_form"  has_submit_button=False uses_file_field=True %}
 
     <div class="btn-group" role="group" aria-label="Form changing">
-        <a href="{% url "inventory:catalogue" type_id=item_type.id %}"
-           class="btn btn-outline-secondary">Cancel</a>
-        {% if can_delete %}
-        <a href="{% url "inventory:catalogue_delete_item" type_id=item_type.id item_id=item.id %}"
-           class="btn btn-outline-danger">Delete</a>
+        {% if redirect_to_url %}
+            <a href="{{ redirect_to_url }}"
+               class="btn btn-outline-secondary">Cancel</a>
+        {% else %}
+            <a href="{% url "inventory:catalogue" type_id=item_type %}"
+               class="btn btn-outline-secondary">Cancel</a>
         {% endif %}
-        <button form="submit_form" type="submit" class="btn btn-outline-primary" name="btn_save_to_group">
-            Save and assign to group
-        </button>
-        <button form="submit_form" type="submit" class="btn btn-outline-primary" name="btn_save_to_member">
-            Save and assign to member
-        </button>
         <button form="submit_form" type="submit" class="btn btn-primary" name="btn_save">
             Save item
         </button>

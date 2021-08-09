@@ -30,7 +30,7 @@
                         </button>
                         <div class="dropdown-menu dropdown-menu-right">
                             {% for content_type in content_types %}
-                                <a href="{% url "inventory:catalogue" type_id=content_type.id %}"
+                                <a href="{% url "inventory:catalogue" type_id=content_type %}"
                                    class="dropdown-item">
                                     {{ content_type }}
                                 </a>

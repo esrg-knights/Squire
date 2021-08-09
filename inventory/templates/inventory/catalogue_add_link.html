@@ -19,8 +19,13 @@
     {% render_form method="post" id="submit_form"  has_submit_button=False %}
 
     <div class="btn-group" role="group" aria-label="Form changing">
-        <a href="{% url "inventory:catalogue" type_id=item_type.id %}"
-           class="btn btn-secondary">Cancel</a>
+        {% if redirect_to_url %}
+            <a href="{{ redirect_to_url }}"
+               class="btn btn-secondary">Cancel</a>
+        {% else %}
+            <a href="{% url "inventory:catalogue" type_id=item_type %}"
+               class="btn btn-secondary">Cancel</a>
+        {% endif %}
         <button form="submit_form" type="submit" class="btn btn-success">
             Save ownership link
         </button>

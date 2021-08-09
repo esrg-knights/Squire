@@ -212,9 +212,5 @@
 {% endblock content %}
 
 {% block js_bottom %}
-    <script language="JavaScript" note="Trigger bootstrap popovers">
-        $(function () {
-            $('[data-toggle="popover"]').popover()
-        })
-    </script>
+    <script src="{% static "js/activate_bootstrap_popover.js" %}"></script>
 {% endblock %}
