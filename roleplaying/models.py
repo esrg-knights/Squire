@@ -1,6 +1,7 @@
 import os
 
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.contenttypes.fields import GenericRelation
 
@@ -67,4 +68,13 @@ class RoleplayingItem(Item):
                               on_delete=models.SET_NULL, null=True, blank=True)
 
     digital_version = models.FileField(null=True, blank=True, upload_to=get_roleplay_item_file_upload_path)
-    digital_version_file_name = models.CharField(max_length=32, null=True, blank=True)
+    digital_version_file_name = models.CharField(max_length=32, blank=True, null=True)
+
+    external_file_location = models.URLField(max_length=256, blank=True, null=True)
+
+    def clean(self):
+        if self.digital_version and self.external_file_location:
+            raise ValidationError(
+                "You can not set both a digital file and an external file location",
+                code='duplicate_location'
+            )

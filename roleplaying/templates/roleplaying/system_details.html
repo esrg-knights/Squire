@@ -142,14 +142,24 @@
                                 <td>
                                     {{ item.description }}
                                 </td>
-                                <td>
+                                <td style="max-width: 4em;">
                                     {% if item.digital_version %}
                                         <button type="button"
-                                                class="btn btn-sm btn-outline-info"
-                                                data-toggle="modal" data-target="#downloadModal"
+                                                class="btn btn-sm btn-outline-info btn-block"
+                                                data-toggle="modal" data-target="#fileModal"
                                                 data-url="{% url "roleplaying:download_roleplay_item" item_id=item.id %}"
+                                                data-useraction="Download"
                                                 data-filename="{{ item.name }}"
                                         > Download
+                                        </button>
+                                    {% elif item.external_file_location %}
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-info btn-block"
+                                                data-toggle="modal" data-target="#fileModal"
+                                                data-url="{{ item.external_file_location }}"
+                                                data-useraction="Read"
+                                                data-filename="{{ item.name }}"
+                                        > View
                                         </button>
                                     {% else %}
                                         In Luna
@@ -177,11 +187,13 @@
     </div>
 
     <!-- Define the Bootstrap modal that is displayed when download is pressed. -->
-    <div class="modal fade" id="downloadModal" tabindex="-1" role="dialog" aria-labelledby="downloadModalLabel" aria-hidden="true">
+    <div class="modal fade" id="fileModal" tabindex="-1" role="dialog" aria-labelledby="fileModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-warning">
-                    <h5 class="modal-title" id="downloadModalLabel">Download <span id="downloadFileName"></span> </h5>
+                    <h5 class="modal-title" id="fileModalLabel">
+                        <span class="filemodalaction"></span> <span class="filemodalfilename"></span>
+                    </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -199,7 +211,10 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <a class="btn btn-info" id="downloadModalLinkButton" href="">Download file</a>
+                    <a class="btn btn-info" id="downloadModalLinkButton" href=""
+                        target="_blank" rel="noopener noreferrer">
+                        <span class="filemodalaction"></span> file
+                    </a>
                 </div>
             </div>
         </div>
@@ -214,15 +229,17 @@
     <script src="{% static "js/enlarge_item_image.js" %}"></script>
 
     <script>
-        $('#downloadModal').on('show.bs.modal', function (event) {
+        $('#fileModal').on('show.bs.modal', function (event) {
+
             var button = $(event.relatedTarget); // Button that triggered the modal
             var file_url = button.data('url'); // Extract info from data-* attributes
             var file_name = button.data('filename'); // Extract info from data-* attributes
-            // If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
-            // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
+            var user_action = button.data('useraction'); // Extract info from data-* attributes
+
             var modal = $(this);
             modal.find('#downloadModalLinkButton').attr("href", file_url);
-            modal.find('#downloadFileName').text(file_name);
+            modal.find('.filemodalfilename').text(file_name);
+            modal.find('.filemodalaction').text(user_action);
         })
     </script>
 {% endblock %}

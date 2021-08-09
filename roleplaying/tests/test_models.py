@@ -58,3 +58,14 @@ class TestRoleplayingItem(TestCase):
         # Test digital_version field
         field = RoleplayingItem._meta.get_field("digital_version")
         self.assertIsInstance(field, models.FileField)
+
+    def test_non_duplicate_location(self):
+        """ Tests that an external file location and a local file can't both be set. """
+        item = RoleplayingItem(external_file_location = "https://www.google.com")
+        # Set a file location. Cleaning does not actually verify file existence so setting a name is enough to
+        # imitate a linked file
+        item.digital_version.name = "test_file_location.txt"
+
+        with self.assertRaises(ValidationError) as error:
+            item.clean()
+        self.assertEqual(error.exception.code, 'duplicate_location')
