@@ -1,18 +1,11 @@
 import os
 
-from django.contrib import messages
-from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import PermissionDenied
 from django.http import Http404, FileResponse
-from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.urls import reverse_lazy, reverse
 from django.utils.text import slugify
 from django.views.generic import ListView, View, DetailView
-from django.views.generic.edit import FormView, UpdateView, CreateView
 
-from committees.views import GroupMixin
 from utils.views import SearchFormMixin
 from membership_file.views import MembershipRequiredMixin
 
@@ -26,6 +19,9 @@ class RoleplaySystemView(SearchFormMixin, ListView):
     model = RoleplayingSystem
 
     paginate_by = 10
+
+    def get_queryset(self):
+        return super(RoleplaySystemView, self).get_queryset().filter(is_live=True)
 
 
 class SystemDetailView(MembershipRequiredMixin, DetailView):
@@ -42,7 +38,7 @@ class SystemDetailView(MembershipRequiredMixin, DetailView):
         system = context['system']
         context.update({
             'item_type': ContentType.objects.get_for_model(RoleplayingItem),
-            'can_maintain_ownership': self.request.user.has_perm(f'inventory.change_{item_class_name}'),
+            'can_maintain_ownership': self.request.user.has_perm(f'roleplaying.maintain_ownerships_for_{item_class_name}'),
             'owned_items': system.items.get_all_in_possession(),
         })
         return context

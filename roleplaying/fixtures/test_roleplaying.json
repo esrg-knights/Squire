@@ -1,0 +1,109 @@
+[
+    {
+        "model": "auth.group",
+        "pk": 20,
+        "fields": {
+            "name": "RP"
+        }
+    },
+    {
+        "model": "roleplaying.roleplayingsystem",
+        "pk": 1,
+        "fields": {
+            "name": "Dungeons and Dragons",
+            "short_description": "This infamous roleplaying system",
+            "long_description": "Ha, this is a long description",
+            "is_live": true
+        }
+    },
+    {
+        "model": "roleplaying.roleplayingsystem",
+        "pk": 2,
+        "fields": {
+            "name": "Lasers & Feelings",
+            "short_description": "A simple chaotic system",
+            "long_description": "Some lengthy description of science fiction and liberal arts degrees",
+            "is_live": true
+        }
+    },
+    {
+        "model": "roleplaying.roleplayingsystem",
+        "pk": 3,
+        "fields": {
+            "name": "Old system of old",
+            "short_description": "Discontinued system",
+            "is_live": false
+        }
+    },
+    {
+        "model": "roleplaying.roleplayingitem",
+        "pk": 1,
+        "fields": {
+            "name": "D&D book monsters",
+            "system": 1
+        }
+    },
+    {
+        "model": "roleplaying.roleplayingitem",
+        "pk": 2,
+        "fields": {
+            "name": "D&D book online",
+            "system": 1,
+            "digital_version": "roleplaying/this-is-a-test-file.txt",
+            "digital_version_file_name": "test_file"
+        }
+    },
+    {
+        "model": "roleplaying.roleplayingitem",
+        "pk": 3,
+        "fields": {
+            "name": "Old DnD book",
+            "system": 1
+        }
+    },
+    {
+        "model": "roleplaying.roleplayingitem",
+        "pk": 4,
+        "fields": {
+            "name": "Lasers and feelings toiletpaper roll",
+            "system": 2
+        }
+    },
+    {
+        "model": "inventory.ownership",
+        "pk": 21,
+        "fields": {
+            "member": null,
+            "group": 20,
+            "added_since": "2021-01-01",
+            "is_active": true,
+            "content_type": ["roleplaying", "roleplayingitem"],
+            "object_id": 1
+        }
+    },
+    {
+        "model": "inventory.ownership",
+        "pk": 22,
+        "fields": {
+            "member": null,
+            "group": 20,
+            "added_since": "2021-01-01",
+            "is_active": true,
+            "content_type": ["roleplaying", "roleplayingitem"],
+            "object_id": 2
+        }
+    },
+    {
+        "model": "inventory.ownership",
+        "pk": 23,
+        "fields": {
+            "member": null,
+            "group": 20,
+            "added_since": "2021-01-01",
+            "is_active": true,
+            "content_type": ["roleplaying", "roleplayingitem"],
+            "object_id": 2
+        }
+    }
+
+]

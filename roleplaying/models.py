@@ -7,6 +7,8 @@ from django.contrib.contenttypes.fields import GenericRelation
 from inventory.models import Item
 
 
+__all__ = ['RoleplayingSystem', 'RoleplayingItem',]
+
 
 # File path to upload achievement images to
 def get_system_image_upload_path(instance, filename):
