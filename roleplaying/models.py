@@ -51,7 +51,7 @@ class RoleplayingSystem(models.Model):
         return self.name
 
 # File path to upload achievement images to
-def get_item_image_upload_path(instance, filename):
+def get_roleplay_item_file_upload_path(instance, filename):
     # Obtain extension
     # NB: A file can be renamed to have ANY extension
     _, extension = os.path.splitext(filename)
@@ -66,5 +66,5 @@ class RoleplayingItem(Item):
     system = models.ForeignKey(RoleplayingSystem, related_name='items',
                               on_delete=models.SET_NULL, null=True, blank=True)
 
-    digital_version = models.FileField(null=True, blank=True, upload_to=get_item_image_upload_path)
+    digital_version = models.FileField(null=True, blank=True, upload_to=get_roleplay_item_file_upload_path)
     digital_version_file_name = models.CharField(max_length=32, null=True, blank=True)

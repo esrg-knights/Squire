@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='roleplayingitem',
             name='digital_version',
-            field=models.FileField(blank=True, null=True, upload_to=roleplaying.models.get_item_image_upload_path),
+            field=models.FileField(blank=True, null=True, upload_to=roleplaying.models.get_roleplay_item_file_upload_path),
         ),
     ]
