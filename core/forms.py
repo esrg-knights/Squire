@@ -90,9 +90,9 @@ class PasswordResetConfirmForm(DjangoPasswordResetConfirmForm):
 
 class MarkdownForm(UserFormMixin, ModelForm):
     """
-        Changes fields listed in markdown_field_names to use Martor's Markdown widget
-        instead of their normal widget. Ideally, those fields should be TextFields, but this
-        is not enforced.
+        Changes the model's fields that support Markdown such that they use a variant of Martor's
+        widget that also allows images to be uploaded. Furthermore, it allows those fields to
+        display a placeholder, just like normal HTML inputs.
 
         Also ensures that any images uploaded through Martor's widget are properly linked
         to the object that is being edited (if any). If an image is uploaded for an object

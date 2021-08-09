@@ -1,3 +1,4 @@
+from core.models import MarkdownImage
 from django.db import models
 from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe
@@ -23,6 +24,11 @@ class MarkdownObject:
     def __len__(self):
         # For max_length and friends
         return len(self.raw_value)
+
+    def __eq__(self, other):
+        if isinstance(other, MarkdownObject):
+            return self.raw_value == other.raw_value
+        return False
 
     def as_rendered(self):
         """

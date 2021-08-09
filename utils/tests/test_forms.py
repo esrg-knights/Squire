@@ -71,6 +71,15 @@ class UpdatingUserFormMixinTest(TestCase):
         form.save()
         self.assertEqual(LogEntry.objects.get(id=self.obj.id).user, self.new_user)
 
+    def test_field_sanity_check(self):
+        """ Tests if an AssertionError is raised if the Form does not have updating_user_field_name """
+        class DummyForm2(DummyForm):
+            updating_user_field_name = "foo"
+
+        with self.assertRaisesMessage(AssertionError,
+                "<class 'django.contrib.admin.models.LogEntry'> has no field foo"):
+            DummyForm2(model_to_dict(self.obj), instance=self.obj, user=self.new_user)
+
 class DummyView(RequestUserToFormViewMixin, FormView):
     """ Dummy view for testing RequestUserToFormViewMixin """
     form_class = DummyForm
