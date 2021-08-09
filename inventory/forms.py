@@ -72,20 +72,21 @@ class AddOwnershipLinkMixin:
 
 
 class AddOwnershipCommitteeLinkForm(AddOwnershipLinkMixin, forms.ModelForm):
-    committee = forms.ModelChoiceField(queryset=Group.objects.none(), required=True)
+    committee = forms.ModelChoiceField(queryset=Group.objects.all(), required=True)
 
     class Meta:
         model = Ownership
         fields = ['committee', 'note', 'is_active']
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, allow_all_groups=False, **kwargs):
         super(AddOwnershipCommitteeLinkForm, self).__init__(*args, **kwargs)
         # Adjust committee field depending on the number of groups a user is in.
         # There is no reason to change group if only one is possible
-        self.fields['committee'].queryset = self.instance.added_by.groups.all()
-        if self.instance.added_by.groups.count() == 1:
-            self.fields['committee'].initial = self.instance.added_by.groups.first().id
-            self.fields['committee'].disabled = True
+        if not allow_all_groups:
+            self.fields['committee'].queryset = self.instance.added_by.groups.all()
+            if self.instance.added_by.groups.count() == 1:
+                self.fields['committee'].initial = self.instance.added_by.groups.first().id
+                self.fields['committee'].disabled = True
 
     def clean(self):
         self.instance.group = self.cleaned_data.get('committee', None)
@@ -119,7 +120,6 @@ class DeleteOwnershipForm(forms.Form):
 
     def delete_link(self):
         self.ownership.delete()
-
 
 
 class FilterOwnershipThroughRelatedItems(forms.Form):

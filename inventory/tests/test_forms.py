@@ -89,6 +89,11 @@ class TestAddOwnershipCommitteeLink(FormValidityMixin, TestCase):
         self.assertEqual(2, form.fields['committee'].queryset.count())
         self.assertFalse(form.fields['committee'].disabled)
 
+    def test_committee_allow_all_groups(self):
+        """ Tests the correct working of a true value in allow_all_groups """
+        form = self.build_form(None, user=User.objects.get(id=100), allow_all_groups=True)
+        self.assertEqual(3, form.fields['committee'].queryset.count())
+
 
 class TestAddOwnershipMemberLink(FormValidityMixin, TestCase):
     """ Tests AddOwnershipCommitteeLink Form with boardgame as the item """
