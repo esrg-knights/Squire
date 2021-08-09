@@ -122,7 +122,6 @@
                 {% if owned_items %}
                     <table class="table table-sm table-hover">
                         <tbody>
-
                         {% for item in owned_items %}
                             <tr>
                                 <td scope="row" style="width: 15em;">
@@ -145,11 +144,13 @@
                                 </td>
                                 <td>
                                     {% if item.digital_version %}
-                                        <a class="btn btn-sm btn-outline-info"
-                                           target="_blank" rel="noopener noreferrer"
-                                           href="{% url "roleplaying:download_roleplay_item" item_id=item.id %}">
-                                            Download
-                                        </a>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-info"
+                                                data-toggle="modal" data-target="#downloadModal"
+                                                data-url="{% url "roleplaying:download_roleplay_item" item_id=item.id %}"
+                                                data-filename="{{ item.name }}"
+                                        > Download
+                                        </button>
                                     {% else %}
                                         In Luna
                                     {% endif %}
@@ -175,6 +176,35 @@
         </div>
     </div>
 
+    <!-- Define the Bootstrap modal that is displayed when download is pressed. -->
+    <div class="modal fade" id="downloadModal" tabindex="-1" role="dialog" aria-labelledby="downloadModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title" id="downloadModalLabel">Download <span id="downloadFileName"></span> </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        This file is availlable to you for personal use as long as you are a member of the Knights.
+                    </p>
+                    <p class="font-weight-bold">
+                        You are not allowed to distribute, or share this file with others.
+                    </p>
+                    <p>
+                        Seriously, please don't. Only this way we can keep these files availlable like they are now.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <a class="btn btn-info" id="downloadModalLinkButton" href="">Download file</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {% include "inventory/snippets/snippet_enlarged_image_modal.html" %}
 {% endblock %}
 
@@ -182,5 +212,18 @@
 {% block js_bottom %}
     {{ block.super }}
     <script src="{% static "js/enlarge_item_image.js" %}"></script>
+
+    <script>
+        $('#downloadModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget); // Button that triggered the modal
+            var file_url = button.data('url'); // Extract info from data-* attributes
+            var file_name = button.data('filename'); // Extract info from data-* attributes
+            // If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
+            // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
+            var modal = $(this);
+            modal.find('#downloadModalLinkButton').attr("href", file_url);
+            modal.find('#downloadFileName').text(file_name);
+        })
+    </script>
 {% endblock %}
 
