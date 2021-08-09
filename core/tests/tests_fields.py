@@ -55,7 +55,7 @@ class MarkdownFieldMixinTest(TestCase):
     def test_max_length(self):
         """ Tests if the max_length property is still enforced"""
         with self.assertRaisesMessage(ValidationError, "Ensure this value has at most 12 characters (it has 13)"):
-            self.charfield.run_validators("1234567890abc")
+            self.charfield.run_validators(MarkdownObject("1234567890abc"))
 
     def test_to_python(self):
         """ Tests for to_python(val) -> Convert from any value to a MarkdownObject """
