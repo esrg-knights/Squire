@@ -268,6 +268,12 @@ class AddLinkCommitteeView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, A
                            RedirectMixin, PermissionRequiredMixin, CreateView):
     form_class = AddOwnershipCommitteeLinkForm
 
+    def get_form_kwargs(self):
+        kwargs = super(AddLinkCommitteeView, self).get_form_kwargs()
+        item_class_name = slugify(self.item_type.model_class().__name__)
+        kwargs['allow_all_groups'] = self.request.user.has_perm(f'inventory.maintain_ownerships_for_{item_class_name}')
+        return kwargs
+
     def get_permission_required(self):
         item_class_name = slugify(self.item_type.model_class().__name__)
         return [f'inventory.add_group_ownership_for_{item_class_name}']
