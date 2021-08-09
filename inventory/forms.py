@@ -10,7 +10,7 @@ from inventory.models import *
 
 __all__ = ['OwnershipRemovalForm', 'OwnershipActivationForm', 'OwnershipNoteForm', 'OwnershipCommitteeForm',
            'AddOwnershipCommitteeLinkForm', 'AddOwnershipMemberLinkForm', 'FilterOwnershipThroughRelatedItems',
-           'DeleteItemForm']
+           'DeleteItemForm', 'DeleteOwnershipForm']
 
 
 class OwnershipRemovalForm(forms.Form):
@@ -72,20 +72,21 @@ class AddOwnershipLinkMixin:
 
 
 class AddOwnershipCommitteeLinkForm(AddOwnershipLinkMixin, forms.ModelForm):
-    committee = forms.ModelChoiceField(queryset=Group.objects.none(), required=True)
+    committee = forms.ModelChoiceField(queryset=Group.objects.all(), required=True)
 
     class Meta:
         model = Ownership
         fields = ['committee', 'note', 'is_active']
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, allow_all_groups=False, **kwargs):
         super(AddOwnershipCommitteeLinkForm, self).__init__(*args, **kwargs)
         # Adjust committee field depending on the number of groups a user is in.
         # There is no reason to change group if only one is possible
-        self.fields['committee'].queryset = self.instance.added_by.groups.all()
-        if self.instance.added_by.groups.count() == 1:
-            self.fields['committee'].initial = self.instance.added_by.groups.first().id
-            self.fields['committee'].disabled = True
+        if not allow_all_groups:
+            self.fields['committee'].queryset = self.instance.added_by.groups.all()
+            if self.instance.added_by.groups.count() == 1:
+                self.fields['committee'].initial = self.instance.added_by.groups.first().id
+                self.fields['committee'].disabled = True
 
     def clean(self):
         self.instance.group = self.cleaned_data.get('committee', None)
@@ -107,6 +108,19 @@ class AddOwnershipMemberLinkForm(AddOwnershipLinkMixin, forms.ModelForm):
         return super(AddOwnershipMemberLinkForm, self).clean()
 
 
+class DeleteOwnershipForm(forms.Form):
+
+    def __init__(self, *args, ownership=None, **kwargs):
+        self.ownership = ownership
+        super(DeleteOwnershipForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        if self.ownership.is_active:
+            raise ValidationError("Links may not be deleted while they are at the Knights", code="is_active")
+
+    def delete_link(self):
+        self.ownership.delete()
+
 
 class FilterOwnershipThroughRelatedItems(forms.Form):
     search_field = forms.CharField(max_length=100, required=False)
@@ -124,6 +138,7 @@ class FilterOwnershipThroughRelatedItems(forms.Form):
             )
             ownerships = ownerships.union(sub_ownerships)
         return ownerships
+
 
 class DeleteItemForm(forms.Form):
 

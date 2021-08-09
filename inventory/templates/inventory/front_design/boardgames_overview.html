@@ -110,7 +110,7 @@
 
     {% if perms.inventory.can_maintain_boardgame_ownerships %}
         <div class="d-flex justify-content-end">
-            <a href="{% url "inventory:catalogue" type_id=content_type.id %}"
+            <a href="{% url "inventory:catalogue" type_id=content_type %}"
                class="btn btn-secondary">
                 Maintain catalogue
             </a>
