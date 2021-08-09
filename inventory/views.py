@@ -337,12 +337,6 @@ class UpdateItemView(RedirectMixin, MembershipRequiredMixin, CatalogueMixin, Ite
     def get_object(self, queryset=None):
         return self.item
 
-    def get_context_data(self, *args, **kwargs):
-        context = super(UpdateItemView, self).get_context_data(*args, **kwargs)
-        permission_name = f'inventory.delete_{slugify(self.item.__class__.__name__)}'
-        context['can_delete'] = self.request.user.has_perm(permission_name)
-        return context
-
     def get_permission_required(self):
         item_class_name = slugify(self.item_type.model_class().__name__)
         return [f'inventory.change_{item_class_name}']
@@ -430,6 +424,7 @@ class ItemLinkMaintenanceView(MembershipRequiredMixin, CatalogueMixin, ItemMixin
             'inactive_links': self.item.ownerships.filter(is_active=False),
             'can_add_to_group': self.request.user.has_perm(f'inventory.add_group_ownership_for_{item_class_name}'),
             'can_add_to_member': self.request.user.has_perm(f'inventory.add_member_ownership_for_{item_class_name}'),
+            'can_delete': self.request.user.has_perm(f'inventory.delete_{item_class_name}'),
         })
         return context
 

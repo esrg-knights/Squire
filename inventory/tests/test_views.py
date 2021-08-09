@@ -748,6 +748,12 @@ class TestItemLinkMaintenanceView(ViewValidityMixin, TestCase):
         self.assertTrue(context['can_add_to_group'])
         self.assertTrue(context['can_add_to_member'])
 
+        context = self.client.get(self.get_base_url(), data={}).context
+        self.assertFalse(context['can_delete'])
+        self.user.user_permissions.add(Permission.objects.get(codename='delete_boardgame'))
+        context = self.client.get(self.get_base_url(), data={}).context
+        self.assertTrue(context['can_delete'])
+
 
 class TestOwnershipCatalogueLinkMixin(TestMixinMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
