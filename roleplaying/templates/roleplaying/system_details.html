@@ -143,7 +143,7 @@
                                     {{ item.description }}
                                 </td>
                                 <td style="max-width: 4em;">
-                                    {% if item.digital_version %}
+                                    {% if item.local_file %}
                                         <button type="button"
                                                 class="btn btn-sm btn-outline-info btn-block"
                                                 data-toggle="modal" data-target="#fileModal"
@@ -152,11 +152,11 @@
                                                 data-filename="{{ item.name }}"
                                         > Download
                                         </button>
-                                    {% elif item.external_file_location %}
+                                    {% elif item.external_file_url %}
                                         <button type="button"
                                                 class="btn btn-sm btn-outline-info btn-block"
                                                 data-toggle="modal" data-target="#fileModal"
-                                                data-url="{{ item.external_file_location }}"
+                                                data-url="{{ item.external_file_url }}"
                                                 data-useraction="Read"
                                                 data-filename="{{ item.name }}"
                                         > View
