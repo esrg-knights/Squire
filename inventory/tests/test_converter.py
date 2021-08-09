@@ -6,7 +6,6 @@ from inventory.models import *
 
 
 class TestCatalogueConverter(TestCase):
-    # fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
 
     def setUp(self):
         self.converter = CatalogueConverter()

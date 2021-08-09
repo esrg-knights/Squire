@@ -117,10 +117,5 @@
 {% block js_bottom %}
     {{ block.super }}
     <script src="{% static "js/enlarge_item_image.js" %}"></script>
-
-    <script language="JavaScript">
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        })
-    </script>
+    <script src="{% static "js/activate_bootstrap_tooltip.js" %}"></script>
 {% endblock %}
