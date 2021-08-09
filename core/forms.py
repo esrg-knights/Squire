@@ -130,7 +130,7 @@ class MarkdownForm(UserFormMixin, ModelForm):
         if self.is_new_instance and self.user is not None:
             # Assign MarkdownImages for this contenttype, and uploaded by the requesting user
             content_type = ContentType.objects.get_for_model(self.instance)
-            MarkdownImage.objects.filter(content_type=content_type, object_id__isnull=True).update(
+            MarkdownImage.objects.filter(content_type=content_type, object_id__isnull=True, uploader=self.user).update(
                 object_id=self.instance.id,
                 uploader=self.user
             )

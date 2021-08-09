@@ -1,17 +1,10 @@
-from django.contrib.admin.models import LogEntry, ADDITION
-from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.forms import CharField
 from django.test.testcases import TestCase
 from django.utils.safestring import SafeText
 from martor.fields import MartorFormField
 
-from core.fields import MarkdownObject, MarkdownCharField, MarkdownTextField
-from core.models import MarkdownImage
-from core.widgets import ImageUploadMartorWidget
-
-User = get_user_model()
+from core.fields import MarkdownObject, MarkdownCharField
 
 
 class MarkdownObjectTest(TestCase):

@@ -2,6 +2,7 @@ import copy
 import datetime
 
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
 from django.db.models.base import ModelBase
@@ -40,6 +41,8 @@ class Activity(models.Model):
             ('can_select_slot_image',                       "[F] Can choose an alternative slot image when creating a slot."),
             ('can_view_private_slot_locations',             "[F] Can view a slot's location even if they are marked as 'private' by the activity."),
         ]
+
+    markdown_images = GenericRelation('core.MarkdownImage')
 
 
     # The User that created the activity
@@ -321,6 +324,8 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
 
     created_date = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
+
+    markdown_images = GenericRelation('core.MarkdownImage')
 
     class Meta:
         unique_together = ['parent_activity', 'recurrence_id']

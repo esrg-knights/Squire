@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -91,4 +92,3 @@ class MarkdownImageTest(TestCase):
         rel_obj = MarkdownImage.objects.create(content_type=self.content_type)
         md_img = MarkdownImage(content_type=self.content_type, object_id=rel_obj.id)
         md_img.clean()
-
