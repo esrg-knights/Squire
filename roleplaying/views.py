@@ -57,20 +57,20 @@ class DownloadDigitalItemView(MembershipRequiredMixin, RoleplayingItemMixin, Vie
     http_method_names = ['get']
 
     def get(self, *args, **kwargs):
-        if not self.roleplay_item.digital_version:
+        if not self.roleplay_item.local_file:
             raise Http404()
 
         # If no file name is given, set it to the item name
-        filename = self.roleplay_item.digital_version_file_name
+        filename = self.roleplay_item.local_file_name
         if filename == "" or filename is None:
             filename = slugify(self.roleplay_item.name)
 
         # Assure the correct extention
         filename, _ = os.path.splitext(filename)
-        _, extension = os.path.splitext(self.roleplay_item.digital_version.name)
+        _, extension = os.path.splitext(self.roleplay_item.local_file.name)
 
         # file = open(self.roleplay_item.digital_version.url, 'rb')
-        response = FileResponse(self.roleplay_item.digital_version)
+        response = FileResponse(self.roleplay_item.local_file)
         response['Content-Disposition'] = f'attachment; filename={filename}{extension}'
 
         return response

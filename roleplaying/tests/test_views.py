@@ -109,4 +109,4 @@ class TestDownloadDigitalItemView(ViewValidityMixin, TestCase):
 
         # Make sure that the file name is equal to the in the instance defined filename
         file_name = content_disposition.split("filename=")[1].split()[0]
-        self.assertEqual(file_name, f"{item.digital_version_file_name}.txt")
+        self.assertEqual(file_name, f"{item.local_file_name}.txt")

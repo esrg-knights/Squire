@@ -49,8 +49,8 @@
         "fields": {
             "name": "D&D book online",
             "system": 1,
-            "digital_version": "roleplaying/this-is-a-test-file.txt",
-            "digital_version_file_name": "test_file"
+            "local_file": "roleplaying/this-is-a-test-file.txt",
+            "local_file_name": "test_file"
         }
     },
     {
@@ -58,7 +58,8 @@
         "pk": 3,
         "fields": {
             "name": "Old DnD book",
-            "system": 1
+            "system": 1,
+            "external_file_url": "https://www.google.com/"
         }
     },
     {

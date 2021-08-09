@@ -67,13 +67,14 @@ class RoleplayingItem(Item):
     system = models.ForeignKey(RoleplayingSystem, related_name='items',
                               on_delete=models.SET_NULL, null=True, blank=True)
 
-    digital_version = models.FileField(null=True, blank=True, upload_to=get_roleplay_item_file_upload_path)
-    digital_version_file_name = models.CharField(max_length=32, blank=True, null=True)
+    local_file = models.FileField(null=True, blank=True, upload_to=get_roleplay_item_file_upload_path)
+    # The filename of the downloaded file (not the name of the local file)
+    local_file_name = models.CharField(max_length=32, blank=True, null=True, verbose_name="Filename (without extension)")
 
-    external_file_location = models.URLField(max_length=256, blank=True, null=True)
+    external_file_url = models.URLField(max_length=256, blank=True, null=True)
 
     def clean(self):
-        if self.digital_version and self.external_file_location:
+        if self.local_file and self.external_file_url:
             raise ValidationError(
                 "You can not set both a digital file and an external file location",
                 code='duplicate_location'
