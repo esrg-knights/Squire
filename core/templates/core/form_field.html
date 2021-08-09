@@ -16,7 +16,7 @@
 
     {% if is_markdown %}
         {% with fields.0.0 as field %}
-            <h4>{{ field.label|title }}</h4>
+            <h6>{{ field.label|title }}</h6>
             {{ field }}
         {% endwith %}
     {% else %}

@@ -6,7 +6,10 @@ from django.contrib.auth.forms import (AuthenticationForm, UserCreationForm,
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError, ImproperlyConfigured
 from django.forms import ModelForm
+from django.forms.boundfield import BoundField
+from django.forms.fields import Field
 from django.utils.translation import gettext_lazy as _
+from martor.widgets import AdminMartorWidget, MartorWidget
 
 from .models import ExtendedUser as User
 from core.models import MarkdownImage
@@ -97,7 +100,6 @@ class MarkdownForm(UserFormMixin, ModelForm):
         any object. Upon saving, if such "orphan" images exist (for the current model, and uploaded by
         the current user), they are linked to the newly created instance.
     """
-    markdown_field_names = []
     placeholder_detail_title = "Field %s"
 
     is_new_instance = True
@@ -106,36 +108,19 @@ class MarkdownForm(UserFormMixin, ModelForm):
         super().__init__(*args, **kwargs)
         self.is_new_instance = self.instance.id is None
 
-        for field_name in self.markdown_field_names:
-            # Basic validation
-            if field_name not in self.fields:
-                # The passed field must actually exists
-                raise ImproperlyConfigured(
-                    "Form '%s' does not have a field '%s', "
-                    "but this was passed in markdown_field_names." % (
-                        self.__class__.__name__,
-                        field_name,
-                    )
-                )
-            elif not isinstance(self.fields[field_name], forms.CharField):
-                # The passed field must be a Charfield, as there is no point to Markdown otherwise
-                raise ImproperlyConfigured(
-                    "Markdown cannot be rendered for Field %s of Form %s as it is not a Charfield, "
-                    "but this field was passed in markdown_field_names." % (
-                        field_name,
-                        self.__class__.__name__,
-                    )
-                )
+        for boundfield in self.visible_fields():
+            if isinstance(boundfield.field.widget, MartorWidget):
+                self._give_field_md_widget(boundfield.field)
 
-            # Add the field's label to the placeholder title
-            label = self.fields[field_name].label
-            placeholder_title = self.placeholder_detail_title % label.capitalize()
-
-            # Replace the field's widget by Martor's markdown widget
-            self.fields[field_name].widget = ImageUploadMartorWidget(
-                ContentType.objects.get_for_model(self.instance),
-                self.instance.id, placeholder_detail_title=placeholder_title
-            )
+    def _give_field_md_widget(self, field: Field):
+        """ Gives the given field an ImageUploadMartorWidget """
+        # Add the field's label to the placeholder title
+        label = field.label
+        placeholder_title = self.placeholder_detail_title % label.capitalize()
+        field.widget = ImageUploadMartorWidget(
+            ContentType.objects.get_for_model(self.instance),
+            self.instance.id, placeholder_detail_title=placeholder_title
+        )
 
     def _save_m2m(self):
         super()._save_m2m()

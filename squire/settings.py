@@ -306,6 +306,9 @@ MARTOR_MARKDOWN_EXTENSIONS = [
 # Markdown Extensions Configs
 MARTOR_MARKDOWN_EXTENSION_CONFIGS = {}
 
+# Enable label in forms
+MARTOR_ENABLE_LABEL = True
+
 # Markdown urls
 MARTOR_MARKDOWNIFY_URL = '/api/martor/markdownify/'
 # MARTOR_SEARCH_USERS_URL = '/martor/search-user/' # for mention

@@ -319,7 +319,6 @@ class ActivityMomentForm(MarkdownForm):
             'local_slot_creation', 'local_private_slot_locations'
         ]
 
-    markdown_field_names = ['local_description']
     placeholder_detail_title = "Base Activity %s"
 
     def __init__(self, *args, instance=None, **kwargs):
@@ -358,13 +357,9 @@ class ActivityAdminForm(MarkdownForm):
         model = Activity
         fields = '__all__'
 
-    markdown_field_names = ['description']
-
 # The ActivityMoment admin form is identical to the form used in the front-end,
 #   but also allows changing the parent_activity and recurrence_id
 class ActivityMomentAdminForm(MarkdownForm):
     class Meta:
         model = ActivityMoment
         fields = ['parent_activity', 'recurrence_id'] + ActivityMomentForm.Meta.fields
-
-    markdown_field_names = ['local_description']

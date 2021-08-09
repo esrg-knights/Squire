@@ -4,18 +4,15 @@ import datetime
 from django.conf import settings
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
-from django.db.models import Count
 from django.db.models.base import ModelBase
-from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
-
 from recurrence.fields import RecurrenceField
 
 import activity_calendar.util as util
 from core.models import ExtendedUser as User, PresetImage
-from membership_file.util import user_to_member
+from core.fields import MarkdownTextField
 
 #############################################################################
 # Models related to the Calendar-functionality of the application.
@@ -50,7 +47,7 @@ class Activity(models.Model):
 
     # General information
     title = models.CharField(max_length=255)
-    description = models.TextField()
+    description = MarkdownTextField()
     location = models.CharField(max_length=255)
     image = models.ForeignKey(PresetImage, blank=True, null=True, related_name="activity_image", on_delete=models.SET_NULL)
 
@@ -311,7 +308,7 @@ class ActivityDuplicate(ModelBase):
         in its parent_activity model instead for the given attribute """
         def get_activity_attribute(self):
             local_attr = getattr(self, 'local_'+field_name, None)
-            if local_attr is None or local_attr == '':
+            if local_attr is None or str(local_attr) == '':
                 return getattr(self.parent_activity, field_name)
             return local_attr
 

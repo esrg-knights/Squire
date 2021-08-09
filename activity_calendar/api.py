@@ -14,8 +14,7 @@ def get_json_from_activity_moment(activity_moment, user=None):
     return {
         'groupId': activity_moment.parent_activity.id,
         'title': activity_moment.title,
-        # Pass the event's description through Martor's markdown renderer
-        'description': markdownify(activity_moment.description),
+        'description': activity_moment.description.as_rendered(),
         'location': activity_moment.location,
         # use urlLink instead of url as that creates unwanted interactions with the calendar js module
         'urlLink': activity_moment.get_absolute_url(),
