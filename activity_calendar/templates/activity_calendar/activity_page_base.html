@@ -31,14 +31,6 @@
 
 {% block js %}
     {{ block.super }}
-    {% if show_modal %}
-        <script type="text/javascript">
-            $(window).on('load', function () {
-                $('#slot-creation-modal').modal('show');
-            });
-        </script>
-    {% endif %}
-
     {% martor_render_js %}
 {% endblock js %}
 
@@ -50,7 +42,7 @@
         })
     </script>
 
-    {% martor_render_js import_hljs=False invoke_hljs_method=True method_param="''" %}
+    {% martor_render_js import_hljs=False invoke_hljs_method=True method_param="'#event-description'" %}
 {% endblock js_bottom %}
 
 {% block content-frame-class %}
@@ -137,8 +129,7 @@
                     </div>
                     <!-- Event Description -->
                     <div class="col align-self-center">
-                        {{ activity_moment.description.as_plaintext }}
-                        <div id="event-description" class="martor-preview override-martor">{{ activity_moment.description.as_rendered  }}</div>
+                        <div id="event-description" class="rendered-md">{{ activity_moment.description.as_rendered  }}</div>
                     </div>
                 </div>
 

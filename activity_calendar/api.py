@@ -7,8 +7,6 @@ from django.http import HttpResponseBadRequest
 
 from .models import Activity
 
-from martor.utils import markdownify
-
 
 def get_json_from_activity_moment(activity_moment, user=None):
     return {

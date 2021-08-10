@@ -112,17 +112,3 @@ class MarkdownImage(models.Model):
 
     def __str__(self):
         return f"{self.content_type}-MarkdownImage ({self.id})"
-
-
-# When deleting a model with MarkdownImages, delete its related MarkdownImages manually
-# def remove_orphan_markdown_images(sender, instance, **kwargs):
-#     # GenericForeignKey does not support on_delete=models.CASCADE without
-#     #   a GenericRelation (that signifies the backwards relation).
-#     # We do not really need this backwards relation, and adding it in means we'd
-#     #   need to add a field to each model that can use a MarkdownImage.
-#     content_type = ContentType.objects.get_for_model(sender)
-#     MarkdownImage.objects.filter(content_type=content_type, object_id=instance.pk).delete()
-
-# for model in settings.MARKDOWN_IMAGE_MODELS:
-#     pre_delete.connect(remove_orphan_markdown_images, sender=model,
-#         dispatch_uid=f"{model}_delete_related_markdown_images")

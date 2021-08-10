@@ -77,6 +77,15 @@ def register(request):
 class MartorImageUploadAPIView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """
         View for uploading images using Martor's Markdown Editor.
+
+        Martor makes ajax requests to this endpoint when uploading images, and passes
+        that uploaded image in addition to _all form contents_ of the form the editor
+        is in. We're cheating by injecting hidden fields for content_type and object_id
+        in such forms so we can access these values here.
+
+        Martor expects these images to exist after calling this endpoint, meaning that
+        they're immediately saved. However, the related object may not actually exist
+        yet, as it may be new.
     """
     # There's no point in creating per-ContentType permissions, as users can just
     #   upload MarkdownImages for one ContentType they have permissions for and use

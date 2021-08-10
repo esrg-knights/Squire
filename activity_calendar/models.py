@@ -50,7 +50,7 @@ class Activity(models.Model):
 
     # General information
     title = models.CharField(max_length=255)
-    description = MarkdownTextField()
+    description = MarkdownTextField(help_text="Note that uploaded images are publicly accessible, even if the activity is unpublished.")
     location = models.CharField(max_length=255)
     image = models.ForeignKey(PresetImage, blank=True, null=True, related_name="activity_image", on_delete=models.SET_NULL)
 

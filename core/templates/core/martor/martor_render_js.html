@@ -6,7 +6,7 @@
     <script>
         // Method that invokes Martor's highlight-js (for code-block syntax highlighting)
         function martorhljs(selector) {
-            $(selector + '.martor-preview pre').each(function(i, block){
+            $(selector + ' pre').each(function(i, block){
                 hljs.highlightBlock(block);
             });
         }
