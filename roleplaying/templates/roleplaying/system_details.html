@@ -2,6 +2,7 @@
 {% load static %}
 {% load paginator %}
 {% load inventory_tags %}
+{% load render_achievement %}
 
 {% block title %}
     Squire - Roleplaying
@@ -98,7 +99,7 @@
                 <div class="row">
                     {% for ach_link in system.achievements.all %}
                         <div class="col">
-                            {% include "achievements/snippets/achievement_external_ref_snippet.html" with achievement=ach_link.achievement %}
+                            {% render_achievement ach_link.achievement outline_class="card" %}
                         </div>
                     {% endfor %}
                 </div>
@@ -124,7 +125,7 @@
                         <tbody>
                         {% for item in owned_items %}
                             <tr>
-                                <td scope="row" style="width: 15em;">
+                                <td scope="row" style="width: 25em;">
                                     <div class="d-flex">
                                         <div style="width: 2em;">
                                             {% if item.image %}
@@ -137,6 +138,7 @@
                                             {% endif %}
                                         </div>
                                         <div>{{ item.name }}</div>
+                                        <div>{% render_ownership_tags item %}</div>
                                     </div>
                                 </td>
                                 <td>

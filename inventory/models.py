@@ -108,6 +108,7 @@ class Item(models.Model):
 
     def is_loaned_by_member(self):
         """ Returns boolean stating whether this item is owned by the association """
+
         return self.ownerships.filter(is_active=True).filter(member__isnull=False).exists()
 
     def __str__(self):

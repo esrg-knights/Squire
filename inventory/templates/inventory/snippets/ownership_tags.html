@@ -1,0 +1,13 @@
+{% load static %}
+
+<span class="pl-2">
+{% if is_owned_by_knights %}
+    <img style="height: 1em;" src="{% static 'images/header_logo.png' %}">
+{% endif %}
+{% if is_owner %}
+    <span class="badge badge-pill badge-success">Yours</span>
+{% endif %}
+{% if is_owned_by_member %}
+    <span class="badge badge-pill badge-warning">In loan</span>
+{% endif %}
+</span>

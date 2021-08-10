@@ -3,6 +3,7 @@
 {% load paginator %}
 {% load inventory_tags %}
 {% load to_member %}
+{% load render_achievement %}
 
 {% block title %}
     Squire - Boardgames
@@ -26,7 +27,9 @@
                 <tr class="">
                     <th scope="col"></th>
                     <th scope="col">Title</th>
-                    <th scope="col">Owned by</th>
+                    {% if perms.inventory.can_maintain_boardgame_ownerships %}
+                        <th scope="col">Owned by</th>
+                    {% endif %}
                     <th scope="col" colspan="2" class="text-center">Info</th>
                 </tr>
             </thead>
@@ -51,39 +54,25 @@
                     </td>
                     <td class="w-50">
                         <div class="font-weight-bold">{{ boardgame.name }}
-                            {% if boardgame.is_owned_by_association %}
-                                <img style="height: 1em;" src="{% static 'images/header_logo.png' %}">
-                            {% endif %}
-                            {% if boardgame|get_owned_by:user %}
-                                <span class="badge badge-pill badge-light">Yours</span>
-                            {% endif %}
+                            {% render_ownership_tags boardgame %}
                         </div>
                         <div><small>{{ boardgame.description }}</small></div>
                     </td>
-                    <td>
-                        <small>
-                            {% if user|is_member %}
+                    {% if perms.inventory.can_maintain_boardgame_ownerships %}
+                        <td>
+                            <small>
                                 {% for owner in boardgame.currently_in_possession %}
                                     {{ owner.owner }}{% if not forloop.last %}, {% endif %}
                                 {% endfor %}
-                            {% else %}
-                                {% if boardgame.is_owned_by_association %}
-                                    Knights
-                                {% else %}
-                                    Loaned by member
-                                {% endif %}
-                            {% endif %}
-                        </small>
-                    </td>
+                            </small>
+                        </td>
+                    {% endif %}
                     <td>
                         {% if boardgame.achievements.all %}
                             <div class="d-flex flex-row justify-content-end">
-                                <div>
-                                <a class="btn btn-sm btn-outline-primary"
-                                   href="{% url "achievements/all" %}">
-                                    Achievement
-                                </a>
-                                </div>
+                                {% for ach_link in boardgame.achievements.all %}
+                                    {% render_achievement ach_link.achievement display_text=False img_height="3em" %}
+                                {% endfor %}
                             </div>
                         {% endif %}
                     </td>
