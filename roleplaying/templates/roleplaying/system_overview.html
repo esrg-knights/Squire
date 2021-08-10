@@ -3,7 +3,7 @@
 {% load paginator %}
 
 {% block title %}
-    Squire - Boardgames
+    Squire - Roleplaying
 {% endblock title %}
 
 {% block content-frame-class %}
@@ -98,6 +98,15 @@
     </div>
 
     {% render_paginator %}
+
+    {% if perms.inventory.can_maintain_boardgame_ownerships %}
+        <div class="d-flex justify-content-end">
+            <a href="{% url "inventory:catalogue" type_id=item_type %}"
+               class="btn btn-secondary">
+                Maintain catalogue
+            </a>
+        </div>
+    {% endif %}
 
     {% include "inventory/snippets/snippet_enlarged_image_modal.html" %}
 {% endblock %}

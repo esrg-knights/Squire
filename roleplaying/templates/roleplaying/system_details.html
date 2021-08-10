@@ -4,7 +4,7 @@
 {% load inventory_tags %}
 
 {% block title %}
-    Squire - Boardgames
+    Squire - Roleplaying
 {% endblock title %}
 
 {% block content-frame-class %}
@@ -109,7 +109,7 @@
             <div>
                 <div class="d-flex justify-content-between">
                     <div class="font-weight-bold mt-3">
-                        Availlable items:
+                        Available items:
                     </div>
                     <div>{% if perms.roleplaying.can_maintain_ownership_roleplayingitem %}
                         <a href="{% url "inventory:catalogue" type_id=item_type %}"
@@ -162,7 +162,7 @@
                                         > View
                                         </button>
                                     {% else %}
-                                        In Luna
+                                        At the Knights
                                     {% endif %}
                                 </td>
                                 {% if can_maintain_ownership %}

@@ -19,7 +19,7 @@ class TestRoleplayingSystem(TestCase):
             short_description='short-test',
             long_description='some long text description test',
             image=None,
-            is_live=True,
+            is_public=True,
             rate_complexity=4,
             player_count='3-9',
             dice="5 d6's",

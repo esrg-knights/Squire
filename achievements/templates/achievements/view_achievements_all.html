@@ -33,8 +33,9 @@
             <!-- List Achievements -->
             <div class='achievementList'>
                 {% for achievement in category.achievements %}
-                    <a name="ach-{{achievement.id}}"></a>
-                    {% include "achievements/achievement_block_wide.html" %}
+                    <div id="ach-{{achievement.id}}">
+                        {% include "achievements/achievement_block_wide.html" %}
+                    </div>
                 {% empty %}
                     <p>Woops! There do not seem to be any achievements in this category!</p>
                 {% endfor %}

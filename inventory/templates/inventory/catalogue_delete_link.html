@@ -46,11 +46,7 @@
                     Note
                 </div>
                 <div class="col-9">
-                    {% if ownership.note %}
-                        {{ ownership.note }}
-                    {% else %}
-                        -
-                    {% endif %}
+                    {{ ownership.note|default:"-" }}
                 </div>
             </div>
         </div>

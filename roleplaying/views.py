@@ -21,7 +21,14 @@ class RoleplaySystemView(SearchFormMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return super(RoleplaySystemView, self).get_queryset().filter(is_live=True)
+        return super(RoleplaySystemView, self).get_queryset().filter(is_public=True)
+
+    def get_context_data(self, **kwargs):
+        context = super(RoleplaySystemView, self).get_context_data(**kwargs)
+        context.update({
+            'item_type': ContentType.objects.get_for_model(RoleplayingItem),
+        })
+        return context
 
 
 class SystemDetailView(MembershipRequiredMixin, DetailView):
@@ -37,7 +44,7 @@ class SystemDetailView(MembershipRequiredMixin, DetailView):
         context = super(SystemDetailView, self).get_context_data(**kwargs)
         system = context['system']
         context.update({
-            'item_type': ContentType.objects.get_for_model(RoleplayingItem),
+            'item_type': item_type,
             'can_maintain_ownership': self.request.user.has_perm(f'roleplaying.maintain_ownerships_for_{item_class_name}'),
             'owned_items': system.items.get_all_in_possession(),
         })

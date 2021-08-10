@@ -29,7 +29,8 @@ class RoleplayingSystem(models.Model):
     long_description = models.TextField(blank=True, null=True)
 
     image = models.ImageField(upload_to=get_system_image_upload_path, null=True, blank=True)
-    is_live = models.BooleanField(default=False)
+    is_public = models.BooleanField(default=False, verbose_name="On Systems page",
+                                    help_text="Whether this system should be displayed on the roleplaying systems page")
 
     # Other system properties
     RULE_COMPLEXITY = [

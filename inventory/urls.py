@@ -13,7 +13,6 @@ class CatalogueConverter:
     def to_python(self, value):
         content_types = Item.get_item_contenttypes()
         for item_type in content_types:
-            # item_type = ContentType.objects.get()
             if value == slugify(item_type.model_class().__name__):
                 return item_type
 
