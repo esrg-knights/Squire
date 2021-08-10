@@ -4,17 +4,16 @@ from django.contrib.auth.forms import (AuthenticationForm, UserCreationForm,
     PasswordChangeForm as DjangoPasswordChangeForm, PasswordResetForm as DjangoPasswordResetForm,
     SetPasswordForm as DjangoPasswordResetConfirmForm)
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError, ImproperlyConfigured
+from django.core.exceptions import ValidationError
 from django.forms import ModelForm
-from django.forms.boundfield import BoundField
 from django.forms.fields import Field
 from django.utils.translation import gettext_lazy as _
-from martor.widgets import AdminMartorWidget, MartorWidget
+from martor.widgets import MartorWidget
 
 from .models import ExtendedUser as User
 from core.models import MarkdownImage
 from core.widgets import  ImageUploadMartorWidget
-from utils.forms import UpdatingUserFormMixin, UserFormMixin
+from utils.forms import UpdatingUserFormMixin
 
 ##################################################################################
 # Defines general-purpose forms.
@@ -88,7 +87,7 @@ class PasswordResetForm(DjangoPasswordResetForm):
 class PasswordResetConfirmForm(DjangoPasswordResetConfirmForm):
     pass
 
-class MarkdownForm(UserFormMixin, ModelForm):
+class MarkdownForm(ModelForm):
     """
         Changes the model's fields that support Markdown such that they use a variant of Martor's
         widget that also allows images to be uploaded. Furthermore, it allows those fields to
@@ -104,7 +103,8 @@ class MarkdownForm(UserFormMixin, ModelForm):
 
     is_new_instance = True
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
         super().__init__(*args, **kwargs)
         self.is_new_instance = self.instance.id is None
 

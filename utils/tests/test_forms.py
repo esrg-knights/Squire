@@ -4,10 +4,9 @@ from django.contrib.admin.models import LogEntry, ADDITION
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.forms.models import model_to_dict
-from django.views.generic.edit import FormView
 from django.test import TestCase, RequestFactory
 
-from utils.forms import RequestUserToFormModelAdminMixin, RequestUserToFormViewMixin, UpdatingUserFormMixin, get_basic_filter_by_field_form
+from utils.forms import RequestUserToFormModelAdminMixin, UpdatingUserFormMixin, get_basic_filter_by_field_form
 from utils.testing import FormValidityMixin
 
 User = get_user_model()
@@ -80,17 +79,12 @@ class UpdatingUserFormMixinTest(TestCase):
                 "<class 'django.contrib.admin.models.LogEntry'> has no field foo"):
             DummyForm2(model_to_dict(self.obj), instance=self.obj, user=self.new_user)
 
-class DummyView(RequestUserToFormViewMixin, FormView):
-    """ Dummy view for testing RequestUserToFormViewMixin """
-    form_class = DummyForm
-    template_name = "testing/test_mixin_template.html"
-
 class DummyModelAdmin(RequestUserToFormModelAdminMixin, ModelAdmin):
     """ Dummy Modeladmin for testing RequestUserToFormModelAdminMixin """
     form = DummyForm
 
 class RequestUserToFormMixinTest(TestCase):
-    """ Tests for RequestUserToFormViewMixin and RequestUserToFormModelAdminMixin """
+    """ Tests for RequestUserToFormModelAdminMixin """
     def setUp(self):
         self.user = User.objects.create(username="test_user")
 
@@ -101,14 +95,6 @@ class RequestUserToFormMixinTest(TestCase):
         self.factory = RequestFactory()
         self.request = self.factory.get('/testurl/')
         self.request.user = self.user
-
-    def test_view_form_has_request_user(self):
-        """ Tests if the View's form's user is set to the requesting user """
-        # We must get an OK-response, and the form must have the user
-        response = DummyView.as_view()(self.request)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.context_data.get('form', False))
-        self.assertEqual(response.context_data.get('form').user, self.user)
 
     def test_model_admin_form_has_request_user(self):
         """ Tests if the ModelAdmin's form's user is set to the requesting user """

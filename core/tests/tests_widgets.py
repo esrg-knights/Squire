@@ -10,7 +10,7 @@ User = get_user_model()
 
 
 class ImageUploadMartorWidgetTest(TestCase):
-    """ Tests for UpdatingUserFormMixin """
+    """ Tests for a variant of Martor's widget that allows image uploads """
     def setUp(self):
         self.user = User.objects.create(username="test_user")
 

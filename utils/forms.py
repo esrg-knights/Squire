@@ -13,24 +13,7 @@ def get_basic_filter_by_field_form(field_name):
     return FilterByFieldForm
 
 
-class UserFormMixin:
-    """
-        Form Mixin that sets a variable to a user passed at form
-        initialisation such that this user can be used in other methods.
-        For example, this user can be the requesting user of a FormView
-        that uses a form with this Mixin.
-    """
-    user = None
-
-    def __init__(self, *args, user=None, **kwargs):
-        self.user = user
-
-        # We do not pass 'user' down the Form-chain, as other Forms
-        #   may not know what to do with it
-        super().__init__(*args, **kwargs)
-
-
-class UpdatingUserFormMixin(UserFormMixin):
+class UpdatingUserFormMixin:
     """
         Form Mixin for ModelForms that, upon saving, updates a customizable
         field with a user passed at form initialisation. For example, by
@@ -39,7 +22,8 @@ class UpdatingUserFormMixin(UserFormMixin):
     """
     updating_user_field_name = 'last_updated_by'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
         super().__init__(*args, **kwargs)
 
         # Sanity check (hasattr doesn't do the trick due to Foo.RelatedObjectDoesNotExist)
@@ -58,17 +42,6 @@ class UpdatingUserFormMixin(UserFormMixin):
         #   show up as the old value for this field
         setattr(self.instance, self.updating_user_field_name, self.user)
         return super().save(commit=commit)
-
-class RequestUserToFormViewMixin:
-    """
-        Mixin that passes the requesting user as a kwarg to
-        the View's Form.
-    """
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
-
 
 class RequestUserToFormModelAdminMixin:
     """

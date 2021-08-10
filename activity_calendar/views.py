@@ -14,7 +14,6 @@ from django.views.generic.edit import FormView, FormMixin
 from .forms import *
 from .models import Activity, ActivityMoment
 from core.models import ExtendedUser
-from utils.forms import RequestUserToFormViewMixin
 
 __all__ = "CreateSlotView, get_activity_detail_view, activity_collection"
 
@@ -372,7 +371,7 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
 # #######################################
 
 
-class EditActivityMomentView(LoginRequiredMixin, PermissionRequiredMixin, ActivityMixin, RequestUserToFormViewMixin, FormView):
+class EditActivityMomentView(LoginRequiredMixin, PermissionRequiredMixin, ActivityMixin, FormView):
     form_class = ActivityMomentForm
     template_name = "activity_calendar/activity_moment_form_page.html"
     permission_required = ('activity_calendar.change_activitymoment',)
@@ -381,6 +380,7 @@ class EditActivityMomentView(LoginRequiredMixin, PermissionRequiredMixin, Activi
         kwargs = super(EditActivityMomentView, self).get_form_kwargs()
         kwargs.update({
             'instance': self.activity_moment,
+            'user': self.request.user, # Needed for MarkdownImage uploads
         })
         return kwargs
 
