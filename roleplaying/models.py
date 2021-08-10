@@ -59,7 +59,7 @@ def get_roleplay_item_file_upload_path(instance, filename):
     _, extension = os.path.splitext(filename)
 
     # file will be uploaded to MEDIA_ROOT / images/item/<item_type>/<id>.<file_extension>
-    return 'files/item/roleplay/{item_id}{extension}'.format(
+    return 'local_only/files/item/roleplay/{item_id}{extension}'.format(
         item_id=instance.id,
         extension=extension,
     )
