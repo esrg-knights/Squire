@@ -115,6 +115,11 @@ class TestItem(TestCase):
         # There is an ownership, but it is not active
         self.assertFalse(BoardGame.objects.get(id=4).is_owned_by_association())
 
+    def test_is_loaned_by_member(self):
+        """ Checks if there is an active instance of this item at the Knights owned by a member """
+        self.assertTrue(BoardGame.objects.get(id=1).is_loaned_by_member())
+        self.assertFalse(BoardGame.objects.get(id=2).is_loaned_by_member())
+
     def test_objects_manager(self):
         self.assertIsInstance(BoardGame.objects, ItemManager)
 
