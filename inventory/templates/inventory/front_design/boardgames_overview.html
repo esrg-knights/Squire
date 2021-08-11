@@ -16,6 +16,15 @@
 
 {% block content %}
     <h1>Availlable board games</h1>
+    <p>
+        Below a list of all boardgames in our collection. Some of them are loaned to the Knights by other members so be
+        extra careful when dealing with them.
+    </p>
+    <p>
+        Do you want to loan your boardgame to the Knights? Did you spot incorrect data on a boardgame?
+        Please send an e-mail to <a href="mailto:zg@kotkt.nl">zg@kotkt.nl</a>
+        to inform them and they'll update it below.
+    </p>
 
 
     {% include "utils/snippets/filter_form_snippet.html" with form=filter_form %}
@@ -27,10 +36,11 @@
                 <tr class="">
                     <th scope="col"></th>
                     <th scope="col">Title</th>
-                    {% if perms.inventory.can_maintain_boardgame_ownerships %}
-                        <th scope="col">Owned by</th>
-                    {% endif %}
-                    <th scope="col" colspan="2" class="text-center">Info</th>
+{#                    {% if perms.inventory.can_maintain_boardgame_ownerships %}#}
+{#                        <th scope="col">Owned by</th>#}
+{#                    {% endif %}#}
+                    <th scope="col" colspan="3" class="text-center">Info</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -58,15 +68,14 @@
                         </div>
                         <div><small>{{ boardgame.description }}</small></div>
                     </td>
-                    {% if perms.inventory.can_maintain_boardgame_ownerships %}
-                        <td>
-                            <small>
-                                {% for owner in boardgame.currently_in_possession %}
-                                    {{ owner.owner }}{% if not forloop.last %}, {% endif %}
-                                {% endfor %}
-                            </small>
-                        </td>
-                    {% endif %}
+                    <td>
+                        {% if boardgame.get_players_display %}<div>Players:</div>{% endif %}
+                        {% if boardgame.play_duration %}<div>Duration:</div>{% endif %}
+                    </td>
+                    <td>
+                        {% if boardgame.get_players_display %}<div>{{ boardgame.get_players_display }}</div>{% endif %}
+                        {% if boardgame.play_duration %}<div>{{ boardgame.get_play_duration_display }}</div>{% endif %}
+                    </td>
                     <td>
                         {% if boardgame.achievements.all %}
                             <div class="d-flex flex-row justify-content-end">
@@ -76,18 +85,25 @@
                             </div>
                         {% endif %}
                     </td>
-                    <td class="pl-0">
-                        {% if boardgame.bgg_id %}
-                            <div class="d-flex flex-row justify-content-end">
-                                <div>
+                    <td class="">
+                        <div class="d-flex flex-row justify-content-end">
+                            <div class="btn-group" role="group" aria-label="Boardgame info">
+                                {% if boardgame.bgg_id %}
                                     <a class="btn btn-sm btn-outline-info"
                                        target="_blank" rel="noopener noreferrer"
                                        href="https://boardgamegeek.com/boardgame/{{ boardgame.bgg_id }}/">Check on
                                         <img style="height: 1em;" src="https://cf.geekdo-static.com/icons/favicon2.ico">BGG
                                     </a>
-                                </div>
+                                {% endif %}
+                                {% if perms.inventory.can_maintain_boardgame_ownerships %}
+                                    <a class="btn btn-sm btn-info"
+                                       href="{% url "inventory:catalogue_item_links" type_id=content_type item_id=boardgame.id %}">
+                                        Edit
+                                    </a>
+                                {% endif %}
                             </div>
-                        {% endif %}
+                        </div>
+
                     </td>
                 </tr>
                 {% endfor %}
