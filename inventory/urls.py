@@ -31,7 +31,7 @@ app_name = 'inventory'
 
 urlpatterns = [
     # Change Language helper view
-    path('', BoardGameView.as_view(), name='home'),
+    # path('', BoardGameView.as_view(), name='home'),
     path('my_items/', include([
         path('', MemberItemsOverview.as_view(), name='member_items'),
         path('<int:ownership_id>/', include([
