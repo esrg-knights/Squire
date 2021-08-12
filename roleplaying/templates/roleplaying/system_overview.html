@@ -99,7 +99,7 @@
 
     {% render_paginator %}
 
-    {% if perms.inventory.can_maintain_boardgame_ownerships %}
+    {% if perms.roleplaying.maintain_ownerships_for_roleplayingitem %}
         <div class="d-flex justify-content-end">
             <a href="{% url "inventory:catalogue" type_id=item_type %}"
                class="btn btn-secondary">

@@ -6,7 +6,6 @@ from django.http import Http404
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy, reverse
-from django.utils.text import slugify
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import FormView, UpdateView, CreateView, DeleteView
 
@@ -22,8 +21,6 @@ __all__ = ['MemberItemsOverview', 'MemberItemRemovalFormView', 'MemberItemLoanFo
            'MemberOwnershipAlterView', 'GroupItemsOverview', 'GroupItemLinkUpdateView', 'TypeCatalogue',
            'AddLinkCommitteeView', 'AddLinkMemberView', 'CreateItemView', 'UpdateItemView', 'DeleteItemView',
            'ItemLinkMaintenanceView', 'UpdateCatalogueLinkView', 'LinkActivationStateView', 'LinkDeletionView']
-
-
 
 
 class MemberItemsOverview(MembershipRequiredMixin, ListView):
@@ -224,13 +221,14 @@ class TypeCatalogue(MembershipRequiredMixin, CatalogueMixin, SearchFormMixin, Li
     def get_context_data(self, *args, **kwargs):
         context = super(TypeCatalogue, self).get_context_data(*args, **kwargs)
 
-        item_class_name = slugify(self.item_type.model_class().__name__)
+        item_class_name = self.item_type.model
+        item_app_label = self.item_type.app_label
         context.update({
-            'can_add_to_group': self.request.user.has_perm(f'inventory.add_group_ownership_for_{item_class_name}'),
-            'can_add_to_member': self.request.user.has_perm(f'inventory.add_member_ownership_for_{item_class_name}'),
-            'can_add_items': self.request.user.has_perm(f'inventory.add_{item_class_name}'),
-            'can_change_items': self.request.user.has_perm(f'inventory.change_{item_class_name}'),
-            'can_maintain_ownerships': self.request.user.has_perm(f'inventory.maintain_ownerships_for_{item_class_name}'),
+            'can_add_to_group': self.request.user.has_perm(f'{item_app_label}.add_group_ownership_for_{item_class_name}'),
+            'can_add_to_member': self.request.user.has_perm(f'{item_app_label}.add_member_ownership_for_{item_class_name}'),
+            'can_add_items': self.request.user.has_perm(f'{item_app_label}.add_{item_class_name}'),
+            'can_change_items': self.request.user.has_perm(f'{item_app_label}.change_{item_class_name}'),
+            'can_maintain_ownerships': self.request.user.has_perm(f'{item_app_label}.maintain_ownerships_for_{item_class_name}'),
         })
         return context
 
@@ -257,13 +255,15 @@ class AddLinkCommitteeView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, A
 
     def get_form_kwargs(self):
         kwargs = super(AddLinkCommitteeView, self).get_form_kwargs()
-        item_class_name = slugify(self.item_type.model_class().__name__)
-        kwargs['allow_all_groups'] = self.request.user.has_perm(f'inventory.maintain_ownerships_for_{item_class_name}')
+        item_class_name = self.item_type.model
+        item_app_label = self.item_type.app_label
+        kwargs['allow_all_groups'] = self.request.user.has_perm(f'{item_app_label}.maintain_ownerships_for_{item_class_name}')
         return kwargs
 
     def get_permission_required(self):
-        item_class_name = slugify(self.item_type.model_class().__name__)
-        return [f'inventory.add_group_ownership_for_{item_class_name}']
+        item_class_name = self.item_type.model
+        item_app_label = self.item_type.app_label
+        return [f'{item_app_label}.add_group_ownership_for_{item_class_name}']
 
     def get_success_url(self):
         if self.redirect_to:
@@ -277,8 +277,9 @@ class AddLinkMemberView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, AddL
     form_class = AddOwnershipMemberLinkForm
 
     def get_permission_required(self):
-        item_class_name = slugify(self.item_type.model_class().__name__)
-        return [f'inventory.add_member_ownership_for_{item_class_name}']
+        item_class_name = self.item_type.model
+        item_app_label = self.item_type.app_label
+        return [f'{item_app_label}.add_member_ownership_for_{item_class_name}']
 
     def get_success_url(self):
         if self.redirect_to:
@@ -296,8 +297,9 @@ class CreateItemView(MembershipRequiredMixin, CatalogueMixin, PermissionRequired
         return self.item_type.model_class()
 
     def get_permission_required(self):
-        item_class_name = slugify(self.item_type.model_class().__name__)
-        return [f'inventory.add_{item_class_name}']
+        item_class_name = self.item_type.model
+        item_app_label = self.item_type.app_label
+        return [f'{item_app_label}.add_{item_class_name}']
 
     def form_valid(self, form):
         msg = "{item_name} has been created".format(item_name=form.instance.name)
@@ -331,8 +333,9 @@ class UpdateItemView(RedirectMixin, MembershipRequiredMixin, CatalogueMixin, Ite
         return self.item
 
     def get_permission_required(self):
-        item_class_name = slugify(self.item_type.model_class().__name__)
-        return [f'inventory.change_{item_class_name}']
+        item_class_name = self.item_type.model
+        item_app_label = self.item_type.app_label
+        return [f'{item_app_label}.change_{item_class_name}']
 
     def form_valid(self, form):
         msg = "{item_name} has been updated".format(item_name=form.instance.name)
@@ -363,7 +366,9 @@ class DeleteItemView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, Redirec
 
     def get_form_kwargs(self):
         # Check user delete_links_permission
-        permission_name = f'inventory.maintain_ownerships_for_{slugify(self.item.__class__.__name__)}'
+        item_class_name = self.item_type.model
+        item_app_label = self.item_type.app_label
+        permission_name = f'{item_app_label}.maintain_ownerships_for_{item_class_name}'
         ignore_active_links = self.request.user.has_perm(permission_name)
 
         kwargs = super(DeleteItemView, self).get_form_kwargs()
@@ -374,7 +379,9 @@ class DeleteItemView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, Redirec
         return kwargs
 
     def get_context_data(self, *args, **kwargs):
-        permission_name = f'inventory.maintain_ownerships_for_{slugify(self.item.__class__.__name__)}'
+        item_class_name = self.item_type.model
+        item_app_label = self.item_type.app_label
+        permission_name = f'{item_app_label}.maintain_ownerships_for_{item_class_name}'
 
         return super(DeleteItemView, self).get_context_data(
             active_links=self.item.currently_in_possession(),
@@ -383,8 +390,9 @@ class DeleteItemView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, Redirec
         )
 
     def get_permission_required(self):
-        item_class_name = slugify(self.item_type.model_class().__name__)
-        return [f'inventory.delete_{item_class_name}']
+        item_class_name = self.item_type.model
+        item_app_label = self.item_type.app_label
+        return [f'{item_app_label}.delete_{item_class_name}']
 
     def form_valid(self, form):
         msg = "{item_name} has been deleted".format(item_name=self.item.name)
@@ -406,18 +414,20 @@ class ItemLinkMaintenanceView(MembershipRequiredMixin, CatalogueMixin, ItemMixin
         return self.item
 
     def get_permission_required(self):
-        item_class_name = slugify(self.item_type.model_class().__name__)
-        return [f'inventory.maintain_ownerships_for_{item_class_name}']
+        item_class_name = self.item_type.model
+        item_app_label = self.item_type.app_label
+        return [f'{item_app_label}.maintain_ownerships_for_{item_class_name}']
 
     def get_context_data(self, *args, **kwargs):
-        item_class_name = slugify(self.item_type.model_class().__name__)
+        item_class_name = self.item_type.model
+        item_app_label = self.item_type.app_label
         context = super(ItemLinkMaintenanceView, self).get_context_data(*args, **kwargs)
         context.update({
             'active_links': self.item.currently_in_possession(),
             'inactive_links': self.item.ownerships.filter(is_active=False),
-            'can_add_to_group': self.request.user.has_perm(f'inventory.add_group_ownership_for_{item_class_name}'),
-            'can_add_to_member': self.request.user.has_perm(f'inventory.add_member_ownership_for_{item_class_name}'),
-            'can_delete': self.request.user.has_perm(f'inventory.delete_{item_class_name}'),
+            'can_add_to_group': self.request.user.has_perm(f'{item_app_label}.add_group_ownership_for_{item_class_name}'),
+            'can_add_to_member': self.request.user.has_perm(f'{item_app_label}.add_member_ownership_for_{item_class_name}'),
+            'can_delete': self.request.user.has_perm(f'{item_app_label}.delete_{item_class_name}'),
         })
         return context
 
@@ -438,8 +448,9 @@ class OwnershipCatalogueLinkMixin:
         return context
 
     def get_permission_required(self):
-        item_class_name = slugify(self.item_type.model_class().__name__)
-        return [f'inventory.maintain_ownerships_for_{item_class_name}']
+        item_class_name = self.item_type.model
+        item_app_label = self.item_type.app_label
+        return [f'{item_app_label}.maintain_ownerships_for_{item_class_name}']
 
 
 class UpdateCatalogueLinkView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, OwnershipCatalogueLinkMixin, PermissionRequiredMixin, UpdateView):
