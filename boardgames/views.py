@@ -5,7 +5,7 @@ from django.views.generic import ListView
 from utils.views import SearchFormMixin
 
 
-from inventory.models import BoardGame
+from boardgames.models import BoardGame
 
 
 class BoardGameView(SearchFormMixin, ListView):
