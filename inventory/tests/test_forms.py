@@ -5,7 +5,7 @@ from django.test import TestCase
 
 from utils.testing import FormValidityMixin
 from inventory.forms import *
-from inventory.models import Ownership, BoardGame
+from inventory.models import Ownership, MiscellaneousItem
 
 
 class TestOwnershipRemovalForm(FormValidityMixin, TestCase):
@@ -61,12 +61,12 @@ class TestSimpleModelForms(TestCase):
 
 
 class TestAddOwnershipCommitteeLink(FormValidityMixin, TestCase):
-    """ Tests AddOwnershipCommitteeLink Form with boardgame as the item """
+    """ Tests AddOwnershipCommitteeLink Form with MiscellaneousItem as the item """
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     form_class = AddOwnershipCommitteeLinkForm
 
     def get_form_kwargs(self, **kwargs):
-        kwargs.setdefault('item', BoardGame.objects.get(id=3))
+        kwargs.setdefault('item', MiscellaneousItem.objects.get(id=3))
         kwargs.setdefault('user', User.objects.get(id=1))
         return super(TestAddOwnershipCommitteeLink, self).get_form_kwargs(**kwargs)
 
@@ -96,12 +96,12 @@ class TestAddOwnershipCommitteeLink(FormValidityMixin, TestCase):
 
 
 class TestAddOwnershipMemberLink(FormValidityMixin, TestCase):
-    """ Tests AddOwnershipCommitteeLink Form with boardgame as the item """
+    """ Tests AddOwnershipCommitteeLink Form with MiscellaneousItem as the item """
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     form_class = AddOwnershipMemberLinkForm
 
     def get_form_kwargs(self, **kwargs):
-        kwargs.setdefault('item', BoardGame.objects.get(id=3))
+        kwargs.setdefault('item', MiscellaneousItem.objects.get(id=3))
         kwargs.setdefault('user', User.objects.get(id=1))
         return super(TestAddOwnershipMemberLink, self).get_form_kwargs(**kwargs)
 
@@ -156,12 +156,12 @@ class TestFilterOwnershipThroughRelatedItems(FormValidityMixin, TestCase):
         filtered_ownerships = self.assertFormValid({}).get_filtered_items(ownerships)
         self.assertEqual(5, filtered_ownerships.count())
 
-        # Test terraforming mars (3 ownership instances)
-        filtered_ownerships = self.assertFormValid({'search_field': 'mars'}).get_filtered_items(ownerships)
+        # Test Flyers (3 ownership instances)
+        filtered_ownerships = self.assertFormValid({'search_field': 'fly'}).get_filtered_items(ownerships)
         self.assertEqual(3, filtered_ownerships.count())
 
-        # Test 'ai' is in 'Gaia Project' and 'Pak speelkaarten (ai)'
-        filtered_ownerships = self.assertFormValid({'search_field': 'ai'}).get_filtered_items(ownerships)
+        # Test 'aa' is in 'schaar' and 'Stoel aan de tafel'
+        filtered_ownerships = self.assertFormValid({'search_field': 'aa'}).get_filtered_items(ownerships)
         self.assertEqual(2, filtered_ownerships.count())
 
 
@@ -170,7 +170,7 @@ class TestDeleteItemForm(FormValidityMixin, TestCase):
     form_class = DeleteItemForm
 
     def setUp(self):
-        self.item = BoardGame.objects.get(id=1)
+        self.item = MiscellaneousItem.objects.get(id=1)
         self.ignore_active_links = False
 
     def get_form_kwargs(self, **kwargs):
@@ -180,13 +180,13 @@ class TestDeleteItemForm(FormValidityMixin, TestCase):
         return kwargs
 
     def test_form_invalid(self):
-        self.item=BoardGame.objects.get(id=1)
+        self.item=MiscellaneousItem.objects.get(id=1)
         self.assertFormHasError({}, 'active_ownerships', ignore_active_links=False)
         self.assertFormValid({}, ignore_active_links=True)
 
     def test_form_valid(self):
-        form = self.assertFormValid({}, item=BoardGame.objects.get(id=4))
+        form = self.assertFormValid({}, item=MiscellaneousItem.objects.get(id=4))
         form.delete_item()
-        self.assertFalse(BoardGame.objects.filter(id=4).exists())
+        self.assertFalse(MiscellaneousItem.objects.filter(id=4).exists())
 
 
