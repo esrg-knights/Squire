@@ -1,0 +1,87 @@
+[
+    {
+        "model": "boardgames.boardgame",
+        "pk": 1,
+        "fields": {
+            "name": "Terraforming Mars",
+            "description": "Some description",
+            "bgg_id": 167791,
+            "player_min": 2,
+            "player_max": 5
+        }
+    },
+    {
+        "model": "boardgames.boardgame",
+        "pk": 2,
+        "fields": {
+            "name": "Gaia Project",
+            "description": ""
+        }
+    },
+    {
+        "model": "boardgames.boardgame",
+        "pk": 3,
+        "fields": {
+            "name": "An old game we used to know",
+            "description": "Currently taken home"
+        }
+    },
+    {
+        "model": "boardgames.boardgame",
+        "pk": 4,
+        "fields": {
+            "name": "Monopoly",
+            "description": "Noooo"
+        }
+    },
+
+
+    {
+        "model": "inventory.ownership",
+        "pk": 1,
+        "fields": {
+            "member": 1,
+            "group": null,
+            "added_since": "2020-08-14",
+            "is_active": true,
+            "content_type": ["boardgames", "boardgame"],
+            "object_id": 1
+        }
+    },
+    {
+        "model": "inventory.ownership",
+        "pk": 2,
+        "fields": {
+            "member": null,
+            "group": 2,
+            "added_since": "2020-09-01",
+            "is_active": true,
+            "content_type": ["boardgames", "boardgame"],
+            "object_id": 1
+        }
+    },
+    {
+        "model": "inventory.ownership",
+        "pk": 3,
+        "fields": {
+            "member": null,
+            "group": 2,
+            "added_since": "2020-08-14",
+            "is_active": true,
+            "content_type": ["boardgames", "boardgame"],
+            "object_id": 2
+        }
+    },
+    {
+        "model": "inventory.ownership",
+        "pk": 4,
+        "fields": {
+            "member": null,
+            "group": 2,
+            "added_since": "2020-08-14",
+            "is_active": false,
+            "content_type": ["boardgames", "boardgame"],
+            "object_id": 3
+        }
+    }
+]
