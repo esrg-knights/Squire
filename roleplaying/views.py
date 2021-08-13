@@ -1,10 +1,13 @@
 import os
 
+from django.contrib import messages
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.http import Http404, FileResponse
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.utils.text import slugify
-from django.views.generic import ListView, View, DetailView
+from django.views.generic import ListView, View, DetailView, UpdateView
 
 from utils.views import SearchFormMixin
 from membership_file.views import MembershipRequiredMixin
@@ -50,6 +53,21 @@ class SystemDetailView(MembershipRequiredMixin, DetailView):
         })
         return context
 
+
+class SystemUpdateView(MembershipRequiredMixin, PermissionRequiredMixin, UpdateView):
+    template_name = "roleplaying/system_update.html"
+    model = RoleplayingSystem
+    fields = '__all__'
+    pk_url_kwarg = 'system_id'
+    permission_required = 'roleplaying.change_roleplayingsystem'
+    context_object_name = 'system'
+
+    def form_valid(self, form):
+        messages.success(self.request, f"{self.object.name} has been updated")
+        return super(SystemUpdateView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse("roleplaying:system_details", kwargs={'system_id': self.object.id,})
 
 
 class RoleplayingItemMixin:

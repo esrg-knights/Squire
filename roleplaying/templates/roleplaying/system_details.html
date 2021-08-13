@@ -33,6 +33,14 @@
                     <div class="h3">{{ system.name }}</div>
                     <div>{{ system.short_description }}</div>
                 </div>
+                {% if perms.roleplaying.edit_roleplayingsystem %}
+                    <div class="col-auto">
+                        <a href="{% url "roleplaying:system_edit" system_id=system.id %}"
+                           class="btn btn-sm btn-outline-primary">
+                            Edit
+                        </a>
+                    </div>
+                {% endif %}
             </div>
 
 
@@ -91,7 +99,7 @@
                 </div>
             </div>
 
-            {% if system.achievements %}
+            {% if system.achievements.all %}
                 <hr>
                 <p>
                     Achievements related to this system:
@@ -103,10 +111,9 @@
                         </div>
                     {% endfor %}
                 </div>
+                <hr>
             {% endif %}
 
-
-            <hr>
             <div>
                 <div class="d-flex justify-content-between">
                     <div class="font-weight-bold mt-3">
