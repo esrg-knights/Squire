@@ -47,7 +47,8 @@
             TU/e Card Number: <i>{{ member.tue_card_number|default:"None" }}</i><br>
             External Card Number: <i>{{ member.display_external_card_number|default:"None" }}</i><br>
             {% if member.external_card_number %}
-                External Card Deposit: <i>€{{ member.external_card_deposit|default:"THIS SHOULD BE FILLED IN; PLEASE CONTACT THE BOARD" }}</i><br>
+                {# Deposit can be €0,- #}
+                External Card Deposit: <i>€{{ member.external_card_deposit|default_if_none:"THIS SHOULD BE FILLED IN; PLEASE CONTACT THE BOARD" }}</i><br>
             {% endif %}
             <small>External Cards can be used by non-TU/e students to access certain rooms.</small>
         </p>
