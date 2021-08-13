@@ -1,0 +1,17 @@
+{% load format_string %}
+{% load filter_first %}
+
+
+<div class="p-1 {{ outline_class }}" style="max-width: 20em">
+    <div class="d-flex">
+        <a class="d-flex {% if display_text %}m-2 ml-0{% endif %}" href="{% url "achievements/all" %}#ach-{{ achievement.id }}">
+            <img src="{{ achievement.image.url }}" class="" style="height: {{ img_height|default:"4em"}};">
+        </a>
+        {% if display_text %}
+            <div class="">
+                <div class="">{{achievement.name}}</div>
+                <div class="" style="font-size:0.7em">{{achievement.description}}</div>
+            </div>
+        {% endif %}
+    </div>
+</div>

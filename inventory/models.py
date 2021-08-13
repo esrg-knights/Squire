@@ -11,7 +11,7 @@ from django.utils.text import slugify
 from membership_file.models import Member
 
 
-__all__ = ['valid_item_class_ids', 'BoardGame', 'Ownership', 'Item', 'MiscellaneousItem']
+__all__ = ['valid_item_class_ids', 'Ownership', 'Item', 'MiscellaneousItem']
 
 
 class ItemManager(models.Manager):
@@ -74,7 +74,7 @@ class Item(models.Model):
     description = models.TextField(max_length=512, blank=True, null=True)
     image = models.ImageField(upload_to=get_item_image_upload_path, blank=True, null=True)
 
-    ownerships = GenericRelation('Ownership')
+    ownerships = GenericRelation('inventory.Ownership')
     # An achievement can also apply to roleplay items
     achievements = GenericRelation('achievements.AchievementItemLink')
 
@@ -106,8 +106,31 @@ class Item(models.Model):
         """ Returns boolean stating whether this item is owned by the association """
         return self.ownerships.filter(is_active=True).filter(group__isnull=False).exists()
 
+    def is_loaned_by_member(self):
+        """ Returns boolean stating whether this item is owned by the association """
+
+        return self.ownerships.filter(is_active=True).filter(member__isnull=False).exists()
+
     def __str__(self):
         return f'{self.__class__.__name__}: {self.name}'
+
+    def other_fields(self):
+        """ Returns a list of dicts with the model fields that are not defined in Item """
+        other_fields = []
+        exclude_names = ('id', 'name', 'description', 'image')
+        for field in self._meta.local_fields:
+            if field.name not in exclude_names:
+                field_dict = {
+                    'name': field.name,
+                    'verbose_name': field.verbose_name,
+                    'value': getattr(self, field.name),
+                }
+                # Set a value in case there are choices
+                if hasattr(self, f'get_{field.name}_display'):
+                    field_dict['display_value'] = getattr(self, f'get_{field.name}_display')()
+
+                other_fields.append(field_dict)
+        return other_fields
 
 
 def valid_item_class_ids():
@@ -141,6 +164,15 @@ class Ownership(models.Model):
         else:
             return self.group
 
+    def clean_fields(self, exclude=None):
+        super().clean_fields(exclude=exclude)
+        # Make exlude a list to prevent complex if statements
+        exclude = exclude or []
+
+        if 'content_type' not in exclude and 'object_id' not in exclude:
+            if self.content_object is None:
+                raise ValidationError("The connected item does not exist", code='item_nonexistent')
+
     def clean(self):
         super(Ownership, self).clean()
         # Validate that EITHER member or group must be defined
@@ -148,9 +180,6 @@ class Ownership(models.Model):
             raise ValidationError("Either a member or a group has to be defined", code='required')
         if self.member and self.group:
             raise ValidationError("An item can't belong both to a user and a group", code='invalid')
-        # Validate that content_object exists
-        if self.content_object is None:
-            raise ValidationError("The connected item does not exist", code='item_nonexistent')
 
     def __str__(self):
         if self.member:
@@ -162,6 +191,4 @@ class Ownership(models.Model):
 class MiscellaneousItem(Item):
     pass
 
-class BoardGame(Item):
-    """ Defines boardgames """
-    bgg_id = models.IntegerField(blank=True, null=True)
+

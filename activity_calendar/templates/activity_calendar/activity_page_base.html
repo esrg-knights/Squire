@@ -36,11 +36,7 @@
 
 {% block js_bottom %}
     {{ block.super }}
-    <script language="JavaScript" note="Trigger bootstrap popovers">
-        $(function () {
-            $('[data-toggle="popover"]').popover()
-        })
-    </script>
+    <script src="{% static "js/activate_bootstrap_popover.js" %}"></script>
 
     {% martor_render_js import_hljs=False invoke_hljs_method=True method_param="'#event-description'" %}
 {% endblock js_bottom %}

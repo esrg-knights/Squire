@@ -64,7 +64,7 @@ class Member(models.Model):
     # NAME
     ##################################
     legal_name = models.CharField(max_length=255, help_text="Legal name as known by your Educational Institution or on your ID-card.")
-    first_name = models.CharField(max_length=255, verbose_name="given name")
+    first_name = models.CharField(max_length=255, verbose_name="preferred name")
     tussenvoegsel = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255)
 
@@ -79,7 +79,7 @@ class Member(models.Model):
     # NB: These card numbers must be unique
     # NB: These numbers may start with 0, which is why they are not IntegerFields
     ##################################
-    tue_card_number_regex = RegexValidator(regex=r'^[0-9]{7}$', message="TUe card numbers must only consist of exactly 7 numbers. E.g. 1234567")
+    tue_card_number_regex = RegexValidator(regex=r'^[0-9]{7,8}$', message="TUe card numbers must only consist of exactly 7 or 8 digits. E.g. 1234567")
     tue_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, blank=True, null=True, unique=True, verbose_name="TUe card number")
 
     external_card_digits_regex = RegexValidator(regex=r'^[0-9]{3}$', message="External card digits must consist of exactly 3 digits. E.g. 012")

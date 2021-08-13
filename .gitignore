@@ -121,10 +121,13 @@ local_settings.py
 
 # Squire-specific gitignore (Secret Keys, etc.)
 /squire/secret_key.txt
+htdocs/media/local_only/*
 htdocs/media/images/achievements
 htdocs/media/images/presets
-htdocs/media/images/item/*
 htdocs/media/images/uploads
+htdocs/media/images/item/*
+htdocs/media/images/roleplaying/*
+htdocs/media/files/item/*
 /output/
 /test/output/
 

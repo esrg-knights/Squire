@@ -3,7 +3,7 @@ from django.contrib.auth import get_user, PermissionDenied
 from django.contrib.auth.models import User
 from django.contrib.messages import add_message, DEBUG, ERROR, SUCCESS
 from django.contrib.messages.storage.base import Message
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseForbidden, HttpResponseRedirect
 from django.test import TestCase
 from django.views.generic import View
 
@@ -16,6 +16,19 @@ class TestMessageView(View):
     def dispatch(self, request, *args, level=None, msg=None, **kwargs):
         add_message(request, level, message=msg)
         return HttpResponse()
+
+
+class FakeClient:
+    """ A fake client to test get and post assert methods with """
+    def __init__(self, http_class, **kwargs):
+        self.http_class = http_class
+        self.http_init_kwargs = kwargs
+
+    def get(self, *args, **kwargs):
+        return self.http_class(**self.http_init_kwargs)
+
+    def post(self, *args, **kwargs):
+        return self.get(*args, **kwargs)
 
 
 class TestViewValidityMixin(ViewValidityMixin, TestCase):
@@ -35,6 +48,42 @@ class TestViewValidityMixin(ViewValidityMixin, TestCase):
 
     def test_get_base_url(self):
         self.assertEqual(self.get_base_url(), self.base_url)
+
+    def get_fake_client_instance(self, http_response_class, **http_init_kwargs):
+        return FakeClient(http_response_class, **http_init_kwargs)
+
+    def test_valid_get_response(self):
+        self.client = FakeClient(HttpResponse)
+        self.assertValidGetResponse()
+
+        # Assert that it fails when presented a forbidden page
+        self.client = FakeClient(HttpResponseForbidden)
+        error = raisesAssertionError(
+            self.assertValidGetResponse
+        )
+        self.assertEqual(error.__str__(), "403 != 200 : Response was not a valid Http200 response")
+
+    def assertRedirects(self, response, *args, **kwargs):
+        # Overwrite to serve as checkpoint
+        if not isinstance(response, HttpResponseRedirect):
+            raise AssertionError("RedirectCheck")
+
+    def test_valid_post_response(self):
+        self.client = FakeClient(HttpResponse)
+        self.assertValidPostResponse()
+
+        # Assert that redirection is checked through self.assertsRedirect as that is validated as working
+        error = raisesAssertionError(self.assertValidPostResponse, redirect_url="/wrong-link/")
+        self.assertEqual(error.__str__(), "RedirectCheck")
+        # Set httpresponse class to redirect
+        self.client = FakeClient(HttpResponseRedirect, redirect_to="/correct-link/")
+        self.assertValidPostResponse(redirect_url="/correct-link/")
+
+        # Assert that it fails when presented a forbidden page
+        self.client = FakeClient(HttpResponseForbidden)
+        error = raisesAssertionError(self.assertValidPostResponse)
+        self.assertEqual(error.__str__(), "403 != 200 : Response was not a valid Http200 response")
+
 
     def test_has_message(self):
         # Messages are read through the response.context property.
