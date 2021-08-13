@@ -28,7 +28,7 @@ urlpatterns = [
     path('', include('achievements.urls')),
     # Inventory
     path('inventory/', include(('inventory.urls', 'inventory'), namespace='inventory')),
-    # Roleplaying
+    path('boardgames/', include(('boardgames.urls', 'boardgames'), namespace='boardgames')),
     path('roleplay/', include(('roleplaying.urls', 'roleplaying'), namespace='roleplaying')),
 
     # Activity Calendar

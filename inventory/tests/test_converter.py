@@ -11,10 +11,11 @@ class TestCatalogueConverter(TestCase):
         self.converter = CatalogueConverter()
 
     def test_to_python(self):
-        self.assertEqual(self.converter.to_python('boardgame'),
-                         ContentType.objects.get_for_model(BoardGame))
         self.assertEqual(self.converter.to_python('miscellaneousitem'),
                          ContentType.objects.get_for_model(MiscellaneousItem))
+        # This tests on an Item model from a different module, just to make sure it can work with other modules
+        content_type = self.converter.to_python('boardgame')
+        self.assertEqual(content_type.model, 'boardgame')
 
     def test_to_python_fails(self):
         # Assure it fails on non-existent models
@@ -24,5 +25,5 @@ class TestCatalogueConverter(TestCase):
 
     def test_to_url(self):
         # Test on the contenttype instance
-        self.assertEqual(self.converter.to_url(ContentType.objects.get_for_model(BoardGame)), 'boardgame')
+        self.assertEqual(self.converter.to_url(ContentType.objects.get_for_model(MiscellaneousItem)), 'miscellaneousitem')
 

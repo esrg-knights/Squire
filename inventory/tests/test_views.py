@@ -15,7 +15,7 @@ from utils.testing.view_test_utils import ViewValidityMixin, TestMixinMixin
 from utils.views import SearchFormMixin, RedirectMixin
 
 from inventory.forms import *
-from inventory.models import Ownership, BoardGame
+from inventory.models import Ownership, MiscellaneousItem
 from inventory.views import *
 from inventory.views import OwnershipMixin, CatalogueMixin, ItemMixin, OwnershipCatalogueLinkMixin
 
@@ -72,7 +72,7 @@ class TestOwnershipMixin(TestMixinMixin, TestCase):
         # A new ownership that is not owned by the current user (member_id=1)
         not_my_ownership = Ownership.objects.create(
             member_id=3,
-            content_object=BoardGame.objects.last()
+            content_object=MiscellaneousItem.objects.last()
         )
         self.assertRaises403(url_kwargs={'ownership_id': not_my_ownership.id})
 
@@ -218,7 +218,7 @@ class TestGroupItemOverview(ViewValidityMixin, TestCase):
 
         # Ensure that the right object types are availlable
         self.assertIn('content_types', context.keys())
-        self.assertIn(ContentType.objects.get_for_model(BoardGame), context['content_types'])
+        self.assertIn(ContentType.objects.get_for_model(MiscellaneousItem), context['content_types'])
 
 
 class TestGroupItemLinkUpdateView(ViewValidityMixin, TestCase):
@@ -262,7 +262,7 @@ class TestCatalogueMixin(TestMixinMixin, TestCase):
     mixin_class = CatalogueMixin
 
     def setUp(self):
-        self.content_type = ContentType.objects.get_for_model(BoardGame)
+        self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
         super(TestCatalogueMixin, self).setUp()
 
     def get_base_url_kwargs(self):
@@ -285,8 +285,8 @@ class TestItemMixin(TestMixinMixin, TestCase):
     pre_inherit_classes = [CatalogueMixin]
 
     def setUp(self):
-        self.content_type = ContentType.objects.get_for_model(BoardGame)
-        self.item = BoardGame.objects.get(id=4)
+        self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
+        self.item = MiscellaneousItem.objects.get(id=4)
         super(TestItemMixin, self).setUp()
 
     def get_base_url_kwargs(self):
@@ -317,7 +317,7 @@ class TestTypeCatalogue(ViewValidityMixin, TestCase):
     base_user_id = 100
 
     def setUp(self):
-        self.content_type = ContentType.objects.get_for_model(BoardGame)
+        self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
         super(TestTypeCatalogue, self).setUp()
 
     def get_base_url(self, content_type=None):
@@ -347,12 +347,12 @@ class TestTypeCatalogue(ViewValidityMixin, TestCase):
         self.assertFalse(context['can_add_to_member'])
 
         # Test that the actual permissions are updated in the context
-        self.user.user_permissions.add(Permission.objects.get(codename='add_group_ownership_for_boardgame'))
+        self.user.user_permissions.add(Permission.objects.get(codename='add_group_ownership_for_miscellaneousitem'))
         context = self.client.get(self.get_base_url(), data={}).context
         self.assertTrue(context['can_add_to_group'])
         self.assertFalse(context['can_add_to_member'])
 
-        self.user.user_permissions.add(Permission.objects.get(codename='add_member_ownership_for_boardgame'))
+        self.user.user_permissions.add(Permission.objects.get(codename='add_member_ownership_for_miscellaneousitem'))
         context = self.client.get(self.get_base_url(), data={}).context
         self.assertTrue(context['can_add_to_group'])
         self.assertTrue(context['can_add_to_member'])
@@ -363,10 +363,10 @@ class TestAddLinkCommitteeView(ViewValidityMixin, TestCase):
     base_user_id = 100
 
     def setUp(self):
-        self.content_type = ContentType.objects.get_for_model(BoardGame)
-        self.item = BoardGame.objects.get(id=4)
+        self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
+        self.item = MiscellaneousItem.objects.get(id=4)
         super(TestAddLinkCommitteeView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='add_group_ownership_for_boardgame'))
+        self.user.user_permissions.add(Permission.objects.get(codename='add_group_ownership_for_miscellaneousitem'))
 
     def get_base_url(self, content_type=None, item_id=None):
         content_type = content_type or self.content_type
@@ -392,7 +392,7 @@ class TestAddLinkCommitteeView(ViewValidityMixin, TestCase):
 
     @suppress_warnings
     def test_not_authorised_get(self):
-        self.user.user_permissions.remove(Permission.objects.get(codename='add_group_ownership_for_boardgame'))
+        self.user.user_permissions.remove(Permission.objects.get(codename='add_group_ownership_for_miscellaneousitem'))
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 403)
 
@@ -418,10 +418,10 @@ class TestAddLinkMemberView(ViewValidityMixin, TestCase):
     base_user_id = 100
 
     def setUp(self):
-        self.content_type = ContentType.objects.get_for_model(BoardGame)
-        self.item = BoardGame.objects.get(id=4)
+        self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
+        self.item = MiscellaneousItem.objects.get(id=4)
         super(TestAddLinkMemberView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='add_member_ownership_for_boardgame'))
+        self.user.user_permissions.add(Permission.objects.get(codename='add_member_ownership_for_miscellaneousitem'))
 
     def get_base_url(self, content_type=None, item_id=None):
         content_type = content_type or self.content_type
@@ -443,7 +443,7 @@ class TestAddLinkMemberView(ViewValidityMixin, TestCase):
 
     @suppress_warnings
     def test_not_authorised_get(self):
-        self.user.user_permissions.remove(Permission.objects.get(codename='add_member_ownership_for_boardgame'))
+        self.user.user_permissions.remove(Permission.objects.get(codename='add_member_ownership_for_miscellaneousitem'))
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 403)
 
@@ -473,9 +473,9 @@ class TestItemCreateView(ViewValidityMixin, TestCase):
     base_user_id = 100
 
     def setUp(self):
-        self.content_type = ContentType.objects.get_for_model(BoardGame)
+        self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
         super(TestItemCreateView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='add_boardgame'))
+        self.user.user_permissions.add(Permission.objects.get(codename='add_miscellaneousitem'))
 
     def get_base_url(self, content_type=None, item_id=None):
         content_type = content_type or self.content_type
@@ -493,7 +493,7 @@ class TestItemCreateView(ViewValidityMixin, TestCase):
 
     @suppress_warnings
     def test_not_authorised_get(self):
-        self.user.user_permissions.remove(Permission.objects.get(codename='add_boardgame'))
+        self.user.user_permissions.remove(Permission.objects.get(codename='add_miscellaneousitem'))
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 403)
 
@@ -509,7 +509,7 @@ class TestItemCreateView(ViewValidityMixin, TestCase):
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
 
         # Test item creation
-        self.assertTrue(BoardGame.objects.filter(name='test_create_view_item').exists())
+        self.assertTrue(MiscellaneousItem.objects.filter(name='test_create_view_item').exists())
 
     def test_success_url(self):
         # Test normal save
@@ -524,7 +524,7 @@ class TestItemCreateView(ViewValidityMixin, TestCase):
         response = self.client.post(self.get_base_url(), data=data)
         self.assertRedirects(response, reverse('inventory:catalogue_add_member_link', kwargs={
             'type_id': self.content_type,
-            'item_id': BoardGame.objects.get(name='test_create_view_item_member').id,
+            'item_id': MiscellaneousItem.objects.get(name='test_create_view_item_member').id,
         }), fetch_redirect_response=False)
 
         # Pressed '& add to group' button
@@ -532,7 +532,7 @@ class TestItemCreateView(ViewValidityMixin, TestCase):
         response = self.client.post(self.get_base_url(), data=data)
         self.assertRedirects(response, reverse('inventory:catalogue_add_group_link', kwargs={
             'type_id': self.content_type,
-            'item_id': BoardGame.objects.get(name='test_create_view_item_group').id,
+            'item_id': MiscellaneousItem.objects.get(name='test_create_view_item_group').id,
         }), fetch_redirect_response=False)
 
 
@@ -541,10 +541,10 @@ class TestItemUpdateView(ViewValidityMixin, TestCase):
     base_user_id = 100
 
     def setUp(self):
-        self.content_type = ContentType.objects.get_for_model(BoardGame)
-        self.item = BoardGame.objects.get(id=4)
+        self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
+        self.item = MiscellaneousItem.objects.get(id=4)
         super(TestItemUpdateView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='change_boardgame'))
+        self.user.user_permissions.add(Permission.objects.get(codename='change_miscellaneousitem'))
 
     def get_base_url(self, content_type=None, item_id=None):
         content_type = content_type or self.content_type
@@ -566,7 +566,7 @@ class TestItemUpdateView(ViewValidityMixin, TestCase):
 
     @suppress_warnings
     def test_not_authorised_get(self):
-        self.user.user_permissions.remove(Permission.objects.get(codename='change_boardgame'))
+        self.user.user_permissions.remove(Permission.objects.get(codename='change_miscellaneousitem'))
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 403)
 
@@ -601,7 +601,7 @@ class TestItemUpdateView(ViewValidityMixin, TestCase):
         response = self.client.post(self.get_base_url(), data=data)
         self.assertRedirects(response, reverse('inventory:catalogue_add_member_link', kwargs={
             'type_id': self.content_type,
-            'item_id': BoardGame.objects.get(name='test_update_view_item_member').id,
+            'item_id': MiscellaneousItem.objects.get(name='test_update_view_item_member').id,
         }), fetch_redirect_response=False)
 
         # Pressed '& add to group' button
@@ -609,7 +609,7 @@ class TestItemUpdateView(ViewValidityMixin, TestCase):
         response = self.client.post(self.get_base_url(), data=data)
         self.assertRedirects(response, reverse('inventory:catalogue_add_group_link', kwargs={
             'type_id': self.content_type,
-            'item_id': BoardGame.objects.get(name='test_update_view_item_group').id,
+            'item_id': MiscellaneousItem.objects.get(name='test_update_view_item_group').id,
         }), fetch_redirect_response=False)
 
 
@@ -618,10 +618,10 @@ class TestItemDeleteView(ViewValidityMixin, TestCase):
     base_user_id = 100
 
     def setUp(self):
-        self.content_type = ContentType.objects.get_for_model(BoardGame)
-        self.item = BoardGame.objects.get(id=4)
+        self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
+        self.item = MiscellaneousItem.objects.get(id=4)
         super(TestItemDeleteView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='delete_boardgame'))
+        self.user.user_permissions.add(Permission.objects.get(codename='delete_miscellaneousitem'))
 
     def get_base_url(self, content_type=None, item_id=None):
         content_type = content_type or self.content_type
@@ -642,7 +642,7 @@ class TestItemDeleteView(ViewValidityMixin, TestCase):
 
     @suppress_warnings
     def test_not_authorised_get(self):
-        self.user.user_permissions.remove(Permission.objects.get(codename='delete_boardgame'))
+        self.user.user_permissions.remove(Permission.objects.get(codename='delete_miscellaneousitem'))
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 403)
 
@@ -661,7 +661,7 @@ class TestItemDeleteView(ViewValidityMixin, TestCase):
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
 
         # Test item deletion
-        self.assertFalse(BoardGame.objects.filter(id=self.item.id).exists())
+        self.assertFalse(MiscellaneousItem.objects.filter(id=self.item.id).exists())
 
     def test_can_maintain_ownerships(self):
         """ Tests that can_maintain_ownerships is handed to the form """
@@ -698,10 +698,10 @@ class TestItemLinkMaintenanceView(ViewValidityMixin, TestCase):
     base_user_id = 100
 
     def setUp(self):
-        self.content_type = ContentType.objects.get_for_model(BoardGame)
-        self.item = BoardGame.objects.get(id=1)
+        self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
+        self.item = MiscellaneousItem.objects.get(id=1)
         super(TestItemLinkMaintenanceView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_boardgame'))
+        self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_miscellaneousitem'))
 
     def get_base_url(self, content_type=None, item_id=None):
         content_type = content_type or self.content_type
@@ -738,19 +738,19 @@ class TestItemLinkMaintenanceView(ViewValidityMixin, TestCase):
         self.assertFalse(context['can_add_to_member'])
 
         # Test that the actual permissions are updated in the context
-        self.user.user_permissions.add(Permission.objects.get(codename='add_group_ownership_for_boardgame'))
+        self.user.user_permissions.add(Permission.objects.get(codename='add_group_ownership_for_miscellaneousitem'))
         context = self.client.get(self.get_base_url(), data={}).context
         self.assertTrue(context['can_add_to_group'])
         self.assertFalse(context['can_add_to_member'])
 
-        self.user.user_permissions.add(Permission.objects.get(codename='add_member_ownership_for_boardgame'))
+        self.user.user_permissions.add(Permission.objects.get(codename='add_member_ownership_for_miscellaneousitem'))
         context = self.client.get(self.get_base_url(), data={}).context
         self.assertTrue(context['can_add_to_group'])
         self.assertTrue(context['can_add_to_member'])
 
         context = self.client.get(self.get_base_url(), data={}).context
         self.assertFalse(context['can_delete'])
-        self.user.user_permissions.add(Permission.objects.get(codename='delete_boardgame'))
+        self.user.user_permissions.add(Permission.objects.get(codename='delete_miscellaneousitem'))
         context = self.client.get(self.get_base_url(), data={}).context
         self.assertTrue(context['can_delete'])
 
@@ -761,8 +761,8 @@ class TestOwnershipCatalogueLinkMixin(TestMixinMixin, TestCase):
     pre_inherit_classes = [CatalogueMixin, ItemMixin]
 
     def setUp(self):
-        self.content_type = ContentType.objects.get_for_model(BoardGame)
-        self.item = BoardGame.objects.get(id=1)
+        self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
+        self.item = MiscellaneousItem.objects.get(id=1)
         self.ownership = Ownership.objects.get(id=1)
         super(TestOwnershipCatalogueLinkMixin, self).setUp()
 
@@ -805,11 +805,11 @@ class TestUpdateCatalogueLinkView(ViewValidityMixin, TestCase):
     base_user_id = 100
 
     def setUp(self):
-        self.content_type = ContentType.objects.get_for_model(BoardGame)
-        self.item = BoardGame.objects.get(id=1)
+        self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
+        self.item = MiscellaneousItem.objects.get(id=1)
         self.ownership = Ownership.objects.get(id=1)
         super(TestUpdateCatalogueLinkView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_boardgame'))
+        self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_miscellaneousitem'))
 
     def get_base_url(self, content_type=None, item_id=None, ownership_id=None):
         content_type = content_type or self.content_type
@@ -848,11 +848,11 @@ class TestLinkActivationStateView(ViewValidityMixin, TestCase):
     base_user_id = 100
 
     def setUp(self):
-        self.content_type = ContentType.objects.get_for_model(BoardGame)
-        self.item = BoardGame.objects.get(id=1)
+        self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
+        self.item = MiscellaneousItem.objects.get(id=1)
         self.ownership = Ownership.objects.get(id=2)
         super(TestLinkActivationStateView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_boardgame'))
+        self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_miscellaneousitem'))
 
     def get_base_url(self, content_type=None, item_id=None, ownership_id=None):
         content_type = content_type or self.content_type
@@ -910,11 +910,11 @@ class TestLinkDeletionView(ViewValidityMixin, TestCase):
     base_user_id = 100
 
     def setUp(self):
-        self.content_type = ContentType.objects.get_for_model(BoardGame)
-        self.item = BoardGame.objects.get(id=1)
+        self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
+        self.item = MiscellaneousItem.objects.get(id=1)
         self.ownership = Ownership.objects.get(id=2)
         super(TestLinkDeletionView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_boardgame'))
+        self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_miscellaneousitem'))
 
     def get_base_url(self, content_type=None, item_id=None, ownership_id=None):
         content_type = content_type or self.content_type

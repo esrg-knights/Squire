@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.template import Context
 
-from inventory.models import BoardGame, Ownership
+from inventory.models import MiscellaneousItem, Ownership
 from inventory.templatetags.inventory_tags import render_ownership_tags, get_owned_by
 
 
@@ -17,7 +17,7 @@ class RenderOwnershipTemplatetagTest(TestCase):
         self.context = Context({'request': self.request,})
 
     def test_self_owned(self):
-        item = BoardGame.objects.get(id=1)
+        item = MiscellaneousItem.objects.get(id=1)
 
         results = render_ownership_tags(self.context, item)
         self.assertEqual(results['is_owner'], True)
@@ -26,7 +26,7 @@ class RenderOwnershipTemplatetagTest(TestCase):
 
     def test_loaned(self):
         """ Tests the sistuation for a loaned item, besides the current users loaned item"""
-        item = BoardGame.objects.get(id=1)
+        item = MiscellaneousItem.objects.get(id=1)
         Ownership(
             member_id=2,
             content_object=item,
@@ -39,7 +39,7 @@ class RenderOwnershipTemplatetagTest(TestCase):
         self.assertEqual(results['is_owned_by_knights'], True)
 
     def test_association_owned(self):
-        item = BoardGame.objects.get(id=4)
+        item = MiscellaneousItem.objects.get(id=4)
         results = render_ownership_tags(self.context, item)
         self.assertEqual(results['is_owner'], False)
         self.assertEqual(results['is_owned_by_member'], False)
@@ -55,7 +55,7 @@ class GetOwnedByTemplatetagTest(TestCase):
         self.context = Context({'request': self.request,})
 
     def test_group(self):
-        item = BoardGame.objects.get(id=1)
+        item = MiscellaneousItem.objects.get(id=1)
         group = Group.objects.get(id=2)
 
         self.assertTrue(get_owned_by(item, group))
@@ -63,7 +63,7 @@ class GetOwnedByTemplatetagTest(TestCase):
         self.assertFalse(get_owned_by(item, group))
 
     def test_user(self):
-        item = BoardGame.objects.get(id=1)
+        item = MiscellaneousItem.objects.get(id=1)
         user = User.objects.get(id=1)
 
         self.assertFalse(get_owned_by(item, user))

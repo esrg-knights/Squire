@@ -11,7 +11,7 @@ from django.utils.text import slugify
 from membership_file.models import Member
 
 
-__all__ = ['valid_item_class_ids', 'BoardGame', 'Ownership', 'Item', 'MiscellaneousItem']
+__all__ = ['valid_item_class_ids', 'Ownership', 'Item', 'MiscellaneousItem']
 
 
 class ItemManager(models.Manager):
@@ -120,11 +120,16 @@ class Item(models.Model):
         exclude_names = ('id', 'name', 'description', 'image')
         for field in self._meta.local_fields:
             if field.name not in exclude_names:
-                other_fields.append({
+                field_dict = {
                     'name': field.name,
                     'verbose_name': field.verbose_name,
                     'value': getattr(self, field.name),
-                })
+                }
+                # Set a value in case there are choices
+                if hasattr(self, f'get_{field.name}_display'):
+                    field_dict['display_value'] = getattr(self, f'get_{field.name}_display')()
+
+                other_fields.append(field_dict)
         return other_fields
 
 
@@ -186,6 +191,4 @@ class Ownership(models.Model):
 class MiscellaneousItem(Item):
     pass
 
-class BoardGame(Item):
-    """ Defines boardgames """
-    bgg_id = models.IntegerField(blank=True, null=True)
+

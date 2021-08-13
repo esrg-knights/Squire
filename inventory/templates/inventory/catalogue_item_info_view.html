@@ -50,7 +50,7 @@
                     {{ other_field.verbose_name }}
                 </div>
                 <div class="col-9">
-                    {{ other_field.value }}
+                    {{ other_field.display_value|default:other_field.value|default:"-" }}
                 </div>
             </div>
             {% endfor %}
