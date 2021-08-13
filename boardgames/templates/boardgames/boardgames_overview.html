@@ -92,7 +92,7 @@
                                         <img style="height: 1em;" src="https://cf.geekdo-static.com/icons/favicon2.ico">BGG
                                     </a>
                                 {% endif %}
-                                {% if perms.boardgames.can_maintain_boardgame_ownerships %}
+                                {% if perms.boardgames.maintain_ownerships_for_boardgame %}
                                     <a class="btn btn-sm btn-info"
                                        href="{% url "inventory:catalogue_item_links" type_id=content_type item_id=boardgame.id %}">
                                         Edit
@@ -110,7 +110,7 @@
 
     {% render_paginator %}
 
-    {% if perms.boardgames.can_maintain_ownerships_for_boardgame %}
+    {% if perms.boardgames.maintain_ownerships_for_boardgame %}
         <div class="d-flex justify-content-end">
             <a href="{% url "inventory:catalogue" type_id=content_type %}"
                class="btn btn-secondary">
