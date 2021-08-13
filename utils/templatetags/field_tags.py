@@ -9,12 +9,6 @@ register = template.Library()
 ##################################################################################
 
 @register.filter
-def is_markdown(field):
-    """ Returns whether the field supports Markdown """
-    return isinstance(field.widget, ImageUploadMartorWidget)
-
-
-@register.filter
 def set_max_width(field, width):
     """ Sets the maximum width (in px) of a field through the field's style-attribute """
     if width >= 0:
