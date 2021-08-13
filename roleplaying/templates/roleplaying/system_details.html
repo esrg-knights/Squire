@@ -119,7 +119,7 @@
                     <div class="font-weight-bold mt-3">
                         Available items:
                     </div>
-                    <div>{% if perms.roleplaying.maintain_ownership_roleplayingitem %}
+                    <div>{% if perms.roleplaying.maintain_ownerships_for_roleplayingitem %}
                         <a href="{% url "inventory:catalogue" type_id=item_type %}"
                            class="btn btn-sm btn-outline-primary">
                             Catalogue
