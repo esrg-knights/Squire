@@ -100,7 +100,7 @@ class Achievement(models.Model):
 class AchievementItemLink(models.Model):
     """ Links an achievement with an item (e.g. boardgame) """
     achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, limit_choices_to=valid_item_class_ids)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
 

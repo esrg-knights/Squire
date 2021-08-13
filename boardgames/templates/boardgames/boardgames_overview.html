@@ -3,6 +3,7 @@
 {% load paginator %}
 {% load inventory_tags %}
 {% load to_member %}
+{% load render_achievement %}
 
 {% block title %}
     Squire - Boardgames
@@ -15,6 +16,15 @@
 
 {% block content %}
     <h1>Availlable board games</h1>
+    <p>
+        Below a list of all boardgames in our collection. Some of them are loaned to the Knights by other members so be
+        extra careful when dealing with them.
+    </p>
+    <p>
+        Do you want to loan your boardgame to the Knights? Did you spot incorrect data on a boardgame?
+        Please send an e-mail to <a href="mailto:zg@kotkt.nl">zg@kotkt.nl</a>
+        to inform them and they'll update it below.
+    </p>
 
 
     {% include "utils/snippets/filter_form_snippet.html" with form=filter_form %}
@@ -26,8 +36,8 @@
                 <tr class="">
                     <th scope="col"></th>
                     <th scope="col">Title</th>
-                    <th scope="col">Owned by</th>
-                    <th scope="col" colspan="2" class="text-center">Info</th>
+                    <th scope="col" colspan="3" class="text-center">Info</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -36,7 +46,7 @@
                     <td>
                         {% if boardgame.image %}
                             <a class="enlargable_image" data-imgurl="{{ boardgame.image.url }}">
-                            <div class="enlargable_image"
+                            <div class=""
                                 style="background-size: contain; background-position: center;
                                     background-image: url('{{ boardgame.image.url }}');
                                     background-repeat: no-repeat; width: 4em; height: 4em;"></div>
@@ -51,54 +61,46 @@
                     </td>
                     <td class="w-50">
                         <div class="font-weight-bold">{{ boardgame.name }}
-                            {% if boardgame.is_owned_by_association %}
-                                <img style="height: 1em;" src="{% static 'images/header_logo.png' %}">
-                            {% endif %}
-                            {% if boardgame|get_owned_by:user %}
-                                <span class="badge badge-pill badge-light">Yours</span>
-                            {% endif %}
+                            {% render_ownership_tags boardgame %}
                         </div>
                         <div><small>{{ boardgame.description }}</small></div>
                     </td>
                     <td>
-                        <small>
-                            {% if user|is_member %}
-                                {% for owner in boardgame.currently_in_possession %}
-                                    {{ owner.owner }}{% if not forloop.last %}, {% endif %}
-                                {% endfor %}
-                            {% else %}
-                                {% if boardgame.is_owned_by_association %}
-                                    Knights
-                                {% else %}
-                                    Loaned by member
-                                {% endif %}
-                            {% endif %}
-                        </small>
+                        {% if boardgame.get_players_display %}<div>Players:</div>{% endif %}
+                        {% if boardgame.play_duration %}<div>Duration:</div>{% endif %}
+                    </td>
+                    <td>
+                        {% if boardgame.get_players_display %}<div>{{ boardgame.get_players_display }}</div>{% endif %}
+                        {% if boardgame.play_duration %}<div>{{ boardgame.get_play_duration_display }}</div>{% endif %}
                     </td>
                     <td>
                         {% if boardgame.achievements.all %}
                             <div class="d-flex flex-row justify-content-end">
-                                <div>
-                                <a class="btn btn-sm btn-outline-primary"
-                                   href="{% url "achievements/all" %}">
-                                    Achievement
-                                </a>
-                                </div>
+                                {% for ach_link in boardgame.achievements.all %}
+                                    {% render_achievement ach_link.achievement display_text=False img_height="3em" %}
+                                {% endfor %}
                             </div>
                         {% endif %}
                     </td>
-                    <td class="pl-0">
-                        {% if boardgame.bgg_id %}
-                            <div class="d-flex flex-row justify-content-end">
-                                <div>
+                    <td class="">
+                        <div class="d-flex flex-row justify-content-end">
+                            <div class="btn-group" role="group" aria-label="Boardgame info">
+                                {% if boardgame.bgg_id %}
                                     <a class="btn btn-sm btn-outline-info"
                                        target="_blank" rel="noopener noreferrer"
                                        href="https://boardgamegeek.com/boardgame/{{ boardgame.bgg_id }}/">Check on
                                         <img style="height: 1em;" src="https://cf.geekdo-static.com/icons/favicon2.ico">BGG
                                     </a>
-                                </div>
+                                {% endif %}
+                                {% if perms.boardgames.maintain_ownerships_for_boardgame %}
+                                    <a class="btn btn-sm btn-info"
+                                       href="{% url "inventory:catalogue_item_links" type_id=content_type item_id=boardgame.id %}">
+                                        Edit
+                                    </a>
+                                {% endif %}
                             </div>
-                        {% endif %}
+                        </div>
+
                     </td>
                 </tr>
                 {% endfor %}
@@ -108,7 +110,7 @@
 
     {% render_paginator %}
 
-    {% if perms.inventory.can_maintain_boardgame_ownerships %}
+    {% if perms.boardgames.maintain_ownerships_for_boardgame %}
         <div class="d-flex justify-content-end">
             <a href="{% url "inventory:catalogue" type_id=content_type %}"
                class="btn btn-secondary">

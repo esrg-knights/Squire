@@ -13,7 +13,6 @@ class CatalogueConverter:
     def to_python(self, value):
         content_types = Item.get_item_contenttypes()
         for item_type in content_types:
-            # item_type = ContentType.objects.get()
             if value == slugify(item_type.model_class().__name__):
                 return item_type
 
@@ -31,8 +30,6 @@ register_converter(CatalogueConverter, 'cat_item')
 app_name = 'inventory'
 
 urlpatterns = [
-    # Change Language helper view
-    path('', BoardGameView.as_view(), name='home'),
     path('my_items/', include([
         path('', MemberItemsOverview.as_view(), name='member_items'),
         path('<int:ownership_id>/', include([

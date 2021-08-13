@@ -3,8 +3,8 @@ from django.urls import reverse
 
 from utils.testing.view_test_utils import ViewValidityMixin
 
-from inventory.models import BoardGame, Ownership
-from inventory.admin import BoardGameAdmin
+from boardgames.models import BoardGame
+from boardgames.admin import BoardGameAdmin
 
 # Tests for the Admin Panel
 class BoardgameAdminTest(ViewValidityMixin, TestCase):
