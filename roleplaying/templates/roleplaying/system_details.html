@@ -33,7 +33,7 @@
                     <div class="h3">{{ system.name }}</div>
                     <div>{{ system.short_description }}</div>
                 </div>
-                {% if perms.roleplaying.edit_roleplayingsystem %}
+                {% if perms.roleplaying.change_roleplayingsystem %}
                     <div class="col-auto">
                         <a href="{% url "roleplaying:system_edit" system_id=system.id %}"
                            class="btn btn-sm btn-outline-primary">
