@@ -120,6 +120,11 @@ class TestItem(TestCase):
         self.assertTrue(MiscellaneousItem.objects.get(id=1).is_loaned_by_member())
         self.assertFalse(MiscellaneousItem.objects.get(id=2).is_loaned_by_member())
 
+    def test_other_fields(self):
+        # This method has no effects in this module, so returns an empty list
+        # Its further tested in boardgames
+        self.assertEqual(MiscellaneousItem.objects.get(id=1).other_fields(), [])
+
     def test_objects_manager(self):
         self.assertIsInstance(MiscellaneousItem.objects, ItemManager)
 

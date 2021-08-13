@@ -1,12 +1,8 @@
-from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from django.urls import reverse
-from django.views.generic.list import ListView
 
 from utils.testing.view_test_utils import ViewValidityMixin
-from utils.views import SearchFormMixin
 
-from boardgames.models import Ownership, BoardGame
 from boardgames.views import *
 
 

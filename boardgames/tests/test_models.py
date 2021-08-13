@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 
-from inventory.models import BoardGame
+from boardgames.models import BoardGame
 
 class TestBoardGame(TestCase):
 
@@ -34,3 +34,27 @@ class TestBoardGame(TestCase):
         with self.assertRaises(ValidationError) as error:
             BoardGame(name='test-game', player_min=5, player_max=3).clean()
         self.assertEqual(error.exception.code, 'incorrect_value')
+
+    def test_other_fields(self):
+        # This method has no effects in this module, so returns an empty list
+        # Its further tested in boardgames
+        play_duration_tuple =  BoardGame.play_duration_options[0]
+
+        boardgame = BoardGame(
+            name = 'test-game',
+            bgg_id = 42,
+            play_duration = play_duration_tuple[0],
+        )
+        other_fields = boardgame.other_fields()
+
+        self.assertEqual(other_fields[0]['name'], 'bgg_id')
+        self.assertEqual(other_fields[0]['value'], 42)
+        self.assertEqual(other_fields[1]['name'], 'player_min')
+        self.assertEqual(other_fields[2]['name'], 'player_max')
+        self.assertEqual(other_fields[3]['name'], 'play_duration')
+        self.assertEqual(other_fields[3]['verbose_name'], 'play duration')
+        self.assertEqual(other_fields[3]['value'], play_duration_tuple[0])
+        self.assertEqual(other_fields[3]['display_value'], play_duration_tuple[1])
+
+
+
