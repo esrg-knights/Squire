@@ -114,24 +114,8 @@ MARKDOWN
 *********************************************************************************************/
 
 .rendered-md {
-    /* border: 1px solid #f0f0f0; */
-    /* padding: 16px; */
-    /* overflow: auto; */
-    /* font-size: 85%; */
-    /* line-height: 1.45; */
-    /* background-color: #f6f8fa; */
     border-radius: 3px;
 }
-
-/* div.martor-preview .highlight pre, div.martor-preview pre {
-
-    padding: 16px;
-    overflow: auto;
-    font-size: 85%;
-    line-height: 1.45;
-
-    border-radius: 3px;
-} */
 
 /* Block code */
 .rendered-md pre {
