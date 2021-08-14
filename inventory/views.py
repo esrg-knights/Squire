@@ -1,13 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView
-from django.views.generic.edit import FormView, UpdateView, CreateView, DeleteView
+from django.views.generic.edit import FormView, UpdateView, CreateView
 
 from committees.views import GroupMixin
 from membership_file.util import MembershipRequiredMixin
