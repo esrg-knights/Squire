@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from django.conf import settings
 from django.utils import timezone
@@ -110,6 +110,11 @@ class CESTEventFeed(ICalFeed):
         return item.title
 
     def item_description(self, item):
+        # Note that we're explicitly not converting the Markdown to HTML, as calendar
+        #   applications do not all handle HTML in the same way (or at all). While it
+        #   would be possible to remove all HTML tags from the rendered Markdown, this
+        #   causes some text to lose meaning (E.g. "click [here](www.example.com)" becomes "click here").
+        #   As Markdown is human-readable enough, we just return plain Markdown.
         return item.description
 
     def item_start_datetime(self, item):

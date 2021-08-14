@@ -1,0 +1,5 @@
+
+/* Smaller widget width */
+.main-martor:not(.main-martor-fullscreen) {
+    max-width: 75em;
+}

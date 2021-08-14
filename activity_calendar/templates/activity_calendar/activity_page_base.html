@@ -3,6 +3,8 @@
 {% load static %}
 {% load get_login_url %}
 {% load calendar_tags %}
+{% load martortags %}
+{% load martor_render %}
 {% load build_absolute_uri %}
 
 {% block title %}
@@ -14,7 +16,7 @@
     {{ activity_moment.title }}
 {% endblock og-title %}
 {% block og-description %}
-    [{{ activity_moment.start_time|date:"l j E H:i" }}] {{ activity_moment.description|truncatewords:20 }}
+    [{{ activity_moment.start_time|date:"l j E H:i" }}] {{ activity_moment.description.as_plaintext|truncatewords:20 }}
 {% endblock og-description %}
 {% block og-image %}{% build_absolute_uri request activity.image_url %}{% endblock og-image %}
 {% block og-image-alt %}
@@ -24,18 +26,20 @@
 {% block css %}
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'css/slot_frames.css' %}">
+    {% martor_render_css %}
 {% endblock css %}
 
 {% block js %}
     {{ block.super }}
-    {% if show_modal %}
-        <script type="text/javascript">
-            $(window).on('load', function () {
-                $('#slot-creation-modal').modal('show');
-            });
-        </script>
-    {% endif %}
+    {% martor_render_js %}
 {% endblock js %}
+
+{% block js_bottom %}
+    {{ block.super }}
+    <script src="{% static "js/activate_bootstrap_popover.js" %}"></script>
+
+    {% martor_render_js import_hljs=False invoke_hljs_method=True method_param="'#event-description'" %}
+{% endblock js_bottom %}
 
 {% block content-frame-class %}
     wideContentFrame
@@ -121,7 +125,7 @@
                     </div>
                     <!-- Event Description -->
                     <div class="col align-self-center">
-                        <p id="event-description">{{ activity_moment.description|linebreaksbr }}</p>
+                        <div id="event-description" class="rendered-md">{{ activity_moment.description.as_rendered  }}</div>
                     </div>
                 </div>
 
@@ -210,7 +214,3 @@
     {% endblock additional-contents %}
 
 {% endblock content %}
-
-{% block js_bottom %}
-    <script src="{% static "js/activate_bootstrap_popover.js" %}"></script>
-{% endblock %}

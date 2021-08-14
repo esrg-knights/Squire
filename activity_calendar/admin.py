@@ -1,11 +1,36 @@
 from django.contrib import admin
-from .models import Activity, ActivitySlot, Participant, ActivityMoment
 from django.utils.timezone import localtime
 
-from .forms import ActivityMomentAdminForm
+from .forms import ActivityAdminForm, ActivityMomentAdminForm
+from .models import Activity, ActivitySlot, Participant, ActivityMoment
+
+from core.admin import MarkdownImageInline
+from utils.forms import RequestUserToFormModelAdminMixin
+
+class MarkdownImageInlineAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmin):
+    class Media:
+        css = {
+             'all': ('css/martor-admin.css',)
+        }
+
+    # Add MarkdownImages to the Admin's Inline models
+    # TODO: Remove in Django 3.0
+    def get_inline_instances(self, request, obj=None):
+        instances = super().get_inline_instances(request, obj=obj)
+        instances.append(MarkdownImageInline(self.model, self.admin_site))
+        return instances
+
+    # Add MarkdownImages to the Admin's Inline models
+    # TODO: Django 3.0
+    # def get_inlines(self, request, obj):
+    #     inlines = super().get_inlines(request, obj=obj)
+    #     inlines.append(MarkdownImageInline)
+    #     return inlines
 
 
-class ActivityAdmin(admin.ModelAdmin):
+class ActivityAdmin(MarkdownImageInlineAdmin):
+    form = ActivityAdminForm
+
     def is_recurring(self, obj):
         return obj.is_recurring
     is_recurring.boolean = True
@@ -14,14 +39,18 @@ class ActivityAdmin(admin.ModelAdmin):
     list_filter = ['subscriptions_required']
     list_display_links = ('id', 'title')
 
+    def get_view_on_site_url(self, obj=None):
+        if hasattr(obj, 'get_absolute_url') and obj.get_absolute_url() is None:
+            return None
+        return super().get_view_on_site_url(obj=obj)
+
 admin.site.register(Activity, ActivityAdmin)
 
 
-
-
 @admin.register(ActivityMoment)
-class ActivityMomentAdmin(admin.ModelAdmin):
+class ActivityMomentAdmin(MarkdownImageInlineAdmin):
     form = ActivityMomentAdminForm
+
     list_filter = ['parent_activity']
 
     def activity_moment_has_changes(obj):
@@ -36,8 +65,6 @@ class ActivityMomentAdmin(admin.ModelAdmin):
     activity_moment_has_changes.boolean = True
     activity_moment_has_changes.short_description = 'Is tweaked'
     list_display = ["title", "recurrence_id", "last_updated", activity_moment_has_changes]
-
-
 
 
 

@@ -1,6 +1,7 @@
 {% extends 'core/base.html' %}
 
 {% load static %}
+{% load martor_render %}
 
 {% block title %}
   Squire - Calendar
@@ -17,6 +18,7 @@
   {{ block.super }}
   <link href="{% static 'fullcalendar/main.min.css' %}" rel='stylesheet'/>
   <link href="{% static 'css/fullcalendar-customisation.css' %}" rel='stylesheet'/>
+  {% martor_render_css %}
 {% endblock css %}
 
 {% block js %}
@@ -24,6 +26,7 @@
     <script src="{% static 'fullcalendar/main.min.js' %}"></script>
     <script src="{% static 'fullcalendar/locales/en-gb.js' %}"></script>
     <script src="{% static 'js/fullcalendar-init.js' %}"></script>
+    {% martor_render_js invoke_hljs_method=True %}
 {% endblock js %}
 
 {% block content-frame-class %}
@@ -156,7 +159,7 @@
               </div>
               <!-- Event Description -->
               <div class="col align-self-center">
-                <p id="event-description"></p>
+                <div id="event-description" class="rendered-md"></div>
               </div>
             </div>
           </div>
