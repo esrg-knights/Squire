@@ -1,0 +1,32 @@
+{% load martortags %}
+
+{% if placeholder is not None %}
+    <!-- Placeholder text is shown on-screen above the widget -->
+    <div class="md-placeholder">
+        <details>
+            {% if placeholder_detail_title is not None %}
+                <summary>{{ placeholder_detail_title }} (<i>click to expand/hide</i>)</summary>
+            {% endif %}
+            <div class="row">
+                <a class="ml-auto toggle-md-source btn btn-secondary greenify" data-toggle="collapse"
+                        href=".md-{{ content_type }}-{{ object_id }}" role="button" aria-expanded="false"
+                        aria-controls="md-{{ content_type }}-{{ object_id }}">
+                    Toggle Rendered Markdown
+                </a>
+            </div>
+            <div class="md-box">
+                <div class="md-content md-{{ content_type }}-{{ object_id }} rendered-md collapse show">
+                    {{ placeholder.as_rendered }}
+                </div>
+                <div class="md-source md-{{ content_type }}-{{ object_id }} collapse">
+                    <p>{{ placeholder.as_raw }}</p>
+                </div>
+            </div>
+        </details>
+    </div>
+{% endif %}
+{% if object_id is not None %}
+    <input type="hidden" id="martor-image-upload:id" name="martor_image_upload_object_id" value="{{ object_id }}">
+{% endif %}
+<input type="hidden" id="martor-image-upload:content_type" name="martor_image_upload_content_type_id" value="{{ content_type }}">
+{{ widget }}

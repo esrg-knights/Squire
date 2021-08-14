@@ -90,7 +90,7 @@ class TestCaseFullCalendar(TestCase):
         self.assertEqual(activity.get('groupId'), 9)
         self.assertEqual(activity.get('title'), 'Weekly CEST Event')
         self.assertEqual(activity.get('location'), 'Online')
-        self.assertEqual(activity.get('description'), 'Occurs every week, except once during daylight saving time (dst) and once during standard time!')
+        self.assertEqual(activity.get('description'), '<p>Occurs every week, except once during daylight saving time (dst) and once during standard time!</p>')
         self.assertEqual(activity.get('allDay'), False)
 
         self.assertEqualDateTime(activity.get('start'), '2020-10-24T10:00:00+00:00')

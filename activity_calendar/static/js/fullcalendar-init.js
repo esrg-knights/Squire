@@ -67,10 +67,10 @@ function onEventClick(info, calendar) {
     if (start_date.getDate() === end_date.getDate()
             && start_date.getMonth() === end_date.getMonth()
             && start_date.getFullYear() === end_date.getFullYear()) {
-        
+
         // Vrijdag, 7 augustus 19:00 – 22:00
         date_str = start_date.toLocaleString('en-gb', {
-                weekday: 'long', month: 'long', day: 'numeric' 
+                weekday: 'long', month: 'long', day: 'numeric'
             })
 
         if (event.allDay) {
@@ -79,7 +79,7 @@ function onEventClick(info, calendar) {
         } else {
             date_str += ' '
                 + start_date.toLocaleString('en-gb', {
-                    hour: 'numeric', minute: 'numeric' 
+                    hour: 'numeric', minute: 'numeric'
                 })
                 + ' - '
                 + end_date.toLocaleString('en-gb', {hour: 'numeric', minute: 'numeric'})
@@ -125,8 +125,9 @@ function onEventClick(info, calendar) {
     }
 
     $('#event-location').text(event.extendedProps.location)
-    $('#event-description').text(event.extendedProps.description)
-    
+    $('#event-description').html(event.extendedProps.description)
+    martorhljs('#event-description') // Update code block highlighting
+
     if (event.extendedProps.isSubscribed) {
         $('#subscribe-required').hide()
         $('#subscribe-done').show()
@@ -148,8 +149,8 @@ function onEventClick(info, calendar) {
         $('#event-subscription-closed').text("Registrations have not opened yet or are closed.")
     } else {
         $('#event-subscription-closed').text("")
-    }    
-    
+    }
+
     if (event.extendedProps.maxParticipants === -1) {
         $('#event-participants-count').text(`${event.extendedProps.numParticipants} participant(s) so far.`)
     } else {

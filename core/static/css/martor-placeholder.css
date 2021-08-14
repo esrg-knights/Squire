@@ -1,0 +1,37 @@
+
+.md-placeholder {
+    border: 1px solid #ced4da;
+    background-color: #e9ecef;
+    color: grey;
+    width: 100%;
+    padding: 0px 5px;
+}
+
+.md-placeholder > details {
+    padding-top: 4px;
+}
+
+.md-placeholder > details > summary {
+    color: black;
+    border-bottom: 1px solid #ced4da;
+    padding: 2px 0px;
+}
+
+/* Placeholder content */
+.md-placeholder .md-box {
+    height: 400px;
+    overflow-y: scroll;
+    border-top: 2px solid #ced4da;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* Markdown Source */
+.md-placeholder .md-source {
+    white-space: pre-wrap;
+}
+
+/* Toggle button */
+.md-placeholder .toggle-md-source {
+    margin: 10px 30px;
+}

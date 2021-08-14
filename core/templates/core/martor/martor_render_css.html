@@ -1,0 +1,5 @@
+{% load static %}
+<link href="{% static 'plugins/css/ace.min.css' %}" type="text/css" media="all" rel="stylesheet" />
+{% with 'martor/css/martor.'|add:martor_theme|add:'.min.css' as martor_css_theme %}
+    <link href="{% static martor_css_theme %}" type="text/css" media="all" rel="stylesheet" />
+{% endwith %}
