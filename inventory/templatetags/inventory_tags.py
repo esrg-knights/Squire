@@ -6,6 +6,7 @@ from django.contrib.auth.models import User, Group
 register = template.Library()
 
 from membership_file.util import user_to_member
+from membership_file.templatetags.to_member import is_member
 
 
 @register.filter
@@ -24,8 +25,8 @@ def get_owned_by(item, owner):
 @register.inclusion_tag('inventory/snippets/ownership_tags.html', takes_context=True)
 def render_ownership_tags(context, item):
 
-    member = user_to_member(context['request'].user).get_member()
-    if member:
+    if is_member(context['request'].user):
+        member = user_to_member(context['request'].user).get_member()
         is_owner = item.ownerships.filter(member=member, is_active=True).exists()
         is_owned_by_other_member = item.ownerships. \
             filter(is_active=True, member__isnull=False). \

@@ -28,7 +28,12 @@ class TestRoleplaySystemView(ViewValidityMixin, TestCase):
         self.assertEqual(RoleplaySystemView.model, RoleplayingSystem)
         self.assertIsNotNone(RoleplaySystemView.paginate_by)
 
-    def test_member_items_successful(self):
+    def test_successful_get(self):
+        response = self.client.get(self.get_base_url(), data={})
+        self.assertEqual(response.status_code, 200)
+
+    def test_successful_get_anonymous_user(self):
+        self.client.logout()
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 200)
 

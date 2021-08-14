@@ -33,7 +33,7 @@
                     <div class="h3">{{ system.name }}</div>
                     <div>{{ system.short_description }}</div>
                 </div>
-                {% if perms.roleplaying.edit_roleplayingsystem %}
+                {% if perms.roleplaying.change_roleplayingsystem %}
                     <div class="col-auto">
                         <a href="{% url "roleplaying:system_edit" system_id=system.id %}"
                            class="btn btn-sm btn-outline-primary">
@@ -119,7 +119,7 @@
                     <div class="font-weight-bold mt-3">
                         Available items:
                     </div>
-                    <div>{% if perms.roleplaying.can_maintain_ownership_roleplayingitem %}
+                    <div>{% if perms.roleplaying.maintain_ownerships_for_roleplayingitem %}
                         <a href="{% url "inventory:catalogue" type_id=item_type %}"
                            class="btn btn-sm btn-outline-primary">
                             Catalogue

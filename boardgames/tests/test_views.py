@@ -7,19 +7,24 @@ from boardgames.views import *
 
 
 class TestBoardGameView(ViewValidityMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'boardgames/boardgames.json']
     base_user_id = 2
 
     def get_base_url(self, content_type=None, item_id=None):
-        return reverse('inventory:home')
+        return reverse('boardgames:home')
 
     def test_class(self):
         self.assertTrue(issubclass(BoardGameView, SearchFormMixin))
         self.assertTrue(issubclass(BoardGameView, ListView))
-        self.assertEqual(BoardGameView.template_name, "inventory/front_design/boardgames_overview.html")
+        self.assertEqual(BoardGameView.template_name, "boardgames/boardgames_overview.html")
         self.assertEqual(BoardGameView.filter_field_name, "name")
         self.assertEqual(BoardGameView.context_object_name, 'boardgames')
         self.assertIsNotNone(BoardGameView.paginate_by)
+
+    def test_successful_get_anonymous_user(self):
+        self.client.logout()
+        response = self.client.get(self.get_base_url(), data={})
+        self.assertEqual(response.status_code, 200)
 
     def test_successful_get(self):
         response = self.client.get(self.get_base_url(), data={})
