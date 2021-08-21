@@ -33,6 +33,7 @@ urlpatterns = [
 
     # Activity Calendar
     path('', include(('activity_calendar.urls', 'activity_calendar'), namespace='activity_calendar')),
+    path('groups/', include(('committees.urls', 'committees'))),
     # Membership File
     path('', include('membership_file.urls')),
     # Redirect all other paths to the core module

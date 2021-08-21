@@ -59,13 +59,16 @@
 						<a class="nav-link" href="{% url 'achievements/all' %}">Achievements</a>
 					</li>
 					<li>
-						<a class="nav-link" href="{% url 'activity_calendar:calendar' %}">Activity Calendar</a>
+						<a class="nav-link" href="{% url 'activity_calendar:calendar' %}">Calendar</a>
 					</li>
                     <li>
                         <a class="nav-link" href="{% url 'boardgames:home' %}">Boardgames</a>
                     </li>
                     <li>
                         <a class="nav-link" href="{% url 'roleplaying:home' %}">Roleplay</a>
+                    </li>
+                    <li>
+                        <a class="nav-link" href="{% url 'committees:home' %}">Committees</a>
                     </li>
 					{% if user.is_authenticated %}
 						<li>
