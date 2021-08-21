@@ -65,7 +65,7 @@ body {
 
 footer {
     /* Align footer to the bottom of the page (non-sticky) */
-    margin-top: auto; 
+    margin-top: auto;
 
     /* Footer is centered */
     text-align: center;
@@ -82,7 +82,7 @@ footer {
         margin-left: 10px;
         margin-right: 10px;
     }
-    
+
 /* Main content is centered and cannot exceed a certain width */
 .contentFrame {
     max-width: 800px;
@@ -108,3 +108,60 @@ footer {
 .heightener {
     min-height: 64px;
 }
+
+/*********************************************************************************************
+MARKDOWN
+*********************************************************************************************/
+
+.rendered-md {
+    border-radius: 3px;
+}
+
+/* Block code */
+.rendered-md pre {
+    white-space: pre;
+    border: 1px solid #f0f0f0;
+    background-color: #f6f8fa;
+    font-size: 80%;
+}
+    .rendered-md pre > code {
+        border: initial;
+        background-color: initial;
+    }
+
+/* Inline code */
+.rendered-md code {
+    padding: 0 5px;
+    border: 1px solid #eaeaea;
+    background-color: #f8f8f8;
+    border-radius: 3px;
+    font-size: 80%;
+}
+
+/* Quotes */
+.rendered-md blockquote {
+    border-left: 4px solid rgb(199, 199, 199);
+    padding: 5px 15px;
+    color: #777;
+    background-color: #fff;
+}
+    .rendered-md blockquote:last-child {
+        margin-bottom: 0px;
+    }
+
+/* Tables */
+.rendered-md table {
+    border-collapse: collapse;
+}
+    .rendered-md table td, .rendered-md table th {
+        border: 1px solid #ccc;
+        padding: 6px 13px;
+    }
+
+    .rendered-md table thead tr, .rendered-md table tbody tr:nth-child(even) {
+        background-color: #fff;
+    }
+
+    .rendered-md table tbody tr:nth-child(odd) {
+        background-color: #f8f8f8;
+    }

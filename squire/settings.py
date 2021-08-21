@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+from time import strftime
+
 from . import util
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -67,6 +69,7 @@ INSTALLED_APPS = [
     'roleplaying',
     # More External Libraries
     'django_cleanup.apps.CleanupConfig',
+    'martor',
     'import_export',
 ]
 
@@ -256,6 +259,84 @@ MEMBERSHIP_FAIL_URL = '/no_member'
 
 # Where the membership file will be exported to. Can be set to None to disable this functionality
 MEMBERSHIP_FILE_EXPORT_PATH = os.getenv('MEMBERSHIP_FILE_EXPORT_PATH') or os.path.join(BASE_DIR, "output")
+
+####################################################################
+# Martor settings (Markdown Editor)
+# https://github.com/agusmakmun/django-markdown-editor
+
+# Global martor settings
+MARTOR_ENABLE_CONFIGS = {
+    'emoji': 'true',        # to enable/disable emoji icons.
+    'imgur': 'true',        # to enable/disable imgur/custom uploader.
+    'mention': 'false',     # to enable/disable mention
+    'jquery': 'true',       # to include/revoke jquery (require for admin default django)
+    'living': 'false',      # to enable/disable live updates in preview
+    'spellcheck': 'true',   # to enable/disable spellcheck in form textareas
+    'hljs': 'true',         # to enable/disable hljs highlighting in preview
+}
+
+# To show the toolbar buttons
+MARTOR_TOOLBAR_BUTTONS = [
+    'bold', 'italic', 'horizontal', 'heading', 'pre-code',
+    'blockquote', 'unordered-list', 'ordered-list',
+    'link', 'image-link', 'image-upload', 'emoji',
+    #'direct-mention',
+    'toggle-maximize', 'help'
+]
+
+# Markdown extensions
+MARTOR_MARKDOWN_EXTENSIONS = [
+    'markdown.extensions.abbr',         # Abbreviations: *[ABBR]
+    'markdown.extensions.fenced_code',  # Code blocks: ```CODE```
+    # 'markdown.extensions.footnotes',  # Footnotes: [^LABEL]
+                                        #   NB: These cause a severe slowdown
+    'markdown.extensions.tables',       # Tables
+    'markdown.extensions.nl2br',        # New lines as hard breaks (like GitHub)
+    'markdown.extensions.sane_lists',   # Prevent mixing (un)ordered lists
+    'markdown.extensions.smarty',       # ASCII dashes, quotes and ellipses to their HTML entity equivalents
+
+    # Custom markdown extensions.
+    'pymdownx.details',                 # <details> and <summary>: ???+ "SUMMARY TITLE"
+    'martor.extensions.urlize',         # Convert urls to links
+    'martor.extensions.del_ins',        # ~~strikethrough~~ and ++underscores++
+    #'martor.extensions.mention',       # Martor mentions
+    'martor.extensions.emoji',          # Martor emoji
+    # 'martor.extensions.mdx_video',    # Embed/iframe video (E.g. Youtube, Vimeo, etc.)
+    'martor.extensions.escape_html',    # Handle XSS vulnerabilities
+]
+
+# Markdown Extensions Configs
+MARTOR_MARKDOWN_EXTENSION_CONFIGS = {}
+
+# Enable label in forms
+MARTOR_ENABLE_LABEL = True
+
+# Markdown urls
+MARTOR_MARKDOWNIFY_URL = '/api/martor/markdownify/'
+# MARTOR_SEARCH_USERS_URL = '/martor/search-user/' # for mention
+
+# Markdown Extensions
+MARTOR_MARKDOWN_BASE_EMOJI_URL = 'https://github.githubassets.com/images/icons/emoji/'  # default from github
+MARTOR_MARKDOWN_BASE_MENTION_URL = ''
+
+# Upload images to local storage
+MARTOR_UPLOAD_PATH = os.path.join('images', 'uploads')
+MARTOR_UPLOAD_URL = '/api/martor/image_uploader/'
+
+# Maximum Upload Image
+# 2.5MB - 2621440
+# 5MB - 5242880
+# 10MB - 10485760
+# 20MB - 20971520
+# 50MB - 5242880
+# 100MB 104857600
+# 250MB - 214958080
+# 500MB - 429916160
+MAX_IMAGE_UPLOAD_SIZE = 2621440  # 2.5MB
+
+# Valid models for which MarkdownImages can be selected
+#   (used internally to handle uploads; Not a Martor setting)
+MARKDOWN_IMAGE_MODELS = ('activity_calendar.activity', 'activity_calendar.activitymoment')
 
 ####################################################################
 # Other Settings

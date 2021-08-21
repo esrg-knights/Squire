@@ -27,8 +27,8 @@ class DummyForm(forms.Form):
 
 # Tests usage of custom template tags
 class TemplateTagsTest(TestCase):
-    # Tests the field_label template tag
-    def test_field_label(self):
+    # Tests the get_required_indicator filter
+    def test_get_required_indicator(self):
         form_data = {
             'test_required_field': 'unused_filler_text',
             'test_optional_field': 'unused_filler_text',
@@ -37,21 +37,21 @@ class TemplateTagsTest(TestCase):
 
         # Test required field
         out = Template(
-            "{% load field_label %}"
-            "{% field_label 'MyFormFieldName' form.test_required_field %}"
+            "{% load field_tags %}"
+            "{{ form.test_required_field|get_required_indicator }}"
         ).render(Context({
             'form': form,
         }))
-        self.assertEqual(out, "MyFormFieldName*")
+        self.assertEqual(out, "*")
 
         # Test optional field
         out = Template(
-            "{% load field_label %}"
-            "{% field_label 'MyFormFieldName' form.test_optional_field %}"
+            "{% load field_tags %}"
+            "{{ form.test_optional_field|get_required_indicator }}"
         ).render(Context({
             'form': form,
         }))
-        self.assertEqual(out, "MyFormFieldName")
+        self.assertEqual(out, "")
 
 ################################################################
 # VIEWS

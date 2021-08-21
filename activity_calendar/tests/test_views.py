@@ -598,7 +598,8 @@ class EditActivityMomentDataView(TestActivityViewMixin, TestCase):
     def test_normal_get_page(self):
         # The basic set-up is valid. User can create a slot
         # Login a superuser so it always has the required permission
-        self.client.force_login(User.objects.get(is_superuser=True))
+        user = User.objects.get(is_superuser=True)
+        self.client.force_login(user)
 
         response = self.build_get_response()
         self.assertEqual(response.status_code, 200)
@@ -609,7 +610,11 @@ class EditActivityMomentDataView(TestActivityViewMixin, TestCase):
         self.assertIn('recurrence_id', response.context)
         self.assertIn('activity_moment', response.context)
 
+        self.assertIsNotNone(response.context['form'])
         self.assertIsInstance(response.context['form'], ActivityMomentForm)
+
+        # User must've been passed to the form (for MarkdownImage uploads)
+        self.assertEqual(response.context['form'].user, user)
 
     def test_requires_permission(self):
         self.assertTrue(issubclass(EditActivityMomentView, PermissionRequiredMixin))

@@ -3,10 +3,17 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.forms import (AuthenticationForm, UserCreationForm,
     PasswordChangeForm as DjangoPasswordChangeForm, PasswordResetForm as DjangoPasswordResetForm,
     SetPasswordForm as DjangoPasswordResetConfirmForm)
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext, gettext_lazy as _
+from django.forms import ModelForm
+from django.forms.fields import Field
+from django.utils.translation import gettext_lazy as _
+from martor.widgets import MartorWidget
 
 from .models import ExtendedUser as User
+from core.models import MarkdownImage
+from core.widgets import  ImageUploadMartorWidget
+from utils.forms import UpdatingUserFormMixin
 
 ##################################################################################
 # Defines general-purpose forms.
@@ -79,3 +86,58 @@ class PasswordResetForm(DjangoPasswordResetForm):
 
 class PasswordResetConfirmForm(DjangoPasswordResetConfirmForm):
     pass
+
+class MarkdownForm(ModelForm):
+    """
+        Changes the model's fields that support Markdown such that they use a variant of Martor's
+        widget that also allows images to be uploaded. Furthermore, it allows those fields to
+        display a placeholder, just like normal HTML inputs.
+
+        Also ensures that any images uploaded through Martor's widget are properly linked
+        to the object that is being edited (if any). If an image is uploaded for an object
+        that does not yet exist, then these images are temporarily unlinked (and do not reference)
+        any object. Upon saving, if such "orphan" images exist (for the current model, and uploaded by
+        the current user), they are linked to the newly created instance.
+    """
+    placeholder_detail_title = "Field %s"
+
+    is_new_instance = True
+
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+        self.is_new_instance = self.instance.id is None
+
+        for boundfield in self.visible_fields():
+            if isinstance(boundfield.field.widget, MartorWidget):
+                self._give_field_md_widget(boundfield.field)
+
+    def _give_field_md_widget(self, field: Field):
+        """ Gives the given field an ImageUploadMartorWidget """
+        # Add the field's label to the placeholder title
+        label = field.label
+        placeholder_title = self.placeholder_detail_title % label.capitalize()
+        field.widget = ImageUploadMartorWidget(
+            ContentType.objects.get_for_model(self.instance),
+            self.instance.id, placeholder_detail_title=placeholder_title
+        )
+
+    def _save_m2m(self):
+        super()._save_m2m()
+
+        # Handle "orphan" images that were uploaded when the instance was not yet saved
+        #   to the database.
+        if self.is_new_instance and self.user is not None:
+            # Assign MarkdownImages for this contenttype, and uploaded by the requesting user
+            content_type = ContentType.objects.get_for_model(self.instance)
+            MarkdownImage.objects.filter(content_type=content_type, object_id__isnull=True, uploader=self.user).update(
+                object_id=self.instance.id,
+                uploader=self.user
+            )
+
+class MarkdownImageAdminForm(UpdatingUserFormMixin, ModelForm):
+    class Meta:
+        model = MarkdownImage
+        fields = "__all__"
+
+    updating_user_field_name = "uploader"

@@ -1,11 +1,9 @@
-import functools
-
 from django.contrib import admin
 from django.utils.html import format_html
 
 from .forms import AdminMemberForm
 from .models import Member, MemberLog, MemberLogField, Room
-
+from utils.forms import RequestUserToFormModelAdminMixin
 
 class HideRelatedNameAdmin(admin.ModelAdmin):
     class Media:
@@ -49,7 +47,7 @@ class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
     get_url.short_description = 'Details'
 
 # Ensures that the last_updated_by field is also updated properly from the Django admin panel
-class MemberWithLog(HideRelatedNameAdmin):
+class MemberWithLog(RequestUserToFormModelAdminMixin, HideRelatedNameAdmin):
     form = AdminMemberForm
     save_on_top = True
 
@@ -85,12 +83,6 @@ class MemberWithLog(HideRelatedNameAdmin):
     ]
 
     inlines = [MemberLogReadOnlyInline]
-
-    def get_form(self, request, obj=None, **kwargs):
-        # Pass request.user to the form
-        Form = super().get_form(request, obj=None, **kwargs)
-        return functools.partial(Form, user=request.user)
-
 
     # Disable deletion if the member was not marked for deletion
     # Disable deletion for the user that marked the member for deletion
