@@ -61,9 +61,14 @@ def get_roleplay_item_file_upload_path(instance, filename):
     # NB: A file can be renamed to have ANY extension
     _, extension = os.path.splitext(filename)
 
+    if instance.system:
+        filename = f'{instance.system.id}-{instance.id}-{slugify(instance.name)}'
+    else:
+        filename = f'None-{instance.id}-{slugify(instance.name)}'
+
     # file will be uploaded to MEDIA_ROOT / images/item/<item_type>/<id>.<file_extension>
-    return 'local_only/files/item/roleplay/{item_id}{extension}'.format(
-        item_id=instance.id,
+    return 'local_only/files/item/roleplay/{filename}{extension}'.format(
+        filename=filename,
         extension=extension,
     )
 
