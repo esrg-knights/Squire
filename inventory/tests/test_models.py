@@ -1,4 +1,3 @@
-from django.db import models
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -7,7 +6,7 @@ from django.utils.text import slugify
 
 
 from membership_file.models import Member
-from inventory.models import Item, BoardGame, Ownership, valid_item_class_ids, ItemManager,\
+from inventory.models import Item, Ownership, valid_item_class_ids, ItemManager,\
     get_item_image_upload_path, MiscellaneousItem
 
 
@@ -16,9 +15,9 @@ class TestOwnership(TestCase):
 
     def test_ownership_owner_validation(self):
         """ Test the custom clean criteria related to member/group """
-        boardgame = BoardGame.objects.first()
+        misc_item = MiscellaneousItem.objects.first()
         ownership = Ownership(
-            content_object = boardgame
+            content_object = misc_item
         )
 
         # Either member or group needs to be defined
@@ -28,12 +27,12 @@ class TestOwnership(TestCase):
 
         # Member and group can't both be defined
         ownership = Ownership(
-            # content_object = boardgame,
+            # content_object = MiscellaneousItem,
             added_by_id=2,
             member_id = 2,
             group_id = 1,
-            content_type_id=ContentType.objects.get_for_model(BoardGame).id,
-            object_id = boardgame.id,
+            content_type_id=ContentType.objects.get_for_model(MiscellaneousItem).id,
+            object_id = misc_item.id,
         )
         with self.assertRaises(ValidationError) as error:
             ownership.full_clean()
@@ -45,7 +44,7 @@ class TestOwnership(TestCase):
         ownership = Ownership(
             member_id = 2,
             added_by_id=2,
-            content_type_id=ContentType.objects.get_for_model(BoardGame).id,
+            content_type_id=ContentType.objects.get_for_model(MiscellaneousItem).id,
             object_id = 999,
         )
         with self.assertRaises(ValidationError) as error:
@@ -62,7 +61,7 @@ class TestOwnership(TestCase):
         self.assertEqual(len(valid_ids.keys()), 1)
         self.assertIn('id__in', valid_ids.keys())
 
-        # There is only 1 item implemented: Boardgame
+        # There is only 1 item implemented: MiscellaneousItem
         self.assertEqual(len(valid_ids['id__in']), len(Item.get_item_contenttypes()))
 
     def test_owner(self):
@@ -82,7 +81,7 @@ class TestItem(TestCase):
 
     # Tests if the achievement images are uploaded to the correct location
     def test_item_upload_path(self):
-        item = BoardGame.objects.get(id=1)
+        item = MiscellaneousItem.objects.get(id=1)
         str_expected_upload_path = "images/item/{type_str}/{item_id}.png"
 
         str_expected_upload_path = str_expected_upload_path.format(
@@ -96,33 +95,38 @@ class TestItem(TestCase):
         item_contenttypes = Item.get_item_contenttypes()
         self.assertEqual(len(item_contenttypes), len(Item.__subclasses__()))
 
-        self.assertIn(ContentType.objects.get_for_model(BoardGame), item_contenttypes)
+        self.assertIn(ContentType.objects.get_for_model(MiscellaneousItem), item_contenttypes)
         self.assertIn(ContentType.objects.get_for_model(MiscellaneousItem), item_contenttypes)
 
     def test_ownerships_relation(self):
-        # We use Boardgames as a proxy
-        self.assertEqual(3, BoardGame.objects.get(id=1).ownerships.count())
+        # We use MiscellaneousItems as a proxy
+        self.assertEqual(3, MiscellaneousItem.objects.get(id=1).ownerships.count())
 
     def test_currently_in_possession(self):
-        """ Test the ownership link from the item side. Tested on boardgame item """
-        # We use Boardgames as a proxy
-        self.assertEqual(2, BoardGame.objects.get(id=1).currently_in_possession().count())
-        self.assertEqual(1, BoardGame.objects.get(id=2).currently_in_possession().count())
-        self.assertEqual(0, BoardGame.objects.get(id=4).currently_in_possession().count())
+        """ Test the ownership link from the item side. Tested on MiscellaneousItem item """
+        # We use MiscellaneousItems as a proxy
+        self.assertEqual(2, MiscellaneousItem.objects.get(id=1).currently_in_possession().count())
+        self.assertEqual(1, MiscellaneousItem.objects.get(id=2).currently_in_possession().count())
+        self.assertEqual(0, MiscellaneousItem.objects.get(id=4).currently_in_possession().count())
 
     def test_is_owned_by_association(self):
         """ Test the check if the item is owned by the association """
-        self.assertTrue(BoardGame.objects.get(id=1).is_owned_by_association())
+        self.assertTrue(MiscellaneousItem.objects.get(id=1).is_owned_by_association())
         # There is an ownership, but it is not active
-        self.assertFalse(BoardGame.objects.get(id=4).is_owned_by_association())
+        self.assertFalse(MiscellaneousItem.objects.get(id=4).is_owned_by_association())
 
     def test_is_loaned_by_member(self):
         """ Checks if there is an active instance of this item at the Knights owned by a member """
-        self.assertTrue(BoardGame.objects.get(id=1).is_loaned_by_member())
-        self.assertFalse(BoardGame.objects.get(id=2).is_loaned_by_member())
+        self.assertTrue(MiscellaneousItem.objects.get(id=1).is_loaned_by_member())
+        self.assertFalse(MiscellaneousItem.objects.get(id=2).is_loaned_by_member())
+
+    def test_other_fields(self):
+        # This method has no effects in this module, so returns an empty list
+        # Its further tested in boardgames
+        self.assertEqual(MiscellaneousItem.objects.get(id=1).other_fields(), [])
 
     def test_objects_manager(self):
-        self.assertIsInstance(BoardGame.objects, ItemManager)
+        self.assertIsInstance(MiscellaneousItem.objects, ItemManager)
 
 
 class TestItemManager(TestCase):
@@ -130,7 +134,7 @@ class TestItemManager(TestCase):
 
     def setUp(self):
         self.manager = ItemManager()
-        self.manager.model = BoardGame
+        self.manager.model = MiscellaneousItem
 
     def test_get_all_in_possession(self):
         self.assertEqual(2, self.manager.get_all_in_possession().count())
@@ -152,35 +156,3 @@ class TestItemManager(TestCase):
         self.assertEqual(0, self.manager.get_all_owned_by(group=group).count())
         group = Group.objects.get(id=2)
         self.assertEqual(2, self.manager.get_all_owned_by(group=group).count())
-
-
-class TestBoardGame(TestCase):
-
-    def test_duration_field(self):
-        # Test that play_duration is a choice field with 5 choices
-        field = BoardGame._meta.get_field("play_duration")
-        self.assertIsNotNone(field.choices)
-        self.assertEqual(len(field.choices), 5)
-
-    def test_get_players_display(self):
-        txt = BoardGame(name='test-game')
-        self.assertEqual(txt.get_players_display(), '')
-
-        txt = BoardGame(name='test-game', player_min=2)
-        self.assertEqual(txt.get_players_display(), '2+')
-
-        txt = BoardGame(name='test-game', player_max=9)
-        self.assertEqual(txt.get_players_display(), '9-')
-
-        txt = BoardGame(name='test-game', player_min=3, player_max=5)
-        self.assertEqual(txt.get_players_display(), '3 - 5')
-
-    def test_playter_clean(self):
-        try:
-            BoardGame(name='test-game', player_min=3, player_max=5).clean()
-        except ValidationError as error:
-            raise AssertionError("Error raised: "+str(error))
-
-        with self.assertRaises(ValidationError) as error:
-            BoardGame(name='test-game', player_min=5, player_max=3).clean()
-        self.assertEqual(error.exception.code, 'incorrect_value')

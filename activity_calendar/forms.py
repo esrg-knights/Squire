@@ -1,3 +1,4 @@
+from core.widgets import ImageUploadMartorWidget
 from django import forms
 from django.forms import ModelForm, Form
 from django.forms.widgets import HiddenInput
@@ -5,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import ValidationError
 
 from .models import ActivitySlot, Activity, Participant, ActivityMoment
+from core.forms import MarkdownForm
 from core.models import PresetImage
 
 ##################################################################################
@@ -13,10 +15,8 @@ from core.models import PresetImage
 ##################################################################################
 
 
-__all__ = [
-    'RegisterNewSlotForm', 'RegisterForActivitySlotForm', 'RegisterForActivityForm',
-    'ActivityMomentForm', 'ActivityMomentAdminForm'
-]
+__all__ = ['RegisterNewSlotForm', 'RegisterForActivitySlotForm', 'RegisterForActivityForm', 'ActivityMomentForm',
+    'ActivityAdminForm', 'ActivityMomentAdminForm']
 
 
 class RegisterAcitivityMixin:
@@ -311,13 +311,15 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
         return slot_obj
 
-class ActivityMomentForm(ModelForm):
+class ActivityMomentForm(MarkdownForm):
     class Meta:
         model = ActivityMoment
         fields = ['local_title', 'local_description',
             'local_location', 'local_max_participants', 'local_subscriptions_required',
             'local_slot_creation', 'local_private_slot_locations'
         ]
+
+    placeholder_detail_title = "Base Activity %s"
 
     def __init__(self, *args, instance=None, **kwargs):
         # Require that an instance is given as this contains the required attributes parent_activity and recurrence_id
@@ -327,14 +329,14 @@ class ActivityMomentForm(ModelForm):
 
         # Set a placeholder on all fields
         for key, field in self.fields.items():
-            attr_name = key[len('local_'):]            
+            attr_name = key[len('local_'):]
 
             if isinstance(field.widget, forms.Select):
                 # Replace the "-------" or "unknown" option for <select> fields
 
                 # Obtain value from parent_activity.get_FOO_display() if it exists
                 # Otherwise, we must be working with a true/false value from a BooleanField without custom options
-                get_parent_field_display_value = getattr(self.instance.parent_activity, f"get_{attr_name}_display", 
+                get_parent_field_display_value = getattr(self.instance.parent_activity, f"get_{attr_name}_display",
                     lambda: _('Yes') if getattr(self.instance.parent_activity, attr_name) else _('No')
                 )
 
@@ -344,12 +346,20 @@ class ActivityMomentForm(ModelForm):
                 field.widget.choices = [
                     ((k, null_choice_text) if k in ['', 'unknown'] else (k, v)) for (k, v) in field.widget.choices
                 ]
+            elif isinstance(field.widget, ImageUploadMartorWidget):
+                field.widget.placeholder = getattr(self.instance.parent_activity, attr_name, None)
             else:
                 # Set HTML Placeholder for all other fields
                 field.widget.attrs['placeholder'] = getattr(self.instance.parent_activity, attr_name, None)
 
+class ActivityAdminForm(MarkdownForm):
+    class Meta:
+        model = Activity
+        fields = '__all__'
+
 # The ActivityMoment admin form is identical to the form used in the front-end,
 #   but also allows changing the parent_activity and recurrence_id
-class ActivityMomentAdminForm(ActivityMomentForm):
-    class Meta():
+class ActivityMomentAdminForm(MarkdownForm):
+    class Meta:
+        model = ActivityMoment
         fields = ['parent_activity', 'recurrence_id'] + ActivityMomentForm.Meta.fields

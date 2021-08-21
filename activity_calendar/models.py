@@ -2,20 +2,18 @@ import copy
 import datetime
 
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
-from django.db.models import Count
 from django.db.models.base import ModelBase
-from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
-
 from recurrence.fields import RecurrenceField
 
 import activity_calendar.util as util
 from core.models import ExtendedUser as User, PresetImage
-from membership_file.util import user_to_member
+from core.fields import MarkdownTextField
 
 #############################################################################
 # Models related to the Calendar-functionality of the application.
@@ -44,13 +42,15 @@ class Activity(models.Model):
             ('can_view_private_slot_locations',             "[F] Can view a slot's location even if they are marked as 'private' by the activity."),
         ]
 
+    markdown_images = GenericRelation('core.MarkdownImage')
+
 
     # The User that created the activity
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
 
     # General information
     title = models.CharField(max_length=255)
-    description = models.TextField()
+    description = MarkdownTextField(help_text="Note that uploaded images are publicly accessible, even if the activity is unpublished.")
     location = models.CharField(max_length=255)
     image = models.ForeignKey(PresetImage, blank=True, null=True, related_name="activity_image", on_delete=models.SET_NULL)
 
@@ -248,8 +248,16 @@ class Activity(models.Model):
         :param recurrence_id: Specifies the start-time and applies that in the url for recurrent activities
         :return: the url for the activity page
         """
-        # There is currently no version of the object without recurrrence_id
-        assert recurrence_id is not None
+        if recurrence_id is None:
+            # There is currently no version of the object without recurrrence_id
+            if self.is_recurring:
+                # The Django admin calls this method without any parameters for
+                #   its "view on site" functionality.
+                return None
+            else:
+                # If the activity is non-recurring, there's just a single occurrence we
+                #   can link back to
+                recurrence_id = self.start_date
 
         return reverse('activity_calendar:activity_slots_on_day', kwargs={
             'activity_id': self.id,
@@ -303,7 +311,7 @@ class ActivityDuplicate(ModelBase):
         in its parent_activity model instead for the given attribute """
         def get_activity_attribute(self):
             local_attr = getattr(self, 'local_'+field_name, None)
-            if local_attr is None or local_attr == '':
+            if local_attr is None or str(local_attr) == '':
                 return getattr(self.parent_activity, field_name)
             return local_attr
 
@@ -316,6 +324,8 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
 
     created_date = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
+
+    markdown_images = GenericRelation('core.MarkdownImage')
 
     class Meta:
         unique_together = ['parent_activity', 'recurrence_id']

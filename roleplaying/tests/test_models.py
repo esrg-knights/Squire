@@ -1,14 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import Group
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from django.utils.text import slugify
 
 
-from membership_file.models import Member
-from inventory.models import Item, BoardGame, Ownership, valid_item_class_ids, ItemManager, \
-    get_item_image_upload_path, MiscellaneousItem
+from inventory.models import Item
 from roleplaying.models import *
 
 

@@ -1,5 +1,5 @@
 from django.contrib.auth.mixins import AccessMixin
-from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
@@ -11,10 +11,8 @@ from django.views.decorators.http import require_safe
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView, FormMixin
 
-from membership_file.util import user_to_member
-
 from .forms import *
-from .models import Activity, Participant, ActivityMoment
+from .models import Activity, ActivityMoment
 from core.models import ExtendedUser
 
 __all__ = "CreateSlotView, get_activity_detail_view, activity_collection"
@@ -382,6 +380,7 @@ class EditActivityMomentView(LoginRequiredMixin, PermissionRequiredMixin, Activi
         kwargs = super(EditActivityMomentView, self).get_form_kwargs()
         kwargs.update({
             'instance': self.activity_moment,
+            'user': self.request.user, # Needed for MarkdownImage uploads
         })
         return kwargs
 

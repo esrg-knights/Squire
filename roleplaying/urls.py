@@ -10,6 +10,7 @@ urlpatterns = [
         path('', RoleplaySystemView.as_view(), name='home'),
         path('<int:system_id>/', include([
             path('details/', SystemDetailView.as_view(), name='system_details'),
+            path('edit/', SystemUpdateView.as_view(), name='system_edit'),
         ])),
     ])),
 

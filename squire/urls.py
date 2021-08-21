@@ -28,16 +28,15 @@ urlpatterns = [
     path('', include('achievements.urls')),
     # Inventory
     path('inventory/', include(('inventory.urls', 'inventory'), namespace='inventory')),
-    # Roleplaying
+    path('boardgames/', include(('boardgames.urls', 'boardgames'), namespace='boardgames')),
     path('roleplay/', include(('roleplaying.urls', 'roleplaying'), namespace='roleplaying')),
 
     # Activity Calendar
     path('', include(('activity_calendar.urls', 'activity_calendar'), namespace='activity_calendar')),
     # Membership File
     path('', include('membership_file.urls')),
-
     # Redirect all other paths to the core module
-    path('', include('core.urls')),
+    path('', include('core.urls', namespace='core')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 # NB: 'static(...) above only works when Debug=True! In production, the web server should be set up to serve files
 # For production use, view the following:
