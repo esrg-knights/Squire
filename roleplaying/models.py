@@ -4,6 +4,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.contenttypes.fields import GenericRelation
+from django.utils.text import slugify
 
 from inventory.models import Item
 
@@ -17,9 +18,11 @@ def get_system_image_upload_path(instance, filename):
     # NB: A file can be renamed to have ANY extension
     _, extension = os.path.splitext(filename)
 
+    system_name = f'{instance.id}-{slugify(instance.name)}'
+
     # file will be uploaded to MEDIA_ROOT / images/item/<item_type>/<id>.<file_extension>
-    return 'images/roleplaying/system/{system_id}{extension}'.format(
-        system_id=instance.id,
+    return 'images/roleplaying/system/{system_name}{extension}'.format(
+        system_name=system_name,
         extension=extension,
     )
 

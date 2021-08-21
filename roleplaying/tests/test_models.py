@@ -1,13 +1,17 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils.text import slugify
 
 
 from inventory.models import Item
 from roleplaying.models import *
+from roleplaying.models import get_system_image_upload_path
 
 
 class TestRoleplayingSystem(TestCase):
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'test_roleplaying.json']
+
     def test_normal(self):
         system = RoleplayingSystem(
             name='test-name',
@@ -33,6 +37,17 @@ class TestRoleplayingSystem(TestCase):
         field = RoleplayingSystem._meta.get_field("rate_complexity")
         self.assertTrue(hasattr(field, 'choices'))
         self.assertTrue(len(field.choices), 5)
+
+    def test_item_upload_path(self):
+        system = RoleplayingSystem.objects.get(id=1)
+        str_expected_upload_path = "images/roleplaying/system/{system_name}.png"
+        system_name = f'{system.id}-{slugify(system.name)}'
+
+        str_expected_upload_path = str_expected_upload_path.format(
+            system_name=system_name
+        )
+        str_actual_upload_path = get_system_image_upload_path(system, "some_file_name.png")
+        self.assertEqual(str_expected_upload_path, str_actual_upload_path)
 
 
 class TestRoleplayingItem(TestCase):
