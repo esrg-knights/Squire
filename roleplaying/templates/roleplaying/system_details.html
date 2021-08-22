@@ -48,19 +48,12 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-12 col-lg-8">
-                    <p>
-                        {{ system.long_description|linebreaksbr }}
-                    </p>
-                    {% if system.more_info_url %}
-                        <a href="{{ system.more_info_url }}"
-                           class="btn btn-info mt-4" target="_blank" rel="noopener noreferrer">
-                            More information
-                        </a>
-                    {% endif %}
+                    {{ system.long_description.as_rendered }}
                 </div>
                 <div class="col-12 col-lg-4">
                     <hr class="d-flex d-lg-none">
 
+                    <div class="my-3"></div>
                     {% if system.rate_complexity %}
                         <div class="row">
                             <div class="col-5 col-sm-4 pr-0">
@@ -82,7 +75,9 @@
                         </div>
                     {% endif %}
 
+                    {% if system.rate_lore or system.rate_complexity %}
                     <hr>
+                    {% endif %}
 
                     {% if system.player_count %}
                         <div class="row">
@@ -103,6 +98,13 @@
                                 {{ system.dice|linebreaksbr }}
                             </div>
                         </div>
+                    {% endif %}
+                    <hr>
+                    {% if system.more_info_url %}
+                        <a href="{{ system.more_info_url }}"
+                           class="btn btn-info mt-4" target="_blank" rel="noopener noreferrer">
+                            More information
+                        </a>
                     {% endif %}
                 </div>
             </div>

@@ -6,6 +6,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.contenttypes.fields import GenericRelation
 from django.utils.text import slugify
 
+from core.fields import MarkdownTextField
 from inventory.models import Item
 
 
@@ -29,7 +30,7 @@ def get_system_image_upload_path(instance, filename):
 class RoleplayingSystem(models.Model):
     name = models.CharField(max_length=128)
     short_description = models.CharField(max_length=128)
-    long_description = models.TextField(blank=True, null=True)
+    long_description = MarkdownTextField(blank=True, null=True)
 
     image = models.ImageField(upload_to=get_system_image_upload_path, null=True, blank=True)
     is_public = models.BooleanField(default=False, verbose_name="On Systems page",

@@ -12,6 +12,7 @@ from django.views.generic import ListView, View, DetailView, UpdateView
 from utils.views import SearchFormMixin
 from membership_file.views import MembershipRequiredMixin
 
+from roleplaying.forms import RoleplayingSystemUpdateForm
 from roleplaying.models import RoleplayingItem, RoleplayingSystem
 
 
@@ -56,8 +57,9 @@ class SystemDetailView(MembershipRequiredMixin, DetailView):
 
 class SystemUpdateView(MembershipRequiredMixin, PermissionRequiredMixin, UpdateView):
     template_name = "roleplaying/system_update.html"
+    form_class = RoleplayingSystemUpdateForm
     model = RoleplayingSystem
-    fields = '__all__'
+    # fields = '__all__'
     pk_url_kwarg = 'system_id'
     permission_required = 'roleplaying.change_roleplayingsystem'
     context_object_name = 'system'
