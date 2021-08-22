@@ -49,6 +49,8 @@ class RoleplayingSystem(models.Model):
     player_count = models.CharField(max_length=8, null=True, blank=True)
     dice = models.TextField(max_length=64, null=True, blank=True)
 
+    more_info_url = models.URLField(blank=True, null=True)
+
     # Relations
     achievements = GenericRelation('achievements.AchievementItemLink')
 

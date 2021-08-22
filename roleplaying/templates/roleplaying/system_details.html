@@ -51,6 +51,12 @@
                     <p>
                         {{ system.long_description|linebreaksbr }}
                     </p>
+                    {% if system.more_info_url %}
+                        <a href="{{ system.more_info_url }}"
+                           class="btn btn-info mt-4" target="_blank" rel="noopener noreferrer">
+                            More information
+                        </a>
+                    {% endif %}
                 </div>
                 <div class="col-12 col-lg-4">
                     <hr class="d-flex d-lg-none">
