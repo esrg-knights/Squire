@@ -13,4 +13,9 @@ urlpatterns = [
     path('committees/', CommitteeOverview.as_view(), name='committees'),
     path('guilds/', GuildOverview.as_view(), name='guilds'),
     path('boards/', BoardOverview.as_view(), name='boards'),
+    path('<int:group_id>/', include([
+        path('', AssociationGroupDetailView.as_view(), name='group_general'),
+        path('inventory/', AssociationGroupInventoryView.as_view(), name='group_inventory'),
+        path('inventory/<int:ownership_id>', GroupItemLinkUpdateView.as_view(), name='group_inventory'),
+    ]))
 ]

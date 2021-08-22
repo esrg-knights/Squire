@@ -1,7 +1,7 @@
 {% extends 'committees/base.html' %}
 {% load static %}
 {% load to_member %}
-
+{% load association_group_tags %}
 
 {% block content %}
     <h1>Guilds</h1>
@@ -49,6 +49,12 @@
                                     </li>
                                 {% endfor %}
                             </ul>
+                        {% endif %}
+                        {% if user|is_in_group:group.site_group %}
+                            <a class="btn btn-info"
+                               href="{% url "committees:group_general" group_id=group.site_group.id %}">
+                                Group page
+                            </a>
                         {% endif %}
                     </div>
                 </div>

@@ -1,0 +1,60 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% load to_member %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+{{ block.super }}
+
+
+
+    <div class="row">
+        <div class="col-12 col-md-7">
+
+            <p>
+                {{ group.associationgroup.instructions }}
+            </p>
+
+
+            Current members:
+            <ul>
+                {% for member in group.user_set.all %}
+                    <li>
+                        {{ member|to_member }}
+                    </li>
+                {% empty %}
+                    <li>
+                        -
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col-12 col-md-5 order-first order-md-2">
+            <p class="font-weight-bold mb-0">Quick links:</p>
+            {% for link in links_internal %}
+                <div>
+                    <a href="{{ link.url }}" class="btn btn-outline-info my-1">
+                        {{ link.name }}
+                    </a>
+                </div>
+            {% endfor %}
+            {% for link in links_external %}
+                <div class="mb-3">
+                    <div><small>{{ link.description}}</small></div>
+                    <a href="{{ link.url }}" class="btn btn-sm btn-outline-info my-1"
+                        target="_blank" rel="noopener noreferrer">
+                        {{ link.name }}
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+
+
+
+{% endblock %}

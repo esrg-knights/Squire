@@ -1,6 +1,8 @@
 {% extends 'core/base.html' %}
 
-
+{% block title %}
+    Squire - My Groups
+{% endblock title %}
 
 {% block content %}
     <h1> My groups </h1>
@@ -14,8 +16,11 @@
                     {{ group }}
                 </div>
                 <div class="col">
-                    <a class="btn btn-info" href="{% url "inventory:committee_items" group_id=group.id %}">
-                        View commitee inventory
+                    <a class="btn btn-info" href="{% url "committees:group_general" group_id=group.id %}">
+                        Details
+                    </a>
+                    <a class="btn btn-info" href="{% url "committees:group_inventory" group_id=group.id %}">
+                        Inventory
                     </a>
                 </div>
             </div>
