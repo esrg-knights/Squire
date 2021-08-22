@@ -10,4 +10,4 @@ class RoleplayingSystemUpdateForm(MarkdownForm):
 
     class Meta:
         model = RoleplayingSystem
-        fields = '__all__'
+        exclude = ['is_public']
