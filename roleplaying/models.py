@@ -4,6 +4,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.contenttypes.fields import GenericRelation
+from django.forms.widgets import Textarea
 from django.utils.text import slugify
 
 from core.fields import MarkdownTextField
@@ -48,7 +49,7 @@ class RoleplayingSystem(models.Model):
     rate_lore = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)],
                                      blank=True, null=True)
     player_count = models.CharField(max_length=8, null=True, blank=True)
-    dice = models.TextField(max_length=64, null=True, blank=True)
+    dice = models.CharField(max_length=64, null=True, blank=True)
 
     more_info_url = models.URLField(blank=True, null=True)
 

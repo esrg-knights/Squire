@@ -59,7 +59,6 @@ class SystemUpdateView(MembershipRequiredMixin, PermissionRequiredMixin, UpdateV
     template_name = "roleplaying/system_update.html"
     form_class = RoleplayingSystemUpdateForm
     model = RoleplayingSystem
-    # fields = '__all__'
     pk_url_kwarg = 'system_id'
     permission_required = 'roleplaying.change_roleplayingsystem'
     context_object_name = 'system'
