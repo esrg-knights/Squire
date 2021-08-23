@@ -71,6 +71,13 @@
         }
     },
     {
+        "model": "roleplaying.roleplayingitem",
+        "pk": 5,
+        "fields": {
+            "name": "Gandalf mini figure"
+        }
+    },
+    {
         "model": "inventory.ownership",
         "pk": 21,
         "fields": {
