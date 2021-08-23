@@ -14,7 +14,7 @@ from inventory.views import OwnershipMixin
 from roleplaying.models import RoleplayingItem
 from utils.views import SearchFormMixin, PostOnlyFormViewMixin
 
-from committees.forms import DeleteGroupExternalUrlForm, AddOrUpdateExternalUrlForm
+from committees.forms import *
 from committees.models import AssociationGroup
 
 
@@ -143,6 +143,29 @@ class AssociationGroupQuickLinksDeleteView(GroupMixin, PostOnlyFormViewMixin, Fo
 
     def get_success_message(self, form):
         return f'{form.instance.name} has been removed'
+
+
+class AssociationGroupUpdateView(GroupMixin, FormView):
+    form_class = AssociationGroupUpdateForm
+    template_name = "committees/group_detail_info_edit.html"
+
+    def get_form_kwargs(self):
+        form_kwargs = super(AssociationGroupUpdateView, self).get_form_kwargs()
+        form_kwargs['instance'] = self.group.associationgroup
+        return form_kwargs
+
+    def get_context_data(self, **kwargs):
+        return super(AssociationGroupUpdateView, self).get_context_data(
+            tab_overview=True,
+            **kwargs
+        )
+
+    def form_valid(self, form):
+        form.save()
+        return super(AssociationGroupUpdateView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('committees:group_general', kwargs={'group_id': self.group.id})
 
 
 class AssociationGroupInventoryView(GroupMixin, SearchFormMixin, ListView):

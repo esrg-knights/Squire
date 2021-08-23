@@ -15,10 +15,15 @@
     <div class="row">
         <div class="col-12 col-md-8">
 
-            <p>
-                {{ group.associationgroup.instructions }}
-            </p>
+            <div>
+                {{ group.associationgroup.instructions.as_rendered }}
+            </div>
 
+            <a href="{% url "committees:group_update" group_id=group.id %}"
+                class="btn btn-outline-primary btn-sm">
+                Edit
+            </a>
+            <hr>
 
             Current members:
             <ul>

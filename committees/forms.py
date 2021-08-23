@@ -2,6 +2,8 @@ from django.core.exceptions import ValidationError
 from django.forms import Form, ModelForm, IntegerField
 from django.forms.widgets import HiddenInput
 
+from core.forms import MarkdownForm
+
 from committees.models import GroupExternalUrl, AssociationGroup
 
 
@@ -45,3 +47,8 @@ class AddOrUpdateExternalUrlForm(ModelForm):
         return self.instance, created
 
 
+class AssociationGroupUpdateForm(MarkdownForm):
+
+    class Meta:
+        model = AssociationGroup
+        fields = ['instructions',]

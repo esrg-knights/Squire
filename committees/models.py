@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import Group
 
+from core.fields import MarkdownTextField
+
 
 
 class AssociationGroup(models.Model):
@@ -24,9 +26,9 @@ class AssociationGroup(models.Model):
     short_description = models.CharField(max_length=128, blank=True, null=True)
     long_description = models.TextField(blank=True, null=True)
 
-
     # Internal data
-    instructions = models.TextField(blank=True, null=True, max_length=2047)
+    instructions = MarkdownTextField(blank=True, null=True, max_length=2047,
+                                    help_text="Information displayed on internal info page")
 
     class Meta:
         ordering = ("shorthand",)
