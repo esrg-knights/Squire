@@ -30,18 +30,25 @@
 
     <div class="table-responsive">
         <table class="table table-striped table-hover">
+            <colgroup>
+                <col span="1" style="width:4em;">
+                <col span="1" style="min-width: 15em;">
+                <col span="2" style="min-width: 5em;">
+                <col span="1" style="">
+            </colgroup>
+
             <thead>
-            <tr class="">
-                <th scope="col"></th>
-                <th scope="col">Title</th>
-                <th scope="col" colspan="2">Info</th>
-                <th scope="col"></th>
-            </tr>
+                <tr class="">
+                    <th scope="col"></th>
+                    <th scope="col">Title</th>
+                    <th scope="col" colspan="2">Info</th>
+                    <th scope="col"></th>
+                </tr>
             </thead>
             <tbody>
             {% for system in roleplay_systems %}
                 <tr>
-                    <td style="width:4em;">
+                    <td>
                         {% if system.image %}
                             <a class="enlargable_image" data-imgurl="{{ system.image.url }}">
                                 <div class=""
@@ -57,7 +64,7 @@
 
                         {% endif %}
                     </td>
-                    <td style="min-width: 15em;">
+                    <td>
                         <div class="font-weight-bold">{{ system.name }}</div>
                         <div>{{ system.short_description }}</div>
                     </td>

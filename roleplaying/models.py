@@ -4,7 +4,10 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.contenttypes.fields import GenericRelation
+from django.forms.widgets import Textarea
+from django.utils.text import slugify
 
+from core.fields import MarkdownTextField
 from inventory.models import Item
 
 
@@ -17,16 +20,18 @@ def get_system_image_upload_path(instance, filename):
     # NB: A file can be renamed to have ANY extension
     _, extension = os.path.splitext(filename)
 
+    system_name = f'{instance.id}-{slugify(instance.name)}'
+
     # file will be uploaded to MEDIA_ROOT / images/item/<item_type>/<id>.<file_extension>
-    return 'images/roleplaying/system/{system_id}{extension}'.format(
-        system_id=instance.id,
+    return 'images/roleplaying/system/{system_name}{extension}'.format(
+        system_name=system_name,
         extension=extension,
     )
 
 class RoleplayingSystem(models.Model):
     name = models.CharField(max_length=128)
     short_description = models.CharField(max_length=128)
-    long_description = models.TextField(blank=True, null=True)
+    long_description = MarkdownTextField(blank=True, null=True)
 
     image = models.ImageField(upload_to=get_system_image_upload_path, null=True, blank=True)
     is_public = models.BooleanField(default=False, verbose_name="On Systems page",
@@ -44,7 +49,9 @@ class RoleplayingSystem(models.Model):
     rate_lore = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)],
                                      blank=True, null=True)
     player_count = models.CharField(max_length=8, null=True, blank=True)
-    dice = models.TextField(max_length=32, null=True, blank=True)
+    dice = models.CharField(max_length=64, null=True, blank=True)
+
+    more_info_url = models.URLField(blank=True, null=True)
 
     # Relations
     achievements = GenericRelation('achievements.AchievementItemLink')
@@ -58,9 +65,14 @@ def get_roleplay_item_file_upload_path(instance, filename):
     # NB: A file can be renamed to have ANY extension
     _, extension = os.path.splitext(filename)
 
+    if instance.system:
+        filename = f'{instance.system.id}-{instance.id}-{slugify(instance.name)}'
+    else:
+        filename = f'None-{instance.id}-{slugify(instance.name)}'
+
     # file will be uploaded to MEDIA_ROOT / images/item/<item_type>/<id>.<file_extension>
-    return 'local_only/files/item/roleplay/{item_id}{extension}'.format(
-        item_id=instance.id,
+    return 'local_only/files/item/roleplay/{filename}{extension}'.format(
+        filename=filename,
         extension=extension,
     )
 

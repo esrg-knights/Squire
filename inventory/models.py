@@ -48,10 +48,12 @@ def get_item_image_upload_path(instance, filename):
     # NB: A file can be renamed to have ANY extension
     _, extension = os.path.splitext(filename)
 
+    item_name = f'{instance.id}-{slugify(instance.name)}'
+
     # file will be uploaded to MEDIA_ROOT / images/item/<item_type>/<id>.<file_extension>
-    return 'images/item/{type_str}/{item_id}{extension}'.format(
+    return 'images/item/{type_str}/{item_name}{extension}'.format(
         type_str=slugify(instance.__class__.__name__),
-        item_id=instance.id,
+        item_name=item_name,
         extension=extension,
     )
 

@@ -102,7 +102,6 @@ class TestSystemUpdateView(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(SystemUpdateView, PermissionRequiredMixin))
         self.assertTrue(issubclass(SystemUpdateView, UpdateView))
         self.assertEqual(SystemUpdateView.template_name, "roleplaying/system_update.html")
-        self.assertEqual(SystemUpdateView.fields, '__all__')
 
     @suppress_warnings
     def test_not_authorised_get(self):

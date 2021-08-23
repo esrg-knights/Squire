@@ -22,13 +22,26 @@
     {% endif %}
     {% include "utils/snippets/filter_form_snippet.html" with form=filter_form %}
 
+    <div class="table-responsive">
     <table class="table table-striped table-hover">
+        <colgroup>
+            <col span="1" style="width: 4em;">
+            <col span="1" style="min-width: 10em;">
+            {% if can_change_items %}
+                <col span="1" style="">
+            {% endif %}
+            {% if can_maintain_ownerships %}
+                <col span="1" style="min-width: 15em;">
+            {% endif %}
+            <col span="1" style="min-width: 10em;">
+        </colgroup>
+
         <thead>
         <tr class="">
             <th></th>
             <th scope="col">Name</th>
             {% if can_change_items %}<th></th>{% endif %}
-            <th>Owned</th>
+            {% if can_maintain_ownerships %}<th>Owned</th>{% endif %}
             <th scope="col"></th>
         </tr>
         </thead>
@@ -48,16 +61,16 @@
                     </div>
 
                 </td>
-                <td>
-                    {% if can_change_items %}
+                {% if can_change_items %}
+                    <td>
                         <a href="{% url "inventory:catalogue_update_item" type_id=item_type item_id=item.id %}"
                            class="btn btn-sm btn-primary">
                             Edit
                         </a>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if can_maintain_ownerships %}
+                    </td>
+                {% endif %}
+                {% if can_maintain_ownerships %}
+                    <td>
                         <div class="d-flex justify-content-between">
                             <div>
                                 {% for owner in item.currently_in_possession %}
@@ -79,8 +92,8 @@
                         {% else %}
                             Loaned by member
                         {% endif %}
-                    {% endif %}
-                </td>
+                    </td>
+                {% endif %}
                 <td>
                     <div class="d-lg-flex justify-content-end">
                         {% if can_add_to_group %}
@@ -106,6 +119,7 @@
 
         </tbody>
     </table>
+    </div>
 
     {% render_paginator %}
 

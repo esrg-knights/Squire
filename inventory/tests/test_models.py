@@ -79,13 +79,13 @@ class TestOwnership(TestCase):
 class TestItem(TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
 
-    # Tests if the achievement images are uploaded to the correct location
+    # Tests if the item images are uploaded to the correct location
     def test_item_upload_path(self):
         item = MiscellaneousItem.objects.get(id=1)
         str_expected_upload_path = "images/item/{type_str}/{item_id}.png"
 
         str_expected_upload_path = str_expected_upload_path.format(
-            item_id=item.id,
+            item_id=f'{item.id}-{slugify(item.name)}',
             type_str=slugify(item.__class__.__name__),
         )
         str_actual_upload_path = get_item_image_upload_path(item, "some_file_name.png")

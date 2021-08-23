@@ -9,6 +9,13 @@
     container
 {% endblock %}
 
+{% block bootstrap_js %}
+    {# We need to prevent bootstrap's JS from loading, as Martor's MarkdownWidget #}
+    {#    also includes it. We cannot remove it from that widget and rely on our version #}
+    {#    as it seems to require a specific version. #}
+    {#    This is ugly... #}
+{% endblock %}
+
 {% block content %}
     <h1>Update {{ system }}</h1>
 
