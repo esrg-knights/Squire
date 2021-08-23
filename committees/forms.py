@@ -11,9 +11,6 @@ class DeleteGroupExternalUrlForm(Form):
         self.instance = instance
         super(DeleteGroupExternalUrlForm, self).__init__(*args, **kwargs)
 
-    def clean(self):
-        raise ValidationError("Well well well", code='well')
-
     def delete(self):
         self.instance.delete()
 

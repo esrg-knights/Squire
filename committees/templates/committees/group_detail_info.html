@@ -46,18 +46,18 @@
                 </div>
             </div>
 
-            {% for link in links_internal %}
+            {% for link in quicklinks_internal %}
                 <div>
                     <a href="{{ link.url }}" class="btn btn-outline-info my-1 w-100">
                         {{ link.name }}
                     </a>
                 </div>
             {% endfor %}
-            {% if links_internal and links_external %}
+            {% if quicklinks_internal and quicklinks_external %}
                 <hr>
             {% endif %}
 
-            {% for link in links_external %}
+            {% for link in quicklinks_external %}
                 <div class="mb-3">
                     <div><small>{{ link.description|default:'' }}</small></div>
                     <a href="{{ link.url }}" class="btn btn-sm btn-outline-info my-1 w-100"

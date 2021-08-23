@@ -20,8 +20,6 @@ class PostOnlyFormViewMixin:
         if success_message:
             success(self.request, success_message)
 
-        return self.form_invalid(form)
-
         # Run the method
         getattr(form, self.form_success_method_name)()
 

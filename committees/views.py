@@ -74,8 +74,8 @@ class AssociationGroupDetailView(GroupMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super(AssociationGroupDetailView, self).get_context_data(**kwargs)
         context['tab_overview'] = True
-        context['links_internal'] = self.construct_internal_links(self.group)
-        context['links_external'] = self.group.associationgroup.shortcut_set.all()
+        context['quicklinks_internal'] = self.construct_internal_links(self.group)
+        context['quicklinks_external'] = self.group.associationgroup.shortcut_set.all()
         return context
 
     @staticmethod
@@ -130,12 +130,12 @@ class AssociationGroupQuickLinksDeleteView(GroupMixin, PostOnlyFormViewMixin, Fo
     form_success_method_name = 'delete'
 
     def get_form_kwargs(self):
-        shortcut = self.group.associationgroup.shortcut_set.filter(id=self.kwargs.get('shortcut_id', None))
-        if not shortcut.exists():
+        quicklink = self.group.associationgroup.shortcut_set.filter(id=self.kwargs.get('quicklink_id', None))
+        if not quicklink.exists():
             raise Http404("This shortcut does not exist")
 
         form_kwargs = super(AssociationGroupQuickLinksDeleteView, self).get_form_kwargs()
-        form_kwargs['instance'] = shortcut.first()
+        form_kwargs['instance'] = quicklink.first()
         return form_kwargs
 
     def get_success_url(self):
@@ -143,10 +143,6 @@ class AssociationGroupQuickLinksDeleteView(GroupMixin, PostOnlyFormViewMixin, Fo
 
     def get_success_message(self, form):
         return f'{form.instance.name} has been removed'
-
-    def get_object(self, queryset=None):
-        return self.group.associationgroup.shortcut_set.filter(id=self.kwargs.get('shortcut_id', None))
-
 
 
 class AssociationGroupInventoryView(GroupMixin, SearchFormMixin, ListView):
