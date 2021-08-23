@@ -1,0 +1,132 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% load to_member %}
+{% load render_form %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    {{ block.super }}
+
+    <a href="{% url "committees:group_general" group_id=group.id %}"
+       class="btn btn-secondary">
+        Back to overview
+    </a>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr class="">
+                    <th scope="col-auto">Name</th>
+                    <th scope="col-auto">url</th>
+                    <th scope="col-auto">Description</th>
+                    <th scope="col-auto">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for shortcut in group.associationgroup.shortcut_set.all %}
+                    <tr>
+                        <td>
+                            {{ shortcut.name }}
+                        </td>
+                        <td>
+                            <a href="{{ shortcut.url }}" target="_blank" rel="noopener noreferrer">
+                                {{ shortcut.url }}
+                            </a>
+                        </td>
+                        <td>
+                            {{ shortcut.description|default:'' }}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group" aria-label="Basic example">
+                                <button type="button"
+                                        class="btn btn-primary px-4"
+                                        data-toggle="modal" data-target="#quicklink_modal"
+                                        data-action="Update {{ shortcut.name }} link"
+                                        data-id="{{ shortcut.id }}"
+                                        data-name="{{ shortcut.name }}"
+                                        data-url="{{ shortcut.url }}"
+                                        data-description="{{ shortcut.description|default:'' }}"
+                                > Edit
+                                </button>
+                                <form method="post" action="{% url "committees:group_quicklink_delete" group_id=group.id shortcut_id=shortcut.id %}"
+                                    id="delete-{{ shortcut.id }}">
+                                    {% csrf_token %}
+                                </form>
+                                <input type="submit" class="btn btn-danger" form="delete-{{ shortcut.id }}" value="Delete">
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+    <button type="button"
+            class="btn btn-outline-primary"
+            data-toggle="modal" data-target="#quicklink_modal"
+            data-action="Add new link"
+            data-id=""
+            data-name=""
+            data-url="https://"
+            data-description=""
+    > Add new link
+    </button>
+
+
+    <!-- Define the Bootstrap modal that is displayed when download is pressed. -->
+    <div class="modal fade" id="quicklink_modal" tabindex="-1" role="dialog" aria-labelledby="quicklinkModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="quicklinkModalLabel">
+
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {% render_form method="post" has_submit_button=False id="submit_form" %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button form="submit_form" type="submit" class="btn btn-success" name="btn_save">
+                        Save item
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock %}
+
+
+{% block js_bottom %}
+    {{ block.super }}
+
+    <script>
+        $('#quicklink_modal').on('show.bs.modal', function (event) {
+
+            var button = $(event.relatedTarget); // Button that triggered the modal
+            var action = button.data('action'); // Extract info from data-* attributes
+            var quicklink_id = button.data('id'); // Extract info from data-* attributes
+            var quicklink_name = button.data('name'); // Extract info from data-* attributes
+            var quicklink_url = button.data('url'); // Extract info from data-* attributes
+            var quicklink_description = button.data('description'); // Extract info from data-* attributes
+
+            var modal = $(this);
+            modal.find('#quicklinkModalLabel').text(action);
+            modal.find('#id_id').attr("value", quicklink_id);
+            modal.find('#id_name').attr("value", quicklink_name);
+            modal.find('#id_description').attr("value", quicklink_description);
+            modal.find('#id_url').attr("value", quicklink_url);
+        })
+    </script>
+{% endblock %}

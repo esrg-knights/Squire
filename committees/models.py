@@ -39,7 +39,7 @@ class AssociationGroup(models.Model):
         return self.site_group.name
 
 
-class GroupExternalUrls(models.Model):
+class GroupExternalUrl(models.Model):
     """ Model class to create quick urls on group screens """
     association_group = models.ForeignKey(AssociationGroup, on_delete=models.CASCADE, related_name='shortcut_set')
     name = models.CharField(max_length=32)

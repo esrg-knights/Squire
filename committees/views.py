@@ -2,17 +2,19 @@
 from django.contrib import messages
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, TemplateView, UpdateView
+from django.views.generic import ListView, DetailView, TemplateView, UpdateView, FormView
 
 from boardgames.models import BoardGame
 from inventory.forms import FilterOwnershipThroughRelatedItems
 from inventory.models import Ownership, Item, MiscellaneousItem
 from inventory.views import OwnershipMixin
 from roleplaying.models import RoleplayingItem
-from utils.views import SearchFormMixin
+from utils.views import SearchFormMixin, PostOnlyFormViewMixin
 
+from committees.forms import DeleteGroupExternalUrlForm, AddOrUpdateExternalUrlForm
 from committees.models import AssociationGroup
 
 
@@ -95,6 +97,57 @@ class AssociationGroupDetailView(GroupMixin, TemplateView):
                 'name': "Misc item catalogue",
             })
         return links
+
+
+class AssociationGroupQuickLinksView(GroupMixin, FormView):
+    template_name = "committees/group_detail_quicklinks.html"
+    form_class = AddOrUpdateExternalUrlForm
+
+    def get_form_kwargs(self):
+        form_kwargs = super(AssociationGroupQuickLinksView, self).get_form_kwargs()
+        form_kwargs['association_group'] = self.group.associationgroup
+        return form_kwargs
+
+    def form_valid(self, form):
+        instance, created = form.save()
+        if created:
+            msg = f'{instance.name} has been added'
+        else:
+            msg = f'{instance.name} has been updated'
+        messages.success(self.request, msg)
+
+        return super(AssociationGroupQuickLinksView, self).form_valid(form)
+
+    def get_success_url(self):
+        return self.request.path
+
+    def get_context_data(self, **kwargs):
+        return super(AssociationGroupQuickLinksView, self).get_context_data(tab_overview=True, **kwargs)
+
+
+class AssociationGroupQuickLinksDeleteView(GroupMixin, PostOnlyFormViewMixin, FormView):
+    form_class = DeleteGroupExternalUrlForm
+    form_success_method_name = 'delete'
+
+    def get_form_kwargs(self):
+        shortcut = self.group.associationgroup.shortcut_set.filter(id=self.kwargs.get('shortcut_id', None))
+        if not shortcut.exists():
+            raise Http404("This shortcut does not exist")
+
+        form_kwargs = super(AssociationGroupQuickLinksDeleteView, self).get_form_kwargs()
+        form_kwargs['instance'] = shortcut.first()
+        return form_kwargs
+
+    def get_success_url(self):
+        return reverse_lazy("committees:group_quicklinks", kwargs={'group_id': self.group.id})
+
+    def get_success_message(self, form):
+        return f'{form.instance.name} has been removed'
+
+    def get_object(self, queryset=None):
+        return self.group.associationgroup.shortcut_set.filter(id=self.kwargs.get('shortcut_id', None))
+
+
 
 class AssociationGroupInventoryView(GroupMixin, SearchFormMixin, ListView):
     template_name = "committees/group_detail_inventory.html"

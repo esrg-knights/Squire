@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from committees.models import AssociationGroup, GroupExternalUrls
+from committees.models import AssociationGroup, GroupExternalUrl
 
 
 admin.site.register(AssociationGroup)
-admin.site.register(GroupExternalUrls)
+admin.site.register(GroupExternalUrl)

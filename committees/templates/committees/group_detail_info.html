@@ -13,7 +13,7 @@
 
 
     <div class="row">
-        <div class="col-12 col-md-7">
+        <div class="col-12 col-md-8">
 
             <p>
                 {{ group.associationgroup.instructions }}
@@ -33,19 +33,34 @@
                 {% endfor %}
             </ul>
         </div>
-        <div class="col-12 col-md-5 order-first order-md-2">
-            <p class="font-weight-bold mb-0">Quick links:</p>
+        <div class="col-12 col-md-4 order-first order-md-2">
+            <div class="row">
+                <div class="col">
+                    <p class="font-weight-bold mb-0">Quick links:</p>
+                </div>
+                <div class="col d-flex justify-content-end">
+                    <a class="btn btn-outline-primary btn-sm"
+                       href="{% url "committees:group_quicklinks" group_id=group.id %}">
+                        Edit
+                    </a>
+                </div>
+            </div>
+
             {% for link in links_internal %}
                 <div>
-                    <a href="{{ link.url }}" class="btn btn-outline-info my-1">
+                    <a href="{{ link.url }}" class="btn btn-outline-info my-1 w-100">
                         {{ link.name }}
                     </a>
                 </div>
             {% endfor %}
+            {% if links_internal and links_external %}
+                <hr>
+            {% endif %}
+
             {% for link in links_external %}
                 <div class="mb-3">
-                    <div><small>{{ link.description}}</small></div>
-                    <a href="{{ link.url }}" class="btn btn-sm btn-outline-info my-1"
+                    <div><small>{{ link.description|default:'' }}</small></div>
+                    <a href="{{ link.url }}" class="btn btn-sm btn-outline-info my-1 w-100"
                         target="_blank" rel="noopener noreferrer">
                         {{ link.name }}
                     </a>
