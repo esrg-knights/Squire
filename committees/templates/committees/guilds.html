@@ -13,51 +13,7 @@
     <div class="row">
         {% for group in association_groups %}
             <div class="col-12 col-md-6">
-                <div class="card mb-2">
-                    <div class="card-header">
-                        <div class="d-flex">
-                            <div style="width: 4em">
-                                {% if group.icon %}
-                                    <img style="height: 4em;" src={{ group.icon.url }}>
-                                {% endif %}
-                            </div>
-
-                            <div>
-                                <h3>
-                                    {{ group.name }}
-                                </h3>
-                                <div>
-                                    {{ group.short_description }}
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text">{{ group.long_description }}</p>
-
-                        {% if user|is_member %}
-                            Leaders:
-                            <ul>
-                                {% for member in group.site_group.user_set.all %}
-                                    <li>
-                                        {{ member|to_member }}
-                                    </li>
-                                {% empty %}
-                                    <li>
-                                        -
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                        {% if user|is_in_group:group.site_group %}
-                            <a class="btn btn-info"
-                               href="{% url "committees:group_general" group_id=group.site_group.id %}">
-                                Group page
-                            </a>
-                        {% endif %}
-                    </div>
-                </div>
+                {% include "committees/snippet_assoc_group.html" %}
             </div>
         {% endfor %}
     </div>

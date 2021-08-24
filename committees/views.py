@@ -15,7 +15,7 @@ from roleplaying.models import RoleplayingItem
 from utils.views import SearchFormMixin, PostOnlyFormViewMixin
 
 from committees.forms import *
-from committees.models import AssociationGroup
+from committees.models import AssociationGroup, AssociationGroupMembership
 
 
 class AssocGroupOverview(ListView):
@@ -166,6 +166,32 @@ class AssociationGroupUpdateView(GroupMixin, FormView):
 
     def get_success_url(self):
         return reverse_lazy('committees:group_general', kwargs={'group_id': self.group.id})
+
+
+class AssociationGroupMembersView(GroupMixin, FormView):
+    template_name = "committees/group_detail_members.html"
+    form_class = AssociationGroupMembershipForm
+
+    def get_form_kwargs(self):
+        form_kwargs = super(AssociationGroupMembersView, self).get_form_kwargs()
+        form_kwargs['association_group'] = self.group.associationgroup
+        return form_kwargs
+
+    def form_valid(self, form):
+        instance = form.save()
+        msg = f'{instance.member} has been updated'
+        messages.success(self.request, msg)
+
+        return super(AssociationGroupMembersView, self).form_valid(form)
+
+    def get_success_url(self):
+        return self.request.path
+
+    def get_context_data(self, **kwargs):
+        return super(AssociationGroupMembersView, self).get_context_data(
+            tab_overview=True,
+            member_links=self.group.associationgroup.associationgroupmembership_set.all(),
+            **kwargs)
 
 
 class AssociationGroupInventoryView(GroupMixin, SearchFormMixin, ListView):

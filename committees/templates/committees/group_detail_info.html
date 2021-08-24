@@ -24,19 +24,31 @@
                 Edit
             </a>
             <hr>
+            <div class="row">
+                <div class="col font-weight-bold">
+                    Members
+                </div>
+                <div class="col d-flex justify-content-end">
+                    <a href="{% url "committees:group_members" group_id=group.id %}"
+                       class="btn btn-outline-primary btn-sm">
+                        Edit
+                    </a>
+                </div>
+            </div>
 
-            Current members:
-            <ul>
-                {% for member in group.user_set.all %}
-                    <li>
-                        {{ member|to_member }}
-                    </li>
-                {% empty %}
-                    <li>
-                        -
-                    </li>
-                {% endfor %}
-            </ul>
+            <div>
+                <table class="table table-sm">
+                    <tbody>
+                        {% for membership in group.associationgroup.associationgroupmembership_set.all %}
+                            <tr>
+                                <td>{{ membership.member }}</td>
+                                <td><span class="font-italic">{% if membership.title %}"{{ membership.title|default:'' }}"{% endif %}</span></td>
+                                <td>{{ membership.role|default:'' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
         <div class="col-12 col-md-4 order-first order-md-2">
             <div class="row">

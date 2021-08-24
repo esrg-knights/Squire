@@ -1,8 +1,10 @@
+import datetime
+
 from django.db import models
 from django.contrib.auth.models import Group
 
 from core.fields import MarkdownTextField
-
+from membership_file.models import Member
 
 
 class AssociationGroup(models.Model):
@@ -27,6 +29,11 @@ class AssociationGroup(models.Model):
     long_description = models.TextField(blank=True, null=True)
 
     # Internal data
+    members = models.ManyToManyField(
+        Member,
+        through='AssociationGroupMembership',
+    )
+
     instructions = MarkdownTextField(blank=True, null=True, max_length=2047,
                                     help_text="Information displayed on internal info page")
 
@@ -50,3 +57,21 @@ class GroupExternalUrl(models.Model):
 
     def __str__(self):
         return f'{self.association_group.name} - {self.name}'
+
+
+class AssociationGroupMembership(models.Model):
+    """
+    This is an alternative to the django user-group connection. For one we can't assume that a member has a user account
+    For another we want additional information stored that is difficult when attempting to override the link between
+    user and group.
+    """
+    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    group = models.ForeignKey(AssociationGroup, on_delete=models.CASCADE)
+    role = models.CharField(max_length=32, blank=True, default="",
+                            help_text="Name of the formal role. E.g. treasurer, president")
+    title = models.CharField(max_length=32, blank=True, default="",
+                             help_text="Symbolic name (if any) e.g. 'God of War', 'Minister of Alien affairs', or 'Wondrous Wizard'")
+    joined_since = models.DateField(default=datetime.date.today)
+
+    class Meta:
+        unique_together = [['member', 'group']]

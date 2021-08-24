@@ -16,6 +16,7 @@ urlpatterns = [
     path('<int:group_id>/', include([
         path('', AssociationGroupDetailView.as_view(), name='group_general'),
         path('update/', AssociationGroupUpdateView.as_view(), name='group_update'),
+        path('members/', AssociationGroupMembersView.as_view(), name='group_members'),
         path('quicklinks/', include([
             path('', AssociationGroupQuickLinksView.as_view(), name='group_quicklinks'),
             path('<int:quicklink_id>/', AssociationGroupQuickLinksView.as_view(), name='group_quicklinks'),
