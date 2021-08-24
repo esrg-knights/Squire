@@ -41,7 +41,7 @@
             {% endfor %}
             </div>
 
-            {% if user|is_in_group:group.site_group %}
+            {% if user|is_in_group:group %}
                 <a class="btn btn-info"
                    href="{% url "committees:group_general" group_id=group.id %}">
                     Group page

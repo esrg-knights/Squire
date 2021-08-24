@@ -5,7 +5,8 @@ from committees.models import *
 
 class MembershipInline(admin.TabularInline):
     model = AssociationGroupMembership
-    extra = 0
+    extra = 1
+    min_num = 0
 
 @admin.register(AssociationGroup)
 class AchievementAdmin(admin.ModelAdmin):

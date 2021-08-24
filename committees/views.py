@@ -18,6 +18,7 @@ from membership_file.util import user_to_member
 
 from committees.forms import *
 from committees.models import AssociationGroup, AssociationGroupMembership
+from committees.utils import user_in_association_group
 
 
 class AssocGroupOverview(ListView):
@@ -59,16 +60,7 @@ class AssociationGroupMixin:
 
     def dispatch(self, request, *args, **kwargs):
         self.association_group = get_object_or_404(AssociationGroup, id=self.kwargs['group_id'])
-
-        has_access = False
-        # Check standard Django group structure
-        if self.association_group.site_group in self.request.user.groups.all():
-            has_access = True
-        # Check Squire specific structure
-        if user_to_member(self.request.user).get_member() in self.association_group.members.all():
-            has_access = True
-
-        if not has_access:
+        if not user_in_association_group(self.request.user, self.association_group):
             raise PermissionDenied()
 
         return super(AssociationGroupMixin, self).dispatch(request, *args, **kwargs)
