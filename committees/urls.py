@@ -23,6 +23,6 @@ urlpatterns = [
             path('<int:quicklink_id>/delete/', AssociationGroupQuickLinksDeleteView.as_view(), name='group_quicklink_delete'),
         ])),
         path('inventory/', AssociationGroupInventoryView.as_view(), name='group_inventory'),
-        path('inventory/<int:ownership_id>', GroupItemLinkUpdateView.as_view(), name='group_inventory'),
+        path('inventory/<int:ownership_id>', AssociationGroupItemLinkUpdateView.as_view(), name='group_inventory'),
     ]))
 ]

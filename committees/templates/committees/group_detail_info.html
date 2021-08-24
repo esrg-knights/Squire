@@ -16,14 +16,14 @@
         <div class="col-12 col-md-8">
             <div style="position: relative;">
             <div class="" style="position: absolute; top: 0; right: 0;">
-                <a href="{% url "committees:group_update" group_id=group.id %}"
+                <a href="{% url "committees:group_update" group_id=association_group.id %}"
                    class="btn btn-outline-primary btn-sm">
                     Edit
                 </a>
             </div>
             </div>
             <div style="min-height: 2em;">
-                {{ group.associationgroup.instructions.as_rendered }}
+                {{ association_group.instructions.as_rendered }}
             </div>
 
 
@@ -33,7 +33,7 @@
                     Members
                 </div>
                 <div class="col d-flex justify-content-end">
-                    <a href="{% url "committees:group_members" group_id=group.id %}"
+                    <a href="{% url "committees:group_members" group_id=association_group.id %}"
                        class="btn btn-outline-primary btn-sm">
                         Edit
                     </a>
@@ -43,7 +43,7 @@
             <div class="table-responsive">
                 <table class="table table-sm">
                     <tbody>
-                        {% for membership in group.associationgroup.associationgroupmembership_set.all %}
+                        {% for membership in associationgroup.associationgroupmembership_set.all %}
                             <tr>
                                 <td>{{ membership.member }}</td>
                                 <td>{{ membership.role }}</td>
@@ -61,7 +61,7 @@
                 </div>
                 <div class="col d-flex justify-content-end">
                     <a class="btn btn-outline-primary btn-sm"
-                       href="{% url "committees:group_quicklinks" group_id=group.id %}">
+                       href="{% url "committees:group_quicklinks" group_id=association_group.id %}">
                         Edit
                     </a>
                 </div>

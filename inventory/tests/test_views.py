@@ -7,7 +7,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.views.generic import DetailView, FormView, UpdateView, CreateView, ListView
 
-from committees.views import GroupMixin
+from committees.views import AssociationGroupMixin
 from core.tests.util import suppress_warnings
 from membership_file.models import Member
 from membership_file.util import MembershipRequiredMixin
@@ -198,7 +198,7 @@ class TestGroupItemOverview(ViewValidityMixin, TestCase):
         return reverse('inventory:committee_items', kwargs={'group_id':group_id,})
 
     def test_class(self):
-        self.assertTrue(issubclass(GroupItemsOverview, GroupMixin))
+        self.assertTrue(issubclass(GroupItemsOverview, AssociationGroupMixin))
         self.assertTrue(issubclass(GroupItemsOverview, SearchFormMixin))
         self.assertTrue(issubclass(GroupItemsOverview, ListView))
         self.assertEqual(GroupItemsOverview.search_form_class, FilterOwnershipThroughRelatedItems)
@@ -236,7 +236,7 @@ class TestGroupItemLinkUpdateView(ViewValidityMixin, TestCase):
         return reverse('inventory:owner_link_edit', kwargs={'group_id':group_id, 'ownership_id': ownership_id})
 
     def test_class(self):
-        self.assertTrue(issubclass(GroupItemLinkUpdateView, GroupMixin))
+        self.assertTrue(issubclass(GroupItemLinkUpdateView, AssociationGroupMixin))
         self.assertTrue(issubclass(GroupItemLinkUpdateView, OwnershipMixin))
         self.assertTrue(issubclass(GroupItemLinkUpdateView, UpdateView))
         self.assertEqual(GroupItemLinkUpdateView.model, Ownership)

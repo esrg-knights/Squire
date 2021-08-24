@@ -21,7 +21,7 @@
     {% render_form method="post" id="submit_form"  has_submit_button=False uses_file_field=True %}
 
     <div class="btn-group" role="group" aria-label="Form changing">
-        <a href="{% url "committees:group_general" group_id=group.id %}"
+        <a href="{% url "committees:group_general" group_id=association_group.id %}"
            class="btn btn-outline-secondary">Cancel</a>
         <button form="submit_form" type="submit" class="btn btn-primary">
             Save changes

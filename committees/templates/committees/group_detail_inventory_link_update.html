@@ -7,7 +7,7 @@
     {% render_form method="post" id="submit_form"  has_submit_button=False %}
 
     <div class="btn-group w-100" role="group" aria-label="Form changing">
-        <a href="{% url "committees:group_inventory" group_id=group.id %}"
+        <a href="{% url "committees:group_inventory" group_id=association_group.id %}"
            class="btn btn-secondary">Cancel</a>
         <button form="submit_form" type="submit" class="btn btn-success">
             Save changes

@@ -14,6 +14,8 @@ from inventory.views import OwnershipMixin
 from roleplaying.models import RoleplayingItem
 from utils.views import SearchFormMixin, PostOnlyFormViewMixin
 
+from membership_file.util import user_to_member
+
 from committees.forms import *
 from committees.models import AssociationGroup, AssociationGroupMembership
 
@@ -51,31 +53,40 @@ class BoardOverview(AssocGroupOverview):
     tab_name = 'tab_boards'
 
 
-class GroupMixin:
+class AssociationGroupMixin:
     """ Mixin that stores the retrieved group from the url group_id keyword. Also verifies user is part of that group """
-    group = None
+    association_group = None
 
     def dispatch(self, request, *args, **kwargs):
-        self.group = get_object_or_404(Group, id=self.kwargs['group_id'])
-        if self.group not in self.request.user.groups.all():
+        self.association_group = get_object_or_404(AssociationGroup, id=self.kwargs['group_id'])
+
+        has_access = False
+        # Check standard Django group structure
+        if self.association_group.site_group in self.request.user.groups.all():
+            has_access = True
+        # Check Squire specific structure
+        if user_to_member(self.request.user).get_member() in self.association_group.members.all():
+            has_access = True
+
+        if not has_access:
             raise PermissionDenied()
 
-        return super(GroupMixin, self).dispatch(request, *args, **kwargs)
+        return super(AssociationGroupMixin, self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        context = super(GroupMixin, self).get_context_data(**kwargs)
-        context['group'] = self.group
+        context = super(AssociationGroupMixin, self).get_context_data(**kwargs)
+        context['association_group'] = self.association_group
         return context
 
 
-class AssociationGroupDetailView(GroupMixin, TemplateView):
+class AssociationGroupDetailView(AssociationGroupMixin, TemplateView):
     template_name = "committees/group_detail_info.html"
 
     def get_context_data(self, **kwargs):
         context = super(AssociationGroupDetailView, self).get_context_data(**kwargs)
         context['tab_overview'] = True
-        context['quicklinks_internal'] = self.construct_internal_links(self.group)
-        context['quicklinks_external'] = self.group.associationgroup.shortcut_set.all()
+        context['quicklinks_internal'] = self.construct_internal_links(self.association_group.site_group)
+        context['quicklinks_external'] = self.association_group.shortcut_set.all()
         return context
 
     @staticmethod
@@ -99,13 +110,13 @@ class AssociationGroupDetailView(GroupMixin, TemplateView):
         return links
 
 
-class AssociationGroupQuickLinksView(GroupMixin, FormView):
+class AssociationGroupQuickLinksView(AssociationGroupMixin, FormView):
     template_name = "committees/group_detail_quicklinks.html"
     form_class = AddOrUpdateExternalUrlForm
 
     def get_form_kwargs(self):
         form_kwargs = super(AssociationGroupQuickLinksView, self).get_form_kwargs()
-        form_kwargs['association_group'] = self.group.associationgroup
+        form_kwargs['association_group'] = self.association_group
         return form_kwargs
 
     def form_valid(self, form):
@@ -125,12 +136,12 @@ class AssociationGroupQuickLinksView(GroupMixin, FormView):
         return super(AssociationGroupQuickLinksView, self).get_context_data(tab_overview=True, **kwargs)
 
 
-class AssociationGroupQuickLinksDeleteView(GroupMixin, PostOnlyFormViewMixin, FormView):
+class AssociationGroupQuickLinksDeleteView(AssociationGroupMixin, PostOnlyFormViewMixin, FormView):
     form_class = DeleteGroupExternalUrlForm
     form_success_method_name = 'delete'
 
     def get_form_kwargs(self):
-        quicklink = self.group.associationgroup.shortcut_set.filter(id=self.kwargs.get('quicklink_id', None))
+        quicklink = self.association_group.shortcut_set.filter(id=self.kwargs.get('quicklink_id', None))
         if not quicklink.exists():
             raise Http404("This shortcut does not exist")
 
@@ -139,19 +150,19 @@ class AssociationGroupQuickLinksDeleteView(GroupMixin, PostOnlyFormViewMixin, Fo
         return form_kwargs
 
     def get_success_url(self):
-        return reverse_lazy("committees:group_quicklinks", kwargs={'group_id': self.group.id})
+        return reverse_lazy("committees:group_quicklinks", kwargs={'group_id': self.association_group.id})
 
     def get_success_message(self, form):
         return f'{form.instance.name} has been removed'
 
 
-class AssociationGroupUpdateView(GroupMixin, FormView):
+class AssociationGroupUpdateView(AssociationGroupMixin, FormView):
     form_class = AssociationGroupUpdateForm
     template_name = "committees/group_detail_info_edit.html"
 
     def get_form_kwargs(self):
         form_kwargs = super(AssociationGroupUpdateView, self).get_form_kwargs()
-        form_kwargs['instance'] = self.group.associationgroup
+        form_kwargs['instance'] = self.association_group
         return form_kwargs
 
     def get_context_data(self, **kwargs):
@@ -165,16 +176,16 @@ class AssociationGroupUpdateView(GroupMixin, FormView):
         return super(AssociationGroupUpdateView, self).form_valid(form)
 
     def get_success_url(self):
-        return reverse_lazy('committees:group_general', kwargs={'group_id': self.group.id})
+        return reverse_lazy('committees:group_general', kwargs={'group_id': self.association_group.id})
 
 
-class AssociationGroupMembersView(GroupMixin, FormView):
+class AssociationGroupMembersView(AssociationGroupMixin, FormView):
     template_name = "committees/group_detail_members.html"
     form_class = AssociationGroupMembershipForm
 
     def get_form_kwargs(self):
         form_kwargs = super(AssociationGroupMembersView, self).get_form_kwargs()
-        form_kwargs['association_group'] = self.group.associationgroup
+        form_kwargs['association_group'] = self.association_group
         return form_kwargs
 
     def form_valid(self, form):
@@ -190,17 +201,17 @@ class AssociationGroupMembersView(GroupMixin, FormView):
     def get_context_data(self, **kwargs):
         return super(AssociationGroupMembersView, self).get_context_data(
             tab_overview=True,
-            member_links=self.group.associationgroup.associationgroupmembership_set.all(),
+            member_links=self.association_group.associationgroupmembership_set.all(),
             **kwargs)
 
 
-class AssociationGroupInventoryView(GroupMixin, SearchFormMixin, ListView):
+class AssociationGroupInventoryView(AssociationGroupMixin, SearchFormMixin, ListView):
     template_name = "committees/group_detail_inventory.html"
     context_object_name = 'ownerships'
     search_form_class = FilterOwnershipThroughRelatedItems
 
     def get_queryset(self):
-        ownerships = Ownership.objects.filter(group=self.group).filter(is_active=True)
+        ownerships = Ownership.objects.filter(group=self.association_group.site_group).filter(is_active=True)
         return self.filter_data(ownerships)
 
     def get_context_data(self, **kwargs):
@@ -213,7 +224,7 @@ class AssociationGroupInventoryView(GroupMixin, SearchFormMixin, ListView):
         )
 
 
-class GroupItemLinkUpdateView(GroupMixin, OwnershipMixin, UpdateView):
+class AssociationGroupItemLinkUpdateView(AssociationGroupMixin, OwnershipMixin, UpdateView):
     template_name = "committees/group_detail_inventory_link_update.html"
     model = Ownership
     fields = ['note', 'added_since']
@@ -223,13 +234,13 @@ class GroupItemLinkUpdateView(GroupMixin, OwnershipMixin, UpdateView):
         return self.ownership
 
     def get_context_data(self, **kwargs):
-        context = super(GroupItemLinkUpdateView, self).get_context_data(**kwargs)
+        context = super(AssociationGroupItemLinkUpdateView, self).get_context_data(**kwargs)
         context['tab_inventory'] = True
         return context
 
     def form_valid(self, form):
         messages.success(self.request, f"Link data has been updated")
-        return super(GroupItemLinkUpdateView, self).form_valid(form)
+        return super(AssociationGroupItemLinkUpdateView, self).form_valid(form)
 
     def get_success_url(self):
-        return reverse_lazy("committees:group_inventory", kwargs={'group_id': self.group.id})
+        return reverse_lazy("committees:group_inventory", kwargs={'group_id': self.association_group.id})

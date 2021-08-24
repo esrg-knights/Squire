@@ -11,7 +11,7 @@
 {% block content %}
     {{ block.super }}
 
-    <a href="{% url "committees:group_general" group_id=group.id %}"
+    <a href="{% url "committees:group_general" group_id=association_group.id %}"
        class="btn btn-secondary">
         Back to overview
     </a>
@@ -36,7 +36,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for quicklink in group.associationgroup.shortcut_set.all %}
+                {% for quicklink in association_group.shortcut_set.all %}
                     <tr>
                         <td>
                             {{ quicklink.name }}
@@ -61,7 +61,8 @@
                                         data-description="{{ quicklink.description|default:'' }}"
                                 > Edit
                                 </button>
-                                <form method="post" action="{% url "committees:group_quicklink_delete" group_id=group.id quicklink_id=quicklink.id %}"
+                                <form method="post"
+                                      action="{% url "committees:group_quicklink_delete" group_id=association_group.id quicklink_id=quicklink.id %}"
                                     id="delete-{{ quicklink.id }}">
                                     {% csrf_token %}
                                 </form>
