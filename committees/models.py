@@ -34,6 +34,7 @@ class AssociationGroup(models.Model):
         through='AssociationGroupMembership',
     )
 
+    contact_email = models.EmailField(null=True, blank=True)
     instructions = MarkdownTextField(blank=True, null=True, max_length=2047,
                                     help_text="Information displayed on internal info page")
 

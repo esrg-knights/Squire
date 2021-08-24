@@ -20,13 +20,21 @@
                 </div>
             </div>
         </div>
-
     </div>
     <div class="card-body">
-        <p class="card-text">{{ group.long_description }}</p>
+        <div class="card-text">{{ group.long_description }}</div>
+
+        {% if group.contact_email %}
+            <div class="mt-2">
+                Contact:
+                <a href="mailto:{{ group.contact_email }}">
+                    {{ group.contact_email }}
+                </a>
+            </div>
+        {% endif %}
 
         {% if user|is_member %}
-            <div class="font-weight-bold">Members:</div>
+            <div class="font-weight-bold mt-3">Members:</div>
 
             <div class="mb-3">
             {% for membership in group.associationgroupmembership_set.all %}
