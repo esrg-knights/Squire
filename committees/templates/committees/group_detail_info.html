@@ -14,15 +14,19 @@
 
     <div class="row">
         <div class="col-12 col-md-8">
-
-            <div>
+            <div style="position: relative;">
+            <div class="" style="position: absolute; top: 0; right: 0;">
+                <a href="{% url "committees:group_update" group_id=group.id %}"
+                   class="btn btn-outline-primary btn-sm">
+                    Edit
+                </a>
+            </div>
+            </div>
+            <div style="min-height: 2em;">
                 {{ group.associationgroup.instructions.as_rendered }}
             </div>
 
-            <a href="{% url "committees:group_update" group_id=group.id %}"
-                class="btn btn-outline-primary btn-sm">
-                Edit
-            </a>
+
             <hr>
             <div class="row">
                 <div class="col font-weight-bold">
@@ -36,14 +40,14 @@
                 </div>
             </div>
 
-            <div>
+            <div class="table-responsive">
                 <table class="table table-sm">
                     <tbody>
                         {% for membership in group.associationgroup.associationgroupmembership_set.all %}
                             <tr>
                                 <td>{{ membership.member }}</td>
-                                <td><span class="font-italic">{% if membership.title %}"{{ membership.title|default:'' }}"{% endif %}</span></td>
-                                <td>{{ membership.role|default:'' }}</td>
+                                <td>{{ membership.role }}</td>
+                                <td><span class="font-italic">{% if membership.title %}"{{ membership.title }}"{% endif %}</span></td>
                             </tr>
                         {% endfor %}
                     </tbody>

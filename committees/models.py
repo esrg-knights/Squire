@@ -75,3 +75,4 @@ class AssociationGroupMembership(models.Model):
 
     class Meta:
         unique_together = [['member', 'group']]
+        ordering = ['-role', 'member__legal_name']
