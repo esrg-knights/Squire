@@ -87,6 +87,7 @@ MIDDLEWARE = [
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'core.backends.BaseUserBackend',
+    'committees.backends.AssociationGroupAuthBackend',
 ]
 
 ROOT_URLCONF = 'squire.urls'
