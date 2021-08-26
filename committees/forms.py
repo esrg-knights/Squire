@@ -64,7 +64,7 @@ class AssociationGroupMembershipForm(ModelForm):
             self.instance = self.association_group.associationgroupmembership_set.get(id=id)
         except AssociationGroupMembership.DoesNotExist:
             # Connect the association group to the new model instance
-            raise ValidationError(f"Membership was not part of {self.association_group}")
+            raise ValidationError(f"Membership was not part of {self.association_group}", code="unconnected")
         return id
 
 

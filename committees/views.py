@@ -22,7 +22,6 @@ from committees.utils import user_in_association_group
 
 
 class AssocGroupOverview(ListView):
-    template_name = "committees/overview.html"
     context_object_name = 'association_groups'
     group_type = None
     tab_name = None

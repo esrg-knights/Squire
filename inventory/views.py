@@ -268,7 +268,7 @@ class AddLinkCommitteeView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, A
         if self.redirect_to:
             return self.redirect_to
         # Go back to the committee page
-        return reverse_lazy("committees:group_inventory", kwargs={'group_id': self.object.group.id})
+        return reverse_lazy("inventory:catalogue", kwargs={'type_id': self.item_type})
 
 
 class AddLinkMemberView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, AddLinkFormMixin,
