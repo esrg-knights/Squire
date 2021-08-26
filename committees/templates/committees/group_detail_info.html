@@ -43,7 +43,7 @@
             <div class="table-responsive">
                 <table class="table table-sm">
                     <tbody>
-                        {% for membership in associationgroup.associationgroupmembership_set.all %}
+                        {% for membership in association_group.associationgroupmembership_set.all %}
                             <tr>
                                 <td>{{ membership.member }}</td>
                                 <td>{{ membership.role }}</td>
