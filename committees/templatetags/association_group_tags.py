@@ -12,8 +12,9 @@ def is_in_group(user, group):
 
 
 @register.filter
-def get_group_tabs(group):
+def get_group_tabs(association_group):
     tabs = []
     for committee_config in get_all_configs():
-        tabs.append(committee_config.get_tab_data())
+        if committee_config.is_valid_for_group(association_group):
+            tabs.append(committee_config.get_tab_data())
     return tabs

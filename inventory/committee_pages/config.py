@@ -14,6 +14,6 @@ class InventoryConfig(CommitteeConfig):
     def get_urls(self):
         """ Builds a list of urls """
         return [
-            path('', AssociationGroupInventoryView.as_view(), name='group_inventory'),
-            path('<int:ownership_id>/', AssociationGroupItemLinkUpdateView.as_view(), name='group_inventory'),
+            path('', AssociationGroupInventoryView.as_view(config_class=InventoryConfig), name='group_inventory'),
+            path('<int:ownership_id>/', AssociationGroupItemLinkUpdateView.as_view(config_class=InventoryConfig), name='group_inventory'),
         ]

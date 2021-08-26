@@ -28,6 +28,10 @@ class CommitteeConfig:
             'url_name': self.url_name,
         }
 
+    @classmethod
+    def is_valid_for_group(cls, association_group):
+        return True
+
 
 def get_all_configs(request=None):
     """ Returns a list of all setup configs used by this application"""

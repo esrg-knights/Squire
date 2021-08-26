@@ -56,10 +56,14 @@ class BoardOverview(AssocGroupOverview):
 class AssociationGroupMixin:
     """ Mixin that stores the retrieved group from the url group_id keyword. Also verifies user is part of that group """
     association_group = None
+    config_class = None
 
     def dispatch(self, request, *args, **kwargs):
         self.association_group = get_object_or_404(AssociationGroup, id=self.kwargs['group_id'])
         if not user_in_association_group(self.request.user, self.association_group):
+            raise PermissionDenied()
+
+        if self.config_class and not self.config_class.is_valid_for_group(self.association_group):
             raise PermissionDenied()
 
         return super(AssociationGroupMixin, self).dispatch(request, *args, **kwargs)
