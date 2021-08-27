@@ -8,8 +8,8 @@ from committees.models import AssociationGroup
 class TestAssociationGroupBackend(TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members', 'committees/associationgroups']
 
-    def test_has_perm(self):
-        """ Tests that permission checking also go through associationgroups """
+    def prep_group(self):
+        """ Preps user 100 and group 1 for perm check """
         user = User.objects.get(id=100)
         user.groups.clear()
 
@@ -17,9 +17,14 @@ class TestAssociationGroupBackend(TestCase):
         perm = Permission.objects.get(codename='add_associationgroup')
         assoc_group.site_group.permissions.add(perm)
 
+        return user, assoc_group
+
+    def test_has_perm(self):
+        """ Tests that permission checking also go through associationgroups """
+        user, assoc_group = self.prep_group()
+
         user_has_perm = AssociationGroupAuthBackend().has_perm(
-            user,
-            'committees.add_associationgroup'
+            user, 'committees.add_associationgroup'
         )
         self.assertTrue(user_has_perm)
 
@@ -27,6 +32,17 @@ class TestAssociationGroupBackend(TestCase):
         user_has_perm = AssociationGroupAuthBackend().has_perm(
             AnonymousUser(),
             'committees.add_associationgroup'
+        )
+        self.assertFalse(user_has_perm)
+
+    def test_inactive_user(self):
+        """ Tests that inactive users don't validate on a permission check """
+        user, assoc_group = self.prep_group()
+        user.is_active = False
+        user.save()
+
+        user_has_perm = AssociationGroupAuthBackend().has_perm(
+            user, 'committees.add_associationgroup'
         )
         self.assertFalse(user_has_perm)
 

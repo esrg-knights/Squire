@@ -21,7 +21,7 @@ class CatalogueConverter:
     def to_url(self, value):
         if isinstance(value, ContentType):
             return slugify(value.model_class().__name__)
-        elif issubclass(value, Item):
+        elif isinstance(value, type) and issubclass(value, Item):
             return slugify(value.__name__)
         else:
             raise KeyError("Given value '{}' is not of a valid type".format(value))
