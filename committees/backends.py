@@ -1,7 +1,6 @@
 from django.contrib.auth.models import Permission
 
 from membership_file.util import user_to_member
-from membership_file.models import Member
 
 
 class AssociationGroupAuthBackend:

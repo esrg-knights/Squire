@@ -7,7 +7,6 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.views.generic import DetailView, FormView, UpdateView, CreateView, ListView
 
-from committees.views import AssociationGroupMixin
 from core.tests.util import suppress_warnings
 from membership_file.models import Member
 from membership_file.util import MembershipRequiredMixin

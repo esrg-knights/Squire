@@ -1,9 +1,6 @@
-from functools import update_wrapper
 from importlib import import_module
 
 from django.apps import apps
-from django.http import HttpResponseForbidden
-from django.urls import reverse
 
 
 class CommitteeConfig:

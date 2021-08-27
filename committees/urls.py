@@ -1,7 +1,4 @@
-from importlib import import_module
-
-from django.apps import apps
-from django.urls import path, include, reverse_lazy
+from django.urls import path, include
 from django.views.generic.base import RedirectView
 
 from committees.views import *

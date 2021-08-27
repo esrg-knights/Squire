@@ -43,12 +43,6 @@ urlpatterns = [
             path('edit_note/', MemberOwnershipAlterView.as_view(), name='owner_link_edit'),
         ])),
     ])),
-    # path('committee/<int:group_id>/', include([
-    #     path('items/', GroupItemsOverview.as_view(), name='committee_items'),
-    #     path('<int:ownership_id>/', include([
-    #         path('edit_note/', GroupItemLinkUpdateView.as_view(), name='owner_link_edit'),
-    #     ])),
-    # ])),
 
     path('catalogue/<cat_item:type_id>/', include([
         path('', TypeCatalogue.as_view(), name="catalogue"),

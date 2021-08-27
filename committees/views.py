@@ -1,23 +1,18 @@
-
 from django.contrib import messages
-from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, TemplateView, UpdateView, FormView
+from django.views.generic import ListView, TemplateView,  FormView
 
 from boardgames.models import BoardGame
-from inventory.forms import FilterOwnershipThroughRelatedItems
-from inventory.models import Ownership, Item, MiscellaneousItem
-from inventory.views import OwnershipMixin
+from inventory.models import MiscellaneousItem
 from roleplaying.models import RoleplayingItem
-from utils.views import SearchFormMixin, PostOnlyFormViewMixin
+from utils.views import PostOnlyFormViewMixin
 
-from membership_file.util import user_to_member
-
-from committees.forms import *
-from committees.models import AssociationGroup, AssociationGroupMembership
+from committees.forms import AssociationGroupUpdateForm, AddOrUpdateExternalUrlForm,\
+    DeleteGroupExternalUrlForm, AssociationGroupMembershipForm
+from committees.models import AssociationGroup
 from committees.utils import user_in_association_group
 
 
