@@ -36,19 +36,19 @@ class AssocGroupOverview(ListView):
 
 
 class CommitteeOverview(AssocGroupOverview):
-    template_name = "committees/committees.html"
+    template_name = "committees/overview_committees.html"
     group_type = AssociationGroup.COMMITTEE
     tab_name = 'tab_committee'
 
 
 class GuildOverview(AssocGroupOverview):
-    template_name = "committees/guilds.html"
+    template_name = "committees/overview_guilds.html"
     group_type = AssociationGroup.GUILD
     tab_name = 'tab_guild'
 
 
 class BoardOverview(AssocGroupOverview):
-    template_name = "committees/boards.html"
+    template_name = "committees/overview_boards.html"
     group_type = AssociationGroup.BOARD
     tab_name = 'tab_boards'
 
