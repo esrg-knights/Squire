@@ -70,7 +70,7 @@
             {% for link in quicklinks_internal %}
                 <div>
                     <a href="{{ link.url }}" class="btn btn-outline-info my-1 w-100">
-                        {{ link.name }}
+                        {{ link.name|capfirst }}
                     </a>
                 </div>
             {% endfor %}

@@ -10,6 +10,7 @@ from inventory.models import MiscellaneousItem
 from roleplaying.models import RoleplayingItem
 from utils.views import PostOnlyFormViewMixin
 
+from committees.config import get_all_configs_for_group
 from committees.forms import AssociationGroupUpdateForm, AddOrUpdateExternalUrlForm,\
     DeleteGroupExternalUrlForm, AssociationGroupMembershipForm
 from committees.models import AssociationGroup
@@ -75,29 +76,18 @@ class AssociationGroupDetailView(AssociationGroupMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super(AssociationGroupDetailView, self).get_context_data(**kwargs)
         context['tab_overview'] = True
-        context['quicklinks_internal'] = self.construct_internal_links(self.association_group.site_group)
+        context['quicklinks_internal'] = self.construct_internal_links()
         context['quicklinks_external'] = self.association_group.shortcut_set.all()
         return context
 
-    @staticmethod
-    def construct_internal_links(group):
-        links = []
-        if group.permissions.filter(codename='maintain_ownerships_for_boardgame').exists():
-            links.append({
-                'url': reverse_lazy('inventory:catalogue', kwargs={'type_id': BoardGame}),
-                'name': "Boardgame catalogue",
-            })
-        if group.permissions.filter(codename='maintain_ownerships_for_roleplayingitem').exists():
-            links.append({
-                'url': reverse_lazy('inventory:catalogue',  kwargs={'type_id': RoleplayingItem}),
-                'name': "Roleplaying catalogue",
-            })
-        if group.permissions.filter(codename='maintain_ownerships_for_miscellaneousitem').exists():
-            links.append({
-                'url': reverse_lazy('inventory:catalogue',  kwargs={'type_id': MiscellaneousItem}),
-                'name': "Misc item catalogue",
-            })
-        return links
+    def construct_internal_links(self):
+        """ Loops over the configs to determine any quicklinks """
+        quicklinks = []
+        for config in get_all_configs_for_group(self.association_group):
+            quicklinks.append(
+                *config.get_local_quicklinks(association_group=self.association_group)
+            )
+        return quicklinks
 
 
 class AssociationGroupQuickLinksView(AssociationGroupMixin, FormView):

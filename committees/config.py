@@ -48,6 +48,12 @@ class CommitteeConfig:
         """
         return True
 
+    def get_local_quicklinks(self, association_group):
+        """ Returns a list of dicts with local shortcut instances
+        ('name': X, 'url': X)
+        """
+        return []
+
 
 def get_all_configs():
     """ Returns a list of all committee page configs"""
@@ -66,4 +72,11 @@ def get_all_configs():
                     if issubclass(cls, CommitteeConfig) and cls != CommitteeConfig:
                         config = cls()  # Initialise config
                         configs.append(config)
+    return configs
+
+def get_all_configs_for_group(association_group):
+    configs = []
+    for committee_config in get_all_configs():
+        if committee_config.is_valid_for_group(association_group):
+            configs.append(committee_config)
     return configs
