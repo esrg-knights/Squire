@@ -12,7 +12,7 @@ from committees.views import AssociationGroupMixin
 
 
 class AssociationGroupInventoryView(AssociationGroupMixin, SearchFormMixin, ListView):
-    template_name = "committees/group_detail_inventory.html"
+    template_name = "inventory/committee_pages/group_detail_inventory.html"
     context_object_name = 'ownerships'
     search_form_class = FilterOwnershipThroughRelatedItems
 
@@ -31,7 +31,7 @@ class AssociationGroupInventoryView(AssociationGroupMixin, SearchFormMixin, List
 
 
 class AssociationGroupItemLinkUpdateView(AssociationGroupMixin, OwnershipMixin, UpdateView):
-    template_name = "committees/group_detail_inventory_link_update.html"
+    template_name = "inventory/committee_pages/group_detail_inventory_link_update.html"
     model = Ownership
     fields = ['note', 'added_since']
     allow_access_through_group = True
