@@ -112,7 +112,9 @@ class TestAssociationGroupDetailView(ViewValidityMixin, TestCase):
         # Ensure that ownerships only contain activated instances
         self.assertEqual(context['tab_overview'], True)
         self.assertIn('quicklinks_internal', context.keys())
+        self.assertIsInstance(context['quicklinks_internal'], list)
         self.assertIn('quicklinks_external', context.keys())
+        self.assertEqual(set(context['quicklinks_external']), set(self.associationgroup.shortcut_set.all()))
 
 
 class TestAssociationGroupQuickLinksView(ViewValidityMixin, TestCase):
