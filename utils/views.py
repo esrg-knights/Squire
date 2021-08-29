@@ -28,8 +28,7 @@ class PostOnlyFormViewMixin:
     def form_invalid(self, form):
         # Build the faillure message if provided
         faillure_message = self.get_faillure_message(form)
-        if faillure_message:
-            warning(self.request, faillure_message)
+        warning(self.request, faillure_message)
 
         return HttpResponseRedirect(self.get_success_url())
 
