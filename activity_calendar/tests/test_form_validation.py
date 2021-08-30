@@ -32,6 +32,8 @@ class ActivityFormValidationMixin(FormValidityMixin):
 
     def get_form_kwargs(self, **kwargs):
         kwargs = super(ActivityFormValidationMixin, self).get_form_kwargs(**kwargs)
+        # Reload activity_moment as we may have made changes to its cached parent object
+        self.activity_moment.refresh_from_db()
         kwargs.update({
             'user': self.user,
             'activity': self.activity,
@@ -338,6 +340,26 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
         self.user.user_permissions.add(Permission.objects.get(codename='can_ignore_none_slot_creation_type'))
         self.user.save()
         self.assertFormValid({'sign_up': True, 'title': 'My slot', 'max_participants': -1})
+
+    @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_local_slot_mode(self, mock_tz):
+        """
+            Tests that form validates when an activity_moment overrides slot creation to (dis)allow
+            it, while it is normally (dis)allowed
+        """
+        # Slot creation normally not allowed; it is allowed now
+        self.activity.slot_creation = Activity.SLOT_CREATION_STAFF
+        self.activity.save()
+        self.activity_moment.local_slot_creation = Activity.SLOT_CREATION_USER
+        self.activity_moment.save()
+        self.assertFormValid({'sign_up': True, 'title': 'My slot', 'max_participants': -1})
+
+        # Slot creation normally allowed; it is disallowed now
+        self.activity.slot_creation = Activity.SLOT_CREATION_USER
+        self.activity.save()
+        self.activity_moment.local_slot_creation = Activity.SLOT_CREATION_STAFF
+        self.activity_moment.save()
+        self.assertFormHasError({'sign_up': True, 'title': 'My slot', 'max_participants': -1}, code='user-slot-creation-denied')
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_user_max_slots_occupied(self, mock_tz):

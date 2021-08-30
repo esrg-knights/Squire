@@ -130,7 +130,7 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
         super(RegisterForActivityForm, self).check_validity(data)
 
         # Subscribing directly on activities can only happen if we don't use the multiple-slots feature
-        if not self.activity.slot_creation == Activity.SLOT_CREATION_AUTO:
+        if not self.activity_moment.slot_creation == Activity.SLOT_CREATION_AUTO:
             raise ValidationError(
                 _("Activity mode is incorrect. Please refresh the page."), code='invalid_slot_mode')
 
@@ -266,9 +266,9 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
         super(RegisterNewSlotForm, self).check_validity(data)
 
         # Is user allowed to create a slot
-        if self.activity.slot_creation == Activity.SLOT_CREATION_USER:
+        if self.activity_moment.slot_creation == Activity.SLOT_CREATION_USER:
             pass
-        elif self.activity.slot_creation == Activity.SLOT_CREATION_STAFF \
+        elif self.activity_moment.slot_creation == Activity.SLOT_CREATION_STAFF \
                 and self.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type'):
             pass
         else:
