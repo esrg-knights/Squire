@@ -33,10 +33,10 @@
             </div>
         {% endif %}
 
-        {% if user|is_member %}
+        {% if can_view_members %}
             <div class="font-weight-bold mt-3">Members:</div>
 
-            <div class="mb-3">
+            <div class="">
             {% for membership in group.associationgroupmembership_set.all %}
                 <div>
                     {{ membership.member }}{% if membership.role %}, {{ membership.role }}{% endif %}
@@ -48,13 +48,12 @@
                 </div>
             {% endfor %}
             </div>
-
-            {% if user|is_in_group:group %}
-                <a class="btn btn-info"
-                   href="{% url "committees:group_general" group_id=group.id %}">
-                    Group page
-                </a>
-            {% endif %}
+        {% endif %}
+        {% if user|is_in_group:group %}
+            <a class="btn btn-info mt-3"
+               href="{% url "committees:group_general" group_id=group.id %}">
+                Group page
+            </a>
         {% endif %}
     </div>
 </div>

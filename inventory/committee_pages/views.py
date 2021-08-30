@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.urls import reverse_lazy
+from django.utils.text import slugify
 from django.views.generic import ListView, UpdateView
 
 from inventory.forms import FilterOwnershipThroughRelatedItems
@@ -23,8 +24,14 @@ class AssociationGroupInventoryView(AssociationGroupMixin, SearchFormMixin, List
     def get_context_data(self, **kwargs):
         # Set a list of availlable content types
         # Used for url creation to add-item pages
+        adjustable_items = []
+        for item in Item.get_item_contenttypes():
+            perm_name = f'{item.app_label}.add_group_ownership_for_{item.model}'
+            if self.request.user.has_perm(perm_name):
+                adjustable_items.append(item)
+
         return super(AssociationGroupInventoryView, self).get_context_data(
-            content_types=Item.get_item_contenttypes(),
+
             tab_selected='tab_inventory',
             **kwargs,
         )

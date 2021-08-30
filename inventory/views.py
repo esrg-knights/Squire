@@ -8,7 +8,7 @@ from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import FormView, UpdateView, CreateView
 
-# from committees.views import GroupMixin
+from committees.utils import user_in_association_group
 from membership_file.util import MembershipRequiredMixin
 from utils.views import SearchFormMixin, RedirectMixin
 
@@ -53,7 +53,10 @@ class OwnershipMixin:
             if self.request.user.member == self.ownership.member:
                 return
         elif self.allow_access_through_group:
-            if self.ownership.group in self.request.user.groups.all():
+            if self.ownership.group and user_in_association_group(
+                self.request.user,
+                self.ownership.group.associationgroup
+            ):
                 return
         raise PermissionDenied
 
@@ -121,47 +124,6 @@ class MemberOwnershipAlterView(MembershipRequiredMixin, OwnershipMixin, FormView
         form.save()
         messages.success(self.request, f"Your version of {self.ownership.content_object} has been updated")
         return super(MemberOwnershipAlterView, self).form_valid(form)
-
-
-###########################################################
-###############   Groups / Committees   ###################
-###########################################################
-
-
-# class GroupItemsOverview(GroupMixin, SearchFormMixin, ListView):
-#     template_name = "inventory/committee_inventory.html"
-#     context_object_name = 'ownerships'
-#     search_form_class = FilterOwnershipThroughRelatedItems
-#
-#     def get_queryset(self):
-#         ownerships = Ownership.objects.filter(group=self.group).filter(is_active=True)
-#         return self.filter_data(ownerships)
-#
-#     def get_context_data(self, **kwargs):
-#         # Set a list of availlable content types
-#         # Used for url creation to add-item pages
-#         return super(GroupItemsOverview, self).get_context_data(
-#             content_types=Item.get_item_contenttypes(),
-#             **kwargs,
-#         )
-#
-#
-# class GroupItemLinkUpdateView(GroupMixin, OwnershipMixin, UpdateView):
-#     template_name = "inventory/committee_link_edit.html"
-#     model = Ownership
-#     fields = ['note', 'added_since']
-#     allow_access_through_group = True
-#
-#     def get_object(self, queryset=None):
-#         return self.ownership
-#
-#     def form_valid(self, form):
-#         messages.success(self.request, f"Link data has been updated")
-#         return super(GroupItemLinkUpdateView, self).form_valid(form)
-#
-#     def get_success_url(self):
-#         return reverse_lazy("inventory:committee_items", kwargs={'group_id': self.group.id})
-
 
 
 ###########################################################

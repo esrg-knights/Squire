@@ -18,25 +18,27 @@
         <div class="col">
             {% include "utils/snippets/filter_form_snippet.html" with form=filter_form %}
         </div>
-        <div class="col  d-flex">
-            <div class="row w-100 justify-content-end">
-                <div class="col-auto">
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Go to catalogue
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-right">
-                            {% for content_type in content_types %}
-                                <a href="{% url "inventory:catalogue" type_id=content_type %}"
-                                   class="dropdown-item">
-                                    {{ content_type }}
-                                </a>
-                            {% endfor %}
+        {% if content_types %}
+            <div class="col  d-flex">
+                <div class="row w-100 justify-content-end">
+                    <div class="col-auto">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Go to catalogue
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                {% for content_type in content_types %}
+                                    <a href="{% url "inventory:catalogue" type_id=content_type %}"
+                                       class="dropdown-item">
+                                        {{ content_type }}
+                                    </a>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        {% endif %}
     </div>
 
 

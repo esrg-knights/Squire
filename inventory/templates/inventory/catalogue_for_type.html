@@ -14,7 +14,7 @@
 {% block content %}
     <h1>Item catalogue for {{ item_type }}</h1>
 
-    {% if can_add_to_member %}
+    {% if can_add_items %}
         <a href="{% url "inventory:catalogue_add_new_item" type_id=item_type %}"
            class="btn btn-sm btn-primary">
             Add new {{ item_type }}

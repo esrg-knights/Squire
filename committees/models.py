@@ -40,6 +40,11 @@ class AssociationGroup(models.Model):
 
     class Meta:
         ordering = ("shorthand",)
+        permissions = [
+            ("can_view_committee_members", "Can view committee members"),
+            ("can_view_order_members", "Can view order members"),
+            ("can_view_board_members", "Can view board members"),
+        ]
 
     @property
     def name(self):
