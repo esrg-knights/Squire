@@ -1,23 +1,18 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.auth.models import Group, User, Permission
+from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import QuerySet
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.urls import reverse
-from django.views.generic import DetailView, FormView, UpdateView, CreateView, ListView
+from django.views.generic import UpdateView, ListView
 
+from committees.models import AssociationGroup
 from committees.views import AssociationGroupMixin
-from core.tests.util import suppress_warnings
-from membership_file.models import Member
-from membership_file.util import MembershipRequiredMixin
-from utils.testing.view_test_utils import ViewValidityMixin, TestMixinMixin
-from utils.views import SearchFormMixin, RedirectMixin
+from utils.testing.view_test_utils import ViewValidityMixin
+from utils.views import SearchFormMixin
 
 from inventory.forms import *
-from inventory.models import Ownership, MiscellaneousItem
-from inventory.views import *
-from inventory.views import OwnershipMixin, CatalogueMixin, ItemMixin, OwnershipCatalogueLinkMixin
+from inventory.models import MiscellaneousItem
+from inventory.views import OwnershipMixin
 
 from inventory.models import Ownership
 from inventory.committee_pages.views import AssociationGroupInventoryView, AssociationGroupItemLinkUpdateView
@@ -28,7 +23,7 @@ class TestAssociationGroupInventoryView(ViewValidityMixin, TestCase):
     base_user_id = 100
 
     def setUp(self):
-        self.group = Group.objects.get(id=2)
+        self.group = AssociationGroup.objects.get(id=2)
         super(TestAssociationGroupInventoryView, self).setUp()
 
     def get_base_url(self, group_id=None):
@@ -48,6 +43,10 @@ class TestAssociationGroupInventoryView(ViewValidityMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_context_data(self):
+        # Add the permission to the group to make it appear in the content_type list
+        self.group.site_group.permissions.add(
+            Permission.objects.get(codename='add_group_ownership_for_miscellaneousitem'))
+
         response  = self.client.get(self.get_base_url(), data={})
         context = response.context
 
