@@ -15,13 +15,13 @@ class PostOnlyFormViewMixin:
         return HttpResponseRedirect(self.get_success_url())
 
     def form_valid(self, form):
+        # Run the method
+        getattr(form, self.form_success_method_name)()
+
         # Build the success message if provided
         success_message = self.get_success_message(form)
         if success_message:
             success(self.request, success_message)
-
-        # Run the method
-        getattr(form, self.form_success_method_name)()
 
         return super(PostOnlyFormViewMixin, self).form_valid(form)
 

@@ -12,7 +12,8 @@ from committees.forms import AssociationGroupMembershipForm, DeleteGroupExternal
     AddOrUpdateExternalUrlForm, AssociationGroupUpdateForm
 from committees.models import AssociationGroup, AssociationGroupMembership, GroupExternalUrl
 from committees.views import AssociationGroupMixin, AssociationGroupDetailView, AssociationGroupQuickLinksView, \
-    AssociationGroupQuickLinksDeleteView, AssociationGroupUpdateView, AssociationGroupMembersView
+    AssociationGroupQuickLinksAddOrUpdateView, AssociationGroupQuickLinksDeleteView,\
+    AssociationGroupUpdateView, AssociationGroupMembersView
 
 
 class TestAssociationGroupOverviews(TestCase):
@@ -131,15 +132,34 @@ class TestAssociationGroupQuickLinksView(ViewValidityMixin, TestCase):
 
     def test_class(self):
         self.assertTrue(issubclass(AssociationGroupQuickLinksView, AssociationGroupMixin))
-        self.assertTrue(issubclass(AssociationGroupQuickLinksView, FormView))
+        self.assertTrue(issubclass(AssociationGroupQuickLinksView, TemplateView))
         self.assertEqual(AssociationGroupQuickLinksView.template_name, "committees/group_detail_quicklinks.html")
-        self.assertEqual(AssociationGroupQuickLinksView.form_class, AddOrUpdateExternalUrlForm)
 
     def test_successful_get(self):
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 200)
 
         self.assertTrue(response.context['tab_overview'])
+        self.assertIsInstance(response.context['form'], AddOrUpdateExternalUrlForm)
+
+
+class TestAssociationGroupQuickLinksAddOrUpdateView(ViewValidityMixin, TestCase):
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'committees/associationgroups']
+    base_user_id = 100
+
+    def setUp(self):
+        self.associationgroup = AssociationGroup.objects.get(id=1)
+        super(TestAssociationGroupQuickLinksAddOrUpdateView, self).setUp()
+
+    def get_base_url(self, associationgroup_id=None):
+        associationgroup_id = associationgroup_id or self.associationgroup.id
+        return reverse('committees:group_quicklinks_edit', kwargs={'group_id':associationgroup_id})
+
+    def test_class(self):
+        self.assertTrue(issubclass(AssociationGroupQuickLinksAddOrUpdateView, AssociationGroupMixin))
+        self.assertTrue(issubclass(AssociationGroupQuickLinksAddOrUpdateView, PostOnlyFormViewMixin))
+        self.assertTrue(issubclass(AssociationGroupQuickLinksAddOrUpdateView, FormView))
+        self.assertEqual(AssociationGroupQuickLinksAddOrUpdateView.form_class, AddOrUpdateExternalUrlForm)
 
     def test_post_successful_add(self):
         data = {'name': 'Knights site', 'url': 'https://www.kotkt.nl/'}
@@ -155,13 +175,6 @@ class TestAssociationGroupQuickLinksView(ViewValidityMixin, TestCase):
         # Test success message
         msg = "{url_name} has been updated".format(url_name=data['name'])
         self.assertHasMessage(response, level=SUCCESS, text=msg)
-
-    def test_success_url(self):
-        data = {'name': 'Knights site', 'url': 'https://www.kotkt.nl/'}
-        self.assertValidPostResponse(
-            data=data,
-            redirect_url=self.get_base_url()
-        )
 
 
 class TestAssociationGroupQuickLinksDeleteView(ViewValidityMixin, TestCase):

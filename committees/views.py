@@ -90,30 +90,36 @@ class AssociationGroupDetailView(AssociationGroupMixin, TemplateView):
         return quicklinks
 
 
-class AssociationGroupQuickLinksView(AssociationGroupMixin, FormView):
+class AssociationGroupQuickLinksView(AssociationGroupMixin, TemplateView):
     template_name = "committees/group_detail_quicklinks.html"
+
+    def get_context_data(self, **kwargs):
+        return super(AssociationGroupQuickLinksView, self).get_context_data(
+            tab_overview=True,
+            form=AddOrUpdateExternalUrlForm(association_group=self.association_group),
+            **kwargs
+        )
+
+
+class AssociationGroupQuickLinksAddOrUpdateView(AssociationGroupMixin, PostOnlyFormViewMixin, FormView):
     form_class = AddOrUpdateExternalUrlForm
 
     def get_form_kwargs(self):
-        form_kwargs = super(AssociationGroupQuickLinksView, self).get_form_kwargs()
+        form_kwargs = super(AssociationGroupQuickLinksAddOrUpdateView, self).get_form_kwargs()
         form_kwargs['association_group'] = self.association_group
         return form_kwargs
 
-    def form_valid(self, form):
-        instance, created = form.save()
-        if created:
-            msg = f'{instance.name} has been added'
+    def get_success_message(self, form):
+        if not form.cleaned_data['id']:
+            msg = f'{form.instance.name} has been added'
         else:
-            msg = f'{instance.name} has been updated'
+            msg = f'{form.instance.name} has been updated'
         messages.success(self.request, msg)
 
-        return super(AssociationGroupQuickLinksView, self).form_valid(form)
+        return super(AssociationGroupQuickLinksAddOrUpdateView, self).get_success_message(form)
 
     def get_success_url(self):
-        return self.request.path
-
-    def get_context_data(self, **kwargs):
-        return super(AssociationGroupQuickLinksView, self).get_context_data(tab_overview=True, **kwargs)
+        return reverse_lazy("committees:group_quicklinks", kwargs={'group_id': self.association_group.id})
 
 
 class AssociationGroupQuickLinksDeleteView(AssociationGroupMixin, PostOnlyFormViewMixin, FormView):
