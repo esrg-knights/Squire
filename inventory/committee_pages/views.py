@@ -31,7 +31,7 @@ class AssociationGroupInventoryView(AssociationGroupMixin, SearchFormMixin, List
                 adjustable_items.append(item)
 
         return super(AssociationGroupInventoryView, self).get_context_data(
-
+            content_types=adjustable_items,
             tab_selected='tab_inventory',
             **kwargs,
         )
