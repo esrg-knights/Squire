@@ -216,7 +216,7 @@ class TestGroupItemOverview(ViewValidityMixin, TestCase):
         self.assertIn('ownerships', context.keys())
         self.assertEqual(2, context['ownerships'].count())
 
-        # Ensure that the right object types are availlable
+        # Ensure that the right object types are available
         self.assertIn('content_types', context.keys())
         self.assertIn(ContentType.objects.get_for_model(MiscellaneousItem), context['content_types'])
 
@@ -342,7 +342,7 @@ class TestTypeCatalogue(ViewValidityMixin, TestCase):
         # Ensure that ownerships only contain activated instances
         self.assertIn('can_add_to_group', context.keys())
 
-        # Ensure that the right object types are availlable
+        # Ensure that the right object types are available
         self.assertIn('can_add_to_member', context.keys())
         self.assertFalse(context['can_add_to_member'])
 

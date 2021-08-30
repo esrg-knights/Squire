@@ -74,13 +74,10 @@ footer {
     padding-bottom: 10px;
 }
 
-/* Add a margin aroun the page content
+/* Add a margin around the page content
     so it's not too close to the navigation and footer */
     #mainContent {
         margin-top: 10px;
-        margin-bottom: 10px;
-        margin-left: 10px;
-        margin-right: 10px;
     }
 
 /* Main content is centered and cannot exceed a certain width */
