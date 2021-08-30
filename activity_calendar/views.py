@@ -235,7 +235,7 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
         # Determine if the mode allows slot creation. If mode is None, staff users should be able to create slots
         # Note that actual validation always takes place in the form itself, this is merely whether, without any actual
         # input on the complex database status (i.e. relations), this button needs to be shown.
-        if self.activity.slot_creation == Activity.SLOT_CREATION_USER:
+        if self.activity_moment.slot_creation == Activity.SLOT_CREATION_USER:
             new_slot_form = RegisterNewSlotForm(
                 initial={
                     'sign_up': True,
@@ -245,7 +245,7 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
                 recurrence_id=self.recurrence_id,
                 activity_moment=self.activity_moment,
             )
-        elif self.activity.slot_creation == Activity.SLOT_CREATION_STAFF and \
+        elif self.activity_moment.slot_creation == Activity.SLOT_CREATION_STAFF and \
                 self.request.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type'):
             # In a none based slot mode, don't automatically register the creator to the slot
             new_slot_form = RegisterNewSlotForm(
@@ -277,11 +277,21 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
 def get_activity_detail_view(request, *args, **kwargs):
     """ Returns a HTTP response object by calling the required View Class """
     try:
-        if kwargs.get('recurrence_id', None) is None:
+        recurrence_id = kwargs.get('recurrence_id', None)
+        if recurrence_id is None:
             raise Http404("The timestamp was not correctly written")
 
         activity = Activity.objects.get(id=kwargs.get('activity_id', -1))
-        if activity.slot_creation == Activity.SLOT_CREATION_AUTO:
+
+        activity_moment = ActivityMoment.objects.filter(
+            parent_activity=activity,
+            recurrence_id=recurrence_id
+        ).first()
+
+        if activity_moment is None:
+            activity_moment = activity
+
+        if activity_moment.slot_creation == Activity.SLOT_CREATION_AUTO:
             view_class = ActivitySimpleMomentView
         else:
             view_class = ActivityMomentWithSlotsView
@@ -322,7 +332,7 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
         return super(CreateSlotView, self).render_to_response(context, **response_kwargs)
 
     def get_form_kwargs(self):
-        if self.activity.slot_creation == Activity.SLOT_CREATION_STAFF:
+        if self.activity_moment.slot_creation == Activity.SLOT_CREATION_STAFF:
             # In a none based slot mode, don't automatically register the creator to the slot
             initial = {'sign_up': False}
         else:
