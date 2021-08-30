@@ -43,6 +43,8 @@ class MemberUser(User):
 
 # The Member model represents a Member in the membership file
 class Member(models.Model):
+    class Meta:
+        ordering = ['first_name', 'last_name']
 
     class Meta:
         permissions = [
@@ -215,7 +217,7 @@ class Member(models.Model):
 
 class Room(models.Model):
     class Meta:
-        ordering = ['access', 'id']
+        ordering = ['access', 'name']
 
     name = models.CharField(max_length=63)
     access = models.CharField(max_length=15, help_text="How access is provided. E.g. 'Key 12' or 'Campus Card'")
