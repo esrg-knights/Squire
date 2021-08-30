@@ -44,13 +44,11 @@ class MemberUser(User):
 # The Member model represents a Member in the membership file
 class Member(models.Model):
     class Meta:
-        ordering = ['first_name', 'last_name']
-
-    class Meta:
         permissions = [
             ('can_view_membership_information_self',    "[F] Can view their own membership information."),
             ('can_change_membership_information_self',  "[F] Can edit their own membership information."),
         ]
+        ordering = ['first_name', 'last_name']
 
     # The User that is linked to this member
     # NB: Only one user can be linked to one member at the same time!
