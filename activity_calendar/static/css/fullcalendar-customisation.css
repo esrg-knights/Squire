@@ -7,7 +7,8 @@
 }
 
 #calendar {
-    height: 70vh;
+    height: 72vh;
+    min-height: 665px;
     margin: 40px auto;
     padding: 0 10px;
     margin: 0;

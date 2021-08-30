@@ -180,10 +180,7 @@ class TestMemberOwnershipAlterView(ViewValidityMixin, TestCase):
         msg = "Your version of {item} has been updated".format(item=self.ownership.content_object)
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
 
-
-######################################################
-
-
+        
 class TestCatalogueMixin(TestMixinMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     mixin_class = CatalogueMixin
@@ -269,7 +266,7 @@ class TestTypeCatalogue(ViewValidityMixin, TestCase):
         # Ensure that ownerships only contain activated instances
         self.assertIn('can_add_to_group', context.keys())
 
-        # Ensure that the right object types are availlable
+        # Ensure that the right object types are available
         self.assertIn('can_add_to_member', context.keys())
         self.assertFalse(context['can_add_to_member'])
 
