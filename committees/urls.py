@@ -30,6 +30,7 @@ def get_urls():
                 path('', AssociationGroupDetailView.as_view(), name='group_general'),
                 path('update/', AssociationGroupUpdateView.as_view(), name='group_update'),
                 path('members/', AssociationGroupMembersView.as_view(), name='group_members'),
+                path('members/edit/', AssociationGroupMemberUpdateView.as_view(), name='group_members_edit'),
                 path('quicklinks/', include([
                     path('', AssociationGroupQuickLinksView.as_view(), name='group_quicklinks'),
                     path('edit/', AssociationGroupQuickLinksAddOrUpdateView.as_view(), name='group_quicklinks_edit'),

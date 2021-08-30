@@ -13,7 +13,7 @@ from committees.forms import AssociationGroupMembershipForm, DeleteGroupExternal
 from committees.models import AssociationGroup, AssociationGroupMembership, GroupExternalUrl
 from committees.views import AssociationGroupMixin, AssociationGroupDetailView, AssociationGroupQuickLinksView, \
     AssociationGroupQuickLinksAddOrUpdateView, AssociationGroupQuickLinksDeleteView,\
-    AssociationGroupUpdateView, AssociationGroupMembersView
+    AssociationGroupUpdateView, AssociationGroupMembersView, AssociationGroupMemberUpdateView
 
 
 class TestAssociationGroupOverviews(TestCase):
@@ -273,9 +273,8 @@ class TestAssociationGroupMembersView(ViewValidityMixin, TestCase):
 
     def test_class(self):
         self.assertTrue(issubclass(AssociationGroupMembersView, AssociationGroupMixin))
-        self.assertTrue(issubclass(AssociationGroupMembersView, FormView))
+        self.assertTrue(issubclass(AssociationGroupMembersView, TemplateView))
         self.assertEqual(AssociationGroupMembersView.template_name, "committees/group_detail_members.html")
-        self.assertEqual(AssociationGroupMembersView.form_class, AssociationGroupMembershipForm)
 
     def test_successful_get(self):
         response = self.client.get(self.get_base_url(), data={})
@@ -283,8 +282,28 @@ class TestAssociationGroupMembersView(ViewValidityMixin, TestCase):
 
         context = response.context
         self.assertTrue(context['tab_overview'])
+        self.assertIsInstance(context['form'], AssociationGroupMembershipForm)
         self.assertIn('member_links', context.keys())
         self.assertGreater(len(context['member_links']), 0)
+
+
+class TestAssociationGroupMemberUpdateView(ViewValidityMixin, TestCase):
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'committees/associationgroups']
+    base_user_id = 100
+
+    def setUp(self):
+        self.association_group = AssociationGroup.objects.get(id=1)
+        super(TestAssociationGroupMemberUpdateView, self).setUp()
+
+    def get_base_url(self, association_group_id=None):
+        association_group_id = association_group_id or self.association_group.id
+        return reverse('committees:group_members_edit', kwargs={'group_id':association_group_id})
+
+    def test_class(self):
+        self.assertTrue(issubclass(AssociationGroupMemberUpdateView, AssociationGroupMixin))
+        self.assertTrue(issubclass(AssociationGroupMemberUpdateView, PostOnlyFormViewMixin))
+        self.assertTrue(issubclass(AssociationGroupMemberUpdateView, FormView))
+        self.assertEqual(AssociationGroupMemberUpdateView.form_class, AssociationGroupMembershipForm)
 
     def test_post_successful(self):
         # The id here notes that it is an overwrite action
@@ -298,5 +317,5 @@ class TestAssociationGroupMembersView(ViewValidityMixin, TestCase):
         data = {'id': 3}
         self.assertValidPostResponse(
             data=data,
-            redirect_url=self.get_base_url()
+            redirect_url=reverse("committees:group_members", kwargs={'group_id': self.association_group.id})
         )

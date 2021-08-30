@@ -102,7 +102,6 @@
                 </div>
                 <div class="modal-body">
                     {% url "committees:group_quicklinks_edit" group_id=association_group.id as post_url %}
-                    URL {{ post_url }}
                     {% render_form method="post" has_submit_button=False id="submit_form" action=post_url %}
                 </div>
                 <div class="modal-footer">

@@ -111,12 +111,9 @@ class AssociationGroupQuickLinksAddOrUpdateView(AssociationGroupMixin, PostOnlyF
 
     def get_success_message(self, form):
         if not form.cleaned_data['id']:
-            msg = f'{form.instance.name} has been added'
+            return f'{form.instance.name} has been added'
         else:
-            msg = f'{form.instance.name} has been updated'
-        messages.success(self.request, msg)
-
-        return super(AssociationGroupQuickLinksAddOrUpdateView, self).get_success_message(form)
+            return f'{form.instance.name} has been updated'
 
     def get_success_url(self):
         return reverse_lazy("committees:group_quicklinks", kwargs={'group_id': self.association_group.id})
@@ -165,29 +162,29 @@ class AssociationGroupUpdateView(AssociationGroupMixin, FormView):
         return reverse_lazy('committees:group_general', kwargs={'group_id': self.association_group.id})
 
 
-class AssociationGroupMembersView(AssociationGroupMixin, FormView):
+class AssociationGroupMembersView(AssociationGroupMixin, TemplateView):
     template_name = "committees/group_detail_members.html"
-    form_class = AssociationGroupMembershipForm
-
-    def get_form_kwargs(self):
-        form_kwargs = super(AssociationGroupMembersView, self).get_form_kwargs()
-        form_kwargs['association_group'] = self.association_group
-        return form_kwargs
-
-    def form_valid(self, form):
-        instance = form.save()
-        msg = f'{instance.member} has been updated'
-        messages.success(self.request, msg)
-
-        return super(AssociationGroupMembersView, self).form_valid(form)
-
-    def get_success_url(self):
-        return self.request.path
+    form_class = AssociationGroupMembershipForm  # An empty form is displayed on the page
 
     def get_context_data(self, **kwargs):
         return super(AssociationGroupMembersView, self).get_context_data(
+            form=self.form_class(association_group=self.association_group),
             tab_overview=True,
             member_links=self.association_group.associationgroupmembership_set.all(),
             **kwargs)
 
+
+class AssociationGroupMemberUpdateView(AssociationGroupMixin, PostOnlyFormViewMixin, FormView):
+    form_class = AssociationGroupMembershipForm
+
+    def get_form_kwargs(self):
+        form_kwargs = super(AssociationGroupMemberUpdateView, self).get_form_kwargs()
+        form_kwargs['association_group'] = self.association_group
+        return form_kwargs
+
+    def get_success_message(self, form):
+        return f'{form.instance.member} has been updated'
+
+    def get_success_url(self):
+        return reverse_lazy("committees:group_members", kwargs={'group_id': self.association_group.id})
 
