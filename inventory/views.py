@@ -138,7 +138,7 @@ class GroupItemsOverview(GroupMixin, SearchFormMixin, ListView):
         return self.filter_data(ownerships)
 
     def get_context_data(self, **kwargs):
-        # Set a list of availlable content types
+        # Set a list of available content types
         # Used for url creation to add-item pages
         return super(GroupItemsOverview, self).get_context_data(
             content_types=Item.get_item_contenttypes(),
