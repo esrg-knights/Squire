@@ -6,6 +6,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
+from django.http.response import Http404, HttpResponseNotFound
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
@@ -15,6 +16,9 @@ from django.views.decorators.http import require_safe
 from .forms import RegisterForm
 from .managers import TemplateManager
 from .models import MarkdownImage
+
+from dynamic_preferences.registries import global_preferences_registry
+global_preferences = global_preferences_registry.manager()
 
 ##################################################################################
 # Contains render-code for displaying general pages.
@@ -34,8 +38,12 @@ def logoutSuccess(request):
 @require_safe
 @login_required
 def viewNewsletters(request):
+    share_link = global_preferences['newsletter__share_link']
+    if not share_link:
+        raise Http404("Newsletters are unavailable.")
+
     return render(request, 'core/newsletters.html', {
-        'NEWSLETTER_ARCHIVE_URL': settings.NEWSLETTER_ARCHIVE_URL,
+        'NEWSLETTER_ARCHIVE_URL': global_preferences['newsletter__share_link'],
     })
 
 

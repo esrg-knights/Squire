@@ -67,7 +67,7 @@
                     <li>
                         <a class="nav-link" href="{% url 'roleplaying:home' %}">Roleplay</a>
                     </li>
-					{% if user.is_authenticated %}
+					{% if global_preferences.newsletter__share_link and user.is_authenticated %}
 						<li>
 							<a class="nav-link" href="{% url 'core:newsletters' %}">Newsletter</a>
 						</li>
