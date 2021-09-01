@@ -1,11 +1,13 @@
 import csv
 from io import StringIO
 
+from django.contrib.admin.sites import AdminSite
 from django.test import TestCase
+from import_export.formats.base_formats import YAML
 
-from membership_file.models import Room
-
+from membership_file.admin import MemberWithLog
 from membership_file.export import MemberResource
+from membership_file.models import Member, Room
 
 
 class MembershipFileExportTest(TestCase):
@@ -32,3 +34,26 @@ class MembershipFileExportTest(TestCase):
                 self.assertIn(str(Room.objects.get(id=1)), row["accessible_rooms"])
                 self.assertIn(str(Room.objects.get(id=2)), row["accessible_rooms"])
                 break
+
+class ModelAdminExportTest(TestCase):
+    """
+        Tests for the model admin's export functionality
+    """
+    fixtures = ['test_export_members.json']
+
+    def setUp(self):
+        self.model_admin = MemberWithLog(model=Member, admin_site=AdminSite())
+
+    def test_export_filename(self):
+        """ Tests the exported filename """
+        # Everyone (includes both)
+        filename = self.model_admin.get_export_filename(None, Member.objects.all(), YAML())
+        self.assertIn("HAS_DEREGISTERED_MEMBERS", filename)
+
+        # Deregistered members only
+        filename = self.model_admin.get_export_filename(None, Member.objects.filter(is_deregistered=True), YAML())
+        self.assertIn("HAS_DEREGISTERED_MEMBERS", filename)
+
+        # Registered members only
+        filename = self.model_admin.get_export_filename(None, Member.objects.filter(is_deregistered=False), YAML())
+        self.assertNotIn("HAS_DEREGISTERED_MEMBERS", filename)
