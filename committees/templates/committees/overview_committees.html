@@ -1,0 +1,19 @@
+{% extends 'committees/overview_base.html' %}
+
+{% block content %}
+    <h1>Committees</h1>
+    <p>
+        Below are all committees of the Knights. Committees are groups that commit themselves to improving the
+        experience of the Knights. Like any other committee at any other association, members of a committee
+        are expected to actively participate in the committee.
+    </p>
+
+    <div class="row">
+        {% for group in association_groups %}
+            <div class="col-12 col-md-6">
+                {% include "committees/snippet_assoc_group.html" with can_view_members=perms.can_view_committee_members %}
+            </div>
+        {% endfor %}
+    </div>
+
+{% endblock %}

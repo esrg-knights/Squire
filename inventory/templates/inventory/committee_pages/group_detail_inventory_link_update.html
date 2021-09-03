@@ -1,0 +1,17 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load render_form %}
+
+{% block content %}
+    {{ block.super }}
+    <h3>Adjust link to {{ ownership.content_object.name }}</h3>
+    {% render_form method="post" id="submit_form"  has_submit_button=False %}
+
+    <div class="btn-group w-100" role="group" aria-label="Form changing">
+        <a href="{% url "committees:group_inventory" group_id=association_group.id %}"
+           class="btn btn-secondary">Cancel</a>
+        <button form="submit_form" type="submit" class="btn btn-success">
+            Save changes
+        </button>
+    </div>
+
+{% endblock %}

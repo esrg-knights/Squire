@@ -1,0 +1,94 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    {{ block.super }}
+
+    <p>
+        Below is a list of all items owned by this committee
+    </p>
+    <hr>
+
+    <div class="row">
+        <div class="col">
+            {% include "utils/snippets/filter_form_snippet.html" with form=filter_form %}
+        </div>
+        {% if content_types %}
+            <div class="col  d-flex">
+                <div class="row w-100 justify-content-end">
+                    <div class="col-auto">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Go to catalogue
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                {% for content_type in content_types %}
+                                    <a href="{% url "inventory:catalogue" type_id=content_type %}"
+                                       class="dropdown-item">
+                                        {{ content_type }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+
+    {% if ownerships %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                <tr class="">
+                    <th scope="col-auto">Name</th>
+                    <th scope="col-auto">Type</th>
+                    <th scope="col-auto">Added on</th>
+                    <th scope="col-4">Note</th>
+                    <th scope="col-auto">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for ownership in ownerships %}
+                    <tr class="">
+                        <td class="col-auto">
+                            {% if ownership.content_object.image %}
+                                <img style="height: 2em;" src={{ ownership.content_object.image.url }}>
+                            {% endif %}
+                            {{ ownership.content_object.name }}
+                        </td>
+                        <td class="col-auto">
+                            {{ ownership.content_type }}
+                        </td>
+                        <td class="col-auto">
+                            {{ ownership.added_since }}
+                        </td >
+                        <td class="col-4">
+                            {{ ownership.note }}
+                        </td>
+                        <td class="col-auto">
+                            <div class="btn-group" role="group" aria-label="">
+                                <!-- Left open for additional actions -->
+                                <a href="{% url "committees:group_inventory" ownership_id=ownership.id group_id=association_group.id %}"
+                                   class="btn btn-outline-secondary">Edit link</a>
+
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="font-weight-bold">There are no items in the inventory of this committee</p>
+        <div style="height: 10em;"></div>
+    {% endif %}
+
+{% endblock %}

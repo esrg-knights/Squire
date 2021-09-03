@@ -19,6 +19,8 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls import handler403, handler404
 
+from committees.urls import get_urls as committee_urls
+
 urlpatterns = [
     #Change Language helper view
     path('i18n/', include('django.conf.urls.i18n')),
@@ -33,6 +35,8 @@ urlpatterns = [
 
     # Activity Calendar
     path('', include(('activity_calendar.urls', 'activity_calendar'), namespace='activity_calendar')),
+    # Committee pages
+    path('groups/', committee_urls()),
     # Membership File
     path('', include('membership_file.urls')),
     # Redirect all other paths to the core module

@@ -1,0 +1,20 @@
+{% extends 'committees/overview_base.html' %}
+{% load static %}
+{% load to_member %}
+{% load association_group_tags %}
+
+{% block content %}
+    <h1>Boards</h1>
+    <p>
+        Behold the legacy of our current and old board members.
+    </p>
+
+    <div class="row">
+        {% for group in association_groups %}
+            <div class="col-12 col-md-6">
+                {% include "committees/snippet_assoc_group.html" with can_view_members=perms.can_view_board_members %}
+            </div>
+        {% endfor %}
+    </div>
+
+{% endblock %}

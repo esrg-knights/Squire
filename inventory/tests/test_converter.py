@@ -26,4 +26,8 @@ class TestCatalogueConverter(TestCase):
     def test_to_url(self):
         # Test on the contenttype instance
         self.assertEqual(self.converter.to_url(ContentType.objects.get_for_model(MiscellaneousItem)), 'miscellaneousitem')
+        self.assertEqual(self.converter.to_url(MiscellaneousItem), 'miscellaneousitem')
+        with self.assertRaises(KeyError):
+            self.converter.to_url('user')
+
 
