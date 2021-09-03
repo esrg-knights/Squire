@@ -1,11 +1,7 @@
 from django.conf import settings
 from django.core.validators import RegexValidator, MinValueValidator
 from django.db import models
-from django.utils import timezone
 from datetime import date
-
-import datetime
-import re
 
 from core.models import ExtendedUser as User
 
@@ -47,6 +43,7 @@ class Member(models.Model):
         permissions = [
             ('can_view_membership_information_self',    "[F] Can view their own membership information."),
             ('can_change_membership_information_self',  "[F] Can edit their own membership information."),
+            ('can_export_membership_file',              "Can export the membership file.")
         ]
         ordering = ['first_name', 'last_name']
 

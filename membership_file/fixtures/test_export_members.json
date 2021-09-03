@@ -1,0 +1,58 @@
+[
+    {
+       "model": "membership_file.member",
+       "pk": 1,
+       "fields": {
+          "user": null,
+          "is_deregistered": false,
+          "first_name": "John",
+          "tussenvoegsel": "van der",
+          "last_name": "Doe",
+          "student_number": "1234567",
+          "educational_institution": "TUe",
+          "external_card_number": "1234567",
+          "external_card_digits": "",
+          "external_card_cluster": "Luna Cluster 3",
+          "email": "johndoe@example.com",
+          "last_updated_date": "1970-01-01T12:00:00Z",
+          "last_updated_by": null
+       }
+    },
+    {
+        "model": "membership_file.member",
+        "pk": 1,
+        "fields": {
+           "user": null,
+           "is_deregistered": true,
+           "first_name": "Alice",
+           "last_name": "Boberson",
+           "student_number": "1234567",
+           "educational_institution": "TUe",
+           "email": "aliceboerson@example.com",
+           "last_updated_date": "1970-01-01T12:00:00Z",
+           "last_updated_by": null
+        }
+    },
+    {
+        "model": "membership_file.room",
+        "pk": 1,
+        "fields": {
+          "name": "Room 1",
+          "access": "Key 12",
+          "members_with_access": [
+            1
+          ]
+        }
+    },
+    {
+        "model": "membership_file.room",
+        "pk": 2,
+        "fields": {
+          "name": "Room 2",
+          "access": "Campus Card",
+          "members_with_access": [
+            1
+          ]
+        }
+    }
+]

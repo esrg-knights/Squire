@@ -58,7 +58,6 @@ class TemplateTagsTest(TestCase):
 ################################################################
 
 # Tests the editing feature of a user's own membership info.
-@override_settings(MEMBERSHIP_FILE_EXPORT_PATH=None)
 class MemberfileEditTest(TestCase):
     fixtures = TestMemberUser.get_fixtures()
 
@@ -212,7 +211,6 @@ class MemberfileViewTest(TestCase):
 ################################################################
 
 # Tests several member-info-related formatting methods
-@override_settings(MEMBERSHIP_FILE_EXPORT_PATH=None)
 class MemberRenderTest(TestCase):
     def setUp(self):
         # Create a user

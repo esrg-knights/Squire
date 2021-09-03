@@ -258,9 +258,6 @@ LOGOUT_REDIRECT_URL = '/logout/success'
 # when the membership_required-decorator does not receive a fail_url parameter
 MEMBERSHIP_FAIL_URL = '/no_member'
 
-# Where the membership file will be exported to. Can be set to None to disable this functionality
-MEMBERSHIP_FILE_EXPORT_PATH = os.getenv('MEMBERSHIP_FILE_EXPORT_PATH') or os.path.join(BASE_DIR, "output")
-
 ####################################################################
 # Martor settings (Markdown Editor)
 # https://github.com/agusmakmun/django-markdown-editor
@@ -345,9 +342,6 @@ MARKDOWN_IMAGE_MODELS = ('activity_calendar.activity', 'activity_calendar.activi
 APPLICATION_NAME = 'Squire'
 COMMITTEE_ABBREVIATION = 'UUPS'
 COMMITTEE_FULL_NAME = 'UUPS Ultraviolet Programmer Squad'
-
-# Share link to a 3rd party site where the newsletters are (temporarily) archived
-NEWSLETTER_ARCHIVE_URL = os.getenv('NEWSLETTER_ARCHIVE_URL') or None
 
 # The email address that error messages come from, such as those sent to ADMINS and MANAGERS.
 SERVER_EMAIL = f'{APPLICATION_NAME} Error <{APPLICATION_NAME.lower()}-error@kotkt.nl>'
