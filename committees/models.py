@@ -1,7 +1,8 @@
 import datetime
 
-from django.db import models
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
+from django.db import models
 
 from core.fields import MarkdownTextField
 from membership_file.models import Member
@@ -71,7 +72,8 @@ class AssociationGroupMembership(models.Model):
     For another we want additional information stored that is difficult when attempting to override the link between
     user and group.
     """
-    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, blank=True, null=True)
+    external_person = models.CharField(max_length=64, help_text="Person not is not a member", blank=True, null=True)
     group = models.ForeignKey(AssociationGroup, on_delete=models.CASCADE)
     role = models.CharField(max_length=32, blank=True, default="",
                             help_text="Name of the formal role. E.g. treasurer, president")
@@ -82,3 +84,18 @@ class AssociationGroupMembership(models.Model):
     class Meta:
         unique_together = [['member', 'group']]
         ordering = ['-role', 'member__legal_name']
+
+    def clean(self):
+        if not (self.member or self.external_person):
+            raise ValidationError("Either a member or an external person name needs to be defined", code='required')
+        if self.member and self.external_person:
+            raise ValidationError("You can not have both a member and external person connected", code='fields_conflict')
+
+    @property
+    def member_name(self):
+        """ Returns the name of the member, no matter the type of connection """
+        if self.member:
+            return str(self.member)
+        else:
+            return self.external_person
+
