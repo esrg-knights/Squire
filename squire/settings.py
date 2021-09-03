@@ -257,9 +257,6 @@ LOGOUT_REDIRECT_URL = '/logout/success'
 # when the membership_required-decorator does not receive a fail_url parameter
 MEMBERSHIP_FAIL_URL = '/no_member'
 
-# Where the membership file will be exported to. Can be set to None to disable this functionality
-MEMBERSHIP_FILE_EXPORT_PATH = os.getenv('MEMBERSHIP_FILE_EXPORT_PATH') or os.path.join(BASE_DIR, "output")
-
 ####################################################################
 # Martor settings (Markdown Editor)
 # https://github.com/agusmakmun/django-markdown-editor
