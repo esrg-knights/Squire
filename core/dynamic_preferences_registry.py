@@ -4,12 +4,31 @@ from django.contrib.auth.models import Permission
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
-from dynamic_preferences.types import ModelMultipleChoicePreference
+from dynamic_preferences.types import ModelMultipleChoicePreference, StringPreference
 from dynamic_preferences.preferences import Section
 from dynamic_preferences.registries import global_preferences_registry
 
-permissions = Section('permissions')
+##############################################################################
+# NEWSLETTER
+##############################################################################
 
+newsletter = Section('newsletter')
+
+@global_preferences_registry.register
+class NewsletterShareLink(StringPreference):
+    section = newsletter
+    name = 'share_link'
+    verbose_name = "Public Share Link"
+    description = 'A public link towards a page where anyone can view newsletters. For instance, can be a Nextcloud share URL.'
+    help_text = "Leave empty to disable the newsletter page."
+    default = ""
+    required = False
+
+
+##############################################################################
+# PERMISSIONS
+##############################################################################
+permissions = Section('permissions')
 
 # Permissions for everyone (including anonymous users)
 DEFAULT_BASE_PERMISSIONS = ()
