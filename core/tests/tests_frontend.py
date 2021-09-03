@@ -1,9 +1,11 @@
 from django.test import TestCase
 from django.conf import settings
+from django.urls.base import reverse
+from dynamic_preferences.registries import global_preferences_registry
 
 from core.forms import LoginForm, RegisterForm
 from core.models import ExtendedUser as User
-from core.tests.util import check_http_response, TestPublicUser, TestAccountUser
+from core.tests.util import check_http_response, TestPublicUser, TestAccountUser, suppress_warnings
 
 ##################################################################################
 # Test cases for core
@@ -47,6 +49,34 @@ class FrontEndTest(TestCase):
     # Tests if the register-success page can be accessed
     def test_register_success(self):
         check_http_response(self, '/register/success', 'get', TestPublicUser)
+
+    # Tests if the newsletter URL is being rendered properly
+    @suppress_warnings
+    def test_newsletter(self):
+        global_preferences = global_preferences_registry.manager()
+
+        # Disable share URL
+        global_preferences['newsletter__share_link'] = ""
+        check_http_response(self, reverse('core:newsletters'), 'get', TestAccountUser, response_status=404)
+
+        # Enable share URL
+        global_preferences['newsletter__share_link'] = "https://www.example.com"
+        res = check_http_response(self, reverse('core:newsletters'), 'get', TestAccountUser)
+        self.assertContains(res, "https://www.example.com")
+
+    # The "Newsletters" tab should not be present in the base template if there is no share url
+    def test_newsletter_link_in_base_template(self):
+        global_preferences = global_preferences_registry.manager()
+
+        # Disable share URL
+        global_preferences['newsletter__share_link'] = ""
+        res = check_http_response(self, reverse('core:homepage'), 'get', TestAccountUser)
+        self.assertNotContains(res, reverse('core:newsletters'))
+
+        # Enable share URL
+        global_preferences['newsletter__share_link'] = "https://www.example.com"
+        res = check_http_response(self, reverse('core:homepage'), 'get', TestAccountUser)
+        self.assertContains(res, reverse('core:newsletters'))
 
 
 # Tests the login form

@@ -342,9 +342,6 @@ APPLICATION_NAME = 'Squire'
 COMMITTEE_ABBREVIATION = 'UUPS'
 COMMITTEE_FULL_NAME = 'UUPS Ultraviolet Programmer Squad'
 
-# Share link to a 3rd party site where the newsletters are (temporarily) archived
-NEWSLETTER_ARCHIVE_URL = os.getenv('NEWSLETTER_ARCHIVE_URL') or None
-
 # The email address that error messages come from, such as those sent to ADMINS and MANAGERS.
 SERVER_EMAIL = f'{APPLICATION_NAME} Error <{APPLICATION_NAME.lower()}-error@kotkt.nl>'
 
