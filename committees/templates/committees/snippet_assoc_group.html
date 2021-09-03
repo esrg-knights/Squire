@@ -16,7 +16,7 @@
                     {{ group.name }}
                 </h3>
                 <div>
-                    {{ group.short_description }}
+                    {{ group.short_description|default:"" }}
                 </div>
             </div>
         </div>
