@@ -17,7 +17,6 @@ User = get_user_model()
 # Tests the authentication backend responsible for default permissions
 class BaseBackendTest(TestCase):
 
-    @override_settings(MEMBERSHIP_FILE_EXPORT_PATH=None)
     def test_default_permissions(self):
         # Override default permissions with test permissions
         global_preferences = global_preferences_registry.manager()

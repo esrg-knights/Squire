@@ -1,5 +1,10 @@
+from datetime import datetime
+from membership_file.export import MemberResource
 from django.contrib import admin
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
+from import_export.admin import ExportActionMixin
+from import_export.formats.base_formats import CSV
 
 from .forms import AdminMemberForm
 from .models import Member, MemberLog, MemberLogField, Room
@@ -46,8 +51,26 @@ class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
         return format_html("<a href='/admin/membership_file/memberlog/{0}/change/'>View Details</a>", obj.id)
     get_url.short_description = 'Details'
 
-# Ensures that the last_updated_by field is also updated properly from the Django admin panel
-class MemberWithLog(RequestUserToFormModelAdminMixin, HideRelatedNameAdmin):
+class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRelatedNameAdmin):
+    ##############################
+    #  Export functionality
+    resource_class = MemberResource
+    formats = (CSV,)
+
+    def has_export_permission(self, request):
+        return request.user.has_perm('membership_file.can_export_membership_file')
+
+    def get_export_filename(self, request, queryset, file_format):
+        filename_prefix = ""
+        if queryset.filter(is_deregistered=True).exists():
+            filename_prefix = "HAS_DEREGISTERED_MEMBERS-"
+
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        filename = "%sMembershipFile-%s.%s" % (filename_prefix, date_str, file_format.get_extension())
+
+        return filename
+
+    ##############################
     form = AdminMemberForm
     save_on_top = True
 
@@ -83,6 +106,13 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, HideRelatedNameAdmin):
     ]
 
     inlines = [MemberLogReadOnlyInline]
+
+    # Disable bulk delete
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
 
     # Disable deletion if the member was not marked for deletion
     # Disable deletion for the user that marked the member for deletion
