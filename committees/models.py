@@ -73,7 +73,7 @@ class AssociationGroupMembership(models.Model):
     user and group.
     """
     member = models.ForeignKey(Member, on_delete=models.CASCADE, blank=True, null=True)
-    external_person = models.CharField(max_length=64, help_text="Person not is not a member", blank=True, null=True)
+    external_person = models.CharField(max_length=64, help_text="Name of a person who is not a registered member", blank=True)
     group = models.ForeignKey(AssociationGroup, on_delete=models.CASCADE)
     role = models.CharField(max_length=32, blank=True, default="",
                             help_text="Name of the formal role. E.g. treasurer, president")
