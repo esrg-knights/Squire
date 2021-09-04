@@ -56,7 +56,7 @@ class ModelMethodsDSTDependentTests(TestCase):
         """
         query_dt = timezone.make_aware(timezone.datetime(2020, 10, 27, 15, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
 
-        has_occurence_at_query_dt = self.activity.has_occurence_at(query_dt)
+        has_occurence_at_query_dt = self.activity.has_occurrence_at(query_dt)
         self.assertTrue(has_occurence_at_query_dt)
 
     @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2020, 3, 20, 0, 0)))
@@ -69,7 +69,7 @@ class ModelMethodsDSTDependentTests(TestCase):
         """
         query_dt = timezone.make_aware(timezone.datetime(2020, 3, 31, 15, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
 
-        has_occurence_at_query_dt = self.activity.has_occurence_at(query_dt)
+        has_occurence_at_query_dt = self.activity.has_occurrence_at(query_dt)
         self.assertTrue(has_occurence_at_query_dt)
 
     @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2020, 3, 20, 0, 0)))
@@ -87,7 +87,7 @@ class ModelMethodsDSTDependentTests(TestCase):
 
         query_dt = timezone.make_aware(timezone.datetime(2020, 10, 27, 16, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
 
-        has_occurence_at_query_dt = self.activity.has_occurence_at(query_dt)
+        has_occurence_at_query_dt = self.activity.has_occurrence_at(query_dt)
         self.assertTrue(has_occurence_at_query_dt)
 
     @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2020, 10, 20, 0, 0)))
@@ -100,7 +100,7 @@ class ModelMethodsDSTDependentTests(TestCase):
         """
         query_dt = timezone.make_aware(timezone.datetime(2020, 3, 31, 15, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
 
-        has_occurence_at_query_dt = self.activity.has_occurence_at(query_dt)
+        has_occurence_at_query_dt = self.activity.has_occurrence_at(query_dt)
         self.assertTrue(has_occurence_at_query_dt)
 
     @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2020, 10, 20, 0, 0)))
@@ -118,7 +118,7 @@ class ModelMethodsDSTDependentTests(TestCase):
 
         query_dt = timezone.make_aware(timezone.datetime(2020, 10, 27, 16, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
 
-        has_occurence_at_query_dt = self.activity.has_occurence_at(query_dt)
+        has_occurence_at_query_dt = self.activity.has_occurrence_at(query_dt)
         self.assertTrue(has_occurence_at_query_dt)
 
 class EXDATEandRDATEwithDSTTests(TestCase):
@@ -157,15 +157,15 @@ class EXDATEandRDATEwithDSTTests(TestCase):
 
         # 30 December RDATE
         rdate_dt = timezone.make_aware(timezone.datetime(2020, 12, 30, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
-        self.assertTrue(self.activity.has_occurence_at(rdate_dt))
+        self.assertTrue(self.activity.has_occurrence_at(rdate_dt))
 
         # 29 December EXDATE
         exdate_dt = timezone.make_aware(timezone.datetime(2020, 12, 29, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
-        self.assertFalse(self.activity.has_occurence_at(exdate_dt))
+        self.assertFalse(self.activity.has_occurrence_at(exdate_dt))
 
         # 12 January EXDATE
         exdate_dt = timezone.make_aware(timezone.datetime(2021, 1, 12, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
-        self.assertFalse(self.activity.has_occurence_at(exdate_dt))
+        self.assertFalse(self.activity.has_occurrence_at(exdate_dt))
 
     @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2020, 12, 3, 0, 0)))
     def test_CET_RDATE_EXDATE_CET_to_CEST(self, mock_tz):
@@ -204,11 +204,11 @@ class EXDATEandRDATEwithDSTTests(TestCase):
 
         # 17 April RDATE
         rdate_dt = timezone.make_aware(timezone.datetime(2021, 4, 17, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
-        self.assertTrue(self.activity.has_occurence_at(rdate_dt))
+        self.assertTrue(self.activity.has_occurrence_at(rdate_dt))
 
         # 04 April EXDATE
         exdate_dt = timezone.make_aware(timezone.datetime(2021, 4, 4, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
-        self.assertFalse(self.activity.has_occurence_at(exdate_dt))
+        self.assertFalse(self.activity.has_occurrence_at(exdate_dt))
 
     @patch('django.utils.timezone.now', side_effect=mock_now(timezone.datetime(2020, 12, 3, 0, 0)))
     def test_CET_RDATE_EXDATE_CEST_to_CET(self, mock_tz):
@@ -250,11 +250,11 @@ class EXDATEandRDATEwithDSTTests(TestCase):
 
         # 22 October RDATE
         rdate_dt = timezone.make_aware(timezone.datetime(2020, 10, 22, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
-        self.assertTrue(self.activity.has_occurence_at(rdate_dt))
+        self.assertTrue(self.activity.has_occurrence_at(rdate_dt))
 
         # 27 October EXDATE
         exdate_dt = timezone.make_aware(timezone.datetime(2020, 10, 27, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam"))
-        self.assertFalse(self.activity.has_occurence_at(exdate_dt))
+        self.assertFalse(self.activity.has_occurrence_at(exdate_dt))
 
 
 class TestCaseActivityClean(TestCase):
@@ -352,25 +352,38 @@ class ActivityTestCase(TestCase):
             raise AssertionError("ActivityMoments from rrule overwritten database instances or were not obtained")
 
 
-    def test_get_occurence_between(self):
-        """ Tests the get_occurence_between method, returning all activities according to the recurring rules """
+    def test_get_occurrences_starting_between(self):
+        """ Tests the get_occurrences_starting_between method, returning all activities according to the recurring rules """
         after = timezone.datetime(2020, 10, 2, 0, 0, 0, tzinfo=timezone.utc)
         before = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
-        recurrences = self.activity.get_occurences_between(after, before)
+        recurrences = self.activity.get_occurrences_starting_between(after, before)
 
         self.assertEqual(len(recurrences), 2)
         self.assertEqual(recurrences[0], timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc))
         self.assertEqual(recurrences[1], timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc))
 
-    def test_get_occurence_between_exclude(self):
-        """ Tests the get_occurence_between method, confirms that excluded dates are processed accurately """
+    def test_get_occurrences_starting_between_exclude(self):
+        """ Tests the get_occurrences_starting_between method, confirms that excluded dates are processed accurately """
         after = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
         before = timezone.datetime(2020, 10, 23, 0, 0, 0, tzinfo=timezone.utc)
-        recurrences = self.activity.get_occurences_between(after, before)
+        recurrences = self.activity.get_occurrences_starting_between(after, before)
 
         # There is normally an activity on the 21st, but it's excluded so it doesn't happen.
         self.assertEqual(len(recurrences), 0)
 
+    def test_get_occurrences_between_multi_day_activity(self):
+        """ Tests if an occurrence starting before the specified time, but ending after it
+            (thus still partially taking place during the specified period) is included """
+        # Note: Activity has an occurrence on 07-10-21, which ends the next day at 02:00 (UTC)
+        after = timezone.datetime(2020, 10, 8, 0, 0, 0, tzinfo=timezone.utc)
+        before = timezone.datetime(2020, 10, 10, 0, 0, 0, tzinfo=timezone.utc)
+        recurrences = self.activity.get_occurrences_between(after, before)
+
+        self.assertEqual(len(recurrences), 1)
+        self.assertEqual(recurrences[0], timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc))
+
+        # The activity does not START betwee the specified bounds
+        self.assertEqual(len(self.activity.get_occurrences_starting_between(after, before)), 0)
 
 class ActivityMomentTestCase(TestCase):
     fixtures = ['test_users.json', 'test_activity_slots']

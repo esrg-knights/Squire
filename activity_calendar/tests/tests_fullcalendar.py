@@ -25,7 +25,7 @@ class TestCaseFullCalendar(TestCase):
 
     def test_valid_dst_request(self):
         response = self.client.get('/api/calendar/fullcalendar', data={
-            'start': "2020-10-14T00:00:00+02:00",
+            'start': "2020-10-14T08:00:00+02:00",
             'end': "2020-10-28T00:00:00+01:00",
         })
 

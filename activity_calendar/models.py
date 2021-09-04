@@ -118,7 +118,7 @@ class Activity(models.Model):
         """ Retrieves (or creates based on recurrences) all ActivityMoment instances in the given time frame """
         event_start_time = self.start_date.astimezone(timezone.get_current_timezone()).time()
 
-        recurrence_dts = self.get_occurences_between(start_date, end_date, dtstart=self.start_date, inc=True)
+        recurrence_dts = self.get_occurrences_between(start_date, end_date, dtstart=self.start_date)
 
         # Recurrence_dts is a map objects and thus can not later be used in the filter
         processed_recurrences = []
@@ -169,16 +169,37 @@ class Activity(models.Model):
         return bool(self.recurrences.rdates or self.recurrences.rrules)
 
     # Whether this activity has an occurence at a specific date
-    def has_occurence_at(self, date, is_dst_aware=False):
+    def has_occurrence_at(self, date, is_dst_aware=False):
+        """ Whether this activity has an occurrence that starts at the specified time """
         if not self.is_recurring:
             return date == self.start_date
 
         if not is_dst_aware:
             date = util.dst_aware_to_dst_ignore(date, self.start_date, reverse=True)
-        occurences = self.get_occurences_between(date, date, dtstart=self.start_date, inc=True)
+        occurences = self.get_occurrences_starting_between(date, date, dtstart=self.start_date, inc=True)
         return occurences
 
-    def get_occurences_between(self, after, before, inc=False, dtstart=None, dtend=None, cache=False):
+    def get_occurrences_between(self, after, before, inc=False, dtstart=None, dtend=None, cache=False):
+        """
+            Get an iterable of dates, each representing an occurrence of this activity for which
+            any point in that activity's duration occurs between the specified start and end date.
+        """
+        dtstart = dtstart or self.start_date
+        duration = self.end_date - self.start_date
+
+        # We should include activities that start before "after", but also end after "after".
+        #   Any occurrence before (after - duration) can never partially take place inside the
+        #   specified time period, so there's no need to look back even further.
+        after = after - duration
+
+        # Now we can simply check for occurrences that start between the broader bounds
+        return self.get_occurrences_starting_between(after, before, inc=inc, dtstart=dtstart, dtend=dtend, cache=cache)
+
+    def get_occurrences_starting_between(self, after, before, inc=False, dtstart=None, dtend=None, cache=False):
+        """
+            Get an iterable of dates, each representing an occurrence of this activity that starts
+            between the specified start and end date.
+        """
         dtstart = dtstart or self.start_date
 
         # EXDATEs and RDATEs should match the event's start time, but in the recurrence-widget they
