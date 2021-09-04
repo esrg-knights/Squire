@@ -80,6 +80,14 @@
         }
     },
     {
+        "model": "committees.associationgroupmembership",
+        "pk": 5,
+        "fields": {
+            "external_person": "Edward Nigma",
+            "group": 4
+        }
+    },
+    {
         "model": "committees.groupexternalurl",
         "pk": 1,
         "fields": {

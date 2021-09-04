@@ -48,6 +48,10 @@ class BoardOverview(AssocGroupOverview):
     group_type = AssociationGroup.BOARD
     tab_name = 'tab_boards'
 
+    def get_queryset(self):
+        # Reverse order to make sure latest boards are on top
+        return super(BoardOverview, self).get_queryset().order_by('-shorthand')
+
 
 class AssociationGroupMixin:
     """ Mixin that stores the retrieved group from the url group_id keyword. Also verifies user is part of that group """
