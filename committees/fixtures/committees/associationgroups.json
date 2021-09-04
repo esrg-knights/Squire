@@ -1,0 +1,118 @@
+[
+    {
+        "model": "committees.associationgroup",
+        "pk": 1,
+        "fields": {
+            "site_group": 1,
+            "shorthand": "UUPS",
+            "type": "C",
+            "contact_email": "uups@test_kotkt.nl"
+        }
+    },
+    {
+        "model": "committees.associationgroup",
+        "pk": 2,
+        "fields": {
+            "site_group": 2,
+            "shorthand": "ZG",
+            "type": "C",
+            "contact_email": "zg@test_kotkt.nl"
+        }
+    },
+    {
+        "model": "committees.associationgroup",
+        "pk": 3,
+        "fields": {
+            "site_group": 3,
+            "shorthand": "Bestuur16",
+            "type": "B"
+        }
+    },
+    {
+        "model": "auth.group",
+        "pk": 85,
+        "fields": {
+            "name": "Inn drinkers"
+        }
+    },
+    {
+        "model": "committees.associationgroup",
+        "pk": 4,
+        "fields": {
+            "site_group": 85,
+            "shorthand": "ID",
+            "type": "O",
+            "contact_email": "id@test_kotkt.nl"
+        }
+    },
+    {
+        "model": "committees.associationgroupmembership",
+        "pk": 1,
+        "fields": {
+            "member": 1,
+            "group": 1,
+            "role": "Chairman",
+            "title": "Son of Zeus"
+        }
+    },
+    {
+        "model": "committees.associationgroupmembership",
+        "pk": 2,
+        "fields": {
+            "member": 2,
+            "group": 1
+        }
+    },
+    {
+        "model": "committees.associationgroupmembership",
+        "pk": 3,
+        "fields": {
+            "member": 3,
+            "group": 1
+        }
+    },
+    {
+        "model": "committees.associationgroupmembership",
+        "pk": 4,
+        "fields": {
+            "member": 1,
+            "group": 4
+        }
+    },
+    {
+        "model": "committees.associationgroupmembership",
+        "pk": 5,
+        "fields": {
+            "external_person": "Edward Nigma",
+            "group": 4
+        }
+    },
+    {
+        "model": "committees.groupexternalurl",
+        "pk": 1,
+        "fields": {
+            "association_group": 1,
+            "name": "test_link",
+            "url": "https://www.nos.nl"
+        }
+    },
+    {
+        "model": "committees.groupexternalurl",
+        "pk": 2,
+        "fields": {
+            "association_group": 1,
+            "name": "Tweede link",
+            "url": "https://www.wikipedia.com"
+        }
+    },
+    {
+        "model": "committees.groupexternalurl",
+        "pk": 3,
+        "fields": {
+            "association_group": 2,
+            "name": "Andere groep-link",
+            "url": "https://www.twitter.com"
+        }
+    }
+
+]

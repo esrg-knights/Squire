@@ -1,80 +1,59 @@
-import os
+import csv
+from io import StringIO
 
-from django.conf import settings
-from django.test import TestCase, override_settings
+from django.contrib.admin.sites import AdminSite
+from django.test import TestCase
+from import_export.formats.base_formats import YAML
 
-from core.tests.util import suppress_warnings
-from membership_file.models import Member
+from membership_file.admin import MemberWithLog
+from membership_file.export import MemberResource
+from membership_file.models import Member, Room
 
-output_path = os.path.join(settings.BASE_DIR, 'test', 'output')
-output_file = os.path.join(output_path, 'squire_membership_file.csv')
 
-@override_settings(MEMBERSHIP_FILE_EXPORT_PATH=output_path)
 class MembershipFileExportTest(TestCase):
-    fixtures = ['test_users.json', 'test_members.json']
+    """ Tests the structure of the exported membership file """
+    fixtures = ['test_export_members.json']
 
-    def remove_previous_file(self):
-        if os.path.isfile(output_file):
-            try: # If it does, try deleting it
-                os.remove(output_file)
-            except OSError as e: # If auto-deletion fails, notify the user and fail the test
-                self.fail(f"Could not delete file <{output_file}> so the test could not be started. Please delete it manually.")
+    def setUp(self):
+        csv_export = MemberResource().export().csv
+        f = StringIO(csv_export)
+        self.reader = csv.DictReader(f, delimiter=',')
 
-    # Tests if a new file is created when it does not exist
-    @suppress_warnings(logger_name='membership_file')
-    def test_new_member(self):
-        self.remove_previous_file()
+    def test_email_split(self):
+        """ Tests if the email addresses for registered and deregistered members are in different columns """
+        for row in self.reader:
+            if row['is_deregistered']:
+                self.assertEqual(row['email'], "")
+            else:
+                self.assertEqual(row['email_deregistered_member'], "")
 
-        # Create a Member
-        Member.objects.create(**{
-            "first_name": "John",
-            "last_name": "Doe",
-            "date_of_birth": "1970-01-01",
-            "email": "johndoe@example.com",
-            "street": "Main Street",
-            "house_number": "23",
-            "city": "Los Angeles",
-            "country": "USA",
-            "member_since": "2000-01-01",
-            "educational_institution": "LA Police Academy",
-        })
+    def test_accessible_rooms(self):
+        """ Tests if accessible rooms are added correctly """
+        for row in self.reader:
+            if row['id'] == 1:
+                self.assertIn(str(Room.objects.get(id=1)), row["accessible_rooms"])
+                self.assertIn(str(Room.objects.get(id=2)), row["accessible_rooms"])
+                break
 
-        with open(output_file) as f:
-            count = sum(1 for _ in f)
+class ModelAdminExportTest(TestCase):
+    """
+        Tests for the model admin's export functionality
+    """
+    fixtures = ['test_export_members.json']
 
-        # Should contain the header, old members, and the newly added member
-        self.assertEqual(count, 4)
+    def setUp(self):
+        self.model_admin = MemberWithLog(model=Member, admin_site=AdminSite())
 
-        self.remove_previous_file()
+    def test_export_filename(self):
+        """ Tests the exported filename """
+        # Everyone (includes both)
+        filename = self.model_admin.get_export_filename(None, Member.objects.all(), YAML())
+        self.assertIn("HAS_DEREGISTERED_MEMBERS", filename)
 
-    @suppress_warnings(logger_name='membership_file')
-    def test_update_member(self):
-        self.remove_previous_file()
+        # Deregistered members only
+        filename = self.model_admin.get_export_filename(None, Member.objects.filter(is_deregistered=True), YAML())
+        self.assertIn("HAS_DEREGISTERED_MEMBERS", filename)
 
-        # Update a Member
-        member = Member.objects.filter(first_name='Charlie').first()
-        member.first_name = "Charles"
-        member.save()
-
-        with open(output_file) as f:
-            count = sum(1 for _ in f)
-
-        # Should contain the header, old members, and updated member
-        self.assertEqual(count, 3)
-
-        self.remove_previous_file()
-
-    @suppress_warnings(logger_name='membership_file')
-    def test_remove_member(self):
-        self.remove_previous_file()
-
-        # Delete a Member
-        Member.objects.filter(first_name='Charlie').delete()
-
-        with open(output_file) as f:
-            count = sum(1 for _ in f)
-
-        # Should contain the header, old members, not the deleted member
-        self.assertEqual(count, 2)
-
-        self.remove_previous_file()
+        # Registered members only
+        filename = self.model_admin.get_export_filename(None, Member.objects.filter(is_deregistered=False), YAML())
+        self.assertNotIn("HAS_DEREGISTERED_MEMBERS", filename)

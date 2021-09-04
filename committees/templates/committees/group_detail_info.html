@@ -1,0 +1,96 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% load to_member %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+{{ block.super }}
+
+
+
+    <div class="row">
+        <div class="col-12 col-md-8">
+            <div style="position: relative;">
+            <div class="" style="position: absolute; top: 0; right: 0;">
+                <a href="{% url "committees:group_update" group_id=association_group.id %}"
+                   class="btn btn-outline-primary btn-sm">
+                    Edit
+                </a>
+            </div>
+            </div>
+            <div style="min-height: 2em;" class="rendered-md">
+                {{ association_group.instructions.as_rendered }}
+            </div>
+
+
+            <hr>
+            <div class="row">
+                <div class="col font-weight-bold">
+                    Members
+                </div>
+                <div class="col d-flex justify-content-end">
+                    <a href="{% url "committees:group_members" group_id=association_group.id %}"
+                       class="btn btn-outline-primary btn-sm">
+                        Edit
+                    </a>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <tbody>
+                        {% for membership in association_group.associationgroupmembership_set.all %}
+                            <tr>
+                                <td>{{ membership.member }}</td>
+                                <td>{{ membership.role }}</td>
+                                <td><span class="font-italic">{% if membership.title %}"{{ membership.title }}"{% endif %}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-12 col-md-4 order-first order-md-2">
+            <div class="row">
+                <div class="col">
+                    <p class="font-weight-bold mb-0">Quick links:</p>
+                </div>
+                <div class="col d-flex justify-content-end">
+                    <a class="btn btn-outline-primary btn-sm"
+                       href="{% url "committees:group_quicklinks" group_id=association_group.id %}">
+                        Edit
+                    </a>
+                </div>
+            </div>
+
+            {% for link in quicklinks_internal %}
+                <div>
+                    <a href="{{ link.url }}" class="btn btn-outline-info my-1 w-100">
+                        {{ link.name|capfirst }}
+                    </a>
+                </div>
+            {% endfor %}
+            {% if quicklinks_internal and quicklinks_external %}
+                <hr>
+            {% endif %}
+
+            {% for link in quicklinks_external %}
+                <div class="mb-3">
+                    <div><small>{{ link.description|default:'' }}</small></div>
+                    <a href="{{ link.url }}" class="btn btn-sm btn-outline-info my-1 w-100"
+                        target="_blank" rel="noopener noreferrer">
+                        {{ link.name }}
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+
+
+
+{% endblock %}

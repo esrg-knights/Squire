@@ -59,15 +59,20 @@
 						<a class="nav-link" href="{% url 'achievements/all' %}">Achievements</a>
 					</li>
 					<li>
-						<a class="nav-link" href="{% url 'activity_calendar:calendar' %}">Activity Calendar</a>
+						<a class="nav-link" href="{% url 'activity_calendar:calendar' %}">Activities</a>
 					</li>
-                    <li>
-                        <a class="nav-link" href="{% url 'boardgames:home' %}">Boardgames</a>
-                    </li>
-                    <li>
-                        <a class="nav-link" href="{% url 'roleplaying:home' %}">Roleplay</a>
-                    </li>
-					{% if user.is_authenticated %}
+          <li>
+              <a class="nav-link" href="{% url 'boardgames:home' %}">Boardgames</a>
+          </li>
+          <li>
+              <a class="nav-link" href="{% url 'roleplaying:home' %}">Roleplay</a>
+          </li>
+          {% if perms.view_associationgroup %} {# Temporary criteria while we create all commission data #}
+            <li>
+                <a class="nav-link" href="{% url 'committees:home' %}">Committees</a>
+            </li>
+          {% endif %}
+					{% if global_preferences.newsletter__share_link and user.is_authenticated %}
 						<li>
 							<a class="nav-link" href="{% url 'core:newsletters' %}">Newsletter</a>
 						</li>
@@ -111,6 +116,11 @@
 				</ul>
 			</div>
 		</nav>
+
+        {% block local-nav-bar %}
+            {# Space for navigation on local sections e.g. tabs in associatingroups overview #}
+
+        {% endblock %}
 
 		<main class="mb-5 px-3">
 			<div id='mainContent'>

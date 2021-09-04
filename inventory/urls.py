@@ -19,7 +19,12 @@ class CatalogueConverter:
         raise ValueError(f"There was no Item with name {value}")
 
     def to_url(self, value):
-        return slugify(value.model_class().__name__)
+        if isinstance(value, ContentType):
+            return slugify(value.model_class().__name__)
+        elif isinstance(value, type) and issubclass(value, Item):
+            return slugify(value.__name__)
+        else:
+            raise KeyError("Given value '{}' is not of a valid type".format(value))
 
 register_converter(CatalogueConverter, 'cat_item')
 
@@ -36,12 +41,6 @@ urlpatterns = [
             path('take_home/', MemberItemRemovalFormView.as_view(), name='member_take_home'),
             path('give_out/', MemberItemLoanFormView.as_view(), name='member_loan_out'),
             path('edit_note/', MemberOwnershipAlterView.as_view(), name='owner_link_edit'),
-        ])),
-    ])),
-    path('committee/<int:group_id>/', include([
-        path('items/', GroupItemsOverview.as_view(), name='committee_items'),
-        path('<int:ownership_id>/', include([
-            path('edit_note/', GroupItemLinkUpdateView.as_view(), name='owner_link_edit'),
         ])),
     ])),
 

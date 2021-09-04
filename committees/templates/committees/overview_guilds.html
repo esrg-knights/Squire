@@ -1,0 +1,21 @@
+{% extends 'committees/overview_base.html' %}
+{% load static %}
+{% load to_member %}
+{% load association_group_tags %}
+
+{% block content %}
+    <h1>Order</h1>
+    <p>
+        An order is a group within the association that is united for a shared interest. Wear it like a badge of
+        honour to show what your interests are.
+    </p>
+
+    <div class="row">
+        {% for group in association_groups %}
+            <div class="col-12 col-md-6">
+                {% include "committees/snippet_assoc_group.html" with can_view_members=perms.can_view_order_members %}
+            </div>
+        {% endfor %}
+    </div>
+
+{% endblock %}
