@@ -52,7 +52,6 @@ def is_alt_start_before_normal_occurrence(context):
     normally take place """
     activity_moment = context['activity_moment']
     assert activity_moment.start_date is not None
-    print(activity_moment.start_date < activity_moment.recurrence_id)
     return activity_moment.start_date < activity_moment.recurrence_id
 
 @register.inclusion_tag("activity_calendar/slot_blocks/register_button.html", takes_context=True)

@@ -355,7 +355,7 @@ class ActivityMomentForm(MarkdownForm):
                 field.widget.placeholder = getattr(self.instance.parent_activity, attr_name, None)
             elif key == 'start_date':
                 # Special lookup for alternative start/end time
-                start_humanized = date_format(localtime(self.instance.recurrence_id), "l j E H:i")
+                start_humanized = date_format(localtime(self.instance.recurrence_id), "Y-m-d H:i")
                 field.widget.attrs['placeholder'] = start_humanized
             elif key == 'end_date':
                 duration_humanized = timeuntil(self.instance.parent_activity.end_date,

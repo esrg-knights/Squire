@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import timezone
+from django.utils.formats import date_format
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 from recurrence.fields import RecurrenceField
@@ -400,6 +401,19 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         # Add the activity's normal duration to the event's start time
         normal_duration = self.parent_activity.end_date - self.parent_activity.start_date
         return self.start_time + normal_duration
+
+    def clean_fields(self, exclude=None):
+        super().clean_fields(exclude=exclude)
+        errors = {}
+        exclude = exclude or []
+
+        if 'end_date' not in exclude and self.end_date is not None:
+            if self.end_date <= self.start_time:
+                errors.update({'end_date': "End date must be later than this occurrence's start date (" +
+                    date_format(self.start_time, "Y-m-d, H:i") + ")"})
+
+        if errors or True:
+            raise ValidationError(errors)
 
     def get_subscribed_users(self):
         """ Returns a queryest of all USERS (not participants) in this activity moment """
