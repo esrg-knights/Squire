@@ -385,6 +385,49 @@ class ActivityTestCase(TestCase):
         # The activity does not START betwee the specified bounds
         self.assertEqual(len(list(self.activity.get_occurrences_starting_between(after, before))), 0)
 
+    def test_get_occurrences_between_extra_activitymoment(self):
+        """
+            Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
+            but with a local_start_date between these same bounds, is included in the result.
+        """
+        self.activity_moment = ActivityMoment.objects.get(
+            parent_activity=self.activity,
+            recurrence_id=timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc),
+        )
+        # Occur almost a week later instead
+        self.activity_moment.local_start_date = timezone.datetime(2020, 10, 13, 14, 0, 0, tzinfo=timezone.utc)
+        self.activity_moment.save()
+
+        after = timezone.datetime(2020, 10, 9, 0, 0, 0, tzinfo=timezone.utc)
+        before = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
+        recurrences = list(self.activity.get_occurrences_starting_between(after, before))
+
+        self.assertEqual(len(recurrences), 2)
+        # Note that the returned recurrence_list contains the original recurrence_id and
+        #   NOT the modified start time.
+        self.assertIn(timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc), recurrences)
+        self.assertIn(timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc), recurrences)
+
+    def test_get_occurrences_between_surplus_activitymoment(self):
+        """
+            Tests if an occurrence with a recurrence_id inside the bounds of get_occurrences_between,
+            but with a local_start_date outside these same bounds, is excluded from the result.
+        """
+        self.activity_moment = ActivityMoment.objects.get(
+            parent_activity=self.activity,
+            recurrence_id=timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc),
+        )
+        # Occur a week later instead
+        self.activity_moment.local_start_date = timezone.datetime(2020, 10, 18, 14, 0, 0, tzinfo=timezone.utc)
+        self.activity_moment.save()
+
+        after = timezone.datetime(2020, 10, 2, 0, 0, 0, tzinfo=timezone.utc)
+        before = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
+        recurrences = list(self.activity.get_occurrences_starting_between(after, before))
+
+        self.assertEqual(len(recurrences), 1)
+        self.assertIn(timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc), recurrences)
+
 class ActivityMomentTestCase(TestCase):
     fixtures = ['test_users.json', 'test_activity_slots']
 
@@ -410,6 +453,61 @@ class ActivityMomentTestCase(TestCase):
         self.assertEqual(moment.description, "Unique description")
         self.assertEqual(moment.location, "Different location")
         self.assertEqual(moment.max_participants, 186)
+
+    def test_overwrites_start_date(self):
+        """ Tests if the start_date can be changed """
+        activity_moment: ActivityMoment = ActivityMoment.objects.get(id=1)
+
+        self.assertEqual(activity_moment.start_date, activity_moment.recurrence_id)
+
+        new_date = timezone.datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        activity_moment.local_start_date = new_date
+        self.assertEqual(activity_moment.start_date, new_date)
+
+    def test_overwrites_end_date(self):
+        """ Tests if the end_date can be changed """
+        activity_moment: ActivityMoment = ActivityMoment.objects.get(id=1)
+        cur_date = timezone.datetime(2020, 8, 14, 21, 0, 0, tzinfo=timezone.utc)
+        self.assertEqual(activity_moment.end_date, cur_date)
+
+        new_date = timezone.datetime(2020, 8, 15, 23, 30, 0, tzinfo=timezone.utc)
+        activity_moment.local_end_date = new_date
+        self.assertEqual(activity_moment.end_date, new_date)
+
+    def test_clean_end_date(self):
+        """ Tests if the model is properly cleaned """
+        # End dates cannot occur before the start date
+        # #####
+        activity_moment: ActivityMoment = ActivityMoment.objects.get(id=1)
+
+        # Should not break without an end date
+        activity_moment.full_clean()
+        activity_moment.local_start_date = timezone.datetime(2020, 8, 15, 19, 0, 0, tzinfo=timezone.utc)
+        activity_moment.full_clean()
+
+        # Should throw an error with an end date
+        new_date = timezone.datetime(2020, 8, 15, 19, 0, 0, tzinfo=timezone.utc)
+        activity_moment.local_end_date = new_date
+
+        # end_date = start_date -> invalid
+        with self.assertRaisesMessage(ValidationError, "End date must be later than this occurrence's start date"):
+            activity_moment.full_clean()
+
+        # Should throw an error with an end date, but without a start_date
+        new_date = timezone.datetime(2020, 8, 14, 18, 30, 0, tzinfo=timezone.utc)
+        activity_moment.local_end_date = new_date
+        activity_moment.local_start_date = None
+
+        # end_date < start_date -> invalid
+        with self.assertRaisesMessage(ValidationError, "End date must be later than this occurrence's start date"):
+            activity_moment.full_clean()
+
+        # Should not break if end_date > start_date
+        activity_moment.local_end_date = activity_moment.recurrence_id + timezone.timedelta(hours=3)
+        activity_moment.full_clean()
+        activity_moment.local_start_date = activity_moment.recurrence_id + timezone.timedelta(hours=2)
+        activity_moment.full_clean()
+
 
     def test_get_subscribed_users(self):
         """ Test that get subscribed users returns the correct users """
@@ -445,6 +543,7 @@ class ActivityMomentTestCase(TestCase):
     def test_is_open_for_subscriptions(self, mock_tz):
         self.assertFalse(ActivityMoment.objects.get(id=3).is_open_for_subscriptions())
         self.assertTrue(ActivityMoment.objects.get(id=1).is_open_for_subscriptions())
+
 
 
 

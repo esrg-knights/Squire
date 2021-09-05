@@ -74,18 +74,18 @@
                                 {% endif %}
                             </p>
                             <p>
-                                {% if activity_moment.start_date is not None %}
-                                    <small class="text-muted">
-                                        {% if activity_moment.recurrence_id.date != activity_moment.start_date.date %}
+                                {% if activity_moment.local_start_date is not None %}
+                                    <small id="activity-alt-start-message" class="text-muted">
+                                        {% if activity_moment.recurrence_id.date != activity_moment.local_start_date.date %}
                                             Replacement for the same activity on {{ activity_moment.recurrence_id|date:"l j E (H:i)" }}
                                         {% else %}
                                             Starts
                                             {% is_alt_start_before_normal_occurrence as is_alt_start_before_normal_occurrence %}
                                             {% if is_alt_start_before_normal_occurrence %}
-                                                {{ activity_moment.recurrence_id|timeuntil:activity_moment.start_date }}
+                                                {{ activity_moment.recurrence_id|timeuntil:activity_moment.local_start_date }}
                                                 earlier
                                             {% else %}
-                                                {{ activity_moment.recurrence_id|timesince:activity_moment.start_date }}
+                                                {{ activity_moment.recurrence_id|timesince:activity_moment.local_start_date }}
                                                 later
                                             {% endif %}
                                             than normal!

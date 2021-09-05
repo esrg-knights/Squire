@@ -51,8 +51,8 @@ def is_alt_start_before_normal_occurrence(context):
     """ Returns whether the alternative start time is before the date at which the occurrence would
     normally take place """
     activity_moment = context['activity_moment']
-    assert activity_moment.start_date is not None
-    return activity_moment.start_date < activity_moment.recurrence_id
+    assert activity_moment.local_start_date is not None
+    return activity_moment.local_start_date < activity_moment.recurrence_id
 
 @register.inclusion_tag("activity_calendar/slot_blocks/register_button.html", takes_context=True)
 def register_button(context, slot):
