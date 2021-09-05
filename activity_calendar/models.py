@@ -351,19 +351,33 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     class Meta:
         unique_together = ['parent_activity', 'recurrence_id']
         # Define the fields that can be locally be overwritten
-        copy_fields = ['title', 'description', 'location', 'max_participants', 'subscriptions_required', 'slot_creation', 'private_slot_locations']
+        copy_fields = [
+            'title', 'description', 'location', 'max_participants', 'subscriptions_required',
+            'slot_creation', 'private_slot_locations']
         # Define fields that are instantly looked for in the parent_activity
         # If at any point in the future these must become customisable, one only has to move the field name to the
         # copy_fields attribute
         link_fields = ['image']
 
+    # Alternative start/end date of the activity. If left empty, matches the start/end time
+    #   of this OCCURRENCE.
+    # Note that we're not doing this through copy_fields, as there is no reason to make a lookup
+    #   the start/end date of the parent activity.
+    start_date = models.DateTimeField(blank=True, null=True)
+    end_date = models.DateTimeField(blank=True, null=True)
+
     @property
     def start_time(self):
-        return self.recurrence_id
+        return self.start_date or self.recurrence_id
 
     @property
     def end_time(self):
-        return self.recurrence_id + (self.parent_activity.end_date - self.parent_activity.start_date)
+        if self.end_date is not None:
+            return self.end_date
+
+        # Add the activity's normal duration to the event's start time
+        normal_duration = self.parent_activity.end_date - self.parent_activity.start_date
+        return self.start_time + normal_duration
 
     def get_subscribed_users(self):
         """ Returns a queryest of all USERS (not participants) in this activity moment """
@@ -419,7 +433,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         })
 
     def __str__(self):
-        return f"{self.title} @ {self.recurrence_id}"
+        return f"{self.title} @ {self.start_time}"
 
 
 class ActivitySlot(models.Model):
