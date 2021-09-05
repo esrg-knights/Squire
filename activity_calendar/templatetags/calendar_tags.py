@@ -46,6 +46,14 @@ def opens_in_future(context):
     open_date = activity_moment.start_time - activity_moment.parent_activity.subscriptions_open
     return timezone.now() < open_date
 
+@register.simple_tag(takes_context=True)
+def is_alt_start_before_normal_occurrence(context):
+    """ Returns whether the alternative start time is before the date at which the occurrence would
+    normally take place """
+    activity_moment = context['activity_moment']
+    assert activity_moment.start_date is not None
+    print(activity_moment.start_date < activity_moment.recurrence_id)
+    return activity_moment.start_date < activity_moment.recurrence_id
 
 @register.inclusion_tag("activity_calendar/slot_blocks/register_button.html", takes_context=True)
 def register_button(context, slot):

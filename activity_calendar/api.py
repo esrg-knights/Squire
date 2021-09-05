@@ -28,6 +28,7 @@ def get_json_from_activity_moment(activity_moment, user=None):
         'isSubscribed': activity_moment.get_user_subscriptions(user).exists(),
         'canSubscribe': activity_moment.is_open_for_subscriptions(),
         'start': activity_moment.start_time.isoformat(),
+        'recurrence_id': activity_moment.recurrence_id.isoformat(),
         'end': activity_moment.end_time.isoformat(),
         'allDay': False,
     }

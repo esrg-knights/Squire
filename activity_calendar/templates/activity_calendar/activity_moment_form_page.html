@@ -74,6 +74,12 @@
                         <!-- Activity starts and ends on a different day -->
                         {{ activity_moment.start_time|date:"j E H:i" }} - {{ activity_moment.end_time|date:"j E H:i" }}
                     {% endif %}
+                    <br>
+                    <small class="text-muted">
+                        {% if activity_moment.start_date is not None %}
+                            Normally occurs on {{ activity_moment.recurrence_id|date:"l j E (H:i)" }}
+                        {% endif %}
+                    </small>
                 </p>
             </div>
         </div>
