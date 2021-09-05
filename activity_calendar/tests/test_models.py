@@ -356,7 +356,7 @@ class ActivityTestCase(TestCase):
         """ Tests the get_occurrences_starting_between method, returning all activities according to the recurring rules """
         after = timezone.datetime(2020, 10, 2, 0, 0, 0, tzinfo=timezone.utc)
         before = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
-        recurrences = self.activity.get_occurrences_starting_between(after, before)
+        recurrences = list(self.activity.get_occurrences_starting_between(after, before))
 
         self.assertEqual(len(recurrences), 2)
         self.assertEqual(recurrences[0], timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc))
@@ -366,7 +366,7 @@ class ActivityTestCase(TestCase):
         """ Tests the get_occurrences_starting_between method, confirms that excluded dates are processed accurately """
         after = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
         before = timezone.datetime(2020, 10, 23, 0, 0, 0, tzinfo=timezone.utc)
-        recurrences = self.activity.get_occurrences_starting_between(after, before)
+        recurrences = list(self.activity.get_occurrences_starting_between(after, before))
 
         # There is normally an activity on the 21st, but it's excluded so it doesn't happen.
         self.assertEqual(len(recurrences), 0)
@@ -377,13 +377,13 @@ class ActivityTestCase(TestCase):
         # Note: Activity has an occurrence on 07-10-21, which ends the next day at 02:00 (UTC)
         after = timezone.datetime(2020, 10, 8, 0, 0, 0, tzinfo=timezone.utc)
         before = timezone.datetime(2020, 10, 10, 0, 0, 0, tzinfo=timezone.utc)
-        recurrences = self.activity.get_occurrences_between(after, before)
+        recurrences = list(self.activity.get_occurrences_between(after, before))
 
         self.assertEqual(len(recurrences), 1)
         self.assertEqual(recurrences[0], timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc))
 
         # The activity does not START betwee the specified bounds
-        self.assertEqual(len(self.activity.get_occurrences_starting_between(after, before)), 0)
+        self.assertEqual(len(list(self.activity.get_occurrences_starting_between(after, before))), 0)
 
 class ActivityMomentTestCase(TestCase):
     fixtures = ['test_users.json', 'test_activity_slots']

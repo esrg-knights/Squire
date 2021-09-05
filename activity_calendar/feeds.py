@@ -119,20 +119,12 @@ class CESTEventFeed(ICalFeed):
 
     def item_start_datetime(self, item):
         # Convert to Europe/Amsterdam to ensure daylight saving time is accounted for in recurring events
-        if isinstance(item, Activity):
-            start_dt = item.start_date
-        elif isinstance(item, ActivityMoment):
-            start_dt = item.start_time
-
+        start_dt = item.start_date
         return start_dt.astimezone(timezone.get_current_timezone())
 
     def item_end_datetime(self, item):
         # Convert to Europe/Amsterdam to ensure daylight saving time is accounted for in recurring events
-        if isinstance(item, Activity):
-            end_dt = item.end_date
-        elif isinstance(item, ActivityMoment):
-            end_dt = item.end_time
-
+        end_dt = item.end_date
         return end_dt.astimezone(timezone.get_current_timezone())
 
     def item_created(self, item):

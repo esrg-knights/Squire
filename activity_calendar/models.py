@@ -180,7 +180,7 @@ class Activity(models.Model):
         if not is_dst_aware:
             date = util.dst_aware_to_dst_ignore(date, self.start_date, reverse=True)
         occurences = self.get_occurrences_starting_between(date, date, dtstart=self.start_date, inc=True)
-        return occurences
+        return list(occurences)
 
     def get_occurrences_between(self, after, before, inc=False, dtstart=None, dtend=None, cache=False):
         """
@@ -223,8 +223,8 @@ class Activity(models.Model):
 
         # Find all activity_moments whose recurrence_id is inside the bounds, but whose
         #   alternative start_date is NOT between these bounds
-        alt_start_outside_bounds = Q(start_date__lte=after, recurrence_id__gt=after, recurrence_id__lt=before) \
-            | Q(start_date__gte=before, recurrence_id__gt=after, recurrence_id__lt=before)
+        alt_start_outside_bounds = Q(local_start_date__lte=after, recurrence_id__gt=after, recurrence_id__lt=before) \
+            | Q(local_start_date__gte=before, recurrence_id__gt=after, recurrence_id__lt=before)
         surplus_activity_moments = self.activitymoment_set.filter(alt_start_outside_bounds) \
             .values_list('recurrence_id', flat=True)
 
@@ -233,8 +233,8 @@ class Activity(models.Model):
 
         # Find all activity_moments that have an alternative start_date between the bounds, but whose
         #   recurrence_id is NOT between these bounds
-        alt_start_inside_bounds = Q(recurrence_id__lte=after, start_date__gt=after, start_date__lt=before) \
-            | Q(recurrence_id__gte=before, start_date__gt=after, start_date__lt=before)
+        alt_start_inside_bounds = Q(recurrence_id__lte=after, local_start_date__gt=after, local_start_date__lt=before) \
+            | Q(recurrence_id__gte=before, local_start_date__gt=after, local_start_date__lt=before)
         extra_activity_moments = self.activitymoment_set.filter(alt_start_inside_bounds) \
             .values_list("recurrence_id", flat=True)
 
@@ -386,33 +386,33 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     #   of this OCCURRENCE.
     # Note that we're not doing this through copy_fields, as there is no reason to make a lookup
     #   the start/end date of the parent activity.
-    start_date = models.DateTimeField(blank=True, null=True)
-    end_date = models.DateTimeField(blank=True, null=True)
+    local_start_date = models.DateTimeField(blank=True, null=True)
+    local_end_date = models.DateTimeField(blank=True, null=True)
 
     @property
-    def start_time(self):
-        return self.start_date or self.recurrence_id
+    def start_date(self):
+        return self.local_start_date or self.recurrence_id
 
     @property
-    def end_time(self):
-        if self.end_date is not None:
-            return self.end_date
+    def end_date(self):
+        if self.local_end_date is not None:
+            return self.local_end_date
 
         # Add the activity's normal duration to the event's start time
         normal_duration = self.parent_activity.end_date - self.parent_activity.start_date
-        return self.start_time + normal_duration
+        return self.start_date + normal_duration
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
         errors = {}
         exclude = exclude or []
 
-        if 'end_date' not in exclude and self.end_date is not None:
-            if self.end_date <= self.start_time:
-                errors.update({'end_date': "End date must be later than this occurrence's start date (" +
-                    date_format(self.start_time, "Y-m-d, H:i") + ")"})
+        if 'local_end_date' not in exclude and self.local_end_date is not None:
+            if self.local_end_date <= self.start_date:
+                errors.update({'local_end_date': "End date must be later than this occurrence's start date (" +
+                    date_format(self.start_date, "Y-m-d, H:i") + ")"})
 
-        if errors or True:
+        if errors:
             raise ValidationError(errors)
 
     def get_subscribed_users(self):
@@ -469,7 +469,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         })
 
     def __str__(self):
-        return f"{self.title} @ {self.start_time}"
+        return f"{self.title} @ {self.start_date}"
 
 
 class ActivitySlot(models.Model):
@@ -534,7 +534,7 @@ class ActivitySlot(models.Model):
             if self.recurrence_id is None:
                 errors.update({'recurrence_id': 'Must set a date/time when this activity takes place'})
             else:
-                if not self.parent_activity.has_occurence_at(self.recurrence_id):
+                if not self.parent_activity.has_occurrence_at(self.recurrence_id):
                     # Bounce activities if it is not fitting with the recurrence scheme
                     errors.update({'recurrence_id': 'Parent activity has no occurence at the given date/time'})
 

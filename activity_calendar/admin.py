@@ -53,7 +53,7 @@ admin.site.register(Activity, ActivityAdmin)
 class ActivityMomentAdmin(MarkdownImageInlineAdmin):
     form = ActivityMomentAdminForm
 
-    list_filter = ['recurrence_id', 'start_date']
+    list_filter = ['recurrence_id', 'local_start_date']
     date_hierarchy = 'recurrence_id'
     search_fields = ['local_title', 'parent_activity__title']
 
@@ -68,7 +68,7 @@ class ActivityMomentAdmin(MarkdownImageInlineAdmin):
         return False
     activity_moment_has_changes.boolean = True
     activity_moment_has_changes.short_description = 'Is tweaked'
-    list_display = ["title", "recurrence_id", "start_date", "last_updated", activity_moment_has_changes]
+    list_display = ["title", "recurrence_id", "local_start_date", "last_updated", activity_moment_has_changes]
 
 
 

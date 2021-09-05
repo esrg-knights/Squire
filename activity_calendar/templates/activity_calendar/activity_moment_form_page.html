@@ -11,7 +11,7 @@
     Edit - {{ activity_moment.title }}
 {% endblock og-title %}
 {% block og-description %}
-    Edit occurrence taking place on {{ activity_moment.start_time|date:"l j E H:i" }}
+    Edit occurrence taking place on {{ activity_moment.start_date|date:"l j E H:i" }}
 {% endblock og-description %}
 
 {% block content-frame-class %}
@@ -67,12 +67,12 @@
         <div class="col align-self-center">
             <div class='nospace'>
                 <p id="event-date">
-                    {% if activity_moment.start_time.date == activity_moment.end_time.date %}
+                    {% if activity_moment.start_date.date == activity_moment.end_date.date %}
                         <!-- Activity starts and ends on the same day -->
-                        {{ activity_moment.start_time|date:"l j E H:i" }} - {{ activity_moment.end_time|date:"H:i" }}
+                        {{ activity_moment.start_date|date:"l j E H:i" }} - {{ activity_moment.end_date|date:"H:i" }}
                     {% else %}
                         <!-- Activity starts and ends on a different day -->
-                        {{ activity_moment.start_time|date:"j E H:i" }} - {{ activity_moment.end_time|date:"j E H:i" }}
+                        {{ activity_moment.start_date|date:"j E H:i" }} - {{ activity_moment.end_date|date:"j E H:i" }}
                     {% endif %}
                     <br>
                     <small class="text-muted">
