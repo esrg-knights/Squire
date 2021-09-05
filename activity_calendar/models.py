@@ -1,10 +1,12 @@
 import copy
 import datetime
+from itertools import chain
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
+from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -216,7 +218,27 @@ class Activity(models.Model):
         # the recurrences package does not work with DST. Since we want our activities
         #   to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00
         #   in winter, and vice versa), we have to account for the difference here.
-        occurences = list(map(lambda occurence: util.dst_aware_to_dst_ignore(occurence, dtstart), occurences))
+        occurences = map(lambda occurence: util.dst_aware_to_dst_ignore(occurence, dtstart), occurences)
+
+        # Find all activity_moments whose recurrence_id is inside the bounds, but whose
+        #   alternative start_date is NOT between these bounds
+        alt_start_outside_bounds = Q(start_date__lte=after, recurrence_id__gt=after, recurrence_id__lt=before) \
+            | Q(start_date__gte=before, recurrence_id__gt=after, recurrence_id__lt=before)
+        surplus_activity_moments = self.activitymoment_set.filter(alt_start_outside_bounds) \
+            .values_list('recurrence_id', flat=True)
+
+        # Get rid of these surplus activity_moments
+        occurences = filter(lambda occ: occ not in surplus_activity_moments, occurences)
+
+        # Find all activity_moments that have an alternative start_date between the bounds, but whose
+        #   recurrence_id is NOT between these bounds
+        alt_start_inside_bounds = Q(recurrence_id__lte=after, start_date__gt=after, start_date__lt=before) \
+            | Q(recurrence_id__gte=before, start_date__gt=after, start_date__lt=before)
+        extra_activity_moments = self.activitymoment_set.filter(alt_start_inside_bounds) \
+            .values_list("recurrence_id", flat=True)
+
+        # Add these extra activity_moments
+        occurences = chain(occurences, extra_activity_moments)
 
         return occurences
 
