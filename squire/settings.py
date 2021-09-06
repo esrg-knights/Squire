@@ -107,6 +107,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'dynamic_preferences.processors.global_preferences',
+                'membership_file.processor.member_context',
             ],
         },
     },
