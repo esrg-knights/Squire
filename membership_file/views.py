@@ -10,7 +10,7 @@ from django.views.decorators.http import require_safe
 
 from .forms import MemberForm
 from .models import Member
-from .util import MembershipRequiredMixin, membership_required, request_member
+from .util import MembershipRequiredMixin, membership_required
 
 from core.views import TemplateManager
 
@@ -74,7 +74,6 @@ class MemberChangeView(MemberMixin, PermissionRequiredMixin, UpdateView):
 @require_safe
 @membership_required
 @permission_required('membership_file.can_view_membership_information_self', raise_exception=True)
-@request_member
 def viewGroups(request):
     tData = {'member': request.user.get_member()}
     return render(request, 'membership_file/member_group_overview.html', tData)

@@ -6,8 +6,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 
 from core.models import ExtendedUser as User
-from membership_file.models import MemberUser
-from membership_file.util import membership_required, request_member
+from membership_file.util import membership_required
 
 
 ##################################################################################
@@ -102,30 +101,3 @@ class MembershipRequiredDecoratorTest(TestCase):
                 'login_url':            "/login_url",
             },
             redirect_url=f"/login_url?redirect_field_name=/rand", factory=self.factory)
-
-
-# Tests the request_member decorator
-class RequestMemberDecoratorTest(TestCase):
-    fixtures = ['test_users.json', 'test_members.json']
-
-    def setUp(self):
-        self.member_user = User.objects.filter(username="test_member").first()
-        self.factory = RequestFactory()
-
-    # Tests if request.user becomes a MemberUser if logged in users make a request
-    def test_authenticated_request(self):
-        def view(request):
-            # Requesting User should be transformed to a MemberUser
-            self.assertIsInstance(request.user, MemberUser)
-            return HttpResponse()
-
-        test_decorator(self, request_member, user=self.member_user, factory=self.factory, view=view)
-
-    # Tests if request.user stays an AnonymousUser if a non-logged in user makes a request
-    def test_anonymous_request(self):
-        def view(request):
-            # Requesting User should stay an AnonymousUser
-            self.assertIsInstance(request.user, AnonymousUser)
-            return HttpResponse()
-
-        test_decorator(self, request_member, factory=self.factory, view=view)

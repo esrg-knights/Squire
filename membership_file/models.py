@@ -5,6 +5,8 @@ from datetime import date
 
 from core.models import ExtendedUser as User
 
+from membership_file.util import user_to_member
+
 ##################################################################################
 # Models related to the Membership File-functionality of the application.
 # @since 06 JUL 2019
@@ -12,28 +14,13 @@ from core.models import ExtendedUser as User
 
 # Display method for a user that may also be a member
 def get_member_display_name(user):
-    member = MemberUser(user.id).get_member()
+    member = user_to_member(user)
     if member is not None:
         return member.get_full_name()
-    return user.get_simple_display_name()
+    return user.get_full_name()
 
 # Users should be displayed by their names according to the membership file (if they're a member)
 User.set_display_name_method(get_member_display_name)
-
-# Provides additional methods on the ExtendedUser model
-class MemberUser(User):
-    class Meta:
-        proxy = True
-
-    # Returns the associated member to a given user
-    def get_member(self):
-        return Member.objects.filter(user__id=self.id).first()
-
-    # Checks whether a given user is a member
-    def is_member(self):
-        member = self.get_member()
-        return member is not None and member.is_considered_member()
-
 
 ##################################################################################
 

@@ -1,7 +1,7 @@
+from django.contrib.auth.models import User
 from django.test import TestCase
 
 from membership_file.models import Member, get_member_display_name, MemberLog, MemberLogField, Room
-from membership_file.models import MemberUser as User
 
 
 ##################################################################################
@@ -24,7 +24,7 @@ class MemberModelTest(TestCase):
         # Non-Member has the correct display method
         user = User.objects.filter(username="test_user").first()
         display_str = get_member_display_name(user)
-        self.assertEqual(display_str, user.get_simple_display_name())
+        self.assertEqual(display_str, user.get_full_name())
 
     # Tests the display method of the MemberLog
     def test_memberlog_display(self):
