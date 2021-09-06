@@ -36,8 +36,10 @@ class ActivityAdmin(MarkdownImageInlineAdmin):
     is_recurring.boolean = True
 
     list_display = ('id', 'title', 'start_date', 'is_recurring', 'subscriptions_required', )
-    list_filter = ['subscriptions_required']
+    list_filter = ['subscriptions_required', 'start_date']
     list_display_links = ('id', 'title')
+    date_hierarchy = 'start_date'
+    search_fields = ['title']
 
     def get_view_on_site_url(self, obj=None):
         if hasattr(obj, 'get_absolute_url') and obj.get_absolute_url() is None:
@@ -51,7 +53,9 @@ admin.site.register(Activity, ActivityAdmin)
 class ActivityMomentAdmin(MarkdownImageInlineAdmin):
     form = ActivityMomentAdminForm
 
-    list_filter = ['parent_activity']
+    list_filter = ['recurrence_id']
+    date_hierarchy = 'recurrence_id'
+    search_fields = ['local_title', 'parent_activity__title']
 
     def activity_moment_has_changes(obj):
         """ Check if this ActivityModel has any data it overwrites """
@@ -82,8 +86,10 @@ class ActivitySlotAdmin(admin.ModelAdmin):
     recurrence_id_with_day.short_description = 'Activity Start Date'
 
     list_display = ('id', 'title', 'parent_activity', 'recurrence_id_with_day', 'owner')
-    list_filter = ['parent_activity', 'recurrence_id']
+    list_filter = ['recurrence_id']
     list_display_links = ('id', 'title')
+    date_hierarchy = 'recurrence_id'
+    search_fields = ['parent_activity__title', 'title']
 
     # Not supported yet
     exclude = ('start_date', 'end_date')

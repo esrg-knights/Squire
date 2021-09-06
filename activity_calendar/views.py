@@ -48,7 +48,7 @@ class ActivityMixin:
         ).first()
 
         if self.activity_moment is None:
-            if not self.activity.has_occurence_at(self.recurrence_id):
+            if not self.activity.has_occurrence_at(self.recurrence_id):
                 raise Http404("We could not find the activity you are trying to reach")
             else:
                 self.activity_moment = ActivityMoment(

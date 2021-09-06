@@ -54,7 +54,7 @@
     "last_updated_date": "2020-08-29T10:36:45.859Z",
     "published_date": "2020-08-05T14:00:00Z",
     "start_date": "2020-08-12T14:00:00Z",
-    "end_date": "2020-08-12T16:00:00Z",
+    "end_date": "2020-08-13T02:00:00Z",
     "recurrences": "RRULE:FREQ=WEEKLY;BYDAY=WE\nEXDATE:20201021T140000Z",
     "max_slots": -1,
     "max_participants": 30,
