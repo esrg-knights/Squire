@@ -29,7 +29,7 @@ class MemberMixin(MembershipRequiredMixin):
         the request.
     """
     def get_object(self, queryset=None):
-        return self._get_member_from_request()
+        return self.request.member
 
 
 # Page that loads whenever a user tries to access a member-page

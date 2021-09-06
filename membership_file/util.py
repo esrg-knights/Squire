@@ -45,7 +45,7 @@ def membership_required(function=None, fail_url=None, redirect_field_name=REDIRE
         def _wrapped_view(request, *args, **kwargs):
 
             # If the user is authenticated and a member with the same userID exists, continue
-            if request.user.is_authenticated and MemberUser(request.user.id).is_member():
+            if request.member and request.member.is_considered_member():
                 return view_func(request, *args, **kwargs)
 
             # Otherwise show the "Not a member" error page
@@ -66,16 +66,10 @@ class MembershipRequiredMixin(LoginRequiredMixin):
     fail_url = settings.MEMBERSHIP_FAIL_URL
 
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated and self._get_member_from_request() is None:
+        if request.member is None:
+            # Current session has no member connected
+            return HttpResponseRedirect(resolve_url(self.fail_url))
+        if not request.member.is_considered_member():
+            # Current session has a disabled member connected
             return HttpResponseRedirect(resolve_url(self.fail_url))
         return super().dispatch(request, *args, **kwargs)
-
-    def _get_member_from_request(self):
-        """
-            Gets the member object of the user making the request, or None if the requesting user
-            is not a member.
-        """
-        member = getattr(self.request.user, 'member', None)
-        if member is None or not member.is_considered_member():
-            return None
-        return member
