@@ -17,7 +17,8 @@ def get_member_display_name(user):
     member = user_to_member(user)
     if member is not None:
         return member.get_full_name()
-    return user.get_full_name()
+    user.__class__ = User
+    return user.get_simple_display_name()
 
 # Users should be displayed by their names according to the membership file (if they're a member)
 User.set_display_name_method(get_member_display_name)

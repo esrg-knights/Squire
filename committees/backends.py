@@ -9,7 +9,7 @@ class AssociationGroupAuthBackend:
         if not user_obj.is_authenticated:
             return False
 
-        member = user_to_member(user_obj).get_member()
+        member = user_to_member(user_obj)
         if member is None:
             return False
         if not user_obj.is_active:

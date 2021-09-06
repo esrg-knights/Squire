@@ -10,7 +10,7 @@ def user_in_association_group(user, association_group):
     if association_group.site_group in user.groups.all():
         return True
         # Check Squire specific structure
-    if hasattr(user, 'member') and user.member in association_group.members.all():
+    if user_to_member(user) in association_group.members.all():
         return True
 
     return False
