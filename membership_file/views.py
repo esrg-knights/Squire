@@ -75,5 +75,4 @@ class MemberChangeView(MemberMixin, PermissionRequiredMixin, UpdateView):
 @membership_required
 @permission_required('membership_file.can_view_membership_information_self', raise_exception=True)
 def viewGroups(request):
-    tData = {'member': request.user.get_member()}
-    return render(request, 'membership_file/member_group_overview.html', tData)
+    return render(request, 'membership_file/member_group_overview.html', {})
