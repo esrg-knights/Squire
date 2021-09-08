@@ -3,9 +3,11 @@
 
 
     <div class="card">
-{#        <div class="card-img-top bg-secondary" style="height: 8rem;">#}
-{#            <img class="card-img-top" src="">#}
-{#        </div>#}
+        <div class="card-img-top bg-secondary" style="height: 8rem;
+            background-image: url({% if activity_moment.promotion_image %}{{ activity_moment.promotion_image.url }}{% endif %});
+            background-size: cover; background-position: 50% 50%"
+        >
+        </div>
         <div class="card-body">
             <div class="mb-3">
                 <h4 class="card-title">{{ activity_moment.title }}</h4>
@@ -24,7 +26,7 @@
                 </div>
                 <!-- Location -->
                 <div class="col nospace align-self-center">
-                    <p id="event-location">{{ activity_moment.location }}</p>
+                    <p id="event-location">{{ activity_moment.location }} </p>
                 </div>
             </div>
             {% endif %}

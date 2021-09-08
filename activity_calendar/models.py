@@ -56,6 +56,7 @@ class Activity(models.Model):
     description = MarkdownTextField(help_text="Note that uploaded images are publicly accessible, even if the activity is unpublished.")
     location = models.CharField(max_length=255)
     image = models.ForeignKey(PresetImage, blank=True, null=True, related_name="activity_image", on_delete=models.SET_NULL)
+    promotion_image = models.ImageField(blank=True, null=True, upload_to='images/activity/%Y/%m/')
 
     # Creation and last update dates (handled automatically)
     created_date = models.DateTimeField(auto_now_add=True)
@@ -375,7 +376,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         unique_together = ['parent_activity', 'recurrence_id']
         # Define the fields that can be locally be overwritten
         copy_fields = [
-            'title', 'description', 'location', 'max_participants', 'subscriptions_required',
+            'title', 'description', 'promotion_image', 'location', 'max_participants', 'subscriptions_required',
             'slot_creation', 'private_slot_locations']
         # Define fields that are instantly looked for in the parent_activity
         # If at any point in the future these must become customisable, one only has to move the field name to the
