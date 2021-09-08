@@ -8,8 +8,9 @@ register_converter(DateTimeIsoConverter, 'dt')
 
 urlpatterns = [
 
-    path('calendar/', include([
-        path('', views.activity_collection, name='calendar'),
+    path('activities/', include([
+        path('', views.ActivityOverview.as_view(), name='activity_upcoming'),
+        path('calendar/', views.activity_collection, name='calendar'),
         path('activity/<int:activity_id>/<dt:recurrence_id>/', include([
             path('', views.get_activity_detail_view, name='activity_slots_on_day'),
             path('create_slot/', views.CreateSlotView.as_view(), name='create_slot'),

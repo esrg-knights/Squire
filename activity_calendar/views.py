@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from django.contrib.auth.mixins import AccessMixin
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404
@@ -8,7 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
 from django.views.decorators.http import require_safe
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView
 from django.views.generic.edit import FormView, FormMixin
 
 from .forms import *
@@ -22,6 +24,23 @@ __all__ = "CreateSlotView, get_activity_detail_view, activity_collection"
 @require_safe
 def activity_collection(request):
     return render(request, 'activity_calendar/fullcalendar.html', {})
+
+
+class ActivityOverview(ListView):
+    template_name = "activity_calendar/activity_overview.html"
+    context_object_name = 'activities'
+
+    def get_queryset(self):
+        start_date = timezone.now() - timedelta(hours=6)
+        end_date = start_date + timedelta(days=14)
+
+        activities = []
+
+        for activity in Activity.objects.filter(published_date__lte=timezone.now()):
+            for activity_moment in activity.get_all_activity_moments(start_date, end_date):
+                activities.append(activity_moment)
+
+        return sorted(activities, key=lambda activity: activity.start_date)
 
 
 class LoginRequiredForPostMixin(AccessMixin):

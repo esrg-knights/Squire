@@ -39,6 +39,11 @@ def get_opening_time(context, filter=None):
     return open_date
 
 
+@register.filter
+def is_subscribed_to(user, activity_moment):
+    return activity_moment.get_user_subscriptions(user)
+
+
 @register.simple_tag(takes_context=True)
 def opens_in_future(context):
     """ Returns whether the opening time is in the future """
