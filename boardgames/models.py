@@ -28,7 +28,10 @@ class BoardGame(Item):
         if self.player_min and not self.player_max:
             return f'{self.player_min}+'
         if self.player_min and self.player_max:
-            return f'{self.player_min} - {self.player_max}'
+            if self.player_min == self.player_max:
+                return str(self.player_min)
+            else:
+                return f'{self.player_min} - {self.player_max}'
         if not self.player_min and self.player_max:
             return f'{self.player_max}-'
         return ''
