@@ -381,7 +381,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         # Define fields that are instantly looked for in the parent_activity
         # If at any point in the future these must become customisable, one only has to move the field name to the
         # copy_fields attribute
-        link_fields = ['image']
+        link_fields = ['slots_image']
 
     # Alternative start/end date of the activity. If left empty, matches the start/end time
     #   of this OCCURRENCE.

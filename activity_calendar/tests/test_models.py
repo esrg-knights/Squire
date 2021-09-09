@@ -26,7 +26,7 @@ class ModelMethodsTest(TestCase):
     def test_image_url(self):
         self.assertEqual(self.activity.image_url, f"{settings.MEDIA_URL}images/presets/rpg.jpg")
 
-        self.activity.image = None
+        self.activity.slots_image = None
         self.assertEqual(self.activity.image_url, f"{settings.STATIC_URL}images/default_logo.png")
 
 class ModelMethodsDSTDependentTests(TestCase):
@@ -439,7 +439,7 @@ class ActivityMomentTestCase(TestCase):
 
         self.assertEqual(moment.title, moment.parent_activity.title)
         self.assertEqual(moment.description, moment.parent_activity.description)
-        self.assertEqual(moment.image, moment.parent_activity.image)
+        self.assertEqual(moment.slots_image, moment.parent_activity.slots_image)
         self.assertEqual(moment.location, moment.parent_activity.location)
         self.assertEqual(moment.max_participants, moment.parent_activity.max_participants)
 
