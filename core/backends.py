@@ -1,5 +1,5 @@
 from django.contrib.auth.backends import ModelBackend
-from membership_file.util import user_to_member
+from membership_file.util import get_member_from_user
 
 from dynamic_preferences.registries import global_preferences_registry
 
@@ -31,7 +31,7 @@ class BaseUserBackend(ModelBackend):
             return True
 
         # Permissions for members
-        member = user_to_member(user)
+        member = get_member_from_user(user)
         if member is not None and member.is_considered_member() \
                 and self._in_perm_group(app_label, codename, self.global_preferences['permissions__member_permissions']):
             return True

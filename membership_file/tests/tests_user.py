@@ -1,14 +1,12 @@
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django import forms
 from django.conf import settings
-from django.contrib.auth.models import Permission, User
-from django.core import serializers
+from django.contrib.auth.models import User
 from django.template import Context, Template
 
 from core.tests.util import TestAccountUser, check_http_response, TestPublicUser
 from membership_file.tests.util import TestMemberUser, check_http_response_with_member_redirect
 from membership_file.models import Member
-from membership_file.models import User
 from membership_file.serializers import MemberSerializer
 
 ##################################################################################

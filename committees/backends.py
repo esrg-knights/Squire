@@ -1,6 +1,6 @@
 from django.contrib.auth.models import Permission
 
-from membership_file.util import user_to_member
+from membership_file.util import get_member_from_user
 
 
 class AssociationGroupAuthBackend:
@@ -9,7 +9,7 @@ class AssociationGroupAuthBackend:
         if not user_obj.is_authenticated:
             return False
 
-        member = user_to_member(user_obj)
+        member = get_member_from_user(user_obj)
         if member is None:
             return False
         if not user_obj.is_active:

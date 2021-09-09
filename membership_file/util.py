@@ -7,9 +7,11 @@ from django.shortcuts import resolve_url
 from functools import wraps
 
 
-def user_to_member(user):
+def get_member_from_user(user):
     """
-    Transforms a User to a MemberUser with the same data
+    Retrieves the member associated with this user (if any)
+    :param user: The user object
+    :return: a Member instance or None if user has no link to a member
     """
     if user.is_authenticated:
         if hasattr(user, 'member'):
