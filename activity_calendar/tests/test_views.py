@@ -301,6 +301,43 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         self._verify_show_participants('2020-08-10T21:00:00+00:00', [during_perm], True)
         self._verify_show_participants('2020-08-01T00:00:00+00:00', [after_perm], True)
 
+    def test_activitymoment_alt_start_date_text(self):
+        """ Tests which text appear for activity moments that have a different start_date than their
+            occurrence
+        """
+        recurrence_id = timezone.datetime(2020, 8, 14, 19, 0, 0, tzinfo=timezone.utc)
+        self.activity_moment = ActivityMoment.objects.get(
+            parent_activity=self.activity,
+            recurrence_id=recurrence_id,
+        )
+
+        # If the activitymoment does not have an alt start time, no extra text should be added
+        response = self.build_get_response(iso_dt=recurrence_id.isoformat())
+        self.assertNotContains(response, "Replacement for the same activity on", status_code=200)
+        self.assertNotContains(response, "than normal!")
+
+        # Occurs at a different day
+        self.activity_moment.local_start_date = timezone.datetime(2020, 8, 15, 14, 0, 0, tzinfo=timezone.utc)
+        self.activity_moment.save()
+        response = self.build_get_response(iso_dt=recurrence_id.isoformat())
+        self.assertContains(response, "Replacement for the same activity on", status_code=200)
+
+        # Occurson the same day (earlier)
+        self.activity_moment.local_start_date = recurrence_id - timezone.timedelta(hours=1)
+        self.activity_moment.save()
+        response = self.build_get_response(iso_dt=recurrence_id.isoformat())
+        self.assertContains(response, "than normal!", status_code=200)
+        self.assertContains(response, "earlier")
+
+
+        # Occurson the same day (later)
+        self.activity_moment.local_start_date = recurrence_id + timezone.timedelta(hours=1)
+        self.activity_moment.save()
+        response = self.build_get_response(iso_dt=recurrence_id.isoformat())
+        self.assertContains(response, "than normal!", status_code=200)
+        self.assertContains(response, "later")
+
+
 
 class ActivitySlotViewTest(TestActivityViewMixin, TestCase):
     default_url_name = "activity_slots_on_day"
@@ -638,6 +675,3 @@ class EditActivityMomentDataView(TestActivityViewMixin, TestCase):
 
         # Assert that the instance is saved
         self.assertIsNotNone(ActivityMoment.objects.filter(local_title=new_title,).first())
-
-
-

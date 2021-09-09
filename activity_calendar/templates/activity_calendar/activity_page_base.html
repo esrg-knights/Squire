@@ -16,7 +16,7 @@
     {{ activity_moment.title }}
 {% endblock og-title %}
 {% block og-description %}
-    [{{ activity_moment.start_time|date:"l j E H:i" }}] {{ activity_moment.description.as_plaintext|truncatewords:20 }}
+    [{{ activity_moment.start_date|date:"l j E H:i" }}] {{ activity_moment.description.as_plaintext|truncatewords:20 }}
 {% endblock og-description %}
 {% block og-image %}{% build_absolute_uri request activity.image_url %}{% endblock og-image %}
 {% block og-image-alt %}
@@ -65,12 +65,32 @@
                     <div class="col align-self-center">
                         <div class='nospace'>
                             <p id="event-date">
-                                {% if activity_moment.start_time.date == activity_moment.end_time.date %}
+                                {% if activity_moment.start_date.date == activity_moment.end_date.date %}
                                     <!-- Activity starts and ends on the same day -->
-                                    {{ activity_moment.start_time|date:"l j E H:i" }} - {{ activity_moment.end_time|date:"H:i" }}
+                                    {{ activity_moment.start_date|date:"l j E H:i" }} - {{ activity_moment.end_date|date:"H:i" }}
                                 {% else %}
                                     <!-- Activity starts and ends on a different day -->
-                                    {{ activity_moment.start_time|date:"j E H:i" }} - {{ activity_moment.end_time|date:"j E H:i" }}
+                                    {{ activity_moment.start_date|date:"j E H:i" }} - {{ activity_moment.end_date|date:"j E H:i" }}
+                                {% endif %}
+                            </p>
+                            <p>
+                                {% if activity_moment.local_start_date is not None %}
+                                    <small id="activity-alt-start-message" class="text-muted">
+                                        {% if activity_moment.recurrence_id.date != activity_moment.local_start_date.date %}
+                                            Replacement for the same activity on {{ activity_moment.recurrence_id|date:"l j E (H:i)" }}
+                                        {% else %}
+                                            Starts
+                                            {% is_alt_start_before_normal_occurrence as is_alt_start_before_normal_occurrence %}
+                                            {% if is_alt_start_before_normal_occurrence %}
+                                                {{ activity_moment.recurrence_id|timeuntil:activity_moment.local_start_date }}
+                                                earlier
+                                            {% else %}
+                                                {{ activity_moment.recurrence_id|timesince:activity_moment.local_start_date }}
+                                                later
+                                            {% endif %}
+                                            than normal!
+                                        {% endif %}
+                                    </small>
                                 {% endif %}
                             </p>
                         </div>
