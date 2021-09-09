@@ -1,12 +1,15 @@
 import copy
 import datetime
+from itertools import chain
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
+from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import timezone
+from django.utils.formats import date_format
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 from recurrence.fields import RecurrenceField
@@ -177,7 +180,7 @@ class Activity(models.Model):
         if not is_dst_aware:
             date = util.dst_aware_to_dst_ignore(date, self.start_date, reverse=True)
         occurences = self.get_occurrences_starting_between(date, date, dtstart=self.start_date, inc=True)
-        return occurences
+        return list(occurences)
 
     def get_occurrences_between(self, after, before, inc=False, dtstart=None, dtend=None, cache=False):
         """
@@ -216,7 +219,27 @@ class Activity(models.Model):
         # the recurrences package does not work with DST. Since we want our activities
         #   to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00
         #   in winter, and vice versa), we have to account for the difference here.
-        occurences = list(map(lambda occurence: util.dst_aware_to_dst_ignore(occurence, dtstart), occurences))
+        occurences = map(lambda occurence: util.dst_aware_to_dst_ignore(occurence, dtstart), occurences)
+
+        # Find all activity_moments whose recurrence_id is inside the bounds, but whose
+        #   alternative start_date is NOT between these bounds
+        alt_start_outside_bounds = Q(local_start_date__lte=after, recurrence_id__gt=after, recurrence_id__lt=before) \
+            | Q(local_start_date__gte=before, recurrence_id__gt=after, recurrence_id__lt=before)
+        surplus_activity_moments = self.activitymoment_set.filter(alt_start_outside_bounds) \
+            .values_list('recurrence_id', flat=True)
+
+        # Get rid of these surplus activity_moments
+        occurences = filter(lambda occ: occ not in surplus_activity_moments, occurences)
+
+        # Find all activity_moments that have an alternative start_date between the bounds, but whose
+        #   recurrence_id is NOT between these bounds
+        alt_start_inside_bounds = Q(recurrence_id__lte=after, local_start_date__gt=after, local_start_date__lt=before) \
+            | Q(recurrence_id__gte=before, local_start_date__gt=after, local_start_date__lt=before)
+        extra_activity_moments = self.activitymoment_set.filter(alt_start_inside_bounds) \
+            .values_list("recurrence_id", flat=True)
+
+        # Add these extra activity_moments
+        occurences = chain(occurences, extra_activity_moments)
 
         return occurences
 
@@ -351,19 +374,46 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     class Meta:
         unique_together = ['parent_activity', 'recurrence_id']
         # Define the fields that can be locally be overwritten
-        copy_fields = ['title', 'description', 'location', 'max_participants', 'subscriptions_required', 'slot_creation', 'private_slot_locations']
+        copy_fields = [
+            'title', 'description', 'location', 'max_participants', 'subscriptions_required',
+            'slot_creation', 'private_slot_locations']
         # Define fields that are instantly looked for in the parent_activity
         # If at any point in the future these must become customisable, one only has to move the field name to the
         # copy_fields attribute
         link_fields = ['image']
 
-    @property
-    def start_time(self):
-        return self.recurrence_id
+    # Alternative start/end date of the activity. If left empty, matches the start/end time
+    #   of this OCCURRENCE.
+    # Note that we're not doing this through copy_fields, as there is no reason to make a lookup
+    #   the start/end date of the parent activity.
+    local_start_date = models.DateTimeField(blank=True, null=True)
+    local_end_date = models.DateTimeField(blank=True, null=True)
 
     @property
-    def end_time(self):
-        return self.recurrence_id + (self.parent_activity.end_date - self.parent_activity.start_date)
+    def start_date(self):
+        return self.local_start_date or self.recurrence_id
+
+    @property
+    def end_date(self):
+        if self.local_end_date is not None:
+            return self.local_end_date
+
+        # Add the activity's normal duration to the event's start time
+        normal_duration = self.parent_activity.end_date - self.parent_activity.start_date
+        return self.start_date + normal_duration
+
+    def clean_fields(self, exclude=None):
+        super().clean_fields(exclude=exclude)
+        errors = {}
+        exclude = exclude or []
+
+        if 'local_end_date' not in exclude and self.local_end_date is not None:
+            if self.local_end_date <= self.start_date:
+                errors.update({'local_end_date': "End date must be later than this occurrence's start date (" +
+                    date_format(self.start_date, "Y-m-d, H:i") + ")"})
+
+        if errors:
+            raise ValidationError(errors)
 
     def get_subscribed_users(self):
         """ Returns a queryest of all USERS (not participants) in this activity moment """
@@ -419,7 +469,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         })
 
     def __str__(self):
-        return f"{self.title} @ {self.recurrence_id}"
+        return f"{self.title} @ {self.start_date}"
 
 
 class ActivitySlot(models.Model):
@@ -484,7 +534,7 @@ class ActivitySlot(models.Model):
             if self.recurrence_id is None:
                 errors.update({'recurrence_id': 'Must set a date/time when this activity takes place'})
             else:
-                if not self.parent_activity.has_occurence_at(self.recurrence_id):
+                if not self.parent_activity.has_occurrence_at(self.recurrence_id):
                     # Bounce activities if it is not fitting with the recurrence scheme
                     errors.update({'recurrence_id': 'Parent activity has no occurence at the given date/time'})
 

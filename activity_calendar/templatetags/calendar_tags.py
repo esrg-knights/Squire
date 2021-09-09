@@ -32,7 +32,7 @@ def sign_up_slot_form(context, slot):
 @register.simple_tag(takes_context=True)
 def get_opening_time(context, filter=None):
     activity_moment = context['activity_moment']
-    open_date = activity_moment.start_time - activity_moment.parent_activity.subscriptions_open
+    open_date = activity_moment.start_date - activity_moment.parent_activity.subscriptions_open
     if filter:
         return date_format(open_date, filter)
 
@@ -43,9 +43,16 @@ def get_opening_time(context, filter=None):
 def opens_in_future(context):
     """ Returns whether the opening time is in the future """
     activity_moment = context['activity_moment']
-    open_date = activity_moment.start_time - activity_moment.parent_activity.subscriptions_open
+    open_date = activity_moment.start_date - activity_moment.parent_activity.subscriptions_open
     return timezone.now() < open_date
 
+@register.simple_tag(takes_context=True)
+def is_alt_start_before_normal_occurrence(context):
+    """ Returns whether the alternative start time is before the date at which the occurrence would
+    normally take place """
+    activity_moment = context['activity_moment']
+    assert activity_moment.local_start_date is not None
+    return activity_moment.local_start_date < activity_moment.recurrence_id
 
 @register.inclusion_tag("activity_calendar/slot_blocks/register_button.html", takes_context=True)
 def register_button(context, slot):
