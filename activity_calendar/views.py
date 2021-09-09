@@ -80,9 +80,9 @@ class ActivityMixin:
         """ Returns whether to show participant names """
         now = timezone.now()
 
-        if now < self.activity_moment.start_time:
+        if now < self.activity_moment.start_date:
             return self.request.user.has_perm('activity_calendar.can_view_activity_participants_before')
-        elif now > self.activity_moment.end_time:
+        elif now > self.activity_moment.end_date:
             return self.request.user.has_perm('activity_calendar.can_view_activity_participants_after')
         return self.request.user.has_perm('activity_calendar.can_view_activity_participants_during')
 

@@ -1,7 +1,11 @@
 from core.widgets import ImageUploadMartorWidget
 from django import forms
+from django.utils.formats import date_format
 from django.forms import ModelForm, Form
 from django.forms.widgets import HiddenInput
+from django.utils.dateparse import parse_datetime
+from django.utils.timesince import timeuntil
+from django.utils.timezone import localtime
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import ValidationError
 
@@ -315,7 +319,9 @@ class ActivityMomentForm(MarkdownForm):
     class Meta:
         model = ActivityMoment
         fields = ['local_title', 'local_description',
-            'local_location', 'local_max_participants', 'local_subscriptions_required',
+            'local_location',
+            'local_start_date', 'local_end_date',
+            'local_max_participants', 'local_subscriptions_required',
             'local_slot_creation', 'local_private_slot_locations'
         ]
 
@@ -348,6 +354,16 @@ class ActivityMomentForm(MarkdownForm):
                 ]
             elif isinstance(field.widget, ImageUploadMartorWidget):
                 field.widget.placeholder = getattr(self.instance.parent_activity, attr_name, None)
+            elif attr_name == 'start_date':
+                # Special lookup for alternative start/end time
+                if isinstance(self.instance.recurrence_id, str):
+                    self.instance.recurrence_id = parse_datetime(self.instance.recurrence_id)
+                start_humanized = date_format(localtime(self.instance.recurrence_id), "Y-m-d H:i")
+                field.widget.attrs['placeholder'] = start_humanized
+            elif attr_name == 'end_date':
+                duration_humanized = timeuntil(self.instance.parent_activity.end_date,
+                    now=self.instance.parent_activity.start_date)
+                field.widget.attrs['placeholder'] = duration_humanized + " after this occurrence starts"
             else:
                 # Set HTML Placeholder for all other fields
                 field.widget.attrs['placeholder'] = getattr(self.instance.parent_activity, attr_name, None)

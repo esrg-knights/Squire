@@ -95,10 +95,37 @@ function onEventClick(info, calendar) {
     }
 
     var rInfo = event.extendedProps.recurrenceInfo
+    var recurrence_date = new Date(event.extendedProps.recurrence_id)
 
     // Set modal contents
     $('#modal-title').text(event.title)
     $('#event-date').text(date_str)
+
+    // Add a small notice if this occurrence takes place on a different day than
+    //  its recurrence indicates. I.e., this occurrence has an alternative start date
+    if (start_date.getDate() !== recurrence_date.getDate()
+            || start_date.getMonth() !== recurrence_date.getMonth()
+            || start_date.getFullYear() !== recurrence_date.getFullYear()) {
+
+        date_str = recurrence_date.toLocaleString('en-gb', {
+            weekday: 'long', month: 'long', day: 'numeric'
+        })
+
+        if (event.allDay) {
+            // All-day event; display "all day" instead of event duration
+            date_str += ' (' + calendar.currentData.options.allDayText + ')'
+        } else {
+            date_str += ' ('
+                + recurrence_date.toLocaleString('en-gb', {
+                    hour: 'numeric', minute: 'numeric'
+                })
+                + ')'
+        }
+        $('#occurrence-replacement').text("Replacement for " + date_str)
+    } else {
+        $('#occurrence-replacement').text("")
+    }
+
     if (rInfo.rrules.length !== 0) {
         $('#event-recurrence-info #rrules').text('Repeats ' + rInfo.rrules.join(' and '))
     } else {
