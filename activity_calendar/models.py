@@ -55,7 +55,7 @@ class Activity(models.Model):
     title = models.CharField(max_length=255)
     description = MarkdownTextField(help_text="Note that uploaded images are publicly accessible, even if the activity is unpublished.")
     location = models.CharField(max_length=255)
-    image = models.ForeignKey(PresetImage, blank=True, null=True, related_name="activity_image", on_delete=models.SET_NULL)
+    slots_image = models.ForeignKey(PresetImage, blank=True, null=True, related_name="activity_image", on_delete=models.SET_NULL)
     promotion_image = models.ImageField(blank=True, null=True, upload_to='images/activity/%Y/%m/')
 
     # Creation and last update dates (handled automatically)
@@ -114,9 +114,9 @@ class Activity(models.Model):
 
     @property
     def image_url(self):
-        if self.image is None:
+        if self.slots_image is None:
             return f'{settings.STATIC_URL}images/default_logo.png'
-        return self.image.image.url
+        return self.slots_image.image.url
 
     def get_all_activity_moments(self, start_date, end_date):
         """ Retrieves (or creates based on recurrences) all ActivityMoment instances in the given time frame """

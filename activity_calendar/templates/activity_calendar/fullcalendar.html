@@ -2,6 +2,7 @@
 
 {% load static %}
 {% load martor_render %}
+{% load build_absolute_uri %}
 
 {% block title %}
   Squire - Calendar
@@ -174,7 +175,8 @@
         <p>You can import the Knights agenda into your own agenda. To do this follow the instructions on adding an
         agenda from url and use the following url:</p>
         <p class="">
-            https://app.kotkt.nl{% url "activity_calendar:icalendar" %}
+            {% url "activity_calendar:icalendar" as calendar_url %}
+            {% build_absolute_uri request calendar_url %}
         </p>
         <p>
             For instance in Google in your calendar go to Add Calendar > From URL and add the above mentioned url.

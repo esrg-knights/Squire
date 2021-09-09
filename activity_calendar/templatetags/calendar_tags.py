@@ -41,7 +41,7 @@ def get_opening_time(context, filter=None):
 
 @register.filter
 def is_subscribed_to(user, activity_moment):
-    return activity_moment.get_user_subscriptions(user)
+    return activity_moment.get_user_subscriptions(user).exists()
 
 
 @register.simple_tag(takes_context=True)
