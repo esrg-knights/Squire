@@ -91,7 +91,7 @@
         it will copy the attribute from the general activity instead.
     </p>
 
-    {% render_form has_submit_button=False id="submit_form" method="post" %}
+    {% render_form has_submit_button=False id="submit_form" method="post" uses_file_field=True %}
 
     <div class="btn-group w-100" role="group" aria-label="Form changing">
         <a href="{% url "activity_calendar:activity_slots_on_day" activity_id=activity.id recurrence_id=recurrence_id %}"

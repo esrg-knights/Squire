@@ -2,6 +2,7 @@
 
 {% load static %}
 {% load martor_render %}
+{% load build_absolute_uri %}
 
 {% block title %}
   Squire - Calendar
@@ -52,120 +53,133 @@
 
 
   <!-- Event Details Modal -->
-  <div class="modal fade" id="event-modal" tabindex="-1" role="dialog" aria-labelledby="event-modal-aria" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="modal-title">Modal title</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body" id="modal-description">
-          <div class="container-fluid">
-            <div class="row">
-              <!-- Calendar Icon -->
-              <div class="col-xs-2">
-                <img
-                  src="{% static 'octicons/calendar.svg' %}"
-                  alt="Calendar-icon"
-                  height="16"
-                  width="16"
-                />
-              </div>
-              <!-- Event Date & Recurrence Information -->
-              <div class="col align-self-center">
-                <div class='nospace'>
-                  <small>
-                    <p id="event-date"></p>
-                    <p><small id="occurrence-replacement" class="text-muted"></small></p>
-                    <span id="event-recurrence-info">
-                      <p id="rrules"></p>
-                      <p id="rdates"></p>
-                    </span>
-                  </small>
+    <div class="modal fade" id="event-modal" tabindex="-1" role="dialog" aria-labelledby="event-modal-aria" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modal-title">Modal title</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body" id="modal-description">
+              <div class="container-fluid">
+                <div class="row">
+                  <!-- Calendar Icon -->
+                  <div class="col-xs-2">
+                    <img
+                      src="{% static 'octicons/calendar.svg' %}"
+                      alt="Calendar-icon"
+                      height="16"
+                      width="16"
+                    />
+                  </div>
+                  <!-- Event Date & Recurrence Information -->
+                  <div class="col align-self-center">
+                    <div class='nospace'>
+                      <small>
+                        <p id="event-date"></p>
+                        <p><small id="occurrence-replacement" class="text-muted"></small></p>
+                        <span id="event-recurrence-info">
+                          <p id="rrules"></p>
+                          <p id="rdates"></p>
+                        </span>
+                      </small>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <!-- Location Icon -->
+                  <div class="col-xs-2">
+                    <img
+                      src="{% static 'octicons/location.svg' %}"
+                      alt="Location-icon"
+                      height="16"
+                      width="16"
+                    />
+                  </div>
+                  <!-- Location -->
+                  <div class="col nospace align-self-center">
+                    <small><p id="event-location"></p></small>
+                  </div>
+                </div>
+
+                <div class="row largespace">
+                  <!-- Alert Icon -->
+                  <div class="col-xs-2">
+                    <img
+                      src="{% static 'octicons/alert.svg' %}"
+                      alt="Alert-icon"
+                      height="16"
+                      width="16"
+                      class="icon-warning"
+                      style="display:none"
+                      id="subscribe-required"
+                    />
+                    <img
+                      src="{% static 'octicons/check-circle.svg' %}"
+                      alt="Check-icon"
+                      height="16"
+                      width="16"
+                      class="icon-success"
+                      style="display:none"
+                      id="subscribe-done"
+                    />
+                    <img
+                      src="{% static 'octicons/info.svg' %}"
+                      alt="Check-icon"
+                      height="16"
+                      width="16"
+                      style="display:none"
+                      id="subscribe-info"
+                    />
+                  </div>
+                  <!-- Subscription -->
+                  <div class="col nospace align-self-center">
+                    <small>
+                      <p id="event-subscription"></p>
+                      <p id="event-participants-count"></p>
+                      <p id="event-subscription-closed"></p>
+                    </small>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <!-- Calendar Icon -->
+                  <div class="col-xs-2">
+                    <img
+                      src="{% static 'octicons/three-bars.svg' %}"
+                      alt="Description-icon"
+                      height="16"
+                      width="16"
+                    />
+                  </div>
+                  <!-- Event Description -->
+                  <div class="col align-self-center">
+                    <div id="event-description" class="rendered-md"></div>
+                  </div>
                 </div>
               </div>
             </div>
-
-            <div class="row">
-              <!-- Location Icon -->
-              <div class="col-xs-2">
-                <img
-                  src="{% static 'octicons/location.svg' %}"
-                  alt="Location-icon"
-                  height="16"
-                  width="16"
-                />
-              </div>
-              <!-- Location -->
-              <div class="col nospace align-self-center">
-                <small><p id="event-location"></p></small>
-              </div>
-            </div>
-
-            <div class="row largespace">
-              <!-- Alert Icon -->
-              <div class="col-xs-2">
-                <img
-                  src="{% static 'octicons/alert.svg' %}"
-                  alt="Alert-icon"
-                  height="16"
-                  width="16"
-                  class="icon-warning"
-                  style="display:none"
-                  id="subscribe-required"
-                />
-                <img
-                  src="{% static 'octicons/check-circle.svg' %}"
-                  alt="Check-icon"
-                  height="16"
-                  width="16"
-                  class="icon-success"
-                  style="display:none"
-                  id="subscribe-done"
-                />
-                <img
-                  src="{% static 'octicons/info.svg' %}"
-                  alt="Check-icon"
-                  height="16"
-                  width="16"
-                  style="display:none"
-                  id="subscribe-info"
-                />
-              </div>
-              <!-- Subscription -->
-              <div class="col nospace align-self-center">
-                <small>
-                  <p id="event-subscription"></p>
-                  <p id="event-participants-count"></p>
-                  <p id="event-subscription-closed"></p>
-                </small>
-              </div>
-            </div>
-
-            <div class="row">
-              <!-- Calendar Icon -->
-              <div class="col-xs-2">
-                <img
-                  src="{% static 'octicons/three-bars.svg' %}"
-                  alt="Description-icon"
-                  height="16"
-                  width="16"
-                />
-              </div>
-              <!-- Event Description -->
-              <div class="col align-self-center">
-                <div id="event-description" class="rendered-md"></div>
-              </div>
+            <div class="modal-footer">
+              <a id='event-subscribe-url' class="btn btn-primary" href="">View Registration Slots</a>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <a id='event-subscribe-url' class="btn btn-primary" href="">View Registration Slots</a>
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        </div>
-      </div>
     </div>
-  </div>
+
+    <div class="mt-3">
+        <h5>Add this to your agenda</h5>
+        <p>You can import the Knights agenda into your own agenda. To do this follow the instructions on adding an
+        agenda from url and use the following url:</p>
+        <p class="">
+            {% url "activity_calendar:icalendar" as calendar_url %}
+            {% build_absolute_uri request calendar_url %}
+        </p>
+        <p>
+            For instance in Google in your calendar go to Add Calendar > From URL and add the above mentioned url.
+        </p>
+    </div>
 {% endblock content %}

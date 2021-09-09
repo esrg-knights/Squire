@@ -319,6 +319,7 @@ class ActivityMomentForm(MarkdownForm):
     class Meta:
         model = ActivityMoment
         fields = ['local_title', 'local_description',
+            'local_promotion_image',
             'local_location',
             'local_start_date', 'local_end_date',
             'local_max_participants', 'local_subscriptions_required',
