@@ -121,7 +121,7 @@ class Activity(models.Model):
         """ Retrieves (or creates based on recurrences) all ActivityMoment instances in the given time frame """
         event_start_time = self.start_date.astimezone(timezone.get_current_timezone()).time()
 
-        recurrence_dts = self.get_occurrences_between(start_date, end_date, dtstart=self.start_date)
+        recurrence_dts = self.get_occurrences_between(start_date, end_date)
 
         # Recurrence_dts is a map objects and thus can not later be used in the filter
         processed_recurrences = []
@@ -187,7 +187,7 @@ class Activity(models.Model):
             Get an iterable of dates, each representing an occurrence of this activity for which
             any point in that activity's duration occurs between the specified start and end date.
         """
-        dtstart = dtstart or self.start_date
+        dtstart = dtstart or timezone.localtime(self.start_date)
         duration = self.end_date - self.start_date
 
         # We should include activities that start before "after", but also end after "after".
@@ -203,7 +203,7 @@ class Activity(models.Model):
             Get an iterable of dates, each representing an occurrence of this activity that starts
             between the specified start and end date.
         """
-        dtstart = dtstart or self.start_date
+        dtstart = dtstart or timezone.localtime(self.start_date)
 
         # EXDATEs and RDATEs should match the event's start time, but in the recurrence-widget they
         #   occur at midnight!
