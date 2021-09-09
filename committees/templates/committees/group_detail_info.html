@@ -14,13 +14,57 @@
 
     <div class="row">
         <div class="col-12 col-md-8">
-            <div style="position: relative;">
-            <div class="" style="position: absolute; top: 0; right: 0;">
-                <a href="{% url "committees:group_update" group_id=association_group.id %}"
-                   class="btn btn-outline-primary btn-sm">
-                    Edit
-                </a>
+            <div class="d-flex d-md-none mb-3">
+                <div class="card w-100">
+                    <a class="card-header btn" href="" data-toggle="collapse" data-target="#collapsablequicklinks"
+                       aria-expanded="true" aria-controls="collapsablequicklinks">
+                       Shortcuts
+                    </a>
+                    <div class="card-body collapse py-3" id="collapsablequicklinks">
+                        {% for link in quicklinks_internal %}
+                            <div class="row">
+                                <div class="col-7">
+                                    {{ link.name|capfirst }}
+
+                                </div>
+                                <div class="col-5">
+                                    <a href="{{ link.url }}" class="btn btn-outline-info w-100">
+                                        Visit
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        {% if quicklinks_internal and quicklinks_external %}
+                            <hr>
+                        {% endif %}
+
+                        {% for link in quicklinks_external %}
+                            <div class="row my-2">
+                                <div class="col-7">
+                                    <small>
+                                        {{ link.description|default:'' }}
+                                    </small>
+                                </div>
+                                <div class="col-5">
+                                    <a href="{{ link.url }}" class="btn btn-outline-info w-100"
+                                       target="_blank" rel="noopener noreferrer">
+                                        {{ link.name|capfirst }}
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <hr>
             </div>
+
+            <div class="d-none d-sm-block" style="position: relative;">
+                <div class="" style="position: absolute; top: 0; right: 0;">
+                    <a href="{% url "committees:group_update" group_id=association_group.id %}"
+                       class="btn btn-outline-primary btn-sm">
+                        Edit
+                    </a>
+                </div>
             </div>
             <div style="min-height: 2em;" class="rendered-md">
                 {{ association_group.instructions.as_rendered }}
@@ -54,7 +98,7 @@
                 </table>
             </div>
         </div>
-        <div class="col-12 col-md-4 order-first order-md-2">
+        <div class="col-12 col-md-4 d-none d-md-block">
             <div class="row">
                 <div class="col">
                     <p class="font-weight-bold mb-0">Quick links:</p>
@@ -66,7 +110,6 @@
                     </a>
                 </div>
             </div>
-
             {% for link in quicklinks_internal %}
                 <div>
                     <a href="{{ link.url }}" class="btn btn-outline-info my-1 w-100">
@@ -82,11 +125,12 @@
                 <div class="mb-3">
                     <div><small>{{ link.description|default:'' }}</small></div>
                     <a href="{{ link.url }}" class="btn btn-sm btn-outline-info my-1 w-100"
-                        target="_blank" rel="noopener noreferrer">
+                       target="_blank" rel="noopener noreferrer">
                         {{ link.name }}
                     </a>
                 </div>
             {% endfor %}
+
         </div>
     </div>
 
