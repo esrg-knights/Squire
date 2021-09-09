@@ -1,4 +1,6 @@
-from django.urls import path, include, register_converter
+from django.urls import path, include, register_converter, reverse_lazy
+from django.views.generic.base import RedirectView
+
 from . import views, api
 from .feeds import CESTEventFeed
 
@@ -20,4 +22,7 @@ urlpatterns = [
 
     path('api/calendar/ical', CESTEventFeed(), name='icalendar'),
     path('api/calendar/fullcalendar', api.fullcalendar_feed, name='fullcalendar_feed'),
+
+    # Some mails contained the old calendar url, redirect them to the new activity page
+    path('calendar/', RedirectView.as_view(url=reverse_lazy('activity_calendar:activity_upcoming'))),
 ]
