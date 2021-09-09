@@ -1,7 +1,7 @@
+from django.contrib.auth.models import User
 from django.test import TestCase
 
 from membership_file.models import Member, get_member_display_name, MemberLog, MemberLogField, Room
-from membership_file.models import MemberUser as User
 
 
 ##################################################################################
