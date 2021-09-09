@@ -3,7 +3,9 @@ from django.core.validators import RegexValidator, MinValueValidator
 from django.db import models
 from datetime import date
 
-from core.models import ExtendedUser as User
+from core.models import ExtendedUser
+
+from membership_file.util import get_member_from_user
 
 ##################################################################################
 # Models related to the Membership File-functionality of the application.
@@ -12,28 +14,16 @@ from core.models import ExtendedUser as User
 
 # Display method for a user that may also be a member
 def get_member_display_name(user):
-    member = MemberUser(user.id).get_member()
+    member = get_member_from_user(user)
     if member is not None:
         return member.get_full_name()
+    # The get_simple_display_name method is part of ExtendedUser, a proxy class.
+    # Cast the user object to this proxy class so we can use this method
+    user.__class__ = ExtendedUser
     return user.get_simple_display_name()
 
 # Users should be displayed by their names according to the membership file (if they're a member)
-User.set_display_name_method(get_member_display_name)
-
-# Provides additional methods on the ExtendedUser model
-class MemberUser(User):
-    class Meta:
-        proxy = True
-
-    # Returns the associated member to a given user
-    def get_member(self):
-        return Member.objects.filter(user__id=self.id).first()
-
-    # Checks whether a given user is a member
-    def is_member(self):
-        member = self.get_member()
-        return member is not None and member.is_considered_member()
-
+ExtendedUser.set_display_name_method(get_member_display_name)
 
 ##################################################################################
 
@@ -172,7 +162,7 @@ class Member(models.Model):
             return None
         updater = Member.objects.filter(user__id=self.last_updated_by.id).first()
         if updater is None:
-            return User.objects.filter(id=self.last_updated_by.id).first().username
+            return ExtendedUser.objects.filter(id=self.last_updated_by.id).first().username
         if updater.id == self.id:
             return 'You'
         return updater.get_full_name()

@@ -98,8 +98,7 @@ class TestMixinMixin:
         url_kwargs = url_kwargs or self.get_base_url_kwargs()
 
         request = RequestFactory().get(url)
-        if self.base_user_id:
-            request.user = User.objects.get(id=self.base_user_id)
+        self._imitiate_request_middleware(request)
 
         view = self.get_as_full_view_class()()
         view.setup(request, **url_kwargs)
@@ -109,6 +108,10 @@ class TestMixinMixin:
             self.view = view
 
         return response
+
+    def _imitiate_request_middleware(self, request):
+        if self.base_user_id:
+            request.user = User.objects.get(id=self.base_user_id)
 
 
     def get_base_url(self):

@@ -6,8 +6,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 
 from core.models import ExtendedUser as User
-from membership_file.models import MemberUser
-from membership_file.util import membership_required, request_member
+from membership_file.util import membership_required
 
 
 ##################################################################################
@@ -18,7 +17,7 @@ from membership_file.util import membership_required, request_member
 # Tests whether some decorator (with some settings) properly loads or
 # redirects to some page requested by some user
 def test_decorator(test, decorator, decorator_params={}, request_url="/some_url", view=None,
-        factory=None, user=None, redirect_url=None):
+        factory=None, user=None, member=None, redirect_url=None):
     if factory is None:
         factory = RequestFactory()
 
@@ -36,7 +35,7 @@ def test_decorator(test, decorator, decorator_params={}, request_url="/some_url"
         # If no parameters are passed, also test @decorator syntax (note the absense of brackets after the decorator)
         if not decorator_params:
             test_decorator(test, decorator, decorator_params=None, request_url=request_url, view=view,
-                factory=factory, user=user, redirect_url=redirect_url)
+                factory=factory, user=user, member=member, redirect_url=redirect_url)
 
         # Apply the decorator with the given parameters
         @decorator(**decorator_params)
@@ -46,8 +45,10 @@ def test_decorator(test, decorator, decorator_params={}, request_url="/some_url"
             return view(request)
 
     # Make the request
+    # Set custom values for non-activated middleware
     request = factory.get(request_url)
     request.user = user
+    request.member = member
     response = some_view(request)
 
     if redirect_url is not None:
@@ -70,12 +71,13 @@ class MembershipRequiredDecoratorTest(TestCase):
 
     def setUp(self):
         self.member_user = User.objects.filter(username="test_member").first()
+        self.member = self.member_user.member
         self.nonmember_user = User.objects.filter(username="test_user").first()
         self.factory = RequestFactory()
 
     # Tests if members are not redirected to the fail page
     def test_no_redirect(self):
-        test_decorator(self, membership_required, user=self.member_user, factory=self.factory)
+        test_decorator(self, membership_required, user=self.member_user, member=self.member, factory=self.factory)
 
     # Tests if non-members are redirected to the fail page
     def test_redirect(self):
@@ -99,30 +101,3 @@ class MembershipRequiredDecoratorTest(TestCase):
                 'login_url':            "/login_url",
             },
             redirect_url=f"/login_url?redirect_field_name=/rand", factory=self.factory)
-
-
-# Tests the request_member decorator
-class RequestMemberDecoratorTest(TestCase):
-    fixtures = ['test_users.json', 'test_members.json']
-
-    def setUp(self):
-        self.member_user = User.objects.filter(username="test_member").first()
-        self.factory = RequestFactory()
-
-    # Tests if request.user becomes a MemberUser if logged in users make a request
-    def test_authenticated_request(self):
-        def view(request):
-            # Requesting User should be transformed to a MemberUser
-            self.assertIsInstance(request.user, MemberUser)
-            return HttpResponse()
-
-        test_decorator(self, request_member, user=self.member_user, factory=self.factory, view=view)
-
-    # Tests if request.user stays an AnonymousUser if a non-logged in user makes a request
-    def test_anonymous_request(self):
-        def view(request):
-            # Requesting User should stay an AnonymousUser
-            self.assertIsInstance(request.user, AnonymousUser)
-            return HttpResponse()
-
-        test_decorator(self, request_member, factory=self.factory, view=view)
