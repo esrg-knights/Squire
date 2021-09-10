@@ -117,26 +117,26 @@ class Activity(models.Model):
             return f'{settings.STATIC_URL}images/default_logo.png'
         return self.image.image.url
 
-    def get_all_activity_moments(self, start_date, end_date):
-        """ Retrieves (or creates based on recurrences) all ActivityMoment instances in the given time frame """
-        event_start_time = self.start_date.astimezone(timezone.get_current_timezone()).time()
+    def get_activitymoments_between(self, start_date, end_date):
+        """
+            Get an iterable of ActivityMoments, each representing an occurrence of this activity for which
+            any point in that ActivityMoment's duration occurs between the specified start and end date.
 
-        recurrence_dts = self.get_occurrences_between(start_date, end_date)
+            Note that an ActivityMoment is not entirely the same as an occurrence, as an ActivityMoment can
+            have a different start time than the occurrence it represents.
+        """
+
+        occurrences = self.get_occurrences_between(start_date, end_date)
 
         # Recurrence_dts is a map objects and thus can not later be used in the filter
-        processed_recurrences = []
         activity_moments = []
 
-        for occurence in recurrence_dts:
-            # Store occurence
-            processed_recurrences.append(occurence)
+        for occurence in occurrences:
+            # Note that DST-offsets have already been handled earlier
+            #   in self.get_occurrences_between -> util.dst_aware_to_dst_ignore
 
-            # recurrence does not handle daylight-saving time! If we were to keep the occurence as is,
-            # then summer events would occur an hour earlier in winter!
-            occurence = timezone.get_current_timezone().localize(
-                datetime.datetime.combine(timezone.localtime(occurence).date(), event_start_time)
-            )
             # Search an instance on the database if present, otherwise generate a new instance
+            # TODO Refactor: This creates a DB query for each occurrence
             try:
                 activity_moment = ActivityMoment.objects.get(
                     recurrence_id=occurence,
@@ -148,17 +148,7 @@ class Activity(models.Model):
                     parent_activity=self,
                 )
             activity_moments.append(activity_moment)
-
-        # Get all moment objects that are not part of the defined recurrences
-        single_activity_moments = ActivityMoment.objects.filter(
-            parent_activity=self,
-            recurrence_id__gte = start_date,
-            recurrence_id__lte = end_date,
-        ).exclude(
-            recurrence_id__in = processed_recurrences
-        )
-
-        return activity_moments + [*single_activity_moments]
+        return activity_moments
 
     # String-representation of an instance of the model
     def __str__(self):
@@ -171,7 +161,6 @@ class Activity(models.Model):
     def is_recurring(self):
         return bool(self.recurrences.rdates or self.recurrences.rrules)
 
-    # Whether this activity has an occurence at a specific date
     def has_occurrence_at(self, date, is_dst_aware=False):
         """ Whether this activity has an occurrence that starts at the specified time """
         if not self.is_recurring:

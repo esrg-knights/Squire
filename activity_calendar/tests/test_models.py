@@ -317,11 +317,11 @@ class ActivityTestCase(TestCase):
     def setUp(self):
         self.activity = Activity.objects.get(id=2)
 
-    def test_get_all_activity_moments(self):
-        """ Tests the Activity get_all_activity_moments method"""
+    def test_get_activitymoments_between(self):
+        """ Tests the Activity get_activitymoments_between method"""
         after = timezone.datetime(2020, 10, 2, 0, 0, 0, tzinfo=timezone.utc)
         before = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
-        activity_moments = self.activity.get_all_activity_moments(after, before)
+        activity_moments = self.activity.get_activitymoments_between(after, before)
 
         # There are three activities, two from the recurring activities, one as an extra one
         self.assertEqual(len(activity_moments), 3)

@@ -61,7 +61,7 @@ def fullcalendar_feed(request):
 
     activity_moment_jsons = []
     for activity in Activity.objects.filter(published_date__lte=timezone.now()):
-        for activity_moment in activity.get_all_activity_moments(start_date, end_date):
+        for activity_moment in activity.get_activitymoments_between(start_date, end_date):
             json_instance = get_json_from_activity_moment(activity_moment, user=request.user)
             activity_moment_jsons.append(json_instance)
 
