@@ -381,7 +381,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         # Define fields that are instantly looked for in the parent_activity
         # If at any point in the future these must become customisable, one only has to move the field name to the
         # copy_fields attribute
-        link_fields = ['slots_image']
+        link_fields = ['slots_image', 'subscriptions_required']
 
     # Alternative start/end date of the activity. If left empty, matches the start/end time
     #   of this OCCURRENCE.
@@ -457,6 +457,9 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         open_date_in_past = self.recurrence_id - self.parent_activity.subscriptions_open <= now
         close_date_in_future = self.recurrence_id - self.parent_activity.subscriptions_close >= now
         return open_date_in_past and close_date_in_future
+
+    def is_full(self):
+        return self.get_subscribed_users().count() >= self.max_participants and self.max_participants != -1
 
     def get_absolute_url(self):
         """

@@ -163,7 +163,7 @@
                     <div class="col align-self-center">
                         <p id="event-status">
                             {% if subscriptions_open %}
-                                {% if num_total_participants >= max_participants and max_participants != -1 %}
+                                {% if activity_moment.is_full %}
                                     Activity is full.
                                 {% else %}
                                     Activity is open for sign-ups
