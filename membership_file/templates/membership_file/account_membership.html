@@ -1,9 +1,8 @@
 
-{% load to_member %}
 
 <h2>Membership Information</h2>
-{% with memberuser=user|to_member %}
-    {% if memberuser.is_member %}
+
+    {% if member.is_considered_member %}
         <p>
             You are a Knights Member; hooray!<br>
             {% if perms.membership_file.can_view_membership_information_self %}
@@ -13,4 +12,4 @@
     {% else %}
         <p>You are not a Knights Member. Please notify the board so they can link your Squire account to your membership information.</p>
     {% endif %}
-{% endwith %}
+

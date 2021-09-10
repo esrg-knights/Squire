@@ -4,6 +4,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.template import Context
 
+from membership_file.models import Member
 from inventory.models import MiscellaneousItem, Ownership
 from inventory.templatetags.inventory_tags import render_ownership_tags, get_owned_by
 
@@ -14,6 +15,7 @@ class RenderOwnershipTemplatetagTest(TestCase):
     def setUp(self):
         self.request = RequestFactory().get("/")
         self.request.user = User.objects.get(id=100)
+        self.request.member = self.request.user.member
         self.context = Context({'request': self.request,})
 
     def test_self_owned(self):
@@ -58,11 +60,6 @@ class RenderOwnershipTemplatetagTest(TestCase):
 class GetOwnedByTemplatetagTest(TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
 
-    def setUp(self):
-        self.request = RequestFactory().get("/")
-        self.request.user = User.objects.get(id=100)
-        self.context = Context({'request': self.request,})
-
     def test_group(self):
         item = MiscellaneousItem.objects.get(id=1)
         group = Group.objects.get(id=2)
@@ -73,9 +70,9 @@ class GetOwnedByTemplatetagTest(TestCase):
 
     def test_user(self):
         item = MiscellaneousItem.objects.get(id=1)
-        user = User.objects.get(id=1)
+        member = Member.objects.get(id=1)
 
-        self.assertFalse(get_owned_by(item, user))
-        user = User.objects.get(id=100)
-        self.assertTrue(get_owned_by(item, user))
+        self.assertTrue(get_owned_by(item, member))
+        member = Member.objects.get(id=2)
+        self.assertFalse(get_owned_by(item, member))
 

@@ -54,6 +54,11 @@ class TestOwnershipMixin(TestMixinMixin, TestCase):
         self.ownership = Ownership.objects.get(id=2)
         super(TestOwnershipMixin, self).setUp()
 
+    def _imitiate_request_middleware(self, request):
+        super(TestOwnershipMixin, self)._imitiate_request_middleware(request)
+        if hasattr(request.user, 'member'):
+            request.member = request.user.member
+
     def get_base_url_kwargs(self):
         return {'ownership_id': self.ownership.id}
 
@@ -180,7 +185,7 @@ class TestMemberOwnershipAlterView(ViewValidityMixin, TestCase):
         msg = "Your version of {item} has been updated".format(item=self.ownership.content_object)
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
 
-        
+
 class TestCatalogueMixin(TestMixinMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     mixin_class = CatalogueMixin
