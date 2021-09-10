@@ -13,66 +13,68 @@
                 <h4 class="card-title">{{ activity_moment.title }}</h4>
                 <h6 class="card-subtitle mb-2 text-muted">{{ activity_moment.start_date|date:"l j E H:i" }}</h6>
             </div>
-            {% if activity_moment.location %}
-            <div class="d-flex">
-                <!-- Location Icon -->
-                <div class="col-xs-2">
-                    <img
-                        src="{% static 'octicons/location.svg' %}"
-                        alt="Location-icon"
-                        height="16"
-                        width="16"
-                    />
+            <div style="min-height: 5em;">
+                {% if activity_moment.location %}
+                <div class="d-flex">
+                    <!-- Location Icon -->
+                    <div class="col-xs-2">
+                        <img
+                            src="{% static 'octicons/location.svg' %}"
+                            alt="Location-icon"
+                            height="16"
+                            width="16"
+                        />
+                    </div>
+                    <!-- Location -->
+                    <div class="col nospace align-self-center">
+                        <p id="event-location">{{ activity_moment.location }} </p>
+                    </div>
                 </div>
-                <!-- Location -->
-                <div class="col nospace align-self-center">
-                    <p id="event-location">{{ activity_moment.location }} </p>
-                </div>
-            </div>
-            {% endif %}
+                {% endif %}
 
-            {% if activity_moment.max_participants > 0 or activity_moment.subscriptions_required %}
-            <div class="d-flex">
-                <!-- Subscription Icon -->
-                <div class="col-xs-2">
-                    <img
-                        src="{% static 'octicons/clippy.svg' %}"
-                        alt=""
-                        height="16"
-                        width="16"
-                    />
-                </div>
-                <!-- Subscription status -->
-                <div class="col align-self-center">
-                    <p id="event-status">
-                        {% if user|is_subscribed_to:activity_moment %}
-                            <span class="text-success">
-                                You are subscribed
-                            </span>
-                        {% elif activity_moment.is_open_for_subscriptions %}
-                            {% if activity_moment.is_full %}
-                                <span class="text-danger">
-                                    Activity is full.
+                {% if activity_moment.max_participants > 0 or activity_moment.subscriptions_required %}
+                <div class="d-flex">
+                    <!-- Subscription Icon -->
+                    <div class="col-xs-2">
+                        <img
+                            src="{% static 'octicons/clippy.svg' %}"
+                            alt=""
+                            height="16"
+                            width="16"
+                        />
+                    </div>
+                    <!-- Subscription status -->
+                    <div class="col align-self-center">
+                        <p id="event-status">
+                            {% if user|is_subscribed_to:activity_moment %}
+                                <span class="text-success">
+                                    You are subscribed
                                 </span>
+                            {% elif activity_moment.is_open_for_subscriptions %}
+                                {% if activity_moment.is_full %}
+                                    <span class="text-danger">
+                                        Activity is full.
+                                    </span>
+                                {% else %}
+                                    Open for sign-ups
+                                {% endif %}
                             {% else %}
-                                Open for sign-ups
+                                {% opens_in_future as opens_in_future %}
+                                {% if opens_in_future %}
+                                    <small>
+                                        Sign-ups open: {% get_opening_time "M j, H:i" %}
+                                    </small>
+                                {% else %}
+                                    <span class="text-danger">
+                                        Sign-ups are closed
+                                    </span>
+                                {% endif %}
                             {% endif %}
-                        {% else %}
-                            {% opens_in_future as opens_in_future %}
-                            {% if opens_in_future %}
-                                <small>
-                                    Sign-ups open: {% get_opening_time "M j, H:i" %}
-                                </small>
-                            {% else %}
-                                <span class="text-danger">
-                                    Sign-ups are closed
-                                </span>
-                            {% endif %}
-                        {% endif %}
-                    </p>
+                        </p>
+                    </div>
                 </div>
+                {% endif %}
             </div>
-            {% endif %}
 
             <!-- Link to activity moment page -->
 
