@@ -508,6 +508,15 @@ class ActivityMomentTestCase(TestCase):
         activity_moment.local_start_date = activity_moment.recurrence_id + timezone.timedelta(hours=2)
         activity_moment.full_clean()
 
+    def test_is_full(self):
+        activity_moment = ActivityMoment.objects.get(id=2)
+        self.assertFalse(activity_moment.is_full())
+        # Set the maximum number to the amount of users is the activitymoment
+        activity_moment.local_max_participants = activity_moment.get_subscribed_users().count()
+        self.assertTrue(activity_moment.is_full())
+        # Check that -1 does not cause problems
+        activity_moment.local_max_participants = -1
+        self.assertFalse(activity_moment.is_full())
 
     def test_get_subscribed_users(self):
         """ Test that get subscribed users returns the correct users """
