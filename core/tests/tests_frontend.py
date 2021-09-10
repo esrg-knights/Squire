@@ -70,12 +70,12 @@ class FrontEndTest(TestCase):
 
         # Disable share URL
         global_preferences['newsletter__share_link'] = ""
-        res = check_http_response(self, reverse('core:homepage'), 'get', TestAccountUser)
+        res = check_http_response(self, '/', 'get', TestAccountUser)
         self.assertNotContains(res, reverse('core:newsletters'))
 
         # Enable share URL
         global_preferences['newsletter__share_link'] = "https://www.example.com"
-        res = check_http_response(self, reverse('core:homepage'), 'get', TestAccountUser)
+        res = check_http_response(self, '/', 'get', TestAccountUser)
         self.assertContains(res, reverse('core:newsletters'))
 
 
