@@ -49,56 +49,59 @@
                         can connect your membership to this account. Until that is done, functionality will be limited.
                     </div>
                 {% else %}
-                    <div>
-                        <h3>My groups</h3>
-                        {% for group in member.associationgroup_set.all %}
-                            <div class="card mb-2">
-                                <div class="card-header d-flex">
-                                    <div style="width: 2em;">
-                                        {% if group.icon %}
-                                            <div class=""">
-                                                <div class=""
-                                                     style="background-size: contain; background-position: center;
-                                                         background-image: url('{{ group.icon.url }}');
-                                                         background-repeat: no-repeat; width: 3em; height: 3em;
-                                                         margin-left: -1em; margin-top: -0.5em;"
-                                                ></div>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                    <div>
-                                        {{ group.name }}
-                                    </div>
-                                </div>
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">
-                                        <div class="row">
-                                            <div class="col">
-                                                Control board
-                                            </div>
-                                            <a class="col btn btn-sm btn-outline-primary"
-                                               href="{% url "committees:group_general" group_id=group.id %}"
-                                            >   Go to
-                                            </a>
+                    {% if member.associationgroup_set.exist %}
+                        <div>
+                            <h3>My groups</h3>
+
+                            {% for group in member.associationgroup_set.all %}
+                                <div class="card mb-2">
+                                    <div class="card-header d-flex">
+                                        <div style="width: 2em;">
+                                            {% if group.icon %}
+                                                <div class="">
+                                                    <div class=""
+                                                         style="background-size: contain; background-position: center;
+                                                             background-image: url('{{ group.icon.url }}');
+                                                             background-repeat: no-repeat; width: 3em; height: 3em;
+                                                             margin-left: -1em; margin-top: -0.5em;"
+                                                    ></div>
+                                                </div>
+                                            {% endif %}
                                         </div>
-                                    </li>
-                                    {% for shortcut in group.shortcut_set.all%}
+                                        <div>
+                                            {{ group.name }}
+                                        </div>
+                                    </div>
+                                    <ul class="list-group list-group-flush">
                                         <li class="list-group-item">
                                             <div class="row">
                                                 <div class="col">
-                                                    {{ shortcut.name|capfirst }}
+                                                    Control board
                                                 </div>
                                                 <a class="col btn btn-sm btn-outline-primary"
-                                                   href="{{ shortcut.url }}"
+                                                   href="{% url "committees:group_general" group_id=group.id %}"
                                                 >   Go to
                                                 </a>
                                             </div>
                                         </li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        {% endfor %}
-                    </div>
+                                        {% for shortcut in group.shortcut_set.all%}
+                                            <li class="list-group-item">
+                                                <div class="row">
+                                                    <div class="col">
+                                                        {{ shortcut.name|capfirst }}
+                                                    </div>
+                                                    <a class="col btn btn-sm btn-outline-primary"
+                                                       href="{{ shortcut.url }}"
+                                                    >   Go to
+                                                    </a>
+                                                </div>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 {% endif %}
 
                 <div>
