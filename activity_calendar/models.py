@@ -164,6 +164,7 @@ class Activity(models.Model):
     def duration(self):
         """ Gets the duration of this activity """
         return self.end_date - self.start_date
+
     def has_occurrence_at(self, date, is_dst_aware=False):
         """ Whether this activity has an occurrence that starts at the specified time """
         if not self.is_recurring:
@@ -209,7 +210,7 @@ class Activity(models.Model):
         alt_start_outside_bounds |= Q(local_end_date__isnull=True, local_start_date__lt=(after - activity_duration))
 
         # Obtain just their recurrence_ids
-        surplus_activity_moments = self.activitymoment_set.filter(alt_start_outside_bounds, recurrence_id__gte=after, recurrence_id__lte=before) \
+        surplus_activity_moments = self.activitymoment_set.filter(alt_start_outside_bounds, recurrence_id__gte=(after - activity_duration), recurrence_id__lte=before) \
             .values_list('recurrence_id', flat=True)
 
         # Get rid of these surplus activity_moments
@@ -222,15 +223,16 @@ class Activity(models.Model):
         # Activitymoment has a local_start_date within the bounds
         alt_start_inside_bounds = Q(local_start_date__gte=after, local_start_date__lte=before)
 
-        # Activitymoment has a local_end_date within the bounds
-        alt_start_inside_bounds |= Q(local_end_date__gte=after, local_end_date__lte=before)
-
         # Activitymoment has no local_end_date,
         #   but the (local_start_date + activity_duration) >= 'after'
         alt_start_inside_bounds |= Q(local_end_date__isnull=True, local_start_date__gte=after - activity_duration)
 
-        # Activitymoment has a local_start_date < after, and a local_end_date > before
-        alt_start_inside_bounds |= Q(local_start_date__lt=after, local_end_date__gt=before)
+        # Activitymoment has no local_start_date and normally starts before the bounds,
+        #   but the local_end_date >= after
+        alt_start_inside_bounds |= Q(local_start_date__isnull=True, recurrence_id__lt=after, local_end_date__gte=after)
+
+        # Activitymoment has a local_start_date < after, and a local_end_date > after
+        alt_start_inside_bounds |= Q(local_start_date__lte=after, local_end_date__gte=after)
 
         # Obtain just their recurrence_ids
         recurrence_id_not_between = ~Q(recurrence_id__gte=after, recurrence_id__lte=before)
