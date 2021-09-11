@@ -501,8 +501,6 @@ class ActivityTestCase(TestCase):
             [], new_start_date=timezone.datetime(2020, 10, 18, 14, 0, 0, tzinfo=timezone.utc),
         )
 
-        # TODO: check duplicates if moving within the bounds?
-
     def test_get_occurrences_between_surplus_end_earlier(self):
         """
             Tests if an occurrence with a recurrence_id inside the bounds of get_occurrences_between,

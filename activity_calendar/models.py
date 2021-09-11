@@ -125,27 +125,27 @@ class Activity(models.Model):
             Note that an ActivityMoment is not entirely the same as an occurrence, as an ActivityMoment can
             have a different start time than the occurrence it represents.
         """
-        occurrences = self.get_activitymoment_occurrences_between(start_date, end_date)
-
-        # Recurrence_dts is a map objects and thus can not later be used in the filter
+        occurrences = list(self.get_activitymoment_occurrences_between(start_date, end_date))
         activity_moments = []
 
-        for occurence in occurrences:
+        # Fetch existing activitymoments
+        existing_moments = list(self.activitymoment_set.filter(recurrence_id__in=occurrences))
+
+        for occurrence in occurrences:
             # Note that DST-offsets have already been handled earlier
             #   in self.get_occurrences_between -> util.dst_aware_to_dst_ignore
 
-            # Search an instance on the database if present, otherwise generate a new instance
-            # TODO Refactor: This creates a DB query for each occurrence
-            try:
-                activity_moment = ActivityMoment.objects.get(
-                    recurrence_id=occurence,
+            # Get the instance from the database if present, otherwise generate a new instance
+            #   i.e. find the first matching recurrence_id from the list. If that doesn't exist,
+            #       create a new activitymoment
+            activity_moment = next(
+                (x for x in existing_moments if x.recurrence_id == occurrence),
+                # Default value if recurrence_id is not found
+                ActivityMoment(
+                    recurrence_id=occurrence,
                     parent_activity=self,
                 )
-            except ActivityMoment.DoesNotExist:
-                activity_moment = ActivityMoment(
-                    recurrence_id=occurence,
-                    parent_activity=self,
-                )
+            )
             activity_moments.append(activity_moment)
         return activity_moments
 
