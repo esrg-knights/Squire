@@ -377,7 +377,7 @@ class ActivityTestCase(TestCase):
         # Note: Activity has an occurrence on 07-10-21, which ends the next day at 02:00 (UTC)
         after = timezone.datetime(2020, 10, 8, 0, 0, 0, tzinfo=timezone.utc)
         before = timezone.datetime(2020, 10, 10, 0, 0, 0, tzinfo=timezone.utc)
-        recurrences = list(self.activity.get_occurrences_between(after, before))
+        recurrences = list(self.activity.get_activitymoment_occurrences_between(after, before))
 
         self.assertEqual(len(recurrences), 1)
         self.assertEqual(recurrences[0], timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc))
@@ -400,7 +400,7 @@ class ActivityTestCase(TestCase):
 
         after = timezone.datetime(2020, 10, 9, 0, 0, 0, tzinfo=timezone.utc)
         before = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
-        recurrences = list(self.activity.get_occurrences_starting_between(after, before))
+        recurrences = list(self.activity.get_activitymoment_occurrences_between(after, before))
 
         self.assertEqual(len(recurrences), 2)
         # Note that the returned recurrence_list contains the original recurrence_id and
@@ -423,7 +423,7 @@ class ActivityTestCase(TestCase):
 
         after = timezone.datetime(2020, 10, 2, 0, 0, 0, tzinfo=timezone.utc)
         before = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
-        recurrences = list(self.activity.get_occurrences_starting_between(after, before))
+        recurrences = list(self.activity.get_activitymoment_occurrences_between(after, before))
 
         self.assertEqual(len(recurrences), 1)
         self.assertIn(timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc), recurrences)
