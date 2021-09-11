@@ -8,16 +8,18 @@ from django.test.utils import override_settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
+from django.views.generic import ListView
 
 from unittest.mock import patch
 
 from activity_calendar.models import *
 from activity_calendar.views import CreateSlotView, ActivityMomentWithSlotsView, ActivitySimpleMomentView,\
-    EditActivityMomentView
+    EditActivityMomentView, ActivityOverview
 from activity_calendar.forms import *
 
 from core.models import ExtendedUser as User
 from core.tests.util import suppress_warnings
+from utils.testing.view_test_utils import ViewValidityMixin
 
 from . import mock_now
 
@@ -156,6 +158,31 @@ class ActivityAdminTest(TestCase):
         # No occurence at the given date
         response = self.client.post('/calendar/activity/2/2020-09-03T14%3A00%3A00%2B00%3A00/', data={})
         self.assertEqual(response.status_code, 404)
+
+
+class TestActivityOverview(ViewValidityMixin, TestCase):
+    fixtures = ['test_users.json', 'test_activity_slots.json']
+    base_user_id = 2
+
+    def get_base_url(self, content_type=None, item_id=None):
+        return reverse('activity_calendar:activity_upcoming')
+
+    def test_class(self):
+        self.assertTrue(issubclass(ActivityOverview, ListView))
+        self.assertEqual(ActivityOverview.template_name, "activity_calendar/activity_overview.html")
+        self.assertEqual(ActivityOverview.context_object_name, 'activities')
+
+    def test_successful_get(self):
+        response = self.client.get(self.get_base_url(), data={})
+        self.assertEqual(response.status_code, 200)
+
+    @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_template_context(self, mock_tz):
+        response  = self.client.get(self.get_base_url(item_id=1), data={})
+        context = response.context
+
+        self.assertEqual(len(context['activities']), 2)
+        self.assertIsInstance(context['activities'][0], ActivityMoment)
 
 
 class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):

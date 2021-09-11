@@ -1,11 +1,11 @@
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.sites import AdminSite
+from django.contrib.auth.models import User
 from django.test import Client, TestCase, override_settings
 
 from core.tests.util import suppress_warnings
 from membership_file.tests.util import fillDictKeys
 from membership_file.models import Member, MemberLog, MemberLogField
-from membership_file.models import MemberUser as User
 
 
 ##################################################################################

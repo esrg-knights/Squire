@@ -27,13 +27,13 @@ class MemberItemsOverview(MembershipRequiredMixin, ListView):
     context_object_name = 'ownerships'
 
     def get_queryset(self):
-        return Ownership.objects.filter(member=self.request.user.member).filter(is_active=True)
+        return Ownership.objects.filter(member=self.request.member).filter(is_active=True)
 
     def get_context_data(self, *args, **kwargs):
         context = super(MemberItemsOverview, self).get_context_data(*args, **kwargs)
         # Get items previously stored at the associatoin
         context[self.context_object_name+'_history'] = Ownership.objects.\
-            filter(member=self.request.user.member).\
+            filter(member=self.request.member).\
             filter(is_active=False)
         return context
 
@@ -50,7 +50,7 @@ class OwnershipMixin:
 
     def check_access(self):
         if self.ownership.member:
-            if self.request.user.member == self.ownership.member:
+            if self.request.member == self.ownership.member:
                 return
         elif self.allow_access_through_group:
             if self.ownership.group and user_in_association_group(

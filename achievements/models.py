@@ -7,7 +7,6 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from inventory.models import valid_item_class_ids
 
 from core.models import ExtendedUser as User
-from membership_file.util import user_to_member
 
 __all__ = ['Category', 'Achievement', 'Claimant', 'AchievementItemLink']
 
