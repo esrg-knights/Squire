@@ -19,7 +19,7 @@ class AssociationGroup(models.Model):
     BOARD = 'B'
     GROUPTYPES = [
         (COMMITTEE, 'Committee'),
-        (GUILD, 'Guild'),
+        (GUILD, 'Order'),
         (WORKGROUP, 'Workgroup'),
         (BOARD, 'Board'),
     ]

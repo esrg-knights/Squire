@@ -24,6 +24,9 @@ class TestAssociationGroupOverviews(TestCase):
         self.user = User.objects.get(id=100)
         self.client.force_login(self.user)
 
+        # Add the required permission
+        self.user.user_permissions.add(Permission.objects.get(codename='view_associationgroup'))
+
     def test_committee_overview(self):
         base_url = reverse('committees:committees')
         response  = self.client.get(base_url, data={})
