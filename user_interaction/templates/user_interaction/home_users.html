@@ -36,10 +36,13 @@
                         </h3>
                     </div>
                     {% for activity_moment in activities %}
-                        <div class="col-12 col-md-6 col-xl-4 p-1">
+                        <div class="col-12 col-md-6 p-1">
                             {% include "activity_calendar/snippet_activity_moment.html" %}
                         </div>
                     {% endfor %}
+                    <div class="alert alert-info w-100">
+                        Don't forget: Physical activities require registration as long as Corona guidelines exist!
+                    </div>
                 </div>
             </div>
             <div class="col-md-4">
@@ -49,7 +52,7 @@
                         can connect your membership to this account. Until that is done, functionality will be limited.
                     </div>
                 {% else %}
-                    {% if member.associationgroup_set.exist %}
+                    {% if member.associationgroup_set.exists %}
                         <div>
                             <h3>My groups</h3>
 
@@ -76,7 +79,7 @@
                                         <li class="list-group-item">
                                             <div class="row">
                                                 <div class="col">
-                                                    Control board
+                                                    Control panel
                                                 </div>
                                                 <a class="col btn btn-sm btn-outline-primary"
                                                    href="{% url "committees:group_general" group_id=group.id %}"
@@ -110,7 +113,9 @@
                         Bugs are annoying. If you encountered one, please mark them on github or notify the board and
                         we will send in our troops!
                     </p>
-                    <a class="btn btn-outline-dark" href="https://github.com/esrg-knights/Squire/issues">Report bug</a>
+                    <a class="btn btn-outline-dark" href="https://github.com/esrg-knights/Squire/issues"
+                       target="_blank" rel="noreferrer noopener"
+                    >Report bug</a>
                 </div>
             </div>
         </div>

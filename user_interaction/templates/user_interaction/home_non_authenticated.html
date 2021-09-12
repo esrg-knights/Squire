@@ -23,7 +23,7 @@
     <h4>What is Squire?</h4>
     <p>
         Squire is the webapp developed by the UUPS-committee, which is the ICT committee of ESRG Knights of the Kitchen Table.
-        It's goal is to provide members with more insight in the going-ons inside the association as well as aid the board
+        Its goal is to provide members with more insight in the going-ons inside the association as well as aid the board
         in running the association. For instance members can adjust their personal data, view the committees, boardgames
         and roleplaying games. Over time we undboubtedly will add more functions.
     </p>
@@ -45,6 +45,9 @@
     <div>
         {% url "core:user_accounts/login" as login_url %}
         {% render_form method="post" id="login_form"  has_submit_button=False action=login_url %}
+        <p>
+            Forgot your password? Click <a href="{% url 'core:user_accounts/password_reset' %}">here</a>
+        </p>
         <div class="btn-group">
             <input type="submit" form="login_form" value="Login" class="btn  greenify" style="min-width: 10em;">
             <a href="{% url "core:user_accounts/register" %}"
