@@ -8,7 +8,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('membership_file', '0010_export_permission'),
+        ('membership_file', '0011_delete_memberuser'),
     ]
 
     operations = [
