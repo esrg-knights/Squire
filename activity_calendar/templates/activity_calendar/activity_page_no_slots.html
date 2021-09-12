@@ -69,12 +69,20 @@
 {% block additional-contents %}
     {% if show_participants %}
         <h2>Current participants</h2>
-        {% if participants %}
-            {% for participant in participants %}
+        {% if subscribed_users or ext_participants %}
+            {% for participant in subscribed_users %}
                 <div class="">
                     {{ participant.get_display_name }}
                 </div>
             {% endfor %}
+            {% if ext_participants %}
+                <h4 class="mt-2">Guests</h4>
+                {% for participant in subscribed_guests %}
+                    <div class="">
+                        {{ participant }}
+                    </div>
+                {% endfor %}
+            {% endif %}
         {% else %}
             There are currently no people signed up. {% if subscriptions_open %} Be the first! {% endif %}
         {% endif %}

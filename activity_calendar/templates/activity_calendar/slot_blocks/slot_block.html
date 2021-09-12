@@ -38,7 +38,7 @@
                                 {{ slot.participants.all|length }} / &infin;
                             {% endif %}
                             participants{% if show_participants %}:
-                                {{ slot.participants.all | join:", " }}
+                                {{ slot.participant_set.all | join:", " }}
                             {% endif %}
                         </small>
                     </div>

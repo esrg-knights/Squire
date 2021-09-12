@@ -29,6 +29,7 @@ class ModelMethodsTest(TestCase):
         self.activity.slots_image = None
         self.assertEqual(self.activity.image_url, f"{settings.STATIC_URL}images/default_logo.png")
 
+
 class ModelMethodsDSTDependentTests(TestCase):
     """
         Tests model methods that change behaviour based on Daylight Saving Time
@@ -120,6 +121,7 @@ class ModelMethodsDSTDependentTests(TestCase):
 
         has_occurence_at_query_dt = self.activity.has_occurrence_at(query_dt)
         self.assertTrue(has_occurence_at_query_dt)
+
 
 class EXDATEandRDATEwithDSTTests(TestCase):
     """
@@ -428,6 +430,7 @@ class ActivityTestCase(TestCase):
         self.assertEqual(len(recurrences), 1)
         self.assertIn(timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc), recurrences)
 
+
 class ActivityMomentTestCase(TestCase):
     fixtures = ['test_users.json', 'test_activity_slots']
 
@@ -512,11 +515,16 @@ class ActivityMomentTestCase(TestCase):
         activity_moment = ActivityMoment.objects.get(id=2)
         self.assertFalse(activity_moment.is_full())
         # Set the maximum number to the amount of users is the activitymoment
-        activity_moment.local_max_participants = activity_moment.get_subscribed_users().count()
+        activity_moment.local_max_participants = activity_moment.participant_count
         self.assertTrue(activity_moment.is_full())
         # Check that -1 does not cause problems
         activity_moment.local_max_participants = -1
         self.assertFalse(activity_moment.is_full())
+
+    def test_participant_count(self):
+        self.assertEqual(ActivityMoment.objects.get(id=3).get_subscribed_users().count(), 2)
+        self.assertEqual(ActivityMoment.objects.get(id=3).get_subscribed_guests().count(), 3)
+        self.assertEqual(ActivityMoment.objects.get(id=3).participant_count, 5)
 
     def test_get_subscribed_users(self):
         """ Test that get subscribed users returns the correct users """
@@ -529,7 +537,12 @@ class ActivityMomentTestCase(TestCase):
         self.assertEqual(ActivityMoment.objects.get(id=2).get_subscribed_users().count(), 2)
 
         # This activity contains three entries, but only two users (one double entry) ensure it is not counted double
-        self.assertEqual(ActivityMoment.objects.get(id=3).get_subscribed_users().count(), 2)
+        users = ActivityMoment.objects.get(id=3).get_subscribed_users()
+        self.assertEqual(users.count(), 2)
+        # Also validate that it did not count user 3 that does have an external user
+        self.assertNotIn(3, [user.id for user in users])
+        guests_entries = ActivityMoment.objects.get(id=3).get_subscribed_guests()
+        self.assertIn(3, [entry.user_id for entry in guests_entries])
 
     def test_get_user_subscriptions(self):
         """ Test that user subscriptions generally return the correct data"""
@@ -542,6 +555,12 @@ class ActivityMomentTestCase(TestCase):
         # AnonymousUsers return empty querysets
         self.assertEquals(ActivityMoment.objects.get(id=3).get_user_subscriptions(AnonymousUser()).count(), 0)
 
+    def test_get_guest_subscriptions(self):
+        participants = ActivityMoment.objects.get(id=3).get_subscribed_guests()
+        self.assertEqual(participants.count(), 3)
+        self.assertIsInstance(participants.first(), Participant)
+        self.assertEqual(participants.first().activity_slot.parent_activity_id, 2)
+
     def test_get_slots(self):
         slots = ActivityMoment.objects.get(id=3).get_slots()
         self.assertEqual(slots.count(), 5)
@@ -552,6 +571,20 @@ class ActivityMomentTestCase(TestCase):
     def test_is_open_for_subscriptions(self, mock_tz):
         self.assertFalse(ActivityMoment.objects.get(id=3).is_open_for_subscriptions())
         self.assertTrue(ActivityMoment.objects.get(id=1).is_open_for_subscriptions())
+
+
+class ActivityParticipantTest(TestCase):
+    fixtures = ['test_users.json', 'test_activity_slots']
+
+    def test_str(self):
+        participation = Participant.objects.create(
+            user_id=1,
+            activity_slot_id=7
+        )
+        self.assertEqual(str(participation), 'test_admin')
+
+        participation.guest_name = 'some guest'
+        self.assertEqual(str(participation), participation.guest_name + ' (ext)')
 
 
 

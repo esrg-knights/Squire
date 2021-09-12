@@ -144,7 +144,7 @@ class ActivityAdminTest(TestCase):
         self.assertIn('Betrayal', slots)
         self.assertIn('Boardgame the Boardgame', slots)
 
-        self.assertEqual(context['num_total_participants'], 2)
+        self.assertEqual(context['num_total_participants'], 5)
 
     # Test POST without a correct url
     # Even if the data is invalid, we expect a 400 bad request
@@ -210,7 +210,8 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         self.assertEqual(response.context['activity'].id, self.default_activity_id)
         self.assertEqual(response.context['recurrence_id'], self.recurrence_id)
         self.assertEqual(response.context['subscriptions_open'], True)
-        self.assertIn('participants', response.context)
+        self.assertIn('subscribed_users', response.context)
+        self.assertIn('subscribed_guests', response.context)
         self.assertIn('num_max_participants', response.context)
         self.assertIn('form', response.context)
         self.assertIn('show_participants', response.context)

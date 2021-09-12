@@ -403,6 +403,11 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         normal_duration = self.parent_activity.end_date - self.parent_activity.start_date
         return self.start_date + normal_duration
 
+    @property
+    def participant_count(self):
+        return self.get_subscribed_users().count() + \
+               self.get_subscribed_guests().count()
+
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
         errors = {}
@@ -421,7 +426,16 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         return User.objects.filter(
             participant__activity_slot__parent_activity_id=self.parent_activity_id,
             participant__activity_slot__recurrence_id=self.recurrence_id,
+            participant__guest_name='',
         ).distinct()
+
+    def get_subscribed_guests(self):
+        return Participant.objects.filter(
+            activity_slot__parent_activity_id=self.parent_activity.id,
+            activity_slot__recurrence_id=self.recurrence_id,
+        ).exclude(
+            guest_name='',
+        )
 
     def get_user_subscriptions(self, user):
         """
@@ -435,6 +449,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         return Participant.objects.filter(
             activity_slot__parent_activity__id=self.parent_activity_id,
             activity_slot__recurrence_id=self.recurrence_id,
+            guest_name='',
             user_id=user.id,
         )
 
@@ -565,7 +580,12 @@ class ActivitySlot(models.Model):
 class Participant(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     activity_slot = models.ForeignKey(ActivitySlot, on_delete=models.CASCADE)
+    # Charfield for adding external users, this can only be done through admin.
+    guest_name = models.CharField(max_length=123, default='')
     showed_up = models.BooleanField(null=True, default=None, help_text="Whether the participant actually showed up")
 
     def __str__(self):
-        return self.user.get_simple_display_name()
+        if self.guest_name:
+            return self.guest_name + ' (ext)'
+        else:
+            return self.user.get_simple_display_name()

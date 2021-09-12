@@ -326,5 +326,36 @@
     "activity_slot": 8,
     "showed_up": null
   }
-}
+},
+    {
+        "model": "activity_calendar.participant",
+        "pk": 7,
+        "fields": {
+            "user": 1,
+            "activity_slot": 4,
+            "guest_name": "Karen",
+            "showed_up": true
+        }
+    },
+    {
+        "model": "activity_calendar.participant",
+        "pk": 8,
+        "fields": {
+            "user": 1,
+            "activity_slot": 4,
+            "guest_name": "Krystal",
+            "showed_up": true
+        }
+    },
+    {
+        "model": "activity_calendar.participant",
+        "pk": 9,
+        "fields": {
+            "user": 3,
+            "activity_slot": 4,
+            "guest_name": "Kathleen",
+            "showed_up": true
+        }
+    }
+
 ]
