@@ -2,8 +2,10 @@ from django.contrib.admin import ModelAdmin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
 from django.test import Client, TestCase, override_settings
+from django.test.client import RequestFactory
 
 from core.tests.util import suppress_warnings
+from membership_file.admin import MemberWithLog, reset_has_paid_membership_fee
 from membership_file.tests.util import fillDictKeys
 from membership_file.models import Member, MemberLog, MemberLogField
 
@@ -12,6 +14,55 @@ from membership_file.models import Member, MemberLog, MemberLogField
 # Test cases for MemberLog-logic and Member deletion logic on the admin-side
 # @since 19 JUL 2019
 ##################################################################################
+
+class MemberAdminTest(TestCase):
+    """ Testcases for MemberWithLog """
+    fixtures = ['test_users.json', 'test_members.json']
+
+    def setUp(self):
+        self.model_admin = MemberWithLog(model=Member, admin_site=AdminSite())
+        self.user = User.objects.all().first()
+
+        factory = RequestFactory()
+        self.request = factory.get('/testurl/')
+        self.request.user = self.user
+
+    def test_bulk_reset_membership_fee(self):
+        """ Tests if the bulk resetting membership fee admin action updates
+        has_paid_membership_fee and created logs (if needed) """
+        Member.objects.all().update(has_paid_membership_fee=True, last_updated_by=None)
+        # Already reset
+        member = Member.objects.get(id=1)
+        member.has_paid_membership_fee = False
+        member.save()
+
+        # Get rid of all the logs
+        MemberLog.objects.all().delete()
+
+        # Exclude a single member
+        queryset = Member.objects.exclude(id=2)
+        reset_has_paid_membership_fee(self.model_admin, self.request, queryset)
+
+        for member in Member.objects.all():
+            if member.id == 1:
+                # Already reset
+                self.assertIsNone(member.last_updated_by)
+                self.assertFalse(member.has_paid_membership_fee)
+                self.assertIsNone(member.memberlog_set.all().first())
+
+            elif member.id == 2:
+                # Not part of the queryset
+                self.assertIsNone(member.last_updated_by)
+                self.assertTrue(member.has_paid_membership_fee)
+                self.assertIsNone(member.memberlog_set.all().first())
+            else:
+                # Updated
+                self.assertEqual(member.last_updated_by, self.user)
+                self.assertFalse(member.has_paid_membership_fee)
+                memberlogs = member.memberlog_set.all()
+                self.assertEqual(len(memberlogs), 1)
+                self.assertEqual(memberlogs.first().updated_fields.first().field, "has_paid_membership_fee")
+
 
 # Tests Log deletion when members are deleted
 class MemberLogCleanupTest(TestCase):
@@ -68,10 +119,10 @@ class MemberLogTest(TestCase):
 
         # An empty dictionary of all fields that are set when making a POST request for a member
         cls.emptyMemberDictionary = {
-            "updated_member-TOTAL_FORMS": 0,
-            "updated_member-INITIAL_FORMS": 0,
-            "updated_member-MIN_NUM_FORMS": 0,
-            "updated_member-MAX_NUM_FORMS": 0,
+            "memberlog_set-TOTAL_FORMS": 0,
+            "memberlog_set-INITIAL_FORMS": 0,
+            "memberlog_set-MIN_NUM_FORMS": 0,
+            "memberlog_set-MAX_NUM_FORMS": 0,
         }
 
     def setUp(self):
@@ -395,10 +446,10 @@ class DeleteMemberTest(TestCase):
         self.member = Member.objects.create(**self.memberData)
 
         self.memberData = {
-            "updated_member-TOTAL_FORMS": 0,
-            "updated_member-INITIAL_FORMS": 0,
-            "updated_member-MIN_NUM_FORMS": 0,
-            "updated_member-MAX_NUM_FORMS": 0,
+            "memberlog_set-TOTAL_FORMS": 0,
+            "memberlog_set-INITIAL_FORMS": 0,
+            "memberlog_set-MIN_NUM_FORMS": 0,
+            "memberlog_set-MAX_NUM_FORMS": 0,
             **self.memberData,
         }
 

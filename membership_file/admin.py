@@ -1,6 +1,6 @@
-from core.admin import EmptyFieldListFilter
+
 from datetime import datetime
-from membership_file.export import MemberResource
+
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -9,7 +9,20 @@ from import_export.formats.base_formats import CSV
 
 from .forms import AdminMemberForm
 from .models import Member, MemberLog, MemberLogField, Room
+from core.admin import EmptyFieldListFilter
+from membership_file.export import MemberResource
 from utils.forms import RequestUserToFormModelAdminMixin
+
+
+def reset_has_paid_membership_fee(modeladmin, request, queryset):
+    # Iterate over the queryset instead of updating it as to
+    #   make sure this action is logged
+    for member in queryset:
+        if member.has_paid_membership_fee:
+            member.has_paid_membership_fee = False
+            member.last_updated_by = request.user
+            member.save()
+reset_has_paid_membership_fee.short_description = 'Reset membership fee paid status'
 
 class HideRelatedNameAdmin(admin.ModelAdmin):
     class Media:
@@ -122,6 +135,9 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
     #   causing the last few members to not receive emails.
     list_per_page = 150
     list_max_show_all = 999
+
+    # Allow bulk updating has_paid_membership_fee = False
+    actions = [reset_has_paid_membership_fee]
 
     # Disable bulk delete
     def get_actions(self, request):
