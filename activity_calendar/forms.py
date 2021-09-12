@@ -80,13 +80,8 @@ class RegisterAcitivityMixin:
 
         # Check if, when signing up, there is still room (because max is limited)
         if data['sign_up'] and self.activity_moment.max_participants != -1:
-            # get the number of participants
-            num_participants = \
-                self.activity_moment.get_subscribed_users().count() + \
-                self.activity_moment.get_subscribed_guests().count()
-
             # check the number of participants
-            if num_participants >= self.activity_moment.max_participants:
+            if self.activity_moment.participant_count >= self.activity_moment.max_participants:
                 raise ValidationError(
                     _(f"This activity is already at maximum capacity."),
                     code='activity-full'
