@@ -41,7 +41,7 @@ class HomeUsersView(TemplateView):
 
 
         kwargs.update(
-            activities=activities
+            activities=sorted(activities, key=lambda activity: activity.start_date)
         )
 
         return super(HomeUsersView, self).get_context_data(**kwargs)
