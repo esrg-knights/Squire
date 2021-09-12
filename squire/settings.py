@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'utils',
     'boardgames',
     'roleplaying',
+    'user_interaction',
     # More External Libraries
     'django_cleanup.apps.CleanupConfig',
     'martor',
