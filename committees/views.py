@@ -1,13 +1,10 @@
-from django.contrib import messages
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, TemplateView,  FormView
 
-from boardgames.models import BoardGame
-from inventory.models import MiscellaneousItem
-from roleplaying.models import RoleplayingItem
 from utils.views import PostOnlyFormViewMixin
 
 from committees.config import get_all_configs_for_group
@@ -17,7 +14,8 @@ from committees.models import AssociationGroup
 from committees.utils import user_in_association_group
 
 
-class AssocGroupOverview(ListView):
+class AssocGroupOverview(PermissionRequiredMixin, ListView):
+    permission_required = "committees.view_associationgroup"
     context_object_name = 'association_groups'
     group_type = None
     tab_name = None

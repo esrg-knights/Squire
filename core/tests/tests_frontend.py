@@ -16,10 +16,6 @@ from core.tests.util import check_http_response, TestPublicUser, TestAccountUser
 class FrontEndTest(TestCase):
     fixtures = TestAccountUser.get_fixtures()
 
-    # Tests if the homepage can be accessed
-    def test_homepage(self):
-        check_http_response(self, '/', 'get', TestPublicUser)
-
     # Tests if the login page can be accessed
     def test_login(self):
         check_http_response(self, settings.LOGIN_URL, 'get', TestPublicUser)
@@ -70,12 +66,12 @@ class FrontEndTest(TestCase):
 
         # Disable share URL
         global_preferences['newsletter__share_link'] = ""
-        res = check_http_response(self, reverse('core:homepage'), 'get', TestAccountUser)
+        res = check_http_response(self, '/', 'get', TestAccountUser)
         self.assertNotContains(res, reverse('core:newsletters'))
 
         # Enable share URL
         global_preferences['newsletter__share_link'] = "https://www.example.com"
-        res = check_http_response(self, reverse('core:homepage'), 'get', TestAccountUser)
+        res = check_http_response(self, '/', 'get', TestAccountUser)
         self.assertContains(res, reverse('core:newsletters'))
 
 
