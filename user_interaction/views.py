@@ -36,7 +36,7 @@ class HomeUsersView(TemplateView):
         activities = []
         for activity in Activity.objects.filter(published_date__lte=timezone.now()):
             # Todo when #153 is applied: Change method name
-            for activity_moment in activity.get_all_activity_moments(start_date, end_date):
+            for activity_moment in activity.get_activitymoments_between(start_date, end_date):
                 activities.append(activity_moment)
 
 

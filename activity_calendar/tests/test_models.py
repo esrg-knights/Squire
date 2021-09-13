@@ -405,17 +405,17 @@ class ActivityTestCase(TestCase):
         # Get activitymoments in this interval
         after = after or timezone.datetime(2020, 10, 9, 0, 0, 0, tzinfo=timezone.utc)
         before = before or timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
-        recurrences = list(self.activity.get_activitymoments_between(after, before))
+        activity_moments = list(self.activity.get_activitymoments_between(after, before))
 
         # All expected occurrences should be there
         for occ in expected_occurrences:
-            self.assertTrue(any(activity_moment.recurrence_id == occ for activity_moment in recurrences),
-                f"{occ} not in {recurrences}")
+            self.assertTrue(any(activity_moment.recurrence_id == occ for activity_moment in activity_moments),
+                f"{occ} not in {activity_moments}")
 
         # There should not be more occurrences
-        self.assertEqual(len(recurrences), len(expected_occurrences))
+        self.assertEqual(len(activity_moments), len(expected_occurrences))
 
-    def test_get_occurrences_between_extra_start_within_bounds(self):
+    def test_get_activitymoments_between_extra_start_within_bounds(self):
         """
             Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
             but with a local_start_date between these same bounds, is included in the result.
@@ -429,7 +429,7 @@ class ActivityTestCase(TestCase):
             new_start_date=timezone.datetime(2020, 10, 13, 14, 0, 0, tzinfo=timezone.utc)
         )
 
-    def test_get_occurrences_between_extra_end_within_bounds(self):
+    def test_get_activitymoments_between_extra_end_within_bounds(self):
         """
             Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
             but with a local_end_date between these same bounds, is included in the result.
@@ -444,7 +444,7 @@ class ActivityTestCase(TestCase):
             new_end_date=timezone.datetime(2020, 10, 13, 14, 0, 0, tzinfo=timezone.utc)
         )
 
-    def test_get_occurrences_between_extra_wrap_bounds(self):
+    def test_get_activitymoments_between_extra_wrap_bounds_just_end(self):
         """
             Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
             but with a local_end_date making it wrap the bounds, is included in the result.
@@ -458,7 +458,7 @@ class ActivityTestCase(TestCase):
             new_end_date=timezone.datetime(2020, 10, 30, 14, 0, 0, tzinfo=timezone.utc)
         )
 
-    def test_get_occurrences_between_extra_wrap_bounds(self):
+    def test_get_activitymoments_between_extra_wrap_bounds_start_and_end(self):
         """
             Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
             but completely wrapping the bounds with a new start AND end date, is included in the result.
@@ -473,7 +473,7 @@ class ActivityTestCase(TestCase):
             new_end_date=timezone.datetime(2020, 10, 30, 14, 0, 0, tzinfo=timezone.utc)
         )
 
-    def test_get_occurrences_between_extra_default_end_within_bounds(self):
+    def test_get_activitymoments_between_extra_default_end_within_bounds(self):
         """
             Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
             but with a local_start_date just before the bounds, such that the activity's default duration
@@ -489,7 +489,7 @@ class ActivityTestCase(TestCase):
             new_start_date=timezone.datetime(2020, 10, 9, 23, 30, 0, tzinfo=timezone.utc),
         )
 
-    def test_get_occurrences_between_surplus_start_outside(self):
+    def test_get_activitymoments_between_surplus_start_outside(self):
         """
             Tests if an occurrence with a recurrence_id inside the bounds of get_occurrences_between,
             but with a local_start_date outside these same bounds, is excluded from the result.
@@ -498,7 +498,7 @@ class ActivityTestCase(TestCase):
             [], new_start_date=timezone.datetime(2020, 10, 18, 14, 0, 0, tzinfo=timezone.utc),
         )
 
-    def test_get_occurrences_between_surplus_end_earlier(self):
+    def test_get_activitymoments_between_surplus_end_earlier(self):
         """
             Tests if an occurrence with a recurrence_id inside the bounds of get_occurrences_between,
             but with a local_end_date outside these same bounds, is excluded from the result.
