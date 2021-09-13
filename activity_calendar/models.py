@@ -592,7 +592,7 @@ class Participant(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     activity_slot = models.ForeignKey(ActivitySlot, on_delete=models.CASCADE)
     # Charfield for adding external users, this can only be done through admin.
-    guest_name = models.CharField(max_length=123, default='')
+    guest_name = models.CharField(max_length=123, default='', blank=True)
     showed_up = models.BooleanField(null=True, default=None, help_text="Whether the participant actually showed up")
 
     objects = ParticipantManager()
