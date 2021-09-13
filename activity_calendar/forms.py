@@ -157,7 +157,10 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
             if activity_slot is None:
                 activity_slot = ActivitySlot.objects.create(**kwargs)
 
-            activity_slot.participants.add(self.user)
+            Participant.objects.create(
+                activity_slot=activity_slot,
+                user=self.user,
+            )
             return True
         else:
             self.activity_moment.get_user_subscriptions(self.user).delete()
@@ -209,21 +212,21 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
 
         if data.get('sign_up', None):
             # Can only subscribe at most once to each slot
-            if self.user in slot_obj.participants.all():
+            if self.user in slot_obj.get_subscribed_users().all():
                 raise ValidationError(
                     _("You are already registered for this slot"),
                     code='already-registered'
                 )
 
             # There is still room in this slot
-            if slot_obj.max_participants != -1 and slot_obj.participants.count() >= slot_obj.max_participants:
+            if slot_obj.max_participants != -1 and slot_obj.participant_set.count() >= slot_obj.max_participants:
                 raise ValidationError(
                     _("This slot is already at maximum capacity. You cannot subscribe to it."),
                     code='slot-full'
                 )
         else:
             # User tries to unsubscribe from slot he/she was not registered to
-            if self.user not in slot_obj.participants.all():
+            if self.user not in slot_obj.get_subscribed_users().all():
                 raise ValidationError(_("You were not registered to this slot"), code='not-registered')
 
         return slot_obj
@@ -236,10 +239,17 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
         ).first()
 
         if self.cleaned_data['sign_up']:
-            slot_obj.participants.add(self.user)
+            Participant.objects.create(
+                activity_slot=slot_obj,
+                user=self.user,
+            )
+
             return True
         else:
-            slot_obj.participants.remove(self.user)
+            slot_obj.participant_set.filter_users_only().filter(
+                user_id=self.user.id,
+            ).delete()
+
             return False
 
 
@@ -306,7 +316,10 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
         # Add the user to the slot if the user wants to
         if self.cleaned_data['sign_up']:
-            slot_obj.participants.add(self.user)
+            Participant.objects.create(
+                activity_slot=slot_obj,
+                user=self.user,
+            )
 
         return slot_obj
 

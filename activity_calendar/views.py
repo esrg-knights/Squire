@@ -201,7 +201,7 @@ class ActivitySimpleMomentView(LoginRequiredForPostMixin, FormMixin, ActivityMom
         kwargs = super(ActivitySimpleMomentView, self).get_context_data(**kwargs)
         kwargs.update({
             'subscribed_users': self.activity_moment.get_subscribed_users(),
-            'subscribed_guests': self.activity_moment.get_subscribed_guests()
+            'subscribed_guests': self.activity_moment.get_guest_subscriptions()
         })
         return kwargs
 

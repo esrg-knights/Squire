@@ -406,7 +406,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     @property
     def participant_count(self):
         return self.get_subscribed_users().count() + \
-               self.get_subscribed_guests().count()
+               self.get_guest_subscriptions().count()
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
@@ -424,34 +424,32 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     def get_subscribed_users(self):
         """ Returns a queryest of all USERS (not participants) in this activity moment """
         return User.objects.filter(
-            participant__activity_slot__parent_activity_id=self.parent_activity_id,
-            participant__activity_slot__recurrence_id=self.recurrence_id,
-            participant__guest_name='',
+            participant__in=self.get_user_subscriptions()
         ).distinct()
 
-    def get_subscribed_guests(self):
-        return Participant.objects.filter(
+    def get_guest_subscriptions(self):
+        return Participant.objects.filter_guests_only().filter(
             activity_slot__parent_activity_id=self.parent_activity.id,
             activity_slot__recurrence_id=self.recurrence_id,
-        ).exclude(
-            guest_name='',
         )
 
-    def get_user_subscriptions(self, user):
+    def get_user_subscriptions(self, user=None):
         """
         Get all user subscriptions on this activity
         :param user: The user that needs to looked out for
         :return: Queryset of all participant entries
         """
-        if user.is_anonymous:
-            return Participant.objects.none()
-
-        return Participant.objects.filter(
-            activity_slot__parent_activity__id=self.parent_activity_id,
+        participants = Participant.objects.filter_users_only().filter(
+            activity_slot__parent_activity_id=self.parent_activity_id,
             activity_slot__recurrence_id=self.recurrence_id,
-            guest_name='',
-            user_id=user.id,
         )
+        if user:
+            if user.is_anonymous:
+                return Participant.objects.none()
+            else:
+                participants = participants.filter(user=user)
+
+        return participants
 
     def get_slots(self):
         """
@@ -513,7 +511,6 @@ class ActivitySlot(models.Model):
         help_text="If the activity is recurring, set this to the date/time of one of its occurences. Leave this field empty if the parent activity is non-recurring.",
         verbose_name="parent activity date/time")
 
-    participants = models.ManyToManyField(User, blank=True, through="Participant", related_name="participant_info")
     max_participants = models.IntegerField(default=-1, validators=[MinValueValidator(-1)],
         help_text="-1 denotes unlimited participants", verbose_name="maximum number of participants")
 
@@ -529,13 +526,13 @@ class ActivitySlot(models.Model):
             return self.parent_activity.image_url
         return self.image.image.url
 
-    # Participants already subscribed
-    def get_subscribed_participants(self):
-        return self.participants
+    def get_subscribed_users(self):
+        return User.objects.filter(
+            participant__in=self.participant_set.filter_users_only()
+        )
 
-    # Number of participants already subscribed
-    def get_num_subscribed_participants(self):
-        return self.get_subscribed_participants().count()
+    def get_guest_subscriptions(self):
+        return self.participant_set.filter_guests_only()
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
@@ -577,12 +574,28 @@ class ActivitySlot(models.Model):
         })
 
 
+class ParticipantManager(models.Manager):
+    def filter_guests_only(self):
+        """ Returns only particpant instances of guests """
+        return self.get_queryset().exclude(
+            guest_name=''
+        )
+
+    def filter_users_only(self):
+        """ Returns only particpant instances of users """
+        return self.get_queryset().filter(
+            guest_name=''
+        )
+
+
 class Participant(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     activity_slot = models.ForeignKey(ActivitySlot, on_delete=models.CASCADE)
     # Charfield for adding external users, this can only be done through admin.
     guest_name = models.CharField(max_length=123, default='')
     showed_up = models.BooleanField(null=True, default=None, help_text="Whether the participant actually showed up")
+
+    objects = ParticipantManager()
 
     def __str__(self):
         if self.guest_name:

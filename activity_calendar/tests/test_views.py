@@ -234,7 +234,10 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
             parent_activity_id=self.default_activity_id,
             recurrence_id=self.recurrence_id,
         )
-        slot.participants.add(self.user)
+        Participant.objects.create(
+            activity_slot=slot,
+            user=self.user,
+        )
 
         response = self.build_get_response()
         self.assertEqual(response.status_code, 200)
@@ -443,7 +446,10 @@ class ActivitySlotViewTest(TestActivityViewMixin, TestCase):
             parent_activity_id=self.default_activity_id,
             recurrence_id=self.recurrence_id,
         ).first()
-        slot.participants.add(self.user)
+        Participant.objects.create(
+            activity_slot=slot,
+            user=self.user,
+        )
 
         response = self.build_get_response()
         self.assertEqual(response.status_code, 200)
@@ -513,7 +519,12 @@ class ActivitySlotViewTest(TestActivityViewMixin, TestCase):
 
         # Should only be able to see private slot location of slots a user is registered for
         first_slot = slots.first()
-        first_slot.participants.add(self.user)
+        Participant.objects.create(
+            activity_slot=first_slot,
+            user=self.user,
+        )
+        # Refresh so the participant entry is updated on this model
+        first_slot.refresh_from_db()
 
         response = self.build_get_response()
         self.assertEqual(response.status_code, 200)
