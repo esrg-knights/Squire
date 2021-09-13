@@ -34,7 +34,7 @@ class MemberResource(resources.ModelResource):
         return member.display_external_card_number()
 
     def dehydrate_accessible_rooms(self, member):
-        return '\n'.join(map(str, member.accessible_rooms.all()))
+        return '| '.join(map(str, member.accessible_rooms.all()))
 
     def dehydrate_email(self, member):
         return member.email if not member.is_deregistered else None

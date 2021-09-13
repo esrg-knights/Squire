@@ -227,7 +227,7 @@ class MemberLog(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete = models.SET_NULL,
-        related_name = "user_that_updated",
+        related_name = "created_memberlogs",
         null = True,
         )
 
@@ -235,7 +235,6 @@ class MemberLog(models.Model):
     member = models.ForeignKey(
         Member,
         on_delete = models.SET_NULL,
-        related_name = "updated_member",
         null = True,
     )
 
@@ -267,7 +266,7 @@ class MemberLogField(models.Model):
     member_log = models.ForeignKey(
         MemberLog,
         on_delete = models.CASCADE,
-        related_name = "updated_in_member_log",
+        related_name = "updated_fields",
         )
 
     # The name of the field that was updated

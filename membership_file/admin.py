@@ -1,5 +1,6 @@
+
 from datetime import datetime
-from membership_file.export import MemberResource
+
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -8,7 +9,20 @@ from import_export.formats.base_formats import CSV
 
 from .forms import AdminMemberForm
 from .models import Member, MemberLog, MemberLogField, Room
+from core.admin import EmptyFieldListFilter
+from membership_file.export import MemberResource
 from utils.forms import RequestUserToFormModelAdminMixin
+
+
+def reset_has_paid_membership_fee(modeladmin, request, queryset):
+    # Iterate over the queryset instead of updating it as to
+    #   make sure this action is logged
+    for member in queryset:
+        if member.has_paid_membership_fee:
+            member.has_paid_membership_fee = False
+            member.last_updated_by = request.user
+            member.save()
+reset_has_paid_membership_fee.short_description = 'Reset membership fee paid status'
 
 class HideRelatedNameAdmin(admin.ModelAdmin):
     class Media:
@@ -75,7 +89,13 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
     save_on_top = True
 
     list_display = ('id', 'user', 'first_name', 'tussenvoegsel', 'last_name', 'educational_institution', 'is_deregistered', 'marked_for_deletion')
-    list_filter = ['educational_institution', 'marked_for_deletion', 'is_deregistered', 'has_paid_membership_fee', 'is_honorary_member']
+    list_filter = [
+        'is_deregistered', 'marked_for_deletion',
+        'has_paid_membership_fee', 'is_honorary_member',
+        'educational_institution',
+        ('tue_card_number', EmptyFieldListFilter), ('external_card_number', EmptyFieldListFilter),
+        ('key_id', EmptyFieldListFilter), ('phone_number', EmptyFieldListFilter),
+    ]
     list_display_links = ('id', 'user', 'first_name')
     search_fields = ['first_name', 'last_name', 'email', 'phone_number', 'tue_card_number', 'external_card_number', 'key_id']
 
@@ -106,6 +126,18 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
     ]
 
     inlines = [MemberLogReadOnlyInline]
+
+    # Show at most 150 members per page (opposed to 100).
+    # Show a "show all" button if <999 members are selected (opposed to 200)
+    #   We're increasing these numbers as the board needs to be able to select all members in
+    #   order to export & send emails to them. We likely won't go over 150 members, so this
+    #   basically gets rid of any chances of forgetting to click the "select all" button,
+    #   causing the last few members to not receive emails.
+    list_per_page = 150
+    list_max_show_all = 999
+
+    # Allow bulk updating has_paid_membership_fee = False
+    actions = [reset_has_paid_membership_fee]
 
     # Disable bulk delete
     def get_actions(self, request):
