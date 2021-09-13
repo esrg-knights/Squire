@@ -1,0 +1,67 @@
+
+{% extends 'core/base.html' %}
+
+{% load render_form %}
+
+{% block title %}
+    Squire - Homepage
+{% endblock title %}
+
+{% block og-title %}
+    Squire Homepage
+{% endblock og-title %}
+
+
+{% block content %}
+    <!-- Welcome Message -->
+    <h1 class="">Squire</h1>
+    <p class="lead">
+        The digital home for Knights members
+    </p>
+
+    <!-- Application Description -->
+    <h4>What is Squire?</h4>
+    <p>
+        Squire is the webapp developed by the UUPS-committee, which is the ICT committee of ESRG Knights of the Kitchen Table.
+        Its goal is to provide members with more insight in the going-ons inside the association as well as aid the board
+        in running the association. For instance members can adjust their personal data, view the committees, boardgames
+        and roleplaying games. Over time we undboubtedly will add more functions.
+    </p>
+
+    <h4>Sign up for activities</h4>
+    <p>
+        In accordance to TU/e Covid-guidelines, everybody needs to sign up for activities. That is also done through this
+        platform.
+    </p>
+    <p>
+        Are you new to the Knights and want to join a boardgame or roleplaying evening? Please send a mail to
+        the board. Otherwise log-in.
+    </p>
+    <hr>
+    <h4>Login</h4>
+    <p>
+        Log in with your user account. Don't have one yet? Register and inform the board so they can connect your membership.
+    </p>
+    <div>
+        {% url "core:user_accounts/login" as login_url %}
+        {% render_form method="post" id="login_form"  has_submit_button=False action=login_url %}
+        <p>
+            Forgot your password? Click <a href="{% url 'core:user_accounts/password_reset' %}">here</a>
+        </p>
+        <div class="btn-group">
+            <input type="submit" form="login_form" value="Login" class="btn  greenify" style="min-width: 10em;">
+            <a href="{% url "core:user_accounts/register" %}"
+               class="btn btn-secondary">
+                Register
+            </a>
+        </div>
+    </div>
+
+
+
+{% endblock content %}
+
+<!-- Privacy Policy Notice -->
+{% block footer %}
+    <small>Hey, listen! We currently do not have a separate Privacy Policy for this application, but we do adhere to that of ESRG Knights of the Kitchen Table!</small>
+{% endblock %}
