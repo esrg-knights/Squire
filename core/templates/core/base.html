@@ -66,7 +66,7 @@
           <li>
               <a class="nav-link" href="{% url 'roleplaying:home' %}">Roleplay</a>
           </li>
-          {% if perms.view_associationgroup %} {# Temporary criteria while we create all commission data #}
+          {% if perms.committees.view_associationgroup %} {# Temporary criteria while we create all commission data #}
             <li>
                 <a class="nav-link" href="{% url 'committees:home' %}">Committees</a>
             </li>
