@@ -137,7 +137,8 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
     list_max_show_all = 999
 
     # Allow bulk updating has_paid_membership_fee = False
-    actions = [reset_has_paid_membership_fee]
+    # TODO: This isn't a clean solution but it'll work for now
+    actions = [reset_has_paid_membership_fee, ExportActionMixin.export_admin_action]
 
     # Disable bulk delete
     def get_actions(self, request):
