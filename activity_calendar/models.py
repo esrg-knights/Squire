@@ -235,12 +235,20 @@ class Activity(models.Model):
         alt_start_inside_bounds = Q(local_start_date__gte=after, local_start_date__lte=before)
 
         # Activitymoment has no local_end_date,
-        #   but the (local_start_date + activity_duration) >= 'after'
-        alt_start_inside_bounds |= Q(local_end_date__isnull=True, local_start_date__gte=after - activity_duration)
+        #   and has a local_start_date just before the bounds, making it end
+        #   inside (or after) the bounds
+        #   More specifically, (local_start_date + activity_duration) >= 'after'
+        alt_start_inside_bounds |= Q(local_end_date__isnull=True,
+            local_start_date__gte=(after - activity_duration),
+            local_start_date__lt=after,
+        )
 
         # Activitymoment has no local_start_date and normally starts before the bounds,
         #   but the local_end_date >= after
-        alt_start_inside_bounds |= Q(local_start_date__isnull=True, recurrence_id__lt=after, local_end_date__gte=after)
+        alt_start_inside_bounds |= Q(local_start_date__isnull=True,
+            recurrence_id__lt=after,
+            local_end_date__gte=after
+        )
 
         # Activitymoment has a local_start_date < after, and a local_end_date > after
         alt_start_inside_bounds |= Q(local_start_date__lte=after, local_end_date__gte=after)

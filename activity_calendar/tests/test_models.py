@@ -410,9 +410,14 @@ class ActivityTestCase(TestCase):
         # All expected occurrences should be there
         for occ in expected_occurrences:
             self.assertTrue(any(activity_moment.recurrence_id == occ for activity_moment in activity_moments),
-                f"{occ} not in {activity_moments}")
+                f"expected occurrence {occ} not in returned activitymoments {activity_moments}")
 
-        # There should not be more occurrences
+        # No unexpected acitivitymoments should be in there
+        for am in activity_moments:
+            self.assertTrue(any(am.recurrence_id == occ for occ in expected_occurrences),
+                f"returned unexpected activitymoment {am} for expected occurrences {expected_occurrences}")
+
+        # Same amount of occurrences/activitymoments
         self.assertEqual(len(activity_moments), len(expected_occurrences))
 
     def test_get_activitymoments_between_extra_start_within_bounds(self):
@@ -427,6 +432,20 @@ class ActivityTestCase(TestCase):
             ],
             recurrence_id=recurrence_id,
             new_start_date=timezone.datetime(2020, 10, 13, 14, 0, 0, tzinfo=timezone.utc)
+        )
+
+    def test_get_activitymoments_between_extra_start_outside_bounds(self):
+        """
+            Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
+            and with a local_start_date also outside these same bounds, is excluded in the result.
+        """
+        recurrence_id = timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
+        self._test_get_activitymoments_between(
+            [
+                timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)
+            ],
+            recurrence_id=recurrence_id,
+            new_start_date=timezone.datetime(2020, 11, 1, 14, 0, 0, tzinfo=timezone.utc)
         )
 
     def test_get_activitymoments_between_extra_end_within_bounds(self):
