@@ -12,7 +12,7 @@
     <div class="row">
         {% for group in association_groups %}
             <div class="col-12 col-md-6">
-                {% include "committees/snippet_assoc_group.html" with can_view_members=perms.can_view_order_members %}
+                {% include "committees/snippet_assoc_group.html" with can_view_members=perms.committees.can_view_order_members %}
             </div>
         {% endfor %}
     </div>
