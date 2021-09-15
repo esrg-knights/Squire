@@ -31,7 +31,7 @@ class ActivityOverview(ListView):
     context_object_name = 'activities'
 
     def get_queryset(self):
-        start_date = timezone.now() - timedelta(hours=6)
+        start_date = timezone.now()
         end_date = start_date + timedelta(days=14)
 
         activities = []
