@@ -270,16 +270,19 @@ class Activity(models.Model):
         """
         dtstart = timezone.localtime(self.start_date)
 
+        # Make a copy so we don't modify our own recurrence
+        recurrences = copy.deepcopy(self.recurrences)
+
         # EXDATEs and RDATEs should match the event's start time, but in the recurrence-widget they
         #   occur at midnight!
         # Since there is no possibility to select the RDATE/EXDATE time in the UI either, we need to
         #   override their time here so that it matches the event's start time. Their timezones are
         #   also changed into that of the event's start date
-        self.recurrences.exdates = list(util.set_time_for_RDATE_EXDATE(self.recurrences.exdates, dtstart, make_dst_ignore=True))
-        self.recurrences.rdates = list(util.set_time_for_RDATE_EXDATE(self.recurrences.rdates, dtstart, make_dst_ignore=True))
+        recurrences.exdates = list(util.set_time_for_RDATE_EXDATE(recurrences.exdates, dtstart, make_dst_ignore=True))
+        recurrences.rdates = list(util.set_time_for_RDATE_EXDATE(recurrences.rdates, dtstart, make_dst_ignore=True))
 
         # Get all occurences according to the recurrence module
-        occurences = self.recurrences.between(after, before, dtstart=dtstart, inc=True, **kwargs)
+        occurences = recurrences.between(after, before, dtstart=dtstart, inc=True, **kwargs)
 
         # the recurrences package does not work with DST. Since we want our activities
         #   to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00
