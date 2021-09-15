@@ -250,9 +250,9 @@ class RegisterForActivitySlotFormTestCase(ActivityFormValidationMixin, TestCase)
         """ Checks if the user is registered to any of the already existing slots"""
         form = self.assertFormValid({'sign_up': True, 'slot_id': 7})
         slot = ActivitySlot.objects.get(id=7)
-        self.assertFalse(slot.participants.filter(id=self.user.id).exists())
+        self.assertFalse(slot.get_subscribed_users().filter(id=self.user.id).exists())
         form.save()
-        self.assertTrue(slot.participants.filter(id=self.user.id).exists())
+        self.assertTrue(slot.get_subscribed_users().filter(id=self.user.id).exists())
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_save_sign_out(self, mock_tz):
@@ -260,9 +260,9 @@ class RegisterForActivitySlotFormTestCase(ActivityFormValidationMixin, TestCase)
         Participant.objects.create(user=self.user, activity_slot_id=7)
         form = self.assertFormValid({'sign_up': False, 'slot_id': 7})
         slot = ActivitySlot.objects.get(id=7)
-        self.assertTrue(slot.participants.filter(id=self.user.id).exists())
+        self.assertTrue(slot.get_subscribed_users().filter(id=self.user.id).exists())
         form.save()
-        self.assertFalse(slot.participants.filter(id=self.user.id).exists())
+        self.assertFalse(slot.get_subscribed_users().filter(id=self.user.id).exists())
 
 
 class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
@@ -399,7 +399,7 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
         self.assertEqual(slot.description, "Some various text about my slot")
 
         # Test that the user is registered as participant
-        self.assertEqual(slot.participants.first(), self.user)
+        self.assertEqual(slot.get_subscribed_users().first(), self.user)
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_save_form_creation_without_user(self, mock_tz):
@@ -425,7 +425,7 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
         self.assertEqual(slot.description, "Some various text about this slot")
 
         # Test that there are no users registered to the slot
-        self.assertEqual(slot.participants.count(), 0)
+        self.assertEqual(slot.get_subscribed_users().count(), 0)
 
 
 class ActivityMomentFormTestCase(FormValidityMixin, TestCase):
