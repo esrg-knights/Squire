@@ -29,6 +29,7 @@ class ModelMethodsTest(TestCase):
         self.activity.slots_image = None
         self.assertEqual(self.activity.image_url, f"{settings.STATIC_URL}images/default_logo.png")
 
+
 class ModelMethodsDSTDependentTests(TestCase):
     """
         Tests model methods that change behaviour based on Daylight Saving Time
@@ -120,6 +121,7 @@ class ModelMethodsDSTDependentTests(TestCase):
 
         has_occurence_at_query_dt = self.activity.has_occurrence_at(query_dt)
         self.assertTrue(has_occurence_at_query_dt)
+
 
 class EXDATEandRDATEwithDSTTests(TestCase):
     """
@@ -571,6 +573,7 @@ class ActivityTestCase(TestCase):
         self.assertTrue(self.activity.has_occurrence_at(recurrence_id))
         self.assertFalse(self.activity.has_occurrence_at(alt_start_time))
 
+
 class ActivityMomentTestCase(TestCase):
     fixtures = ['test_users.json', 'test_activity_slots']
 
@@ -655,11 +658,16 @@ class ActivityMomentTestCase(TestCase):
         activity_moment = ActivityMoment.objects.get(id=2)
         self.assertFalse(activity_moment.is_full())
         # Set the maximum number to the amount of users is the activitymoment
-        activity_moment.local_max_participants = activity_moment.get_subscribed_users().count()
+        activity_moment.local_max_participants = activity_moment.participant_count
         self.assertTrue(activity_moment.is_full())
         # Check that -1 does not cause problems
         activity_moment.local_max_participants = -1
         self.assertFalse(activity_moment.is_full())
+
+    def test_participant_count(self):
+        self.assertEqual(ActivityMoment.objects.get(id=3).get_subscribed_users().count(), 2)
+        self.assertEqual(ActivityMoment.objects.get(id=3).get_guest_subscriptions().count(), 3)
+        self.assertEqual(ActivityMoment.objects.get(id=3).participant_count, 5)
 
     def test_get_subscribed_users(self):
         """ Test that get subscribed users returns the correct users """
@@ -672,7 +680,12 @@ class ActivityMomentTestCase(TestCase):
         self.assertEqual(ActivityMoment.objects.get(id=2).get_subscribed_users().count(), 2)
 
         # This activity contains three entries, but only two users (one double entry) ensure it is not counted double
-        self.assertEqual(ActivityMoment.objects.get(id=3).get_subscribed_users().count(), 2)
+        users = ActivityMoment.objects.get(id=3).get_subscribed_users()
+        self.assertEqual(users.count(), 2)
+        # Also validate that it did not count user 3 that does have an external user
+        self.assertNotIn(3, [user.id for user in users])
+        guests_entries = ActivityMoment.objects.get(id=3).get_guest_subscriptions()
+        self.assertIn(3, [entry.user_id for entry in guests_entries])
 
     def test_get_user_subscriptions(self):
         """ Test that user subscriptions generally return the correct data"""
@@ -684,6 +697,12 @@ class ActivityMomentTestCase(TestCase):
 
         # AnonymousUsers return empty querysets
         self.assertEquals(ActivityMoment.objects.get(id=3).get_user_subscriptions(AnonymousUser()).count(), 0)
+
+    def test_get_guest_subscriptions(self):
+        participants = ActivityMoment.objects.get(id=3).get_guest_subscriptions()
+        self.assertEqual(participants.count(), 3)
+        self.assertIsInstance(participants.first(), Participant)
+        self.assertEqual(participants.first().activity_slot.parent_activity_id, 2)
 
     def test_get_slots(self):
         slots = ActivityMoment.objects.get(id=3).get_slots()
@@ -697,6 +716,90 @@ class ActivityMomentTestCase(TestCase):
         self.assertTrue(ActivityMoment.objects.get(id=1).is_open_for_subscriptions())
 
 
+class ActivitySlotTestCase(TestCase):
+    fixtures = ['test_users.json', 'test_activity_slots']
+
+    def test_get_subscribed_users(self):
+        slot = ActivitySlot.objects.get(id=4)
+        self.assertEqual(
+            slot.get_subscribed_users().count(),
+            0
+        )
+        slot = ActivitySlot.objects.get(id=8)
+        self.assertEqual(
+            slot.get_subscribed_users().count(),
+            2
+        )
+        self.assertIsInstance(slot.get_subscribed_users().first(), User)
+
+    def test_get_subscribed_guests(self):
+        slot = ActivitySlot.objects.get(id=4)
+        self.assertEqual(
+            slot.get_guest_subscriptions().count(),
+            3
+        )
+        self.assertIsInstance(slot.get_guest_subscriptions().first(), Participant)
+
+        slot = ActivitySlot.objects.get(id=8)
+        self.assertEqual(
+            slot.get_guest_subscriptions().count(),
+            0
+        )
+
+    def test_clean_recurrence_id_omitted(self):
+        slot = ActivitySlot(
+            title='test_recurrentce_clean',
+            parent_activity_id=1,
+        )
+
+        with self.assertRaises(ValidationError) as error:
+            slot.clean_fields()
+        self.assertIn('recurrence_id', error.exception.error_dict.keys())
+
+    def test_clean_recurrence_id_invalid(self):
+        slot = ActivitySlot(
+            title='test_recurrentce_clean',
+            parent_activity_id=1,
+            recurrence_id="2020-08-15T19:00:00Z"
+        )   # There is no activity_moment on this recurrence moment
+
+        with self.assertRaises(ValidationError) as error:
+            slot.clean_fields()
+        self.assertIn('recurrence_id', error.exception.error_dict.keys())
+
+        slot = ActivitySlot(
+            title='test_recurrentce_clean',
+            parent_activity_id=1,
+            recurrence_id="2020-08-14T19:00:00Z"
+        )
+        # Recurrence_id is valid, so it does not raise an error
+        slot.clean_fields()
+
+
+class ActivityParticipantTestCase(TestCase):
+    fixtures = ['test_users.json', 'test_activity_slots']
+
+    def test_str(self):
+        participation = Participant.objects.create(
+            user_id=1,
+            activity_slot_id=7
+        )
+        self.assertEqual(str(participation), 'test_admin')
+
+        participation.guest_name = 'some guest'
+        self.assertEqual(str(participation), participation.guest_name + ' (ext)')
+
+    def test_manager_filter_guests_only(self):
+        self.assertEqual(
+            Participant.objects.filter_guests_only().count(),
+            Participant.objects.exclude(guest_name='').count()
+        )
+
+    def test_manager_filter_users_only(self):
+        self.assertEqual(
+            Participant.objects.filter_users_only().count(),
+            Participant.objects.filter(guest_name='').count()
+        )
 
 
 

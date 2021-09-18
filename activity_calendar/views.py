@@ -87,7 +87,7 @@ class ActivityMixin:
             'recurrence_id': self.recurrence_id,
             # General information displayed on all relevant pages
             'subscriptions_open': self.activity_moment.is_open_for_subscriptions(),
-            'num_total_participants': self.activity_moment.get_subscribed_users().count(),
+            'num_total_participants': self.activity_moment.participant_count,
             'num_max_participants': self.activity_moment.max_participants,
             'user_subscriptions': self.activity_moment.get_user_subscriptions(self.request.user),
             'show_participants': self.show_participants(),
@@ -200,7 +200,8 @@ class ActivitySimpleMomentView(LoginRequiredForPostMixin, FormMixin, ActivityMom
     def get_context_data(self, **kwargs):
         kwargs = super(ActivitySimpleMomentView, self).get_context_data(**kwargs)
         kwargs.update({
-            'participants': self.activity_moment.get_subscribed_users(),
+            'subscribed_users': self.activity_moment.get_subscribed_users(),
+            'subscribed_guests': self.activity_moment.get_guest_subscriptions()
         })
         return kwargs
 
