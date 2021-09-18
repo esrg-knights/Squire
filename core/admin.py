@@ -1,8 +1,8 @@
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.options import IncorrectLookupParameters
-from django.contrib.auth.models import User
-from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import Group, User
+from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured
@@ -99,6 +99,24 @@ class SquireUserAdmin(UserAdmin):
 admin.site.unregister(User)
 admin.site.register(User, SquireUserAdmin)
 
+class SquireGroupAdmin(GroupAdmin):
+    list_filter = (
+        ('associationgroup', EmptyFieldListFilter),
+    )
+    search_fields = ('name', 'associationgroup__shorthand')
+    list_display = ('id', 'name', 'has_assoc_group')
+    list_display_links = ('id', 'name')
+    readonly_fields = ('associationgroup',)
+
+    def has_assoc_group(self, obj):
+        return bool(obj.associationgroup)
+    has_assoc_group.short_description = "Is Committee"
+    has_assoc_group.admin_order_field = 'associationgroup'
+    has_assoc_group.boolean = True
+
+admin.site.unregister(Group)
+admin.site.register(Group, SquireGroupAdmin)
+
 ###################################################
 # Markdown Images
 
@@ -106,6 +124,7 @@ class PresetImageAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'image', 'selectable')
     list_filter = ['selectable']
     list_display_links = ('id', 'name')
+    search_fields = ('name',)
 
 admin.site.register(PresetImage, PresetImageAdmin)
 
@@ -137,6 +156,7 @@ class MarkdownImageAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmin):
         ('content_type',    admin.RelatedOnlyFieldListFilter),
         ('object_id',       EmptyFieldListFilter),
     )
+    search_fields = ('uploader__username',)
     readonly_fields = ('upload_date', 'content_object', 'id', 'uploader')
     ordering = ("-upload_date",)
     fieldsets = (
