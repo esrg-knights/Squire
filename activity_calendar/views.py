@@ -31,13 +31,13 @@ class ActivityOverview(ListView):
     context_object_name = 'activities'
 
     def get_queryset(self):
-        start_date = timezone.now() - timedelta(hours=6)
+        start_date = timezone.now()
         end_date = start_date + timedelta(days=14)
 
         activities = []
 
         for activity in Activity.objects.filter(published_date__lte=timezone.now()):
-            for activity_moment in activity.get_all_activity_moments(start_date, end_date):
+            for activity_moment in activity.get_activitymoments_between(start_date, end_date):
                 activities.append(activity_moment)
 
         return sorted(activities, key=lambda activity: activity.start_date)

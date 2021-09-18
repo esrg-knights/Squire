@@ -118,48 +118,57 @@ class Activity(models.Model):
             return f'{settings.STATIC_URL}images/default_logo.png'
         return self.slots_image.image.url
 
-    def get_all_activity_moments(self, start_date, end_date):
-        """ Retrieves (or creates based on recurrences) all ActivityMoment instances in the given time frame """
-        event_start_time = self.start_date.astimezone(timezone.get_current_timezone()).time()
+    def get_activitymoments_between(self, start_date, end_date):
+        """
+            Get a list of ActivityMoments, each representing an occurrence of this activity for which
+            any point in that ActivityMoment's duration occurs between the specified start and end date.
 
-        recurrence_dts = self.get_occurrences_between(start_date, end_date, dtstart=self.start_date)
+            Note that an ActivityMoment is not entirely the same as an occurrence, as an ActivityMoment can
+            have a different start time than the occurrence it represents. This is accounted for.
+        """
+        # We should also include activities that start before "start_date", but also end after "start_date"
+        #   (i.e., their start date is before the specified bounds, but their end date is within it).
+        # Any occurrence before (start_date - duration) can never partially take place inside the
+        #   specified time period, so there's no need to look back even further.
+        activity_duration = self.duration
+        occurrences = self.get_occurrences_starting_between(start_date - activity_duration, end_date)
 
-        # Recurrence_dts is a map objects and thus can not later be used in the filter
-        processed_recurrences = []
-        activity_moments = []
+        # Note that DST-offsets have already been handled earlier
+        #   in self.get_occurrences_between -> util.dst_aware_to_dst_ignore
 
-        for occurence in recurrence_dts:
-            # Store occurence
-            processed_recurrences.append(occurence)
+        # The above comment isn't entirely True as there are also activity_moments we need to consider,
+        #   which we handle here
+        surplus_moments, extra_moments = self._get_queries_for_alt_start_time_activity_moments(start_date, end_date)
 
-            # recurrence does not handle daylight-saving time! If we were to keep the occurence as is,
-            # then summer events would occur an hour earlier in winter!
-            occurence = timezone.get_current_timezone().localize(
-                datetime.datetime.combine(timezone.localtime(occurence).date(), event_start_time)
-            )
-            # Search an instance on the database if present, otherwise generate a new instance
-            try:
-                activity_moment = ActivityMoment.objects.get(
-                    recurrence_id=occurence,
-                    parent_activity=self,
-                )
-            except ActivityMoment.DoesNotExist:
-                activity_moment = ActivityMoment(
-                    recurrence_id=occurence,
-                    parent_activity=self,
-                )
-            activity_moments.append(activity_moment)
+        # Filter out all activitymoments with an alt start time outside the bounds
+        surplus_moments = self.activitymoment_set.filter(surplus_moments).values_list('recurrence_id', flat=True)
+        occurrences = filter(lambda occ: occ not in surplus_moments, occurrences)
 
-        # Get all moment objects that are not part of the defined recurrences
-        single_activity_moments = ActivityMoment.objects.filter(
-            parent_activity=self,
-            recurrence_id__gte = start_date,
-            recurrence_id__lte = end_date,
-        ).exclude(
-            recurrence_id__in = processed_recurrences
+        # Evaluate the iterable: we want to use it more than once below
+        occurrences = list(occurrences)
+
+        # Fetch existing activitymoments
+        #   They must either be within the bounds
+        #   OR be extra ones due to different start/end date(s)
+        query_filter = Q(recurrence_id__in=occurrences) | extra_moments
+        existing_moments = list(self.activitymoment_set.filter(query_filter))
+
+        # Get occurrences for which we have no ActivityMoment
+        occurrences = filter(
+            lambda occ: all(existing_moment.recurrence_id != occ for existing_moment in existing_moments),
+            occurrences
         )
 
-        return activity_moments + [*single_activity_moments]
+        # Generate new ActivityMoments for them
+        occurrences = map(
+            lambda occ: ActivityMoment(
+                recurrence_id=occ,
+                parent_activity=self,
+            ),
+            occurrences
+        )
+
+        return list(occurrences) + existing_moments
 
     # String-representation of an instance of the model
     def __str__(self):
@@ -172,7 +181,11 @@ class Activity(models.Model):
     def is_recurring(self):
         return bool(self.recurrences.rdates or self.recurrences.rrules)
 
-    # Whether this activity has an occurence at a specific date
+    @property
+    def duration(self):
+        """ Gets the duration of this activity """
+        return self.end_date - self.start_date
+
     def has_occurrence_at(self, date, is_dst_aware=False):
         """ Whether this activity has an occurrence that starts at the specified time """
         if not self.is_recurring:
@@ -180,67 +193,101 @@ class Activity(models.Model):
 
         if not is_dst_aware:
             date = util.dst_aware_to_dst_ignore(date, self.start_date, reverse=True)
-        occurences = self.get_occurrences_starting_between(date, date, dtstart=self.start_date, inc=True)
+        occurences = self.get_occurrences_starting_between(date, date)
         return list(occurences)
 
-    def get_occurrences_between(self, after, before, inc=False, dtstart=None, dtend=None, cache=False):
+    def _get_queries_for_alt_start_time_activity_moments(self, after, before):
         """
-            Get an iterable of dates, each representing an occurrence of this activity for which
-            any point in that activity's duration occurs between the specified start and end date.
+            Get two Q objects containing ActivityMoments with alternative start times, such
+            that they do (not) occur between the specified bounds while they would (not) if
+            they did not have an alternative start time.
+
+            The former object represents ActivityMoments that do NOT occur between the
+                specified bounds due to their new start/end date, while they normally would.
+            The latter object represents ActivityMoments that DO occur between the
+                specified bounds due to their new start/end date, while they normally would not.
         """
-        dtstart = dtstart or self.start_date
-        duration = self.end_date - self.start_date
+        activity_duration = self.duration
 
-        # We should include activities that start before "after", but also end after "after".
-        #   Any occurrence before (after - duration) can never partially take place inside the
-        #   specified time period, so there's no need to look back even further.
-        after = after - duration
+        ####################
+        # Find all activity_moments whose recurrence_id is inside the bounds, but whose
+        #   alternative start_date is NOT between these bounds
+        ####################
+        # Activitymoment has a local_end_date before 'after'
+        alt_start_outside_bounds = Q(local_end_date__lt=after)
 
-        # Now we can simply check for occurrences that start between the broader bounds
-        return self.get_occurrences_starting_between(after, before, inc=inc, dtstart=dtstart, dtend=dtend, cache=cache)
+        # Activitymoment has a local_start_date after 'before'
+        alt_start_outside_bounds |= Q(local_start_date__gt=before)
 
-    def get_occurrences_starting_between(self, after, before, inc=False, dtstart=None, dtend=None, cache=False):
+        # Activitymoment does not have a local_end_date,
+        #   but the (local_start_date + activity_duration) < 'after'
+        alt_start_outside_bounds |= Q(local_end_date__isnull=True, local_start_date__lt=(after - activity_duration))
+
+        # Should normally occur within the specified bounds
+        recurrence_id_between = Q(recurrence_id__gte=(after - activity_duration), recurrence_id__lte=before)
+        surplus_activity_moments = recurrence_id_between & alt_start_outside_bounds
+
+        ####################
+        # Find all activity_moments that have an alternative start_date between the bounds, but whose
+        #   recurrence_id is NOT between these bounds
+        ####################
+        # Activitymoment has a local_start_date within the bounds
+        alt_start_inside_bounds = Q(local_start_date__gte=after, local_start_date__lte=before)
+
+        # Activitymoment has no local_end_date,
+        #   and has a local_start_date just before the bounds, making it end
+        #   inside (or after) the bounds
+        #   More specifically, (local_start_date + activity_duration) >= 'after'
+        alt_start_inside_bounds |= Q(local_end_date__isnull=True,
+            local_start_date__gte=(after - activity_duration),
+            local_start_date__lt=after,
+        )
+
+        # Activitymoment has no local_start_date and normally starts before the bounds,
+        #   but the local_end_date >= after
+        alt_start_inside_bounds |= Q(local_start_date__isnull=True,
+            recurrence_id__lt=after,
+            local_end_date__gte=after
+        )
+
+        # Activitymoment has a local_start_date < after, and a local_end_date > after
+        alt_start_inside_bounds |= Q(local_start_date__lte=after, local_end_date__gte=after)
+
+        # Should normally NOT occur between the specified bounds
+        recurrence_id_not_between = ~Q(recurrence_id__gte=(after - activity_duration), recurrence_id__lte=before)
+        extra_activity_moments = recurrence_id_not_between & alt_start_inside_bounds
+
+        # return as two separate query filters to be used later elsewhere
+        return surplus_activity_moments, extra_activity_moments
+
+    def get_occurrences_starting_between(self, after, before, **kwargs):
         """
-            Get an iterable of dates, each representing an occurrence of this activity that starts
+            Get an iterable of dates, each representing an occurrence of this activity that STARTS
             between the specified start and end date.
+
+            Note that this does not take an alternative start date of the occurrence's corresponding
+            ActivityMoment into account.
         """
-        dtstart = dtstart or self.start_date
+        dtstart = timezone.localtime(self.start_date)
+
+        # Make a copy so we don't modify our own recurrence
+        recurrences = copy.deepcopy(self.recurrences)
 
         # EXDATEs and RDATEs should match the event's start time, but in the recurrence-widget they
         #   occur at midnight!
         # Since there is no possibility to select the RDATE/EXDATE time in the UI either, we need to
         #   override their time here so that it matches the event's start time. Their timezones are
         #   also changed into that of the event's start date
-        self.recurrences.exdates = list(util.set_time_for_RDATE_EXDATE(self.recurrences.exdates, dtstart, make_dst_ignore=True))
-        self.recurrences.rdates = list(util.set_time_for_RDATE_EXDATE(self.recurrences.rdates, dtstart, make_dst_ignore=True))
+        recurrences.exdates = list(util.set_time_for_RDATE_EXDATE(recurrences.exdates, dtstart, make_dst_ignore=True))
+        recurrences.rdates = list(util.set_time_for_RDATE_EXDATE(recurrences.rdates, dtstart, make_dst_ignore=True))
 
         # Get all occurences according to the recurrence module
-        occurences = self.recurrences.between(after, before, inc=inc, dtstart=dtstart, dtend=dtend, cache=cache)
+        occurences = recurrences.between(after, before, dtstart=dtstart, inc=True, **kwargs)
 
         # the recurrences package does not work with DST. Since we want our activities
         #   to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00
         #   in winter, and vice versa), we have to account for the difference here.
         occurences = map(lambda occurence: util.dst_aware_to_dst_ignore(occurence, dtstart), occurences)
-
-        # Find all activity_moments whose recurrence_id is inside the bounds, but whose
-        #   alternative start_date is NOT between these bounds
-        alt_start_outside_bounds = Q(local_start_date__lte=after, recurrence_id__gt=after, recurrence_id__lt=before) \
-            | Q(local_start_date__gte=before, recurrence_id__gt=after, recurrence_id__lt=before)
-        surplus_activity_moments = self.activitymoment_set.filter(alt_start_outside_bounds) \
-            .values_list('recurrence_id', flat=True)
-
-        # Get rid of these surplus activity_moments
-        occurences = filter(lambda occ: occ not in surplus_activity_moments, occurences)
-
-        # Find all activity_moments that have an alternative start_date between the bounds, but whose
-        #   recurrence_id is NOT between these bounds
-        alt_start_inside_bounds = Q(recurrence_id__lte=after, local_start_date__gt=after, local_start_date__lt=before) \
-            | Q(recurrence_id__gte=before, local_start_date__gt=after, local_start_date__lt=before)
-        extra_activity_moments = self.activitymoment_set.filter(alt_start_inside_bounds) \
-            .values_list("recurrence_id", flat=True)
-
-        # Add these extra activity_moments
-        occurences = chain(occurences, extra_activity_moments)
 
         return occurences
 
@@ -400,8 +447,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
             return self.local_end_date
 
         # Add the activity's normal duration to the event's start time
-        normal_duration = self.parent_activity.end_date - self.parent_activity.start_date
-        return self.start_date + normal_duration
+        return self.start_date + self.parent_activity.duration
 
     @property
     def participant_count(self):

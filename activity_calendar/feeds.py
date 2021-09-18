@@ -141,8 +141,6 @@ class CESTEventFeed(ICalFeed):
     @only_for(ActivityMoment, default="/calendar/")
     def item_link(self, item):
         # The local url to the activity
-        # Because of the repetitition of the activity there is not 1 date. So instead let's just reroute it to the
-        # app activity page for now
         return item.get_absolute_url()
 
     def item_location(self, item):

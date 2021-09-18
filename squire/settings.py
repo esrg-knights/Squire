@@ -362,3 +362,15 @@ if DEBUG:
     EMAIL_HOST_PASSWORD = ''
     EMAIL_USE_TLS = False
 
+
+# Easy way to debug the application at a specific datetime
+#   This is obviously an ugly hack and should not be used in production
+if DEBUG and False: # pragma: no cover
+    from django.utils import timezone
+    from datetime import datetime
+    timezone.now = lambda: datetime(year=2021, month=9, day=14, hour=21, minute=20, tzinfo=timezone.utc)
+    print("=====WARNING=====")
+    print("timezone.now was overridden")
+    print("It will be " + str(timezone.now()) + " until the end of times!")
+    print("You will not escape!")
+    print("=================")
