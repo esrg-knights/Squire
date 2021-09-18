@@ -139,7 +139,7 @@ class RegisterFormTest(TestCase):
             'password1': 'bestaatookniet',
             'password2': 'bestaatookniet',
             'email': 'kandi@example.com',
-            'nickname': 'wijbestaanniet',
+            'real_name': 'wijbestaanniet',
         }
         form = RegisterForm(data=form_data)
 
@@ -167,7 +167,7 @@ class RegisterFormTest(TestCase):
     # Test if a registering fails if required fields are missing
     def test_form_fields_missing(self):
         form_data = {
-            'nickname': 'empty',
+            'real_name': 'empty',
         }
         form = RegisterForm(data=form_data)
 
@@ -192,7 +192,7 @@ class RegisterFormTest(TestCase):
             'password1': 'bestaatookniet',
             'password2': 'nomatch',
             'email': 'kandi@example.com',
-            'nickname': 'wijbestaanniet',
+            'real_name': 'wijbestaanniet',
         }
         form = RegisterForm(data=form_data)
 
@@ -210,7 +210,7 @@ class RegisterFormTest(TestCase):
             'password1': 'secret',
             'password2': 'secret',
             'email': 'rva@example.com',
-            'nickname': 'wijbestaanniet',
+            'real_name': 'wijbestaanniet',
         }
         form = RegisterForm(data=form_data)
 

@@ -47,14 +47,14 @@ class LoginForm(AuthenticationForm):
 
 
 # RegisterForm that expands on the default UserCreationForm
-# It requires a (unique) email address, and includes an optional nickname field
+# It requires a (unique) email address, and includes a required real_name field
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(label = "Email")
-    nickname = forms.CharField(label = "Nickname", required=False, help_text='A nickname (if provided) is shown instead of your username.')
+    real_name = forms.CharField(label="Real Name", help_text='Your real name will be shown instead of your username when you register for activities.')
 
     class Meta:
         model = User
-        fields = ("username", "nickname", "email")
+        fields = ("username", "real_name", "email")
 
     def clean_email(self):
         # Ensure that another user with the same email does not exist
@@ -68,8 +68,8 @@ class RegisterForm(UserCreationForm):
 
     def save(self, commit=True):
         user = super(RegisterForm, self).save(commit=False)
-        # First name field is used as a nickname field
-        user.first_name = self.cleaned_data["nickname"]
+        # First name field is used as a real_name field
+        user.first_name = self.cleaned_data["real_name"]
         user.email = self.cleaned_data["email"]
 
         if commit:
