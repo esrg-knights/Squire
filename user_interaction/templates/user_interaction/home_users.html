@@ -35,14 +35,14 @@
                             Activities in the next 7 days
                         </h3>
                     </div>
+                    <div class="alert alert-info w-100">
+                        Don't forget: Physical activities require registration as long as Corona guidelines exist!
+                    </div>
                     {% for activity_moment in activities %}
                         <div class="col-12 col-md-6 p-1">
                             {% include "activity_calendar/snippet_activity_moment.html" %}
                         </div>
                     {% endfor %}
-                    <div class="alert alert-info w-100">
-                        Don't forget: Physical activities require registration as long as Corona guidelines exist!
-                    </div>
                 </div>
             </div>
             <div class="col-md-4">

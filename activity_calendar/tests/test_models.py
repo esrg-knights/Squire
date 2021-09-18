@@ -319,17 +319,16 @@ class ActivityTestCase(TestCase):
     def setUp(self):
         self.activity = Activity.objects.get(id=2)
 
-    def test_get_all_activity_moments(self):
-        """ Tests the Activity get_all_activity_moments method"""
+    def test_get_activitymoments_between(self):
+        """ Tests the Activity get_activitymoments_between method"""
         after = timezone.datetime(2020, 10, 2, 0, 0, 0, tzinfo=timezone.utc)
         before = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
-        activity_moments = self.activity.get_all_activity_moments(after, before)
+        activity_moments = self.activity.get_activitymoments_between(after, before)
 
-        # There are three activities, two from the recurring activities, one as an extra one
-        self.assertEqual(len(activity_moments), 3)
+        # There are two activities
+        self.assertEqual(len(activity_moments), 2)
         dts = [
             timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc),
-            timezone.datetime(2020, 10, 10, 19, 30, 0, tzinfo=timezone.utc),
             timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc),
         ]
         # Check if all expected dates are present and not a single one more
@@ -379,56 +378,200 @@ class ActivityTestCase(TestCase):
         # Note: Activity has an occurrence on 07-10-21, which ends the next day at 02:00 (UTC)
         after = timezone.datetime(2020, 10, 8, 0, 0, 0, tzinfo=timezone.utc)
         before = timezone.datetime(2020, 10, 10, 0, 0, 0, tzinfo=timezone.utc)
-        recurrences = list(self.activity.get_occurrences_between(after, before))
+        recurrences = list(self.activity.get_activitymoments_between(after, before))
 
         self.assertEqual(len(recurrences), 1)
-        self.assertEqual(recurrences[0], timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc))
+        self.assertEqual(recurrences[0].recurrence_id, timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc))
 
         # The activity does not START betwee the specified bounds
         self.assertEqual(len(list(self.activity.get_occurrences_starting_between(after, before))), 0)
 
-    def test_get_occurrences_between_extra_activitymoment(self):
+    def _test_get_activitymoments_between(self, expected_occurrences, recurrence_id=None,
+            new_start_date=None, new_end_date=None, after=None, before=None):
+        """
+            Tests if an activitymoment for an occurrence at a specified recurrence_id with
+            specified alternative start and end times, is included/excluded in
+            get_activitymoments_between
+        """
+        recurrence_id = recurrence_id or timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)
+        self.activity_moment, _ = ActivityMoment.objects.get_or_create(
+            parent_activity=self.activity,
+            recurrence_id=recurrence_id,
+        )
+
+        # Set alternative start/end dates
+        self.activity_moment.local_start_date = new_start_date
+        self.activity_moment.local_end_date = new_end_date
+        self.activity_moment.save()
+
+        # Get activitymoments in this interval
+        after = after or timezone.datetime(2020, 10, 9, 0, 0, 0, tzinfo=timezone.utc)
+        before = before or timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
+        activity_moments = list(self.activity.get_activitymoments_between(after, before))
+
+        # All expected occurrences should be there
+        for occ in expected_occurrences:
+            self.assertTrue(any(activity_moment.recurrence_id == occ for activity_moment in activity_moments),
+                f"expected occurrence {occ} not in returned activitymoments {activity_moments}")
+
+        # No unexpected acitivitymoments should be in there
+        for am in activity_moments:
+            self.assertTrue(any(am.recurrence_id == occ for occ in expected_occurrences),
+                f"returned unexpected activitymoment {am} for expected occurrences {expected_occurrences}")
+
+        # Same amount of occurrences/activitymoments
+        self.assertEqual(len(activity_moments), len(expected_occurrences))
+
+    def test_get_activitymoments_between_extra_start_within_bounds(self):
         """
             Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
             but with a local_start_date between these same bounds, is included in the result.
         """
-        self.activity_moment = ActivityMoment.objects.get(
-            parent_activity=self.activity,
-            recurrence_id=timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc),
+        recurrence_id = timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
+        self._test_get_activitymoments_between(
+            [
+                recurrence_id, timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)
+            ],
+            recurrence_id=recurrence_id,
+            new_start_date=timezone.datetime(2020, 10, 13, 14, 0, 0, tzinfo=timezone.utc)
         )
-        # Occur almost a week later instead
-        self.activity_moment.local_start_date = timezone.datetime(2020, 10, 13, 14, 0, 0, tzinfo=timezone.utc)
-        self.activity_moment.save()
 
-        after = timezone.datetime(2020, 10, 9, 0, 0, 0, tzinfo=timezone.utc)
-        before = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
-        recurrences = list(self.activity.get_occurrences_starting_between(after, before))
+    def test_get_activitymoments_between_extra_start_outside_bounds(self):
+        """
+            Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
+            and with a local_start_date also outside these same bounds, is excluded in the result.
+        """
+        recurrence_id = timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
+        self._test_get_activitymoments_between(
+            [
+                timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)
+            ],
+            recurrence_id=recurrence_id,
+            new_start_date=timezone.datetime(2020, 11, 1, 14, 0, 0, tzinfo=timezone.utc)
+        )
 
-        self.assertEqual(len(recurrences), 2)
-        # Note that the returned recurrence_list contains the original recurrence_id and
-        #   NOT the modified start time.
-        self.assertIn(timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc), recurrences)
-        self.assertIn(timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc), recurrences)
+    def test_get_activitymoments_between_extra_end_within_bounds(self):
+        """
+            Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
+            but with a local_end_date between these same bounds, is included in the result.
+        """
+        recurrence_id = timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
+        self._test_get_activitymoments_between(
+            [
+                recurrence_id, timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)
+            ],
+            recurrence_id=recurrence_id,
+            new_start_date=timezone.datetime(2020, 10, 1, 14, 0, 0, tzinfo=timezone.utc),
+            new_end_date=timezone.datetime(2020, 10, 13, 14, 0, 0, tzinfo=timezone.utc)
+        )
 
-    def test_get_occurrences_between_surplus_activitymoment(self):
+    def test_get_activitymoments_between_extra_wrap_bounds_just_end(self):
+        """
+            Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
+            but with a local_end_date making it wrap the bounds, is included in the result.
+        """
+        recurrence_id = timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
+        self._test_get_activitymoments_between(
+            [
+                recurrence_id, timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)
+            ],
+            recurrence_id=recurrence_id,
+            new_end_date=timezone.datetime(2020, 10, 30, 14, 0, 0, tzinfo=timezone.utc)
+        )
+
+    def test_get_activitymoments_between_extra_wrap_bounds_start_and_end(self):
+        """
+            Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
+            but completely wrapping the bounds with a new start AND end date, is included in the result.
+        """
+        recurrence_id = timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
+        self._test_get_activitymoments_between(
+            [
+                recurrence_id, timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)
+            ],
+            recurrence_id=recurrence_id,
+            new_start_date=timezone.datetime(2020, 10, 1, 14, 0, 0, tzinfo=timezone.utc),
+            new_end_date=timezone.datetime(2020, 10, 30, 14, 0, 0, tzinfo=timezone.utc)
+        )
+
+    def test_get_activitymoments_between_extra_default_end_within_bounds(self):
+        """
+            Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
+            but with a local_start_date just before the bounds, such that the activity's default duration
+            makes it end within the bounds, is included in the result.
+        """
+        recurrence_id = timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
+        self._test_get_activitymoments_between(
+            [
+                recurrence_id, timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)
+            ],
+            recurrence_id=recurrence_id,
+            # Start half an hour before the bounds
+            new_start_date=timezone.datetime(2020, 10, 9, 23, 30, 0, tzinfo=timezone.utc),
+        )
+
+    def test_get_activitymoments_between_surplus_start_outside(self):
         """
             Tests if an occurrence with a recurrence_id inside the bounds of get_occurrences_between,
             but with a local_start_date outside these same bounds, is excluded from the result.
         """
-        self.activity_moment = ActivityMoment.objects.get(
-            parent_activity=self.activity,
-            recurrence_id=timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc),
+        self._test_get_activitymoments_between(
+            [], new_start_date=timezone.datetime(2020, 10, 18, 14, 0, 0, tzinfo=timezone.utc),
         )
-        # Occur a week later instead
-        self.activity_moment.local_start_date = timezone.datetime(2020, 10, 18, 14, 0, 0, tzinfo=timezone.utc)
-        self.activity_moment.save()
 
-        after = timezone.datetime(2020, 10, 2, 0, 0, 0, tzinfo=timezone.utc)
-        before = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
+    def test_get_activitymoments_between_surplus_end_earlier(self):
+        """
+            Tests if an occurrence with a recurrence_id inside the bounds of get_occurrences_between,
+            but with a local_end_date outside these same bounds, is excluded from the result.
+        """
+        self._test_get_activitymoments_between(
+            [], new_end_date=timezone.datetime(2020, 10, 14, 15, 30, 0, tzinfo=timezone.utc),
+            after=timezone.datetime(2020, 10, 14, 17, 0, 0, tzinfo=timezone.utc),
+            before=timezone.datetime(2020, 10, 14, 23, 30, 0, tzinfo=timezone.utc)
+        )
+
+    def test_recurrence_different_day(self):
+        """
+            django_recurrences does not always handle recurrences around midnight correctly due to
+            timezone offsets. Tests if we're using django_recurrences correctly so it simply doesn't
+            encounter those problems.
+            Tests an activity that starts just after midnight in CEST, but just before in UTC.
+        """
+        # Occurs weekly on Wednesday 12 aug, 01:30 CEST
+        self.activity.start_date = timezone.datetime(2020, 8, 11, 23, 30, 0, tzinfo=timezone.utc)
+        self.activity.save()
+
+        after = timezone.datetime(2020, 8, 11, 0, 0, 0, tzinfo=timezone.utc)
+        before = timezone.datetime(2020, 8, 25, 0, 0, 0, tzinfo=timezone.utc)
         recurrences = list(self.activity.get_occurrences_starting_between(after, before))
 
-        self.assertEqual(len(recurrences), 1)
-        self.assertIn(timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc), recurrences)
+        # Should have an occurrence at the start
+        self.assertIn(timezone.datetime(2020, 8, 11, 23, 30, 0, tzinfo=timezone.utc), recurrences)
+
+        # Should have an occurrence the week after (19 aug, 01:30 CEST)
+        self.assertIn(timezone.datetime(2020, 8, 18, 23, 30, 0, tzinfo=timezone.utc), recurrences)
+
+        # Should not have other occurrences
+        self.assertEqual(len(recurrences), 2)
+
+    def test_has_occurrence_at_alt_start_time(self):
+        """
+            Tests if has_occurrence_at does not break if the activitymoment for that occurrence
+            has a different start time
+        """
+        recurrence_id = timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
+        self.activity_moment = ActivityMoment.objects.get(
+            parent_activity=self.activity,
+            recurrence_id=recurrence_id,
+        )
+        # Occur later instead
+        alt_start_time = timezone.datetime(2020, 10, 18, 14, 0, 0, tzinfo=timezone.utc)
+        self.activity_moment.local_start_date = alt_start_time
+        self.activity_moment.save()
+
+        # Should occur at the activitymoments's recurrence_id, and not its alt start time
+        self.assertTrue(self.activity.has_occurrence_at(recurrence_id))
+        self.assertFalse(self.activity.has_occurrence_at(alt_start_time))
 
 
 class ActivityMomentTestCase(TestCase):
