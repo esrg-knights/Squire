@@ -777,14 +777,17 @@ class ActivitySlotTestCase(TestCase):
 
 
 class ActivityParticipantTestCase(TestCase):
-    fixtures = ['test_users.json', 'test_activity_slots']
+    fixtures = ['test_users.json', 'test_members', 'test_activity_slots']
 
-    def test_str(self):
+    @patch('core.models.ExtendedUser.get_display_name', return_value='trigger_test')
+    def test_str(self, mock_function=None):
         participation = Participant.objects.create(
             user_id=1,
             activity_slot_id=7
         )
-        self.assertEqual(str(participation), 'test_admin')
+        # The method that should be triggered is overwritten as output is tested elsewhere
+        # We merely need to assure that it is used
+        self.assertEqual(str(participation), 'trigger_test')
 
         participation.guest_name = 'some guest'
         self.assertEqual(str(participation), participation.guest_name + ' (ext)')
