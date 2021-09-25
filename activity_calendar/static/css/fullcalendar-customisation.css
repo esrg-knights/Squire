@@ -21,6 +21,19 @@
         background-color: white;
     }
 
+    /* There's no easy way to override the button colours of custom buttons in FullCalendar,
+        nor can custom classes be added to them easily. This is a workaround.
+    */
+    #calendar .fc-importCalendar-button {
+        background-color: var(--info);
+        border-color: var(--info);
+        color: var(--main-text-color);
+    }
+        #calendar .fc-importCalendar-button:hover {
+            background-color: var(--dark);
+            border-color: var(--dark);
+        }
+
     /* Hide the "Month" button on small screens; it's not useful there even in landscape mode */
     @media (max-width: 991px) {
         #calendar .fc-dayGridMonth-button {

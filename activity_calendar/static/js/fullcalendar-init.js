@@ -12,10 +12,18 @@ document.addEventListener('DOMContentLoaded', function() {
             meridiem: false, // AM/PM display
         },
         initialView: $(window).width() < 992 ? 'listWeek' : 'dayGridMonth',
+        customButtons: {
+            importCalendar: {
+                text: 'Import this Calendar',
+                click: function() {
+                    $('#importModal').modal('show')
+                },
+            }
+        },
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'timeGridWeek,dayGridMonth listWeek,listMonth'
+            right: 'timeGridWeek,dayGridMonth listWeek,listMonth importCalendar'
         },
         // Determines how far forward the scroll pane is initially scrolled.
         // This value ensures that evening-activities are visible without needing to scroll
@@ -56,7 +64,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     calendar.render();
+    $("#copy-calendar-url-to-clipboard").click(onCalendarCopyClick)
 });
+
+function onCalendarCopyClick() {
+    // Copy the calendar URL to the clipboard
+    navigator.clipboard.writeText($("#calendar-url").text().trim());
+}
 
 function onEventClick(info, calendar) {
     var event = info.event

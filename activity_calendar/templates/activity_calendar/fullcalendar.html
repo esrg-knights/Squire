@@ -170,16 +170,36 @@
         </div>
     </div>
 
-    <div class="mt-3">
-        <h5>Add this to your agenda</h5>
-        <p>You can import the Knights agenda into your own agenda. To do this follow the instructions on adding an
-        agenda from url and use the following url:</p>
-        <p class="">
-            {% url "activity_calendar:icalendar" as calendar_url %}
-            {% build_absolute_uri request calendar_url %}
-        </p>
-        <p>
-            For instance in Google in your calendar go to Add Calendar > From URL and add the above mentioned url.
-        </p>
+    <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="importModalLabel">Import this Calendar</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>
+              You can import the Knights agenda into your own agenda. To do so, follow the instructions on adding an agenda from URL and use the URL below.
+              <br>
+              <small class="text-danger">Do not import the file you get if you navigate to this URL directly</small>
+            </p>
+            <center class="mb-3">
+              <p class="mb-2">
+                <code id="calendar-url">
+                    {% url "activity_calendar:icalendar" as calendar_url %}
+                    {% build_absolute_uri request calendar_url %}
+                </code>
+              </p>
+              <button id="copy-calendar-url-to-clipboard" type="button" class="btn btn-dark btn-sm greenify">Copy URL to clipboard</button>
+            </center>
+            <p><small class="text-muted">
+                For instance, in Google Calendar, go to <i>Add Calendar</i> > <i>From URL</i> and enter URL listed above.
+            </small></p>
+          </div>
+        </div>
+      </div>
     </div>
+
 {% endblock content %}
