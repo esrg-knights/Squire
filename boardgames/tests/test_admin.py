@@ -8,24 +8,24 @@ from boardgames.admin import BoardGameAdmin
 
 # Tests for the Admin Panel
 class BoardgameAdminTest(ViewValidityMixin, TestCase):
-    fixtures = ['test_users.json', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ['test_users.json', 'test_groups', 'test_members.json', 'boardgames/boardgames']
     base_user_id = 1
 
     # Tests whether we can reach the activity page in the admin panel
     def test_list_page(self):
-        app_label, model_name = 'inventory', 'boardgame'
+        app_label, model_name = 'boardgames', 'boardgame'
         url = reverse(f"admin:{app_label}_{model_name}_changelist")
 
         self.assertValidGetResponse(url=url)
 
     def test_add_page_new_object(self):
-        app_label, model_name = 'inventory', 'boardgame'
+        app_label, model_name = 'boardgames', 'boardgame'
         url = reverse(f"admin:{app_label}_{model_name}_add", kwargs={})
 
         self.assertValidGetResponse(url=url)
 
     def test_add_post_reply(self):
-        app_label, model_name = 'inventory', 'boardgame'
+        app_label, model_name = 'boardgames', 'boardgame'
         url = reverse(f"admin:{app_label}_{model_name}_add", kwargs={})
 
         """ Tests the overwritten is_valid in BaseGenericTweakedInlineFormSet """

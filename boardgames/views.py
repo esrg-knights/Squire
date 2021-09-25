@@ -4,14 +4,14 @@ from django.views.generic import ListView
 
 from utils.views import SearchFormMixin
 
-
+from boardgames.forms import BoardgameFilterForm
 from boardgames.models import BoardGame
 
 
 class BoardGameView(SearchFormMixin, ListView):
     template_name = "boardgames/boardgames_overview.html"
     context_object_name = 'boardgames'
-    filter_field_name = 'name'
+    search_form_class = BoardgameFilterForm
 
     paginate_by = 15
 
