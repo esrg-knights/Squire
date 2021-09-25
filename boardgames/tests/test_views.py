@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from utils.testing.view_test_utils import ViewValidityMixin
 
+from boardgames.forms import BoardgameFilterForm
 from boardgames.views import *
 
 
@@ -17,7 +18,7 @@ class TestBoardGameView(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(BoardGameView, SearchFormMixin))
         self.assertTrue(issubclass(BoardGameView, ListView))
         self.assertEqual(BoardGameView.template_name, "boardgames/boardgames_overview.html")
-        self.assertEqual(BoardGameView.filter_field_name, "name")
+        self.assertEqual(BoardGameView.search_form_class, BoardgameFilterForm)
         self.assertEqual(BoardGameView.context_object_name, 'boardgames')
         self.assertIsNotNone(BoardGameView.paginate_by)
 
@@ -37,12 +38,6 @@ class TestBoardGameView(ViewValidityMixin, TestCase):
         response  = self.client.get(url, data={})
         context = response.context
         self.assertEqual(context['boardgames'].count(), correct_query.count())
-
-        # Assert that it uses the filter. Exact value does not matter
-        url = self.get_base_url(item_id=1)+"?search_field=mars"
-        response  = self.client.get(url, data={})
-        context = response.context
-        self.assertLess(context['boardgames'].count(), correct_query.count())
 
     def test_template_context(self):
         response  = self.client.get(self.get_base_url(item_id=1), data={})

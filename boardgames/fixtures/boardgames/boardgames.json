@@ -7,7 +7,8 @@
             "description": "Some description",
             "bgg_id": 167791,
             "player_min": 2,
-            "player_max": 5
+            "player_max": 5,
+            "play_duration": "L"
         }
     },
     {
@@ -15,7 +16,9 @@
         "pk": 2,
         "fields": {
             "name": "Gaia Project",
-            "description": ""
+            "description": "",
+            "player_max": 4,
+            "play_duration": "L"
         }
     },
     {
@@ -23,7 +26,8 @@
         "pk": 3,
         "fields": {
             "name": "An old game we used to know",
-            "description": "Currently taken home"
+            "description": "Currently taken home",
+            "player_min": 3
         }
     },
     {
@@ -31,7 +35,8 @@
         "pk": 4,
         "fields": {
             "name": "Monopoly",
-            "description": "Noooo"
+            "description": "Noooo",
+            "play_duration": "XS"
         }
     },
 

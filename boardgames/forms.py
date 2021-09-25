@@ -15,6 +15,7 @@ class BoardgameFilterForm(Form):
         if self.cleaned_data['boardgame_name']:
             queryset = queryset.filter(name__icontains=self.cleaned_data['boardgame_name'])
         if self.cleaned_data['players']:
+            # Players is more complex as there are N+ and N- options. Hence we use Q objects
             queryset = queryset.filter(
                 Q(player_min__lte=self.cleaned_data['players']) | Q(player_min__isnull=True),
                 Q(player_max__gte=self.cleaned_data['players']) | Q(player_max__isnull=True),
