@@ -26,10 +26,6 @@ global_preferences = global_preferences_registry.manager()
 ##################################################################################
 
 @require_safe
-def homePage(request):
-    return render(request, 'core/home.html', {})
-
-@require_safe
 def logoutSuccess(request):
     if request.user.is_authenticated:
         return redirect(reverse('core:user_accounts/logout'))

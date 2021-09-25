@@ -16,7 +16,7 @@
                     <div class="row no-gutters">
                         <small class="text-muted">
                             Alternative Location:
-                            {% if not activity_moment.private_slot_locations or user in slot.participants.all or perms.activity_calendar.can_view_private_slot_locations %}
+                            {% if not activity_moment.private_slot_locations or user in slot.get_subscribed_users or perms.activity_calendar.can_view_private_slot_locations %}
                                 {{ slot.location }}
                                 {% if activity_moment.private_slot_locations %}
                                     <i>(private)</i>
@@ -33,12 +33,12 @@
                     <div class="card-text">
                         <small class="text-muted">
                             {% if slot.max_participants != -1 %}
-                                {{ slot.participants.all|length }} / {{ slot.max_participants }}
+                                {{ slot.participant_set.all|length }} / {{ slot.max_participants }}
                             {% else %}
-                                {{ slot.participants.all|length }} / &infin;
+                                {{ slot.participant_set.all|length }} / &infin;
                             {% endif %}
                             participants{% if show_participants %}:
-                                {{ slot.participants.all | join:", " }}
+                                {{ slot.participant_set.all | join:", " }}
                             {% endif %}
                         </small>
                     </div>

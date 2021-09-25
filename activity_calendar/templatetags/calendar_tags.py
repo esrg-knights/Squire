@@ -23,7 +23,7 @@ def sign_up_slot_form(context, slot):
         slot = slot,
         initial = {
             'slot_id': slot.id,
-            'sign_up': slot.get_subscribed_participants().filter(id=user.id).count() == 0
+            'sign_up': slot.get_subscribed_users().filter(id=user.id).count() == 0
         }
     )
     return form
@@ -67,7 +67,7 @@ def register_button(context, slot):
     if not user.is_authenticated:
         return None
 
-    sign_up = not slot.participants.filter(id=user.id).exists()
+    sign_up = not slot.get_subscribed_users().filter(id=user.id).exists()
 
     form = RegisterForActivitySlotForm(
         activity = context['activity'],

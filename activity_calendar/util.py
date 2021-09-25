@@ -27,22 +27,18 @@ def dst_aware_to_dst_ignore(date, origin_date, reverse=False):
         date = date - (start_utc_offset - date_utc_offset)
     else:
         date = date + (start_utc_offset - date_utc_offset)
-    return date
-
+    return localtime(date)
 
 def set_time_for_RDATE_EXDATE(dates, time, make_dst_ignore=False):
     """
         Sets the time (with the corresponding timezone) for a given set of dates.
-
-        Note:
 
         :param dates: Collection of datetime objects of which the time should be set
         :param time: A datetime object whose date and timezone are set to the collection of dates
         :param make_dst_ignore: If these dates (RDATES or EXDATEs) are made dst-aware later on,
             then this difference can be accounted here by offsetting this change backwards.
     """
-    local_time = time.astimezone(get_current_timezone()).time()
-
+    local_time = localtime(time).time()
     set_time_fn = (lambda date:
             get_current_timezone().localize(
                 datetime.datetime.combine(localtime(date).date(), local_time),

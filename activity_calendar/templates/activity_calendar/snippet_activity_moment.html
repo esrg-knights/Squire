@@ -38,7 +38,7 @@
                 </div>
                 {% endif %}
 
-                {% if activity_moment.max_participants > 0 or activity_moment.subscriptions_required %}
+                {% if activity_moment.max_participants != 0 or activity_moment.subscriptions_required %}
                 <div class="d-flex">
                     <!-- Subscription Icon -->
                     <div class="col-xs-2">
@@ -83,13 +83,8 @@
             </div>
 
             <!-- Link to activity moment page -->
-
-
-            <a href="{{ activity_moment.get_absolute_url }}" class="card-link btn btn-primary">
+            <a href="{{ activity_moment.get_absolute_url }}" class="card-link btn btn-success greenify">
                 Go to activity
             </a>
         </div>
-
-
     </div>
-

@@ -23,7 +23,7 @@ def get_json_from_activity_moment(activity_moment, user=None):
             'exdates': [occ.date().strftime("%A, %B %d, %Y") for occ in activity_moment.parent_activity.recurrences.exdates],
         },
         'subscriptionsRequired': activity_moment.parent_activity.subscriptions_required,
-        'numParticipants': activity_moment.get_subscribed_users().count(),
+        'numParticipants': activity_moment.participant_count,
         'maxParticipants': activity_moment.max_participants,
         'isSubscribed': activity_moment.get_user_subscriptions(user).exists(),
         'canSubscribe': activity_moment.is_open_for_subscriptions(),
@@ -61,7 +61,7 @@ def fullcalendar_feed(request):
 
     activity_moment_jsons = []
     for activity in Activity.objects.filter(published_date__lte=timezone.now()):
-        for activity_moment in activity.get_all_activity_moments(start_date, end_date):
+        for activity_moment in activity.get_activitymoments_between(start_date, end_date):
             json_instance = get_json_from_activity_moment(activity_moment, user=request.user)
             activity_moment_jsons.append(json_instance)
 

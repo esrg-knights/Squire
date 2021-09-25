@@ -19,7 +19,7 @@ class AssociationGroup(models.Model):
     BOARD = 'B'
     GROUPTYPES = [
         (COMMITTEE, 'Committee'),
-        (GUILD, 'Guild'),
+        (GUILD, 'Order'),
         (WORKGROUP, 'Workgroup'),
         (BOARD, 'Board'),
     ]
@@ -77,7 +77,7 @@ class AssociationGroupMembership(models.Model):
     group = models.ForeignKey(AssociationGroup, on_delete=models.CASCADE)
     role = models.CharField(max_length=32, blank=True, default="",
                             help_text="Name of the formal role. E.g. treasurer, president")
-    title = models.CharField(max_length=32, blank=True, default="",
+    title = models.CharField(max_length=64, blank=True, default="",
                              help_text="Symbolic name (if any) e.g. 'God of War', 'Minister of Alien affairs', or 'Wondrous Wizard'")
     joined_since = models.DateField(default=datetime.date.today)
 

@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.options import IncorrectLookupParameters
+from django.contrib.auth.models import Group, User
+from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured
@@ -22,7 +24,11 @@ from utils.forms import RequestUserToFormModelAdminMixin
 # Backport of Django 3.1
 class EmptyFieldListFilter(admin.FieldListFilter): # pragma: no cover
     def __init__(self, field, request, params, model, model_admin, field_path):
-        if not field.empty_strings_allowed and not field.null:
+        # https://code.djangoproject.com/ticket/31952
+        # This bug is fixed in future versions of Django, though this is done in
+        #   another place than this filter. We'll make our own "fix" here instead
+        #   until we upgrade
+        if not getattr(field, 'empty_strings_allowed', False) and not field.null:
             raise ImproperlyConfigured(
                 "The list filter '%s' cannot be used with field '%s' which "
                 "doesn't allow empty strings and nulls." % (
@@ -41,7 +47,8 @@ class EmptyFieldListFilter(admin.FieldListFilter): # pragma: no cover
             raise IncorrectLookupParameters
 
         lookup_condition = Q()
-        if self.field.empty_strings_allowed:
+        # Same as above
+        if getattr(self.field, 'empty_strings_allowed', False):
             lookup_condition |= Q(**{self.field_path: ''})
         if self.field.null:
             lookup_condition |= Q(**{'%s__isnull' % self.field_path: True})
@@ -66,10 +73,58 @@ class EmptyFieldListFilter(admin.FieldListFilter): # pragma: no cover
 
 ###################################################
 
+
+class SquireUserAdmin(UserAdmin):
+    list_filter = (
+        'is_staff', 'is_superuser', 'is_active',
+        ('member', EmptyFieldListFilter),
+        ('groups', admin.RelatedOnlyFieldListFilter),
+        'date_joined', 'last_login'
+    )
+    search_fields = ('username', 'first_name', 'email', 'member__first_name', 'member__last_name')
+    list_display = ('id', 'username', 'email', 'first_name', 'member', 'is_staff', 'is_superuser', 'date_joined')
+    list_display_links = ('id', 'username')
+    readonly_fields = ('member',)
+    exclude=('last_name',)
+
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        (_('Personal info'), {'fields': ('first_name', 'email', 'member')}),
+        (_('Permissions'), {
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+        }),
+        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
+    )
+
+admin.site.unregister(User)
+admin.site.register(User, SquireUserAdmin)
+
+class SquireGroupAdmin(GroupAdmin):
+    list_filter = (
+        ('associationgroup', EmptyFieldListFilter),
+    )
+    search_fields = ('name', 'associationgroup__shorthand')
+    list_display = ('id', 'name', 'has_assoc_group')
+    list_display_links = ('id', 'name')
+    readonly_fields = ('associationgroup',)
+
+    def has_assoc_group(self, obj):
+        return bool(obj.associationgroup)
+    has_assoc_group.short_description = "Is Committee"
+    has_assoc_group.admin_order_field = 'associationgroup'
+    has_assoc_group.boolean = True
+
+admin.site.unregister(Group)
+admin.site.register(Group, SquireGroupAdmin)
+
+###################################################
+# Markdown Images
+
 class PresetImageAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'image', 'selectable')
     list_filter = ['selectable']
     list_display_links = ('id', 'name')
+    search_fields = ('name',)
 
 admin.site.register(PresetImage, PresetImageAdmin)
 
@@ -101,6 +156,7 @@ class MarkdownImageAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmin):
         ('content_type',    admin.RelatedOnlyFieldListFilter),
         ('object_id',       EmptyFieldListFilter),
     )
+    search_fields = ('uploader__username',)
     readonly_fields = ('upload_date', 'content_object', 'id', 'uploader')
     ordering = ("-upload_date",)
     fieldsets = (
@@ -124,7 +180,7 @@ class MarkdownImageAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmin):
 
 admin.site.register(MarkdownImage, MarkdownImageAdmin)
 
-
+###################################################
 # Global preferences admin panel.
 #   We want to change the way some preference fields are rendered
 class SquireGlobalPreferencesAdmin(GlobalPreferenceAdmin):

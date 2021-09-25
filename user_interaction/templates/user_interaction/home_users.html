@@ -1,0 +1,123 @@
+
+{% extends 'core/base.html' %}
+
+{% load to_extended_user %}
+
+{% block title %}
+    Squire - Homepage
+{% endblock title %}
+
+{% block og-title %}
+    Squire Homepage
+{% endblock og-title %}
+
+{% block content-frame-class %}
+    container-fluid
+{% endblock %}
+
+{% block content %}
+    <div class="m-auto py-5" style="max-width: 1250px;">
+        <div class="row">
+            <div class="col-12  text-center ">
+                <p class="lead display-4">
+                    Hello {{ member.first_name }}
+                </p>
+                <p>
+                    Squire has levelled up! Have a look around and if there is anything off please let us know!
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="row">
+                    <div class="col-12">
+                        <h3>
+                            Activities in the next 7 days
+                        </h3>
+                    </div>
+                    <div class="alert alert-info w-100">
+                        Don't forget: Physical activities require registration as long as Corona guidelines exist!
+                    </div>
+                    {% for activity_moment in activities %}
+                        <div class="col-12 col-md-6 p-1">
+                            {% include "activity_calendar/snippet_activity_moment.html" %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-md-4">
+                {% if not member %}
+                    <div class="alert alert-warning">
+                        This account has no membership connected yet. Please contact the board with your username so they
+                        can connect your membership to this account. Until that is done, functionality will be limited.
+                    </div>
+                {% else %}
+                    {% if member.associationgroup_set.exists %}
+                        <div>
+                            <h3>My groups</h3>
+
+                            {% for group in member.associationgroup_set.all %}
+                                <div class="card mb-2">
+                                    <div class="card-header d-flex">
+                                        <div style="width: 2em;">
+                                            {% if group.icon %}
+                                                <div class="">
+                                                    <div class=""
+                                                         style="background-size: contain; background-position: center;
+                                                             background-image: url('{{ group.icon.url }}');
+                                                             background-repeat: no-repeat; width: 3em; height: 3em;
+                                                             margin-left: -1em; margin-top: -0.5em;"
+                                                    ></div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            {{ group.name }}
+                                        </div>
+                                    </div>
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item">
+                                            <div class="row">
+                                                <div class="col">
+                                                    Control panel
+                                                </div>
+                                                <a class="col btn btn-sm btn-outline-primary"
+                                                   href="{% url "committees:group_general" group_id=group.id %}"
+                                                >   Go to
+                                                </a>
+                                            </div>
+                                        </li>
+                                        {% for shortcut in group.shortcut_set.all%}
+                                            <li class="list-group-item">
+                                                <div class="row">
+                                                    <div class="col">
+                                                        {{ shortcut.name|capfirst }}
+                                                    </div>
+                                                    <a class="col btn btn-sm btn-outline-primary"
+                                                       href="{{ shortcut.url }}"
+                                                    >   Go to
+                                                    </a>
+                                                </div>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+                <div>
+                    <h4>Encountered evil?</h4>
+                    <p>
+                        Bugs are annoying. If you encountered one, please mark them on github or notify the board and
+                        we will send in our troops!
+                    </p>
+                    <a class="btn btn-outline-dark" href="https://github.com/esrg-knights/Squire/issues"
+                       target="_blank" rel="noreferrer noopener"
+                    >Report bug</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

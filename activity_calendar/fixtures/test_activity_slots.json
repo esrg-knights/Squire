@@ -132,18 +132,6 @@
     }
 },
 {
-    "_comment": "This AM is an extra location that does not fit the rrule",
-    "model": "activity_calendar.activitymoment",
-    "pk": 5,
-    "fields": {
-        "parent_activity": 2,
-        "recurrence_id": "2020-10-10T19:30:00Z",
-        "created_date": "2020-10-01T19:00:00Z",
-        "last_updated": "2020-10-01T19:00:00Z",
-        "local_title": "Extra boardgame"
-    }
-},
-{
   "model": "activity_calendar.activityslot",
   "pk": 1,
   "fields": {
@@ -326,5 +314,36 @@
     "activity_slot": 8,
     "showed_up": null
   }
-}
+},
+    {
+        "model": "activity_calendar.participant",
+        "pk": 7,
+        "fields": {
+            "user": 1,
+            "activity_slot": 4,
+            "guest_name": "Karen",
+            "showed_up": true
+        }
+    },
+    {
+        "model": "activity_calendar.participant",
+        "pk": 8,
+        "fields": {
+            "user": 1,
+            "activity_slot": 4,
+            "guest_name": "Krystal",
+            "showed_up": true
+        }
+    },
+    {
+        "model": "activity_calendar.participant",
+        "pk": 9,
+        "fields": {
+            "user": 3,
+            "activity_slot": 4,
+            "guest_name": "Kathleen",
+            "showed_up": true
+        }
+    }
+
 ]

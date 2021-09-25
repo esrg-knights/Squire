@@ -16,10 +16,6 @@ from core.tests.util import check_http_response, TestPublicUser, TestAccountUser
 class FrontEndTest(TestCase):
     fixtures = TestAccountUser.get_fixtures()
 
-    # Tests if the homepage can be accessed
-    def test_homepage(self):
-        check_http_response(self, '/', 'get', TestPublicUser)
-
     # Tests if the login page can be accessed
     def test_login(self):
         check_http_response(self, settings.LOGIN_URL, 'get', TestPublicUser)
@@ -70,12 +66,12 @@ class FrontEndTest(TestCase):
 
         # Disable share URL
         global_preferences['newsletter__share_link'] = ""
-        res = check_http_response(self, reverse('core:homepage'), 'get', TestAccountUser)
+        res = check_http_response(self, '/', 'get', TestAccountUser)
         self.assertNotContains(res, reverse('core:newsletters'))
 
         # Enable share URL
         global_preferences['newsletter__share_link'] = "https://www.example.com"
-        res = check_http_response(self, reverse('core:homepage'), 'get', TestAccountUser)
+        res = check_http_response(self, '/', 'get', TestAccountUser)
         self.assertContains(res, reverse('core:newsletters'))
 
 
@@ -143,7 +139,7 @@ class RegisterFormTest(TestCase):
             'password1': 'bestaatookniet',
             'password2': 'bestaatookniet',
             'email': 'kandi@example.com',
-            'nickname': 'wijbestaanniet',
+            'real_name': 'wijbestaanniet',
         }
         form = RegisterForm(data=form_data)
 
@@ -171,7 +167,7 @@ class RegisterFormTest(TestCase):
     # Test if a registering fails if required fields are missing
     def test_form_fields_missing(self):
         form_data = {
-            'nickname': 'empty',
+            'real_name': 'empty',
         }
         form = RegisterForm(data=form_data)
 
@@ -196,7 +192,7 @@ class RegisterFormTest(TestCase):
             'password1': 'bestaatookniet',
             'password2': 'nomatch',
             'email': 'kandi@example.com',
-            'nickname': 'wijbestaanniet',
+            'real_name': 'wijbestaanniet',
         }
         form = RegisterForm(data=form_data)
 
@@ -214,7 +210,7 @@ class RegisterFormTest(TestCase):
             'password1': 'secret',
             'password2': 'secret',
             'email': 'rva@example.com',
-            'nickname': 'wijbestaanniet',
+            'real_name': 'wijbestaanniet',
         }
         form = RegisterForm(data=form_data)
 
@@ -239,6 +235,7 @@ class RegisterFormViewTest(TestCase):
             'password1': 'thisactuallyneedstobeagoodpassword',
             'password2': 'thisactuallyneedstobeagoodpassword',
             'email': 'email@example.com',
+            'real_name': "My Real name",
         }
         check_http_response(self, '/register', 'post', TestPublicUser,
                 redirect_url='/register/success', data=form_data)
@@ -247,7 +244,20 @@ class RegisterFormViewTest(TestCase):
         self.assertIsNotNone(user)
         self.assertEquals(user.email, 'email@example.com')
         self.assertTrue(user.check_password('thisactuallyneedstobeagoodpassword'))
-        self.assertEqual(user.first_name, '')
+        self.assertEqual(user.first_name, 'My Real name')
+
+    # Tests if not redirected when form data was entered incorrectly
+    def test_fail_form_enter_no_real_name(self):
+        form_data = {
+            'username': 'username',
+            'password1': 'thisactuallyneedstobeagoodpassword', # Real name not passed
+            'password2': 'thisactuallyneedstobeagoodpassword',
+            'email': 'email@example.com',
+        }
+        check_http_response(self, '/register', 'post', TestPublicUser, data=form_data)
+
+        user = User.objects.filter(username='username').first()
+        self.assertIsNone(user)
 
     # Tests if not redirected when form data was entered incorrectly
     def test_fail_form_enter(self):
@@ -256,6 +266,7 @@ class RegisterFormViewTest(TestCase):
             'password1': 'password', # Password too easy so should fail
             'password2': 'password',
             'email': 'email@example.com',
+            'real_name': "My Real name",
         }
         check_http_response(self, '/register', 'post', TestPublicUser, data=form_data)
 
