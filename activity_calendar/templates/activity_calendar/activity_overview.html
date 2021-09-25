@@ -17,30 +17,23 @@
 {% block content %}
     <div class="m-auto" style="max-width: 1250px;">
         <h1>Upcoming Activities</h1>
-        <p>
-            Below is a list of the upcoming two weeks. For the calendar to all activities,
-            <a href="{% url 'activity_calendar:calendar' %}">
-                click here.
-            </a>
-        </p>
-
-        <div class="row px-2">
-        {% for activity_moment in activities %}
-            <div class="col-12 col-md-6 col-xl-4 p-1">
-                {% include "activity_calendar/snippet_activity_moment.html" %}
-            </div>
-        {% endfor %}
-        </div>
-        <hr>
-        <div class="">
+        <div class="d-flex justify-content-between align-items-center">
             <p>
-                Want to look even further into the future? Check the Knights calendar!
+                Below is a list of activities for the upcoming two weeks.
             </p>
-            <a href="{% url "activity_calendar:calendar" %}"
-               class="btn btn-info">
-                View Knights calendar
-            </a>
+            <p>
+                <a href='{% url "activity_calendar:calendar" %}'
+                class="btn btn-info">
+                    View entire Calendar
+                </a>
+            </p>
         </div>
-
+        <div class="row px-2">
+            {% for activity_moment in activities %}
+                <div class="col-12 col-md-6 col-xl-4 p-1">
+                    {% include "activity_calendar/snippet_activity_moment.html" %}
+                </div>
+            {% endfor %}
+        </div>
     </div>
 {% endblock %}
