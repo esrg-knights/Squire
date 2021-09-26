@@ -1,4 +1,6 @@
 from django import forms
+from django.db.models import Value, Q
+from django.db.models.functions import Concat
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -6,10 +8,11 @@ from django.utils import timezone
 
 from membership_file.models import Member
 from inventory.models import *
+from utils.forms import FilterForm
 
 __all__ = ['OwnershipRemovalForm', 'OwnershipActivationForm', 'OwnershipNoteForm', 'OwnershipCommitteeForm',
            'AddOwnershipCommitteeLinkForm', 'AddOwnershipMemberLinkForm', 'FilterOwnershipThroughRelatedItems',
-           'DeleteItemForm', 'DeleteOwnershipForm']
+           'DeleteItemForm', 'DeleteOwnershipForm', 'FilterCatalogue']
 
 
 class OwnershipRemovalForm(forms.Form):
@@ -121,7 +124,33 @@ class DeleteOwnershipForm(forms.Form):
         self.ownership.delete()
 
 
-class FilterOwnershipThroughRelatedItems(forms.Form):
+class FilterCatalogue(FilterForm):
+    name = forms.CharField(max_length=32, required=False)
+    owner = forms.CharField(max_length=32, required=False)
+
+    def __init__(self, *args, item_type=None, **kwargs):
+        self.item_type = item_type
+        super(FilterCatalogue, self).__init__(*args, **kwargs)
+
+    def get_filtered_items(self, queryset):
+        if self.cleaned_data['name']:
+            queryset = queryset.filter(name__icontains=self.cleaned_data['name'])
+        if self.cleaned_data['owner']:
+            members = Member.objects.\
+                annotate(fullname=Concat('first_name', Value(' '), 'last_name')).\
+                filter(fullname__icontains=self.cleaned_data['owner'])
+            groups = Group.objects.filter(name__icontains=self.cleaned_data['owner'])
+            ownerships = Ownership.objects.filter(
+                content_type=self.item_type,
+            ).filter(
+                Q(member__in=members) | Q(group__in=groups),
+            )
+            queryset = queryset.filter(ownerships__in=ownerships)
+
+        return queryset.order_by('name')
+
+
+class FilterOwnershipThroughRelatedItems(FilterForm):
     search_field = forms.CharField(max_length=100, required=False)
 
     def get_filtered_items(self, queryset):
