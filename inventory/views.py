@@ -180,8 +180,12 @@ class TypeCatalogue(MembershipRequiredMixin, CatalogueMixin, SearchFormMixin, Li
         return self.item_type.model_class()
 
     def get_filter_form_kwargs(self, **kwargs):
+        item_class_name = self.item_type.model
+        item_app_label = self.item_type.app_label
+
         return super(TypeCatalogue, self).get_filter_form_kwargs(
-            item_type=self.item_type
+            item_type=self.item_type,
+            include_owner=self.request.user.has_perm(f'{item_app_label}.maintain_ownerships_for_{item_class_name}')
         )
 
     def get_context_data(self, *args, **kwargs):

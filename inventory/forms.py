@@ -128,29 +128,31 @@ class FilterCatalogueForm(FilterForm):
     name = forms.CharField(max_length=32, required=False)
     owner = forms.CharField(max_length=32, required=False)
 
-    def __init__(self, *args, item_type=None, **kwargs):
+    def __init__(self, *args, item_type=None, include_owner=False, **kwargs):
         self.item_type = item_type
         super(FilterCatalogueForm, self).__init__(*args, **kwargs)
+        if not include_owner:
+            del self.fields['owner']
 
     def get_filtered_items(self, queryset):
-        if self.cleaned_data['name']:
-            queryset = queryset.filter(name__icontains=self.cleaned_data['name'])
-        if self.cleaned_data['owner']:
-            # Annotate but take tussenvoegsels into account. Some names have them, but others don't resulting in
-            # accidental double space, so instead we just make a string of the name with and without tussenvoegsel
-            members = Member.objects.\
-                annotate(fullname=Concat('first_name', Value(' '), 'last_name', Value('-'),
-                                         'first_name', Value(' '), 'tussenvoegsel', Value(' '), 'last_name')).\
-                filter(fullname__icontains=self.cleaned_data['owner'])
-            groups = Group.objects.filter(name__icontains=self.cleaned_data['owner'])
-            ownerships = Ownership.objects.filter(
-                content_type=self.item_type,
-            ).filter(
-                Q(member__in=members) | Q(group__in=groups),
-            )
-            queryset = queryset.filter(ownerships__in=ownerships)
+            if self.cleaned_data['name']:
+                queryset = queryset.filter(name__icontains=self.cleaned_data['name'])
+            if 'owner' in self.cleaned_data.keys() and self.cleaned_data['owner']:
+                # Annotate but take tussenvoegsels into account. Some names have them, but others don't resulting in
+                # accidental double space, so instead we just make a string of the name with and without tussenvoegsel
+                members = Member.objects.\
+                    annotate(fullname=Concat('first_name', Value(' '), 'last_name', Value('-'),
+                                             'first_name', Value(' '), 'tussenvoegsel', Value(' '), 'last_name')).\
+                    filter(fullname__icontains=self.cleaned_data['owner'])
+                groups = Group.objects.filter(name__icontains=self.cleaned_data['owner'])
+                ownerships = Ownership.objects.filter(
+                    content_type=self.item_type,
+                ).filter(
+                    Q(member__in=members) | Q(group__in=groups),
+                )
+                queryset = queryset.filter(ownerships__in=ownerships)
 
-        return queryset.order_by('name')
+            return queryset.order_by('name')
 
 
 class FilterOwnershipThroughRelatedItems(FilterForm):

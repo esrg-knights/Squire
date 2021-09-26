@@ -147,27 +147,32 @@ class TestFilterCatalogueForm(FormValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     form_class = FilterCatalogueForm
 
+    def get_form_kwargs(self, **kwargs):
+        kwargs.setdefault('item_type', ContentType.objects.get_for_model(MiscellaneousItem))
+        kwargs.setdefault('include_owner', True)
+
+        return super(TestFilterCatalogueForm, self).get_form_kwargs(**kwargs)
+
     def test_fields(self):
         self.assertHasField('name')
         self.assertHasField('owner')
 
     def test_filtering_name(self):
         items = MiscellaneousItem.objects.all()
-        item_type = ContentType.objects.get_for_model(MiscellaneousItem)
         # Test searching by name
-        form = self.assertFormValid({'name': 'aa'}, item_type=item_type)
+        form = self.assertFormValid({'name': 'aa'})
         filtered_items =form.get_filtered_items(items)
         self.assertEqual(2, filtered_items.count())
         self.assertTrue(filtered_items.filter(name="Schaar").exists())
 
         # Test searching by owner (member)
-        form = self.assertFormValid({'owner': 'Charlie'}, item_type=item_type)
+        form = self.assertFormValid({'owner': 'Charlie'})
         filtered_items =form.get_filtered_items(items)
         self.assertEqual(2, filtered_items.count())
         self.assertTrue(filtered_items.filter(name="Flyers").exists())
 
         # Test searching by owner (group)
-        form = self.assertFormValid({'owner': 'ZG'}, item_type=item_type)
+        form = self.assertFormValid({'owner': 'ZG'})
         filtered_items =form.get_filtered_items(items)
         self.assertEqual(3, filtered_items.count())
 
@@ -183,6 +188,15 @@ class TestFilterCatalogueForm(FormValidityMixin, TestCase):
         filtered_items =form.get_filtered_items(items)
         self.assertEqual(1, filtered_items.count())
 
+    def test_remove_owner_field_query(self):
+        form = self.build_form({}, include_owner=False)
+        self.assertNotIn('owner', form.fields)
+
+        # Test that owner is ignored if someone tries to hack the system
+        form = self.assertFormValid({'owner': 'NOT RELEVANT'}, include_owner=False)
+        items = MiscellaneousItem.objects.all()
+        filtered_items =form.get_filtered_items(items)
+        self.assertEqual(items.count(), filtered_items.count())
 
 class TestFilterOwnershipThroughRelatedItems(FormValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
