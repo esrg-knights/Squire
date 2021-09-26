@@ -12,7 +12,7 @@ from utils.forms import FilterForm
 
 __all__ = ['OwnershipRemovalForm', 'OwnershipActivationForm', 'OwnershipNoteForm', 'OwnershipCommitteeForm',
            'AddOwnershipCommitteeLinkForm', 'AddOwnershipMemberLinkForm', 'FilterOwnershipThroughRelatedItems',
-           'DeleteItemForm', 'DeleteOwnershipForm', 'FilterCatalogue']
+           'DeleteItemForm', 'DeleteOwnershipForm', 'FilterCatalogueForm']
 
 
 class OwnershipRemovalForm(forms.Form):
@@ -124,20 +124,23 @@ class DeleteOwnershipForm(forms.Form):
         self.ownership.delete()
 
 
-class FilterCatalogue(FilterForm):
+class FilterCatalogueForm(FilterForm):
     name = forms.CharField(max_length=32, required=False)
     owner = forms.CharField(max_length=32, required=False)
 
     def __init__(self, *args, item_type=None, **kwargs):
         self.item_type = item_type
-        super(FilterCatalogue, self).__init__(*args, **kwargs)
+        super(FilterCatalogueForm, self).__init__(*args, **kwargs)
 
     def get_filtered_items(self, queryset):
         if self.cleaned_data['name']:
             queryset = queryset.filter(name__icontains=self.cleaned_data['name'])
         if self.cleaned_data['owner']:
+            # Annotate but take tussenvoegsels into account. Some names have them, but others don't resulting in
+            # accidental double space, so instead we just make a string of the name with and without tussenvoegsel
             members = Member.objects.\
-                annotate(fullname=Concat('first_name', Value(' '), 'last_name')).\
+                annotate(fullname=Concat('first_name', Value(' '), 'last_name', Value('-'),
+                                         'first_name', Value(' '), 'tussenvoegsel', Value(' '), 'last_name')).\
                 filter(fullname__icontains=self.cleaned_data['owner'])
             groups = Group.objects.filter(name__icontains=self.cleaned_data['owner'])
             ownerships = Ownership.objects.filter(

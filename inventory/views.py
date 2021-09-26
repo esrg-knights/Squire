@@ -169,7 +169,7 @@ class ItemMixin:
 
 class TypeCatalogue(MembershipRequiredMixin, CatalogueMixin, SearchFormMixin, ListView):
     template_name = "inventory/catalogue_for_type.html"
-    search_form_class = FilterCatalogue
+    search_form_class = FilterCatalogueForm
 
     paginate_by = 15
 
