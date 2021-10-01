@@ -259,6 +259,7 @@ class TestTypeCatalogue(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(TypeCatalogue, SearchFormMixin))
         self.assertTrue(issubclass(TypeCatalogue, ListView))
         self.assertEqual(TypeCatalogue.template_name, "inventory/catalogue_for_type.html")
+        self.assertEqual(TypeCatalogue.search_form_class, FilterCatalogueForm)
 
     def test_successful_get(self):
         response = self.client.get(self.get_base_url(), data={})

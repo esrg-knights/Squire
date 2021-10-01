@@ -1,6 +1,7 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% load paginator %}
+{% load inventory_tags %}
 
 {% block title %}
     Squire - Boardgames
@@ -16,7 +17,7 @@
 
     {% if can_add_items %}
         <a href="{% url "inventory:catalogue_add_new_item" type_id=item_type %}"
-           class="btn btn-sm btn-primary">
+           class="btn btn-sm btn-primary mb-3">
             Add new {{ item_type }}
         </a>
     {% endif %}
@@ -27,21 +28,17 @@
         <colgroup>
             <col span="1" style="width: 4em;">
             <col span="1" style="min-width: 10em;">
-            {% if can_change_items %}
-                <col span="1" style="">
-            {% endif %}
-            {% if can_maintain_ownerships %}
-                <col span="1" style="min-width: 15em;">
-            {% endif %}
+            <col span="1" style="{% if can_maintain_ownerships %}min-width: 15em;{% endif %}">
+            <col span="1">
             <col span="1" style="min-width: 10em;">
         </colgroup>
 
         <thead>
         <tr class="">
-            <th></th>
+            <th scope="col"></th>
             <th scope="col">Name</th>
-            {% if can_change_items %}<th></th>{% endif %}
-            {% if can_maintain_ownerships %}<th>Owned</th>{% endif %}
+            <th scope="col">Owned</th>
+            <th scope="col"></th>
             <th scope="col"></th>
         </tr>
         </thead>
@@ -61,39 +58,34 @@
                     </div>
 
                 </td>
-                {% if can_change_items %}
-                    <td>
-                        <a href="{% url "inventory:catalogue_update_item" type_id=item_type item_id=item.id %}"
-                           class="btn btn-sm btn-primary">
-                            Edit
-                        </a>
-                    </td>
-                {% endif %}
-                {% if can_maintain_ownerships %}
-                    <td>
+                <td>
+                    {% if can_maintain_ownerships %}
                         <div class="d-flex justify-content-between">
                             <div>
                                 {% for owner in item.currently_in_possession %}
                                     <small>
-                                    {{ owner.owner }}{% if not forloop.last %}, {% endif %}
+                                        {{ owner.owner }}{% if not forloop.last %}, {% endif %}
                                     </small>
                                 {% endfor %}
                             </div>
-                            <div>
-                                <a class="btn btn-sm btn-info"
-                                   href="{% url "inventory:catalogue_item_links" type_id=item_type item_id=item.id %}">
-                                    Edit
-                                </a>
-                            </div>
                         </div>
                     {% else %}
-                        {% if boardgame.is_owned_by_association %}
-                            Knights
-                        {% else %}
-                            Loaned by member
-                        {% endif %}
-                    </td>
-                {% endif %}
+                        {% render_ownership_tags item %}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if can_maintain_ownerships %}
+                        <a class="btn btn-sm btn-info"
+                           href="{% url "inventory:catalogue_item_links" type_id=item_type item_id=item.id %}">
+                            Details
+                        </a>
+                    {% elif can_change_items %}
+                        <a href="{% url "inventory:catalogue_update_item" type_id=item_type item_id=item.id %}"
+                           class="btn btn-sm btn-primary">
+                            Edit
+                        </a>
+                    {% endif %}
+                </td>
                 <td>
                     <div class="d-lg-flex justify-content-end">
                         {% if can_add_to_group %}

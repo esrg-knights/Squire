@@ -13,6 +13,14 @@ def get_basic_filter_by_field_form(field_name):
     return FilterByFieldForm
 
 
+class FilterForm(forms.Form):
+    """ Basic set-up for filtering through form """
+
+    def get_filtered_items(self, queryset):
+        raise NotImplementedError(
+            "Any subclass of FilterForm should have a 'get_filtered_items(self, queryset)' method."
+        )
+
 class UpdatingUserFormMixin:
     """
         Form Mixin for ModelForms that, upon saving, updates a customizable

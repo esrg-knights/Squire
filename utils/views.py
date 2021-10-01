@@ -87,7 +87,10 @@ class SearchFormMixin:
         else:
             raise KeyError("Either 'search_form_class' or a 'filter_field_name' need to be defined"
                            "to use SearchFormMixin")
-        return form_class(self.request.GET)
+        return form_class(**self.get_filter_form_kwargs())
+
+    def get_filter_form_kwargs(self, **kwargs):
+        return {'data': self.request.GET, **kwargs}
 
     def dispatch(self, request, *args, **kwargs):
         self.search_form = self.get_filter_form()

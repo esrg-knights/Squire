@@ -169,7 +169,7 @@ class ItemMixin:
 
 class TypeCatalogue(MembershipRequiredMixin, CatalogueMixin, SearchFormMixin, ListView):
     template_name = "inventory/catalogue_for_type.html"
-    filter_field_name = 'name'
+    search_form_class = FilterCatalogueForm
 
     paginate_by = 15
 
@@ -178,6 +178,15 @@ class TypeCatalogue(MembershipRequiredMixin, CatalogueMixin, SearchFormMixin, Li
         # model as attribute is called by the list queryset
         # This patch is needed to let listview catalogue and searchform work
         return self.item_type.model_class()
+
+    def get_filter_form_kwargs(self, **kwargs):
+        item_class_name = self.item_type.model
+        item_app_label = self.item_type.app_label
+
+        return super(TypeCatalogue, self).get_filter_form_kwargs(
+            item_type=self.item_type,
+            include_owner=self.request.user.has_perm(f'{item_app_label}.maintain_ownerships_for_{item_class_name}')
+        )
 
     def get_context_data(self, *args, **kwargs):
         context = super(TypeCatalogue, self).get_context_data(*args, **kwargs)

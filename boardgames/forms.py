@@ -1,10 +1,12 @@
-from django.forms import Form, CharField, IntegerField, ChoiceField
+from django.forms import CharField, IntegerField, ChoiceField
 from django.db.models import Q
+
+from utils.forms import FilterForm
 
 from boardgames.models import BoardGame
 
 
-class BoardgameFilterForm(Form):
+class BoardgameFilterForm(FilterForm):
     boardgame_name = CharField(max_length=100, required=False, label='name')
     players = IntegerField(required=False)
     duration = ChoiceField(required=False,

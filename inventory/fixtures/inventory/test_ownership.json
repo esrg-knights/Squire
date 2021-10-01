@@ -92,5 +92,17 @@
             "content_type": ["inventory", "miscellaneousitem"],
             "object_id": 4
         }
+    },
+    {
+        "model": "inventory.ownership",
+        "pk": 6,
+        "fields": {
+            "member": 2,
+            "group": null,
+            "added_since": "2021-01-01",
+            "is_active": false,
+            "content_type": ["inventory", "miscellaneousitem"],
+            "object_id": 4
+        }
     }
 ]
