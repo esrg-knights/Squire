@@ -1,0 +1,39 @@
+name: Test Squire
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Test Code
+    runs-on: ${{ matrix.ubuntu }}
+    strategy:
+      matrix:
+        python: ["3.7"]
+        ubuntu: ["ubuntu-20.04"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Cache dependencies # caching dependency will make our build faster.
+        uses: actions/cache@v2 # for more info checkout pip section documentation at https://github.com/actions/cache
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements/*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Setup Python Environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: '${{ matrix.python }}'
+      - name: Install requirements
+        run: pip install -r requirements/ci.txt
+      - name: Run Tests
+        run: coverage run manage.py test
+      - name: Output Coverage
+        run: coverage report && coverage xml
+      - name: Upload coverage to CodeCov
+        uses: codecov/codecov-action@v2 # https://github.com/codecov/codecov-action
+        with:
+          env_vars: OS,PYTHON
+          fail_ci_if_error: true
+          files: ./coverage/coverage.xml
+          flags: unittests
