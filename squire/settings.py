@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'django_cleanup.apps.CleanupConfig',
     'martor',
     'import_export',
+    'pwa'
 ]
 
 MIDDLEWARE = [
@@ -374,3 +375,65 @@ if DEBUG and False: # pragma: no cover
     print("It will be " + str(timezone.now()) + " until the end of times!")
     print("You will not escape!")
     print("=================")
+
+
+# PWA settings
+PWA_APP_NAME = 'Squire'
+PWA_APP_DESCRIPTION = "The digital home for Knights members."
+PWA_APP_THEME_COLOR = '#206141'
+PWA_APP_BACKGROUND_COLOR = '#ffffff'
+PWA_APP_DISPLAY = 'standalone'
+PWA_APP_SCOPE = '/'
+PWA_APP_ORIENTATION = 'any'
+PWA_APP_START_URL = '/'
+PWA_APP_STATUS_BAR_COLOR = 'default'
+PWA_APP_ICONS = [
+    {
+        'src': '/static/images/non_maskable_icon_x512.png',
+        'sizes': '512x512'
+    },
+    {
+        'src': '/static/images/non_maskable_icon_x192.png',
+        'sizes': '192x192'
+    },
+    {
+        'src': '/static/images/maskable_icon_x512.png',
+        'sizes': '512x512',
+        'purpose': 'maskable' 
+    },
+    {
+        'src': '/static/images/maskable_icon_x192.png',
+        'sizes': '192x192',
+        'purpose': 'maskable' 
+    }
+]
+PWA_APP_ICONS_APPLE = [
+    {
+        'src': '/static/images/non_maskable_icon_x512.png',
+        'sizes': '512x512'
+    },
+    {
+        'src': '/static/images/non_maskable_icon_x192.png',
+        'sizes': '192x192'
+    },
+    {
+        'src': '/static/images/maskable_icon_x512.png',
+        'sizes': '512x512',
+        'purpose': 'maskable' 
+    },
+    {
+        'src': '/static/images/maskable_icon_x192.png',
+        'sizes': '192x192',
+        'purpose': 'maskable' 
+    }
+]
+PWA_APP_SPLASH_SCREEN = [
+    {
+        'src': '/static/images/header_logo.png',
+        'media': '(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)'
+    }
+]
+PWA_SERVICE_WORKER_PATH =  os.path.join(BASE_DIR, 'core', 'static', 'js', 'serviceworker.js')
+PWA_APP_DIR = 'ltr'
+PWA_APP_LANG = 'en-US'
+

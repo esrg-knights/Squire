@@ -22,6 +22,9 @@ from django.conf.urls import handler403, handler404
 from committees.urls import get_urls as committee_urls
 
 urlpatterns = [
+    # Progressive web app
+    path('', include('pwa.urls')),
+
     #Change Language helper view
     path('i18n/', include('django.conf.urls.i18n')),
     # Admin Panel
