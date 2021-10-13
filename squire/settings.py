@@ -381,7 +381,7 @@ if DEBUG and False: # pragma: no cover
 PWA_APP_NAME = 'Squire'
 PWA_APP_DESCRIPTION = "The digital home for Knights members."
 PWA_APP_THEME_COLOR = '#206141'
-PWA_APP_BACKGROUND_COLOR = '#ffffff'
+PWA_APP_BACKGROUND_COLOR = '#206141'
 PWA_APP_DISPLAY = 'standalone'
 PWA_APP_SCOPE = '/'
 PWA_APP_ORIENTATION = 'any'
