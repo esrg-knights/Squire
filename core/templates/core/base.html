@@ -2,6 +2,8 @@
 {% load bootstrap4 %}
 {% load static %}
 {% load build_absolute_uri %}
+{% load pwa %}
+
 <html lang="en" prefix="og: https://ogp.me/ns#">
 	<head>
 		<meta charset="UTF-8">
@@ -19,6 +21,9 @@
 		<meta property="og:locale" content="en_GB" />
 		<meta property="og:locale:alternate" content="nl_NL" />
 
+		<!-- Progressive web app-->
+		{% progressive_web_app_meta %}
+		
 		<!-- Form Media -->
 		{# These are loaded before the application to make overriding them easier #}
 		{% block form_media %}
