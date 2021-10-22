@@ -23,7 +23,7 @@
 
 		<!-- Progressive web app-->
 		{% progressive_web_app_meta %}
-		
+
 		<!-- Form Media -->
 		{# These are loaded before the application to make overriding them easier #}
 		{% block form_media %}
@@ -65,17 +65,17 @@
 					<li>
 						<a class="nav-link" href="{% url 'activity_calendar:activity_upcoming' %}">Activities</a>
 					</li>
-          <li>
-              <a class="nav-link" href="{% url 'boardgames:home' %}">Boardgames</a>
-          </li>
-          <li>
-              <a class="nav-link" href="{% url 'roleplaying:home' %}">Roleplay</a>
-          </li>
-          {% if perms.committees.view_associationgroup %} {# Temporary criteria while we create all commission data #}
-            <li>
-                <a class="nav-link" href="{% url 'committees:home' %}">Committees</a>
-            </li>
-          {% endif %}
+					<li>
+						<a class="nav-link" href="{% url 'boardgames:home' %}">Boardgames</a>
+					</li>
+					<li>
+						<a class="nav-link" href="{% url 'roleplaying:home' %}">Roleplay</a>
+					</li>
+					{% if perms.committees.view_associationgroup %} {# Temporary criteria while we create all commission data #}
+						<li>
+							<a class="nav-link" href="{% url 'committees:home' %}">Committees</a>
+						</li>
+					{% endif %}
 					{% if global_preferences.newsletter__share_link and user.is_authenticated %}
 						<li>
 							<a class="nav-link" href="{% url 'core:newsletters' %}">Newsletter</a>
