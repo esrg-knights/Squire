@@ -21,6 +21,10 @@
         background-color: white;
     }
 
+    #calendar .fc-day-other {
+        background-color: rgb(246, 246, 246);
+    }
+
     /* There's no easy way to override the button colours of custom buttons in FullCalendar,
         nor can custom classes be added to them easily. This is a workaround.
     */
