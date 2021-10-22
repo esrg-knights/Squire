@@ -23,7 +23,7 @@
                     Hello {{ member.first_name }}
                 </p>
                 <p>
-                    Squire has levelled up! Have a look around and if there is anything off please let us know!
+                    {{ greeting_line|urlize }}
                 </p>
             </div>
         </div>
@@ -34,9 +34,6 @@
                         <h3>
                             Activities in the next 7 days
                         </h3>
-                    </div>
-                    <div class="alert alert-info w-100">
-                        Don't forget: Physical activities require registration as long as Corona guidelines exist!
                     </div>
                     {% for activity_moment in activities %}
                         <div class="col-12 col-md-6 p-1">
