@@ -87,7 +87,7 @@ class Activity(models.Model):
     private_slot_locations = models.BooleanField(default=False,
         help_text="Private locations are hidden for users not registered to the relevant slot")
 
-    subscriptions_required = models.BooleanField(default=True,
+    subscriptions_required = models.BooleanField(default=False,
         help_text="People are only allowed to go to the activity if they register beforehand")
 
     # Possible slot-creation options:

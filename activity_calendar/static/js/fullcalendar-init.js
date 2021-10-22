@@ -178,12 +178,12 @@ function onEventClick(info, calendar) {
         $('#subscribe-required').show()
         $('#subscribe-done').hide()
         $('#subscribe-info').hide()
-        $('#event-subscription').text("You need to register for this activity before you can join!")
+        $('#event-subscription').html("<i>Registrations are <strong>required</strong>! You cannot join this activity otherwise!</i>")
     } else {
         $('#subscribe-required').hide()
         $('#subscribe-done').hide()
         $('#subscribe-info').show()
-        $('#event-subscription').text("")
+        $('#event-subscription').html("<small class='text-muted'>Registrations are <i>optional</i>, but are appreciated!</small>")
     }
 
     if (!event.extendedProps.canSubscribe) {
