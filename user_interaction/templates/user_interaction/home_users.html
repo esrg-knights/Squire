@@ -28,6 +28,11 @@
             </div>
         </div>
         <div class="row">
+            {% if global_preferences.homepage__home_page_message %}
+                <div class="alert alert-info w-100">
+                    {{ global_preferences.homepage__home_page_message }}
+                </div>
+            {% endif %}
             <div class="col-md-8">
                 <div class="row">
                     <div class="col-12">
@@ -43,6 +48,18 @@
                 </div>
             </div>
             <div class="col-md-4">
+                <div>
+                    <h4>Encountered Evil?</h4>
+                    <p>
+                        Bugs are annoying. If you encountered one, please mark them on GitHub or notify the board and
+                        we will send in our troops!
+                    </p>
+                    <p>
+                        <a class="btn btn-outline-dark" href="https://github.com/esrg-knights/Squire/issues"
+                        target="_blank" rel="noreferrer noopener"
+                        >Report Bug</a>
+                    </p>
+                </div>
                 {% if not member %}
                     <div class="alert alert-warning">
                         This account has no membership connected yet. Please contact the board with your username so they
@@ -103,17 +120,6 @@
                         </div>
                     {% endif %}
                 {% endif %}
-
-                <div>
-                    <h4>Encountered evil?</h4>
-                    <p>
-                        Bugs are annoying. If you encountered one, please mark them on github or notify the board and
-                        we will send in our troops!
-                    </p>
-                    <a class="btn btn-outline-dark" href="https://github.com/esrg-knights/Squire/issues"
-                       target="_blank" rel="noreferrer noopener"
-                    >Report bug</a>
-                </div>
             </div>
         </div>
     </div>

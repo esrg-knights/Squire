@@ -220,12 +220,14 @@
                     </div>
                 </div>
             {% endif %}
-            <div class="alert alert-warning">
-                Corona protocol is active! Got symptoms? Stay home!<br>
-                <a href="https://beta.kotkt.nl/nextcloud/s/JpGkgdMLCGX4nHL/download">
-                    More information
-                </a>
-            </div>
+            {% if global_preferences.covid__covid_protocol %}
+                <div class="alert alert-warning">
+                    Corona protocol is active! Got symptoms? Stay home!<br>
+                    <a href="{{ global_preferences.covid__covid_protocol }}">
+                        More information
+                    </a>
+                </div>
+            {% endif %}
 
         </div>
     </div>

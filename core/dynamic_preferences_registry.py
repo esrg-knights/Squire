@@ -9,6 +9,38 @@ from dynamic_preferences.preferences import Section
 from dynamic_preferences.registries import global_preferences_registry
 
 ##############################################################################
+# HOMEPAGE
+##############################################################################
+
+homepage = Section('homepage')
+
+@global_preferences_registry.register
+class HomePageMessage(StringPreference):
+    section = homepage
+    name = 'home_page_message'
+    verbose_name = "Home Page Message"
+    description = 'A message to show on the homepage.'
+    help_text = "Leave empty to not show any home page message."
+    default = ""
+    required = False
+
+##############################################################################
+# COVID-19 / Corona
+##############################################################################
+
+covid = Section('covid')
+
+@global_preferences_registry.register
+class CovidProtocol(StringPreference):
+    section = covid
+    name = 'covid_protocol'
+    verbose_name = "COVID Protocol URL"
+    description = 'A public link towards the COVID-19 protocol.'
+    help_text = "Leave empty to disable COVID-19 messages."
+    default = ""
+    required = False
+
+##############################################################################
 # NEWSLETTER
 ##############################################################################
 

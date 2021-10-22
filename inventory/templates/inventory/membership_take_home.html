@@ -17,9 +17,11 @@
         item.<br>
         You can always make it available again later if you want to
     </p>
-    <div class="alert alert-warning" role="alert">
-        Due to Corona measures, please inform the board when wanting to access the Knights room outside of regular hours
-    </div>
+    {% if global_preferences.covid__covid_protocol %}
+        <div class="alert alert-warning" role="alert">
+            Due to Corona measures, please inform the board when wanting to access the Knights room outside of regular hours
+        </div>
+    {% endif %}
 
     <form id="main_form" method="post">
         {% csrf_token %}

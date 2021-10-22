@@ -19,9 +19,11 @@
         While we will take care of all items stored with us. We can not guarantee safety. Loaning out items is
         at your own risk.
     </div>
-    <div class="alert alert-warning" role="alert">
-        Due to Corona measures, please inform the board when wanting to access the Knights room outside of regular hours
-    </div>
+    {% if global_preferences.covid__covid_protocol %}
+        <div class="alert alert-warning" role="alert">
+            Due to Corona measures, please inform the board when wanting to access the Knights room outside of regular hours.
+        </div>
+    {% endif %}
 
     <form id="main_form" method="post">
         {% csrf_token %}
