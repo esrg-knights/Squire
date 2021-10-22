@@ -39,14 +39,17 @@ welcome_messages = [
     "Time to join the dark knights side, we have cookies",
     "Message from the board: We are aware of the kobold infestation.",
     "I hope you are having a splendid day",
-    "Knight room now open 23/7",
+    "Knights room now open 23/7",
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce tristique quam rutrum augue dapibus, quis condimentum ligula porttitor.",
     "Don't forget to like, subscribe, and hit that notification bell!"
     "",
-    "Für wissen... und weisheit!",
+    "Für Wissen... und Weisheit!",
     "Man, man, man. Wat een avontuur!",
-    "This is what we will offer this time, now availlable in wonderous rhyme!",
+    "This is what we will offer this time, now available in wonderous rhyme!",
     "Have an amazing quote said around the Knights? Email it to quotcie@kotkt.nl",
+    "Ḛ͈̅͆̑͂͟ͅv̠͔̗͒͗͟ͅe͊͌ͣͫ҉͙͈͍̘̲r͖̖̼̐̏̍̕y̛͉͍̲̹͔̫̐ͅtͥͦ̎҉̪̰̪̭͖̮̰ͅh̛͇̮̝ͬ̓į̮̞̬̟̫̼̌ͭ̀n̉ͪ҉̬̭͈̫̱̣̳ͅg̤͕̲͚̓͢ ̝͚̙͚̱̬̎̈́͌͟ḯ̡̥̰̼͍͎ͪs̨̜̺̣͌̈́ͭ̚ ̛̞̖͉͈̖̓ͨ̇n̨̮̺͈̩͇̞͍̽́o̲͔̹̹̩̰̙͙̐͘r̟͍͚ͣͥ̂̈́͠m̷̻͎ͤ̅ͬa̜͓͎͇̭̖ͮ̓̎̃͘l̷̞̬̩̮̠̟̤̐͗ͪ",
+    "ᗷᒪOOᗪ ᔕᗩᑕᖇᗩᖴIᑕEᔕ ᗩᖇE ᑎOT ᗩᒪᒪOᗯEᗪ Oᑎ TᕼE Tᑌ/E ᑕᗩᗰᑭᑌᔕ",
+    "Good dawning to thee, friend. May thy day be blissful.",
 ]
 
 
