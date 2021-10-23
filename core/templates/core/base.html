@@ -3,6 +3,7 @@
 {% load static %}
 {% load build_absolute_uri %}
 {% load pwa %}
+{% load theme_tags %}
 
 <html lang="en" prefix="og: https://ogp.me/ns#">
 	<head>
@@ -23,6 +24,11 @@
 
 		<!-- Progressive web app-->
 		{% progressive_web_app_meta %}
+
+		<!-- Theme -->
+		{% block theme %}
+			{% theme_tags request.user.preferences.layout__theme %}
+		{% endblock theme %}
 
 		<!-- Form Media -->
 		{# These are loaded before the application to make overriding them easier #}
