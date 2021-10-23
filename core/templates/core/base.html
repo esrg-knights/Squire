@@ -25,11 +25,6 @@
 		<!-- Progressive web app-->
 		{% progressive_web_app_meta %}
 
-		<!-- Theme -->
-		{% block theme %}
-			{% theme_tags request.user.preferences.layout__theme %}
-		{% endblock theme %}
-
 		<!-- Form Media -->
 		{# These are loaded before the application to make overriding them easier #}
 		{% block form_media %}
@@ -43,6 +38,11 @@
 		{% block bootstrap_js %}
 			{% bootstrap_javascript jquery='full' %}
 		{% endblock %}
+
+		<!-- Theme -->
+		{% block theme %}
+			{% theme_tags request.user.preferences.layout__theme %}
+		{% endblock theme %}
 
 		<!-- Css -->
 		{% block css %}

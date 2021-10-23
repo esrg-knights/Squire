@@ -1,0 +1,24 @@
+
+{% extends 'core/base.html' %}
+
+{% load render_form %}
+
+{% block title %}
+    Squire - Update Preferences
+{% endblock title %}
+
+{% block og-title %}
+    Squire Update Preferences
+{% endblock og-title %}
+
+{% block content %}
+    <h1>Change Preferences</h1>
+    {% render_form id="update_preferences_form" method="post" has_submit_button=False %}
+    <div class="btn-group w-100" role="group" aria-label="Form changing">
+        <a href="{% url "core:user_accounts/account" %}"
+           class="btn btn-secondary">Cancel</a>
+        <button form="update_preferences_form" type="submit" class="btn btn-success">
+            Update
+        </button>
+    </div>
+{% endblock %}
