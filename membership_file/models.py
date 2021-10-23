@@ -72,7 +72,7 @@ class Member(models.Model):
     external_card_digits_regex = RegexValidator(regex=r'^[0-9]{3}$', message="External card digits must consist of exactly 3 digits. E.g. 012")
 
     # External card uses the same number formatting as Tue cards, but its number does not necessarily need to be unique
-    external_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, null=True, blank=True, help_text="External cards are blue, whereas Tu/e cards are (currently) orange.")
+    external_card_number = models.CharField(validators=[tue_card_number_regex], max_length=15, null=True, blank=True, help_text="External cards are blue, whereas Tu/e cards are currently red (since sept. 2021) or orange (before sept. 2021).")
     # 3-digit code at the bottom of a card
     external_card_digits = models.CharField(validators=[external_card_digits_regex], max_length=3, blank=True, verbose_name="digits")
     # The cluster contains additional information of an external card

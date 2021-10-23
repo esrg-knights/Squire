@@ -74,6 +74,19 @@ class FrontEndTest(TestCase):
         res = check_http_response(self, '/', 'get', TestAccountUser)
         self.assertContains(res, reverse('core:newsletters'))
 
+    def test_homepage_message(self):
+        """ Tests if the homepage message is rendered properly """
+        global_preferences = global_preferences_registry.manager()
+
+        # Disable share URL
+        global_preferences['homepage__home_page_message'] = ""
+        res = check_http_response(self, '/', 'get', TestAccountUser)
+        self.assertNotContains(res, 'homepage_message')
+
+        # Enable share URL
+        global_preferences['homepage__home_page_message'] = "Test Homepage Message"
+        res = check_http_response(self, '/', 'get', TestAccountUser)
+        self.assertContains(res, "Test Homepage Message")
 
 # Tests the login form
 class LoginFormTest(TestCase):

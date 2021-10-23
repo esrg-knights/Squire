@@ -19,7 +19,10 @@
         padding: 5px 10px;
         min-height: inherit;
     }
-    
+        .activity-wide .card-body .slot-text {
+            white-space: pre-line;
+        }
+
     /* Auto-scale image */
     .activity-wide .activityImage > img {
         max-width: 100%;

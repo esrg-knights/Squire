@@ -19,9 +19,7 @@
     [{{ activity_moment.start_date|date:"l j E H:i" }}] {{ activity_moment.description.as_plaintext|truncatewords:20 }}
 {% endblock og-description %}
 {% block og-image %}{% build_absolute_uri request activity.image_url %}{% endblock og-image %}
-{% block og-image-alt %}
-    {{ activity_moment.title }} Icon
-{% endblock og-image-alt %}
+{% block og-image-alt %}{{ activity_moment.title }} Icon{% endblock og-image-alt %}
 
 {% block css %}
     {{ block.super }}
@@ -176,12 +174,16 @@
                                     Sign-ups are closed
                                 {% endif %}
                             {% endif %}
+                            <br>
+                            {% if activity_moment.subscriptions_required %}
+                                <i>Registrations are <strong>required</strong>! You cannot join this activity otherwise!</i>
+                            {% else %}
+                                <small class="text-muted">Registrations are <i>optional</i>, but are appreciated!</small>
+                            {% endif %}
                         </p>
                     </div>
                 </div>
-                {% if activity.subscriptions_required %}
-                    <strong>NB:</strong> You need to register for this activity before you can join!
-                {% endif %}
+
 
                 <div style="height: 4em;" class="d-none d-md-flex">
 
@@ -218,12 +220,14 @@
                     </div>
                 </div>
             {% endif %}
-            <div class="alert alert-warning">
-                Corona protocol is active! Got symptoms? Stay home!<br>
-                <a href="https://beta.kotkt.nl/nextcloud/s/JpGkgdMLCGX4nHL/download">
-                    More information
-                </a>
-            </div>
+            {% if global_preferences.covid__covid_protocol %}
+                <div class="alert alert-warning">
+                    Corona protocol is active! Got symptoms? Stay home!<br>
+                    <a href="{{ global_preferences.covid__covid_protocol }}">
+                        More information
+                    </a>
+                </div>
+            {% endif %}
 
         </div>
     </div>

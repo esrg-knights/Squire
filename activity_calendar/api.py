@@ -22,7 +22,7 @@ def get_json_from_activity_moment(activity_moment, user=None):
             'rdates': [occ.date().strftime("%A, %B %d, %Y") for occ in activity_moment.parent_activity.recurrences.rdates],
             'exdates': [occ.date().strftime("%A, %B %d, %Y") for occ in activity_moment.parent_activity.recurrences.exdates],
         },
-        'subscriptionsRequired': activity_moment.parent_activity.subscriptions_required,
+        'subscriptionsRequired': activity_moment.subscriptions_required,
         'numParticipants': activity_moment.participant_count,
         'maxParticipants': activity_moment.max_participants,
         'isSubscribed': activity_moment.get_user_subscriptions(user).exists(),
