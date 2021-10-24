@@ -12,6 +12,25 @@ h1, h2, h3, h4, strong {
     color: var(--title-text-color);
 }
 
+.card, .modal-content {
+    background-color: var(--body-alt-bg-color);
+}
+
+.icon {
+    filter: var(--body-icon-color);
+}
+
+.form-control, select option, .form-control:focus {
+    background-color: var(--input-bg-color);
+    color: var(--input-text-color);
+}
+
+    .input-group-prepend .input-group-text {
+        background-color: var(--input-prepend-bg-color);
+        color: var(--body-alt-text-color);
+    }
+
+
 /***************************************
 Greenified Items
 ***************************************/
@@ -30,10 +49,13 @@ Greenified Items
 }
 
 /* Greenified Dropdowns */
-.greenify-dropdown .dropdown-item, .greenify-dropdown.dropdown-divider {
+.greenify-dropdown .dropdown-item, .greenify-dropdown {
     background-color: var(--greenify-dropdown-bg-color);
     color: var(--greenify-dropdown-text-color);
 }
+    .greenify-dropdown .dropdown-divider {
+        border-top-color: var(--greenify-dropdown-text-color);
+    }
     .greenify-dropdown .dropdown-item.hover, .greenify-dropdown .dropdown-item:hover {
         background-color: var(--greenify-dropdown-hover-bg-color);
         color: var(--greenify-dropdown-hover-text-color);
