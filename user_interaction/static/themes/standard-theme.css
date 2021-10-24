@@ -1,10 +1,29 @@
 /* Define main colour scheme */
 :root {
-    --main-bg-color: #206141;
-    --main-text-color: white;
-    --main-bg-color-dark: #163b28;
-    --main-bg-color-hover: #3b6b5377;
-    --main-bg-color-light: #45ac786e;
-
+    /* Default text and background colors for the body */
     --body-bg-color: #e5e0e0;
+    --body-text-color: #212529;
+
+    /* Colors for highlighted text (e.g. h1, strong) */
+    --title-text-color: #163b28;
+
+    /* Colors for greenified elements (e.g. buttons) */
+    --greenify-bg-color: #206141;
+    --greenify-text-color: white;
+
+    /* Colors for darker greenified elements (e.g. navbar, card images) */
+    --greenify-dark-bg-color: var(--greenify-bg-color);
+    --greenify-dark-text-color: var(--greenify-text-color);
+
+    /* Colors for lighter greenified elements (e.g. cards) */
+    --greenify-light-bg-color: #a0c9b3;
+    --greenify-light-text-color: var(--body-text-color);
+
+    /* Colors for greenified dropdowns */
+    --greenify-dropdown-bg-color: inherit;
+    --greenify-dropdown-text-color: var(--greenify-bg-color);
+    --greenify-dropdown-hover-bg-color: #3b6b5377;
+    --greenify-dropdown-hover-text-color: inherit;
+    --greenify-dropdown-active-bg-color: var(--greenify-bg-color);
+    --greenify-dropdown-active-text-color: var(--greenify-text-color);
 }
