@@ -1,0 +1,103 @@
+/* Define main colour scheme */
+:root {
+    /* Default text and background colors for the body */
+    --body-bg-color: #e5e0e0;
+    --body-text-color: #caaf17;
+
+    --body-alt-bg-color: white;
+    --body-alt-text-color: var(--body-text-color);
+    --body-alt-dark-bg-color: #f6f6f6;
+
+    /* Generated at https://codepen.io/sosuke/pen/Pjoqqp using --body-text-color */
+    --body-icon-color: invert(7%) sepia(4%) saturate(3534%) hue-rotate(169deg) brightness(92%) contrast(81%);
+
+    /* Colors for (bootstrap) inputs */
+    --input-bg-color: var(--body-alt-bg-color);
+    --input-text-color: var(--body-text-color);
+    --input-prepend-bg-color: #e9ecef;
+    --input-prepend-text-color: #495057;
+
+    /* Colors for highlighted text (e.g. h1, strong) */
+    --title-text-color: #caaf17;
+
+    /* Colors for greenified elements (e.g. buttons) */
+    --greenify-bg-color: #6C3461;
+    --greenify-text-color: white;
+
+    /* Colors for darker greenified elements (e.g. navbar, card images) */
+    --greenify-dark-bg-color: var(--greenify-bg-color);
+    --greenify-dark-text-color: var(--greenify-text-color);
+
+    /* Colors for lighter greenified elements (e.g. cards) */
+    --greenify-light-bg-color: #94568C;
+    --greenify-light-text-color: var(--body-text-color);
+
+    /* Colors for greenified dropdowns */
+    --greenify-dropdown-bg-color: var(--body-alt-bg-color);
+    --greenify-dropdown-text-color: var(--greenify-bg-color);
+    --greenify-dropdown-hover-bg-color: #4a165f81;
+    --greenify-dropdown-hover-text-color: inherit;
+    --greenify-dropdown-active-bg-color: var(--greenify-bg-color);
+    --greenify-dropdown-active-text-color: var(--greenify-text-color);
+}
+
+.text-muted, .april-footer, .april-ad {
+    color: #ffea70 !important;
+}
+
+body {
+    font-family: "Comic Sans MS", "Comic Sans" !important;
+}
+
+/* Cookie Stealing & Party Parrots */
+.april-footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: red;
+    color: white;
+    text-align: center;
+    height: 50px;
+}
+.april-footer-img {
+    position: fixed;
+    bottom: 50px;
+    height: 20px;
+}
+
+/* Advertisements */
+.april-ad {
+    position: fixed;
+    top: 33%;
+    width: 250px;
+    height: 50%;
+    background-color: var(--greenify-bg-color);
+    text-align: center;
+}
+.april-ad img {
+    width: 100%;
+    height: 100%;
+}
+
+.april-ad p {
+    margin-top: -30px;
+    margin-bottom: 0px;
+}
+
+.april-ad.left {
+    left: 30px;
+}
+.april-ad.right {
+    right: 30px;
+}
+
+@media (max-width: 991px) {
+    .april-ad {
+        position: static;
+        display: inline-block;
+    }
+    .april-ad img {
+        height: 200px;
+    }
+}

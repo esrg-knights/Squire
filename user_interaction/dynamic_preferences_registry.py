@@ -13,3 +13,6 @@ class UserTheme(ChoicePreference):
     name = 'theme'
     default = DEFAULT_THEME
     choices = [(identifier, theme.name) for (identifier, theme) in THEMES.items()]
+    verbose_name = 'site theme'
+    description = 'Theme of the application'
+    help_text = 'Only the default theme is supported.'

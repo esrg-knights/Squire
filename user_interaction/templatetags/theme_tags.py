@@ -14,4 +14,4 @@ register = template.Library()
 def theme_tags(theme):
     theme = theme or DEFAULT_THEME
     theme = THEMES[theme]()
-    return theme.get_css() + theme.get_js()
+    return theme.get_css() + theme.get_raw_js() + theme.get_js()
