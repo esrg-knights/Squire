@@ -1,8 +1,4 @@
-{% extends 'core/base.html' %}
-
-{% block title %}
-  Squire - Membership Data
-{% endblock title %}
+{% extends 'membership_file/membership_view.html' %}
 
 {% load generic_field %}
 {% load selected_m2m_labels %}
@@ -14,12 +10,8 @@
     Edit your Knights' membership information here.
 {% endblock og-description %}
 
-{% block content-frame-class %}
-    wideContentFrame
-{% endblock %}
-
 {% block content %}
-    <h1>Editing Member Information...</h1>
+    <h1>Edit Membership Information</h1>
     <p>
       <form method="post">
           {% csrf_token %}
@@ -65,6 +57,8 @@
             <ul>
               {% for x in form|selected_m2m_labels:"accessible_rooms" %}
                 <li>{{ x }}</li>
+              {% empty %}
+                <li>No rooms are accessible by you</li>
               {% endfor %}
             </ul>
           {% endif %}

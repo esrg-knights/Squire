@@ -12,15 +12,9 @@ from .forms import MemberForm
 from .models import Member
 from .util import MembershipRequiredMixin, membership_required
 
-from core.views import TemplateManager
-
 # Enable the auto-creation of logs
 from .auto_model_update import *
 from .export import *
-
-
-# Add a link to each user's Account page leading to its Membership page
-TemplateManager.set_template('core/user_accounts/account.html', 'membership_file/account_membership.html')
 
 
 class MemberMixin(MembershipRequiredMixin):
@@ -38,19 +32,29 @@ class NotAMemberView(TemplateView):
 
 
 # Page for viewing membership information
-class MemberView(MemberMixin, PermissionRequiredMixin, DetailView):
+class MemberView(TemplateView):
     model = Member
-    template_name = 'membership_file/view_member.html'
-    permission_required = 'membership_file.can_view_membership_information_self'
-    raise_exception = True
+    template_name = 'membership_file/membership_view.html'
+    tab_name = 'tab_membership'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context[self.tab_name] = True
+        return context
 
 # Page for changing membership information using a form
 class MemberChangeView(MemberMixin, PermissionRequiredMixin, UpdateView):
-    template_name = 'membership_file/edit_member.html'
+    template_name = 'membership_file/membership_edit.html'
     form_class = MemberForm
     success_url = reverse_lazy('membership_file/membership')
     permission_required = ('membership_file.can_view_membership_information_self', 'membership_file.can_change_membership_information_self')
     raise_exception = True
+    tab_name = 'tab_membership'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context[self.tab_name] = True
+        return context
 
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super().get_form_kwargs(*args, **kwargs)

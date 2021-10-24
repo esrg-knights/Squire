@@ -80,7 +80,13 @@ class HomeUsersView(TemplateView):
 class UpdateUserPreferencesView(LoginRequiredMixin, FormView):
     """ View for updating user preferences """
     template_name = 'user_interaction/preferences_change_form.html'
-    success_url = reverse_lazy('core:user_accounts/account')
+    success_url = reverse_lazy('user_interaction:change_preferences')
+    tab_name = 'tab_preferences'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context[self.tab_name] = True
+        return context
 
     def get_form_class(self):
         return user_preference_form_builder(instance=self.request.user, section='layout')
