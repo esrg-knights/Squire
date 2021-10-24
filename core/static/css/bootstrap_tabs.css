@@ -5,7 +5,7 @@
 }
 
 .nav-tabs .nav-link.active{
-    border-color: #555555 #555555 #e5e0e0;
+    border-color: #555555 #555555 var(--body-bg-color);
     background-color: transparent;
 }
 

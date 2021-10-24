@@ -41,10 +41,20 @@ class AprilUserTheme(SquireUserTheme):
         f"var adImg = \"{StaticNode.handle_simple('themes/images/april/tim-merch-ad.gif')}\"",
     )
 
+class FantasyCourtUserTheme(SquireUserTheme):
+    """ Fantasy Court theme """
+    name = 'Fantasy Court'
+    css = ('themes/fc-theme.css',)
+    js = ('themes/fc-theme.js',)
+    raw_js = (
+        f"var fancyedgeImg = \"{StaticNode.handle_simple('themes/images/fc/fancy-edge.png')}\"",
+    )
+
 THEMES = {
     'THEME_DEFAULT': DefaultUserTheme,
     'THEME_DARK': DarkUserTheme,
     'THEME_APRIL': AprilUserTheme,
+    'THEME_FC': FantasyCourtUserTheme,
 }
 
 DEFAULT_THEME = 'THEME_DEFAULT'
