@@ -19,18 +19,18 @@
 
 
     /* Colors for highlighted text (e.g. h1, strong) */
-    --title-text-color: #266645;
+    --title-text-color: #3e6690;
 
     /* Colors for greenified elements (e.g. buttons) */
-    --greenify-bg-color: #195737;
+    --greenify-bg-color: #375a7f;
     --greenify-text-color: #e0e0da;
 
     /* Colors for darker greenified elements (e.g. navbar, card images) */
-    --greenify-dark-bg-color: #133825;
+    --greenify-dark-bg-color: var(--greenify-bg-color);
     --greenify-dark-text-color: var(--greenify-text-color);
 
     /* Colors for lighter greenified elements (e.g. cards) */
-    --greenify-light-bg-color: #2b4e3b;
+    --greenify-light-bg-color: #2f4e6e;
     --greenify-light-text-color: var(--body-text-color);
 
     /* Colors for greenified dropdowns */

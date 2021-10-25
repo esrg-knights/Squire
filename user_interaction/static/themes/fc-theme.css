@@ -41,6 +41,14 @@
     --greenify-dropdown-active-text-color: var(--greenify-text-color);
 }
 
+p {
+    font-family: "book antiqua", sans-serif;
+}
+
+h1, h2, h3, h4, a {
+    font-family: "blackchancery", serif;
+}
+
 .fancy-edge {
     position: fixed;
     background-size: contain;

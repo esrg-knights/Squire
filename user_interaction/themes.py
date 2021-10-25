@@ -50,11 +50,30 @@ class FantasyCourtUserTheme(SquireUserTheme):
         f"var fancyedgeImg = \"{StaticNode.handle_simple('themes/images/fc/fancy-edge.png')}\"",
     )
 
+class QuadriviumUserTheme(SquireUserTheme):
+    """ Quadrivium Theme """
+    name = 'Nemesis'
+    css = ('themes/q-theme.css',)
+    js = ('themes/q-theme.js',)
+
+class DoppioUserTheme(SquireUserTheme):
+    """ Doppio Theme """
+    name = 'Espresso'
+    css = ('themes/doppio-theme.css',)
+
+class ScalaUserTheme(SquireUserTheme):
+    """ Scala Theme """
+    name = 'Dining'
+    css = ('themes/scala-theme.css',)
+
 THEMES = {
     'THEME_DEFAULT': DefaultUserTheme,
     'THEME_DARK': DarkUserTheme,
     'THEME_APRIL': AprilUserTheme,
     'THEME_FC': FantasyCourtUserTheme,
+    'THEME_Q': QuadriviumUserTheme,
+    'THEME_DOPPIO': DoppioUserTheme,
+    'THEME_SCALA': ScalaUserTheme,
 }
 
 DEFAULT_THEME = 'THEME_DEFAULT'
