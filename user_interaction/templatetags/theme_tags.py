@@ -1,5 +1,4 @@
 from django import template
-from django.utils.safestring import mark_safe
 
 from user_interaction.themes import THEMES, DEFAULT_THEME
 
