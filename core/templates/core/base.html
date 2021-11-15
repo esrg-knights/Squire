@@ -3,6 +3,7 @@
 {% load static %}
 {% load build_absolute_uri %}
 {% load pwa %}
+{% load theme_tags %}
 
 <html lang="en" prefix="og: https://ogp.me/ns#">
 	<head>
@@ -38,6 +39,11 @@
 			{% bootstrap_javascript jquery='full' %}
 		{% endblock %}
 
+		<!-- Theme -->
+		{% block theme %}
+			{% theme_tags request.user.preferences.layout__theme %}
+		{% endblock theme %}
+
 		<!-- Css -->
 		{% block css %}
 			<link rel="stylesheet" href="{% static 'css/main.css' %}">
@@ -49,7 +55,7 @@
 		{% endblock js %}
 	</head>
 	<body class='d-flex flex-column'>
-		<nav class="navbar navbar-expand-lg navbar-dark greenify">
+		<nav class="navbar navbar-expand-lg navbar-dark greenify-dark">
 			<a class="navbar-brand" href="/">
 				<img src="{% static 'images/header_logo.png' %}" alt="Modified Knights Logo" height="85px">
 				<span class="brand-text">Squire</span>
@@ -88,26 +94,25 @@
 							<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 								Account
 							</a>
-							<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-								<a class="dropdown-item greenify" href="{% url 'core:user_accounts/account' %}">View Account</a>
-								<a class="dropdown-item greenify" href="{% url 'achievements/user' %}">Earned Achievements</a>
+							<div class="dropdown-menu dropdown-menu-right greenify-dropdown" aria-labelledby="navbarDropdownMenuLink">
+								<a class="dropdown-item" href="{% url 'core:user_accounts/account' %}">View Account</a>
+								<a class="dropdown-item" href="{% url 'achievements/user' %}">Earned Achievements</a>
                                 {% if member.is_considered_member %}
-                                    <a class="dropdown-item greenify" href="{% url 'membership_file/membership' %}">Membership Information</a>
-                                    <a class="dropdown-item greenify" href="{% url 'inventory:member_items' %}">My inventory</a>
+                                    <a class="dropdown-item" href="{% url 'inventory:member_items' %}">My inventory</a>
                                     {% if member.associationgroup_set.all %}
-                                        <a class="dropdown-item greenify" href="{% url 'membership_file/groups' %}">My groups</a>
+                                        <a class="dropdown-item" href="{% url 'membership_file/groups' %}">My groups</a>
                                     {% endif %}
                                 {% endif %}
                                 {% if user.is_staff %}
-                                    <div class="dropdown-divider greenify"></div>
-                                    <a class="dropdown-item greenify"
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item"
                                        target="_blank" rel="noopener noreferrer"
                                        href="{% url 'admin:index' %}">Admin panel</a>
 
                                 {% endif %}
 
-								<div class="dropdown-divider greenify"></div>
-								<a class="dropdown-item greenify" href="{% url 'core:user_accounts/logout' %}">Sign out</a>
+								<div class="dropdown-divider"></div>
+								<a class="dropdown-item" href="{% url 'core:user_accounts/logout' %}">Sign out</a>
 							</div>
 						</li>
 					{% else %}
@@ -136,7 +141,7 @@
 		</main>
 
 		<!-- Show footer at bottom of the page -->
-		<footer class='greenify'>
+		<footer class='greenify-dark'>
 			{% block footer %}
 				<!-- Other templates can add extra content here -->
 			{% endblock %}

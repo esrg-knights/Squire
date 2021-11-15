@@ -1,7 +1,7 @@
 {% load format_string %}
 {% load filter_first %}
 
-<div class="card greenify achievement-wide">
+<div class="card greenify-light achievement-wide">
     <div class="row no-gutters">
         <div class="col-md-1 achievementImage">
             <div class="heightener"></div>
@@ -60,7 +60,7 @@
             <ul>
                 {% for claimant in achievement.claimants %}
                     <li>
-                        {% include "achievements/achievement_claimant.html" %}                               
+                        {% include "achievements/achievement_claimant.html" %}
                     </li>
                 {% endfor %}
             </ul>

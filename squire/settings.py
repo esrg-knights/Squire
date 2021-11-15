@@ -52,9 +52,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # External Libraries
     'bootstrap4',
-    'dynamic_preferences',
-    # comment the following line if you don't want to use user preferences
-    # 'dynamic_preferences.users.apps.UserPreferencesConfig',
+    'dynamic_preferences', # Global Preferences
+    'dynamic_preferences.users.apps.UserPreferencesConfig', # Per-user preferences
     'recurrence',
     'rest_framework',
     # Internal Components
@@ -399,12 +398,12 @@ PWA_APP_ICONS = [
     {
         'src': '/static/images/maskable_icon_x512.png',
         'sizes': '512x512',
-        'purpose': 'maskable' 
+        'purpose': 'maskable'
     },
     {
         'src': '/static/images/maskable_icon_x192.png',
         'sizes': '192x192',
-        'purpose': 'maskable' 
+        'purpose': 'maskable'
     }
 ]
 PWA_APP_ICONS_APPLE = [
@@ -419,12 +418,12 @@ PWA_APP_ICONS_APPLE = [
     {
         'src': '/static/images/maskable_icon_x512.png',
         'sizes': '512x512',
-        'purpose': 'maskable' 
+        'purpose': 'maskable'
     },
     {
         'src': '/static/images/maskable_icon_x192.png',
         'sizes': '192x192',
-        'purpose': 'maskable' 
+        'purpose': 'maskable'
     }
 ]
 PWA_APP_SPLASH_SCREEN = [

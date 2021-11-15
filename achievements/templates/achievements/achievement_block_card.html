@@ -1,7 +1,7 @@
 {% load filter_first %}
 {% load subtract %}
 
-<div class='achievement-card card greenify'>
+<div class='achievement-card card greenify-light'>
     <div class='achievementImage'>
         <img src={{ achievement.image }} alt="Achievement Icon for {{achievement.name}}">
     </div>
@@ -26,7 +26,7 @@
                         <ul class="achievementClaimants">
                             {% for claimant in achievement.claimants|filter_first:num_shown_claimants %}
                                 <li>
-                                    {% include "achievements/achievement_claimant.html" %}                               
+                                    {% include "achievements/achievement_claimant.html" %}
                                 </li>
                             {% endfor %}
                             {% if num_others_earned > 0 %}
@@ -61,7 +61,7 @@
             <ul>
                 {% for claimant in achievement.claimants %}
                     <li>
-                        {% include "achievements/achievement_claimant.html" %}                               
+                        {% include "achievements/achievement_claimant.html" %}
                     </li>
                 {% endfor %}
             </ul>

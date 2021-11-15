@@ -1,54 +1,77 @@
 /*********************************************************************************************
-DEFINITIONS
-*********************************************************************************************/
-/* Define main colour scheme */
-:root {
-    --main-bg-color: #206141;
-    --main-text-color: white;
-    --main-bg-color-dark: #163b28;
-    --main-bg-color-hover: #3b6b5377;
-    --main-bg-color-light: #45ac786e;
-}
-
-/* Main background colour */
-body {
-    background-color: #e5e0e0;
-}
-
-
-/*********************************************************************************************
 COLOUR SCHEME
 *********************************************************************************************/
+/* Main background colour */
+body {
+    background-color: var(--body-bg-color);
+    color: var(--body-text-color);
+}
+
 /* Headers and bold text have a slightly greenish colour */
 h1, h2, h3, h4, strong {
-    color: var(--main-bg-color-dark);
+    color: var(--title-text-color);
 }
 
+.card, .modal-content {
+    background-color: var(--body-alt-bg-color);
+}
+
+.icon {
+    filter: var(--body-icon-color);
+}
+
+/* Tables (e.g. boardgames, systems) */
+.table {
+    color: var(--body-text-color);
+}
+    .table-hover tbody tr:hover {
+        color: var(--body-text-color);
+    }
+
+.form-control, select option, .form-control:focus {
+    background-color: var(--input-bg-color);
+    color: var(--input-text-color);
+}
+
+    .input-group-prepend .input-group-text {
+        background-color: var(--input-prepend-bg-color);
+        color: var(--body-alt-text-color);
+    }
+
+
+/***************************************
+Greenified Items
+***************************************/
 /* General theme colours */
 .greenify {
-    background-color: var(--main-bg-color);
-    color: var(--main-text-color);
+    background-color: var(--greenify-bg-color);
+    color: var(--greenify-text-color);
+}
+.greenify-dark {
+    background-color: var(--greenify-dark-bg-color);
+    color: var(--greenify-dark-text-color);
+}
+.greenify-light {
+    background-color: var(--greenify-light-bg-color);
+    color: var(--greenify-light-text-color);
 }
 
-/* Theme colours are different for Bootstrap dropdown menus */
-.greenify.dropdown-item {
-    background-color: inherit;
-    color: var(--main-bg-color);
+/* Greenified Dropdowns */
+.greenify-dropdown .dropdown-item, .greenify-dropdown {
+    background-color: var(--greenify-dropdown-bg-color);
+    color: var(--greenify-dropdown-text-color);
 }
-    /* Green hover colours */
-    .greenify.dropdown-item.hover, .greenify.dropdown-item:hover {
-        background-color: var(--main-bg-color-hover);
+    .greenify-dropdown .dropdown-divider {
+        border-top-color: var(--greenify-dropdown-text-color);
     }
-    /* Green click colours */
-    .greenify.dropdown-item.active, .greenify.dropdown-item:active {
-        background-color: var(--main-bg-color);
-        color: var(--main-text-color);
+    .greenify-dropdown .dropdown-item.hover, .greenify-dropdown .dropdown-item:hover {
+        background-color: var(--greenify-dropdown-hover-bg-color);
+        color: var(--greenify-dropdown-hover-text-color);
     }
-
-.greenify.card {
-    background-color: var(--main-bg-color-light);
-    color: black;
-}
+    .greenify-dropdown .dropdown-item.active, .greenify-dropdown .dropdown-item:active {
+        background-color: var(--greenify-dropdown-active-bg-color);
+        color: var(--greenify-dropdown-active-text-color);
+    }
 
 /*********************************************************************************************
 FORMATTING

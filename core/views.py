@@ -12,9 +12,9 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_safe
+from django.views.generic.base import TemplateView
 
 from .forms import RegisterForm
-from .managers import TemplateManager
 from .models import MarkdownImage
 
 from dynamic_preferences.registries import global_preferences_registry
@@ -43,12 +43,15 @@ def viewNewsletters(request):
     })
 
 
-@require_safe
-@login_required
-def viewAccount(request):
-    return render(request, 'core/user_accounts/account.html', {
-        'included_template_name': TemplateManager.get_template('core/user_accounts/account.html'),
-    })
+class AccountView(TemplateView):
+    """ Base account page """
+    template_name = "core/user_accounts/account_info.html"
+    tab_name = 'tab_account'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context[self.tab_name] = True
+        return context
 
 @require_safe
 def registerSuccess(request):
