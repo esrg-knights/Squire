@@ -41,8 +41,13 @@ ALLOWED_HOSTS = []
 if os.getenv('SQUIRE_ALLOWED_HOSTS'): # pragma: no cover
     ALLOWED_HOSTS += os.getenv('SQUIRE_ALLOWED_HOSTS').split(',')
 
-# Application definition
 
+if DEBUG:
+    INTERNAL_IPS = [
+        '127.0.0.1',
+    ]
+
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -71,18 +76,21 @@ INSTALLED_APPS = [
     'django_cleanup.apps.CleanupConfig',
     'martor',
     'import_export',
-    'pwa'
+    'pwa',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware', #Determine Language based on user's Language preference
+    'django.middleware.locale.LocaleMiddleware', # Determine Language based on user's Language preference
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',  # Should come as early as possible, but after middleware
+                                                        #   that changes the response's content
     'membership_file.middleware.MembershipMiddleware',
 ]
 
