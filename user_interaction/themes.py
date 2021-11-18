@@ -66,6 +66,11 @@ class ScalaUserTheme(SquireUserTheme):
     name = 'Dining'
     css = ('themes/scala-theme.css',)
 
+class 金人スキン(SquireUserTheme):
+    """ Kinjin Theme """
+    name = 'Ｋｉｎｊｉｎ（金人）'
+    css = ('themes/金人.css',)
+
 THEMES = {
     'THEME_DEFAULT': DefaultUserTheme,
     'THEME_DARK': DarkUserTheme,
@@ -74,6 +79,7 @@ THEMES = {
     'THEME_Q': QuadriviumUserTheme,
     'THEME_DOPPIO': DoppioUserTheme,
     'THEME_SCALA': ScalaUserTheme,
+    'THEME_KINJIN': 金人スキン,
 }
 
 DEFAULT_THEME = 'THEME_DEFAULT'

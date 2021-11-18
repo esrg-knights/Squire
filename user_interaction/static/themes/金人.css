@@ -1,0 +1,11 @@
+body {
+    text-transform: full-width !important;
+}
+
+.brand-text::before {
+	content: "スクワイア　（"
+}
+
+.brand-text::after {
+	content: "）"
+}
