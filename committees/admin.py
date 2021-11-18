@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.admin.filters import RelatedOnlyFieldListFilter
 
 from committees.models import *
 
@@ -7,6 +8,7 @@ class MembershipInline(admin.TabularInline):
     model = AssociationGroupMembership
     extra = 1
     min_num = 0
+    autocomplete_fields = ['member',]
 
 @admin.register(AssociationGroup)
 class AssociationGroupAdmin(admin.ModelAdmin):
@@ -18,5 +20,16 @@ class AssociationGroupAdmin(admin.ModelAdmin):
               'contact_email', 'instructions']
 
     inlines = [MembershipInline]
+    autocomplete_fields = ['site_group',]
 
-admin.site.register(GroupExternalUrl)
+
+@admin.register(GroupExternalUrl)
+class GroupExternalURLAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'association_group')
+    list_filter = [
+        ('association_group', RelatedOnlyFieldListFilter)
+    ]
+    list_display_links = ('id', 'name')
+    search_fields = ('asssociation_group__site_group__name', 'name')
+
+    autocomplete_fields = ['association_group',]

@@ -1,13 +1,8 @@
 from django.contrib import admin
-from django.contrib.contenttypes.admin import GenericTabularInline
 
 from boardgames.models import BoardGame
-from inventory.models import Ownership
-
-
-class OwnershipInline(GenericTabularInline):
-    model = Ownership
-    extra = 0
+from core.admin import EmptyFieldListFilter
+from inventory.admin import OwnershipInline
 
 
 class BoardGameAdmin(admin.ModelAdmin):
@@ -15,6 +10,10 @@ class BoardGameAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'name')
     search_fields = ['name']
     inlines = [OwnershipInline,]
+    list_filter = (
+        ('ownerships__group', admin.RelatedOnlyFieldListFilter),
+        ('ownerships__member', EmptyFieldListFilter),
+    )
 
     @staticmethod
     def current_possession_count(obj):
