@@ -1,8 +1,9 @@
 from django.test import TestCase
 
-from achievements.models import (Achievement, Category, Claimant,
-    get_or_create_default_category, get_achievement_image_upload_path)
-from core.models import ExtendedUser as User
+from achievements.models import (Achievement, Category, Claimant, get_achievement_image_upload_path)
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 ##################################################################################
 # Test the Member model's helper methods

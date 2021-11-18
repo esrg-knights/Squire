@@ -17,11 +17,13 @@ from activity_calendar.views import CreateSlotView, ActivityMomentWithSlotsView,
     EditActivityMomentView, ActivityOverview
 from activity_calendar.forms import *
 
-from core.models import ExtendedUser as User
 from core.tests.util import suppress_warnings
 from utils.testing.view_test_utils import ViewValidityMixin
 
 from . import mock_now
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 ##################################################################################
 # Test cases for the activity views

@@ -1,7 +1,9 @@
 from django.test import TestCase
 
 from activity_calendar.models import Activity, ActivitySlot, Participant
-from core.models import ExtendedUser as User
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 ##################################################################################
 # Test the Activity and related models' helper methods
@@ -26,4 +28,4 @@ class ActivityRelatedModelHelpersTest(TestCase):
     # Tests the display method of a Participant
     def test_participant_display(self):
         participant = Participant(activity_slot=self.slot, user=User.objects.filter(username="test_user").first())
-        self.assertEqual(str(participant), participant.user.get_simple_display_name())
+        self.assertEqual(str(participant), str(participant.user))

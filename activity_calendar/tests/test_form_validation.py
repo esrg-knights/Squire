@@ -9,11 +9,12 @@ from unittest.mock import patch
 
 from activity_calendar.models import *
 from activity_calendar.forms import *
-from core.models import ExtendedUser as User
-from core.tests.util import suppress_warnings
 
 from utils.testing import FormValidityMixin
 from . import mock_now
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 
 class ActivityFormValidationMixin(FormValidityMixin):

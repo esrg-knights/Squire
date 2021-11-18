@@ -3,7 +3,8 @@ from django.core.validators import RegexValidator, MinValueValidator
 from django.db import models
 from datetime import date
 
-from core.models import ExtendedUser
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 ##################################################################################
 # Models related to the Membership File-functionality of the application.
@@ -143,12 +144,9 @@ class Member(models.Model):
     def display_last_updated_name(self):
         if self.last_updated_by is None:
             return None
-        updater = Member.objects.filter(user__id=self.last_updated_by.id).first()
-        if updater is None:
-            return ExtendedUser.objects.filter(id=self.last_updated_by.id).first().username
-        if updater.id == self.id:
+        if self.user == self.last_updated_by:
             return 'You'
-        return updater.get_full_name()
+        return str(self.last_updated_by)
 
     # Displays the external card number of the member
     def display_external_card_number(self):

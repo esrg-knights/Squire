@@ -12,8 +12,9 @@ from recurrence import deserialize as deserialize_recurrence_test
 from . import mock_now
 
 from activity_calendar.models import Activity, ActivitySlot, Participant, ActivityMoment
-from core.models import ExtendedUser as User
 
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 # Tests model properties related to fetching participants, slots, etc.
 class ModelMethodsTest(TestCase):

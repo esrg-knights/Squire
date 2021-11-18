@@ -1,6 +1,4 @@
 import copy
-import datetime
-from itertools import chain
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
@@ -15,8 +13,11 @@ from django.urls import reverse
 from recurrence.fields import RecurrenceField
 
 import activity_calendar.util as util
-from core.models import ExtendedUser as User, PresetImage
+from core.models import PresetImage
 from core.fields import MarkdownTextField
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 #############################################################################
 # Models related to the Calendar-functionality of the application.

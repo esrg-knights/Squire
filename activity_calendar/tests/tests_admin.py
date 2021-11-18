@@ -2,7 +2,9 @@ from django.test import TestCase, Client
 from django.conf import settings
 
 from activity_calendar.models import ActivitySlot, Activity
-from core.models import ExtendedUser as User
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 ##################################################################################
 # Test cases for the activty admin panel
@@ -22,7 +24,7 @@ class ActivityAdminTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.client.force_login(User.objects.filter(username='test_admin').first())
-    
+
     # Tests whether we can reach the activity page in the admin panel
     def test_activity_page(self):
 
@@ -36,7 +38,7 @@ class ActivityAdminTest(TestCase):
 
     # Tests whether we can reach the activity slot page in the admin panel
     def test_slot_page(self):
-        
+
         # General activity page
         response = self.client.get('/admin/activity_calendar/activityslot/', data={})
         self.assertEqual(response.status_code, 200)

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
@@ -5,8 +6,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 
 from inventory.models import valid_item_class_ids
-
-from core.models import ExtendedUser as User
 
 __all__ = ['Category', 'Achievement', 'Claimant', 'AchievementItemLink']
 
@@ -55,7 +54,7 @@ class Achievement(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET(get_or_create_default_category), related_name="related_achievements")
 
     # An Achievement can be claimed by more members (claimants) and a member can have more achievements.
-    claimants = models.ManyToManyField(User, blank=True, through="Claimant", related_name="claimant_info")
+    claimants = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, through="Claimant", related_name="claimant_info")
 
     # Achievement Icon
     image = models.ImageField(upload_to=get_achievement_image_upload_path)
@@ -110,7 +109,7 @@ class AchievementItemLink(models.Model):
 # Represents a user earning an achievement
 class Claimant(models.Model):
     achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     date_unlocked = models.DateField(default=timezone.now)
 
     # Extra data fields that can be used to track high-scores

@@ -10,10 +10,12 @@ from django.forms.fields import Field
 from django.utils.translation import gettext_lazy as _
 from martor.widgets import MartorWidget
 
-from .models import ExtendedUser as User
 from core.models import MarkdownImage
 from core.widgets import  ImageUploadMartorWidget
 from utils.forms import UpdatingUserFormMixin
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 ##################################################################################
 # Defines general-purpose forms.

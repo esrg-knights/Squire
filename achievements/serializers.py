@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from django.db.models import Count, Max, When, Case
 
-from core.models import ExtendedUser as User
 from .models import Achievement, Category, Claimant
 
 from enum import Enum
