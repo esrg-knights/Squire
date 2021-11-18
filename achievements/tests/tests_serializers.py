@@ -27,7 +27,7 @@ class AchievementModelSerializersTest(TestCase):
             "extra_data_2":     "xyz",
             "extra_data_3":     "equal",
         })
-    
+
     # Tests Achievement Seralizer when obtaining all claimants
     def test_serializer_achievement_claimants_all(self):
         serializer = AchievementSerializer(self.achievement, context={
@@ -64,7 +64,7 @@ class AchievementModelSerializersTest(TestCase):
             'claimants_sort_ascending': False,
             'claimant_count':           2,
         })
-    
+
     # Tests Achievement Seralizer when obtaining no claimants
     def test_serializer_achievement_claimants_none(self):
         serializer = AchievementSerializer(self.achievement)
@@ -80,7 +80,7 @@ class AchievementModelSerializersTest(TestCase):
             'claimants_sort_ascending': False,
             'claimant_count':           2,
         })
-    
+
     # Tests the order in which the claimants are passed
     def test_serializer_achievement_claimant_sorting(self):
         # Sorted by date, descending
@@ -92,7 +92,7 @@ class AchievementModelSerializersTest(TestCase):
         self.assertEqual(len(claimants), 2)
         self.assertEqual(claimants[0]['name'], 'test_user')
         self.assertEqual(claimants[1]['name'], 'test_admin')
-        
+
         # Sorted by extra_data_2, descending
         self.achievement.claimants_sort_field = "extra_data_2"
         serializer = AchievementSerializer(self.achievement, context={
@@ -110,7 +110,7 @@ class AchievementModelSerializersTest(TestCase):
         serializer = AchievementSerializer(self.achievement, context={
             'obtain_claimants': True,
         })
-        
+
         claimants = serializer.data.get("claimants")
         self.assertEqual(len(claimants), 2)
         self.assertEqual(claimants[0]['name'], 'test_admin')
@@ -139,13 +139,13 @@ class AchievementModelSerializersTest(TestCase):
             "id":           1,
             "name":         "Testing",
             "description":  "A Category used for testing!",
-            "achievements": AchievementSerializer(Achievement.objects.filter(category__id=self.category.id), 
+            "achievements": AchievementSerializer(Achievement.objects.filter(category__id=self.category.id),
                 many=True, context={
                     'user_id':          1,
                     'obtain_claimants': False
                 }).data,
         })
-    
+
     # Tests the latest unlock date sorting of a category
     def test_serializer_category_sort_latest_unlock(self):
         serializer = CategorySerializer(self.category, context={

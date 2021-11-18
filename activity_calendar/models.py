@@ -646,5 +646,4 @@ class Participant(models.Model):
     def __str__(self):
         if self.guest_name:
             return self.guest_name + ' (ext)'
-        else:
-            return self.user.get_display_name()
+        return str(self.user)

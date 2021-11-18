@@ -5,26 +5,9 @@ from datetime import date
 
 from core.models import ExtendedUser
 
-from membership_file.util import get_member_from_user
-
 ##################################################################################
 # Models related to the Membership File-functionality of the application.
 # @since 06 JUL 2019
-##################################################################################
-
-# Display method for a user that may also be a member
-def get_member_display_name(user):
-    member = get_member_from_user(user)
-    if member is not None:
-        return member.get_full_name()
-    # The get_simple_display_name method is part of ExtendedUser, a proxy class.
-    # Cast the user object to this proxy class so we can use this method
-    user.__class__ = ExtendedUser
-    return user.get_simple_display_name()
-
-# Users should be displayed by their names according to the membership file (if they're a member)
-ExtendedUser.set_display_name_method(get_member_display_name)
-
 ##################################################################################
 
 # The Member model represents a Member in the membership file

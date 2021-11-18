@@ -7,8 +7,9 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.signals import pre_delete
 from django.utils.text import slugify
+
+
 
 # Proxy model based on Django's user that provides extra utility methods.
 class ExtendedUser(User):
