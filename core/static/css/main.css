@@ -12,7 +12,7 @@ h1, h2, h3, h4, strong {
     color: var(--title-text-color);
 }
 
-.card, .modal-content {
+.card, .modal-content, .list-group-item {
     background-color: var(--body-alt-bg-color);
 }
 
