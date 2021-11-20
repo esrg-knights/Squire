@@ -1,17 +1,20 @@
 from django.contrib import admin
 from django.contrib.admin.filters import RelatedOnlyFieldListFilter
 
+from activity_calendar.admin import MarkdownImageInlineAdmin
+from committees.forms import AssociationGroupAdminForm
 from committees.models import *
 
 
 class MembershipInline(admin.TabularInline):
     model = AssociationGroupMembership
-    extra = 1
-    min_num = 0
+    extra = 0
     autocomplete_fields = ['member',]
 
 @admin.register(AssociationGroup)
-class AssociationGroupAdmin(admin.ModelAdmin):
+class AssociationGroupAdmin(MarkdownImageInlineAdmin):
+    form = AssociationGroupAdminForm
+
     list_display = ('id', 'name', 'shorthand',)
     list_filter = ['type', 'is_public']
     list_display_links = ('id', 'name')

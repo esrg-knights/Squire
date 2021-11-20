@@ -345,7 +345,11 @@ MAX_IMAGE_UPLOAD_SIZE = 2621440  # 2.5MB
 
 # Valid models for which MarkdownImages can be selected
 #   (used internally to handle uploads; Not a Martor setting)
-MARKDOWN_IMAGE_MODELS = ('activity_calendar.activity', 'activity_calendar.activitymoment')
+MARKDOWN_IMAGE_MODELS = (
+    'activity_calendar.activity', 'activity_calendar.activitymoment',
+    'committees.associationgroup',
+    'roleplaying.roleplayingsystem'
+)
 
 ####################################################################
 # Other Settings

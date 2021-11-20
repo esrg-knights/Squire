@@ -69,7 +69,12 @@ class AssociationGroupMembershipForm(ModelForm):
 
 
 class AssociationGroupUpdateForm(MarkdownForm):
-
     class Meta:
         model = AssociationGroup
         fields = ['instructions',]
+
+
+class AssociationGroupAdminForm(MarkdownForm):
+    class Meta:
+        model = AssociationGroup
+        fields = '__all__'

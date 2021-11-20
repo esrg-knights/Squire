@@ -119,3 +119,14 @@ fieldset .form-row .main-martor {
 .js-inline-admin-formset .form-row {
   display: revert;
 }
+
+/*****************************************************
+BEGIN SQUIRE ADDITIONS
+*****************************************************/
+.js-inline-admin-formset .form-row.empty-form {
+  display: none;
+}
+
+/*****************************************************
+END SQUIRE ADDITIONS
+*****************************************************/

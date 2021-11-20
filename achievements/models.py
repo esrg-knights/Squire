@@ -118,4 +118,4 @@ class Claimant(models.Model):
     extra_data_3 = models.CharField(max_length=63, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.achievement} unlocked by {self.user}"
+        return f"Claimant {self.id} (Achievement {self.achievement_id}, User {self.user_id})"

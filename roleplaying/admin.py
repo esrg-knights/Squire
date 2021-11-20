@@ -1,11 +1,14 @@
 from django.contrib import admin
 
+from activity_calendar.admin import MarkdownImageInlineAdmin
 from core.admin import EmptyFieldListFilter
 from inventory.admin import OwnershipInline
+from roleplaying.forms import RoleplayingSystemAdminForm
 from roleplaying.models import *
 
 
-class RoleplaySystemAdmin(admin.ModelAdmin):
+class RoleplaySystemAdmin(MarkdownImageInlineAdmin):
+    form = RoleplayingSystemAdminForm
     list_display = ('id', 'name', 'more_info_url', 'is_public', 'get_num_items')
     list_display_links = ('id', 'name')
     search_fields = ['name']
