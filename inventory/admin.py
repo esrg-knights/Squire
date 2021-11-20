@@ -26,11 +26,12 @@ class OwnershipAdmin(admin.ModelAdmin):
 
 admin.site.register(Ownership, OwnershipAdmin)
 
-class MiscellaneousItemAdmin(admin.ModelAdmin):
+
+class ItemAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'current_possession_count')
     list_display_links = ('id', 'name')
     search_fields = ['name']
-    inlines = [OwnershipInline,]
+    inlines = [OwnershipInline]
     list_filter = (
         ('ownerships__group', admin.RelatedOnlyFieldListFilter),
         ('ownerships__member', EmptyFieldListFilter),
@@ -41,5 +42,4 @@ class MiscellaneousItemAdmin(admin.ModelAdmin):
         return obj.currently_in_possession().count()
     current_possession_count.short_description = 'Number of items at the association'
 
-
-admin.site.register(MiscellaneousItem, MiscellaneousItemAdmin)
+admin.site.register(MiscellaneousItem, ItemAdmin)

@@ -1,8 +1,8 @@
 from django.contrib import admin
+from achievements.admin import AchievementItemInline
 
 from activity_calendar.admin import MarkdownImageInlineAdmin
-from core.admin import EmptyFieldListFilter
-from inventory.admin import OwnershipInline
+from inventory.admin import ItemAdmin
 from roleplaying.forms import RoleplayingSystemAdminForm
 from roleplaying.models import *
 
@@ -15,6 +15,7 @@ class RoleplaySystemAdmin(MarkdownImageInlineAdmin):
     list_filter = (
         'is_public',
     )
+    inlines = [AchievementItemInline]
 
     @staticmethod
     def get_num_items(obj):
@@ -24,21 +25,12 @@ class RoleplaySystemAdmin(MarkdownImageInlineAdmin):
 admin.site.register(RoleplayingSystem, RoleplaySystemAdmin)
 
 
-class RoleplayItemAdmin(admin.ModelAdmin):
+class RoleplayItemAdmin(ItemAdmin):
     list_display = ('id', 'name', 'system', 'current_possession_count')
-    list_display_links = ('id', 'name')
-    search_fields = ['name']
-    inlines = [OwnershipInline,]
     autocomplete_fields = ['system']
     list_filter = (
         'system',
-        ('ownerships__group', admin.RelatedOnlyFieldListFilter),
-        ('ownerships__member', EmptyFieldListFilter),
+        *ItemAdmin.list_filter,
     )
-
-    @staticmethod
-    def current_possession_count(obj):
-        return obj.currently_in_possession().count()
-    current_possession_count.short_description = 'Number of items at the association'
 
 admin.site.register(RoleplayingItem, RoleplayItemAdmin)

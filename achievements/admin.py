@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.contenttypes.admin import GenericTabularInline
 from .models import *
 
 class CategoryAdmin(admin.ModelAdmin):
@@ -23,6 +24,12 @@ class AchievementAdmin(admin.ModelAdmin):
     inlines = [ClaimantInline]
 
 admin.site.register(Achievement, AchievementAdmin)
+
+class AchievementItemInline(GenericTabularInline):
+    model = AchievementItemLink
+    extra = 0
+    ordering = ("achievement__name",)
+    autocomplete_fields = ['achievement']
 
 class AchievementItemLinkAdmin(admin.ModelAdmin):
     search_fields = ('achievement__name',)
