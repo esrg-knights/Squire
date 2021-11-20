@@ -43,6 +43,7 @@ if os.getenv('SQUIRE_ALLOWED_HOSTS'): # pragma: no cover
 
 
 if DEBUG:
+    # Required for django-debug-toolbar
     INTERNAL_IPS = [
         '127.0.0.1',
     ]
@@ -77,8 +78,11 @@ INSTALLED_APPS = [
     'martor',
     'import_export',
     'pwa',
-    'debug_toolbar',
 ]
+
+if DEBUG:
+    INSTALLED_APPS.append('debug_toolbar')
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -89,10 +93,17 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',  # Should come as early as possible, but after middleware
-                                                        #   that changes the response's content
+]
+
+if DEBUG:
+    # Should come as early as possible, but after middleware
+    #   that changes the response's content
+    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+
+MIDDLEWARE = MIDDLEWARE + [
     'membership_file.middleware.MembershipMiddleware',
 ]
+
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',

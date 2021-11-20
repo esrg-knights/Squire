@@ -13,7 +13,6 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-import debug_toolbar
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -25,8 +24,6 @@ from committees.urls import get_urls as committee_urls
 urlpatterns = [
     # Progressive web app
     path('', include('pwa.urls')),
-    # Debugging (Django Debug Toolbar)
-    path('__debug__/', include(debug_toolbar.urls)),
     # Change Language helper view
     path('i18n/', include('django.conf.urls.i18n')),
     # Admin Panel
@@ -54,6 +51,11 @@ urlpatterns = [
 # https://docs.djangoproject.com/en/3.0/howto/static-files/#serving-files-uploaded-by-a-user
 # https://docs.djangoproject.com/en/3.0/howto/static-files/deployment/
 #
+
+if settings.DEBUG:
+    import debug_toolbar
+    # Debugging (Django Debug Toolbar)
+    urlpatterns.append(path('__debug__/', include(debug_toolbar.urls)))
 
 
 handler403 = 'core.views.show_error_403'

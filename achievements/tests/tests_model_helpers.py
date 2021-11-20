@@ -30,7 +30,7 @@ class AchievementModelHelpersTest(TestCase):
     # Tests the display method of a Claimant
     def test_claimant_display(self):
         claimant = Claimant(achievement=self.achievement, user=User.objects.filter(username="test_user").first())
-        self.assertEqual(str(claimant), "Wow unlocked by test_user")
+        self.assertEqual(str(claimant), "Claimant None (Achievement 4, User 2)")
 
     # Tests if the achievement images are uploaded to the correct location
     def test_image_upload_path(self):
