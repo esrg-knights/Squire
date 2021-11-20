@@ -16,6 +16,10 @@ h1, h2, h3, h4, strong {
     background-color: var(--body-alt-bg-color);
 }
 
+.card-header {
+    background-color: var(--body-alt-dark-bg-color);
+}
+
 .icon {
     filter: var(--body-icon-color);
 }

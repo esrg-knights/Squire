@@ -23,7 +23,7 @@ class SquireUserTheme:
 
 class LightUserTheme(SquireUserTheme):
     """ Standard green-white theme """
-    name = "Light theme"
+    name = "Light Theme"
     css = ('themes/standard-theme.css',)
 
 class DarkUserTheme(SquireUserTheme):
@@ -32,7 +32,7 @@ class DarkUserTheme(SquireUserTheme):
     css = LightUserTheme.css + ('themes/dark-theme.css',) #here, so it's consistent 
 
 class DefaultAutoTheme(SquireUserTheme):
-    name = "Automatically switch between dark and light"
+    name = "Automatic"
     css = ("themes/auto.css",)
 
 class AprilUserTheme(SquireUserTheme):
