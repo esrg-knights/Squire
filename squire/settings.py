@@ -41,13 +41,6 @@ ALLOWED_HOSTS = []
 if os.getenv('SQUIRE_ALLOWED_HOSTS'): # pragma: no cover
     ALLOWED_HOSTS += os.getenv('SQUIRE_ALLOWED_HOSTS').split(',')
 
-
-if DEBUG:
-    # Required for django-debug-toolbar
-    INTERNAL_IPS = [
-        '127.0.0.1',
-    ]
-
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -80,11 +73,8 @@ INSTALLED_APPS = [
     'pwa',
 ]
 
-if DEBUG:
-    INSTALLED_APPS.append('debug_toolbar')
 
-
-MIDDLEWARE = [
+PRE_DEBUG_MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware', # Determine Language based on user's Language preference
@@ -95,14 +85,23 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-if DEBUG:
-    # Should come as early as possible, but after middleware
-    #   that changes the response's content
-    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
-
-MIDDLEWARE = MIDDLEWARE + [
+POST_DEBUG_MIDDLEWARE = [
     'membership_file.middleware.MembershipMiddleware',
 ]
+
+if DEBUG and os.getenv('DJANGO_ENV') != 'TESTING':
+    # django-debug-toolbar settings
+    INSTALLED_APPS.append('debug_toolbar')
+    INTERNAL_IPS = [
+        '127.0.0.1',
+    ]
+
+    # Should come as early as possible, but after middleware
+    #   that changes the response's content
+    PRE_DEBUG_MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+
+# Set Middleware
+MIDDLEWARE = PRE_DEBUG_MIDDLEWARE + POST_DEBUG_MIDDLEWARE
 
 
 AUTHENTICATION_BACKENDS = [
