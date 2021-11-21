@@ -14,18 +14,6 @@ from membership_file.models import Member, MemberLog, MemberLogField, Room
 class MemberModelTest(TestCase):
     fixtures = ['test_users.json', 'test_members.json']
 
-    # Tests whether a member is displayed correctly
-    # def test_member_display_method(self):
-    #     # Member has the correct display method
-    #     user = User.objects.filter(username="test_member").first()
-    #     display_str = get_member_display_name(user)
-    #     self.assertEqual(str(user), Member.objects.filter(user__username="test_member").first().get_full_name())
-
-    #     # Non-Member has the correct display method
-    #     user = User.objects.filter(username="test_user").first()
-    #     display_str = get_member_display_name(user)
-    #     self.assertEqual(display_str, user.get_simple_display_name())
-
     # Tests the display method of the MemberLog
     def test_memberlog_display(self):
         memberlog = MemberLog(id=1, user=User.objects.first(), member=Member.objects.first(), log_type="UPDATE")
