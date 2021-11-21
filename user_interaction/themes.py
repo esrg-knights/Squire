@@ -21,15 +21,19 @@ class SquireUserTheme:
     def __str__(self):
         return self.name
 
-class DefaultUserTheme(SquireUserTheme):
+class LightUserTheme(SquireUserTheme):
     """ Standard green-white theme """
-    name = "Default"
+    name = "Light Theme"
     css = ('themes/standard-theme.css',)
 
 class DarkUserTheme(SquireUserTheme):
     """ Dark Mode """
     name = "Dark Mode"
-    css = ('themes/dark-theme.css',)
+    css = LightUserTheme.css + ('themes/dark-theme.css',) #here, so it's consistent 
+
+class DefaultAutoTheme(SquireUserTheme):
+    name = "Automatic"
+    css = ("themes/auto.css",)
 
 class AprilUserTheme(SquireUserTheme):
     """ April's Fools 2020 theme """
@@ -67,7 +71,8 @@ class ScalaUserTheme(SquireUserTheme):
     css = ('themes/scala-theme.css',)
 
 THEMES = {
-    'THEME_DEFAULT': DefaultUserTheme,
+    'THEME_DEFAULT': DefaultAutoTheme,
+    'THEME_LIGHT': LightUserTheme,
     'THEME_DARK': DarkUserTheme,
     'THEME_APRIL': AprilUserTheme,
     'THEME_FC': FantasyCourtUserTheme,
