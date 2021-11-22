@@ -1,19 +1,33 @@
 body {
-    text-transform: full-width !important;
+    /*text-transform: full-width !important; */
 }
 
+.brand-text {
+    visibility: hidden;
+    font-size: 0px;
+}
 .brand-text::before {
-    content: "スクワイア　（";
+    content: "スクワイア";
+    visibility: visible;
+    font-size: 30px;
 }
 
-.brand-text::after {
-    content: "）";
+.nav-link {
+    /* visibility: hidden;
+    font-size: 0px; */
+    color: white;
 }
+/* .nav-link::before {
+    content: "test";
+    visibility: visible;
+    font-size: 20px;
+    color: white;
+} */
 
 /* Define main colour scheme */
 :root {
     /* Default text and background colors for the body */
-    --body-bg-color: #e5e0e0;
+    --body-bg-color: whitesmoke;
     --body-text-color: #212529;
 
     --body-alt-bg-color: white;
@@ -38,8 +52,8 @@ body {
     --greenify-text-color: white;
 
     /* Colors for darker greenified elements (e.g. navbar, card images) */
-    --greenify-dark-bg-color: #bc360a;
-    --greenify-dark-text-color: var(--greenify-text-color);
+    --greenify-dark-bg-color: #bc002d;
+    --greenify-dark-text-color: white;
 
     /* Colors for lighter greenified elements (e.g. cards) */
     --greenify-light-bg-color: #f0e3cf;
