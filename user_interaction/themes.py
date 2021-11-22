@@ -75,9 +75,9 @@ class ScalaUserTheme(SquireUserTheme):
     css = ('themes/scala-theme.css',)
 
 
-class 日本スキン(SquireUserTheme):
+class KinjinUserTheme(SquireUserTheme):
     """ Kinjin Theme """
-    name = 'Ｋｉｎｊｉｎ（金人）'
+    name = '日本スキン'
     css = ('themes/kinjin-theme.css',)
 
 
@@ -89,7 +89,7 @@ THEMES = {
     'THEME_Q': QuadriviumUserTheme,
     'THEME_DOPPIO': DoppioUserTheme,
     'THEME_SCALA': ScalaUserTheme,
-    'THEME_KINJIN': 日本スキン,
+    'THEME_KINJIN': KinjinUserTheme,
 }
 
 DEFAULT_THEME = 'THEME_DEFAULT'
