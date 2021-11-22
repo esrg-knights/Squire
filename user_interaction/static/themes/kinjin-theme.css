@@ -28,7 +28,7 @@ body {
     --input-bg-color: var(--body-alt-bg-color);
     --input-text-color: var(--body-text-color);
     --input-prepend-bg-color: #e9ecef;
-    --input-prepend-text-color: #495057;
+    --input-prepend-text-color: #515151;
 
     /* Colors for highlighted text (e.g. h1, strong) */
     --title-text-color: #bd0029;
