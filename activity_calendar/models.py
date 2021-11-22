@@ -170,6 +170,89 @@ class Activity(models.Model):
 
         return list(occurrences) + existing_moments
 
+    def get_next_activitymoment(self, dtstart=None, inc=False):
+        """
+        Returns the next activitymoment that will occur (if any)
+        Note: This method gives incorrect results when activites are moved over other activitymoments
+        :param dtstart: The start datetime instance (if any) from which an occurence needs to be retrieved
+        :param inc: Whether the startdate should be included
+        :return: The activitymoment instance that will occur next
+        """
+        dtstart = timezone.localtime(dtstart) or timezone.now()
+        e_ext = 'e' if inc else '' # Search query for inclusion statement
+
+        ### Check for activitymoments stored in the database ###
+        # Check activity_moment by recurrence id
+        next_activity_moment = self.activitymoment_set.\
+            filter(**{'recurrence_id__gt'+e_ext: dtstart}).\
+            filter(local_start_date__isnull=True).\
+            order_by('recurrence_id').\
+            first()
+
+        # Check for local start date adjustments
+        local_activity_moment = self.activitymoment_set.\
+            filter(**{'local_start_date__gt'+e_ext: dtstart}).\
+            order_by('local_start_date').\
+            first()
+
+        # Compare through start dates, which take local changes into account
+        if local_activity_moment is not None:
+            if next_activity_moment is None or local_activity_moment.start_date < next_activity_moment.start_date:
+                next_activity_moment = local_activity_moment
+
+
+        ### Check for recurrence patterns ###
+
+        # Get a list of activity_moments that are not allowed because they have been moved and will therefore
+        # already have been detected with the local_start_date search
+        excluded_activity_moments = self.activitymoment_set. \
+            filter(**{'recurrence_id__gt'+e_ext: dtstart}). \
+            filter(local_start_date__isnull=False). \
+            order_by('recurrence_id').\
+            values_list('recurrence_id', flat=True)
+
+        recurrence_dtstart = dtstart
+        next_recurrence = self._get_next_recurring_occurence(recurrence_dtstart, inc)
+        while next_recurrence in excluded_activity_moments:
+            next_recurrence = self._get_next_recurring_occurence(next_recurrence, False)
+
+        if next_recurrence is not None:
+            # Check if recurrence ids do not match for the activitymoment and the recurrent activity
+            # otherwise it could be the current activity that has been postponed.
+            if next_activity_moment is None or\
+                (next_activity_moment.start_date > next_recurrence and
+                 next_activity_moment.recurrence_id != next_recurrence):
+
+                next_activity_moment = ActivityMoment(
+                    recurrence_id=next_recurrence,
+                    parent_activity=self,
+                )
+
+        return next_activity_moment
+
+    def _get_next_recurring_occurence(self, dtstart, inc=False):
+        """
+         Returns the next occurence according to the recurring format.
+        :param dtstart: The starttime of the search
+        :param inc: Whether dtstart is included in the search
+        :return: A DST-ignored datetime instance of the next occurence since dtstart
+        """
+        # The after function does not know the initial start date of the recurrent activities
+        # So dtstart should be set to the activity start date not search start date
+        next_recurrence = self.recurrences.after(
+            dtstart,
+            inc=inc,
+            dtstart=timezone.localtime(self.start_date)
+        )
+
+        # the recurrences package does not work with DST. Since we want our activities
+        #   to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00
+        #   in winter, and vice versa), we have to account for the difference here.
+        if next_recurrence is not None:
+            next_recurrence = util.dst_aware_to_dst_ignore(next_recurrence, timezone.localtime(self.start_date))
+
+        return next_recurrence
+
     # String-representation of an instance of the model
     def __str__(self):
         if self.is_recurring:
