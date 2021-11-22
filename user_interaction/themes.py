@@ -2,6 +2,7 @@ from django.templatetags.static import StaticNode
 from django.utils.html import format_html_join
 from django.utils.safestring import mark_safe
 
+
 class SquireUserTheme:
     """ Base class for user themes """
     name = None
@@ -21,15 +22,18 @@ class SquireUserTheme:
     def __str__(self):
         return self.name
 
+
 class DefaultUserTheme(SquireUserTheme):
     """ Standard green-white theme """
     name = "Default"
     css = ('themes/standard-theme.css',)
 
+
 class DarkUserTheme(SquireUserTheme):
     """ Dark Mode """
     name = "Dark Mode"
     css = ('themes/dark-theme.css',)
+
 
 class AprilUserTheme(SquireUserTheme):
     """ April's Fools 2020 theme """
@@ -41,6 +45,7 @@ class AprilUserTheme(SquireUserTheme):
         f"var adImg = \"{StaticNode.handle_simple('themes/images/april/tim-merch-ad.gif')}\"",
     )
 
+
 class FantasyCourtUserTheme(SquireUserTheme):
     """ Fantasy Court theme """
     name = 'Fantasy Court'
@@ -50,26 +55,31 @@ class FantasyCourtUserTheme(SquireUserTheme):
         f"var fancyedgeImg = \"{StaticNode.handle_simple('themes/images/fc/fancy-edge.png')}\"",
     )
 
+
 class QuadriviumUserTheme(SquireUserTheme):
     """ Quadrivium Theme """
     name = 'Nemesis'
     css = ('themes/q-theme.css',)
     js = ('themes/q-theme.js',)
 
+
 class DoppioUserTheme(SquireUserTheme):
     """ Doppio Theme """
     name = 'Espresso'
     css = ('themes/doppio-theme.css',)
+
 
 class ScalaUserTheme(SquireUserTheme):
     """ Scala Theme """
     name = 'Dining'
     css = ('themes/scala-theme.css',)
 
-class 金人スキン(SquireUserTheme):
+
+class 日本スキン(SquireUserTheme):
     """ Kinjin Theme """
     name = 'Ｋｉｎｊｉｎ（金人）'
-    css = ('themes/金人.css',)
+    css = ('themes/kinjin-theme.css',)
+
 
 THEMES = {
     'THEME_DEFAULT': DefaultUserTheme,
@@ -79,7 +89,7 @@ THEMES = {
     'THEME_Q': QuadriviumUserTheme,
     'THEME_DOPPIO': DoppioUserTheme,
     'THEME_SCALA': ScalaUserTheme,
-    'THEME_KINJIN': 金人スキン,
+    'THEME_KINJIN': 日本スキン,
 }
 
 DEFAULT_THEME = 'THEME_DEFAULT'
