@@ -7,10 +7,7 @@ body {
 
 .navbar-brand::before {
     visibility: visible;
-    content: "HELP";
-    background-image: url(./images/kinjin/KinjinSpoof.png);
-    width: 100px;
-    height: 50px;
+    content: url(./images/kinjin/KinjinSpoofH70px.png);
 }
 
 .brand-text {
@@ -26,14 +23,11 @@ body {
 .nav-link {
     /* visibility: hidden;
     font-size: 0px; */
-    color: white;
 }
-/* .nav-link::before {
-    content: "test";
-    visibility: visible;
-    font-size: 20px;
-    color: white;
-} */
+.nav-link::after {
+    content: " へのリンク";
+    /* visibility: visible; */
+}
 
 /* Define main colour scheme */
 :root {
