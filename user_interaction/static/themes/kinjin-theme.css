@@ -31,6 +31,10 @@ body {
     /* content: " へのリンク"; */
     /* visibility: visible; */
 }
+
+.lead display-4::after {
+    content: "-san";
+}
 .card-img-top {
     background-image: url(./images/kinjin/KinjinSpoof.png);
 }

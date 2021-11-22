@@ -3,14 +3,22 @@ $( document ).ready(function() {
     console.log('hello!')
     html = $('body main').html()
     // Replace 'k' and 'c' by 'q' (leave html between < and > alone)
+ 
   html = html.replace('board games', 'ボードゲーム')
+  html = html.replace('boardgames', 'ボードゲーム')
   html = html.replace('Board games', 'ボードゲーム')
+  html = html.replace('Boardgames', 'ボードゲーム')
+   html = html.replace('board game', 'ボードゲーム')
+   html = html.replace('boardgame', 'ボードゲーム')
   html = html.replace('Activities in the next 7 days', '今後7日間の活動')
 
-  html = html.replace('board', 'Sensei')
-  html = html.replace('Board', 'Sensei')
+  html = html.replace('board', 'Student Council')
+  html = html.replace('Board', 'Student Council')
 
-  html = html.replace('Evil', 'Baka')
+  html = html.replace('annoying', 'kawaii')
+  html = html.replace('troops', 'oniisan')
+
+  html = html.replace('Evil?', 'itai? Doshite! ')
   html = html.replace('Report Bug', 'バグの報告')
   html = html.replace('Hello','こんにちは')
   html = html.replace('Achievements', '実績')
