@@ -71,7 +71,7 @@
         {% if subscribed_users or ext_participants %}
             {% for participant in subscribed_users %}
                 <div class="">
-                    {{ participant.get_display_name }}
+                    {{ participant }}
                 </div>
             {% endfor %}
             {% if subscribed_guests %}
