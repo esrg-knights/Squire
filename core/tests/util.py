@@ -7,9 +7,10 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 from dynamic_preferences.registries import global_preferences_registry
 
-from core.models import ExtendedUser as User
 from core.util import get_permission_objects_from_string
 
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 ##################################################################################
 # Utility Methods for testcases

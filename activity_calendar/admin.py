@@ -40,6 +40,7 @@ class ActivityAdmin(MarkdownImageInlineAdmin):
     list_display_links = ('id', 'title')
     date_hierarchy = 'start_date'
     search_fields = ['title']
+    autocomplete_fields = ['author',]
 
     def get_view_on_site_url(self, obj=None):
         if hasattr(obj, 'get_absolute_url') and obj.get_absolute_url() is None:
@@ -56,6 +57,7 @@ class ActivityMomentAdmin(MarkdownImageInlineAdmin):
     list_filter = ['recurrence_id', 'local_start_date']
     date_hierarchy = 'recurrence_id'
     search_fields = ['local_title', 'parent_activity__title']
+    autocomplete_fields = ['parent_activity',]
 
     def activity_moment_has_changes(obj):
         """ Check if this ActivityModel has any data it overwrites """
@@ -75,6 +77,7 @@ class ActivityMomentAdmin(MarkdownImageInlineAdmin):
 class ParticipantInline(admin.TabularInline):
     model = Participant
     extra = 0
+    autocomplete_fields = ['user',]
 
 
 class ActivitySlotAdmin(admin.ModelAdmin):
@@ -90,6 +93,7 @@ class ActivitySlotAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'title')
     date_hierarchy = 'recurrence_id'
     search_fields = ['parent_activity__title', 'title']
+    autocomplete_fields = ['parent_activity',]
 
     # Not supported yet
     exclude = ('start_date', 'end_date')

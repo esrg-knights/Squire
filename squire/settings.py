@@ -42,7 +42,6 @@ if os.getenv('SQUIRE_ALLOWED_HOSTS'): # pragma: no cover
     ALLOWED_HOSTS += os.getenv('SQUIRE_ALLOWED_HOSTS').split(',')
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -66,25 +65,44 @@ INSTALLED_APPS = [
     'utils',
     'boardgames',
     'roleplaying',
-    'user_interaction',
+    'user_interaction.apps.UserInteractionConfig',
     # More External Libraries
     'django_cleanup.apps.CleanupConfig',
     'martor',
     'import_export',
-    'pwa'
+    'pwa',
 ]
 
-MIDDLEWARE = [
+
+PRE_DEBUG_MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware', #Determine Language based on user's Language preference
+    'django.middleware.locale.LocaleMiddleware', # Determine Language based on user's Language preference
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+POST_DEBUG_MIDDLEWARE = [
     'membership_file.middleware.MembershipMiddleware',
 ]
+
+if DEBUG and os.getenv('DJANGO_ENV') != 'TESTING':
+    # django-debug-toolbar settings
+    INSTALLED_APPS.append('debug_toolbar')
+    INTERNAL_IPS = [
+        '127.0.0.1',
+    ]
+
+    # Should come as early as possible, but after middleware
+    #   that changes the response's content
+    PRE_DEBUG_MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+
+# Set Middleware
+MIDDLEWARE = PRE_DEBUG_MIDDLEWARE + POST_DEBUG_MIDDLEWARE
+
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -337,7 +355,11 @@ MAX_IMAGE_UPLOAD_SIZE = 2621440  # 2.5MB
 
 # Valid models for which MarkdownImages can be selected
 #   (used internally to handle uploads; Not a Martor setting)
-MARKDOWN_IMAGE_MODELS = ('activity_calendar.activity', 'activity_calendar.activitymoment')
+MARKDOWN_IMAGE_MODELS = (
+    'activity_calendar.activity', 'activity_calendar.activitymoment',
+    'committees.associationgroup',
+    'roleplaying.roleplayingsystem'
+)
 
 ####################################################################
 # Other Settings

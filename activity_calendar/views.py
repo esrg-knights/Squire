@@ -15,7 +15,6 @@ from django.views.generic.edit import FormView, FormMixin
 
 from .forms import *
 from .models import Activity, ActivityMoment
-from core.models import ExtendedUser
 
 __all__ = "CreateSlotView, get_activity_detail_view, activity_collection"
 
@@ -74,10 +73,6 @@ class ActivityMixin:
                     parent_activity=self.activity,
                     recurrence_id=self.recurrence_id,
                 )
-
-        # Odd loop-around because all logged in users should be treated as extended users
-        if self.request.user.is_authenticated:
-            self.request.user.__class__ = ExtendedUser
 
     def get_context_data(self, **kwargs):
         kwargs = super(ActivityMixin, self).get_context_data(**kwargs)

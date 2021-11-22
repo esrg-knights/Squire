@@ -1,26 +1,10 @@
 from django.contrib import admin
-from django.contrib.contenttypes.admin import GenericTabularInline
+from achievements.admin import AchievementItemInline
 
 from boardgames.models import BoardGame
-from inventory.models import Ownership
+from inventory.admin import ItemAdmin
 
+class BoardgameAdmin(ItemAdmin):
+    inlines = [*ItemAdmin.inlines, AchievementItemInline]
 
-class OwnershipInline(GenericTabularInline):
-    model = Ownership
-    extra = 0
-
-
-class BoardGameAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'current_possession_count')
-    list_display_links = ('id', 'name')
-    search_fields = ['name']
-    inlines = [OwnershipInline,]
-
-    @staticmethod
-    def current_possession_count(obj):
-        return obj.currently_in_possession().count()
-    current_possession_count.short_description = 'Number of items at the association'
-
-
-
-admin.site.register(BoardGame, BoardGameAdmin)
+admin.site.register(BoardGame, BoardgameAdmin)
