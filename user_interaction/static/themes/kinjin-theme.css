@@ -1,42 +1,35 @@
 @import url("https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&display=swap");
 body {
-    /*text-transform: full-width !important; */
     font-family: "Mochiy Pop One", sans-serif;
 }
+/* Logo Knights verstoppen */
 .navbar-brand {
     visibility: hidden;
+    width: auto;
 }
-
+/* add Kinjin Knights logo */
 .navbar-brand::before {
     visibility: visible;
     content: url(./images/kinjin/KinjinSpoofH70px.png);
+    width: 69px;
 }
-
+/* hide "Squire" */
 .brand-text {
     visibility: hidden;
     font-size: 0px;
 }
+/* Add Squire but now in Japanese */
 .brand-text::before {
     content: "スクワイア";
     visibility: visible;
     font-size: 30px;
 }
 
+/* play with items in nav bar */
 .nav-link {
     /* visibility: hidden;
     font-size: 0px; */
     color: white;
-}
-.nav-link::after {
-    /* content: " へのリンク"; */
-    /* visibility: visible; */
-}
-
-.lead display-4::after {
-    content: "-san";
-}
-.card-img-top {
-    background-image: url(./images/kinjin/KinjinSpoof.png);
 }
 
 /* Define main colour scheme */
