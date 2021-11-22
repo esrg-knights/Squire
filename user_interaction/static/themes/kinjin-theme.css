@@ -4,10 +4,11 @@ body {
 .navbar-brand {
     visibility: hidden;
 }
+
 .navbar-brand::before {
     visibility: visible;
     content: "HELP";
-    background-image: url(user_interaction\static\themes\images\kinjin\KinjinSpoof.png);
+    background-image: url(./images/kinjin/KinjinSpoof.png);
     width: 100px;
     height: 50px;
 }
