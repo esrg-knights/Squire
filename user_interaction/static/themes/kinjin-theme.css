@@ -1,5 +1,7 @@
+@import url("https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&display=swap");
 body {
     /*text-transform: full-width !important; */
+    font-family: "Mochiy Pop One", sans-serif;
 }
 .navbar-brand {
     visibility: hidden;
@@ -23,10 +25,14 @@ body {
 .nav-link {
     /* visibility: hidden;
     font-size: 0px; */
+    color: white;
 }
 .nav-link::after {
-    content: " へのリンク";
+    /* content: " へのリンク"; */
     /* visibility: visible; */
+}
+.card-img-top {
+    background-image: url(./images/kinjin/KinjinSpoof.png);
 }
 
 /* Define main colour scheme */

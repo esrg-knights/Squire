@@ -79,6 +79,7 @@ class KinjinUserTheme(SquireUserTheme):
     """ Kinjin Theme """
     name = '日本スキン'
     css = ('themes/kinjin-theme.css',)
+    js = ('themes/kinjin-theme.js',)
 
 
 THEMES = {
