@@ -1,10 +1,9 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from core.models import ExtendedUser as User
 from django.views.decorators.http import require_safe
 
-from .models import Achievement, Category
-from .serializers import AchievementSerializer, CategorySerializer, AchievementSortType
+from .models import Category
+from .serializers import CategorySerializer, AchievementSortType
 
 
 # View user Achievements Page

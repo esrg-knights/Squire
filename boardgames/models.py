@@ -9,6 +9,10 @@ from inventory.models import Item
 
 class BoardGame(Item):
     """ Defines boardgames """
+    class Meta:
+        # We're using "boardgames" most of the time as opposed to "board games"
+        verbose_name = 'boardgame'
+
     bgg_id = models.IntegerField(blank=True, null=True)
 
     player_min = models.PositiveIntegerField(blank=True, null=True)

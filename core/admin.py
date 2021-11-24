@@ -132,6 +132,7 @@ admin.site.register(PresetImage, PresetImageAdmin)
 class MarkdownImageInline(GenericTabularInline):
     model = MarkdownImage
     extra = 0
+    max_num = 0 # Hides the "Add another Markdown image" button
     show_change_link = True
     readonly_fields = ['image', 'upload_date', 'uploader']
     fields = ['image', 'upload_date', 'uploader']
