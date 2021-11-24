@@ -36,6 +36,15 @@ $(document).ready(function () {
     html - html.replaceAll('Order', 'オーダー')
     html = html.replaceAll('Account', 'アカウント')
 
+    html = html.replaceAll('Membership', 'メンバーシップ')
+    html = html.replaceAll('membership', 'メンバーシップ')
+
+    html = html.replaceAll('Address', 'アドレス')
+    html = html.replaceAll('address', 'アドレス')
+
+    html = html.replaceAll('Contact', 'コンタクト')
+    html = html.replaceAll('contact', 'コンタクト')
+
     html = html.replaceAll('Monday', 'げつようび')
     html = html.replaceAll('Tuesday', 'かようび')
     html = html.replaceAll('Wednesday', 'すいようび')
