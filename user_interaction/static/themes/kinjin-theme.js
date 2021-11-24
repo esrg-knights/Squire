@@ -1,7 +1,10 @@
 // Modify the DOM
 $( document ).ready(function() {
-    console.log('hello!')
-    html = $('body main').html()
+  console.log('hello!')
+  document.getElementById("WelcomeMessage").textContent += "san";
+  console.log("san");
+
+  html = $('body main').html()
     // Replace X with Y
  
   html = html.replace('Squire', 'スクワイア')
@@ -57,11 +60,11 @@ $( document ).ready(function() {
   html = html.replace('November', '十一月')
   html = html.replace('December', '十二月')
 
-  html = html.replace('00:00', '24:00')
-  html = html.replace('01:00', '25:00')
-  html = html.replace('02:00', '26:00')
-  html = html.replace('03:00', '27:00')
-  html = html.replace('04:00', '28:00')
+  html = html.replace('00:', '24:')
+  html = html.replace('01:', '25:')
+  html = html.replace('02:', '26:')
+  html = html.replace('03:', '27:')
+  html = html.replace('04:', '28:')
 
   html = html.replace('Sign-ups are closed', 'サインアップクローズ')
   html = html.replace('Open for sign-ups', 'サインアップオープン')
@@ -74,9 +77,5 @@ $( document ).ready(function() {
   $('body main').html(html)
   
 })
-// function googleTranslateElementInit() {
-//   new google.translate.TranslateElement({pageLanguage: 'en', layout: google.translate.TranslateElement.InlineLayout.SIMPLE}, 'google_translate_element');
-// }
 
 
-// <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>

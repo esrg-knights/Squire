@@ -29,7 +29,7 @@ body {
 .nav-link {
     /* visibility: hidden;
     font-size: 0px; */
-    color: white;
+    color: #bd0029;
 }
 
 /* Define main colour scheme */
@@ -70,7 +70,7 @@ body {
     /* Colors for greenified dropdowns */
     --greenify-dropdown-bg-color: var(--body-alt-bg-color);
     --greenify-dropdown-text-color: var(--greenify-bg-color);
-    --greenify-dropdown-hover-bg-color: #3b6b5377;
+    --greenify-dropdown-hover-bg-color: #f0e3cf77;
     --greenify-dropdown-hover-text-color: inherit;
     --greenify-dropdown-active-bg-color: var(--greenify-bg-color);
     --greenify-dropdown-active-text-color: var(--greenify-text-color);
