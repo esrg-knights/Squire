@@ -41,10 +41,10 @@
         <div class="col align-self-center">
             <div class='nospace'>
                 <p id="event-name">
-                    Part of: {{ activity_moment.parent_activity.title }}
-                    {% if activity_moment.parent_activity.recurrences.rrules %}
+                    Instance of: {{ activity_moment.parent_activity.title }}
+                    {% if activity_moment.is_part_of_recurrence %}
                         <br>
-                        Repeats:
+                        Part of recurrence:
                         {% for rule in activity_moment.parent_activity.recurrences.rrules %}
                             {{ rule.to_text }}
                         {% endfor %}
@@ -76,7 +76,7 @@
                     {% endif %}
                     <br>
                     <small class="text-muted">
-                        {% if activity_moment.start_date is not None %}
+                        {% if activity_moment.start_date is not None and activity_moment.is_part_of_recurrence %}
                             Normally occurs on {{ activity_moment.recurrence_id|date:"l j E (H:i)" }}
                         {% endif %}
                     </small>

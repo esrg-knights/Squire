@@ -2,7 +2,7 @@ from django.urls import path, include, reverse
 
 from committees.config import CommitteeConfig
 
-from activity_calendar.committee_pages.views import ActivityCalendarView
+from activity_calendar.committee_pages.views import ActivityCalendarView, AddActivityMomentCalendarView
 
 
 
@@ -16,4 +16,6 @@ class ActivityConfig(CommitteeConfig):
         """ Builds a list of urls """
         return [
             path('', ActivityCalendarView.as_view(config_class=ActivityConfig), name='group_activities'),
+            path('<int:activity_id>/add/', AddActivityMomentCalendarView.as_view(config_class=ActivityConfig), name='add_activity_moment'),
+
         ]

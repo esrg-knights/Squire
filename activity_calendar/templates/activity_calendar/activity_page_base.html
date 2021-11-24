@@ -71,6 +71,14 @@
                                     {{ activity_moment.start_date|date:"j E H:i" }} - {{ activity_moment.end_date|date:"j E H:i" }}
                                 {% endif %}
                             </p>
+                            {% if activity_moment.is_part_of_recurrence %}
+                                <p class="text-muted">
+                                Repeats:
+                                {% for rule in activity_moment.parent_activity.recurrences.rrules %}
+                                {{ rule.to_text }}
+                                {% endfor %}
+                                </p>
+                            {% endif %}
                             <p>
                                 {% if activity_moment.local_start_date is not None %}
                                     <small id="activity-alt-start-message" class="text-muted">

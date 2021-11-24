@@ -73,7 +73,7 @@ class ActivityMomentAdmin(MarkdownImageInlineAdmin):
         return False
     activity_moment_has_changes.boolean = True
     activity_moment_has_changes.short_description = 'Is tweaked'
-    list_display = ["title", "recurrence_id", "local_start_date", "last_updated", activity_moment_has_changes]
+    list_display = ["title", "recurrence_id", "local_start_date", "last_updated", "is_part_of_recurrence", activity_moment_has_changes]
 
 
 

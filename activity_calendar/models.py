@@ -544,6 +544,27 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         return self.get_subscribed_users().count() + \
                self.get_guest_subscriptions().count()
 
+    @property
+    def is_part_of_recurrence(self):
+        # A non-recurring activity can not be part of a recurrence
+        if not self.parent_activity.is_recurring:
+            return False
+
+        # Shift daylight savings time to connect to the correct time
+        local_recurrence_id = util.dst_aware_to_dst_ignore(
+            self.recurrence_id,
+            self.parent_activity.start_date,
+            reverse=True
+        )
+        # Get the next instance of the recurring activity, include the given date. So it should return the activity
+        # iteself. If not, than it is not part of the recurring activity
+        recurrence_date = self.parent_activity.recurrences.after(
+            local_recurrence_id,
+            inc=True,
+            dtstart=self.parent_activity.start_date
+        )
+        return recurrence_date == local_recurrence_id
+
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
         errors = {}

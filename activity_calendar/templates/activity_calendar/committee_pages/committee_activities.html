@@ -11,7 +11,7 @@
     {{ block.super }}
 
     <p>
-        Below is a list of all upcoming activities organised by this committee
+        Below is a list of all upcoming (max 3) activities organised by this committee
     </p>
     <hr>
 
@@ -20,6 +20,11 @@
             <h4>
                 {{ activity.title }}
             </h4>
+            {% if activity.is_recurring %}
+            <div class="text mb-3">
+                Recurring: {% for rrule in activity.recurrences.rrules %}{{ rrule.to_text }}{% endfor %}
+            </div>
+            {% endif %}
             {% for activity_moment in activity|get_next_activity_instances %}
                 <div class="row">
                     <div class="col-3">
@@ -41,14 +46,17 @@
                             View
                         </a>
                     </div>
-
-
                 </div>
             {% empty %}
-                There are no instances of this activity planned
+                <div>
+                    There are no instances of this activity planned
+                </div>
             {% endfor %}
+            <a class="btn btn-primary"
+                href="{% url "committees:add_activity_moment" group_id=association_group.id activity_id=activity.id %}">
+                Add activity
+            </a>
         </div>
-
     {% endfor %}
 
 {% endblock %}
