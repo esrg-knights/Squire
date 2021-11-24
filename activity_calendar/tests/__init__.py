@@ -11,3 +11,11 @@ def mock_now(dt=None):
         return timezone.make_aware(dt)
 
     return adjust_now_time
+
+
+def mock_is_organiser(result=True):
+    """ Script that changes the default now time to a preset value """
+    def raise_fake_error(*args):
+        return result
+
+    return raise_fake_error

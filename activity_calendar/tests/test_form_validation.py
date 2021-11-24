@@ -13,7 +13,7 @@ from core.models import ExtendedUser as User
 from core.tests.util import suppress_warnings
 
 from utils.testing import FormValidityMixin
-from . import mock_now
+from . import mock_now, mock_is_organiser
 
 
 class ActivityFormValidationMixin(FormValidityMixin):
@@ -339,6 +339,16 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
         self.activity.save()
         self.user.user_permissions.add(Permission.objects.get(codename='can_ignore_none_slot_creation_type'))
         self.user.save()
+        self.assertFormValid({'sign_up': True, 'title': 'My slot', 'max_participants': -1})
+
+    @patch('activity_calendar.models.Activity.is_organiser', side_effect=mock_is_organiser())
+    @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_slot_mode_organiser_override(self, mock_organiser, mock_tz):
+        """ Tests that form validates when an organiser creates a slot """
+        self.activity.slot_creation = Activity.SLOT_CREATION_STAFF
+        self.activity.save()
+        # self.user.user_permissions.add(Permission.objects.get(codename='can_ignore_none_slot_creation_type'))
+        # self.user.save()
         self.assertFormValid({'sign_up': True, 'title': 'My slot', 'max_participants': -1})
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
