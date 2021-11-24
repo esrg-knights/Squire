@@ -1,82 +1,81 @@
 // Modify the DOM
-$( document ).ready(function() {
-  console.log('hello!')
+$(document).ready(function () {
+    console.log('hello!')
 
-  html = $('body main').html()
+    html = $('body main').html()
     // Replace X with Y
- 
-  html = html.replace('Squire', 'スクワイア')
-  html = html.replace('squire', 'スクワイア')
 
-  html = html.replace('board games', 'ボードゲーム')
-  html = html.replace('boardgames', 'ボードゲーム')
-  html = html.replace('Board games', 'ボードゲーム')
-  html = html.replace('Boardgames', 'ボードゲーム')
-  html = html.replace('board game', 'ボードゲーム')
-  html = html.replace('boardgame', 'ボードゲーム')
-  html = html.replace('boardgame', 'ボードゲーム') //werkt blijkbaar maar 1 instance, maar vaak tenminste 2x nodig, nog fixen. Daarom 2x dit
-  
-  html = html.replace('Activities in the next 7 days', '今後7日間の活動')
+    html = html.replaceAll('Squire', 'スクワイア')
+    html = html.replaceAll('squire', 'スクワイア')
 
-  html = html.replace('board', 'Student Council')
-  html = html.replace('Board', 'Student Council')
-  html = html.replace('Boards', 'Student Council')
+    html = html.replaceAll('board games', 'ボードゲーム')
+    html = html.replaceAll('boardgames', 'ボードゲーム')
+    html = html.replaceAll('Board games', 'ボードゲーム')
+    html = html.replaceAll('Boardgames', 'ボードゲーム')
+    html = html.replaceAll('board game', 'ボードゲーム')
+    html = html.replaceAll('boardgame', 'ボードゲーム')
 
-  html = html.replace('annoying', 'kawaii')
-  html = html.replace('troops', 'oniisan')
+    html = html.replaceAll('Activities in the next 7 days', '今後7日間の活動')
 
-  html = html.replace('Evil?', 'itai? Doshite! ')
-  html = html.replace('Report Bug', 'バグの報告')
-  html = html.replace('Hello','こんにちは')
-  html = html.replace('Achievements', '実績')
-  html = html.replace('Activities', 'アクティビティ')
-  html = html.replace('Boardgames', 'ボードゲーム')
-  html = html.replace('Roleplaying systems','ロールプレイシステム')
-  html = html.replace('Roleplay', 'ロールプレイ')
-  html = html.replace('Committees', '委員会')
-  html - html.replace('Order','オーダー')
-  html = html.replace('Account', 'アカウント')
+    html = html.replaceAll('board', 'Student Council')
+    html = html.replaceAll('Board', 'Student Council')
+    html = html.replaceAll('Boards', 'Student Council')
 
-  html = html.replace('Monday', 'げつようび')
-  html = html.replace('Tuesday', 'かようび')
-  html = html.replace('Wednesday', 'すいようび')
-  html = html.replace('Thursday', 'もくようび')
-  html = html.replace('Friday', 'きんようび')
-  html = html.replace('Saturday', 'どようび')
-  html = html.replace('Sunday', 'にちようび')
+    html = html.replaceAll('annoying', 'kawaii')
+    html = html.replaceAll('troops', 'oniisan')
 
-  html = html.replace('Januari', '一月')
-  html = html.replace('Februari', '二月')
-  html = html.replace('March', '三月')
-  html = html.replace('April', '四月')
-  html = html.replace('May', '五月')
-  html = html.replace('June', '	六月')
-  html = html.replace('July', '七月')
-  html = html.replace('August', '八月')
-  html = html.replace('September', '九月')
-  html = html.replace('October', '十月')
-  html = html.replace('November', '十一月')
-  html = html.replace('December', '十二月')
+    html = html.replaceAll('Evil?', 'itai? Doshite! ')
+    html = html.replaceAll('Report Bug', 'バグの報告')
+    html = html.replaceAll('Hello', 'こんにちは')
+    html = html.replaceAll('Achievements', '実績')
+    html = html.replaceAll('Activities', 'アクティビティ')
+    html = html.replaceAll('Boardgames', 'ボードゲーム')
+    html = html.replaceAll('Roleplaying systems', 'ロールプレイシステム')
+    html = html.replaceAll('Roleplay', 'ロールプレイ')
+    html = html.replaceAll('Committees', '委員会')
+    html - html.replaceAll('Order', 'オーダー')
+    html = html.replaceAll('Account', 'アカウント')
 
-  html = html.replace('00:', '24:')
-  html = html.replace('01:', '25:')
-  html = html.replace('02:', '26:')
-  html = html.replace('03:', '27:')
-  html = html.replace('04:', '28:')
+    html = html.replaceAll('Monday', 'げつようび')
+    html = html.replaceAll('Tuesday', 'かようび')
+    html = html.replaceAll('Wednesday', 'すいようび')
+    html = html.replaceAll('Thursday', 'もくようび')
+    html = html.replaceAll('Friday', 'きんようび')
+    html = html.replaceAll('Saturday', 'どようび')
+    html = html.replaceAll('Sunday', 'にちようび')
 
-  html = html.replace('Sign-ups are closed', 'サインアップクローズ')
-  html = html.replace('Open for sign-ups', 'サインアップオープン')
-  html = html.replace('You are subscribed', 'サブスクライブ')
+    html = html.replaceAll('Januari', '一月')
+    html = html.replaceAll('Februari', '二月')
+    html = html.replaceAll('March', '三月')
+    html = html.replaceAll('April', '四月')
+    html = html.replaceAll('May', '五月')
+    html = html.replaceAll('June', '	六月')
+    html = html.replaceAll('July', '七月')
+    html = html.replaceAll('August', '八月')
+    html = html.replaceAll('September', '九月')
+    html = html.replaceAll('October', '十月')
+    html = html.replaceAll('November', '十一月')
+    html = html.replaceAll('December', '十二月')
 
-  html = html.replace('Go to activity', 'アクティビティに移動')
-  html = html.replace('Register', '書き記す')
-  html - html.replace('Create Slot', 'スロットを作成する')
+    html = html.replaceAll('00:', '24:')
+    html = html.replaceAll('01:', '25:')
+    html = html.replaceAll('02:', '26:')
+    html = html.replaceAll('03:', '27:')
+    html = html.replaceAll('04:', '28:')
 
-  $('body main').html(html)
-  
-  document.getElementById("WelcomeMessage").textContent += "san";
-  console.log("san");
-  
+    html = html.replaceAll('Sign-ups are closed', 'サインアップクローズ')
+    html = html.replaceAll('Open for sign-ups', 'サインアップオープン')
+    html = html.replaceAll('You are subscribed', 'サブスクライブ')
+
+    html = html.replaceAll('Go to activity', 'アクティビティに移動')
+    html = html.replaceAll('Register', '書き記す')
+    html - html.replaceAll('Create Slot', 'スロットを作成する')
+
+    $('body main').html(html)
+
+    document.getElementById("WelcomeMessage").textContent += "san";
+    console.log("san");
+
 })
 
 
