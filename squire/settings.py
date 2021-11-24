@@ -60,10 +60,10 @@ INSTALLED_APPS = [
     # Internal Components
     'core', # Core Module should load first
     'achievements',
-    'activity_calendar',
     'membership_file',
     'inventory',
     'committees',
+    'activity_calendar',
     'utils',
     'boardgames',
     'roleplaying',
@@ -399,12 +399,12 @@ PWA_APP_ICONS = [
     {
         'src': '/static/images/maskable_icon_x512.png',
         'sizes': '512x512',
-        'purpose': 'maskable' 
+        'purpose': 'maskable'
     },
     {
         'src': '/static/images/maskable_icon_x192.png',
         'sizes': '192x192',
-        'purpose': 'maskable' 
+        'purpose': 'maskable'
     }
 ]
 PWA_APP_ICONS_APPLE = [
@@ -419,12 +419,12 @@ PWA_APP_ICONS_APPLE = [
     {
         'src': '/static/images/maskable_icon_x512.png',
         'sizes': '512x512',
-        'purpose': 'maskable' 
+        'purpose': 'maskable'
     },
     {
         'src': '/static/images/maskable_icon_x192.png',
         'sizes': '192x192',
-        'purpose': 'maskable' 
+        'purpose': 'maskable'
     }
 ]
 PWA_APP_SPLASH_SCREEN = [

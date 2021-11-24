@@ -1,0 +1,67 @@
+[
+    {
+        "model": "auth.group",
+        "pk": 41,
+        "fields": {
+            "name": "Activity_hosts"
+        }
+    },
+    {
+        "model": "committees.associationgroup",
+        "pk": 41,
+        "fields": {
+            "site_group": 41,
+            "shorthand": "AH",
+            "type": "C",
+            "contact_email": "ah@test_kotkt.nl"
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 40,
+        "fields": {
+            "password": "pbkdf2_sha25eKF0vuQUz1WFfv3lGvfnJpPvlco=",
+            "last_login": "1970-01-01T12:00:00Z",
+            "username": "activity_host_test_user",
+            "first_name": "",
+            "last_name": "",
+            "email": "",
+            "is_active": true,
+            "date_joined": "1970-01-01T12:00:00Z"
+        }
+    },
+    {
+        "model": "membership_file.member",
+        "pk": 40,
+        "fields": {
+            "user": 40,
+            "is_deregistered": true,
+            "legal_name": "A.H.",
+            "first_name": "Annual",
+            "tussenvoegsel": "",
+            "last_name": "Calenderius",
+            "email": "ahcalenderius@example.com",
+            "member_since": "2020-01-01",
+            "last_updated_date": "1970-01-01T12:00:00Z",
+            "last_updated_by": null,
+            "marked_for_deletion": false
+        }
+    },
+    {
+        "model": "committees.associationgroupmembership",
+        "pk": 44,
+        "fields": {
+            "member": 40,
+            "group": 41
+        }
+    },
+    {
+        "model": "activity_calendar.organiserlink",
+        "pk": 42,
+        "fields": {
+            "activity": 2,
+            "association_group": 41,
+            "archived": false
+        }
+    }
+]

@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from django.views.decorators.http import require_safe
 from django.views.generic import TemplateView, ListView
@@ -95,6 +95,9 @@ class ActivityMixin:
 
         return kwargs
 
+    def can_edit_activity(self):
+        return self.activity.is_organiser(self.request.user)
+
     def show_participants(self):
         """ Returns whether to show participant names """
         now = timezone.now()
@@ -159,7 +162,11 @@ class ActivityFormMixin:
 
 
 class ActivityMomentView(ActivityMixin, ActivityFormMixin, TemplateView):
-    pass
+    def get_context_data(self, **kwargs):
+        return super(ActivityMomentView, self).get_context_data(
+            can_edit_activity=self.can_edit_activity(),
+            **kwargs
+        )
 
 
 class ActivitySimpleMomentView(LoginRequiredForPostMixin, FormMixin, ActivityMomentView):
@@ -266,7 +273,8 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
                 activity_moment=self.activity_moment,
             )
         elif self.activity_moment.slot_creation == Activity.SLOT_CREATION_STAFF and \
-                self.request.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type'):
+            (self.request.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type') or\
+            self.can_edit_activity()):
             # In a none based slot mode, don't automatically register the creator to the slot
             new_slot_form = RegisterNewSlotForm(
                 initial={
@@ -401,10 +409,12 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
 # #######################################
 
 
-class EditActivityMomentView(LoginRequiredMixin, PermissionRequiredMixin, ActivityMixin, FormView):
+class EditActivityMomentView(LoginRequiredMixin, ActivityMixin, UserPassesTestMixin, FormView):
     form_class = ActivityMomentForm
     template_name = "activity_calendar/activity_moment_form_page.html"
-    permission_required = ('activity_calendar.change_activitymoment',)
+
+    def get_test_func(self):
+        return self.can_edit_activity
 
     def get_form_kwargs(self):
         kwargs = super(EditActivityMomentView, self).get_form_kwargs()

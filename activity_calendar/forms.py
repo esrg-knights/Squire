@@ -277,8 +277,9 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
         # Is user allowed to create a slot
         if self.activity_moment.slot_creation == Activity.SLOT_CREATION_USER:
             pass
-        elif self.activity_moment.slot_creation == Activity.SLOT_CREATION_STAFF \
-                and self.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type'):
+        elif self.activity_moment.slot_creation == Activity.SLOT_CREATION_STAFF and\
+            (self.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type') or
+             self.activity.is_organiser(self.user)):
             pass
         else:
             raise ValidationError(

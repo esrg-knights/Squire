@@ -17,6 +17,7 @@ from recurrence.fields import RecurrenceField
 import activity_calendar.util as util
 from core.models import ExtendedUser as User, PresetImage
 from core.fields import MarkdownTextField
+from committees.utils import user_in_association_group
 
 #############################################################################
 # Models related to the Calendar-functionality of the application.
@@ -50,6 +51,7 @@ class Activity(models.Model):
 
     # The User that created the activity
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
+    organisers = models.ManyToManyField('committees.AssociationGroup', through='OrganiserLink')
 
     # General information
     title = models.CharField(max_length=255)
@@ -439,6 +441,11 @@ class Activity(models.Model):
             'recurrence_id': recurrence_id
         })
 
+    def is_organiser(self, user):
+        for association_group in self.organisers.all():
+            if user_in_association_group(user, association_group):
+                return True
+        return False
 
 class ActivityDuplicate(ModelBase):
     """
@@ -731,3 +738,9 @@ class Participant(models.Model):
             return self.guest_name + ' (ext)'
         else:
             return self.user.get_display_name()
+
+
+class OrganiserLink(models.Model):
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+    association_group = models.ForeignKey('committees.AssociationGroup', on_delete=models.CASCADE)
+    archived = models.BooleanField(default=False)
