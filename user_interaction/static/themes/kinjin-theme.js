@@ -1,8 +1,6 @@
 // Modify the DOM
 $( document ).ready(function() {
   console.log('hello!')
-  document.getElementById("WelcomeMessage").textContent += "san";
-  console.log("san");
 
   html = $('body main').html()
     // Replace X with Y
@@ -75,6 +73,9 @@ $( document ).ready(function() {
   html - html.replace('Create Slot', 'スロットを作成する')
 
   $('body main').html(html)
+  
+  document.getElementById("WelcomeMessage").textContent += "san";
+  console.log("san");
   
 })
 
