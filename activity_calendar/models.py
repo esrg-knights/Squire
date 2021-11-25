@@ -1,8 +1,11 @@
 import copy
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
+User = get_user_model()
 from django.contrib.contenttypes.fields import GenericRelation
-from django.core.validators import MinValueValidator, ValidationError
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.db.models.base import ModelBase
@@ -15,9 +18,7 @@ from recurrence.fields import RecurrenceField
 import activity_calendar.util as util
 from core.models import PresetImage
 from core.fields import MarkdownTextField
-
-from django.contrib.auth import get_user_model
-User = get_user_model()
+from user_interaction.models import PinnableMixin
 
 #############################################################################
 # Models related to the Calendar-functionality of the application.
@@ -411,7 +412,7 @@ class ActivityDuplicate(ModelBase):
         return get_activity_attribute
 
 
-class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
+class ActivityMoment(PinnableMixin, models.Model, metaclass=ActivityDuplicate):
     parent_activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
     recurrence_id = models.DateTimeField(verbose_name="parent activity date/time")
 
@@ -531,6 +532,31 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
             'activity_id': self.parent_activity_id,
             'recurrence_id': self.recurrence_id,
         })
+
+    ################################
+    # Pin Info
+    pin_title_field = "title"
+    pin_image = "slots_image"
+    pin_expiry_field = "end_date"
+
+    def get_pin_description(self):
+        # Pin description also contains the location
+        return self.location + self.description.as_plaintext()
+
+    def get_pin_url(self):
+        return self.get_absolute_url()
+
+    def get_pin_publish_date(self):
+        return self.parent_activity.published_date
+
+    def is_pin_valid(self, pin):
+        # TODO: Actually call this method in the Pin's clean method + add it to PinnableMixin
+        if pin.publish_date is not None and pin.publish_date > self.parent_activity.published_date:
+            return ValidationError("Pin cannot be published before the activity")
+
+    # End Pinfo
+    ################################
+
 
     def __str__(self):
         return f"{self.title} @ {self.start_date}"

@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
+from django.template.loader import render_to_string
 from django.utils import timezone
 
 from core.models import PresetImage
@@ -22,16 +23,10 @@ def valid_pinnable_models():
     """ Returns a dictionary consisting of ContentTypes whose corresponding model instances can be pinned. """
     valid_ids = []
     for content_type in ContentType.objects.all():
-        if isinstance(content_type.model_class(), PinnableMixin):
+        if issubclass(content_type.model_class(), PinnableMixin):
             valid_ids.append(content_type.id)
     return {'id__in': valid_ids}
 
-# def validate_is_pinnable(contenttype: ContentType):
-#     """ Validates that a given ContentType inherits from PinnableMixin """
-#     if contenttype is None:
-#         return
-#     if not isinstance(contenttype.model_class(), PinnableMixin):
-#         raise ValidationError(f"{contenttype.model_class()._meta.verbose_name_plural} are not pinnable.")
 
 class PinnableMixin:
     """ TODO """
@@ -73,8 +68,60 @@ class PinnableMixin:
         return getattr(self, self.pin_expiry_field, None)
 
 class PinManager(models.Manager):
-    def for_user(self, user):
-        pass
+    def for_user(self, user, queryset=None):
+        """ Return a queryset consisting of Pins visible to the given user. """
+        assert user is not None
+        now = timezone.now()
+
+        if queryset is None:
+            queryset = Pin.objects.all()
+
+        # Users cannot see unpublished pins
+        queryset = queryset.exclude(local_publish_date__isnull=True, object_id__isnull=True)
+
+        # Is the user unable to view not-yet-published pins?
+        if not user.has_perm('user_interaction.can_view_future_pins'):
+            # Must not have a future publish date
+            queryset = queryset.exclude(local_publish_date__gt=now)
+
+        # Is the user unable to view expired pins?
+        if not user.has_perm('user_interaction.can_view_expired_pins'):
+            # Must not have passed its expiration date
+            queryset = queryset.exclude(local_expiry_date__lte=now)
+
+        # Is the user unable to view member-only pins?
+        if not user.has_perm('user_interaction.can_view_members_only_pins'):
+            queryset = queryset.exclude(is_members_only=True)
+
+        # Handle auto-copying from PinnableMixin (local values have priority)
+        invalid_ids = []
+        current_queryset = queryset.all() # Copy the queryset
+        for pin in current_queryset.filter(object_id__isnull=False):
+            # Repeat the same checks as above; we cannot query this from the database
+            if pin.can_view_pin(user):
+                invalid_ids.append(pin.id)
+            # Unpublished
+            # if pin.local_publish_date is None and pin.content_object.get_pin_publish_date() is None:
+            #     invalid_ids.append(pin.id)
+            #     continue
+
+            # # Is the user unable to view not-yet-published pins?
+            # if not user.has_perm('user_interaction.can_view_future_pins') and not pin.is_published():
+            #     invalid_ids.append(pin.id)
+            #     continue
+
+            # # Is the user unable to view expired pins?
+            # if not user.has_perm('user_interaction.can_view_expired_pins') and pin.is_expired():
+            #     invalid_ids.append(pin.id)
+            #     continue
+
+            # # Is the user unable to view member-only pins?
+            # if not user.has_perm('user_interaction.can_view_members_only_pins') and pin.is_members_only:
+            #     invalid_ids.append(pin.id)
+            #     continue
+
+        queryset = queryset.exclude(id__in=invalid_ids)
+        return queryset
 
 class Pin(models.Model):
     """
@@ -83,6 +130,8 @@ class Pin(models.Model):
     methods) of that model instance unless a local value overrides it.
     """
     objects = PinManager()
+    default_pin_template = PinnableMixin.pin_template
+
     class Meta:
         ordering = ['-local_publish_date']
 
@@ -115,13 +164,52 @@ class Pin(models.Model):
     object_id = models.PositiveIntegerField(blank=True, null=True)
     content_object = GenericForeignKey('content_type', 'object_id')
 
+    @property
+    def title(self):
+        if self.local_title is None and self.content_object is not None:
+            # No local title, so fetch related model title
+            return self.content_object.get_pin_title()
+        return self.local_title
+
+    @property
+    def description(self):
+        if self.local_description is None and self.content_object is not None:
+            return self.content_object.get_pin_description()
+        return self.local_description
+
+    @property
+    def url(self):
+        if self.local_url is None and self.content_object is not None:
+            return self.content_object.get_pin_url()
+        return self.local_url
+
+    @property
+    def image(self):
+        if self.local_image is None and self.content_object is not None:
+            return self.content_object.get_pin_image()
+        return self.local_image or f"{settings.STATIC_URL}images/default_logo.png"
+
+    @property
+    def publish_date(self):
+        if self.local_publish_date is None and self.content_object is not None:
+            return self.content_object.get_pin_publish_date()
+        return self.local_publish_date
+
+    @property
+    def expiry_date(self):
+        if self.local_expiry_date is None and self.content_object is not None:
+            return self.content_object.get_pin_expiry_date()
+        return self.local_expiry_date
+
     def is_published(self):
         """ Whether this pin is published """
-        return self.publish_date is not None and self.publish_date <= timezone.now()
+        publish_date = self.publish_date
+        return publish_date is not None and publish_date <= timezone.now()
 
     def is_expired(self):
         """ Whether this pin has expired """
-        return self.expiry_date is not None and self.expiry_date <= timezone.now()
+        expiry_date = self.expiry_date
+        return expiry_date is not None and expiry_date <= timezone.now()
 
     def can_view_pin(self, user):
         """ Whether the given user can see this pin """
@@ -138,7 +226,7 @@ class Pin(models.Model):
             required_perms.append('user_interaction.can_view_members_only_pins')
 
         if self.content_object is not None:
-            required_perms = required_perms + self.content_object.pin_view_permissions
+            required_perms = required_perms + list(self.content_object.pin_view_permissions)
 
         return user.has_perms(required_perms)
 
@@ -155,11 +243,24 @@ class Pin(models.Model):
                 })
 
     def clean(self):
+        super().clean()
         if self.publish_date is not None and self.expiry_date is not None:
             if self.publish_date > self.expiry_date:
                 raise ValidationError({
                     'publish_date': ValidationError("The pin cannot be published after it expires", code='invalid_duration')
                 })
+
+    def get_pin_template(self):
+        """ Gets the template used by this pin """
+        if self.content_object is not None:
+            return self.content_object.pin_template
+        return self.default_pin_template
+
+    def render(self):
+        """ Renders this pin as HTML """
+        return render_to_string(self.get_pin_template(), {
+            'pin': self
+        })
 
     def __str__(self):
         return f"Pin {self.id} - {self.local_title} ({self.content_object})"

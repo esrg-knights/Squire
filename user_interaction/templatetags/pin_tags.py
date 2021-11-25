@@ -1,7 +1,7 @@
 from django import template
+from django.utils.safestring import mark_safe
 
 from user_interaction.models import Pin
-from user_interaction.pintypes import PINTYPES
 
 register = template.Library()
 
@@ -11,17 +11,13 @@ register = template.Library()
 # @since 25 NOV 2021
 ##################################################################################
 
-@register.inclusion_tag("user_interaction/snippets/user_pins.html", takes_context=True)
+@register.simple_tag(takes_context=True)
 def render_pins(context):
     """ TODO """
-    pins = []
-    queryset = Pin.objects.for_user(context.request.user)
-    for pin in queryset:
-        pintype = PINTYPES[pin.pintype](pin)
-        pins.append(pintype)
-    return {
-        'pins': pins
-    }
+    pin_html = []
+    for pin in Pin.objects.for_user(context.request.user):
+        pin_html.append(pin.render())
+    return mark_safe("\n".join(pin_html))
 
 
 
