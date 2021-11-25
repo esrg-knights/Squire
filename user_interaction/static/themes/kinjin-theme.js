@@ -124,9 +124,10 @@ $(document).ready(function () {
 
     let html = $('body main').html();
 
-    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*swords\.png\);/gmui, "background-image: url(/static/themes/images/kinjin/soa.png);")
-    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*external-content\.duckduckgo\.com\.jpg\);/gmui, "background-image: url(/static/themes/images/kinjin/kfc.png);") //christmas=kfc
+    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*swords\.png\);/gmui, "background-image: url(/static/themes/images/kinjin/soa.jpg);")
+    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*external-content\.duckduckgo\.com\.jpg\);/gmui, "background-image: url(/static/themes/images/kinjin/kfc.jpg);") //christmas=kfc
     html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*bgs\.png\);/gmui, "background-image: url(/static/themes/images/kinjin/no-game-no-life.jpg);")
+    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*header_logo\.png\);/gmui, "background-image: url(/static/themes/images/kinjin/KinjinSpoof.png);")
 
     //This might break some javascript
     $('body main').html(html);
