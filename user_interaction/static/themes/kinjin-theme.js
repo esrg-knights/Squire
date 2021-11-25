@@ -9,7 +9,7 @@
  * @copyright https://stackoverflow.com/a/50537862/4633439
  */
 function replaceInText(element, pattern, replacement) {
-    for (let node of Array.from(element.childNodes)) {
+    for (let node of Array.from(element.childNodes)) { //Array.from cause complicated browser issues
         switch (node.nodeType) {
             case Node.ELEMENT_NODE:
                 replaceInText(node, pattern, replacement);
@@ -19,13 +19,21 @@ function replaceInText(element, pattern, replacement) {
                 break;
             case Node.DOCUMENT_NODE:
                 replaceInText(node, pattern, replacement);
+                break;
+            case Node.COMMENT_NODE:
+                break;
+            default:
+                console.debug(`node type not handled (${node.nodeType})`)
         }
     }
 }
+const currentDirectoryThemes = "/static/themes/";
 
 // Modify the DOM
 $(document).ready(function () {
     console.debug('hello!')
+
+    //Array.from(document.getElementsByClassName("knights-logo-img")).forEach((e) => e.src = "/static/themes/images/kinjin/KinjinSpoof.png");
 
     const textReplaceFn = replaceInText.bind(null, document.body);
 
@@ -35,13 +43,13 @@ $(document).ready(function () {
     textReplaceFn('squire', 'スクワイア')
 
     textReplaceFn(/board\s*games?/muig, 'ボードゲーム');
+    textReplaceFn(/Evening/muig, '夕');
     textReplaceFn(/Sword\s*fighting/muig, '侍');
+    textReplaceFn(/training/muig, '訓練');
 
     textReplaceFn('Activities in the next 7 days', '今後7日間の活動')
 
-    textReplaceFn('board', 'Student Council')
-    textReplaceFn('Board', 'Student Council')
-    textReplaceFn('Boards', 'Student Council')
+    textReplaceFn(/boards?/muig, 'Student Council')
 
     textReplaceFn('annoying', 'kawaii')
     textReplaceFn('troops', 'oniisan')
@@ -51,10 +59,10 @@ $(document).ready(function () {
     textReplaceFn('Hello', 'こんにちは')
     textReplaceFn('Achievements', '実績')
     textReplaceFn('Activities', 'アクティビティ')
-    textReplaceFn('Boardgames', 'ボードゲーム')
     textReplaceFn('Roleplaying systems', 'ロールプレイシステム')
-    textReplaceFn('Roleplay', 'ロールプレイ')
+    textReplaceFn(/Roleplay(-?ing)?/muig, 'ロールプレイ')
     textReplaceFn('Committees', '委員会')
+    textReplaceFn(/newsletters?/muig, 'ニューズレター')
     textReplaceFn('Order', 'オーダー')
     textReplaceFn('Account', 'アカウント')
 
@@ -66,6 +74,9 @@ $(document).ready(function () {
 
     textReplaceFn('Contact', 'コンタクト')
     textReplaceFn('contact', 'コンタクト')
+
+    textReplaceFn(/Luna/muig, 'ルーナー');
+    textReplaceFn(/living\s+room/muig, '居間');
 
     textReplaceFn('Monday', 'げつようび')
     textReplaceFn('Tuesday', 'かようび')
@@ -105,9 +116,9 @@ $(document).ready(function () {
 
     let html = $('body main').html();
 
-    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*swords\.png\);/gmui, "background-image: url(./images/kinjin/soa.png);")
-    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*external-content\.duckduckgo\.com\.jpg\);/gmui, "background-image: url(./images/kinjin/kfc.png);") //christmas=kfc
-    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*bgs\.png\);/gmui, "background-image: url(./images/kinjin/no-game-no-life.png);")
+    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*swords\.png\);/gmui, "background-image: url(/static/themes/images/kinjin/soa.png);")
+    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*external-content\.duckduckgo\.com\.jpg\);/gmui, "background-image: url(/static/themes/images/kinjin/kfc.png);") //christmas=kfc
+    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*bgs\.png\);/gmui, "background-image: url(/static/themes/images/kinjin/no-game-no-life.jpg);")
 
     //This might break some javascript
     $('body main').html(html);
@@ -115,5 +126,34 @@ $(document).ready(function () {
     if (document.getElementById("WelcomeMessage")) //Saw no better way to do it.
         document.getElementById("WelcomeMessage").textContent += "san";
     console.debug("san");
-
 })
+
+{
+    Array.from(document.head.querySelectorAll("link[rel*=icon]")).forEach((e) => e.outerHTML = "");
+    const faviconDirectory = currentDirectoryThemes + "/images/kinjin/";
+    const faviconLocationPNG = faviconDirectory + "KinjinSpoof-favicon.png"
+    //const faviconLocationICO = faviconDirectory + "KinjinSpoof-favicon.ico"
+    //const appleIconLocation = faviconDirectory + "apple-touch-icon.png";
+    const favicon = document.createElement("link");
+    favicon.rel = "icon";
+    favicon.href = faviconLocationPNG;
+
+    /*
+    const favicon32 = document.createElement("link");
+    favicon32.href = faviconDirectory + "favicon-32x32.png";
+    favicon32.sizes = "32x32";
+    favicon32.rel = "icon";
+
+    const favicon16 = document.createElement("link");
+    favicon16.href = faviconDirectory + "favicon-16x16.png";
+    favicon16.sizes = "16x16";
+    favicon16.rel = "icon";
+    */
+
+    const appleIcon = document.createElement("link");
+    appleIcon.rel = "apple-touch-icon";
+    //appleIcon.sizes = "180x180";
+    appleIcon.href = faviconLocationPNG;
+
+    [favicon, appleIcon].forEach((e) => document.head.appendChild(e));
+}

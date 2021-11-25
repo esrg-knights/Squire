@@ -12,6 +12,7 @@ body {
     visibility: visible;
     content: url(./images/kinjin/KinjinSpoofH70px.png);
     width: 69px;
+    background-size: 69px;
 }
 /* hide "Squire" */
 .brand-text {
