@@ -14,23 +14,22 @@ body {
     width: 69px;
     background-size: 69px;
 }
-/* hide "Squire" */
+/* make "Squire" a bit bigger */
 .brand-text {
-    visibility: hidden;
-    font-size: 0px;
-}
-/* Add Squire but now in Japanese */
-.brand-text::before {
-    content: "スクワイア";
     visibility: visible;
     font-size: 30px;
 }
 
 /* play with items in nav bar */
 .nav-link {
-    /* visibility: hidden;
-    font-size: 0px; */
     color: #bd0029;
+    font-size: 20px; /* Makes it a little bit better clickable because smaller text size sometimes */
+}
+
+.btn-success {
+    color: #fff;
+    background-color: #bd0029;
+    border-color: #bd0029;
 }
 
 /* Define main colour scheme */
@@ -59,6 +58,7 @@ body {
     /* Colors for greenified elements (e.g. buttons) */
     --greenify-bg-color: #c5ab45;
     --greenify-text-color: white;
+    --greenify-bg-hover: #bd0029;
 
     /* Colors for darker greenified elements (e.g. navbar, card images) */
     --greenify-dark-bg-color: #bc002d;

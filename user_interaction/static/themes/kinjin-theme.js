@@ -54,7 +54,7 @@ $(document).ready(function () {
     textReplaceFn('annoying', 'kawaii')
     textReplaceFn('troops', 'oniisan')
 
-    textReplaceFn('Evil?', 'itai? Doshite! ')
+    textReplaceFn('Evil?', 'バグ? Doshite! ')
     textReplaceFn('Report Bug', 'バグの報告')
     textReplaceFn('Hello', 'こんにちは')
     textReplaceFn('Achievements', '実績')
@@ -63,8 +63,13 @@ $(document).ready(function () {
     textReplaceFn(/Roleplay(-?ing)?/muig, 'ロールプレイ')
     textReplaceFn('Committees', '委員会')
     textReplaceFn(/newsletters?/muig, 'ニューズレター')
+    textReplaceFn('roleplaying systems', 'ロールプレイシステム')
+    textReplaceFn('Orders', 'オーダー')
     textReplaceFn('Order', 'オーダー')
     textReplaceFn('Account', 'アカウント')
+    textReplaceFn('Association', 'アソシエーション')
+    textReplaceFn('association', 'アソシエーション')
+
 
     textReplaceFn('Membership', 'メンバーシップ')
     textReplaceFn('membership', 'メンバーシップ')
@@ -77,6 +82,8 @@ $(document).ready(function () {
 
     textReplaceFn(/Luna/muig, 'ルーナー');
     textReplaceFn(/living\s+room/muig, '居間');
+    textReplaceFn('Calendar', 'カレンダー')
+    textReplaceFn('calendar', 'カレンダー')
 
     textReplaceFn('Monday', 'げつようび')
     textReplaceFn('Tuesday', 'かようび')
