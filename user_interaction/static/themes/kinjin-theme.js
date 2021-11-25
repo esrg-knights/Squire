@@ -62,6 +62,7 @@ $(document).ready(function () {
     textReplaceFn('Roleplaying systems', 'ロールプレイシステム')
     textReplaceFn(/Roleplay(-?ing)?/muig, 'ロールプレイ')
     textReplaceFn('Committees', '委員会')
+    textReplaceFn('Committee', '委員会')
     textReplaceFn(/newsletters?/muig, 'ニューズレター')
     textReplaceFn('roleplaying systems', 'ロールプレイシステム')
     textReplaceFn('Orders', 'オーダー')
