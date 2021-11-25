@@ -1,90 +1,119 @@
+"use strict";
+
+/** A better replace text function
+ *
+ * @param {Node} element
+ * @param {RegExp|string} pattern
+ * @param {string} replacement
+ *
+ * @copyright https://stackoverflow.com/a/50537862/4633439
+ */
+function replaceInText(element, pattern, replacement) {
+    for (let node of Array.from(element.childNodes)) {
+        switch (node.nodeType) {
+            case Node.ELEMENT_NODE:
+                replaceInText(node, pattern, replacement);
+                break;
+            case Node.TEXT_NODE:
+                node.textContent = node.textContent.replace(pattern, replacement);
+                break;
+            case Node.DOCUMENT_NODE:
+                replaceInText(node, pattern, replacement);
+        }
+    }
+}
+
 // Modify the DOM
 $(document).ready(function () {
-    console.log('hello!')
+    console.debug('hello!')
 
-    html = $('body main').html()
+    const textReplaceFn = replaceInText.bind(null, document.body);
+
     // Replace X with Y
 
-    html = html.replaceAll('Squire', 'スクワイア')
-    html = html.replaceAll('squire', 'スクワイア')
+    textReplaceFn('Squire', 'スクワイア')
+    textReplaceFn('squire', 'スクワイア')
 
-    html = html.replaceAll('board games', 'ボードゲーム')
-    html = html.replaceAll('boardgames', 'ボードゲーム')
-    html = html.replaceAll('Board games', 'ボードゲーム')
-    html = html.replaceAll('Boardgames', 'ボードゲーム')
-    html = html.replaceAll('board game', 'ボードゲーム')
-    html = html.replaceAll('boardgame', 'ボードゲーム')
+    textReplaceFn(/board\s*games?/muig, 'ボードゲーム');
+    textReplaceFn(/Sword\s*fighting/muig, '侍');
 
-    html = html.replaceAll('Activities in the next 7 days', '今後7日間の活動')
+    textReplaceFn('Activities in the next 7 days', '今後7日間の活動')
 
-    html = html.replaceAll('board', 'Student Council')
-    html = html.replaceAll('Board', 'Student Council')
-    html = html.replaceAll('Boards', 'Student Council')
+    textReplaceFn('board', 'Student Council')
+    textReplaceFn('Board', 'Student Council')
+    textReplaceFn('Boards', 'Student Council')
 
-    html = html.replaceAll('annoying', 'kawaii')
-    html = html.replaceAll('troops', 'oniisan')
+    textReplaceFn('annoying', 'kawaii')
+    textReplaceFn('troops', 'oniisan')
 
-    html = html.replaceAll('Evil?', 'itai? Doshite! ')
-    html = html.replaceAll('Report Bug', 'バグの報告')
-    html = html.replaceAll('Hello', 'こんにちは')
-    html = html.replaceAll('Achievements', '実績')
-    html = html.replaceAll('Activities', 'アクティビティ')
-    html = html.replaceAll('Boardgames', 'ボードゲーム')
-    html = html.replaceAll('Roleplaying systems', 'ロールプレイシステム')
-    html = html.replaceAll('Roleplay', 'ロールプレイ')
-    html = html.replaceAll('Committees', '委員会')
-    html - html.replaceAll('Order', 'オーダー')
-    html = html.replaceAll('Account', 'アカウント')
+    textReplaceFn('Evil?', 'itai? Doshite! ')
+    textReplaceFn('Report Bug', 'バグの報告')
+    textReplaceFn('Hello', 'こんにちは')
+    textReplaceFn('Achievements', '実績')
+    textReplaceFn('Activities', 'アクティビティ')
+    textReplaceFn('Boardgames', 'ボードゲーム')
+    textReplaceFn('Roleplaying systems', 'ロールプレイシステム')
+    textReplaceFn('Roleplay', 'ロールプレイ')
+    textReplaceFn('Committees', '委員会')
+    textReplaceFn('Order', 'オーダー')
+    textReplaceFn('Account', 'アカウント')
 
-    html = html.replaceAll('Membership', 'メンバーシップ')
-    html = html.replaceAll('membership', 'メンバーシップ')
+    textReplaceFn('Membership', 'メンバーシップ')
+    textReplaceFn('membership', 'メンバーシップ')
 
-    html = html.replaceAll('Address', 'アドレス')
-    html = html.replaceAll('address', 'アドレス')
+    textReplaceFn('Address', 'アドレス')
+    textReplaceFn('address', 'アドレス')
 
-    html = html.replaceAll('Contact', 'コンタクト')
-    html = html.replaceAll('contact', 'コンタクト')
+    textReplaceFn('Contact', 'コンタクト')
+    textReplaceFn('contact', 'コンタクト')
 
-    html = html.replaceAll('Monday', 'げつようび')
-    html = html.replaceAll('Tuesday', 'かようび')
-    html = html.replaceAll('Wednesday', 'すいようび')
-    html = html.replaceAll('Thursday', 'もくようび')
-    html = html.replaceAll('Friday', 'きんようび')
-    html = html.replaceAll('Saturday', 'どようび')
-    html = html.replaceAll('Sunday', 'にちようび')
+    textReplaceFn('Monday', 'げつようび')
+    textReplaceFn('Tuesday', 'かようび')
+    textReplaceFn('Wednesday', 'すいようび')
+    textReplaceFn('Thursday', 'もくようび')
+    textReplaceFn('Friday', 'きんようび')
+    textReplaceFn('Saturday', 'どようび')
+    textReplaceFn('Sunday', 'にちようび')
 
-    html = html.replaceAll('Januari', '一月')
-    html = html.replaceAll('Februari', '二月')
-    html = html.replaceAll('March', '三月')
-    html = html.replaceAll('April', '四月')
-    html = html.replaceAll('May', '五月')
-    html = html.replaceAll('June', '	六月')
-    html = html.replaceAll('July', '七月')
-    html = html.replaceAll('August', '八月')
-    html = html.replaceAll('September', '九月')
-    html = html.replaceAll('October', '十月')
-    html = html.replaceAll('November', '十一月')
-    html = html.replaceAll('December', '十二月')
+    textReplaceFn('Januari', '一月')
+    textReplaceFn('Februari', '二月')
+    textReplaceFn('March', '三月')
+    textReplaceFn('April', '四月')
+    textReplaceFn('May', '五月')
+    textReplaceFn('June', '	六月')
+    textReplaceFn('July', '七月')
+    textReplaceFn('August', '八月')
+    textReplaceFn('September', '九月')
+    textReplaceFn('October', '十月')
+    textReplaceFn('November', '十一月')
+    textReplaceFn('December', '十二月')
 
-    html = html.replaceAll('00:', '24:')
-    html = html.replaceAll('01:', '25:')
-    html = html.replaceAll('02:', '26:')
-    html = html.replaceAll('03:', '27:')
-    html = html.replaceAll('04:', '28:')
+    textReplaceFn('00:', '24:')
+    textReplaceFn('01:', '25:')
+    textReplaceFn('02:', '26:')
+    textReplaceFn('03:', '27:')
+    textReplaceFn('04:', '28:')
 
-    html = html.replaceAll('Sign-ups are closed', 'サインアップクローズ')
-    html = html.replaceAll('Open for sign-ups', 'サインアップオープン')
-    html = html.replaceAll('You are subscribed', 'サブスクライブ')
+    textReplaceFn('Sign-ups are closed', 'サインアップクローズ')
+    textReplaceFn('Open for sign-ups', 'サインアップオープン')
+    textReplaceFn('You are subscribed', 'サブスクライブ')
 
-    html = html.replaceAll('Go to activity', 'アクティビティに移動')
-    html = html.replaceAll('Register', '書き記す')
-    html - html.replaceAll('Create Slot', 'スロットを作成する')
+    textReplaceFn('Go to activity', 'アクティビティに移動')
+    textReplaceFn('Register', '書き記す')
+    textReplaceFn('Create Slot', 'スロットを作成する')
 
-    $('body main').html(html)
 
-    document.getElementById("WelcomeMessage").textContent += "san";
-    console.log("san");
+    let html = $('body main').html();
+
+    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*swords\.png\);/gmui, "background-image: url(./images/kinjin/soa.png);")
+    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*external-content\.duckduckgo\.com\.jpg\);/gmui, "background-image: url(./images/kinjin/kfc.png);") //christmas=kfc
+    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*bgs\.png\);/gmui, "background-image: url(./images/kinjin/no-game-no-life.png);")
+
+    //This might break some javascript
+    $('body main').html(html);
+
+    if (document.getElementById("WelcomeMessage")) //Saw no better way to do it.
+        document.getElementById("WelcomeMessage").textContent += "san";
+    console.debug("san");
 
 })
-
-
