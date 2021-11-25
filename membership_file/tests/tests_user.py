@@ -189,12 +189,17 @@ class MemberfileViewTest(TestCase):
     def test_no_member_page(self):
         check_http_response(self, '/no_member', 'get', TestPublicUser)
 
-    # Tests if members can view their info, and if non-members are redirected
+    # Both members and non-members can view their membership info
     def test_member_view_info_page(self):
-        check_http_response_with_member_redirect(self, '/account/membership', 'get', permissions=[
+        res = check_http_response(self, '/account/membership', 'get', TestAccountUser, permissions={
             'membership_file.can_view_membership_information_self',
-            'membership_file.can_change_membership_information_self',
-        ])
+        })
+        self.assertContains(res, "You are not a Knights Member")
+
+        res = check_http_response(self, '/account/membership', 'get', TestMemberUser, permissions={
+            'membership_file.can_view_membership_information_self',
+        })
+        self.assertContains(res, "You are a Knights Member")
 
     # Tests if members can access their edit info page, and if non-members are redirected
     def test_member_edit_info_page(self):

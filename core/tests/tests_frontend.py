@@ -4,8 +4,10 @@ from django.urls.base import reverse
 from dynamic_preferences.registries import global_preferences_registry
 
 from core.forms import LoginForm, RegisterForm
-from core.models import ExtendedUser as User
 from core.tests.util import check_http_response, TestPublicUser, TestAccountUser, suppress_warnings
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 ##################################################################################
 # Test cases for core

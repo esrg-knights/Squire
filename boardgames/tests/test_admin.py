@@ -1,15 +1,27 @@
+from django.contrib.admin.sites import AdminSite
 from django.test import TestCase
 from django.urls import reverse
+from achievements.admin import AchievementItemInline
 
 from utils.testing.view_test_utils import ViewValidityMixin
 
 from boardgames.models import BoardGame
-from boardgames.admin import BoardGameAdmin
+from boardgames.admin import BoardgameAdmin, ItemAdmin
+
+class DummyBoardgameAdmin(BoardgameAdmin):
+    """ Removes AchievementItemLine from BoardgameAdmin for testing purposes """
+    def __init__(self, *args, **kwargs):
+        self.inlines.remove(AchievementItemInline)
+        super().__init__(*args, **kwargs)
 
 # Tests for the Admin Panel
-class BoardgameAdminTest(ViewValidityMixin, TestCase):
+class ItemAdminTest(ViewValidityMixin, TestCase):
     fixtures = ['test_users.json', 'test_groups', 'test_members.json', 'boardgames/boardgames']
     base_user_id = 1
+
+    @classmethod
+    def setUpTestData(self):
+        self.model_admin = DummyBoardgameAdmin(model=BoardGame, admin_site=AdminSite())
 
     # Tests whether we can reach the activity page in the admin panel
     def test_list_page(self):
@@ -31,7 +43,7 @@ class BoardgameAdminTest(ViewValidityMixin, TestCase):
         """ Tests the overwritten is_valid in BaseGenericTweakedInlineFormSet """
         post_data = {
             # General inline admin data (required for django formsets to work)
-            'inventory-ownership-content_type-object_id-TOTAL_FORMS': ['1'],
+            'inventory-ownership-content_type-object_id-TOTAL_FORMS': ['0'],
             'inventory-ownership-content_type-object_id-INITIAL_FORMS': ['0'],
 
             # Boardgame data
@@ -50,4 +62,4 @@ class BoardgameAdminTest(ViewValidityMixin, TestCase):
 
     def test_admin_current_possession_count_method(self):
         obj = BoardGame.objects.get(id=1)
-        self.assertEqual(2, BoardGameAdmin.current_possession_count(obj))
+        self.assertEqual(2, ItemAdmin.current_possession_count(obj))

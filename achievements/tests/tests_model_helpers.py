@@ -1,8 +1,9 @@
 from django.test import TestCase
 
-from achievements.models import (Achievement, Category, Claimant,
-    get_or_create_default_category, get_achievement_image_upload_path)
-from core.models import ExtendedUser as User
+from achievements.models import (Achievement, Category, Claimant, get_achievement_image_upload_path)
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 ##################################################################################
 # Test the Member model's helper methods
@@ -29,7 +30,7 @@ class AchievementModelHelpersTest(TestCase):
     # Tests the display method of a Claimant
     def test_claimant_display(self):
         claimant = Claimant(achievement=self.achievement, user=User.objects.filter(username="test_user").first())
-        self.assertEqual(str(claimant), "Wow unlocked by test_user")
+        self.assertEqual(str(claimant), "Claimant None (Achievement 4, User 2)")
 
     # Tests if the achievement images are uploaded to the correct location
     def test_image_upload_path(self):

@@ -3,7 +3,7 @@
 
 
     <div class="card">
-        <div class="card-img-top greenify" style='height: 10rem;
+        <div class="card-img-top greenify-dark" style='height: 10rem;
             {% if activity_moment.promotion_image %}
                 background-image: url({{ activity_moment.promotion_image.url }});
                 background-size: cover;
@@ -27,6 +27,7 @@
                         <img
                             src="{% static 'octicons/location.svg' %}"
                             alt="Location-icon"
+                            class="icon"
                             height="16"
                             width="16"
                         />
@@ -45,6 +46,7 @@
                         <img
                             src="{% static 'octicons/clippy.svg' %}"
                             alt=""
+                            class="icon"
                             height="16"
                             width="16"
                         />

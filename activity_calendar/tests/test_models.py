@@ -12,8 +12,9 @@ from recurrence import deserialize as deserialize_recurrence_test
 from . import mock_now
 
 from activity_calendar.models import Activity, ActivitySlot, Participant, ActivityMoment
-from core.models import ExtendedUser as User
 
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 # Tests model properties related to fetching participants, slots, etc.
 class ModelMethodsTest(TestCase):
@@ -882,16 +883,15 @@ class ActivitySlotTestCase(TestCase):
 class ActivityParticipantTestCase(TestCase):
     fixtures = ['test_users.json', 'test_members', 'test_activity_slots']
 
-    @patch('core.models.ExtendedUser.get_display_name', return_value='trigger_test')
     def test_str(self, mock_function=None):
         participation = Participant.objects.create(
             user_id=1,
             activity_slot_id=7
         )
-        # The method that should be triggered is overwritten as output is tested elsewhere
-        # We merely need to assure that it is used
-        self.assertEqual(str(participation), 'trigger_test')
+        # Not a guest
+        self.assertEqual(str(participation), str(participation.user))
 
+        # User is actually a guest
         participation.guest_name = 'some guest'
         self.assertEqual(str(participation), participation.guest_name + ' (ext)')
 

@@ -5,9 +5,10 @@ from django.http import HttpResponse
 from django.test import TestCase
 from django.test.client import RequestFactory
 
-from core.models import ExtendedUser as User
 from membership_file.util import membership_required
 
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 ##################################################################################
 # Test the Membership File Decorators

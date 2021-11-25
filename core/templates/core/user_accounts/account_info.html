@@ -1,0 +1,23 @@
+{% extends 'core/user_accounts/account_base.html' %}
+
+{% block content %}
+    <h1>Account</h1>
+    <p>
+        Hi {{ user }}!
+        This is your account page.
+    </p>
+    <p>
+        Username: <i>{{ user.username }}</i><br>
+        {% if member is None %}
+            {# No need to show "Real Name" if the user is a member as it won't be used then #}
+            {# Furthermore, this used to be a "nickname", and to prevent confusion among people who #}
+            {#  have entered it like that, we'll just hide it so we won't be asked 100 times to fix it. #}
+            Real Name: <i>{{ user.first_name|default:"No real name provided" }}</i><br>
+        {% endif %}
+        Email: <i>{{ user.email|default:"No email provided" }}</i><br>
+        <small class="text-muted">This information can currently not be edited on your end. Please notify the <a href="mailto:uups@kotkt.nl">UUPS</a> if something needs to be changed.</small>
+    </p>
+    <p>
+        You can change your password <a href="{% url 'core:user_accounts/password_change' %}">here</a>
+    </p>
+{% endblock content %}

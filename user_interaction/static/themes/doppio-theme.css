@@ -1,0 +1,55 @@
+/* Define main colour scheme */
+:root {
+    /* Default text and background colors for the body */
+    --body-bg-color: #e5e0e0;
+    --body-text-color: #212529;
+
+    --body-alt-bg-color: white;
+    --body-alt-text-color: var(--body-text-color);
+    --body-alt-dark-bg-color: #f6f6f6;
+
+    /* Generated at https://codepen.io/sosuke/pen/Pjoqqp using --body-text-color */
+    --body-icon-color: invert(7%) sepia(4%) saturate(3534%) hue-rotate(169deg) brightness(92%) contrast(81%);
+
+    /* Colors for (bootstrap) inputs */
+    --input-bg-color: var(--body-alt-bg-color);
+    --input-text-color: var(--body-text-color);
+    --input-prepend-bg-color: #e9ecef;
+    --input-prepend-text-color: #495057;
+
+    /* Colors for highlighted text (e.g. h1, strong) */
+    --title-text-color: #797300;
+
+    /* Colors for greenified elements (e.g. buttons) */
+    --greenify-bg-color: #fff200;
+    --greenify-text-color: black;
+
+    /* Colors for darker greenified elements (e.g. navbar, card images) */
+    --greenify-dark-bg-color: var(--greenify-bg-color);
+    --greenify-dark-text-color: var(--greenify-text-color);
+
+    /* Colors for lighter greenified elements (e.g. cards) */
+    --greenify-light-bg-color: #f3ed7a;
+    --greenify-light-text-color: var(--body-text-color);
+
+    /* Colors for greenified dropdowns */
+    --greenify-dropdown-bg-color: var(--body-alt-bg-color);
+    --greenify-dropdown-text-color: var(--title-text-color);
+    --greenify-dropdown-hover-bg-color: #3b6b5377;
+    --greenify-dropdown-hover-text-color: inherit;
+    --greenify-dropdown-active-bg-color: var(--greenify-bg-color);
+    --greenify-dropdown-active-text-color: var(--greenify-text-color);
+}
+
+nav .navbar-brand {
+    color: var(--greenify-dark-text-color) !important;
+}
+
+nav .nav-link {
+    color: var(--greenify-dark-text-color) !important;
+    opacity: 0.5;
+}
+
+p {
+    font-family: 'Source Sans Pro', sans-serif;
+}

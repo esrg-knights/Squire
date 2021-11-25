@@ -18,11 +18,11 @@
 }
 
     #calendar .fc-view-harness {
-        background-color: white;
+        background-color: var(--body-alt-bg-color);
     }
 
     #calendar .fc-day-other {
-        background-color: rgb(246, 246, 246);
+        background-color: var(--body-alt-dark-bg-color);
     }
 
     /* There's no easy way to override the button colours of custom buttons in FullCalendar,
@@ -31,7 +31,7 @@
     #calendar .fc-importCalendar-button {
         background-color: var(--info);
         border-color: var(--info);
-        color: var(--main-text-color);
+        color: var(--greenify-text-color);
     }
         #calendar .fc-importCalendar-button:hover {
             background-color: var(--dark);
