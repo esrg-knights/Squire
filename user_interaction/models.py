@@ -3,29 +3,56 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 from core.models import PresetImage
-from user_interaction.pintypes import GenericPin, PINTYPES, PinVisibility
+from membership_file.util import get_member_from_user
+from user_interaction.pintypes import MEMBERS_ONLY_PINTYPES, PUBLIC_PINTYPES, GenericPin, PINTYPES, PinVisibility
 
+
+class PinManager(models.Manager):
+    def for_user(self, user):
+        member = get_member_from_user(user)
+        pin_filter = None
+        if member is not None and member.is_considered_member():
+            # User is a member
+            #   All pins are visible
+            pin_filter = Q()
+        elif member is not None:
+            # User is logged in, but is not a member
+            #   All pins are visible, except those marked as "members-only"
+            pin_filter = ~Q(
+                Q(local_visibility=PinVisibility.PIN_MEMBERS_ONLY) \
+                    | ~Q(local_visibility__isnull=True, pintype__in=MEMBERS_ONLY_PINTYPES)
+            )
+        else:
+            # User is not logged in
+            #   Only public pins are visible
+            pin_filter = Q(local_visibility=PinVisibility.PIN_PUBLIC) \
+                | Q(local_visibility__isnull=True, pintype__in=PUBLIC_PINTYPES)
+
+        return self.get_queryset().filter(pin_filter)
 
 
 class Pin(models.Model):
     """
     A pin is a small notification on the homepage. It can link to a specific model instance.
     """
+    objects = PinManager()
+    class Meta:
+        ordering = ['-publish_date']
 
     # Date and creator of the pin
     creation_date = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
 
-
     pintype = models.CharField(
         max_length=31,
         choices=[
-            (identifier, pintype.name) for (identifier, pintype) in PINTYPES.items()
+            (identifier, _pintype.name) for (identifier, _pintype) in PINTYPES.items()
         ],
-        default=GenericPin
+        default=GenericPin.name
     )
 
     title = models.CharField(max_length=255, blank=True)

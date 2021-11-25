@@ -1,6 +1,8 @@
 
 {% extends 'core/base.html' %}
 
+{% load pin_tags %}
+
 {% block title %}
     Squire - Homepage
 {% endblock title %}
@@ -14,6 +16,8 @@
 {% endblock %}
 
 {% block content %}
+    {% render_pins %}
+
     <div class="m-auto py-5" style="max-width: 1250px;">
         <div class="row">
             <div class="col-12  text-center ">

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.template import Context, Template
 
 
 class PinVisibility:
@@ -10,7 +11,7 @@ class PinVisibility:
 
 class PinType:
     """ TODO """
-    template = "pins/default.html"
+    template = "user_interaction/pins/default.html"
     name = "PinType"
 
     default_pin_title = "Squire Pin"
@@ -61,7 +62,7 @@ class ActivityMomentPin(PinType):
 
     @property
     def pin_description(self):
-        return self.pin_obj.description or (self.content_obj.location + self.content_obj.description)
+        return self.pin_obj.description or (self.content_obj.location + self.content_obj.description.as_plaintext())
 
     @property
     def pin_image(self):
@@ -82,4 +83,17 @@ PINTYPES = {
     'PIN_SQUIRE_UPDATE': SquireUpdatePin,
     'PIN_ACTIVITY': ActivityMomentPin,
     'PIN_ITEM': ItemPin,
+    # 'PIN_COMMITTEE': ItemPin,
 }
+
+PUBLIC_PINTYPES = []
+USERS_ONLY_PINTYPES = []
+MEMBERS_ONLY_PINTYPES = []
+
+for (identifier, pintype) in PINTYPES.items():
+    if pintype.default_pin_visibility == PinVisibility.PIN_PUBLIC:
+        PUBLIC_PINTYPES.append(identifier)
+    elif pintype.default_pin_visibility == PinVisibility.PIN_USERS_ONLY:
+        USERS_ONLY_PINTYPES.append(identifier)
+    else:
+        MEMBERS_ONLY_PINTYPES.append(identifier)
