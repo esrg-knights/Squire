@@ -536,7 +536,6 @@ class ActivityMoment(PinnableMixin, models.Model, metaclass=ActivityDuplicate):
     ################################
     # Pin Info
     pin_title_field = "title"
-    pin_image = "slots_image"
     pin_expiry_field = "end_date"
 
     def get_pin_description(self):
@@ -545,6 +544,9 @@ class ActivityMoment(PinnableMixin, models.Model, metaclass=ActivityDuplicate):
 
     def get_pin_url(self):
         return self.get_absolute_url()
+
+    def get_pin_image(self):
+        return self.parent_activity.image_url
 
     def get_pin_publish_date(self):
         return self.parent_activity.published_date

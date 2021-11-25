@@ -3,13 +3,10 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils import timezone
 
 from core.models import PresetImage
-from membership_file.util import get_member_from_user
-from user_interaction.pintypes import MEMBERS_ONLY_PINTYPES, PUBLIC_PINTYPES, GenericPin, PINTYPES, PinVisibility
 
 def now_rounded():
     """ Returns timezone.now rounded down to the nearest hour """
@@ -45,27 +42,35 @@ class PinnableMixin:
 
     def get_pin_title(self):
         """ Title for pins that have this object attached to them """
-        return getattr(self, self.pin_title_field, None)
+        if self.pin_title_field:
+            return getattr(self, self.pin_title_field, None)
 
     def get_pin_description(self):
         """ Description for pins that have this object attached to them """
-        return getattr(self, self.pin_description_field, None)
+        if self.pin_description_field:
+            return getattr(self, self.pin_description_field, None)
 
     def get_pin_url(self):
         """ Title for pins that have this object attached to them """
-        return getattr(self, self.pin_url_field, None)
+        if self.pin_url_field:
+            return getattr(self, self.pin_url_field, None)
 
     def get_pin_image(self):
         """ Image for pins that have this object attached to them """
-        return getattr(self, self.pin_image_field, None)
+        if self.pin_image_field:
+            print(getattr(self, self.pin_image_field, None))
+            return getattr(self, self.pin_image_field, None)
+        print('none')
 
     def get_pin_publish_date(self):
         """ Publish date for pins that have this object attached to them """
-        return getattr(self, self.pin_publish_field, None)
+        if self.pin_publish_field:
+            return getattr(self, self.pin_publish_field, None)
 
     def get_pin_expiry_date(self):
         """ Expiry Date for pins that have this object attached to them """
-        return getattr(self, self.pin_expiry_field, None)
+        if self.pin_expiry_field:
+            return getattr(self, self.pin_expiry_field, None)
 
 class PinManager(models.Manager):
     def for_user(self, user, queryset=None):
@@ -98,7 +103,7 @@ class PinManager(models.Manager):
         current_queryset = queryset.all() # Copy the queryset
         for pin in current_queryset.filter(object_id__isnull=False):
             # Repeat the same checks as above; we cannot query this from the database
-            if pin.can_view_pin(user):
+            if not pin.can_view_pin(user):
                 invalid_ids.append(pin.id)
             # Unpublished
             # if pin.local_publish_date is None and pin.content_object.get_pin_publish_date() is None:
@@ -120,6 +125,8 @@ class PinManager(models.Manager):
             #     invalid_ids.append(pin.id)
             #     continue
 
+
+        print(invalid_ids)
         queryset = queryset.exclude(id__in=invalid_ids)
         return queryset
 
@@ -133,7 +140,7 @@ class Pin(models.Model):
     default_pin_template = PinnableMixin.pin_template
 
     class Meta:
-        ordering = ['-local_publish_date']
+        ordering = ['-pin_date']
 
         permissions = [
             ('can_view_members_only_pins',  "[F] Can view pins that are marked as 'members only'."),
@@ -147,6 +154,7 @@ class Pin(models.Model):
 
     # A way to categorise pins
     category = models.CharField(max_length=127)
+    pin_date = models.DateTimeField(default=now_rounded, help_text="Pins are sorted based on this value.")
 
     # Standard Information
     local_title = models.CharField(max_length=255, blank=True)
@@ -166,20 +174,20 @@ class Pin(models.Model):
 
     @property
     def title(self):
-        if self.local_title is None and self.content_object is not None:
+        if not self.local_title and self.content_object is not None:
             # No local title, so fetch related model title
             return self.content_object.get_pin_title()
         return self.local_title
 
     @property
     def description(self):
-        if self.local_description is None and self.content_object is not None:
+        if not self.local_description and self.content_object is not None:
             return self.content_object.get_pin_description()
         return self.local_description
 
     @property
     def url(self):
-        if self.local_url is None and self.content_object is not None:
+        if not self.local_url and self.content_object is not None:
             return self.content_object.get_pin_url()
         return self.local_url
 
