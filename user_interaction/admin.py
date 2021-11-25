@@ -11,6 +11,5 @@ class PinAdmin(admin.ModelAdmin):
     search_fields = ('title', 'uploader__username',)
     readonly_fields = ('creation_date', 'id', 'author')
 
-admin.site.register(Pin, PinAdmin)
-
-
+# admin.site.register(Pin, PinAdmin)
+admin.site.register(Pin)

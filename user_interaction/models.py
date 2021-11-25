@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -10,115 +10,138 @@ from core.models import PresetImage
 from membership_file.util import get_member_from_user
 from user_interaction.pintypes import MEMBERS_ONLY_PINTYPES, PUBLIC_PINTYPES, GenericPin, PINTYPES, PinVisibility
 
+def now_rounded():
+    """ Returns timezone.now rounded down to the nearest hour """
+    return timezone.now().replace(minute=0, second=0)
+
+def now_one_week_later():
+    """ Returns the datetime a week from timezone.now """
+    return now_rounded() + timezone.timedelta(days=7)
+
+def valid_pinnable_models():
+    """ Returns a dictionary consisting of ContentTypes whose corresponding model instances can be pinned. """
+    valid_ids = []
+    for content_type in ContentType.objects.all():
+        if isinstance(content_type.model_class(), PinnableMixin):
+            valid_ids.append(content_type.id)
+    return {'id__in': valid_ids}
+
+# def validate_is_pinnable(contenttype: ContentType):
+#     """ Validates that a given ContentType inherits from PinnableMixin """
+#     if contenttype is None:
+#         return
+#     if not isinstance(contenttype.model_class(), PinnableMixin):
+#         raise ValidationError(f"{contenttype.model_class()._meta.verbose_name_plural} are not pinnable.")
+
+class PinnableMixin:
+    """ TODO """
+    pin_template = "user_interaction/pins/default.html"
+    pin_view_permissions = () # Additional permissions needed to view this pin
+
+    # Fieldnames to copy pin information from
+    pin_title_field = None
+    pin_description_field = None
+    pin_url_field = None
+    pin_image_field = None
+    pin_publish_field = None
+    pin_expiry_field = None
+
+    # TODO: GenericRelation
+
+    def get_pin_title(self):
+        """ Title for pins that have this object attached to them """
+        return getattr(self, self.pin_title_field, None)
+
+    def get_pin_description(self):
+        """ Description for pins that have this object attached to them """
+        return getattr(self, self.pin_description_field, None)
+
+    def get_pin_url(self):
+        """ Title for pins that have this object attached to them """
+        return getattr(self, self.pin_url_field, None)
+
+    def get_pin_image(self):
+        """ Image for pins that have this object attached to them """
+        return getattr(self, self.pin_image_field, None)
+
+    def get_pin_publish_date(self):
+        """ Publish date for pins that have this object attached to them """
+        return getattr(self, self.pin_publish_field, None)
+
+    def get_pin_expiry_date(self):
+        """ Expiry Date for pins that have this object attached to them """
+        return getattr(self, self.pin_expiry_field, None)
 
 class PinManager(models.Manager):
     def for_user(self, user):
-        member = get_member_from_user(user)
-        pin_filter = None
-        if member is not None and member.is_considered_member():
-            # User is a member
-            #   All pins are visible
-            pin_filter = Q()
-        elif member is not None:
-            # User is logged in, but is not a member
-            #   All pins are visible, except those marked as "members-only"
-            pin_filter = ~Q(
-                Q(local_visibility=PinVisibility.PIN_MEMBERS_ONLY) \
-                    | ~Q(local_visibility__isnull=True, pintype__in=MEMBERS_ONLY_PINTYPES)
-            )
-        else:
-            # User is not logged in
-            #   Only public pins are visible
-            pin_filter = Q(local_visibility=PinVisibility.PIN_PUBLIC) \
-                | Q(local_visibility__isnull=True, pintype__in=PUBLIC_PINTYPES)
-
-        return self.get_queryset().filter(pin_filter)
-
+        pass
 
 class Pin(models.Model):
     """
-    A pin is a small notification on the homepage. It can link to a specific model instance.
+    A pin is a small notification on the homepage. If linked to a specific model instance that inherits
+    the PinnableMixin, copies over the attributes for the title, description, etc. based on fields (or
+    methods) of that model instance unless a local value overrides it.
     """
     objects = PinManager()
     class Meta:
-        ordering = ['-publish_date']
+        ordering = ['-local_publish_date']
+
+        permissions = [
+            ('can_view_members_only_pins',  "[F] Can view pins that are marked as 'members only'."),
+            ('can_view_expired_pins',       "[F] Can view pins that have expired."),
+            ('can_view_future_pins',        "[F] Can view pins with a publish date in the future."),
+        ]
 
     # Date and creator of the pin
     creation_date = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
 
-    pintype = models.CharField(
-        max_length=31,
-        choices=[
-            (identifier, _pintype.name) for (identifier, _pintype) in PINTYPES.items()
-        ],
-        default=GenericPin.name
-    )
+    # A way to categorise pins
+    category = models.CharField(max_length=127)
 
-    title = models.CharField(max_length=255, blank=True)
-    description = models.TextField(blank=True)
-    url = models.URLField(blank=True)
-    image = models.ForeignKey(PresetImage, on_delete=models.SET_NULL, blank=True, null=True)
-
-    local_visibility = models.CharField(
-        max_length=15,
-        choices=[
-            (PinVisibility.PIN_PUBLIC,        "Public"),
-            (PinVisibility.PIN_USERS_ONLY,    "Any User"),
-            (PinVisibility.PIN_MEMBERS_ONLY,  "Members Only"),
-        ],
-        help_text="Public pins can be viewed by anyone. User-only pins can be viewed by any logged in user. Members-only pins can only be viewed by (non-deregistered) members.",
-        blank=True, null=True,
-    )
-
-    @property
-    def visibility(self):
-        if self.local_visibility is not None:
-            return self.local_visibility
-        return self.pintype.default_visibility
+    # Standard Information
+    local_title = models.CharField(max_length=255, blank=True)
+    local_description = models.TextField(blank=True)
+    local_url = models.URLField(blank=True)
+    local_image = models.ForeignKey(PresetImage, on_delete=models.SET_NULL, blank=True, null=True)
 
     # Visibility Requirements
-    publish_date = models.DateTimeField(default=timezone.now)
+    local_publish_date = models.DateTimeField(default=now_rounded, null=True, blank=True, help_text="The date at which this pin becomes available. Can be left empty to never become available.")
+    local_expiry_date = models.DateTimeField(default=now_one_week_later, null=True, blank=True, help_text="The date at which this pin is no longer available. Can be left empty to not expire.")
+    is_members_only = models.BooleanField(default=True, help_text="'Members-only' pins can only be viewed by those with the permission to do so.")
 
     # Related Model instance (optional)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, blank=True, null=True)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, blank=True, null=True, limit_choices_to=valid_pinnable_models)
     object_id = models.PositiveIntegerField(blank=True, null=True)
     content_object = GenericForeignKey('content_type', 'object_id')
 
-    # # Use object data as a default for the pin's title (get_pin_title), description (get_pin_description)
-    # #   URL (get_absolute_url) and image (get_preview_image).
-    # #   If a title, description, URL, or image is provided anyways, then those have priority over the object data.
-    # use_object_data = models.BooleanField(default=True, help_text="If enabled, fetches the URL and image from the related object (unless overridden).")
+    def is_published(self):
+        """ Whether this pin is published """
+        return self.publish_date is not None and self.publish_date <= timezone.now()
 
-    # @property
-    # def title(self):
-    #     if self.title:
-    #         return self.title
-    #     if self.use_object_data and self.content_object is not None:
-    #         return str(self.content_object)
-    #     return self.pintype.default_title
+    def is_expired(self):
+        """ Whether this pin has expired """
+        return self.expiry_date is not None and self.expiry_date <= timezone.now()
 
-    # @property
-    # def image(self):
-    #     if self.local_image is not None:
-    #         return self.local_image.image.url
-    #     if self.use_object_data and self.content_object is not None:
-    #         try:
-    #             return self.content_object.get_preview_image()
-    #         except AttributeError:
-    #             pass
-    #     return f'{settings.STATIC_URL}images/default_logo.png'
+    def can_view_pin(self, user):
+        """ Whether the given user can see this pin """
+        required_perms = []
+        if not self.is_published and self.publish_date is not None:
+            # Pin will be published in the future
+            required_perms.append('user_interaction.can_view_future_pins')
+        elif self.is_expired:
+            # Pin has expired
+            required_perms.append('user_interaction.can_view_expired_pins')
 
-    # @property
-    # def url(self):
-    #     if self.local_url is not None:
-    #         return self.local_url
-    #     if self.use_object_data and self.content_object is not None:
-    #         try:
-    #             return self.content_object.get_absolute_url()
-    #         except AttributeError:
-    #             pass
-    #     return None
+        if self.is_members_only:
+            # Pin is marked as 'members-only'
+            required_perms.append('user_interaction.can_view_members_only_pins')
+
+        if self.content_object is not None:
+            required_perms = required_perms + self.content_object.pin_view_permissions
+
+        return user.has_perms(required_perms)
+
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
@@ -127,19 +150,16 @@ class Pin(models.Model):
 
         if 'content_type' not in exclude and 'object_id' not in exclude:
             if self.content_type is not None and self.content_object is None:
-                raise ValidationError("The connected instance does not exist", code='instance_nonexistent')
+                raise ValidationError({
+                    'content_type': ValidationError("The connected instance does not exist", code='instance_nonexistent')
+                })
 
-    # def clean(self):
-    #     super().clean()
-
-    #     # Can only upload MarkdownImages for specific models
-    #     if self.content_type is not None:
-    #         if f"{self.content_type.app_label}.{self.content_type.model}" not in settings.MARKDOWN_IMAGE_MODELS:
-    #             raise ValidationError({'content_type': "MarkdownImages cannot be uploaded for this ContentType"})
-
-    #     # Cannot have a content_type - object_id combination that does not exist
-    #     if self.object_id is not None and self.content_object is None:
-    #         raise ValidationError({'object_id': 'The selected ContentType does not have an object with this id'})
+    def clean(self):
+        if self.publish_date is not None and self.expiry_date is not None:
+            if self.publish_date > self.expiry_date:
+                raise ValidationError({
+                    'publish_date': ValidationError("The pin cannot be published after it expires", code='invalid_duration')
+                })
 
     def __str__(self):
-        return f"Pin {self.id} - {self.title} ({self.content_object})"
+        return f"Pin {self.id} - {self.local_title} ({self.content_object})"
