@@ -71,7 +71,6 @@ $(document).ready(function () {
     textReplaceFn('Association', 'アソシエーション')
     textReplaceFn('association', 'アソシエーション')
 
-
     textReplaceFn('Membership', 'メンバーシップ')
     textReplaceFn('membership', 'メンバーシップ')
 
@@ -86,6 +85,7 @@ $(document).ready(function () {
     textReplaceFn('Calendar', 'カレンダー')
     textReplaceFn('calendar', 'カレンダー')
 
+    // week En
     textReplaceFn('Monday', 'げつようび')
     textReplaceFn('Tuesday', 'かようび')
     textReplaceFn('Wednesday', 'すいようび')
@@ -94,6 +94,16 @@ $(document).ready(function () {
     textReplaceFn('Saturday', 'どようび')
     textReplaceFn('Sunday', 'にちようび')
 
+    // Week NL
+    textReplaceFn('Maandag', 'げつようび')
+    textReplaceFn('Dinsdag', 'かようび')
+    textReplaceFn('Woensdag', 'すいようび')
+    textReplaceFn('Donderdag', 'もくようび')
+    textReplaceFn('Vrijdag', 'きんようび')
+    textReplaceFn('Zaterdag', 'どようび')
+    textReplaceFn('Zondag', 'にちようび')
+
+    //Maand EN
     textReplaceFn('Januari', '一月')
     textReplaceFn('Februari', '二月')
     textReplaceFn('March', '三月')
@@ -106,6 +116,20 @@ $(document).ready(function () {
     textReplaceFn('October', '十月')
     textReplaceFn('November', '十一月')
     textReplaceFn('December', '十二月')
+
+    //Maand NL
+    textReplaceFn('januari', '一月')
+    textReplaceFn('februari', '二月')
+    textReplaceFn('maart', '三月')
+    textReplaceFn('april', '四月')
+    textReplaceFn('mei', '五月')
+    textReplaceFn('juni', '	六月')
+    textReplaceFn('juli', '七月')
+    textReplaceFn('augustus', '八月')
+    textReplaceFn('september', '九月')
+    textReplaceFn('oktober', '十月')
+    textReplaceFn('november', '十一月')
+    textReplaceFn('december', '十二月')
 
     textReplaceFn('00:', '24:')
     textReplaceFn('01:', '25:')
