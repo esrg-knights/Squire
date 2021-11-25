@@ -96,7 +96,8 @@ class ActivityMixin:
         return kwargs
 
     def can_edit_activity(self):
-        return self.activity.is_organiser(self.request.user)
+        has_perm = self.request.user.has_perm('activity_calendar.change_activitymoment')
+        return self.activity.is_organiser(self.request.user) or has_perm
 
     def show_participants(self):
         """ Returns whether to show participant names """
