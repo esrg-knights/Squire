@@ -214,13 +214,12 @@ admin.site.register(GlobalPreferenceModel, SquireGlobalPreferencesAdmin)
 # Pins
 
 class PinAdmin(admin.ModelAdmin):
-    date_hierarchy = 'publish_date'
+    date_hierarchy = 'pin_date'
 
-    list_display = ('id', 'pintype', 'title', 'content_object', 'local_visibility', 'publish_date')
-    list_display_links = ('id', 'pintype')
-    list_filter = ('pintype',)
-    search_fields = ('title', 'uploader__username',)
+    list_display = ('id', 'category', 'title', 'content_object', 'pin_date', 'publish_date', 'expiry_date')
+    list_display_links = ('id', 'category')
+    list_filter = ('category', 'pin_date', 'local_publish_date', 'local_expiry_date')
+    search_fields = ('title', 'author',)
     readonly_fields = ('creation_date', 'id', 'author')
 
-# admin.site.register(Pin, PinAdmin)
-admin.site.register(Pin)
+admin.site.register(Pin, PinAdmin)

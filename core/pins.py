@@ -25,9 +25,31 @@ def valid_pinnable_models():
     return {'id__in': valid_ids}
 
 
-class PinnableMixin:
-    """ TODO """
-    pin_template = "core/pins/default.html"
+class PinnableMixin(models.Model):
+    """
+        Mixin that marks the model inheriting this class as "Pinnable". This
+        allows that model to be linked to a Pin, allowing the pin to automatically
+        copy values from the inheriting model.
+
+        The instance variables pin_foo_field (for each field 'foo') determine
+        where to copy information from. If None, this information will not be copied.
+
+        The methods get_pin_foo(self, pin) (for each field 'foo') can be overridden to
+        directly determine what should be returned for the pin's 'foo' attribute. This
+        is a more flexible alternative to providing just a field to copy from.
+        For instance, it can be used to combine two model fields and return that as the
+        pin's description.
+
+        The field 'pins' is added as a GenericRelation in order to auto-delete pins that
+        are linked to the inherited object.
+    """
+    class Meta:
+        # We don't actually want this class in the database, but
+        #   since we're adding a field (even if it's only a lookup)
+        #   we still need to inherit from models.Model
+        abstract = True
+
+    pin_template = None
     pin_view_permissions = () # Additional permissions needed to view this pin
 
     # Fieldnames to copy pin information from
@@ -38,7 +60,9 @@ class PinnableMixin:
     pin_publish_field = None
     pin_expiry_field = None
 
-    # TODO: GenericRelation
+    # Add a GenericRelation, which handles auto-deleting a pin if the related
+    #   object no longer exists
+    pins = GenericRelation("core.Pin")
 
     def get_pin_title(self, pin):
         """ Title for pins that have this object attached to them """
@@ -73,7 +97,12 @@ class PinnableMixin:
         if self.pin_expiry_field:
             return getattr(self, self.pin_expiry_field, None)
 
+
 class PinManager(models.Manager):
+    """
+        Model Manager that also provides a method to list pins
+        that are visible to a given user.
+    """
     def for_user(self, user, queryset=None):
         """ Return a queryset consisting of Pins visible to the given user. """
         assert user is not None
@@ -99,7 +128,7 @@ class PinManager(models.Manager):
         if not user.has_perm('core.can_view_members_only_pins'):
             queryset = queryset.exclude(is_members_only=True)
 
-        # Handle auto-copying from PinnableMixin (local values have priority)
+        # Handle auto-copying from content_object that inherits from PinnableMixin (local values have priority)
         invalid_ids = []
         current_queryset = queryset.all() # Copy the queryset
         for pin in current_queryset.filter(object_id__isnull=False):
@@ -110,14 +139,16 @@ class PinManager(models.Manager):
         queryset = queryset.exclude(id__in=invalid_ids)
         return queryset
 
+
 class Pin(models.Model):
     """
     A pin is a small notification on the homepage. If linked to a specific model instance that inherits
-    the PinnableMixin, copies over the attributes for the title, description, etc. based on fields (or
-    methods) of that model instance unless a local value overrides it.
+    PinnableMixin, it copies over the attributes for the title, description, etc. based on fields (or
+    methods) of that model instance. This auto-copying can be overridden if local values for the pin are
+    provided instead.
     """
     objects = PinManager()
-    default_pin_template = PinnableMixin.pin_template
+    default_pin_template = "core/pins/default.html" # The default template used to render a pin
 
     class Meta:
         ordering = ['-pin_date']
@@ -220,7 +251,6 @@ class Pin(models.Model):
 
         return user.has_perms(required_perms)
 
-
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
         # Make exlude a list to prevent complex if statements
@@ -243,7 +273,7 @@ class Pin(models.Model):
     def get_pin_template(self):
         """ Gets the template used by this pin """
         if self.content_object is not None:
-            return self.content_object.pin_template
+            return self.content_object.pin_template or self.default_pin_template
         return self.default_pin_template
 
     def render(self):

@@ -13,7 +13,7 @@ register = template.Library()
 
 @register.simple_tag(takes_context=True)
 def render_pins(context):
-    """ TODO """
+    """ Renders each of the pins accessible to this user as HTML, separated by a newline. """
     pin_html = []
     for pin in Pin.objects.for_user(context.request.user):
         pin_html.append(pin.render())
