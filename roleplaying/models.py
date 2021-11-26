@@ -4,11 +4,13 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.contenttypes.fields import GenericRelation
-from django.forms.widgets import Textarea
+from django.urls import reverse
+from django.utils import timezone
 from django.utils.text import slugify
 
 from core.fields import MarkdownTextField
 from inventory.models import Item
+from user_interaction.models import PinnableMixin
 
 
 __all__ = ['RoleplayingSystem', 'RoleplayingItem',]
@@ -28,7 +30,7 @@ def get_system_image_upload_path(instance, filename):
         extension=extension,
     )
 
-class RoleplayingSystem(models.Model):
+class RoleplayingSystem(PinnableMixin, models.Model):
     name = models.CharField(max_length=128)
     short_description = models.CharField(max_length=128)
     long_description = MarkdownTextField(blank=True, null=True)
@@ -55,6 +57,23 @@ class RoleplayingSystem(models.Model):
 
     # Relations
     achievements = GenericRelation('achievements.AchievementItemLink')
+
+    ####################
+    # Pin Information
+    pin_description_field = "short_description"
+    pin_image_field = "image"
+
+    def get_pin_title(self, pin):
+        return f"New System: {self.name}"
+
+    def get_pin_url(self, pin):
+        return reverse("roleplaying:system_details", kwargs={'system_id':self.id,})
+
+    def get_pin_expiry_date(self, pin):
+        return (pin.local_publish_date or pin.pin_date) + timezone.timedelta(days=14)
+
+    # End Pinformation
+    ####################
 
     def __str__(self):
         return self.name
@@ -92,3 +111,11 @@ class RoleplayingItem(Item):
                 "You can not set both a digital file and an external file location",
                 code='duplicate_location'
             )
+
+    ####################
+    # Pin Information
+    def get_pin_url(self, pin):
+        return reverse("roleplaying:system_details", kwargs={'system_id':self.system_id,})
+
+    # End Pinformation
+    ####################

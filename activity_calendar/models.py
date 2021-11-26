@@ -538,17 +538,17 @@ class ActivityMoment(PinnableMixin, models.Model, metaclass=ActivityDuplicate):
     pin_title_field = "title"
     pin_expiry_field = "end_date"
 
-    def get_pin_description(self):
+    def get_pin_description(self, pin):
         # Pin description also contains the location
         return self.location + self.description.as_plaintext()
 
-    def get_pin_url(self):
+    def get_pin_url(self, pin):
         return self.get_absolute_url()
 
-    def get_pin_image(self):
+    def get_pin_image(self, pin):
         return self.parent_activity.image_url
 
-    def get_pin_publish_date(self):
+    def get_pin_publish_date(self, pin):
         return self.parent_activity.published_date
 
     def is_pin_valid(self, pin):

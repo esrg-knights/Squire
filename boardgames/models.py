@@ -1,7 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
-from django.contrib.auth.models import Group, User
-from django.contrib.contenttypes.models import ContentType
+from django.urls import reverse
 
 from inventory.models import Item
 
@@ -44,3 +43,11 @@ class BoardGame(Item):
         if self.player_min and self.player_max:
             if self.player_min > self.player_max:
                 raise ValidationError("The minimum player count can not be higher than the maximum player count", code='incorrect_value')
+
+    ####################
+    # Pin Information
+    def get_pin_url(self, pin):
+        return reverse("boardgames:home")
+
+    # End Pinformation
+    ####################

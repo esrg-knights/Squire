@@ -40,34 +40,35 @@ class PinnableMixin:
 
     # TODO: GenericRelation
 
-    def get_pin_title(self):
+    def get_pin_title(self, pin):
         """ Title for pins that have this object attached to them """
         if self.pin_title_field:
             return getattr(self, self.pin_title_field, None)
 
-    def get_pin_description(self):
+    def get_pin_description(self, pin):
         """ Description for pins that have this object attached to them """
         if self.pin_description_field:
             return getattr(self, self.pin_description_field, None)
 
-    def get_pin_url(self):
+    def get_pin_url(self, pin):
         """ Title for pins that have this object attached to them """
         if self.pin_url_field:
             return getattr(self, self.pin_url_field, None)
 
-    def get_pin_image(self):
+    def get_pin_image(self, pin):
         """ Image for pins that have this object attached to them """
         if self.pin_image_field:
-            print(getattr(self, self.pin_image_field, None))
-            return getattr(self, self.pin_image_field, None)
-        print('none')
+            image_field = getattr(self, self.pin_image_field, None)
+            if image_field:
+                return image_field.url
+        return None
 
-    def get_pin_publish_date(self):
+    def get_pin_publish_date(self, pin):
         """ Publish date for pins that have this object attached to them """
         if self.pin_publish_field:
             return getattr(self, self.pin_publish_field, None)
 
-    def get_pin_expiry_date(self):
+    def get_pin_expiry_date(self, pin):
         """ Expiry Date for pins that have this object attached to them """
         if self.pin_expiry_field:
             return getattr(self, self.pin_expiry_field, None)
@@ -105,28 +106,7 @@ class PinManager(models.Manager):
             # Repeat the same checks as above; we cannot query this from the database
             if not pin.can_view_pin(user):
                 invalid_ids.append(pin.id)
-            # Unpublished
-            # if pin.local_publish_date is None and pin.content_object.get_pin_publish_date() is None:
-            #     invalid_ids.append(pin.id)
-            #     continue
 
-            # # Is the user unable to view not-yet-published pins?
-            # if not user.has_perm('user_interaction.can_view_future_pins') and not pin.is_published():
-            #     invalid_ids.append(pin.id)
-            #     continue
-
-            # # Is the user unable to view expired pins?
-            # if not user.has_perm('user_interaction.can_view_expired_pins') and pin.is_expired():
-            #     invalid_ids.append(pin.id)
-            #     continue
-
-            # # Is the user unable to view member-only pins?
-            # if not user.has_perm('user_interaction.can_view_members_only_pins') and pin.is_members_only:
-            #     invalid_ids.append(pin.id)
-            #     continue
-
-
-        print(invalid_ids)
         queryset = queryset.exclude(id__in=invalid_ids)
         return queryset
 
@@ -176,37 +156,39 @@ class Pin(models.Model):
     def title(self):
         if not self.local_title and self.content_object is not None:
             # No local title, so fetch related model title
-            return self.content_object.get_pin_title()
+            return self.content_object.get_pin_title(self)
         return self.local_title
 
     @property
     def description(self):
         if not self.local_description and self.content_object is not None:
-            return self.content_object.get_pin_description()
+            return self.content_object.get_pin_description(self)
         return self.local_description
 
     @property
     def url(self):
         if not self.local_url and self.content_object is not None:
-            return self.content_object.get_pin_url()
-        return self.local_url
+            return self.content_object.get_pin_url(self)
+        return self.local_url or None
 
     @property
     def image(self):
         if self.local_image is None and self.content_object is not None:
-            return self.content_object.get_pin_image()
+            img = self.content_object.get_pin_image(self)
+            if img is not None:
+                return img
         return self.local_image or f"{settings.STATIC_URL}images/default_logo.png"
 
     @property
     def publish_date(self):
         if self.local_publish_date is None and self.content_object is not None:
-            return self.content_object.get_pin_publish_date()
+            return self.content_object.get_pin_publish_date(self)
         return self.local_publish_date
 
     @property
     def expiry_date(self):
         if self.local_expiry_date is None and self.content_object is not None:
-            return self.content_object.get_pin_expiry_date()
+            return self.content_object.get_pin_expiry_date(self)
         return self.local_expiry_date
 
     def is_published(self):

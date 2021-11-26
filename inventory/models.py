@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from membership_file.models import Member
+from user_interaction.models import PinnableMixin
 
 
 __all__ = ['valid_item_class_ids', 'Ownership', 'Item', 'MiscellaneousItem']
@@ -58,7 +59,7 @@ def get_item_image_upload_path(instance, filename):
     )
 
 
-class Item(models.Model):
+class Item(PinnableMixin, models.Model):
     """ Item in the inventory system. Abstract root class.
 
     On permissions:
@@ -133,6 +134,20 @@ class Item(models.Model):
 
                 other_fields.append(field_dict)
         return other_fields
+
+    ####################
+    # Pin Information
+    pin_image_field = "image"
+    pin_description_field = "description"
+
+    def get_pin_title(self, pin):
+        return f"New {self._meta.verbose_name.capitalize()}: {self.name}"
+
+    def get_pin_expiry_date(self, pin):
+        return (pin.local_publish_date or pin.pin_date) + timezone.timedelta(days=14)
+
+    # End Pinformation
+    ####################
 
 
 def valid_item_class_ids():
