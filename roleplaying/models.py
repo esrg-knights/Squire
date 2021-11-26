@@ -10,7 +10,7 @@ from django.utils.text import slugify
 
 from core.fields import MarkdownTextField
 from inventory.models import Item
-from user_interaction.models import PinnableMixin
+from core.pins import PinnableMixin
 
 
 __all__ = ['RoleplayingSystem', 'RoleplayingItem',]

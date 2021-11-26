@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from membership_file.models import Member
-from user_interaction.models import PinnableMixin
+from core.pins import PinnableMixin
 
 
 __all__ = ['valid_item_class_ids', 'Ownership', 'Item', 'MiscellaneousItem']

@@ -15,9 +15,9 @@ from django.utils.translation import gettext_lazy as _
 from dynamic_preferences.admin import GlobalPreferenceAdmin
 from dynamic_preferences.models import GlobalPreferenceModel
 
-from .models import MarkdownImage, PresetImage
-
 from core.forms import MarkdownImageAdminForm
+from core.models import MarkdownImage, PresetImage
+from core.pins import Pin
 from utils.forms import RequestUserToFormModelAdminMixin
 
 ###################################################
@@ -208,3 +208,19 @@ class SquireGlobalPreferencesAdmin(GlobalPreferenceAdmin):
 # Use our custom admin panel instead
 admin.site.unregister(GlobalPreferenceModel)
 admin.site.register(GlobalPreferenceModel, SquireGlobalPreferencesAdmin)
+
+
+###################################################
+# Pins
+
+class PinAdmin(admin.ModelAdmin):
+    date_hierarchy = 'publish_date'
+
+    list_display = ('id', 'pintype', 'title', 'content_object', 'local_visibility', 'publish_date')
+    list_display_links = ('id', 'pintype')
+    list_filter = ('pintype',)
+    search_fields = ('title', 'uploader__username',)
+    readonly_fields = ('creation_date', 'id', 'author')
+
+# admin.site.register(Pin, PinAdmin)
+admin.site.register(Pin)

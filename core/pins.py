@@ -27,7 +27,7 @@ def valid_pinnable_models():
 
 class PinnableMixin:
     """ TODO """
-    pin_template = "user_interaction/pins/default.html"
+    pin_template = "core/pins/default.html"
     pin_view_permissions = () # Additional permissions needed to view this pin
 
     # Fieldnames to copy pin information from
@@ -86,17 +86,17 @@ class PinManager(models.Manager):
         queryset = queryset.exclude(local_publish_date__isnull=True, object_id__isnull=True)
 
         # Is the user unable to view not-yet-published pins?
-        if not user.has_perm('user_interaction.can_view_future_pins'):
+        if not user.has_perm('core.can_view_future_pins'):
             # Must not have a future publish date
             queryset = queryset.exclude(local_publish_date__gt=now)
 
         # Is the user unable to view expired pins?
-        if not user.has_perm('user_interaction.can_view_expired_pins'):
+        if not user.has_perm('core.can_view_expired_pins'):
             # Must not have passed its expiration date
             queryset = queryset.exclude(local_expiry_date__lte=now)
 
         # Is the user unable to view member-only pins?
-        if not user.has_perm('user_interaction.can_view_members_only_pins'):
+        if not user.has_perm('core.can_view_members_only_pins'):
             queryset = queryset.exclude(is_members_only=True)
 
         # Handle auto-copying from PinnableMixin (local values have priority)
@@ -206,14 +206,14 @@ class Pin(models.Model):
         required_perms = []
         if not self.is_published and self.publish_date is not None:
             # Pin will be published in the future
-            required_perms.append('user_interaction.can_view_future_pins')
+            required_perms.append('core.can_view_future_pins')
         elif self.is_expired:
             # Pin has expired
-            required_perms.append('user_interaction.can_view_expired_pins')
+            required_perms.append('core.can_view_expired_pins')
 
         if self.is_members_only:
             # Pin is marked as 'members-only'
-            required_perms.append('user_interaction.can_view_members_only_pins')
+            required_perms.append('core.can_view_members_only_pins')
 
         if self.content_object is not None:
             required_perms = required_perms + list(self.content_object.pin_view_permissions)

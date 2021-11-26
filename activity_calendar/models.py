@@ -18,7 +18,7 @@ from recurrence.fields import RecurrenceField
 import activity_calendar.util as util
 from core.models import PresetImage
 from core.fields import MarkdownTextField
-from user_interaction.models import PinnableMixin
+from core.pins import PinnableMixin
 
 #############################################################################
 # Models related to the Calendar-functionality of the application.

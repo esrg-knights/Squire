@@ -1,7 +1,7 @@
 from django import template
 from django.utils.safestring import mark_safe
 
-from user_interaction.models import Pin
+from core.pins import Pin
 
 register = template.Library()
 
