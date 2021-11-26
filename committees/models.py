@@ -3,12 +3,15 @@ import datetime
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.urls import reverse
+from django.utils import timezone
 
 from core.fields import MarkdownTextField
+from core.pins import PinnableMixin
 from membership_file.models import Member
 
 
-class AssociationGroup(models.Model):
+class AssociationGroup(PinnableMixin, models.Model):
     site_group = models.OneToOneField(Group, on_delete=models.CASCADE)
     shorthand = models.CharField(max_length=16, blank=True, null=True)
     icon = models.ImageField(upload_to='images/committees/', blank=True, null=True)
@@ -50,6 +53,27 @@ class AssociationGroup(models.Model):
     @property
     def name(self):
         return self.site_group.name
+
+    ####################
+    # Pin Information
+    pin_view_permissions = ('committees.view_associationgroup',)
+    pin_title_field = "name"
+    pin_image_field = "icon"
+
+    def get_pin_url(self, pin):
+        if self.type == AssociationGroup.COMMITTEE:
+            return reverse("committees:committees")
+        elif self.type == AssociationGroup.GUILD:
+            return reverse("committees:guilds")
+        elif self.type == AssociationGroup.BOARD:
+            return reverse("committees:boards")
+        # No URL for workgroups
+
+    def get_pin_expiry_date(self, pin):
+        return (pin.local_publish_date or pin.pin_date) + timezone.timedelta(days=14)
+
+    # End Pinformation
+    ####################
 
     def __str__(self):
         return self.site_group.name
