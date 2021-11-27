@@ -66,7 +66,7 @@ class QuadriviumUserTheme(SquireUserTheme):
     """ Quadrivium Theme """
     name = 'Nemesis'
     css = ('themes/q-theme.css',)
-    js = ('themes/q-theme.js',)
+    js = ('themes/util-fns.js','themes/q-theme.js')
 
 
 class DoppioUserTheme(SquireUserTheme):
@@ -85,7 +85,7 @@ class KinjinUserTheme(SquireUserTheme):
     """ Kinjin Theme """
     name = '日本スキン'
     css = ('themes/kinjin-theme.css',)
-    js = ('themes/kinjin-theme.js',)
+    js = ('themes/util-fns.js','themes/kinjin-theme.js')
 
 
 THEMES = {

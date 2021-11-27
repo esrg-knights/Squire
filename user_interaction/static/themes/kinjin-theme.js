@@ -1,32 +1,5 @@
 "use strict";
 
-/** A better replace text function
- *
- * @param {Node} element
- * @param {RegExp|string} pattern
- * @param {string} replacement
- *
- * @copyright https://stackoverflow.com/a/50537862/4633439
- */
-function replaceInText(element, pattern, replacement) {
-    for (let node of Array.from(element.childNodes)) { //Array.from cause complicated browser issues
-        switch (node.nodeType) {
-            case Node.ELEMENT_NODE:
-                replaceInText(node, pattern, replacement);
-                break;
-            case Node.TEXT_NODE:
-                node.textContent = node.textContent.replace(pattern, replacement);
-                break;
-            case Node.DOCUMENT_NODE:
-                replaceInText(node, pattern, replacement);
-                break;
-            case Node.COMMENT_NODE:
-                break;
-            default:
-                console.debug(`node type not handled (${node.nodeType})`)
-        }
-    }
-}
 const currentDirectoryThemes = "/static/themes/";
 
 // Modify the DOM
@@ -95,13 +68,13 @@ $(document).ready(function () {
     textReplaceFn('Sunday', 'にちようび')
 
     // Week NL
-    textReplaceFn('Maandag', 'げつようび')
-    textReplaceFn('Dinsdag', 'かようび')
-    textReplaceFn('Woensdag', 'すいようび')
-    textReplaceFn('Donderdag', 'もくようび')
-    textReplaceFn('Vrijdag', 'きんようび')
-    textReplaceFn('Zaterdag', 'どようび')
-    textReplaceFn('Zondag', 'にちようび')
+    textReplaceFn(/Maandag/muig, 'げつようび')
+    textReplaceFn(/Dinsdag/muig, 'かようび')
+    textReplaceFn(/Woensdag/muig, 'すいようび')
+    textReplaceFn(/Donderdag/muig, 'もくようび')
+    textReplaceFn(/Vrijdag/muig, 'きんようび')
+    textReplaceFn(/Zaterdag/muig, 'どようび')
+    textReplaceFn(/Zondag/muig, 'にちようび')
 
     //Maand EN
     textReplaceFn('Januari', '一月')
@@ -146,15 +119,20 @@ $(document).ready(function () {
     textReplaceFn('Create Slot', 'スロットを作成する')
 
 
-    let html = $('body main').html();
+    const cardImgs = Array.from(document.querySelectorAll(".card-img-top"))
 
-    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*swords\.png\);/gmui, "background-image: url(/static/themes/images/kinjin/soa.jpg);")
-    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*external-content\.duckduckgo\.com\.jpg\);/gmui, "background-image: url(/static/themes/images/kinjin/kfc.jpg);") //christmas=kfc
-    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*bgs\.png\);/gmui, "background-image: url(/static/themes/images/kinjin/no-game-no-life.jpg);")
-    html = html.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*header_logo\.png\);/gmui, "background-image: url(/static/themes/images/kinjin/KinjinSpoof.png);")
+    for (const element of cardImgs) {
+        let styleString = element.attributes.style.textContent;
 
-    //This might break some javascript
-    $('body main').html(html);
+        styleString = styleString.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*swords\.png\);/gmui, "background-image: url(/static/themes/images/kinjin/soa.jpg);");
+        styleString = styleString.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*external-content\.duckduckgo\.com\.jpg\);/gmui, "background-image: url(/static/themes/images/kinjin/kfc.jpg);"); //christmas=kfc
+        styleString = styleString.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*bgs\.png\);/gmui, "background-image: url(/static/themes/images/kinjin/no-game-no-life.jpg);");
+        styleString = styleString.replaceAll(/background-image:\s*url\([A-z\/\\0-9.:]*header_logo\.png\);/gmui, "background-image: url(/static/themes/images/kinjin/KinjinSpoof.png);");
+
+        element.style = styleString;
+    }
+
+
 
     if (document.getElementById("WelcomeMessage")) //Saw no better way to do it.
         document.getElementById("WelcomeMessage").textContent += "san";
