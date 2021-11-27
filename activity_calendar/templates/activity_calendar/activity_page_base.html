@@ -121,6 +121,36 @@
                     </div>
                 </div>
 
+                {% if activity_moment.parent_activity.organisers.all %}
+                    <div class="d-flex">
+                        <!-- Organiser Icon -->
+                        <div class="col-xs-2">
+                            <img
+                                src="{% static 'octicons/tag.svg' %}"
+                                alt="Organisation-icon"
+                                class="icon"
+                                height="16"
+                                width="16"
+                            />
+                        </div>
+                        <!-- Location -->
+                        <div class="col nospace align-self-center">
+                            <p id="event-organisers">
+                                Organised by
+                                {% for organiser in activity_moment.parent_activity.organisers.all %}
+                                    <img
+                                        src="{{ organiser.icon.url }}"
+                                        height="32"
+                                        width="32"
+                                    />
+                                    {{ organiser.name }}{% if not forloop.last %},{% endif %}
+
+                                {% endfor %}
+                            </p>
+                        </div>
+                    </div>
+                {% endif %}
+
                 <div class="d-flex">
                     <!-- Event Participants Icon -->
                     <div class="col-xs-2">
