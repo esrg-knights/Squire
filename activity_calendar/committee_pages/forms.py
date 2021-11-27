@@ -1,7 +1,9 @@
+import datetime
 
 from django import forms
 from django.forms import ModelForm, Form
 from django.forms.widgets import HiddenInput
+from django.utils import timezone
 from django.utils.timesince import timeuntil
 from django.utils.translation import gettext_lazy as _
 
@@ -31,6 +33,9 @@ class CreateActivityMomentForm(MarkdownForm):
             raise KeyError("Activity was not given")
         super(CreateActivityMomentForm, self).__init__(*args, **kwargs)
         self.instance.parent_activity = activity
+
+        self.instance.recurrence_id = timezone.now() + datetime.timedelta(days=7)
+        self.fields['recurrence_id'].initial = self.instance.recurrence_id
 
         # Set a placeholder on all fields
         for key, field in self.fields.items():

@@ -1,8 +1,9 @@
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.views.generic import ListView, FormView
 from django.shortcuts import get_object_or_404
 
-from activity_calendar.models import Activity
+from activity_calendar.models import Activity, ActivityMoment
 from activity_calendar.committee_pages.forms import CreateActivityMomentForm
 
 from committees.views import AssociationGroupMixin
@@ -21,6 +22,8 @@ class ActivityCalendarView(AssociationGroupMixin, ListView):
 
         context = super(ActivityCalendarView, self).get_context_data(
             tab_selected='tab_activity',
+            can_add_activitymoments=self.association_group.site_group.permissions.
+                                        filter(codename="add_activitymoment").exists(),
             **kwargs,
         )
 
@@ -34,6 +37,9 @@ class AddActivityMomentCalendarView(AssociationGroupMixin, FormView):
         super(AddActivityMomentCalendarView, self).setup(request, *args, **kwargs)
         # Django calls the following line only in get(), which is too late
         self.activity = get_object_or_404(Activity, id=self.kwargs.get('activity_id'))
+
+        if not self.association_group.site_group.permissions.filter(codename="add_activitymoment").exists():
+            raise PermissionDenied()
 
     def get_form_kwargs(self):
         kwargs = super(AddActivityMomentCalendarView, self).get_form_kwargs()

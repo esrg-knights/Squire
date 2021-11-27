@@ -52,10 +52,16 @@
                     There are no instances of this activity planned
                 </div>
             {% endfor %}
-            <a class="btn btn-primary"
+            {% if can_add_activitymoments %}
+            <a class="btn btn-primary btn-sm"
                 href="{% url "committees:add_activity_moment" group_id=association_group.id activity_id=activity.id %}">
-                Add activity
+                {% if activity.is_recurring %}
+                    Add extra activity instance
+                {% else %}
+                    Add activity instance
+                {% endif %}
             </a>
+            {% endif %}
         </div>
     {% endfor %}
 
