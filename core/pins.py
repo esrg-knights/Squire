@@ -97,6 +97,12 @@ class PinnableMixin(models.Model):
         if self.pin_expiry_field:
             return getattr(self, self.pin_expiry_field, None)
 
+    def clean_pin(self, pin):
+        """
+            Allow pins that have this object attached to fail validation
+            during the pin's clean method if this method raises a ValidationError.
+        """
+        pass
 
 class PinManager(models.Manager):
     """
@@ -269,6 +275,11 @@ class Pin(models.Model):
                 raise ValidationError({
                     'publish_date': ValidationError("The pin cannot be published after it expires", code='invalid_duration')
                 })
+
+        if self.content_object is not None:
+            # Ensure that local data entered in this pin is valid when
+            #   other data is copied form the related object
+            self.content_object.clean_pin(self)
 
     def get_pin_template(self):
         """ Gets the template used by this pin """

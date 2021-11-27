@@ -72,6 +72,12 @@ class RoleplayingSystem(PinnableMixin, models.Model):
     def get_pin_expiry_date(self, pin):
         return (pin.local_publish_date or pin.pin_date) + timezone.timedelta(days=14)
 
+    def clean_pin(self, pin):
+        if not self.is_public:
+            raise ValidationError({'object_id':
+                "Cannot pin non-public systems"
+            })
+
     # End Pinformation
     ####################
 

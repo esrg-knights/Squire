@@ -146,6 +146,12 @@ class Item(PinnableMixin, models.Model):
     def get_pin_expiry_date(self, pin):
         return (pin.local_publish_date or pin.pin_date) + timezone.timedelta(days=14)
 
+    def clean_pin(self, pin):
+        if not self.ownerships.filter(is_active=True).exists():
+            raise ValidationError({'object_id':
+                f"Cannot pin a {self._meta.verbose_name} that does not have an active owner"
+            })
+
     # End Pinformation
     ####################
 

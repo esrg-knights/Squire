@@ -551,10 +551,14 @@ class ActivityMoment(PinnableMixin, models.Model, metaclass=ActivityDuplicate):
     def get_pin_publish_date(self, pin):
         return self.parent_activity.published_date
 
-    def is_pin_valid(self, pin):
-        # TODO: Actually call this method in the Pin's clean method + add it to PinnableMixin
-        if pin.publish_date is not None and pin.publish_date > self.parent_activity.published_date:
-            return ValidationError("Pin cannot be published before the activity")
+    def get_pin_expiry_date(self, pin):
+        return self.end_date
+
+    def clean_pin(self, pin):
+        if pin.local_publish_date is not None and pin.local_publish_date < self.parent_activity.published_date:
+            raise ValidationError({'local_publish_date':
+                f"Pin cannot be published before the related activity is published ({self.parent_activity.published_date})"
+            })
 
     # End Pinfo
     ################################
