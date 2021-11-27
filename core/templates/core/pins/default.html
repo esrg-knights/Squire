@@ -1,10 +1,19 @@
-<div class="card" style="width: 18rem;">
-    <div class="card-body">
-        {{ pin.id }}
-        <h5 class="card-title">{{ pin.title }}</h5>
-        <h6 class="card-subtitle mb-2 text-muted">{{ pin.image }}</h6>
-        <p class="card-text">{{ pin.description }}</p>
-        <a href="#" class="card-link">{{ pin.url }}</a>
-        <!-- <a href="#" class="card-link">Another link</a> -->
+<div class="card row flex-row" style="max-width: 350px;">
+    <div class="col-3 px-2 align-self-center">
+        <img class="w-100" src="{{ pin.image }}" alt="Pin Image">
+    </div>
+    <div class="card-body col-9 pl-0 pr-2 py-2 d-flex flex-column justify-content-between" style="overflow-wrap: break-word;">
+        <div>
+            <h6 class="card-title mb-1">{{ pin.title|default:"Pin" }}</h6>
+            <p class="card-text" style="white-space: pre-line;">{{ pin.description|default:"This pin is lacking a description. High-five the person on your left without telling them why!" }}</p>
+        </div>
+        {% if pin.url %}
+            <div>
+                <hr class="dropdown-divider my-2">
+                <div class="d-flex justify-content-end">
+                    <a href="{{ pin.url }}" class="my-9 card-link btn btn-sm btn-dark greenify align-self-end">View</a>
+                </div>
+            </div>
+        {% endif %}
     </div>
 </div>

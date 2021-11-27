@@ -16,8 +16,6 @@
 {% endblock %}
 
 {% block content %}
-    {% render_pins %}
-
     <div class="m-auto py-5" style="max-width: 1250px;">
         <div class="row">
             <div class="col-12  text-center ">
@@ -37,6 +35,13 @@
             {% endif %}
             <div class="col-md-8">
                 <div class="row">
+                    <!-- Pins Visible to this user -->
+                    <div class="card-deck p-1 mb-2">
+                        {% for pin in user|get_pins|slice:":3" %}
+                            {{ pin.render }}
+                        {% endfor %}
+                    </div>
+                    <!-- Upcoming Activities -->
                     <div class="col-12">
                         <h3>
                             Activities in the next 7 days

@@ -11,14 +11,7 @@ register = template.Library()
 # @since 25 NOV 2021
 ##################################################################################
 
-@register.simple_tag(takes_context=True)
-def render_pins(context):
-    """ Renders each of the pins accessible to this user as HTML, separated by a newline. """
-    pin_html = []
-    for pin in Pin.objects.for_user(context.request.user):
-        pin_html.append(pin.render())
-    return mark_safe("\n".join(pin_html))
-
-
-
-
+@register.filter
+def get_pins(user):
+    """ Returns a Queryset containing the pins accessible to the given user """
+    return Pin.objects.for_user(user)

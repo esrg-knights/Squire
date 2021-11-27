@@ -2,6 +2,7 @@
 {% extends 'core/base.html' %}
 
 {% load render_form %}
+{% load pin_tags %}
 
 {% block title %}
     Squire - Homepage
@@ -24,6 +25,13 @@
             {{ global_preferences.homepage__home_page_message }}
         </div>
     {% endif %}
+
+    <!-- Pins Visible to this user -->
+    <div class="card-deck mb-2">
+        {% for pin in user|get_pins|slice:":3" %}
+            {{ pin.render }}
+        {% endfor %}
+    </div>
 
     <!-- Application Description -->
     <h4>What is Squire?</h4>
