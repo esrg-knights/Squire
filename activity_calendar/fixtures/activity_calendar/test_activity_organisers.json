@@ -3,7 +3,14 @@
         "model": "auth.group",
         "pk": 41,
         "fields": {
-            "name": "Activity_hosts"
+            "name": "Activity_hosts",
+            "permissions": [
+                [
+                    "view_activity",
+                    "activity_calendar",
+                    "activity"
+                ]
+            ]
         }
     },
     {
