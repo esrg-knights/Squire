@@ -1,19 +1,49 @@
-<div class="card row flex-row" style="max-width: 350px;">
-    <div class="col-3 px-2 align-self-center">
-        <img class="w-100" src="{{ pin.image }}" alt="Pin Image">
-    </div>
-    <div class="card-body col-9 pl-0 pr-2 py-2 d-flex flex-column justify-content-between" style="overflow-wrap: break-word;">
-        <div>
-            <h6 class="card-title mb-1">{{ pin.title|default:"Pin" }}</h6>
-            <p class="card-text" style="white-space: pre-line;">{{ pin.description|default:"This pin is lacking a description. High-five the person on your left without telling them why!" }}</p>
+{% with max_desc_length=100 %}
+    <div class="card row flex-row" style="max-width: 350px;">
+        <div class="col-3 px-2 align-self-center">
+            <img class="w-100" src="{{ pin.image }}" alt="Pin Image">
         </div>
-        {% if pin.url %}
+        <div class="card-body col-9 pl-0 pr-2 py-2 d-flex flex-column justify-content-between" style="overflow-wrap: break-word;">
             <div>
-                <hr class="dropdown-divider my-2">
-                <div class="d-flex justify-content-end">
-                    <a href="{{ pin.url }}" class="my-9 card-link btn btn-sm btn-dark greenify align-self-end">View</a>
+                <h6 class="card-title mb-1">{{ pin.title|default:"Pin" }}</h6>
+                <p class="card-text">
+                    <span style="white-space: pre-line;">{{ pin.description|truncatechars:max_desc_length|default:"This pin is lacking a description. High-five the person on your left without telling them why!" }}</span>
+                    {% if pin.description|length > max_desc_length %}
+                        <a href="#" data-toggle="modal" data-target="#pin-{{ pin.id }}">
+                            <small>&gt; Read More</small>
+                        </a>
+                    {% endif %}
+                </p>
+            </div>
+            {% if pin.url %}
+                <div>
+                    <hr class="dropdown-divider my-2">
+                    <div class="d-flex justify-content-end">
+                        <a href="{{ pin.url }}" class="my-9 card-link btn btn-sm btn-dark greenify align-self-end">View</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if pin.description|length > max_desc_length %}
+        <div class="modal fade" id="pin-{{ pin.id }}" tabindex="-1" role="dialog" aria-labelledby="pin-{{ pin.id }}-label" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content" style="overflow-wrap: break-word; white-space:pre-line;">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="pin-{{ pin.id }}-label">{{ pin.title|default:"Pin" }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">{{ pin.description|default:"Wait!? this shouldn't happen..." }}</div>
+                    {% if pin.url %}
+                        <div class="modal-footer">
+                            <a href="{{ pin.url }}" class="btn btn-dark greenify">View</a>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
-        {% endif %}
-    </div>
-</div>
+        </div>
+    {% endif %}
+{% endwith %}
