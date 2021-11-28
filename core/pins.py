@@ -20,7 +20,8 @@ def valid_pinnable_models():
     """ Returns a dictionary consisting of ContentTypes whose corresponding model instances can be pinned. """
     valid_ids = []
     for content_type in ContentType.objects.all():
-        if issubclass(content_type.model_class(), PinnableMixin):
+        model_class = content_type.model_class()
+        if model_class is not None and issubclass(model_class, PinnableMixin):
             valid_ids.append(content_type.id)
     return {'id__in': valid_ids}
 

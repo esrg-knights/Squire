@@ -156,6 +156,15 @@ class MarkdownImageAdminForm(UpdatingUserFormMixin, ModelForm):
 # @since 28 NOV 2021
 ##################################################################################
 
+class PinAdminForm(UpdatingUserFormMixin, ModelForm):
+    """ Ensure the `author` field represents the user that last edited a Pin """
+    class Meta:
+        model = Pin
+        fields = "__all__"
+
+    updating_user_field_name = "author"
+
+
 class PinnableForm(forms.Form):
     """
         Form used by PinnableFormMixin that allows (un)pinning
