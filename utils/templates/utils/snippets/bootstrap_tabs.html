@@ -1,0 +1,11 @@
+{% load bootstrap_tabs %}
+
+<div class="nav nav-tabs px-3 mt-3">
+    <div class="container d-flex flex-wrap">
+        {% for tab in tabs %}
+            <div class="nav-item">
+                <a class="nav-link {% if tab.selected %}active{% endif %}" href="{{ tab.url }}">{{ tab.verbose }}</a>
+            </div>
+        {% endfor %}
+    </div>
+</div>

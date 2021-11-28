@@ -26,7 +26,20 @@ class AssocGroupOverview(PermissionRequiredMixin, ListView):
     def get_context_data(self, *args, **kwargs):
         context = super(AssocGroupOverview, self).get_context_data(*args, **kwargs)
         context[self.tab_name] = True
+        context['tabs'] = self.get_tab_data()
         return context
+
+    def get_tab_data(self):
+        tabs = [
+            {'name': 'tab_committee', 'verbose': 'Committees', 'url_name': 'committees:committees'},
+            {'name': 'tab_guild', 'verbose': 'Orders', 'url_name': 'committees:guilds'},
+            {'name': 'tab_boards', 'verbose': 'Boards', 'url_name': 'committees:boards'},
+        ]
+        for tab in tabs:
+            if tab['name'] == self.tab_name:
+                tab['selected'] = True
+        return tabs
+
 
 
 class CommitteeOverview(AssocGroupOverview):

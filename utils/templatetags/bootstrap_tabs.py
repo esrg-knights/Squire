@@ -32,3 +32,32 @@ def bootstrap_tab(text, active, active_value=None, url=None, url_name=None, **ur
             url=url,
             text=text
         )
+
+@register.inclusion_tag("utils/snippets/bootstrap_tabs.html")
+def bootstrap_tabs(tabs):
+    """
+    Creates the tabs for bootstrap, mobile friendly
+    :param tabs: A list of dictionaries with the following properties:
+    'name': name to differentiate this tab with (internally)
+    'verbose': displayed tab name. Can use translations
+    'url': url to link to
+    'url_name': url namespace to link to if url is not present
+    'selected': boolean determining whether this tab is displayed as selected
+    :return:
+    """
+    selected = None
+
+    print(tabs)
+
+    for tab in tabs:
+        if tab.get('url', None) is None:
+            if tab.get('url_name', None) is None:
+                raise KeyError(f"Url on tab '{tab.get('name', '?')}' invalid. No url nor url_name was given ")
+            tab['url'] = reverse(viewname=tab.get('url_name'))
+        if tab.get('selected', False):
+            selected = tab
+
+    return {
+        'tabs': tabs,
+        'selected': selected,
+    }

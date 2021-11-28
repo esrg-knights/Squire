@@ -21,21 +21,8 @@
 {% endblock title %}
 
 {% block local-nav-bar %}
-    <div class="nav nav-tabs px-3 mt-3">
-        <div class="container d-flex flex-wrap">
-            <div class="nav-item">
-                {% bootstrap_tab "Committees" tab_committee url_name="committees:committees" %}
-            </div>
-            <div class="nav-item">
-                {% bootstrap_tab "Orders" tab_guild url_name="committees:guilds" %}
-            </div>
-            <div class="nav-item">
-                {% bootstrap_tab "Boards" tab_boards url_name="committees:boards" %}
-            </div>
-        </div>
-    </div>
+    {% bootstrap_tabs tabs %}
     {% include "inventory/snippets/snippet_enlarged_image_modal.html" %}
-
 {% endblock %}
 
 
