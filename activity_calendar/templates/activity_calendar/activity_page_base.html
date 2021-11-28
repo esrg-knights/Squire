@@ -3,6 +3,7 @@
 {% load static %}
 {% load get_login_url %}
 {% load calendar_tags %}
+{% load pin_tags %}
 {% load martortags %}
 {% load martor_render %}
 {% load build_absolute_uri %}
@@ -44,7 +45,6 @@
 {% endblock %}
 
 {% block content %}
-    <!-- Slots -->
     <h1>{{ activity_moment.title }}</h1>
     <div class="row">
         <div class="col-12 col-md-7">
@@ -197,13 +197,19 @@
         </div>
         <div class="col-12 col-md-5">
             {% if request.user.is_authenticated %}
-                {% if perms.activity_calendar.change_activitymoment %}
-                    <a class="btn-block btn-sm btn btn-outline-primary mb-4"
-                        href="{% url "activity_calendar:edit_moment" activity_id=activity.id recurrence_id=recurrence_id %}">
-                        Edit
-                    </a>
-                {% endif %}
-
+                <div class="row align-items-center mb-4">
+                    {% if perms.core.change_pin %}
+                        <div class="col-1 mr-2">
+                            {% pinnable_form %}
+                        </div>
+                    {% endif %}
+                    {% if perms.activity_calendar.change_activitymoment %}
+                        <a class="col btn-block btn-sm btn btn-outline-primary"
+                            href="{% url "activity_calendar:edit_moment" activity_id=activity.id recurrence_id=recurrence_id %}">
+                            Edit
+                        </a>
+                    {% endif %}
+                </div>
 
                 {% block sign-up-status %}
 
@@ -237,6 +243,7 @@
         </div>
     </div>
 
+    <!-- Slots -->
     {% block additional-contents %}
 
 

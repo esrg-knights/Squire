@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib import messages
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import (AuthenticationForm, UserCreationForm,
     PasswordChangeForm as DjangoPasswordChangeForm, PasswordResetForm as DjangoPasswordResetForm,
@@ -7,10 +8,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.forms.fields import Field
+from django.http.response import HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
 from martor.widgets import MartorWidget
 
 from core.models import MarkdownImage
+from core.pins import Pin
 from core.widgets import  ImageUploadMartorWidget
 from utils.forms import UpdatingUserFormMixin
 
@@ -89,6 +92,10 @@ class PasswordResetForm(DjangoPasswordResetForm):
 class PasswordResetConfirmForm(DjangoPasswordResetConfirmForm):
     pass
 
+##################################################################################
+# Markdown
+##################################################################################
+
 class MarkdownForm(ModelForm):
     """
         Changes the model's fields that support Markdown such that they use a variant of Martor's
@@ -143,3 +150,111 @@ class MarkdownImageAdminForm(UpdatingUserFormMixin, ModelForm):
         fields = "__all__"
 
     updating_user_field_name = "uploader"
+
+##################################################################################
+# Pins
+# @since 28 NOV 2021
+##################################################################################
+
+class PinnableForm(forms.Form):
+    """
+        Form used by PinnableFormMixin that allows (un)pinning
+        a model instance based on the value of `do_pin`.
+    """
+    do_pin = forms.BooleanField(
+        required=False,
+        # widget=forms.HiddenInput()
+    )
+
+
+class PinnableFormMixin:
+    """
+        Mixin that adds a form to the view that allows pinning a model instance
+        currently in the View. It can be used alongside any other form in the
+        same View.
+
+        `pinnable_prefix` allows changing the way this form is
+        represented within the context.
+    """
+    pinnable_prefix = "pinnable_form"
+
+    def __init__(self, *args, **kwargs):
+        self.pinnable_instance = None
+
+    def post(self, request, *args, **kwargs):
+        if self.pinnable_prefix not in self.request.POST:
+            # The "pin" form was not submitted; so another form was
+            #   submitted instead. Call the parent's post method instead.
+            return super().post(request, *args, **kwargs)
+
+        if not self.request.user.has_perm('core.change_pin'):
+            # User must be able to pin things
+            return self.handle_no_permission()
+
+        # The instance was (un)pinned
+        pinnable_form = self.get_pinnable_form(data=self.request.POST)
+        if pinnable_form.is_valid():
+            # Correctly (un)pinned
+            return self.pinnable_form_valid(pinnable_form.cleaned_data['do_pin'])
+        # Something went wrong
+        return self.pinnable_form_invalid()
+
+    def pinnable_form_valid(self, was_pinned):
+        """ The form used to (un)pin the item was valid """
+        if was_pinned:
+            self.create_pin()
+            message = _("'{pinnable_instance}' was successfully pinned!")
+        else:
+            self.delete_pin()
+            message = _("'{pinnable_instance}' was successfully unpinned!")
+
+        messages.success(self.request, message.format(pinnable_instance=str(self.pinnable_instance).capitalize()))
+        return HttpResponseRedirect(self.request.get_full_path())
+
+    def pinnable_form_invalid(self):
+        """ The form used to (un)pin the item was invalid """
+        messages.error(self.request, f"An unexpected error occurred when trying to pin {str(self.pinnable_instance)}. Please try again later.")
+        return HttpResponseRedirect(self.request.get_full_path())
+
+    def get_pinnable_instance(self):
+        """
+            Fetches the model instance to which a new pin will be attached, or
+            from which all pins should be removed, depending on the value of the
+            submitted form.
+        """
+        raise NotImplementedError("Subclasses should override this method")
+
+    def create_pin(self):
+        """ Creates a pin for the attached model instance """
+        if self.is_instance_pinned():
+            # There technically is a race condition here if two users pin the object at the exact same time
+            return
+        Pin.objects.create(content_object=self.pinnable_instance, category="auto-pin", author=self.request.user)
+
+    def delete_pin(self):
+        """ Removes all (automatically created) pins attached to this model instance """
+        self.pinnable_instance.pins.filter(category="auto-pin").delete()
+
+    def is_instance_pinned(self):
+        """ Returns whether the attached model instance is currently pinned """
+        return self.pinnable_instance.pins.exists()
+
+    def get_pinnable_form(self, **kwargs):
+        """ Gets the form used to determine whether to pin or unpin the attached model instance """
+        self.pinnable_instance = self.get_pinnable_instance()
+        new_kwargs = {
+            'initial': {
+                'do_pin': not self.is_instance_pinned(),
+            },
+            # We need a different prefix to prevent overlap with other
+            #   forms that may also be in the same view.
+            'prefix': self.pinnable_prefix,
+        }
+        new_kwargs.update(**kwargs)
+        return PinnableForm(**new_kwargs)
+
+    def get_context_data(self, **kwargs):
+        """ Insert the pinnable form into the context dict. """
+        if self.pinnable_prefix not in kwargs:
+            kwargs[self.pinnable_prefix] = self.get_pinnable_form()
+        return super().get_context_data(**kwargs)

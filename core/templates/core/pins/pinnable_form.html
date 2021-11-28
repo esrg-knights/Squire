@@ -1,0 +1,15 @@
+{% load static %}
+
+<form method="post">
+    {% csrf_token %}
+    <img
+        src="{% static 'octicons/pin.svg' %}"
+        alt="(un)pin-icon"
+        class="icon"
+        height="26"
+        width="26"
+        style="transform: scaleX(-1);"
+    />
+    {{ pinnable_form }}
+    <input type="submit" value="Start" name="{{ pinnable_form.prefix }}" class="btn btn-primary">
+</form>
