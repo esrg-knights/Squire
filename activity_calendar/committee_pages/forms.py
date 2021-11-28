@@ -11,9 +11,10 @@ from core.forms import MarkdownForm
 from core.widgets import ImageUploadMartorWidget
 
 from activity_calendar.models import ActivityMoment
+from activity_calendar.forms import ActivityMomentFormMixin
 
 
-class CreateActivityMomentForm(MarkdownForm):
+class CreateActivityMomentForm(ActivityMomentFormMixin, MarkdownForm):
     class Meta:
         model = ActivityMoment
         fields = [
@@ -32,33 +33,10 @@ class CreateActivityMomentForm(MarkdownForm):
         if activity is None:
             raise KeyError("Activity was not given")
         super(CreateActivityMomentForm, self).__init__(*args, **kwargs)
+
         self.instance.parent_activity = activity
+        self.prep_placeholders()
 
         self.instance.recurrence_id = timezone.now() + datetime.timedelta(days=7)
         self.fields['recurrence_id'].initial = self.instance.recurrence_id
-
-        # Set a placeholder on all fields
-        for key, field in self.fields.items():
-            attr_name = key[len('local_'):]
-
-            if isinstance(field.widget, forms.Select):
-                # Replace the "-------" or "unknown" option for <select> fields
-
-                # Obtain value from parent_activity.get_FOO_display() if it exists
-                # Otherwise, we must be working with a true/false value from a BooleanField without custom options
-                get_parent_field_display_value = getattr(self.instance.parent_activity, f"get_{attr_name}_display",
-                                                         lambda: _('Yes') if getattr(self.instance.parent_activity, attr_name) else _('No')
-                                                         )
-
-                null_choice_text = _(f'{get_parent_field_display_value()} (Inherited from base activity)')
-
-                # Replace the "-------" or "unknown" option by our newly generated text
-                field.widget.choices = [
-                    ((k, null_choice_text) if k in ['', 'unknown'] else (k, v)) for (k, v) in field.widget.choices
-                ]
-            elif isinstance(field.widget, ImageUploadMartorWidget):
-                field.widget.placeholder = getattr(self.instance.parent_activity, attr_name, None)
-            else:
-                # Set HTML Placeholder for all other fields
-                field.widget.attrs['placeholder'] = getattr(self.instance.parent_activity, attr_name, None)
 

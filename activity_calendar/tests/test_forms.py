@@ -348,8 +348,6 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
         """ Tests that form validates when an organiser creates a slot """
         self.activity.slot_creation = Activity.SLOT_CREATION_STAFF
         self.activity.save()
-        # self.user.user_permissions.add(Permission.objects.get(codename='can_ignore_none_slot_creation_type'))
-        # self.user.save()
         self.assertFormValid({'sign_up': True, 'title': 'My slot', 'max_participants': -1})
 
     @patch('django.utils.timezone.now', side_effect=mock_now())

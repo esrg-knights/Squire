@@ -78,7 +78,7 @@
                     {% endif %}
                     <br>
                     <small class="text-muted">
-                        {% if activity_moment.start_date is not None and activity_moment.is_part_of_recurrence %}
+                        {% if activity_moment.local_start_date is not None and activity_moment.is_part_of_recurrence %}
                             Normally occurs on {{ activity_moment.recurrence_id|date:"l j E (H:i)" }}
                         {% endif %}
                     </small>

@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('committees', '0005_longer_group_member_titles'),
-        ('activity_calendar', '0013_registrations_required_default_false'),
+        ('activity_calendar', '0014_delete_extendeduser_references'),
     ]
 
     operations = [

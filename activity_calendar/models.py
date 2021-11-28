@@ -176,7 +176,6 @@ class Activity(models.Model):
     def get_next_activitymoment(self, dtstart=None, inc=False):
         """
         Returns the next activitymoment that will occur (if any)
-        Note: This method gives incorrect results when activites are moved over other activitymoments
         :param dtstart: The start datetime instance (if any) from which an occurence needs to be retrieved
         :param inc: Whether the startdate should be included
         :return: The activitymoment instance that will occur next
@@ -240,9 +239,20 @@ class Activity(models.Model):
         :param inc: Whether dtstart is included in the search
         :return: A DST-ignored datetime instance of the next occurence since dtstart
         """
+        # Make a copy so we don't modify our own recurrence
+        recurrences = copy.deepcopy(self.recurrences)
+
+        # EXDATEs and RDATEs should match the event's start time, but in the recurrence-widget they
+        #   occur at midnight!
+        # Since there is no possibility to select the RDATE/EXDATE time in the UI either, we need to
+        #   override their time here so that it matches the event's start time. Their timezones are
+        #   also changed into that of the event's start date
+        # recurrences.exdates = list(util.set_time_for_RDATE_EXDATE(recurrences.exdates, dtstart, make_dst_ignore=True))
+        # recurrences.rdates = list(util.set_time_for_RDATE_EXDATE(recurrences.rdates, dtstart, make_dst_ignore=True))
+
         # The after function does not know the initial start date of the recurrent activities
         # So dtstart should be set to the activity start date not search start date
-        next_recurrence = self.recurrences.after(
+        next_recurrence = recurrences.after(
             dtstart,
             inc=inc,
             dtstart=timezone.localtime(self.start_date)

@@ -138,11 +138,13 @@
                             <p id="event-organisers">
                                 Organised by
                                 {% for organiser in activity_moment.parent_activity.organisers.all %}
-                                    <img
-                                        src="{{ organiser.icon.url }}"
-                                        height="32"
-                                        width="32"
-                                    />
+                                    {% if organiser.icon %}
+                                        <img
+                                            src="{{ organiser.icon.url }}"
+                                            height="32"
+                                            width="32"
+                                        />
+                                    {% endif %}
                                     {{ organiser.name }}{% if not forloop.last %},{% endif %}
 
                                 {% endfor %}

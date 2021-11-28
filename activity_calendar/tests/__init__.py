@@ -14,7 +14,7 @@ def mock_now(dt=None):
 
 
 def mock_is_organiser(result=True):
-    """ Script that changes the default now time to a preset value """
+    """ Script that replaces the is_organiser method returning the initial input of this method (default=True) """
     def raise_fake_error(*args):
         return result
 

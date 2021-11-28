@@ -324,25 +324,12 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
         return slot_obj
 
-class ActivityMomentForm(MarkdownForm):
-    class Meta:
-        model = ActivityMoment
-        fields = ['local_title', 'local_description',
-            'local_promotion_image',
-            'local_location',
-            'local_start_date', 'local_end_date',
-            'local_max_participants', 'local_subscriptions_required',
-            'local_slot_creation', 'local_private_slot_locations'
-        ]
 
-    placeholder_detail_title = "Base Activity %s"
+class ActivityMomentFormMixin:
+    """ A mixin that readies fields on a form handling activitymoments """
 
-    def __init__(self, *args, instance=None, **kwargs):
-        # Require that an instance is given as this contains the required attributes parent_activity and recurrence_id
-        if instance is None:
-            raise KeyError("Instance of ActivityMoment was not given")
-        super(ActivityMomentForm, self).__init__(*args, instance=instance, **kwargs)
-
+    def prep_placeholders(self):
+        """ Function that readies placeholders on all fields, copying from the parent activity. """
         # Set a placeholder on all fields
         for key, field in self.fields.items():
             attr_name = key[len('local_'):]
@@ -353,8 +340,8 @@ class ActivityMomentForm(MarkdownForm):
                 # Obtain value from parent_activity.get_FOO_display() if it exists
                 # Otherwise, we must be working with a true/false value from a BooleanField without custom options
                 get_parent_field_display_value = getattr(self.instance.parent_activity, f"get_{attr_name}_display",
-                    lambda: _('Yes') if getattr(self.instance.parent_activity, attr_name) else _('No')
-                )
+                                                         lambda: _('Yes') if getattr(self.instance.parent_activity, attr_name) else _('No')
+                                                         )
 
                 null_choice_text = _(f'{get_parent_field_display_value()} (Inherited from base activity)')
 
@@ -372,11 +359,33 @@ class ActivityMomentForm(MarkdownForm):
                 field.widget.attrs['placeholder'] = start_humanized
             elif attr_name == 'end_date':
                 duration_humanized = timeuntil(self.instance.parent_activity.end_date,
-                    now=self.instance.parent_activity.start_date)
+                                               now=self.instance.parent_activity.start_date)
                 field.widget.attrs['placeholder'] = duration_humanized + " after this occurrence starts"
             else:
                 # Set HTML Placeholder for all other fields
                 field.widget.attrs['placeholder'] = getattr(self.instance.parent_activity, attr_name, None)
+
+
+class ActivityMomentForm(ActivityMomentFormMixin, MarkdownForm):
+    class Meta:
+        model = ActivityMoment
+        fields = ['local_title', 'local_description',
+            'local_promotion_image',
+            'local_location',
+            'local_start_date', 'local_end_date',
+            'local_max_participants', 'local_subscriptions_required',
+            'local_slot_creation', 'local_private_slot_locations'
+        ]
+
+    placeholder_detail_title = "Base Activity %s"
+
+    def __init__(self, *args, instance=None, **kwargs):
+        # Require that an instance is given as this contains the required attributes parent_activity and recurrence_id
+        if instance is None:
+            raise KeyError("Instance of ActivityMoment was not given")
+        super(ActivityMomentForm, self).__init__(*args, instance=instance, **kwargs)
+        self.prep_placeholders()
+
 
 class ActivityAdminForm(MarkdownForm):
     class Meta:
