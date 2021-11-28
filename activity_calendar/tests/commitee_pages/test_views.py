@@ -1,15 +1,14 @@
-
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib.auth.models import Permission
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.views.generic import ListView, FormView
 
-from activity_calendar.models import Activity
+from activity_calendar.models import Activity, OrganiserLink
 from committees.models import AssociationGroup
 from committees.views import AssociationGroupMixin
 from core.tests.util import suppress_warnings
-from utils.testing.view_test_utils import ViewValidityMixin, TestMixinMixin
+from utils.testing.view_test_utils import ViewValidityMixin
 
 from activity_calendar.committee_pages.forms import CreateActivityMomentForm
 from activity_calendar.committee_pages.views import ActivityCalendarView, AddActivityMomentCalendarView
@@ -60,6 +59,16 @@ class TestCommitteeActivityOverview(AssocationGroupTestingMixin, ViewValidityMix
         # Test context
         self.assertEqual(response.context['activities'].count(), 1)
         self.assertIn(Activity.objects.get(id=2), response.context['activities'])
+
+    def test_archived_in_queryset(self):
+        """ Tests that the archived setting excludes an activity from the activity list """
+        OrganiserLink.objects.filter(id=42).update(archived=True)
+        response = self.client.get(self.get_base_url(), data={})
+        self.assertEqual(response.status_code, 200)
+
+        # Test context
+        self.assertEqual(response.context['activities'].count(), 0)
+        self.assertNotIn(Activity.objects.get(id=2), response.context['activities'])
 
 
 class TestCommitteeActivityAddActivityMomentView(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
