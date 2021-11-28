@@ -22,11 +22,9 @@ def pinnable_form(context, pinnable_prefix=None):
     """
         Renders a form to (un)pin an item in this View. This View must
         inherit PinnableFormMixin in order for this to work.
-
-        If there are multiple pinnables in the context, the `pinnable_prefix`
-        kwarg can be used to determine which pinnable form to render.
     """
     pinnable_prefix = pinnable_prefix or PinnableFormMixin.pinnable_prefix
     return {
         'pinnable_form': context[pinnable_prefix],
+        'is_pinned': context["is_pinned"]
     }

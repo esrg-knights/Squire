@@ -2,14 +2,21 @@
 
 <form method="post">
     {% csrf_token %}
-    <img
-        src="{% static 'octicons/pin.svg' %}"
-        alt="(un)pin-icon"
-        class="icon"
-        height="26"
-        width="26"
-        style="transform: scaleX(-1);"
-    />
     {{ pinnable_form }}
-    <input type="submit" value="Start" name="{{ pinnable_form.prefix }}" class="btn btn-primary">
+    <input type="submit" value="" name="{{ pinnable_form.prefix }}"
+        class="btn-block btn-sm btn p-1
+            {% if is_pinned %}
+                btn-primary
+            {% else %}
+                btn-outline-primary
+            {% endif %}
+        "
+        style="
+            background-image: url('{% static 'octicons/pin.svg' %}');
+            background-size: contain;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-origin: content-box;
+            filter: invert(100%) sepia(62%) saturate(179%) hue-rotate(189deg) brightness(113%) contrast(100%);
+        ">
 </form>

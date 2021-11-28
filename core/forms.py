@@ -172,7 +172,7 @@ class PinnableForm(forms.Form):
     """
     do_pin = forms.BooleanField(
         required=False,
-        # widget=forms.HiddenInput()
+        widget=forms.HiddenInput()
     )
 
 
@@ -266,4 +266,5 @@ class PinnableFormMixin:
         """ Insert the pinnable form into the context dict. """
         if self.pinnable_prefix not in kwargs:
             kwargs[self.pinnable_prefix] = self.get_pinnable_form()
+            kwargs['is_pinned'] = self.is_instance_pinned()
         return super().get_context_data(**kwargs)

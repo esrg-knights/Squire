@@ -199,7 +199,7 @@
             {% if request.user.is_authenticated %}
                 <div class="row align-items-center mb-4">
                     {% if perms.core.change_pin %}
-                        <div class="col-1 mr-2">
+                        <div class="col-2">
                             {% pinnable_form %}
                         </div>
                     {% endif %}
