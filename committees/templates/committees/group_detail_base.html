@@ -43,17 +43,7 @@
         </div>
     </div>
 
-    <div class="nav nav-tabs mb-3 pl-3">
-        <div class="nav-item">
-            {% bootstrap_tab "Overview" tab_overview url_name="committees:group_general" group_id=association_group.id %}
-        </div>
-        {% for tab in association_group|get_group_tabs %}
-            <div class="nav-item">
-                {% bootstrap_tab tab.name tab_selected active_value=tab.tab_select_keyword url_name=tab.url_name group_id=association_group.id %}
-            </div>
-        {% endfor %}
-
-    </div>
+    {% bootstrap_tabs tabs %}
 {% endblock %}
 
 
