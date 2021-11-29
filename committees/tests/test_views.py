@@ -114,7 +114,6 @@ class TestAssociationGroupDetailView(ViewValidityMixin, TestCase):
         context = response.context
 
         # Ensure that ownerships only contain activated instances
-        self.assertEqual(context['tab_overview'], True)
         self.assertIn('quicklinks_internal', context.keys())
         self.assertIsInstance(context['quicklinks_internal'], list)
         self.assertIn('quicklinks_external', context.keys())
@@ -142,7 +141,6 @@ class TestAssociationGroupQuickLinksView(ViewValidityMixin, TestCase):
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 200)
 
-        self.assertTrue(response.context['tab_overview'])
         self.assertIsInstance(response.context['form'], AddOrUpdateExternalUrlForm)
 
 
@@ -250,8 +248,6 @@ class TestAssociationGroupUpdateView(ViewValidityMixin, TestCase):
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 200)
 
-        self.assertTrue(response.context['tab_overview'])
-
     def test_post_succesful(self):
         data = {'instructions': "new_instructions"}
         self.assertValidPostResponse(
@@ -284,7 +280,6 @@ class TestAssociationGroupMembersView(ViewValidityMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
         context = response.context
-        self.assertTrue(context['tab_overview'])
         self.assertIsInstance(context['form'], AssociationGroupMembershipForm)
         self.assertIn('member_links', context.keys())
         self.assertGreater(len(context['member_links']), 0)
