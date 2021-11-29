@@ -11,3 +11,11 @@ def mock_now(dt=None):
         return timezone.make_aware(dt)
 
     return adjust_now_time
+
+
+def mock_is_organiser(result=True):
+    """ Script that replaces the is_organiser method returning the initial input of this method (default=True) """
+    def raise_fake_error(*args):
+        return result
+
+    return raise_fake_error
