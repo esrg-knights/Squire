@@ -68,6 +68,7 @@ class AssociationGroupMixin:
     """ Mixin that stores the retrieved group from the url group_id keyword. Also verifies user is part of that group """
     association_group = None
     config_class = None
+    selected_tab_name = None
 
     def setup(self, request, *args, **kwargs):
         self.association_group = get_object_or_404(AssociationGroup, id=kwargs['group_id'])
@@ -82,15 +83,31 @@ class AssociationGroupMixin:
     def get_context_data(self, **kwargs):
         context = super(AssociationGroupMixin, self).get_context_data(**kwargs)
         context['association_group'] = self.association_group
+        context['tabs'] = self.get_tabs()
         return context
 
+    def get_tabs(self):
+        tabs = [{
+            'name': 'tab_overview',
+            'verbose': 'Overview',
+            'url': reverse_lazy('committees:group_general', kwargs={'group_id': self.association_group.id}),
+            'selected': self.selected_tab_name == 'tab_overview',
+        }]
+        for committee_config in get_all_configs_for_group(self.association_group):
+            tabs.append({
+                    'name': committee_config.tab_select_keyword,
+                    'verbose': committee_config.name,
+                    'url': reverse_lazy(committee_config.url_name, kwargs={'group_id': self.association_group.id}),
+                    'selected': committee_config.tab_select_keyword == self.selected_tab_name,
+            })
+        return tabs
 
 class AssociationGroupDetailView(AssociationGroupMixin, TemplateView):
     template_name = "committees/group_detail_info.html"
+    selected_tab_name = "tab_overview"
 
     def get_context_data(self, **kwargs):
         context = super(AssociationGroupDetailView, self).get_context_data(**kwargs)
-        context['tab_overview'] = True
         context['quicklinks_internal'] = self.construct_internal_links()
         context['quicklinks_external'] = self.association_group.shortcut_set.all()
         return context
@@ -107,10 +124,10 @@ class AssociationGroupDetailView(AssociationGroupMixin, TemplateView):
 
 class AssociationGroupQuickLinksView(AssociationGroupMixin, TemplateView):
     template_name = "committees/group_detail_quicklinks.html"
+    selected_tab_name = "tab_overview"
 
     def get_context_data(self, **kwargs):
         return super(AssociationGroupQuickLinksView, self).get_context_data(
-            tab_overview=True,
             form=AddOrUpdateExternalUrlForm(association_group=self.association_group),
             **kwargs
         )
@@ -157,6 +174,7 @@ class AssociationGroupQuickLinksDeleteView(AssociationGroupMixin, PostOnlyFormVi
 class AssociationGroupUpdateView(AssociationGroupMixin, FormView):
     form_class = AssociationGroupUpdateForm
     template_name = "committees/group_detail_info_edit.html"
+    selected_tab_name = "tab_overview"
 
     def get_form_kwargs(self):
         form_kwargs = super(AssociationGroupUpdateView, self).get_form_kwargs()
@@ -165,7 +183,6 @@ class AssociationGroupUpdateView(AssociationGroupMixin, FormView):
 
     def get_context_data(self, **kwargs):
         return super(AssociationGroupUpdateView, self).get_context_data(
-            tab_overview=True,
             **kwargs
         )
 
@@ -180,11 +197,11 @@ class AssociationGroupUpdateView(AssociationGroupMixin, FormView):
 class AssociationGroupMembersView(AssociationGroupMixin, TemplateView):
     template_name = "committees/group_detail_members.html"
     form_class = AssociationGroupMembershipForm  # An empty form is displayed on the page
+    selected_tab_name = "tab_overview"
 
     def get_context_data(self, **kwargs):
         return super(AssociationGroupMembersView, self).get_context_data(
             form=self.form_class(association_group=self.association_group),
-            tab_overview=True,
             member_links=self.association_group.associationgroupmembership_set.all(),
             **kwargs)
 

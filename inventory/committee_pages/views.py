@@ -16,6 +16,7 @@ class AssociationGroupInventoryView(AssociationGroupMixin, SearchFormMixin, List
     template_name = "inventory/committee_pages/group_detail_inventory.html"
     context_object_name = 'ownerships'
     search_form_class = FilterOwnershipThroughRelatedItems
+    selected_tab_name = "tab_inventory"
 
     def get_queryset(self):
         ownerships = Ownership.objects.filter(group=self.association_group.site_group).filter(is_active=True)
@@ -32,7 +33,6 @@ class AssociationGroupInventoryView(AssociationGroupMixin, SearchFormMixin, List
 
         return super(AssociationGroupInventoryView, self).get_context_data(
             content_types=adjustable_items,
-            tab_selected='tab_inventory',
             **kwargs,
         )
 
@@ -42,14 +42,10 @@ class AssociationGroupItemLinkUpdateView(AssociationGroupMixin, OwnershipMixin, 
     model = Ownership
     fields = ['note', 'added_since']
     allow_access_through_group = True
+    selected_tab_name = "tab_inventory"
 
     def get_object(self, queryset=None):
         return self.ownership
-
-    def get_context_data(self, **kwargs):
-        context = super(AssociationGroupItemLinkUpdateView, self).get_context_data(**kwargs)
-        context['tab_selected'] = 'tab_inventory'
-        return context
 
     def form_valid(self, form):
         messages.success(self.request, f"Link data has been updated")

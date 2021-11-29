@@ -12,6 +12,7 @@ from committees.views import AssociationGroupMixin
 class ActivityCalendarView(AssociationGroupMixin, ListView):
     template_name = "activity_calendar/committee_pages/committee_activities.html"
     context_object_name = 'activities'
+    selected_tab_name = "tab_activity"
 
     def get_queryset(self):
         return Activity.objects.filter(
@@ -24,7 +25,6 @@ class ActivityCalendarView(AssociationGroupMixin, ListView):
         # Used for url creation to add-item pages
 
         context = super(ActivityCalendarView, self).get_context_data(
-            tab_selected='tab_activity',
             can_add_activitymoments=self.association_group.site_group.permissions.
                                         filter(codename="add_activitymoment").exists(),
             **kwargs,
@@ -35,6 +35,7 @@ class ActivityCalendarView(AssociationGroupMixin, ListView):
 class AddActivityMomentCalendarView(AssociationGroupMixin, FormView):
     form_class = CreateActivityMomentForm
     template_name = "activity_calendar/committee_pages/committee_add_moment_page.html"
+    selected_tab_name = "tab_activity"
 
     def setup(self, request, *args, **kwargs):
         super(AddActivityMomentCalendarView, self).setup(request, *args, **kwargs)
