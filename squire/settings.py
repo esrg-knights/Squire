@@ -58,10 +58,10 @@ INSTALLED_APPS = [
     # Internal Components
     'core', # Core Module should load first
     'achievements',
-    'activity_calendar',
     'membership_file',
     'inventory',
     'committees',
+    'activity_calendar',
     'utils',
     'boardgames',
     'roleplaying',

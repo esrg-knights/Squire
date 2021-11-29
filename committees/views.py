@@ -69,15 +69,15 @@ class AssociationGroupMixin:
     association_group = None
     config_class = None
 
-    def dispatch(self, request, *args, **kwargs):
-        self.association_group = get_object_or_404(AssociationGroup, id=self.kwargs['group_id'])
-        if not user_in_association_group(self.request.user, self.association_group):
+    def setup(self, request, *args, **kwargs):
+        self.association_group = get_object_or_404(AssociationGroup, id=kwargs['group_id'])
+        if not user_in_association_group(request.user, self.association_group):
             raise PermissionDenied()
 
         if self.config_class and not self.config_class.is_valid_for_group(self.association_group):
             raise PermissionDenied()
 
-        return super(AssociationGroupMixin, self).dispatch(request, *args, **kwargs)
+        return super(AssociationGroupMixin, self).setup(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(AssociationGroupMixin, self).get_context_data(**kwargs)
