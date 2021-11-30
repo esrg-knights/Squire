@@ -9,14 +9,14 @@
     --body-alt-dark-bg-color: #333333;
 
     /* Generated at https://codepen.io/sosuke/pen/Pjoqqp using --body-text-color */
-    --body-icon-color: invert(98%) sepia(2%) saturate(2998%) hue-rotate(272deg) brightness(118%) contrast(76%);
+    --body-icon-color: invert(98%) sepia(2%) saturate(2998%) hue-rotate(272deg)
+        brightness(118%) contrast(76%);
 
     /* Colors for (bootstrap) inputs */
     --input-bg-color: #6b6b6b;
     --input-text-color: var(--body-text-color);
     --input-prepend-bg-color: var(--body-alt-bg-color);
     --input-prepend-text-color: #c3bbbb;
-
 
     /* Colors for highlighted text (e.g. h1, strong) */
     --title-text-color: #3e6690;
@@ -45,6 +45,10 @@
 /* Lighten link colors */
 a {
     color: #55a7ff;
+}
+
+a:hover {
+    color: white;
 }
 
 .alert-info {
