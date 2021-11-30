@@ -64,10 +64,4 @@ a:hover {
 .btn-outline-success.disabled {
     color: white;
     background-color: red;
-    font-size: 0px;
-}
-.btn-outline-success.disabled::after {
-    visibility: visible;
-    content: "Registration closed";
-    font-size: 15px;
 }
