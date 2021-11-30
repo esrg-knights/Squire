@@ -96,7 +96,7 @@
 							</a>
 							<div class="dropdown-menu dropdown-menu-right greenify-dropdown" aria-labelledby="navbarDropdownMenuLink">
 								<a class="dropdown-item" href="{% url 'core:user_accounts/account' %}">View Account</a>
-								<a class="dropdown-item" href="{% url 'achievements/user' %}">Earned Achievements</a>
+								<a class="dropdown-item" href="{% url 'account:achievements' %}">Earned Achievements</a>
                                 {% if member.is_considered_member %}
                                     <a class="dropdown-item" href="{% url 'account:inventory:member_items' %}">My inventory</a>
                                     {% if member.associationgroup_set.all %}

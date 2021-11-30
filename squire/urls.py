@@ -21,6 +21,7 @@ from django.urls import path, include
 from django.conf.urls import handler403, handler404
 
 from committees.urls import get_urls as committee_urls
+from user_interaction import urls as user_interaction_urls
 
 urlpatterns = [
     # Progressive web app
@@ -45,7 +46,7 @@ urlpatterns = [
     # Redirect all other paths to the core module
     path('', include('core.urls', namespace='core')),
 
-    path('', include('user_interaction.urls', namespace='user_pages')),
+    path('', include('user_interaction.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 # NB: 'static(...) above only works when Debug=True! In production, the web server should be set up to serve files
 # For production use, view the following:
