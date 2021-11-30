@@ -40,6 +40,9 @@
     --greenify-dropdown-hover-text-color: inherit;
     --greenify-dropdown-active-bg-color: var(--greenify-bg-color);
     --greenify-dropdown-active-text-color: var(--greenify-text-color);
+
+    /*Calendar day color*/
+    --fc-neutral-bg-color: #375a7f;
 }
 
 /* Lighten link colors */
@@ -50,7 +53,16 @@ a {
 a:hover {
     color: white;
 }
+/* Text color of tabs*/
+.nav-tabs .nav-link.active {
+    color: white;
+}
 
-.alert-info {
-    /* background-color: #243f44; */
+.text-muted {
+    color: whitesmoke !important;
+}
+
+.btn-outline-success.disabled {
+    color: white;
+    background-color: red;
 }
