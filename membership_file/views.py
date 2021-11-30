@@ -11,6 +11,7 @@ from .forms import MemberForm
 from .util import MembershipRequiredMixin
 
 # Enable the auto-creation of logs
+from .auto_model_update import *
 from .export import *
 
 
