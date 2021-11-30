@@ -50,7 +50,13 @@
 a {
     color: #55a7ff;
 }
-
+a:hover {
+    color: white;
+}
+/* Text color of tabs*/
+.nav-tabs .nav-link.active {
+    color: white;
+}
 .alert-info {
     /* background-color: #243f44; */
 }
