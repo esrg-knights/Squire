@@ -100,7 +100,7 @@
                                 {% if member.is_considered_member %}
                                     <a class="dropdown-item" href="{% url 'account:inventory:member_items' %}">My inventory</a>
                                     {% if member.associationgroup_set.all %}
-                                        <a class="dropdown-item" href="{% url 'membership_file/groups' %}">My groups</a>
+                                        <a class="dropdown-item" href="{% url 'account:account_group' %}">My groups</a>
                                     {% endif %}
                                 {% endif %}
                                 {% if user.is_staff %}

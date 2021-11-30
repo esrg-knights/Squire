@@ -1,7 +1,6 @@
 from importlib import import_module
 
 from django.apps import apps
-from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import Permission
 
 from .models import AssociationGroup
