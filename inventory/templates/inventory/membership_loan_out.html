@@ -1,4 +1,4 @@
-{% extends 'core/base.html' %}
+{% extends 'core/user_accounts/account_base.html' %}
 {% load static %}
 
 {% block title %}
@@ -46,7 +46,7 @@
                 <div class="col-12">
                     <input type="submit" class="btn btn-success" form="main_form"
                            value="Yes, I shall leave it at the Knights">
-                    <a class="btn btn-secondary" href="{% url "inventory:member_items" %}">
+                    <a class="btn btn-secondary" href="{% url "account:inventory:member_items" %}">
                         No, I'll keep it at home
                     </a>
                 </div>

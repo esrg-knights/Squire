@@ -56,7 +56,7 @@ class AccountTabsMixin:
         tabs = [
             {'name': 'tab_account', 'verbose': 'Account', 'url_name': 'core:user_accounts/account'},
             {'name': 'tab_membership', 'verbose': 'Membership', 'url_name': 'membership_file/membership'},
-            {'name': 'tab_preferences', 'verbose': 'Preferences', 'url_name': 'user_interaction:change_preferences'},
+            {'name': 'tab_preferences', 'verbose': 'Preferences', 'url_name': 'account:change_preferences'},
         ]
         for tab in tabs:
             if tab['name'] == self.tab_name:

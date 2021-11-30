@@ -98,7 +98,7 @@
 								<a class="dropdown-item" href="{% url 'core:user_accounts/account' %}">View Account</a>
 								<a class="dropdown-item" href="{% url 'achievements/user' %}">Earned Achievements</a>
                                 {% if member.is_considered_member %}
-                                    <a class="dropdown-item" href="{% url 'inventory:member_items' %}">My inventory</a>
+                                    <a class="dropdown-item" href="{% url 'account:inventory:member_items' %}">My inventory</a>
                                     {% if member.associationgroup_set.all %}
                                         <a class="dropdown-item" href="{% url 'membership_file/groups' %}">My groups</a>
                                     {% endif %}

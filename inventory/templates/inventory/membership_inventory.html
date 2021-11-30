@@ -1,4 +1,4 @@
-{% extends 'core/base.html' %}
+{% extends 'core/user_accounts/account_base.html' %}
 {% load static %}
 
 {% block title %}
@@ -50,13 +50,13 @@
                         <td class="col-4">
                             {{ ownership.note }}
                             <a class="btn btn-sm btn-outline-secondary"
-                               href="{% url "inventory:owner_link_edit" ownership_id=ownership.id %}">
+                               href="{% url "account:inventory:owner_link_edit" ownership_id=ownership.id %}">
                                 Edit
                             </a>
                         </td>
                         <td class="col-auto">
                             <a class="btn btn-sm btn-warning"
-                                href="{% url "inventory:member_take_home" ownership_id=ownership.id %}">
+                                href="{% url "account:inventory:member_take_home" ownership_id=ownership.id %}">
                                 Take home
                             </a>
                         </td>
@@ -109,13 +109,13 @@
                     <td class="col-4">
                         {{ ownership.note }}
                         <a class="btn btn-sm btn-outline-secondary"
-                           href="{% url "inventory:owner_link_edit" ownership_id=ownership.id %}">
+                           href="{% url "account:inventory:owner_link_edit" ownership_id=ownership.id %}">
                             Edit
                         </a>
                     </td>
                     <td class="col-auto">
                         <a class="btn btn-sm btn-secondary"
-                           href="{% url "inventory:member_loan_out" ownership_id=ownership.id %}">
+                           href="{% url "account:inventory:member_loan_out" ownership_id=ownership.id %}">
                             Leave at Knights
                         </a>
                     </td>
