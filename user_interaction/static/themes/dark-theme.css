@@ -40,6 +40,9 @@
     --greenify-dropdown-hover-text-color: inherit;
     --greenify-dropdown-active-bg-color: var(--greenify-bg-color);
     --greenify-dropdown-active-text-color: var(--greenify-text-color);
+
+    /*Calendar day color*/
+    --fc-neutral-bg-color: green;
 }
 
 /* Lighten link colors */
