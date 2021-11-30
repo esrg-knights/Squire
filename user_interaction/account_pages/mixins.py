@@ -13,11 +13,11 @@ class AccountTabsMixin:
 
     def get_tabs(self):
         tabs = []
-        for member_page_config in get_all_configs():
+        for account_page_config in get_all_configs():
             tabs.append({
-                'name': member_page_config.tab_select_keyword,
-                'verbose': member_page_config.name,
-                'url_name': 'account:'+member_page_config.url_name,
-                'selected': member_page_config.tab_select_keyword == self.selected_tab_name,
+                'name': account_page_config.tab_select_keyword,
+                'verbose': account_page_config.name,
+                'url_name': 'account:'+account_page_config.url_name,
+                'selected': account_page_config.tab_select_keyword == self.selected_tab_name,
             })
         return tabs

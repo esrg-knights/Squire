@@ -23,8 +23,6 @@ def user_account_urls():
         url_key = f'{setup_config.url_keyword}/' if setup_config.url_keyword else ''
         urlpatterns.append(path(url_key, setup_config.urls))
 
-    print(urlpatterns)
-
     return urlpatterns, app_name, app_name
 
 
