@@ -1,13 +1,10 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
-from django.contrib.messages import SUCCESS
 from django.test import TestCase
 from django.urls import reverse
 from django.views.generic import TemplateView, FormView
-from dynamic_preferences.users.forms import UserPreferenceForm
 
 from core.forms import PasswordChangeForm
-from core.tests.util import TestAccountUser, check_http_response_with_login_redirect
 from user_interaction.account_pages.views import AccountPasswordChangeView, SiteAccountView, LayoutPreferencesUpdateView
 from utils.testing.view_test_utils import ViewValidityMixin
 from user_interaction.account_pages.mixins import AccountTabsMixin
@@ -66,11 +63,6 @@ class AccountPasswordChangeTestCase(ViewValidityMixin, TestCase):
             redirect_url=AccountPasswordChangeView.success_url,
             fetch_redirect_response=True
         )
-
-        # self.assertHasMessage(
-        #     response,
-        #     level=SUCCESS
-        # )
 
 
 class PreferencesUpdateTestCase(ViewValidityMixin, TestCase):

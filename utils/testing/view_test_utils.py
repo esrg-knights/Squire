@@ -62,7 +62,6 @@ class ViewValidityMixin:
         else:
             self.assertEqual(response.status_code, 200, "Response was not a valid Http200 response")
 
-
         return response
 
     @staticmethod
