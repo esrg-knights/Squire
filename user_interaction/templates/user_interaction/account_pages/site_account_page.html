@@ -1,11 +1,21 @@
+
 {% extends 'core/user_accounts/account_base.html' %}
+
+{% block title %}
+    Squire - Membership Data
+{% endblock title %}
+
+{% block og-title %}
+    View Knights Membership Information
+{% endblock og-title %}
+{% block og-description %}
+    View your Knights' membership information here.
+{% endblock og-description %}
 
 {% block content %}
     <h1>Account</h1>
-    <p>
-        Hi {{ user }}!
-        This is your account page.
-    </p>
+    This page contains all information relevant to your account on the site.
+
     <p>
         Username: <i>{{ user.username }}</i><br>
         {% if member is None %}
@@ -18,6 +28,16 @@
         <small class="text-muted">This information can currently not be edited on your end. Please notify the <a href="mailto:uups@kotkt.nl">UUPS</a> if something needs to be changed.</small>
     </p>
     <p>
-        You can change your password <a href="{% url 'core:user_accounts/password_change' %}">here</a>
+        You can change your password <a href="{% url 'account:password_change' %}">here</a>
     </p>
+
+    <h3>Look and layout</h3>
+    <p>
+        Site theme: {{ user.preferences.layout__theme }}
+    </p>
+    <a class="btn btn-secondary btn-sm" href="{% url "account:layout_change" %}">
+        Edit
+    </a>
+
+
 {% endblock content %}

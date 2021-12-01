@@ -83,11 +83,12 @@ class MembershipChangeViewTestCase(ViewValidityMixin, TestCase):
         self.assertIn('membership_file.can_change_membership_information_self', MembershipChangeView.permission_required)
 
     def test_successful_get(self):
-        self.user.user_permissions.add(*list(get_permission_objects_from_string([MembershipDataView.permission_required])))
+        self.user.user_permissions.add(*list(get_permission_objects_from_string(MembershipChangeView.permission_required)))
         response = self.client.get(reverse('account:membership:edit'), data={})
         self.assertEqual(response.status_code, 200)
 
     def test_valid_post(self):
+        self.user.user_permissions.add(*list(get_permission_objects_from_string(MembershipChangeView.permission_required)))
         self.assertValidPostResponse(
             {
                 **self.form_data,

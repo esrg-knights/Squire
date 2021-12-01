@@ -16,9 +16,7 @@ def user_interaction_urls():
 def user_account_urls():
     app_name = 'account'
 
-    urlpatterns = [
-        path('preferences', views.UpdateUserPreferencesView.as_view(), name='change_preferences')
-    ]
+    urlpatterns = []
     for setup_config in config.get_all_configs():
         url_key = f'{setup_config.url_keyword}/' if setup_config.url_keyword else ''
         urlpatterns.append(path(url_key, setup_config.urls))

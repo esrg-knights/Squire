@@ -1,13 +1,5 @@
-from django.contrib import messages
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.http import HttpResponseForbidden
-from django.urls import reverse_lazy
-from django.utils.translation import gettext_lazy as _
-from django.views.generic import TemplateView, UpdateView
+from django.views.generic import TemplateView
 
-from core.views import AccountTabsMixin
-
-from .forms import MemberForm
 from .util import MembershipRequiredMixin
 
 # Enable the auto-creation of logs
