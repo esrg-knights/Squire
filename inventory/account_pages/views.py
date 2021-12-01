@@ -20,7 +20,7 @@ class InventoryAccountMixin(AccountViewMixin):
     selected_tab_name = "tab_inventory"
 
 
-class MemberItemsOverview(MembershipRequiredMixin, InventoryAccountMixin, ListView):
+class MemberItemsOverview(InventoryAccountMixin, ListView):
     template_name = "inventory/membership_inventory.html"
     context_object_name = 'ownerships'
 
@@ -36,7 +36,7 @@ class MemberItemsOverview(MembershipRequiredMixin, InventoryAccountMixin, ListVi
         return context
 
 
-class MemberItemRemovalFormView(MembershipRequiredMixin, InventoryAccountMixin, OwnershipMixin, FormView):
+class MemberItemRemovalFormView(InventoryAccountMixin, OwnershipMixin, FormView):
     template_name = "inventory/membership_take_home.html"
     form_class = OwnershipRemovalForm
     success_url = reverse_lazy("account:inventory:member_items")
@@ -58,7 +58,7 @@ class MemberItemRemovalFormView(MembershipRequiredMixin, InventoryAccountMixin, 
         return HttpResponseRedirect(self.get_success_url())
 
 
-class MemberItemLoanFormView(MembershipRequiredMixin, InventoryAccountMixin, OwnershipMixin, FormView):
+class MemberItemLoanFormView(InventoryAccountMixin, OwnershipMixin, FormView):
     template_name = "inventory/membership_loan_out.html"
     form_class = OwnershipActivationForm
     success_url = reverse_lazy("account:inventory:member_items")
@@ -80,7 +80,7 @@ class MemberItemLoanFormView(MembershipRequiredMixin, InventoryAccountMixin, Own
         return HttpResponseRedirect(self.get_success_url())
 
 
-class MemberOwnershipAlterView(MembershipRequiredMixin, InventoryAccountMixin, OwnershipMixin, FormView):
+class MemberOwnershipAlterView(InventoryAccountMixin, OwnershipMixin, FormView):
     template_name = "inventory/membership_adjust_note.html"
     form_class = OwnershipNoteForm
     success_url = reverse_lazy("account:inventory:member_items")

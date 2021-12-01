@@ -2,15 +2,14 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.test import TestCase, Client
 from django.urls import reverse
-from django.views.generic import DetailView, FormView
+from django.views.generic import FormView
 
-from membership_file.util import MembershipRequiredMixin
 from utils.testing.view_test_utils import ViewValidityMixin
-from utils.views import SearchFormMixin, RedirectMixin
 
 from inventory.forms import *
 from inventory.models import Ownership
 from inventory.account_pages.views import *
+from inventory.account_pages.views import AccountViewMixin
 from inventory.views import OwnershipMixin
 
 
@@ -26,7 +25,9 @@ class TestMemberItemsOverview(TestCase):
         # self.base_response = self.client.get(self.base_url, data={})
 
     def test_class(self):
-        self.assertTrue(issubclass(MemberItemsOverview, MembershipRequiredMixin))
+        self.assertTrue(issubclass(MemberItemsOverview, AccountViewMixin))
+        self.assertEqual(MemberItemsOverview.template_name, "inventory/membership_inventory.html")
+        self.assertEqual(MemberItemsOverview.context_object_name, "ownerships")
 
     def test_member_items_successful(self):
         response = self.client.get(self.base_url, data={})
@@ -55,7 +56,7 @@ class TestMemberItemRemovalFormView(ViewValidityMixin, TestCase):
     def test_class(self):
         self.assertTrue(issubclass(MemberItemRemovalFormView, FormView))
         self.assertTrue(issubclass(MemberItemRemovalFormView, OwnershipMixin))
-        self.assertTrue(issubclass(MemberItemRemovalFormView, MembershipRequiredMixin))
+        self.assertTrue(issubclass(MemberItemRemovalFormView, AccountViewMixin))
         self.assertEqual(MemberItemRemovalFormView.form_class, OwnershipRemovalForm)
         self.assertEqual(MemberItemRemovalFormView.template_name, "inventory/membership_take_home.html")
 
@@ -92,7 +93,7 @@ class TestMemberItemLoanFormView(ViewValidityMixin, TestCase):
     def test_class(self):
         self.assertTrue(issubclass(MemberItemLoanFormView, FormView))
         self.assertTrue(issubclass(MemberItemLoanFormView, OwnershipMixin))
-        self.assertTrue(issubclass(MemberItemLoanFormView, MembershipRequiredMixin))
+        self.assertTrue(issubclass(MemberItemRemovalFormView, AccountViewMixin))
         self.assertEqual(MemberItemLoanFormView.form_class, OwnershipActivationForm)
         self.assertEqual(MemberItemLoanFormView.template_name, "inventory/membership_loan_out.html")
 

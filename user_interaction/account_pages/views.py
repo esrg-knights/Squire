@@ -10,12 +10,12 @@ from core.forms import PasswordChangeForm
 from user_interaction.account_pages.mixins import AccountViewMixin
 
 
-class SiteAccountView(LoginRequiredMixin, AccountViewMixin, TemplateView):
+class SiteAccountView(AccountViewMixin, TemplateView):
     template_name = "user_interaction/account_pages/site_account_page.html"
     selected_tab_name = 'tab_account_info'
 
 
-class AccountPasswordChangeView(LoginRequiredMixin, AccountViewMixin, PasswordChangeView):
+class AccountPasswordChangeView(AccountViewMixin, PasswordChangeView):
     template_name = "user_interaction/account_pages/password_change_form.html"
     success_url = reverse_lazy("account:site_account")
     selected_tab_name = "tab_account_info"
@@ -27,7 +27,7 @@ class AccountPasswordChangeView(LoginRequiredMixin, AccountViewMixin, PasswordCh
         return result
 
 
-class LayoutPreferencesUpdateView(LoginRequiredMixin, AccountViewMixin, FormView):
+class LayoutPreferencesUpdateView(AccountViewMixin, FormView):
     """ View for updating user preferences """
     template_name = 'user_interaction/preferences_change_form.html'
     success_url = reverse_lazy('account:site_account')

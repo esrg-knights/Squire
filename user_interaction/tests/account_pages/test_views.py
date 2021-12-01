@@ -15,7 +15,6 @@ class AccountViewPageTestCase(ViewValidityMixin, TestCase):
     base_user_id = 1
 
     def test_class(self):
-        self.assertTrue(issubclass(SiteAccountView, LoginRequiredMixin))
         self.assertTrue(issubclass(SiteAccountView, AccountViewMixin))
         self.assertTrue(issubclass(SiteAccountView, TemplateView))
         self.assertEqual(SiteAccountView.template_name, "user_interaction/account_pages/site_account_page.html")
@@ -34,7 +33,6 @@ class AccountPasswordChangeTestCase(ViewValidityMixin, TestCase):
         return reverse('account:password_change')
 
     def test_class(self):
-        self.assertTrue(issubclass(AccountPasswordChangeView, LoginRequiredMixin))
         self.assertTrue(issubclass(AccountPasswordChangeView, AccountViewMixin))
         self.assertTrue(issubclass(AccountPasswordChangeView, PasswordChangeView))
         self.assertEqual(AccountPasswordChangeView.template_name, "user_interaction/account_pages/password_change_form.html")
@@ -74,7 +72,6 @@ class PreferencesUpdateTestCase(ViewValidityMixin, TestCase):
         return reverse('account:layout_change')
 
     def test_class(self):
-        self.assertTrue(issubclass(LayoutPreferencesUpdateView, LoginRequiredMixin))
         self.assertTrue(issubclass(LayoutPreferencesUpdateView, AccountViewMixin))
         self.assertTrue(issubclass(LayoutPreferencesUpdateView, FormView))
         self.assertEqual(LayoutPreferencesUpdateView.template_name, "user_interaction/preferences_change_form.html")

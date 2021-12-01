@@ -21,7 +21,6 @@ class MembershipDataViewTestCase(ViewValidityMixin, TestCase):
     base_user_id = 100
 
     def test_class(self):
-        self.assertTrue(issubclass(MembershipDataView, MembershipRequiredMixin))
         self.assertTrue(issubclass(MembershipDataView, AccountViewMixin))
         self.assertEqual(MembershipDataView.model, Member)
         self.assertEqual(MembershipDataView.template_name, 'membership_file/membership_view.html')
