@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.views.generic import UpdateView
 
 from core.util import get_permission_objects_from_string
-from user_interaction.account_pages.mixins import AccountViewMixin
+from user_interaction.accountcollective import AccountViewMixin
 from utils.testing.view_test_utils import ViewValidityMixin
 
 from membership_file.forms import MemberForm

@@ -7,7 +7,7 @@ from django.views.generic import TemplateView, FormView
 from core.forms import PasswordChangeForm
 from user_interaction.account_pages.views import AccountPasswordChangeView, SiteAccountView, LayoutPreferencesUpdateView
 from utils.testing.view_test_utils import ViewValidityMixin
-from user_interaction.account_pages.mixins import AccountViewMixin
+from user_interaction.accountcollective import AccountViewMixin
 
 
 class AccountViewPageTestCase(ViewValidityMixin, TestCase):

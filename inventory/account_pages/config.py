@@ -1,6 +1,6 @@
 from django.urls import path, include
 
-from user_interaction.config import AccountConfig
+from user_interaction.accountcollective import AccountConfig
 
 from .views import *
 
@@ -8,7 +8,6 @@ from .views import *
 
 class AccountInventoryConfig(AccountConfig):
     url_keyword = 'inventory'
-    tab_select_keyword = 'tab_inventory'
     name = 'Inventory'
     url_name = 'inventory:member_items'
 

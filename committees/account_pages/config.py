@@ -1,6 +1,6 @@
 from django.urls import path
 
-from user_interaction.config import AccountConfig
+from user_interaction.accountcollective import AccountConfig
 
 from .views import AssociationGroupAccountView
 
@@ -8,7 +8,6 @@ from .views import AssociationGroupAccountView
 
 class TestAccountConfig(AccountConfig):
     url_keyword = 'my_groups'
-    tab_select_keyword = 'tab_association_groups'
     name = 'My groups'
     url_name = 'account_group'
     order_value = 1

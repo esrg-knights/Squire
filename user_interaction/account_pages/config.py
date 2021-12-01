@@ -1,13 +1,12 @@
 from django.urls import path
 
-from user_interaction.config import AccountConfig
+from user_interaction.accountcollective import AccountConfig
 
 from .views import SiteAccountView, AccountPasswordChangeView, LayoutPreferencesUpdateView
 
 
 class AccountSettingsConfig(AccountConfig):
     url_keyword = 'site'
-    tab_select_keyword = 'tab_account_info'
     name = 'Account'
     url_name = 'site_account'
     order_value = 100  # Value determining the order of the tabs on the Account page

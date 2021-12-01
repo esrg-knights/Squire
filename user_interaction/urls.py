@@ -1,7 +1,7 @@
 from django.urls import include, path
 
 from user_interaction import views
-from user_interaction.config import registry
+from user_interaction.accountcollective import registry
 
 
 def user_interaction_urls():

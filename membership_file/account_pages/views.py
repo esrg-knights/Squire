@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView, UpdateView
 
 from membership_file.util import MembershipRequiredMixin
-from user_interaction.account_pages.mixins import AccountViewMixin
+from user_interaction.accountcollective import AccountViewMixin
 
 from membership_file.models import Member
 from membership_file.forms import MemberForm

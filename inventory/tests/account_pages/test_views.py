@@ -5,11 +5,11 @@ from django.urls import reverse
 from django.views.generic import FormView
 
 from utils.testing.view_test_utils import ViewValidityMixin
+from user_interaction.accountcollective import AccountViewMixin
 
 from inventory.forms import *
 from inventory.models import Ownership
 from inventory.account_pages.views import *
-from inventory.account_pages.views import AccountViewMixin
 from inventory.views import OwnershipMixin
 
 

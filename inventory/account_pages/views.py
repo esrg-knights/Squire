@@ -10,7 +10,7 @@ from inventory.models import Ownership, Item
 from inventory.forms import *
 from inventory.views import OwnershipMixin
 
-from user_interaction.account_pages.mixins import AccountViewMixin
+from user_interaction.accountcollective import AccountViewMixin
 
 
 __all__ = ['MemberItemsOverview', 'MemberItemRemovalFormView', 'MemberItemLoanFormView', 'MemberOwnershipAlterView']

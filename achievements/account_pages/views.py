@@ -1,8 +1,6 @@
-from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views.generic import TemplateView
 
-from membership_file.util import MembershipRequiredMixin
-from user_interaction.account_pages.mixins import AccountViewMixin
+from user_interaction.accountcollective import AccountViewMixin
 
 from achievements.models import Category
 from achievements.serializers import CategorySerializer, AchievementSortType

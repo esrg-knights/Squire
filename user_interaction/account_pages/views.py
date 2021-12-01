@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from dynamic_preferences.users.forms import user_preference_form_builder
 
 from core.forms import PasswordChangeForm
-from user_interaction.account_pages.mixins import AccountViewMixin
+from user_interaction.accountcollective import AccountViewMixin
 
 
 class SiteAccountView(AccountViewMixin, TemplateView):

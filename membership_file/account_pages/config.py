@@ -1,11 +1,10 @@
 from django.urls import path
-from user_interaction.config import AccountConfig
+from user_interaction.accountcollective import AccountConfig
 from .views import MembershipDataView, MembershipChangeView
 
 
 class MembershipConfig(AccountConfig):
     url_keyword = 'membership'
-    tab_select_keyword = 'tab_membership'
     name = 'Membership'
     url_name = 'membership:view'
     order_value = 90

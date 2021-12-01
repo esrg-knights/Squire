@@ -1,11 +1,10 @@
 from django.urls import path
-from user_interaction.config import AccountConfig
+from user_interaction.accountcollective import AccountConfig
 from .views import AchievementAccountView
 
 
 class AchievementConfig(AccountConfig):
     url_keyword = 'achievements'
-    tab_select_keyword = 'tab_achievements'
     name = 'My achievements'
     url_name = 'achievements'
 
