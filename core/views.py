@@ -55,7 +55,6 @@ class AccountTabsMixin:
     def get_tab_data(self):
         tabs = [
             {'name': 'tab_account', 'verbose': 'Account', 'url_name': 'core:user_accounts/account'},
-            {'name': 'tab_membership', 'verbose': 'Membership', 'url_name': 'membership_file/membership'},
             {'name': 'tab_preferences', 'verbose': 'Preferences', 'url_name': 'account:change_preferences'},
         ]
         for tab in tabs:
