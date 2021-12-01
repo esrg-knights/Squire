@@ -1,4 +1,3 @@
-from functools import cached_property
 from importlib import import_module
 from django.apps import apps
 from django.core.exceptions import PermissionDenied
@@ -81,6 +80,7 @@ class AccountRegistry:
     def __init__(self, folder_name, config_class=None):
         self.folder_name = folder_name
         self.config_class = config_class or self.config_class
+        self._configs = None
 
     def get_applicable_configs(self, request):
         """
@@ -94,9 +94,15 @@ class AccountRegistry:
                 applicable_configs.append(config)
         return applicable_configs
 
-    @cached_property
+    @property
     def configs(self):
-        """ Returns a list of all committee page configs"""
+        """ Returns a list of all related collective configs"""
+        if self._configs is None:
+            self._configs = self._get_configs()
+        return self._configs
+
+    def _get_configs(self):
+        """ Constructs a list of all related collective configs """
         configs = []
 
         # Go over all registered apps and check if it has a committee_pages config
