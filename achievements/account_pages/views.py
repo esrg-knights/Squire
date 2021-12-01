@@ -2,13 +2,13 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views.generic import TemplateView
 
 from membership_file.util import MembershipRequiredMixin
-from user_interaction.account_pages.mixins import AccountTabsMixin
+from user_interaction.account_pages.mixins import AccountViewMixin
 
 from achievements.models import Category
 from achievements.serializers import CategorySerializer, AchievementSortType
 
 
-class AchievementAccountView(MembershipRequiredMixin, AccountTabsMixin, TemplateView):
+class AchievementAccountView(MembershipRequiredMixin, AccountViewMixin, TemplateView):
     template_name = "achievements/view_achievements_user.html"
     selected_tab_name = 'tab_achievements'
 

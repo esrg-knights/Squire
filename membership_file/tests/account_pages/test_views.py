@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.views.generic import UpdateView
 
 from core.util import get_permission_objects_from_string
-from user_interaction.account_pages.mixins import AccountTabsMixin
+from user_interaction.account_pages.mixins import AccountViewMixin
 from utils.testing.view_test_utils import ViewValidityMixin
 
 from membership_file.forms import MemberForm
@@ -22,7 +22,7 @@ class MembershipDataViewTestCase(ViewValidityMixin, TestCase):
 
     def test_class(self):
         self.assertTrue(issubclass(MembershipDataView, MembershipRequiredMixin))
-        self.assertTrue(issubclass(MembershipDataView, AccountTabsMixin))
+        self.assertTrue(issubclass(MembershipDataView, AccountViewMixin))
         self.assertEqual(MembershipDataView.model, Member)
         self.assertEqual(MembershipDataView.template_name, 'membership_file/membership_view.html')
         self.assertEqual(MembershipDataView.selected_tab_name, 'tab_membership')
@@ -68,7 +68,7 @@ class MembershipChangeViewTestCase(ViewValidityMixin, TestCase):
 
     def test_class(self):
         self.assertTrue(issubclass(MembershipChangeView, MembershipRequiredMixin))
-        self.assertTrue(issubclass(MembershipChangeView, AccountTabsMixin))
+        self.assertTrue(issubclass(MembershipChangeView, AccountViewMixin))
         self.assertTrue(issubclass(MembershipChangeView, UpdateView))
         self.assertEqual(MembershipChangeView.form_class, MemberForm)
         self.assertEqual(MembershipChangeView.template_name, 'membership_file/membership_edit.html')

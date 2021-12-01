@@ -8,12 +8,15 @@ class MembershipConfig(AccountConfig):
     tab_select_keyword = 'tab_membership'
     name = 'Membership'
     url_name = 'membership:view'
+    order_value = 90
 
     namespace = 'membership'
+
+    requires_membership = False
 
     def get_urls(self):
         """ Builds a list of urls """
         return [
-            path('', MembershipDataView.as_view(), name='view'),
-            path('edit/', MembershipChangeView.as_view(), name='edit'),
+            path('', MembershipDataView.as_view(config=self), name='view'),
+            path('edit/', MembershipChangeView.as_view(config=self), name='edit'),
         ]

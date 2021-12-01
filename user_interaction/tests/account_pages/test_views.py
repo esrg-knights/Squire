@@ -7,7 +7,7 @@ from django.views.generic import TemplateView, FormView
 from core.forms import PasswordChangeForm
 from user_interaction.account_pages.views import AccountPasswordChangeView, SiteAccountView, LayoutPreferencesUpdateView
 from utils.testing.view_test_utils import ViewValidityMixin
-from user_interaction.account_pages.mixins import AccountTabsMixin
+from user_interaction.account_pages.mixins import AccountViewMixin
 
 
 class AccountViewPageTestCase(ViewValidityMixin, TestCase):
@@ -16,7 +16,7 @@ class AccountViewPageTestCase(ViewValidityMixin, TestCase):
 
     def test_class(self):
         self.assertTrue(issubclass(SiteAccountView, LoginRequiredMixin))
-        self.assertTrue(issubclass(SiteAccountView, AccountTabsMixin))
+        self.assertTrue(issubclass(SiteAccountView, AccountViewMixin))
         self.assertTrue(issubclass(SiteAccountView, TemplateView))
         self.assertEqual(SiteAccountView.template_name, "user_interaction/account_pages/site_account_page.html")
         self.assertEqual(SiteAccountView.selected_tab_name, 'tab_account_info')
@@ -35,7 +35,7 @@ class AccountPasswordChangeTestCase(ViewValidityMixin, TestCase):
 
     def test_class(self):
         self.assertTrue(issubclass(AccountPasswordChangeView, LoginRequiredMixin))
-        self.assertTrue(issubclass(AccountPasswordChangeView, AccountTabsMixin))
+        self.assertTrue(issubclass(AccountPasswordChangeView, AccountViewMixin))
         self.assertTrue(issubclass(AccountPasswordChangeView, PasswordChangeView))
         self.assertEqual(AccountPasswordChangeView.template_name, "user_interaction/account_pages/password_change_form.html")
         self.assertEqual(AccountPasswordChangeView.selected_tab_name, 'tab_account_info')
@@ -75,7 +75,7 @@ class PreferencesUpdateTestCase(ViewValidityMixin, TestCase):
 
     def test_class(self):
         self.assertTrue(issubclass(LayoutPreferencesUpdateView, LoginRequiredMixin))
-        self.assertTrue(issubclass(LayoutPreferencesUpdateView, AccountTabsMixin))
+        self.assertTrue(issubclass(LayoutPreferencesUpdateView, AccountViewMixin))
         self.assertTrue(issubclass(LayoutPreferencesUpdateView, FormView))
         self.assertEqual(LayoutPreferencesUpdateView.template_name, "user_interaction/preferences_change_form.html")
         self.assertEqual(LayoutPreferencesUpdateView.selected_tab_name, 'tab_account_info')

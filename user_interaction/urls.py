@@ -1,6 +1,7 @@
 from django.urls import include, path
 
-from user_interaction import views, config
+from user_interaction import views
+from user_interaction.config import registry
 
 
 def user_interaction_urls():
@@ -17,7 +18,7 @@ def user_account_urls():
     app_name = 'account'
 
     urlpatterns = []
-    for setup_config in config.get_all_configs():
+    for setup_config in registry.configs:
         url_key = f'{setup_config.url_keyword}/' if setup_config.url_keyword else ''
         urlpatterns.append(path(url_key, setup_config.urls))
 

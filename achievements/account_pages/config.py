@@ -12,5 +12,5 @@ class AchievementConfig(AccountConfig):
     def get_urls(self):
         """ Builds a list of urls """
         return [
-            path('', AchievementAccountView.as_view(), name='achievements'),
+            path('', AchievementAccountView.as_view(config=self), name='achievements'),
         ]

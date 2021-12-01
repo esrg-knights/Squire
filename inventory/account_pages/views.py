@@ -10,13 +10,13 @@ from inventory.models import Ownership, Item
 from inventory.forms import *
 from inventory.views import OwnershipMixin
 
-from user_interaction.account_pages.mixins import AccountTabsMixin
+from user_interaction.account_pages.mixins import AccountViewMixin
 
 
 __all__ = ['MemberItemsOverview', 'MemberItemRemovalFormView', 'MemberItemLoanFormView', 'MemberOwnershipAlterView']
 
 
-class InventoryAccountMixin(AccountTabsMixin):
+class InventoryAccountMixin(AccountViewMixin):
     selected_tab_name = "tab_inventory"
 
 
