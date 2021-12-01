@@ -13,17 +13,8 @@
 {% endblock og-description %}
 
 {% block content %}
-    <h1>Membership Information</h1>
-    {% if member is None or not member.is_considered_member %}
-        <p>
-            You are not a Knights Member. Please notify the board so they can
-            link your Squire account to your membership information.
-        </p>
-    {% else %}
-        <p>You are a Knights Member; hooray!</p>
-        <p>
-            This page shows everything Squire knows about you.
-            While you can edit most of it yourself, do contact the board if uneditable information is incorrect.
-        </p>
-    {% endif %}
+    <h1>Your account</h1>
+    This page will contain information about the account you use to access Squire.
+
+    It is still on the todo list though
 {% endblock content %}
