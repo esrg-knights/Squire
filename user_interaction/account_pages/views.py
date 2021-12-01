@@ -12,13 +12,11 @@ from user_interaction.account_pages.mixins import AccountViewMixin
 
 class SiteAccountView(AccountViewMixin, TemplateView):
     template_name = "user_interaction/account_pages/site_account_page.html"
-    selected_tab_name = 'tab_account_info'
 
 
 class AccountPasswordChangeView(AccountViewMixin, PasswordChangeView):
     template_name = "user_interaction/account_pages/password_change_form.html"
     success_url = reverse_lazy("account:site_account")
-    selected_tab_name = "tab_account_info"
     form_class = PasswordChangeForm
 
     def form_valid(self, form):
@@ -31,7 +29,6 @@ class LayoutPreferencesUpdateView(AccountViewMixin, FormView):
     """ View for updating user preferences """
     template_name = 'user_interaction/preferences_change_form.html'
     success_url = reverse_lazy('account:site_account')
-    selected_tab_name = 'tab_account_info'
 
     def get_form_class(self):
         return user_preference_form_builder(instance=self.request.user, section='layout')

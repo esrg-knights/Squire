@@ -24,7 +24,6 @@ class MembershipDataViewTestCase(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(MembershipDataView, AccountViewMixin))
         self.assertEqual(MembershipDataView.model, Member)
         self.assertEqual(MembershipDataView.template_name, 'membership_file/membership_view.html')
-        self.assertEqual(MembershipDataView.selected_tab_name, 'tab_membership')
 
     def test_permission_required(self):
         """ Tests that the agreed upon permissions are requiered """
@@ -71,7 +70,6 @@ class MembershipChangeViewTestCase(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(MembershipChangeView, UpdateView))
         self.assertEqual(MembershipChangeView.form_class, MemberForm)
         self.assertEqual(MembershipChangeView.template_name, 'membership_file/membership_edit.html')
-        self.assertEqual(MembershipChangeView.selected_tab_name, 'tab_membership')
         self.assertEqual(MembershipChangeView.success_url, reverse('account:membership:view'))
 
     def test_permission_required(self):

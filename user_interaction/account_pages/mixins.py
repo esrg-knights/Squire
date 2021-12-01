@@ -32,6 +32,6 @@ class AccountViewMixin:
                 'name': account_page_config.tab_select_keyword,
                 'verbose': account_page_config.name,
                 'url_name': 'account:'+account_page_config.url_name,
-                'selected': account_page_config.tab_select_keyword == self.selected_tab_name,
+                'selected': account_page_config.tab_select_keyword == self.config.tab_select_keyword,
             })
         return tabs

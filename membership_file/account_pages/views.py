@@ -16,7 +16,6 @@ class MembershipDataView(AccountViewMixin, PermissionRequiredMixin, TemplateView
     model = Member
     template_name = 'membership_file/membership_view.html'
     permission_required = 'membership_file.can_view_membership_information_self'
-    selected_tab_name = 'tab_membership'
 
 
 # Page for changing membership information using a form
@@ -26,7 +25,6 @@ class MembershipChangeView(MembershipRequiredMixin, AccountViewMixin, Permission
     success_url = reverse_lazy('account:membership:view')
     permission_required = ('membership_file.can_view_membership_information_self', 'membership_file.can_change_membership_information_self')
     raise_exception = True
-    selected_tab_name = 'tab_membership'
 
     def get_object(self, queryset=None):
         """

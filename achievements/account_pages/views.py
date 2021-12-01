@@ -10,7 +10,6 @@ from achievements.serializers import CategorySerializer, AchievementSortType
 
 class AchievementAccountView(AccountViewMixin, TemplateView):
     template_name = "achievements/view_achievements_user.html"
-    selected_tab_name = 'tab_achievements'
 
     def get_context_data(self, **kwargs):
         serializer = CategorySerializer(Category.objects.all(), many=True, context={

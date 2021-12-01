@@ -18,7 +18,6 @@ class AccountViewPageTestCase(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(SiteAccountView, AccountViewMixin))
         self.assertTrue(issubclass(SiteAccountView, TemplateView))
         self.assertEqual(SiteAccountView.template_name, "user_interaction/account_pages/site_account_page.html")
-        self.assertEqual(SiteAccountView.selected_tab_name, 'tab_account_info')
 
     def test_successful_get(self):
         self.assertValidGetResponse(url=reverse('account:site_account'))
@@ -36,7 +35,6 @@ class AccountPasswordChangeTestCase(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(AccountPasswordChangeView, AccountViewMixin))
         self.assertTrue(issubclass(AccountPasswordChangeView, PasswordChangeView))
         self.assertEqual(AccountPasswordChangeView.template_name, "user_interaction/account_pages/password_change_form.html")
-        self.assertEqual(AccountPasswordChangeView.selected_tab_name, 'tab_account_info')
         self.assertEqual(AccountPasswordChangeView.success_url, reverse('account:site_account'))
         self.assertEqual(AccountPasswordChangeView.form_class, PasswordChangeForm)
 
@@ -75,7 +73,6 @@ class PreferencesUpdateTestCase(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(LayoutPreferencesUpdateView, AccountViewMixin))
         self.assertTrue(issubclass(LayoutPreferencesUpdateView, FormView))
         self.assertEqual(LayoutPreferencesUpdateView.template_name, "user_interaction/preferences_change_form.html")
-        self.assertEqual(LayoutPreferencesUpdateView.selected_tab_name, 'tab_account_info')
         self.assertEqual(LayoutPreferencesUpdateView.success_url, reverse('account:site_account'))
 
     def test_successful_get(self):
