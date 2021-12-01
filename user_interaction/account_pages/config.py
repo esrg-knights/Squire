@@ -2,7 +2,7 @@ from django.urls import path
 
 from user_interaction.config import AccountConfig
 
-from .views import SiteAccountView, AccountPasswordChangeView, AccountLayoutPreferencesUpdateView
+from .views import SiteAccountView, AccountPasswordChangeView, LayoutPreferencesUpdateView
 
 
 class TestAccountConfig(AccountConfig):
@@ -16,5 +16,5 @@ class TestAccountConfig(AccountConfig):
         return [
             path('', SiteAccountView.as_view(), name='site_account'),
             path('change-password/', AccountPasswordChangeView.as_view(), name='password_change'),
-            path('change-layout/', AccountLayoutPreferencesUpdateView.as_view(), name='layout_change'),
+            path('change-layout/', LayoutPreferencesUpdateView.as_view(), name='layout_change'),
         ]

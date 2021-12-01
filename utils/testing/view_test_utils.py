@@ -2,6 +2,7 @@
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import Group, User
 from django.http import Http404
+from django.template.response import TemplateResponse
 from django.test import Client, RequestFactory
 from django.views.generic.base import TemplateView
 
@@ -53,9 +54,15 @@ class ViewValidityMixin:
         data = data or {}
         response = self.client.post(url, data=data)
         if redirect_url:
+            # If a form errors, it returns a templateresponse instead. So we can instantly debug
+            if isinstance(response, TemplateResponse):
+                errors = response.context_data['form'].errors.as_data()
+                print(f'Form on {url} contained errors: \n {errors}')
             self.assertRedirects(response, redirect_url, fetch_redirect_response=fetch_redirect_response)
         else:
             self.assertEqual(response.status_code, 200, "Response was not a valid Http200 response")
+
+
         return response
 
     @staticmethod

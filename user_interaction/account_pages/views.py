@@ -17,7 +17,7 @@ class SiteAccountView(LoginRequiredMixin, AccountTabsMixin, TemplateView):
 
 class AccountPasswordChangeView(LoginRequiredMixin, AccountTabsMixin, PasswordChangeView):
     template_name = "user_interaction/account_pages/password_change_form.html"
-    success_url = reverse_lazy("account:password_change")
+    success_url = reverse_lazy("account:site_account")
     selected_tab_name = "tab_account_info"
     form_class = PasswordChangeForm
 
@@ -27,16 +27,11 @@ class AccountPasswordChangeView(LoginRequiredMixin, AccountTabsMixin, PasswordCh
         return result
 
 
-class AccountLayoutPreferencesUpdateView(LoginRequiredMixin, AccountTabsMixin, FormView):
+class LayoutPreferencesUpdateView(LoginRequiredMixin, AccountTabsMixin, FormView):
     """ View for updating user preferences """
     template_name = 'user_interaction/preferences_change_form.html'
     success_url = reverse_lazy('account:site_account')
-    tab_name = 'tab_account_info'
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context[self.tab_name] = True
-        return context
+    selected_tab_name = 'tab_account_info'
 
     def get_form_class(self):
         return user_preference_form_builder(instance=self.request.user, section='layout')
