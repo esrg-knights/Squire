@@ -1,16 +1,16 @@
 from django.contrib.contenttypes.models import ContentType
 from django.urls import path, include, reverse
 
-from committees.config import CommitteeConfig
+from committees.committeecollective import CommitteeConfig
 
 from .views import AssociationGroupInventoryView, AssociationGroupItemLinkUpdateView
 
 
 class InventoryConfig(CommitteeConfig):
     url_keyword = 'inventory'
-    tab_select_keyword = 'tab_inventory'
     name = 'Inventory'
-    url_name = 'committees:group_inventory'
+    url_name = 'group_inventory'
+    order_value = 50
 
     def get_urls(self):
         """ Builds a list of urls """

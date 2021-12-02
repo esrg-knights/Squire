@@ -1,8 +1,8 @@
-from django.urls import path, include
+from django.urls import path, include, reverse_lazy
 from django.views.generic.base import RedirectView
 
 from committees.views import *
-from committees.config import get_all_configs
+from committees.committeecollective import registry
 
 
 def get_urls():
@@ -14,10 +14,13 @@ def get_urls():
     :return:
     """
 
-    extra_urls = []
-    # Try to load the setup config files
-    for setup_config in get_all_configs():
-        extra_urls.append(path(f'{setup_config.url_keyword}/', setup_config.urls))
+    def associationgroup_pages_urls():
+        urlpatterns = []
+        for setup_config in registry.configs:
+            url_key = f'{setup_config.url_keyword}/' if setup_config.url_keyword else ''
+            urlpatterns.append(path(url_key, setup_config.urls))
+
+        return urlpatterns, None, None
 
     urls = [
         # Change Language helper view
@@ -25,20 +28,7 @@ def get_urls():
         path('committees/', CommitteeOverview.as_view(), name='committees'),
         path('guilds/', GuildOverview.as_view(), name='guilds'),
         path('boards/', BoardOverview.as_view(), name='boards'),
-        path('<int:group_id>/', include([
-            path('main/', include([
-                path('', AssociationGroupDetailView.as_view(), name='group_general'),
-                path('update/', AssociationGroupUpdateView.as_view(), name='group_update'),
-                path('members/', AssociationGroupMembersView.as_view(), name='group_members'),
-                path('members/edit/', AssociationGroupMemberUpdateView.as_view(), name='group_members_edit'),
-                path('quicklinks/', include([
-                    path('', AssociationGroupQuickLinksView.as_view(), name='group_quicklinks'),
-                    path('edit/', AssociationGroupQuickLinksAddOrUpdateView.as_view(), name='group_quicklinks_edit'),
-                    path('<int:quicklink_id>/delete/', AssociationGroupQuickLinksDeleteView.as_view(), name='group_quicklink_delete'),
-                ])),
-            ])),
-            *extra_urls,
-        ]))
+        path('<int:group_id>/', associationgroup_pages_urls())  # include([
     ]
 
 

@@ -14,6 +14,7 @@ class AccountViewMixin(ViewCollectiveViewMixin):
     """
     def __init__(self, *args, **kwargs):
         self.registry = registry
+        self.root_namespace = 'account'
         super(AccountViewMixin, self).__init__(*args, **kwargs)
 
 

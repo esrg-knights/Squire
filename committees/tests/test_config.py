@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 
-from committees.config import get_all_configs, CommitteeConfig
+from committees.committeecollective import get_all_configs, CommitteeConfig
 
 
 def test_get_all_configs(self):
@@ -25,12 +25,6 @@ class TestCommitteeConfig(TestCase):
 
     def setUp(self):
         self.config = FakeConfig()
-
-    def test_get_tab_data(self):
-        tab_data = self.config.get_tab_data()
-        self.assertEqual(tab_data['name'], self.config.name)
-        self.assertEqual(tab_data['tab_select_keyword'], self.config.tab_select_keyword)
-        self.assertEqual(tab_data['url_name'], self.config.url_name)
 
     def test_urls(self):
         urls = self.config.urls

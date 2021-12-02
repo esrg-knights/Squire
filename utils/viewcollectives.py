@@ -1,6 +1,10 @@
 from importlib import import_module
 from django.apps import apps
 from django.core.exceptions import PermissionDenied
+from django.urls import reverse
+
+
+__all__ = ['ViewCollectiveConfig', 'ViewCollectiveViewMixin', 'AccountRegistry']
 
 
 class ViewCollectiveConfig:
@@ -45,16 +49,29 @@ class ViewCollectiveViewMixin:
     """
     config = None
     registry = None
+    root_namespace = None
 
-    def dispatch(self, request, *args, **kwargs):
+    def __init__(self, *args, config=None, **kwargs):
+        self.config = config
         if self.config is None:
             raise KeyError(f"{self.__class__.__name__} does not have a config linked did you forget to assign it "
                            f"in your urls in your config class? ({self.__class__.__name__}).as_view(config=self)")
 
-        if not self.config.valid_for_request(request):
+        super(ViewCollectiveViewMixin, self).__init__(*args, **kwargs)
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self._check_config_access():
             raise PermissionDenied()
 
         return super(ViewCollectiveViewMixin, self).dispatch(request, *args, **kwargs)
+
+    def _check_config_access(self):
+        """
+         Checks whether the current session has permission.
+         Override this in case checks uses other variables than request.
+        :return: Boolean
+        """
+        return self.config.valid_for_request(request=self.request)
 
     def get_context_data(self, **kwargs):
         return super(ViewCollectiveViewMixin, self).get_context_data(
@@ -68,10 +85,15 @@ class ViewCollectiveViewMixin:
             tabs.append({
                 'name': account_page_config.tab_select_keyword,
                 'verbose': account_page_config.name,
-                'url_name': 'account:'+account_page_config.url_name,
+                'url': self._get_tab_url(self.root_namespace+':'+account_page_config.url_name),
                 'selected': account_page_config == self.config,
             })
         return tabs
+
+    def _get_tab_url(self, url_name, **url_kwargs):
+        """ Returns the url for the tab. Interject url_kwargs to add extra perameters"""
+        return reverse(url_name, kwargs=url_kwargs)
+
 
 
 class AccountRegistry:
@@ -82,15 +104,16 @@ class AccountRegistry:
         self.config_class = config_class or self.config_class
         self._configs = None
 
-    def get_applicable_configs(self, request):
+    def get_applicable_configs(self, request, **other_kwargs):
         """
         Returns a list of all applicable configs
         :param request: The request containing the user and member instances of the session
+        :param other_kwargs: keyword arguments related to the sequence of configs as defined in related config class
         :return: List of applicable confis
         """
         applicable_configs = []
         for config in self.configs:
-            if config.valid_for_request(request):
+            if config.valid_for_request(request, **other_kwargs):
                 applicable_configs.append(config)
         return applicable_configs
 
