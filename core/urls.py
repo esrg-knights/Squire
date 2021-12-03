@@ -76,6 +76,7 @@ urlpatterns = [
         name='user_accounts/password_change/success'),
     # Other pages
     path('account', views.AccountView.as_view(), name='user_accounts/account'),
+    path('account/edit', views.AccountChangeView.as_view(), name='user_accounts/account/edit'),
     path('register', views.register, name='user_accounts/register'),
     path('register/success', views.registerSuccess, name='user_accounts/register/success'),
     path('newsletters/', views.viewNewsletters, name='newsletters'),

@@ -143,3 +143,15 @@ class MarkdownImageAdminForm(UpdatingUserFormMixin, ModelForm):
         fields = "__all__"
 
     updating_user_field_name = "uploader"
+
+class AccountForm(ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'email']
+    
+    def is_valid(self):
+        ret = super().is_valid()
+        # Add an 'error' class to input elements that contain an error
+        for field in self.errors:
+            self.fields[field].widget.attrs.update({'class': self.fields[field].widget.attrs.get('class', '') + ' alert-danger'})
+        return ret

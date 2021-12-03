@@ -1,25 +1,29 @@
 import os
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.http.response import Http404, HttpResponseNotFound
 from django.shortcuts import redirect, render
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_safe
 from django.views.generic.base import TemplateView
+from django.views.generic import UpdateView
 
-from .forms import RegisterForm
+from .forms import RegisterForm, AccountForm
 from .models import MarkdownImage
 
 from dynamic_preferences.registries import global_preferences_registry
 global_preferences = global_preferences_registry.manager()
 
+from django.contrib.auth import get_user_model
+User = get_user_model()
 ##################################################################################
 # Contains render-code for displaying general pages.
 # @since 15 JUL 2019
@@ -42,6 +46,13 @@ def viewNewsletters(request):
         'NEWSLETTER_ARCHIVE_URL': global_preferences['newsletter__share_link'],
     })
 
+class AccountMixin(LoginRequiredMixin):
+    """
+        Sets the view's object to the user that makes
+        the request.
+    """
+    def get_object(self, queryset=None):
+        return self.request.user
 
 class AccountTabsMixin:
     tab_name = None
@@ -73,6 +84,22 @@ class AccountView(AccountTabsMixin, TemplateView):
         context = super().get_context_data(*args, **kwargs)
         context[self.tab_name] = True
         return context
+
+
+class AccountChangeView(AccountMixin, AccountTabsMixin, PermissionRequiredMixin, UpdateView):
+    template_name = 'core/user_accounts/account_edit.html'
+    form_class = AccountForm
+    success_url = reverse_lazy('core:user_accounts/account')
+    permission_required = ('core.can_view_account_information_self', 'core.can_change_account_information_self')
+    raise_exception = True
+    tab_name = 'tab_account'
+
+
+    def form_valid(self, form):
+        message = _("Your account information has been saved successfully! Notice the name disappears when the user is a membership ")
+        messages.success(self.request, message)
+        return super().form_valid(form)
+
 
 @require_safe
 def registerSuccess(request):
