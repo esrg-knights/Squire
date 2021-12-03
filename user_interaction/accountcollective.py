@@ -1,7 +1,7 @@
 from utils.viewcollectives import ViewCollectiveConfig, AccountRegistry, ViewCollectiveViewMixin
 
 
-class AccountConfig(ViewCollectiveConfig):
+class AccountBaseConfig(ViewCollectiveConfig):
     """ Configurations for additional tabs on membership pages """
     # Variables for basic requirements
     requires_login = True
@@ -12,10 +12,8 @@ class AccountViewMixin(ViewCollectiveViewMixin):
     """
     Mixin for Account Config classes
     """
-    def __init__(self, *args, **kwargs):
-        self.registry = registry
-        super(AccountViewMixin, self).__init__(*args, **kwargs)
+    pass
 
 
-registry = AccountRegistry('account', 'account_pages', config_class=AccountConfig)
+registry = AccountRegistry('account', 'account_pages', config_class=AccountBaseConfig)
 

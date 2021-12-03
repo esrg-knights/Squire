@@ -1,9 +1,9 @@
 from django.urls import path
-from user_interaction.accountcollective import AccountConfig
+from user_interaction.accountcollective import AccountBaseConfig
 from .views import MembershipDataView, MembershipChangeView
 
 
-class MembershipConfig(AccountConfig):
+class MembershipConfig(AccountBaseConfig):
     url_keyword = 'membership'
     name = 'Membership'
     url_name = 'membership:view'

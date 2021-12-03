@@ -1,11 +1,11 @@
 from django.urls import path
 
-from user_interaction.accountcollective import AccountConfig
+from user_interaction.accountcollective import AccountBaseConfig
 
 from .views import SiteAccountView, AccountPasswordChangeView, LayoutPreferencesUpdateView
 
 
-class AccountSettingsConfig(AccountConfig):
+class AccountSettingsConfig(AccountBaseConfig):
     url_keyword = 'site'
     name = 'Account'
     url_name = 'site_account'

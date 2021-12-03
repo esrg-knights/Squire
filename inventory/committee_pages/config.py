@@ -1,12 +1,12 @@
 from django.contrib.contenttypes.models import ContentType
 from django.urls import path, include, reverse
 
-from committees.committeecollective import CommitteeConfig
+from committees.committeecollective import CommitteeBaseConfig
 
 from .views import AssociationGroupInventoryView, AssociationGroupItemLinkUpdateView
 
 
-class InventoryConfig(CommitteeConfig):
+class InventoryConfig(CommitteeBaseConfig):
     url_keyword = 'inventory'
     name = 'Inventory'
     url_name = 'group_inventory'

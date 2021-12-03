@@ -1,12 +1,12 @@
 from django.urls import path, include, reverse
 
-from committees.committeecollective import CommitteeConfig
+from committees.committeecollective import CommitteeBaseConfig
 
 from activity_calendar.committee_pages.views import ActivityCalendarView, AddActivityMomentCalendarView
 
 
 
-class ActivityConfig(CommitteeConfig):
+class ActivityConfig(CommitteeBaseConfig):
     url_keyword = 'activity'
     name = 'Activities'
     url_name = 'group_activities'

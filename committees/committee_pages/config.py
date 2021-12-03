@@ -1,11 +1,11 @@
 from django.urls import path, include, reverse
 
-from committees.committeecollective import CommitteeConfig
+from committees.committeecollective import CommitteeBaseConfig
 
 from committees.committee_pages.views import *
 
 
-class AssociationGroupWelcomeConfig(CommitteeConfig):
+class AssociationGroupWelcomeConfig(CommitteeBaseConfig):
     url_keyword = 'main'
     name = 'Overview'
     url_name = 'group_general'

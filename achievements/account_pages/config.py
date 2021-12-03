@@ -1,9 +1,9 @@
 from django.urls import path
-from user_interaction.accountcollective import AccountConfig
+from user_interaction.accountcollective import AccountBaseConfig
 from .views import AchievementAccountView
 
 
-class AchievementConfig(AccountConfig):
+class AchievementConfig(AccountBaseConfig):
     url_keyword = 'achievements'
     name = 'My achievements'
     url_name = 'achievements'

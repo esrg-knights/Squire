@@ -22,7 +22,7 @@ class AssociationGroupDetailView(AssociationGroupMixin, TemplateView):
     def construct_internal_links(self):
         """ Loops over the configs to determine any quicklinks """
         quicklinks = []
-        for config in self.registry.get_applicable_configs(self.request, **self._get_other_check_kwargs()):
+        for config in self.config.registry.get_applicable_configs(self.request, **self._get_other_check_kwargs()):
             quicklinks.extend(
                 config.get_local_quicklinks(association_group=self.association_group)
             )

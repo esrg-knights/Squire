@@ -8,7 +8,7 @@ from committees.utils import user_in_association_group
 from committees.models import AssociationGroup
 
 
-class CommitteeConfig(ViewCollectiveConfig):
+class CommitteeBaseConfig(ViewCollectiveConfig):
     """ Configurations for additional tabs on committee pages """
     url_keyword = None
     name = None
@@ -21,7 +21,7 @@ class CommitteeConfig(ViewCollectiveConfig):
     namespace = None
 
     def check_access_validity(self, request, association_group=None):
-        if not super(CommitteeConfig, self).check_access_validity(request):
+        if not super(CommitteeBaseConfig, self).check_access_validity(request):
             return False
 
         if not user_in_association_group(request.user, association_group):
@@ -50,10 +50,6 @@ class AssociationGroupMixin(ViewCollectiveViewMixin):
     association_group = None
     selected_tab_name = None
 
-    def __init__(self, *args, **kwargs):
-        self.registry = registry
-        super(AssociationGroupMixin, self).__init__(*args, **kwargs)
-
     def setup(self, request, *args, **kwargs):
         self.association_group = get_object_or_404(AssociationGroup, id=kwargs['group_id'])
         return super(AssociationGroupMixin, self).setup(request, *args, **kwargs)
@@ -78,4 +74,4 @@ class AssociationGroupMixin(ViewCollectiveViewMixin):
         return super(AssociationGroupMixin, self)._get_tab_url(url_name, **url_kwargs)
 
 
-registry = AccountRegistry('committees', 'committee_pages', config_class=CommitteeConfig)
+registry = AccountRegistry('committees', 'committee_pages', config_class=CommitteeBaseConfig)

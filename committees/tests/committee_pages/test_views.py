@@ -14,10 +14,10 @@ from committees.models import AssociationGroup, AssociationGroupMembership, Grou
 from committees.committee_pages.views import AssociationGroupMixin, AssociationGroupDetailView, AssociationGroupQuickLinksView, \
     AssociationGroupQuickLinksAddOrUpdateView, AssociationGroupQuickLinksDeleteView, \
     AssociationGroupUpdateView, AssociationGroupMembersView, AssociationGroupMemberUpdateView
-from committees.committeecollective import CommitteeConfig
+from committees.committeecollective import CommitteeBaseConfig, registry
 
 
-class FakeConfig(CommitteeConfig):
+class FakeConfig(CommitteeBaseConfig):
     url_keyword = 'main'
     name = 'Overview'
     url_name = 'group_general'
@@ -36,7 +36,7 @@ class TestGroupMixin(TestMixinWithMemberMiddleware, TestMixinMixin, TestCase):
     def get_as_full_view_class(self):
         cls = super(TestGroupMixin, self).get_as_full_view_class()
         # Set the config instance. Normally done in urls creation as base value
-        cls.config = FakeConfig()
+        cls.config = FakeConfig(registry)
         return cls
 
     def get_base_url_kwargs(self):

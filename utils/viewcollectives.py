@@ -51,6 +51,9 @@ class ViewCollectiveConfig:
     requires_login = True
     requires_membership = True
 
+    def __init__(self, registry):
+        self.registry = registry
+
     def check_access_validity(self, request):
         """ Determines whether the given request allows this"""
         if self.requires_login and not request.user.is_authenticated:
@@ -114,8 +117,10 @@ class ViewCollectiveViewMixin:
         Returns a list of dictionary objects for tab information
         :return:
         """
+        registry = self.config.registry
+
         tabs = []
-        applicable_configs = self.registry.get_applicable_configs(
+        applicable_configs = registry.get_applicable_configs(
             self.request,
             **self._get_other_check_kwargs()
         )
@@ -123,7 +128,7 @@ class ViewCollectiveViewMixin:
             tabs.append({
                 'name': None, # redacted
                 'verbose': account_page_config.name,
-                'url': self._get_tab_url(self.registry.namespace+':'+account_page_config.url_name),
+                'url': self._get_tab_url(registry.namespace+':'+account_page_config.url_name),
                 'selected': account_page_config == self.config,
             })
         return tabs
@@ -187,7 +192,7 @@ class AccountRegistry:
                     if isinstance(cls, type):
                         # Get all subclasses of the root config class, but not accidental imported copies of itself
                         if issubclass(cls, self.config_class) and cls != self.config_class:
-                            config = cls()  # Initialise config
+                            config = cls(self)  # Initialise config
                             configs.append(config)
         return sorted(configs, key= lambda config: config.order_value)
 

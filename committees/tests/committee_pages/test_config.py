@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from committees.committeecollective import CommitteeConfig
+from committees.committeecollective import CommitteeBaseConfig
 from committees.committee_pages.config import AssociationGroupWelcomeConfig
 
 from committees.committeecollective import registry
@@ -9,7 +9,7 @@ from committees.committeecollective import registry
 class AssociationGroupHomeConfigTestCase(TestCase):
 
     def test_class(self):
-        self.assertTrue(issubclass(AssociationGroupWelcomeConfig, CommitteeConfig))
+        self.assertTrue(issubclass(AssociationGroupWelcomeConfig, CommitteeBaseConfig))
         self.assertEqual(AssociationGroupWelcomeConfig.url_keyword, "main")
         self.assertEqual(AssociationGroupWelcomeConfig.url_name, "group_general")
 

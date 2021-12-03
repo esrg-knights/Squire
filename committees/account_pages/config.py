@@ -1,12 +1,12 @@
 from django.urls import path
 
-from user_interaction.accountcollective import AccountConfig
+from user_interaction.accountcollective import AccountBaseConfig
 
 from .views import AssociationGroupAccountView
 
 
 
-class TestAccountConfig(AccountConfig):
+class TestAccountConfig(AccountBaseConfig):
     url_keyword = 'my_groups'
     name = 'My groups'
     url_name = 'account_group'

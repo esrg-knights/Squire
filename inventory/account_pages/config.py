@@ -1,12 +1,12 @@
 from django.urls import path, include
 
-from user_interaction.accountcollective import AccountConfig
+from user_interaction.accountcollective import AccountBaseConfig
 
 from .views import *
 
 
 
-class AccountInventoryConfig(AccountConfig):
+class AccountInventoryConfig(AccountBaseConfig):
     url_keyword = 'inventory'
     name = 'Inventory'
     url_name = 'inventory:member_items'
