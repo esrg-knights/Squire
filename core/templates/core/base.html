@@ -55,6 +55,7 @@
 		{% endblock js %}
 	</head>
 	<body class='d-flex flex-column'>
+        {% block nav %}
 		<nav class="navbar navbar-expand-lg navbar-dark greenify-dark">
 			<a class="navbar-brand" href="/">
 				<img src="{% static 'images/header_logo.png' %}" alt="Modified Knights Logo" height="85px">
@@ -123,6 +124,7 @@
 				</ul>
 			</div>
 		</nav>
+        {% endblock nav %}
 
         {% block local-nav-bar %}
             {# Space for navigation on local sections e.g. tabs in associatingroups overview #}

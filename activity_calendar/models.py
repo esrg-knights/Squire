@@ -568,7 +568,7 @@ class ActivityMoment(PinnableMixin, models.Model, metaclass=ActivityDuplicate):
         return f"{self.title} @ {self.start_date}"
 
 
-class ActivitySlot(models.Model):
+class ActivitySlot(PinnableMixin, models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     location = models.CharField(max_length=255, blank=True, null=True,
@@ -651,6 +651,39 @@ class ActivitySlot(models.Model):
             'activity_id': self.parent_activity.id,
             'recurrence_id': self.recurrence_id,
         })
+
+    ################################
+    # Pin Info
+    pin_title_field = "title"
+
+    def get_pin_description(self, pin):
+        # Pin description also contains the location
+        return str(self.location) + self.description
+
+    def get_pin_url(self, pin):
+        return self.get_absolute_url()
+
+    def get_pin_image(self, pin):
+        return self.image_url
+
+    def get_pin_publish_date(self, pin):
+        return self.parent_activity.published_date
+
+    def get_pin_expiry_date(self, pin):
+        # This isn't entirely correct, as activitymoments can have alternative
+        #   start/end times. There is no way, however, to fetch that from
+        #   the slot object itself. Can be fixed once slots are properly
+        #   attached to ActivityMoments instead. See #83
+        return self.recurrence_id
+
+    def clean_pin(self, pin):
+        if pin.local_publish_date is not None and pin.local_publish_date < self.parent_activity.published_date:
+            raise ValidationError({'local_publish_date':
+                f"Pin cannot be published before the related activity is published ({self.parent_activity.published_date})"
+            })
+
+    # End Pinfo
+    ################################
 
 
 class ParticipantManager(models.Manager):

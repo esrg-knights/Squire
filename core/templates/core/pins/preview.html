@@ -1,0 +1,18 @@
+{% extends 'core/base.html' %}
+
+{% block title %}
+Pin Preview
+{% endblock title %}
+
+{% block nav %}{% endblock nav %}
+
+{% block content %}
+    <div class="d-flex flex-column align-items-center">
+        <h1 class="mb-2">Pin Preview</h1>
+        <p class="text-center">
+            This is a preview for pins which have {{ pin.content_object }} ({{ obj_class }}) attached to them.
+            Note that local overrides for specific pin data (e.g., a custom description) are not shown here!
+        </p>
+        {% include "core/pins/default.html" %}
+    </div>
+{% endblock content %}

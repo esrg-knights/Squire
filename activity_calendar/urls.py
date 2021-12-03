@@ -3,6 +3,7 @@ from django.views.generic.base import RedirectView
 
 from . import views, api
 from .feeds import CESTEventFeed
+from .models import ActivityMoment
 
 from activity_calendar.url_converters import DateTimeIsoConverter
 

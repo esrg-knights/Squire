@@ -1,5 +1,6 @@
 {% load static %}
 {% load calendar_tags %}
+{% load pin_tags %}
 
 <div class="card greenify-light activity-wide">
     <div class="row no-gutters">
@@ -7,7 +8,7 @@
             <div class="heightener"></div>
             <img src="{{slot.image_url}}" alt="" class="card-img">
         </div>
-        <div class="col-10 col-sm-11 col-md-9">
+        <div class="col-10 col-sm-11 col-md-8">
             <div class="card-body activityName">
                 <h5 class="card-title">
                     {{ slot.title }}
@@ -45,7 +46,12 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-2 d-flex align-items-center pt-3 pt-md-0">
+        {% if perms.core.change_pin %}
+            <div class="col-2 col-md-1 align-self-center pr-2">
+                {% pinnable_form slot index %}
+            </div>
+        {% endif %}
+        <div class="col-10 col-md-2 d-flex align-items-center pt-3 pt-md-0">
             {% if user.is_authenticated %}
                 {% register_button slot %}
             {% endif %}

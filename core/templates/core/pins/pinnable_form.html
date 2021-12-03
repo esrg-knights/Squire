@@ -4,11 +4,11 @@
     {% csrf_token %}
     {{ pinnable_form }}
     <input type="submit" value="" name="{{ pinnable_form.prefix }}"
-        class="btn-block btn-sm btn p-1
-            {% if is_pinned %}
-                btn-primary
-            {% else %}
+        class="btn-block {{ btn_classes }} btn p-1
+            {% if do_pin %}
                 btn-outline-primary
+            {% else %}
+                btn-primary
             {% endif %}
         "
         style="

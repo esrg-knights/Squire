@@ -1,20 +1,22 @@
 import os
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
-from django.http.response import Http404, HttpResponseNotFound
+from django.http.response import Http404, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_safe
 from django.views.generic.base import TemplateView
+from django.views.generic.edit import FormView
 
-from .forms import RegisterForm
+from .forms import PinnableForm, RegisterForm
 from .models import MarkdownImage
 
 from dynamic_preferences.registries import global_preferences_registry
@@ -184,3 +186,119 @@ def show_error_403(request, exception=None):
 
 def show_error_404(request, exception=None):
     return render(request, 'core/errors/error404.html', status=404)
+
+##################################################################################
+# Pin Creation
+
+class PinnableFormView(PermissionRequiredMixin, FormView):
+    """
+        View that handles instantiation of a form to create a
+        pin for a specific model instance.
+    """
+    form_class = None # Passed when instantiated
+    permission_required = ('core.add_pin', 'core.delete_pin')
+
+    def setup(self, request, obj, *args, **kwargs):
+        self.object = obj
+        return super().setup(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(user=self.request.user, obj=self.object)
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+        if form.cleaned_data['do_pin']:
+            message = _("'{pinnable_obj}' was successfully pinned!")
+        else:
+            message = _("'{pinnable_obj}' was successfully unpinned!")
+        messages.success(self.request, message.format(pinnable_obj=str(self.object).capitalize()))
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, f"An unexpected error occurred when trying to pin {str(self.object)}. Please try again later.")
+        return super().form_invalid(form)
+
+    def get_success_url(self):
+        return self.object.get_absolute_url()
+
+
+class PinnablesMixin:
+    """
+    Mixin that adds a form to the view that allows pinning a model instance
+    currently in the View. It can be used alongside any other form in the
+    same View.
+
+    Multiple pinnable objects can exist in the same view, and their respective
+    forms can be identified using their ContentType and index.
+
+    `pinnable_formview_class` (`PinnableFormView` by default) handles form
+    instantiation, and was split up 1) to keep logic separate, and 2) to
+    ensure that another form in a View inheriting this Mixin does not get
+    overridden by a form for a pinnable.
+    """
+    pinnable_formview_class = PinnableFormView
+    pinnable_form_class = PinnableForm
+
+    def post(self, request, *args, **kwargs):
+        for objs in self.get_pinnable_objects():
+            for i, obj in enumerate(objs):
+                prefix = self.get_prefix_for_pinnable(obj, i)
+                # Was this pinnable (un)pinned?
+                if prefix in self.request.POST:
+                    view = self.pinnable_formview_class.as_view(
+                        form_class=self.get_form_class_for_pinnable(obj),
+                        prefix=prefix
+                    )
+                    # Pass the object to the view
+                    return view(request, obj, *args, **kwargs)
+
+        # The "pin" form was not submitted; so another form was
+        #   submitted instead. Call the parent's post method instead.
+        if hasattr(super(), "post"):
+            return super().post(request, *args, **kwargs)
+
+        # Fallback in case the parent does not have a post method.
+        messages.error(self.request, f"Pin data was corrupted. Please try again later.")
+        return HttpResponseRedirect(self.request.get_full_path())
+
+    def get_pinnable_objects(self):
+        """
+            Get the model instances that can be (un)pinned in this View. The return value
+            must be an iterable of iterables (e.g., a list of tuples: `[(obj1, obj2, ...), ...]`),
+            where all objects in each nested iterable are of the same type.
+
+            For example, to return both users and groups to (un)pin, one can use:
+            `[(user1, user2), (group1, group2, group3)]`
+
+            Model instances do not need to exist in the database when they are passed here,
+            although they will be saved once they are pinned.
+        """
+        raise NotImplementedError("Subclasses of PinnablesMixin should override get_pinnable_objects()")
+
+    def is_pinnable_pinned(self, obj):
+        return obj.pins.exists()
+
+    def get_prefix_for_pinnable(self, obj, i):
+        """ The prefix used to identify the i'th object of its type """
+        # pinnable_form-<content_type_id>-<index>
+        return f"pinnable_form-{ContentType.objects.get_for_model(obj).pk}-{i}"
+
+    def get_form_class_for_pinnable(self, obj):
+        return self.pinnable_form_class
+
+    def get_context_data(self, **kwargs):
+        """ Insert the pinnable forms into the context dict. """
+        context = super().get_context_data(**kwargs)
+        for objs in self.get_pinnable_objects():
+            for i, obj in enumerate(objs):
+                prefix = self.get_prefix_for_pinnable(obj, i)
+                form_kwargs = {
+                    'initial': {'do_pin': not self.is_pinnable_pinned(obj)},
+                    'prefix': prefix,
+                    'user': self.request.user,
+                    'obj': obj,
+                }
+                context[prefix] = self.get_form_class_for_pinnable(obj)(**form_kwargs)
+        return context

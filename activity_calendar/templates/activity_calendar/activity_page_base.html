@@ -200,7 +200,7 @@
                 <div class="row align-items-center mb-4">
                     {% if perms.core.change_pin %}
                         <div class="col-2">
-                            {% pinnable_form %}
+                            {% pinnable_form activity_moment btn_classes="btn-sm" %}
                         </div>
                     {% endif %}
                     {% if perms.activity_calendar.change_activitymoment %}

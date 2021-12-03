@@ -49,7 +49,7 @@
 
     <!-- Real slots -->
     {% for slot in slot_list %}
-        {% include "activity_calendar/slot_blocks/slot_block.html" %}
+        {% include "activity_calendar/slot_blocks/slot_block.html" with index=forloop.counter0 %}
     {% empty %}
         <p>This activity has no slots (yet)!</p>
     {% endfor %}

@@ -12,7 +12,7 @@ from django.views.decorators.http import require_safe
 from django.views.generic import ListView, TemplateView
 from django.views.generic.edit import FormMixin, FormView
 
-from core.forms import PinnableFormMixin
+from core.views import PinnablesMixin
 from .forms import *
 from .models import Activity, ActivityMoment
 
@@ -153,18 +153,13 @@ class ActivityFormMixin:
         return kwargs
 
 
-class ActivityMomentView(ActivityMixin, PinnableFormMixin, ActivityFormMixin, TemplateView):
-    def get_pinnable_instance(self):
-        return self.activity_moment
+class ActivityMomentView(ActivityMixin, PinnablesMixin, ActivityFormMixin, TemplateView):
 
-    def create_pin(self):
-        # We have to ensure the activitymoment of this page actually exists, as we need
-        #   need it in order to link it to the new pin.
-        self.pinnable_instance, _ = ActivityMoment.objects.get_or_create(
-            parent_activity=self.activity_moment.parent_activity,
-            recurrence_id=self.activity_moment.recurrence_id
+    def get_pinnable_objects(self):
+        return (
+            (self.activity_moment,),
+            self.activity_moment.get_slots(),
         )
-        return super().create_pin()
 
 class ActivitySimpleMomentView(LoginRequiredForPostMixin, FormMixin, ActivityMomentView):
     form_class = RegisterForActivityForm

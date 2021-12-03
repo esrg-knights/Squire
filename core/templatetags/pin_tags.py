@@ -1,5 +1,5 @@
 from django import template
-from activity_calendar.views import PinnableFormMixin
+from django.contrib.contenttypes.models import ContentType
 
 from core.pins import Pin
 
@@ -18,13 +18,20 @@ def get_pins(user):
 
 
 @register.inclusion_tag("core/pins/pinnable_form.html", takes_context=True)
-def pinnable_form(context, pinnable_prefix=None):
+def pinnable_form(context, obj, index=0, btn_classes=""):
     """
         Renders a form to (un)pin an item in this View. This View must
-        inherit PinnableFormMixin in order for this to work.
+        inherit `PinnablesMixin` in order for this to work.
+
+        - `obj` is the object that should be (un)pinned. Only its ContentType is used here.
+        - `index` is the index of the object as provided in `PinnablesMixin.get_pinnable_objects()`
+            This is used to identify the correct form.
+        - `btn_classes` can be used to attach extra CSS classes to the (un)pin button
     """
-    pinnable_prefix = pinnable_prefix or PinnableFormMixin.pinnable_prefix
+    pinnable_prefix = f"pinnable_form-{ContentType.objects.get_for_model(obj).id}-{index}"
+    pinnable_form = context.get(pinnable_prefix, None)
     return {
-        'pinnable_form': context[pinnable_prefix],
-        'is_pinned': context["is_pinned"]
+        'pinnable_form': pinnable_form,
+        'do_pin': pinnable_form.initial['do_pin'],
+        'btn_classes': btn_classes,
     }
