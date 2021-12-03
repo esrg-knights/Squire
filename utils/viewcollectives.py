@@ -23,7 +23,7 @@ class ViewCollectiveConfig:
     requires_login = True
     requires_membership = True
 
-    def valid_for_request(self, request):
+    def check_access_validity(self, request):
         """ Determines whether the given request allows this"""
         if self.requires_login and not request.user.is_authenticated:
             return False
@@ -60,18 +60,20 @@ class ViewCollectiveViewMixin:
         super(ViewCollectiveViewMixin, self).__init__(*args, **kwargs)
 
     def dispatch(self, request, *args, **kwargs):
-        if not self._check_config_access():
+        if not self.config.check_access_validity(
+            request=self.request,
+            **self._get_other_check_kwargs()
+        ):
             raise PermissionDenied()
 
         return super(ViewCollectiveViewMixin, self).dispatch(request, *args, **kwargs)
 
-    def _check_config_access(self):
+    def _get_other_check_kwargs(self):
         """
-         Checks whether the current session has permission.
-         Override this in case checks uses other variables than request.
-        :return: Boolean
+        Returns a dict with other kwargs for validation checks (e.g. association_group)
+        :return:
         """
-        return self.config.valid_for_request(request=self.request)
+        return {}
 
     def get_context_data(self, **kwargs):
         return super(ViewCollectiveViewMixin, self).get_context_data(
@@ -81,7 +83,11 @@ class ViewCollectiveViewMixin:
 
     def get_tabs(self):
         tabs = []
-        for account_page_config in self.registry.get_applicable_configs(self.request):
+        applicable_configs = self.registry.get_applicable_configs(
+            self.request,
+            **self._get_other_check_kwargs()
+        )
+        for account_page_config in applicable_configs:
             tabs.append({
                 'name': account_page_config.tab_select_keyword,
                 'verbose': account_page_config.name,
@@ -113,7 +119,7 @@ class AccountRegistry:
         """
         applicable_configs = []
         for config in self.configs:
-            if config.valid_for_request(request, **other_kwargs):
+            if config.check_access_validity(request, **other_kwargs):
                 applicable_configs.append(config)
         return applicable_configs
 

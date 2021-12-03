@@ -21,21 +21,14 @@ class CommitteeConfig(ViewCollectiveConfig):
     """
     namespace = None
 
-    def valid_for_request(self, request, association_group=None):
-        if not super(CommitteeConfig, self).valid_for_request(request):
+    def check_access_validity(self, request, association_group=None):
+        if not super(CommitteeConfig, self).check_access_validity(request):
             return False
 
-        return self.is_valid_for_group(association_group=association_group)
+        if not user_in_association_group(request.user, association_group):
+            raise PermissionDenied()
 
-    def is_valid_for_group(self, association_group: AssociationGroup):
-        """
-        Checks for a given association_group is the group has access to this tab page.
-        :param association_group: The association group
-        :return: Boolean determining access
-        """
-        print(f'ASSOC GROUP {association_group}')
-        # Todo: Fix this
-
+        # Check group permission
         if self.requires_permission is not None:
             app_label, codename = self.requires_permission.split('.', maxsplit=1)
             if not Permission.objects.filter(
@@ -65,15 +58,16 @@ class AssociationGroupMixin(ViewCollectiveViewMixin):
 
     def setup(self, request, *args, **kwargs):
         self.association_group = get_object_or_404(AssociationGroup, id=kwargs['group_id'])
-        # if not user_in_association_group(request.user, self.association_group):
-        #     raise PermissionDenied()
-
         return super(AssociationGroupMixin, self).setup(request, *args, **kwargs)
 
-    # def _check_config_access(self):
-    #     if not super(AssociationGroupMixin, self)._check_config_access():
-    #         return False
-    #     return self.config
+    def _get_other_check_kwargs(self):
+        """
+        Returns a dict with other kwargs for validation checks (e.g. association_group)
+        :return:
+        """
+        return {
+            'association_group': self.association_group
+        }
 
     def get_context_data(self, **kwargs):
         context = super(AssociationGroupMixin, self).get_context_data(**kwargs)

@@ -12,7 +12,6 @@ from committees.forms import AssociationGroupUpdateForm, AddOrUpdateExternalUrlF
 
 class AssociationGroupDetailView(AssociationGroupMixin, TemplateView):
     template_name = "committees/group_detail_info.html"
-    selected_tab_name = "tab_overview"
 
     def get_context_data(self, **kwargs):
         context = super(AssociationGroupDetailView, self).get_context_data(**kwargs)
@@ -23,7 +22,7 @@ class AssociationGroupDetailView(AssociationGroupMixin, TemplateView):
     def construct_internal_links(self):
         """ Loops over the configs to determine any quicklinks """
         quicklinks = []
-        for config in self.registry.get_applicable_configs(self.request):  # Todo self.association_group):
+        for config in self.registry.get_applicable_configs(self.request, **self._get_other_check_kwargs()):  # Todo self.association_group):
             quicklinks.extend(
                 config.get_local_quicklinks(association_group=self.association_group)
             )
@@ -32,7 +31,6 @@ class AssociationGroupDetailView(AssociationGroupMixin, TemplateView):
 
 class AssociationGroupQuickLinksView(AssociationGroupMixin, TemplateView):
     template_name = "committees/group_detail_quicklinks.html"
-    selected_tab_name = "tab_overview"
 
     def get_context_data(self, **kwargs):
         return super(AssociationGroupQuickLinksView, self).get_context_data(
@@ -82,7 +80,6 @@ class AssociationGroupQuickLinksDeleteView(AssociationGroupMixin, PostOnlyFormVi
 class AssociationGroupUpdateView(AssociationGroupMixin, FormView):
     form_class = AssociationGroupUpdateForm
     template_name = "committees/group_detail_info_edit.html"
-    selected_tab_name = "tab_overview"
 
     def get_form_kwargs(self):
         form_kwargs = super(AssociationGroupUpdateView, self).get_form_kwargs()
@@ -105,7 +102,6 @@ class AssociationGroupUpdateView(AssociationGroupMixin, FormView):
 class AssociationGroupMembersView(AssociationGroupMixin, TemplateView):
     template_name = "committees/group_detail_members.html"
     form_class = AssociationGroupMembershipForm  # An empty form is displayed on the page
-    selected_tab_name = "tab_overview"
 
     def get_context_data(self, **kwargs):
         return super(AssociationGroupMembersView, self).get_context_data(
