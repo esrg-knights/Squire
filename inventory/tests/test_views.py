@@ -9,6 +9,7 @@ from django.views.generic import DetailView, FormView, UpdateView, CreateView, L
 
 from core.tests.util import suppress_warnings
 from membership_file.models import Member
+from membership_file.tests.mixins import TestMixinWithMemberMiddleware
 from membership_file.util import MembershipRequiredMixin
 from utils.testing.view_test_utils import ViewValidityMixin, TestMixinMixin
 from utils.views import SearchFormMixin, RedirectMixin
@@ -19,7 +20,7 @@ from inventory.views import *
 from inventory.views import OwnershipMixin, CatalogueMixin, ItemMixin, OwnershipCatalogueLinkMixin
 
 
-class TestOwnershipMixin(TestMixinMixin, TestCase):
+class TestOwnershipMixin(TestMixinWithMemberMiddleware, TestMixinMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     mixin_class = OwnershipMixin
     base_user_id = 100

@@ -52,7 +52,7 @@ class ViewCollectiveViewMixin:
     root_namespace = None
 
     def __init__(self, *args, config=None, **kwargs):
-        self.config = config
+        self.config = config or self.config
         if self.config is None:
             raise KeyError(f"{self.__class__.__name__} does not have a config linked did you forget to assign it "
                            f"in your urls in your config class? ({self.__class__.__name__}).as_view(config=self)")
