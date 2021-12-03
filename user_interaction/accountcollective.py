@@ -1,4 +1,4 @@
-from utils.viewcollectives import ViewCollectiveConfig, AccountRegistry, ViewCollectiveViewMixin
+from utils.viewcollectives import ViewCollectiveConfig, ViewCollectiveRegistry, ViewCollectiveViewMixin
 
 
 class AccountBaseConfig(ViewCollectiveConfig):
@@ -15,5 +15,5 @@ class AccountViewMixin(ViewCollectiveViewMixin):
     pass
 
 
-registry = AccountRegistry('account', 'account_pages', config_class=AccountBaseConfig)
+registry = ViewCollectiveRegistry('account', 'account_pages', config_class=AccountBaseConfig)
 

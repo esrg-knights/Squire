@@ -4,7 +4,7 @@ from django.core.exceptions import PermissionDenied
 from django.urls import reverse, include, path
 
 
-__all__ = ['ViewCollectiveConfig', 'ViewCollectiveViewMixin', 'AccountRegistry']
+__all__ = ['ViewCollectiveConfig', 'ViewCollectiveViewMixin', 'ViewCollectiveRegistry']
 
 
 """
@@ -139,7 +139,7 @@ class ViewCollectiveViewMixin:
 
 
 
-class AccountRegistry:
+class ViewCollectiveRegistry:
     """ Registry class that regulates the various config classes defined """
     # Config root class to ensure config file validity
     config_class = ViewCollectiveConfig

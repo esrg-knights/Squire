@@ -74,4 +74,4 @@ class AssociationGroupMixin(ViewCollectiveViewMixin):
         return super(AssociationGroupMixin, self)._get_tab_url(url_name, **url_kwargs)
 
 
-registry = AccountRegistry('committees', 'committee_pages', config_class=CommitteeBaseConfig)
+registry = ViewCollectiveRegistry('committees', 'committee_pages', config_class=CommitteeBaseConfig)
