@@ -12,7 +12,6 @@ class CommitteeConfig(ViewCollectiveConfig):
     """ Configurations for additional tabs on committee pages """
     url_keyword = None
     name = None
-    tab_select_keyword = None
     url_name = None
     requires_permission = None
 
@@ -53,7 +52,6 @@ class AssociationGroupMixin(ViewCollectiveViewMixin):
 
     def __init__(self, *args, **kwargs):
         self.registry = registry
-        self.root_namespace = 'committees'
         super(AssociationGroupMixin, self).__init__(*args, **kwargs)
 
     def setup(self, request, *args, **kwargs):
@@ -80,4 +78,4 @@ class AssociationGroupMixin(ViewCollectiveViewMixin):
         return super(AssociationGroupMixin, self)._get_tab_url(url_name, **url_kwargs)
 
 
-registry = AccountRegistry('committee_pages', config_class=CommitteeConfig)
+registry = AccountRegistry('committees', 'committee_pages', config_class=CommitteeConfig)

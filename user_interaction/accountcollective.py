@@ -14,9 +14,8 @@ class AccountViewMixin(ViewCollectiveViewMixin):
     """
     def __init__(self, *args, **kwargs):
         self.registry = registry
-        self.root_namespace = 'account'
         super(AccountViewMixin, self).__init__(*args, **kwargs)
 
 
-registry = AccountRegistry('account_pages', config_class=AccountConfig)
+registry = AccountRegistry('account', 'account_pages', config_class=AccountConfig)
 
