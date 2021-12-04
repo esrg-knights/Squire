@@ -2,8 +2,9 @@ from django.contrib.auth.models import Permission
 from django.test import TestCase, Client
 from django.urls import reverse
 
-
 from committees.models import AssociationGroup
+from committees.committeecollective import registry
+
 from inventory.committee_pages.config import InventoryConfig
 from inventory.models import MiscellaneousItem
 
@@ -12,7 +13,7 @@ class TestInventoryCommitteeConfig(TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership', 'committees/associationgroups']
 
     def setUp(self):
-        self.config = InventoryConfig()
+        self.config = InventoryConfig(registry)
 
     def test_quicklinks(self):
         group = AssociationGroup.objects.get(id=1)

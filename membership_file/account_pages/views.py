@@ -6,27 +6,25 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView, UpdateView
 
 from membership_file.util import MembershipRequiredMixin
-from user_interaction.account_pages.mixins import AccountTabsMixin
+from user_interaction.accountcollective import AccountViewMixin
 
 from membership_file.models import Member
 from membership_file.forms import MemberForm
 
 
-class MembershipDataView(MembershipRequiredMixin, AccountTabsMixin, PermissionRequiredMixin, TemplateView):
+class MembershipDataView(AccountViewMixin, PermissionRequiredMixin, TemplateView):
     model = Member
     template_name = 'membership_file/membership_view.html'
     permission_required = 'membership_file.can_view_membership_information_self'
-    selected_tab_name = 'tab_membership'
 
 
 # Page for changing membership information using a form
-class MembershipChangeView(MembershipRequiredMixin, AccountTabsMixin, PermissionRequiredMixin, UpdateView):
+class MembershipChangeView(MembershipRequiredMixin, AccountViewMixin, PermissionRequiredMixin, UpdateView):
     template_name = 'membership_file/membership_edit.html'
     form_class = MemberForm
     success_url = reverse_lazy('account:membership:view')
     permission_required = ('membership_file.can_view_membership_information_self', 'membership_file.can_change_membership_information_self')
     raise_exception = True
-    selected_tab_name = 'tab_membership'
 
     def get_object(self, queryset=None):
         """

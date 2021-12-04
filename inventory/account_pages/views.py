@@ -10,17 +10,13 @@ from inventory.models import Ownership, Item
 from inventory.forms import *
 from inventory.views import OwnershipMixin
 
-from user_interaction.account_pages.mixins import AccountTabsMixin
+from user_interaction.accountcollective import AccountViewMixin
 
 
 __all__ = ['MemberItemsOverview', 'MemberItemRemovalFormView', 'MemberItemLoanFormView', 'MemberOwnershipAlterView']
 
 
-class InventoryAccountMixin(AccountTabsMixin):
-    selected_tab_name = "tab_inventory"
-
-
-class MemberItemsOverview(MembershipRequiredMixin, InventoryAccountMixin, ListView):
+class MemberItemsOverview(AccountViewMixin, ListView):
     template_name = "inventory/membership_inventory.html"
     context_object_name = 'ownerships'
 
@@ -36,7 +32,7 @@ class MemberItemsOverview(MembershipRequiredMixin, InventoryAccountMixin, ListVi
         return context
 
 
-class MemberItemRemovalFormView(MembershipRequiredMixin, InventoryAccountMixin, OwnershipMixin, FormView):
+class MemberItemRemovalFormView(AccountViewMixin, OwnershipMixin, FormView):
     template_name = "inventory/membership_take_home.html"
     form_class = OwnershipRemovalForm
     success_url = reverse_lazy("account:inventory:member_items")
@@ -58,7 +54,7 @@ class MemberItemRemovalFormView(MembershipRequiredMixin, InventoryAccountMixin, 
         return HttpResponseRedirect(self.get_success_url())
 
 
-class MemberItemLoanFormView(MembershipRequiredMixin, InventoryAccountMixin, OwnershipMixin, FormView):
+class MemberItemLoanFormView(AccountViewMixin, OwnershipMixin, FormView):
     template_name = "inventory/membership_loan_out.html"
     form_class = OwnershipActivationForm
     success_url = reverse_lazy("account:inventory:member_items")
@@ -80,7 +76,7 @@ class MemberItemLoanFormView(MembershipRequiredMixin, InventoryAccountMixin, Own
         return HttpResponseRedirect(self.get_success_url())
 
 
-class MemberOwnershipAlterView(MembershipRequiredMixin, InventoryAccountMixin, OwnershipMixin, FormView):
+class MemberOwnershipAlterView(AccountViewMixin, OwnershipMixin, FormView):
     template_name = "inventory/membership_adjust_note.html"
     form_class = OwnershipNoteForm
     success_url = reverse_lazy("account:inventory:member_items")

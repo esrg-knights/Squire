@@ -1,6 +1,7 @@
 from django.urls import include, path
 
-from user_interaction import views, config
+from user_interaction import views
+from user_interaction.accountcollective import registry
 
 
 def user_interaction_urls():
@@ -9,22 +10,10 @@ def user_interaction_urls():
     urlpatterns = [
         path('', views.home_screen, name='homepage'),
     ]
-
-    return urlpatterns, app_name, app_name
-
-
-def user_account_urls():
-    app_name = 'account'
-
-    urlpatterns = []
-    for setup_config in config.get_all_configs():
-        url_key = f'{setup_config.url_keyword}/' if setup_config.url_keyword else ''
-        urlpatterns.append(path(url_key, setup_config.urls))
-
     return urlpatterns, app_name, app_name
 
 
 urlpatterns = [
     path('', user_interaction_urls()),
-    path('account/', user_account_urls()),
+    path('account/', registry.get_urls()),
 ]

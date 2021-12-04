@@ -1,19 +1,21 @@
 from django.urls import path
-from user_interaction.config import AccountConfig
+from user_interaction.accountcollective import AccountBaseConfig
 from .views import MembershipDataView, MembershipChangeView
 
 
-class MembershipConfig(AccountConfig):
+class MembershipConfig(AccountBaseConfig):
     url_keyword = 'membership'
-    tab_select_keyword = 'tab_membership'
     name = 'Membership'
     url_name = 'membership:view'
+    order_value = 20
 
     namespace = 'membership'
+
+    requires_membership = False
 
     def get_urls(self):
         """ Builds a list of urls """
         return [
-            path('', MembershipDataView.as_view(), name='view'),
-            path('edit/', MembershipChangeView.as_view(), name='edit'),
+            path('', MembershipDataView.as_view(config=self), name='view'),
+            path('edit/', MembershipChangeView.as_view(config=self), name='edit'),
         ]

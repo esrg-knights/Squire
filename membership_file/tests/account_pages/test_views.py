@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.views.generic import UpdateView
 
 from core.util import get_permission_objects_from_string
-from user_interaction.account_pages.mixins import AccountTabsMixin
+from user_interaction.accountcollective import AccountViewMixin
 from utils.testing.view_test_utils import ViewValidityMixin
 
 from membership_file.forms import MemberForm
@@ -21,11 +21,9 @@ class MembershipDataViewTestCase(ViewValidityMixin, TestCase):
     base_user_id = 100
 
     def test_class(self):
-        self.assertTrue(issubclass(MembershipDataView, MembershipRequiredMixin))
-        self.assertTrue(issubclass(MembershipDataView, AccountTabsMixin))
+        self.assertTrue(issubclass(MembershipDataView, AccountViewMixin))
         self.assertEqual(MembershipDataView.model, Member)
         self.assertEqual(MembershipDataView.template_name, 'membership_file/membership_view.html')
-        self.assertEqual(MembershipDataView.selected_tab_name, 'tab_membership')
 
     def test_permission_required(self):
         """ Tests that the agreed upon permissions are requiered """
@@ -68,11 +66,10 @@ class MembershipChangeViewTestCase(ViewValidityMixin, TestCase):
 
     def test_class(self):
         self.assertTrue(issubclass(MembershipChangeView, MembershipRequiredMixin))
-        self.assertTrue(issubclass(MembershipChangeView, AccountTabsMixin))
+        self.assertTrue(issubclass(MembershipChangeView, AccountViewMixin))
         self.assertTrue(issubclass(MembershipChangeView, UpdateView))
         self.assertEqual(MembershipChangeView.form_class, MemberForm)
         self.assertEqual(MembershipChangeView.template_name, 'membership_file/membership_edit.html')
-        self.assertEqual(MembershipChangeView.selected_tab_name, 'tab_membership')
         self.assertEqual(MembershipChangeView.success_url, reverse('account:membership:view'))
 
     def test_permission_required(self):

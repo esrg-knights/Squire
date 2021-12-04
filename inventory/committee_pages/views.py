@@ -9,14 +9,13 @@ from inventory.views import OwnershipMixin
 from utils.views import SearchFormMixin
 
 
-from committees.views import AssociationGroupMixin
+from committees.committeecollective import AssociationGroupMixin
 
 
 class AssociationGroupInventoryView(AssociationGroupMixin, SearchFormMixin, ListView):
     template_name = "inventory/committee_pages/group_detail_inventory.html"
     context_object_name = 'ownerships'
     search_form_class = FilterOwnershipThroughRelatedItems
-    selected_tab_name = "tab_inventory"
 
     def get_queryset(self):
         ownerships = Ownership.objects.filter(group=self.association_group.site_group).filter(is_active=True)
@@ -42,7 +41,6 @@ class AssociationGroupItemLinkUpdateView(AssociationGroupMixin, OwnershipMixin, 
     model = Ownership
     fields = ['note', 'added_since']
     allow_access_through_group = True
-    selected_tab_name = "tab_inventory"
 
     def get_object(self, queryset=None):
         return self.ownership

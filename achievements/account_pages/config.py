@@ -1,16 +1,16 @@
 from django.urls import path
-from user_interaction.config import AccountConfig
+from user_interaction.accountcollective import AccountBaseConfig
 from .views import AchievementAccountView
 
 
-class AchievementConfig(AccountConfig):
+class AchievementConfig(AccountBaseConfig):
     url_keyword = 'achievements'
-    tab_select_keyword = 'tab_achievements'
     name = 'My achievements'
     url_name = 'achievements'
+    order_value = 99
 
     def get_urls(self):
         """ Builds a list of urls """
         return [
-            path('', AchievementAccountView.as_view(), name='achievements'),
+            path('', AchievementAccountView.as_view(config=self), name='achievements'),
         ]

@@ -1,22 +1,22 @@
 from django.contrib.contenttypes.models import ContentType
 from django.urls import path, include, reverse
 
-from committees.config import CommitteeConfig
+from committees.committeecollective import CommitteeBaseConfig
 
 from .views import AssociationGroupInventoryView, AssociationGroupItemLinkUpdateView
 
 
-class InventoryConfig(CommitteeConfig):
+class InventoryConfig(CommitteeBaseConfig):
     url_keyword = 'inventory'
-    tab_select_keyword = 'tab_inventory'
     name = 'Inventory'
-    url_name = 'committees:group_inventory'
+    url_name = 'group_inventory'
+    order_value = 50
 
     def get_urls(self):
         """ Builds a list of urls """
         return [
-            path('', AssociationGroupInventoryView.as_view(config_class=InventoryConfig), name='group_inventory'),
-            path('<int:ownership_id>/', AssociationGroupItemLinkUpdateView.as_view(config_class=InventoryConfig), name='group_inventory'),
+            path('', AssociationGroupInventoryView.as_view(config=self), name='group_inventory'),
+            path('<int:ownership_id>/', AssociationGroupItemLinkUpdateView.as_view(config=self), name='group_inventory'),
         ]
 
     def get_local_quicklinks(self, association_group):
