@@ -6,13 +6,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
-from django.http.response import Http404, HttpResponseNotFound
+from django.http.response import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_safe
-from django.views.generic.base import TemplateView
 
 from .forms import RegisterForm
 from .models import MarkdownImage
@@ -42,37 +41,6 @@ def viewNewsletters(request):
         'NEWSLETTER_ARCHIVE_URL': global_preferences['newsletter__share_link'],
     })
 
-
-class AccountTabsMixin:
-    tab_name = None
-
-    def get_context_data(self, *args, **kwargs):
-        context = super(AccountTabsMixin, self).get_context_data(*args, **kwargs)
-        context[self.tab_name] = True
-        context['tabs'] = self.get_tab_data()
-        return context
-
-    def get_tab_data(self):
-        tabs = [
-            {'name': 'tab_account', 'verbose': 'Account', 'url_name': 'core:user_accounts/account'},
-            {'name': 'tab_membership', 'verbose': 'Membership', 'url_name': 'membership_file/membership'},
-            {'name': 'tab_preferences', 'verbose': 'Preferences', 'url_name': 'user_interaction:change_preferences'},
-        ]
-        for tab in tabs:
-            if tab['name'] == self.tab_name:
-                tab['selected'] = True
-        return tabs
-
-
-class AccountView(AccountTabsMixin, TemplateView):
-    """ Base account page """
-    template_name = "core/user_accounts/account_info.html"
-    tab_name = 'tab_account'
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context[self.tab_name] = True
-        return context
 
 @require_safe
 def registerSuccess(request):

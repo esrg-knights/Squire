@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.views.generic import UpdateView, ListView
 
 from committees.models import AssociationGroup
-from committees.views import AssociationGroupMixin
+from committees.committeecollective import AssociationGroupMixin
 from utils.testing.view_test_utils import ViewValidityMixin
 from utils.views import SearchFormMixin
 

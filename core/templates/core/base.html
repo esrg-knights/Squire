@@ -95,12 +95,12 @@
 								Account
 							</a>
 							<div class="dropdown-menu dropdown-menu-right greenify-dropdown" aria-labelledby="navbarDropdownMenuLink">
-								<a class="dropdown-item" href="{% url 'core:user_accounts/account' %}">View Account</a>
-								<a class="dropdown-item" href="{% url 'achievements/user' %}">Earned Achievements</a>
+								<a class="dropdown-item" href="{% url 'account:site_account' %}">View Account</a>
+								<a class="dropdown-item" href="{% url 'account:achievements' %}">Earned Achievements</a>
                                 {% if member.is_considered_member %}
-                                    <a class="dropdown-item" href="{% url 'inventory:member_items' %}">My inventory</a>
+                                    <a class="dropdown-item" href="{% url 'account:inventory:member_items' %}">My inventory</a>
                                     {% if member.associationgroup_set.all %}
-                                        <a class="dropdown-item" href="{% url 'membership_file/groups' %}">My groups</a>
+                                        <a class="dropdown-item" href="{% url 'account:account_group' %}">My groups</a>
                                     {% endif %}
                                 {% endif %}
                                 {% if user.is_staff %}

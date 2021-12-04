@@ -31,10 +31,6 @@ class FrontEndTest(TestCase):
         check_http_response(self, settings.LOGOUT_REDIRECT_URL, 'get', TestAccountUser,
             redirect_url=settings.LOGOUT_REDIRECT_URL)
 
-    # Tests if the account page can be accessed
-    def test_account(self):
-        check_http_response(self, '/account', 'get', TestAccountUser)
-
     # Tests if the logout page can be accessed if not logged in
     def test_logout_redirect(self):
         check_http_response(self, settings.LOGOUT_URL, 'get', TestPublicUser,

@@ -1,0 +1,17 @@
+
+{% extends 'core/user_accounts/account_base.html' %}
+
+{% load render_form %}
+
+{% block title %}
+    Squire - Update Preferences
+{% endblock title %}
+
+{% block og-title %}
+    Squire Update Preferences
+{% endblock og-title %}
+
+{% block content %}
+    <h1>Change layout Preferences</h1>
+    {% render_form id="update_preferences_form" method="post" submit_class="btn btn-success greenify" submit_text="Update Preferences" %}
+{% endblock %}
