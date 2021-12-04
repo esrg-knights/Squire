@@ -65,6 +65,10 @@ class PinnableMixin(models.Model):
     #   object no longer exists
     pins = GenericRelation("core.Pin")
 
+    def get_pin_message_name(self, pin):
+        """ Name for this object used in 'x was pinned successfully' messages """
+        return str(self)
+
     def get_pin_title(self, pin):
         """ Title for pins that have this object attached to them """
         if self.pin_title_field:

@@ -662,6 +662,9 @@ class ActivityMoment(PinnableMixin, models.Model, metaclass=ActivityDuplicate):
     pin_title_field = "title"
     pin_expiry_field = "end_date"
 
+    def get_pin_message_name(self, pin):
+        return self.title
+
     def get_pin_description(self, pin):
         # Pin description also contains the location
         return self.location + self.description.as_plaintext()

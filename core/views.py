@@ -229,12 +229,12 @@ class PinnableFormView(PermissionRequiredMixin, FormView):
         return kwargs
 
     def form_valid(self, form):
-        form.save()
+        pin = form.save()
         if form.cleaned_data['do_pin']:
             message = _("'{pinnable_obj}' was successfully pinned!")
         else:
             message = _("'{pinnable_obj}' was successfully unpinned!")
-        messages.success(self.request, message.format(pinnable_obj=str(self.object).capitalize()))
+        messages.success(self.request, message.format(pinnable_obj=self.object.get_pin_message_name(pin).capitalize()))
         return super().form_valid(form)
 
     def form_invalid(self, form):
