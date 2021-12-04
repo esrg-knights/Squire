@@ -118,6 +118,7 @@ class TestMixinMixin:
         return ""
 
     def get_base_url_kwargs(self):
+        """ Constructs the url kwargs default values for each check """
         return {}
 
     def get_as_full_view_class(self):

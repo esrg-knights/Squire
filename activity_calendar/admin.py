@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.timezone import localtime
 
 from .forms import ActivityAdminForm, ActivityMomentAdminForm
-from .models import Activity, ActivitySlot, Participant, ActivityMoment
+from .models import Activity, ActivitySlot, Participant, ActivityMoment, OrganiserLink
 
 from core.admin import MarkdownImageInline
 from utils.forms import RequestUserToFormModelAdminMixin
@@ -28,6 +28,11 @@ class MarkdownImageInlineAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmi
     #     return inlines
 
 
+class OrganiserInline(admin.TabularInline):
+    model = OrganiserLink
+    extra = 0
+
+@admin.register(Activity)
 class ActivityAdmin(MarkdownImageInlineAdmin):
     form = ActivityAdminForm
 
@@ -42,12 +47,12 @@ class ActivityAdmin(MarkdownImageInlineAdmin):
     search_fields = ['title']
     autocomplete_fields = ['author',]
 
+    inlines = [OrganiserInline]
+
     def get_view_on_site_url(self, obj=None):
         if hasattr(obj, 'get_absolute_url') and obj.get_absolute_url() is None:
             return None
         return super().get_view_on_site_url(obj=obj)
-
-admin.site.register(Activity, ActivityAdmin)
 
 
 @admin.register(ActivityMoment)
@@ -70,7 +75,7 @@ class ActivityMomentAdmin(MarkdownImageInlineAdmin):
         return False
     activity_moment_has_changes.boolean = True
     activity_moment_has_changes.short_description = 'Is tweaked'
-    list_display = ["title", "recurrence_id", "local_start_date", "last_updated", activity_moment_has_changes]
+    list_display = ["title", "recurrence_id", "local_start_date", "last_updated", "is_part_of_recurrence", activity_moment_has_changes]
 
 
 

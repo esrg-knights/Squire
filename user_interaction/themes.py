@@ -2,6 +2,7 @@ from django.templatetags.static import StaticNode
 from django.utils.html import format_html_join
 from django.utils.safestring import mark_safe
 
+
 class SquireUserTheme:
     """ Base class for user themes """
     name = None
@@ -21,19 +22,24 @@ class SquireUserTheme:
     def __str__(self):
         return self.name
 
+
 class LightUserTheme(SquireUserTheme):
     """ Standard green-white theme """
     name = "Light Theme"
     css = ('themes/standard-theme.css',)
 
+
 class DarkUserTheme(SquireUserTheme):
     """ Dark Mode """
     name = "Dark Mode"
-    css = LightUserTheme.css + ('themes/dark-theme.css',) #here, so it's consistent 
+    # here, so it's consistent
+    css = LightUserTheme.css + ('themes/dark-theme.css',)
+
 
 class DefaultAutoTheme(SquireUserTheme):
     name = "Automatic"
     css = ("themes/auto.css",)
+
 
 class AprilUserTheme(SquireUserTheme):
     """ April's Fools 2020 theme """
@@ -45,6 +51,7 @@ class AprilUserTheme(SquireUserTheme):
         f"var adImg = \"{StaticNode.handle_simple('themes/images/april/tim-merch-ad.gif')}\"",
     )
 
+
 class FantasyCourtUserTheme(SquireUserTheme):
     """ Fantasy Court theme """
     name = 'Fantasy Court'
@@ -54,21 +61,32 @@ class FantasyCourtUserTheme(SquireUserTheme):
         f"var fancyedgeImg = \"{StaticNode.handle_simple('themes/images/fc/fancy-edge.png')}\"",
     )
 
+
 class QuadriviumUserTheme(SquireUserTheme):
     """ Quadrivium Theme """
     name = 'Nemesis'
     css = ('themes/q-theme.css',)
-    js = ('themes/q-theme.js',)
+    js = ('themes/util-fns.js','themes/q-theme.js')
+
 
 class DoppioUserTheme(SquireUserTheme):
     """ Doppio Theme """
     name = 'Espresso'
     css = ('themes/doppio-theme.css',)
 
+
 class ScalaUserTheme(SquireUserTheme):
     """ Scala Theme """
     name = 'Dining'
     css = ('themes/scala-theme.css',)
+
+
+class KinjinUserTheme(SquireUserTheme):
+    """ Kinjin Theme """
+    name = '日本スキン'
+    css = ('themes/kinjin-theme.css',)
+    js = ('themes/util-fns.js','themes/kinjin-theme.js')
+
 
 THEMES = {
     'THEME_DEFAULT': DefaultAutoTheme,
@@ -79,6 +97,7 @@ THEMES = {
     'THEME_Q': QuadriviumUserTheme,
     'THEME_DOPPIO': DoppioUserTheme,
     'THEME_SCALA': ScalaUserTheme,
+    'THEME_KINJIN': KinjinUserTheme,
 }
 
 DEFAULT_THEME = 'THEME_DEFAULT'

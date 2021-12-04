@@ -19,19 +19,7 @@
 {% endblock css %}
 
 {% block local-nav-bar %}
-    <div class="nav nav-tabs px-3 mt-3">
-        <div class="container d-flex flex-wrap">
-            <div class="nav-item">
-                {% bootstrap_tab "Account" tab_account url_name="core:user_accounts/account" %}
-            </div>
-            <div class="nav-item">
-                {% bootstrap_tab "Membership" tab_membership url_name="membership_file/membership" %}
-            </div>
-            <div class="nav-item">
-                {% bootstrap_tab "Preferences" tab_preferences url_name="user_interaction:change_preferences" %}
-            </div>
-        </div>
-    </div>
+    {% bootstrap_tabs tabs %}
 {% endblock %}
 
 {% block content-frame-class %}

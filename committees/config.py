@@ -1,6 +1,10 @@
 from importlib import import_module
 
 from django.apps import apps
+from django.core.exceptions import PermissionDenied
+from django.contrib.auth.models import Permission
+
+from .models import AssociationGroup
 
 
 class CommitteeConfig:
@@ -9,6 +13,7 @@ class CommitteeConfig:
     name = None
     tab_select_keyword = None
     url_name = None
+    requires_permission = None
 
     """ Namespace for url. Can be left none. If not left none, know that url navigation will go like:
     committees:<namespace>:url_name
@@ -40,12 +45,20 @@ class CommitteeConfig:
         }
 
     @classmethod
-    def is_valid_for_group(cls, association_group):
+    def is_valid_for_group(cls, association_group: AssociationGroup):
         """
         Checks for a given association_group is the group has access to this tab page.
         :param association_group: The association group
         :return: Boolean determining access
         """
+        if cls.requires_permission is not None:
+            app_label, codename = cls.requires_permission.split('.', maxsplit=1)
+            if not Permission.objects.filter(
+                content_type__app_label=app_label,
+                codename=codename,
+                group__associationgroup=association_group
+            ):  return False
+
         return True
 
     def get_local_quicklinks(self, association_group):

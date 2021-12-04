@@ -45,7 +45,28 @@ def viewNewsletters(request):
     })
 
 
-class AccountView(TemplateView):
+class AccountTabsMixin:
+    tab_name = None
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(AccountTabsMixin, self).get_context_data(*args, **kwargs)
+        context[self.tab_name] = True
+        context['tabs'] = self.get_tab_data()
+        return context
+
+    def get_tab_data(self):
+        tabs = [
+            {'name': 'tab_account', 'verbose': 'Account', 'url_name': 'core:user_accounts/account'},
+            {'name': 'tab_membership', 'verbose': 'Membership', 'url_name': 'membership_file/membership'},
+            {'name': 'tab_preferences', 'verbose': 'Preferences', 'url_name': 'user_interaction:change_preferences'},
+        ]
+        for tab in tabs:
+            if tab['name'] == self.tab_name:
+                tab['selected'] = True
+        return tabs
+
+
+class AccountView(AccountTabsMixin, TemplateView):
     """ Base account page """
     template_name = "core/user_accounts/account_info.html"
     tab_name = 'tab_account'

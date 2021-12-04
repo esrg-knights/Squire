@@ -18,8 +18,8 @@ $( document ).ready(function() {
             such as Quadrivium and Data Analytics for Engineers. Please press Ctrl + W to revoke consent.</p>
         </div>
     `)
-    for (i = 0; i < 70; i++) {
-        offset = i * 30
+    for (let i = 0; i < 70; i++) {
+        let offset = i * 30
         if (offset === 2010) {
             offset = 1010
         }

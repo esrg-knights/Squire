@@ -12,6 +12,7 @@ from dynamic_preferences.users.forms import user_preference_form_builder
 
 from activity_calendar.models import Activity
 from core.forms import LoginForm
+from core.views import AccountTabsMixin
 
 
 def home_screen(request, *args, **kwargs):
@@ -77,7 +78,7 @@ class HomeUsersView(TemplateView):
         return super(HomeUsersView, self).get_context_data(**kwargs)
 
 
-class UpdateUserPreferencesView(LoginRequiredMixin, FormView):
+class UpdateUserPreferencesView(LoginRequiredMixin, AccountTabsMixin, FormView):
     """ View for updating user preferences """
     template_name = 'user_interaction/preferences_change_form.html'
     success_url = reverse_lazy('user_interaction:change_preferences')
