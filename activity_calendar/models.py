@@ -134,44 +134,48 @@ class Activity(models.Model):
         # Any occurrence before (start_date - duration) can never partially take place inside the
         #   specified time period, so there's no need to look back even further.
         activity_duration = self.duration
-        occurrences = self.get_occurrences_starting_between(start_date - activity_duration, end_date)
+        recurrency_occurences = self.get_occurrences_starting_between(start_date - activity_duration, end_date)
 
         # Note that DST-offsets have already been handled earlier
         #   in self.get_occurrences_between -> util.dst_aware_to_dst_ignore
 
-        # The above comment isn't entirely True as there are also activity_moments we need to consider,
-        #   which we handle here
+        # Get the correct activitymoment instances from the database
+        activity_moments_between_query = Q(recurrence_id__gte=(start_date - activity_duration)) &\
+                                         Q(recurrence_id__lte=end_date)
+        # Get a list of all activitymoments that due to shift are either
+        # incorrectly included (surplus) or wrongly excluded (extra)
         surplus_moments, extra_moments = self._get_queries_for_alt_start_time_activity_moments(start_date, end_date)
 
         # Filter out all activitymoments with an alt start time outside the bounds
-        surplus_moments = self.activitymoment_set.filter(surplus_moments).values_list('recurrence_id', flat=True)
-        occurrences = filter(lambda occ: occ not in surplus_moments, occurrences)
+        surplus_moments_queryset = self.activitymoment_set.filter(surplus_moments).values_list('recurrence_id', flat=True)
+        recurrency_occurences = filter(lambda occ: occ not in surplus_moments_queryset, recurrency_occurences)
 
         # Evaluate the iterable: we want to use it more than once below
-        occurrences = list(occurrences)
+        recurrency_occurences = list(recurrency_occurences)
 
         # Fetch existing activitymoments
         #   They must either be within the bounds
         #   OR be extra ones due to different start/end date(s)
-        query_filter = Q(recurrence_id__in=occurrences) | extra_moments
+        query_filter = (activity_moments_between_query | extra_moments) & ~surplus_moments
+        # existing_moments = list(self.activitymoment_set.filter(query_filter))
         existing_moments = list(self.activitymoment_set.filter(query_filter))
 
         # Get occurrences for which we have no ActivityMoment
-        occurrences = filter(
+        unstored_recurrency_occurences = filter(
             lambda occ: all(existing_moment.recurrence_id != occ for existing_moment in existing_moments),
-            occurrences
+            recurrency_occurences
         )
 
         # Generate new ActivityMoments for them
-        occurrences = map(
+        unstored_recurrency_occurences = map(
             lambda occ: ActivityMoment(
                 recurrence_id=occ,
                 parent_activity=self,
             ),
-            occurrences
+            unstored_recurrency_occurences
         )
 
-        return list(occurrences) + existing_moments
+        return list(unstored_recurrency_occurences) + existing_moments
 
     def get_next_activitymoment(self, dtstart=None, inc=False):
         """

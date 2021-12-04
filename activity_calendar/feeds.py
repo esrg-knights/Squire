@@ -28,6 +28,18 @@ def only_for(class_type, default=None):
     return only_for_decorator
 
 
+def get_feed_id(item):
+    # ID should be _globally_ unique
+    if isinstance(item, Activity):
+        return f"local_activity-id-{item.id}@kotkt.nl"
+    elif isinstance(item, ActivityMoment):
+        if item.is_part_of_recurrence:
+            return f"local_activity-id-{item.parent_activity_id}@kotkt.nl"
+        else:
+            return f"local_activity-id-{item.parent_activity_id}-special-{item.id}@kotkt.nl"
+
+    raise RuntimeError(f'An incorrect object instance has entered the calendar feed: {item.__class__.__name__}')
+
 class ExtendedICal20Feed(ICal20Feed):
     """
     iCalendar 2.0 Feed implementation that also supports VTIMEZONE.
@@ -95,13 +107,7 @@ class CESTEventFeed(ICalFeed):
         return [*activities, *exceptions]
 
     def item_guid(self, item):
-        # ID should be _globally_ unique
-        if isinstance(item, Activity):
-            activity_id = item.id
-        elif isinstance(item, ActivityMoment):
-            activity_id = item.parent_activity_id
-
-        return f"local_activity-id-{activity_id}@kotkt.nl"
+        return get_feed_id(item)
 
     def item_class(self, item):
         return "PUBLIC"
@@ -138,7 +144,7 @@ class CESTEventFeed(ICalFeed):
         # When the item was generated, which is at this moment!
         return timezone.now()
 
-    @only_for(ActivityMoment, default="/calendar/")
+    @only_for(ActivityMoment, default="/activities/")
     def item_link(self, item):
         # The local url to the activity
         return item.get_absolute_url()
@@ -186,7 +192,9 @@ class CESTEventFeed(ICalFeed):
     # RECURRENCE-ID
     @only_for(ActivityMoment)
     def item_recurrenceid(self, item):
-        return item.recurrence_id.astimezone(timezone.get_current_timezone())
+        if item.is_part_of_recurrence:
+            return item.recurrence_id.astimezone(timezone.get_current_timezone())
+        return None
 
     # Include
     def feed_extra_kwargs(self, obj):
