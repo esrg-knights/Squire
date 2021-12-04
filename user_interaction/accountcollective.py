@@ -2,7 +2,7 @@ from utils.viewcollectives import ViewCollectiveConfig, ViewCollectiveRegistry, 
 
 
 class AccountBaseConfig(ViewCollectiveConfig):
-    """ Configurations for additional tabs on membership pages """
+    """ Configurations for additional tabs on user account-related pages """
     # Variables for basic requirements
     requires_login = True
     requires_membership = True

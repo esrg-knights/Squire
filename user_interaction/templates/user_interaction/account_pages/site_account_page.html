@@ -1,5 +1,5 @@
-
 {% extends 'core/user_accounts/account_base.html' %}
+{% load theme_tags %}
 
 {% block title %}
     Squire - Membership Data
@@ -33,7 +33,7 @@
 
     <h3>Look and layout</h3>
     <p>
-        Site theme: {{ user.preferences.layout__theme }}
+        Site theme: {{ user|get_theme }}
     </p>
     <a class="btn btn-secondary btn-sm" href="{% url "account:layout_change" %}">
         Edit
