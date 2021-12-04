@@ -9,7 +9,7 @@ class AccountSettingsConfig(AccountBaseConfig):
     url_keyword = 'site'
     name = 'Account'
     url_name = 'site_account'
-    order_value = 100  # Value determining the order of the tabs on the Account page
+    order_value = 10  # Value determining the order of the tabs on the Account page
 
     requires_membership = False
 

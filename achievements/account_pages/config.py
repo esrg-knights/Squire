@@ -7,6 +7,7 @@ class AchievementConfig(AccountBaseConfig):
     url_keyword = 'achievements'
     name = 'My achievements'
     url_name = 'achievements'
+    order_value = 99
 
     def get_urls(self):
         """ Builds a list of urls """

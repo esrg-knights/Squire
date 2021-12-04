@@ -4,7 +4,6 @@ from django.views.generic import TemplateView,  FormView
 
 from utils.views import PostOnlyFormViewMixin
 
-# from committees.config import get_all_configs_for_group
 from committees.committeecollective import AssociationGroupMixin
 from committees.forms import AssociationGroupUpdateForm, AddOrUpdateExternalUrlForm, \
     DeleteGroupExternalUrlForm, AssociationGroupMembershipForm

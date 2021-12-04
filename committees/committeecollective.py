@@ -13,7 +13,7 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
     url_keyword = None
     name = None
     url_name = None
-    requires_permission = None
+    group_requires_permission = None
 
     """ Namespace for url. Can be left none. If not left none, know that url navigation will go like:
     committees:<namespace>:url_name
@@ -28,8 +28,8 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
             raise PermissionDenied()
 
         # Check group permission
-        if self.requires_permission is not None:
-            app_label, codename = self.requires_permission.split('.', maxsplit=1)
+        if self.group_requires_permission is not None:
+            app_label, codename = self.group_requires_permission.split('.', maxsplit=1)
             if not Permission.objects.filter(
                 content_type__app_label=app_label,
                 codename=codename,

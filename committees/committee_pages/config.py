@@ -5,7 +5,7 @@ from committees.committeecollective import CommitteeBaseConfig
 from committees.committee_pages.views import *
 
 
-class AssociationGroupWelcomeConfig(CommitteeBaseConfig):
+class AssociationGroupHomeConfig(CommitteeBaseConfig):
     url_keyword = 'main'
     name = 'Overview'
     url_name = 'group_general'

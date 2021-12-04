@@ -10,7 +10,7 @@ class TestAccountConfig(AccountBaseConfig):
     url_keyword = 'my_groups'
     name = 'My groups'
     url_name = 'account_group'
-    order_value = 1
+    order_value = 30
 
     def get_urls(self):
         """ Builds a list of urls """

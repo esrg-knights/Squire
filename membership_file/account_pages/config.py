@@ -7,7 +7,7 @@ class MembershipConfig(AccountBaseConfig):
     url_keyword = 'membership'
     name = 'Membership'
     url_name = 'membership:view'
-    order_value = 90
+    order_value = 20
 
     namespace = 'membership'
 

@@ -10,6 +10,7 @@ class AccountInventoryConfig(AccountBaseConfig):
     url_keyword = 'inventory'
     name = 'Inventory'
     url_name = 'inventory:member_items'
+    order_value = 70
 
     namespace = 'inventory'
 
