@@ -27,11 +27,16 @@
     {% endif %}
 
     <!-- Pins Visible to this user -->
-    <div class="card-deck mb-2">
+    <div class="card-deck">
         {% for pin in user|get_pins|slice:":3" %}
-            {{ pin.render }}
+            {% render_pin pin %}
         {% endfor %}
     </div>
+    <p class="text-right">
+        <a href='{% url "core:pin_history" %}'>
+            <small>&gt View pin history</small>
+        </a>
+    </p>
 
     <!-- Application Description -->
     <h4>What is Squire?</h4>

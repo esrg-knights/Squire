@@ -1,5 +1,6 @@
 from django import template
 from django.contrib.contenttypes.models import ContentType
+from django.template.loader import render_to_string
 
 from core.pins import Pin
 
@@ -16,6 +17,14 @@ def get_pins(user):
     """ Returns a Queryset containing the pins accessible to the given user """
     return Pin.objects.for_user(user)
 
+@register.simple_tag(takes_context=True)
+def render_pin(context, pin, short=True):
+    """ Renders a pin """
+    template = pin.get_pin_template_short() if short else pin.get_pin_template_long()
+    return render_to_string(template, {
+        'pin': pin,
+        'context': context,
+    })
 
 @register.inclusion_tag("core/pins/pinnable_form.html", takes_context=True)
 def pinnable_form(context, obj, index=0, btn_classes=""):

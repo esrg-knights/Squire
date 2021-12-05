@@ -14,6 +14,8 @@ urlpatterns = [
         path('markdownify/', markdownfy_view, name='martor_markdownify'),
         path('image_uploader/', views.MartorImageUploadAPIView.as_view(), name='martor_image_upload'),
     ])),
+    # Pins
+    path('pins/', views.PinHistoryView.as_view(), name='pin_history'),
     # Login and logout
     path('login', djangoViews.LoginView.as_view(
             template_name='core/user_accounts/login.html',

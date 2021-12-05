@@ -3,7 +3,6 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.template.loader import render_to_string
 from django.utils import timezone
 
 from core.models import PresetImage
@@ -50,7 +49,8 @@ class PinnableMixin(models.Model):
         #   we still need to inherit from models.Model
         abstract = True
 
-    pin_template = None
+    pin_template_short = None
+    pin_template_long = None
     pin_view_permissions = () # Additional permissions needed to view this pin
 
     # Fieldnames to copy pin information from
@@ -159,7 +159,8 @@ class Pin(models.Model):
     provided instead.
     """
     objects = PinManager()
-    default_pin_template = "core/pins/default.html" # The default template used to render a pin
+    default_pin_template_short = "core/pins/default.html" # The default template used to render a pin
+    default_pin_template_long = "core/pins/default_long.html"
 
     class Meta:
         ordering = ['-pin_date']
@@ -215,11 +216,22 @@ class Pin(models.Model):
 
     @property
     def image(self):
-        if self.local_image is None and self.content_object is not None:
+        if self.local_image is not None:
+            # local override
+            return self.local_image.image.url
+
+        if self.content_object is not None:
+            # image provided by content object
             img = self.content_object.get_pin_image(self)
             if img is not None:
                 return img
-        return self.local_image or f"{settings.STATIC_URL}images/default_logo.png"
+        # no image whatsoever
+        return f"{settings.STATIC_URL}images/default_logo.png"
+
+    @property
+    def has_image(self):
+        return self.local_image is not None or \
+            (self.content_object is not None and self.content_object.get_pin_image(self) is not None)
 
     @property
     def publish_date(self):
@@ -286,17 +298,17 @@ class Pin(models.Model):
             #   other data is copied form the related object
             self.content_object.clean_pin(self)
 
-    def get_pin_template(self):
-        """ Gets the template used by this pin """
+    def get_pin_template_short(self):
+        """ Gets the short template used by this pin"""
         if self.content_object is not None:
-            return self.content_object.pin_template or self.default_pin_template
-        return self.default_pin_template
+            return self.content_object.pin_template_short or self.default_pin_template_short
+        return self.default_pin_template_short
 
-    def render(self):
-        """ Renders this pin as HTML """
-        return render_to_string(self.get_pin_template(), {
-            'pin': self
-        })
+    def get_pin_template_long(self):
+        """ Gets the large template used by this pin """
+        if self.content_object is not None:
+            return self.content_object.pin_template_long or self.default_pin_template_long
+        return self.default_pin_template_long
 
     def __str__(self):
         return f"Pin {self.id} - {self.local_title} ({self.content_object})"

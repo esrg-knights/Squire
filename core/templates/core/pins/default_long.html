@@ -1,0 +1,27 @@
+<div class="pin-long overflow-hidden">
+    {% if pin.has_image %}
+        <div class="card-header border col-md-3 float-md-right p-3 ml-md-1 mb-md-1 mb-3 text-center">
+            <img class="w-100" src="{{ pin.image }}" alt="Pin Image" style="max-height: 150px; object-fit: contain;">
+        </div>
+    {% endif %}
+    <div class="d-flex align-items-start flex-wrap">
+        <h4 class="mr-1">{{ pin.title|default:"Pin" }}</h4>
+        {% if context.perms.core.view_pin %}
+            {% include "core/pins/pin_badges.html" %}
+        {% endif %}
+    </div>
+    <h6 class="text-muted">{{ pin.pin_date }}</h6>
+    <p>
+        {{ pin.description|default:"What is this place? Why was it empty? Blame the unimportant person! Wait..., who was that again?" }}
+    </p>
+
+    {% if pin.url %}
+        <p>
+            <a href="{{ pin.url }}" class="btn btn-dark greenify">View</a>
+            {% if context.perms.core.change_pin and context.user.is_staff %}
+                <a href='{% url "admin:core_pin_change" pin.id %}' class="btn btn-dark">Edit Pin</a>
+            {% endif %}
+        </p>
+    {% endif %}
+</div>
+<hr class="mb-4">

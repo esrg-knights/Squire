@@ -1,0 +1,38 @@
+
+{% extends 'core/base.html' %}
+
+{% load static %}
+{% load paginator %}
+{% load pin_tags %}
+
+{% block title %}
+  Squire - Pin History
+{% endblock title %}
+
+{% block og-title %}
+    Knights Highlights
+{% endblock og-title %}
+{% block og-description %}
+    A collection of flavourful highlights related to the Knights: Special activities, new boardgames, or cool new Squire features!
+{% endblock og-description %}
+
+{% block content %}
+    {% if member is None %}
+        <div class="alert alert-danger" role="alert">
+            You are not a Knights member or are not logged in; you may not see all pins!
+        </div>
+    {% endif %}
+
+    <h1>Pin History</h1>
+    <p>
+        Behold a history of pinned highlights: Special activities, new boardgames, or cool new Squire features.
+    </p>
+    <div>
+        {% for pin in object_list %}
+            {% render_pin pin short=False %}
+        {% empty %}
+            <p>There are no accessible pins.</p>
+        {% endfor %}
+    </div>
+    {% render_paginator %}
+{% endblock content %}

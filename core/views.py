@@ -13,11 +13,11 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_safe
-from django.views.generic.base import TemplateView
-from django.views.generic.edit import FormView
+from django.views.generic import FormView, ListView, TemplateView
 
 from .forms import PinnableForm, RegisterForm
 from .models import MarkdownImage
+from .pins import Pin
 
 from dynamic_preferences.registries import global_preferences_registry
 global_preferences = global_preferences_registry.manager()
@@ -207,6 +207,17 @@ def show_error_403(request, exception=None):
 
 def show_error_404(request, exception=None):
     return render(request, 'core/errors/error404.html', status=404)
+
+##################################################################################
+# Pin History
+
+class PinHistoryView(ListView):
+    template_name = "core/pins/pin_history.html"
+    paginate_by = 4
+
+    def get_queryset(self):
+        return Pin.objects.for_user(self.request.user)
+
 
 ##################################################################################
 # Pin Creation

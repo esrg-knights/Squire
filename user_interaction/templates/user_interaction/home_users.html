@@ -36,10 +36,17 @@
             <div class="col-md-8">
                 <div class="row">
                     <!-- Pins Visible to this user -->
-                    <div class="card-deck p-1 mb-2">
+                    <div class="card-deck p-1">
                         {% for pin in user|get_pins|slice:":3" %}
-                            {{ pin.render }}
+                            {% render_pin pin %}
                         {% endfor %}
+                    </div>
+                    <div class="col-12">
+                        <p class="text-right">
+                            <a href='{% url "core:pin_history" %}'>
+                                <small>&gt View pin history</small>
+                            </a>
+                        </p>
                     </div>
                     <!-- Upcoming Activities -->
                     <div class="col-12">

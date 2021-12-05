@@ -1,0 +1,20 @@
+{% if not pin.is_members_only %}
+    <p class="badge badge-info mr-1">Public</p>
+{% endif %}
+{% if pin.category == 'auto-pin' %}
+    <p class="badge badge-secondary mr-1">Auto-generated</p>
+{% endif %}
+<!-- Publish Status -->
+{% if pin.publish_date is None %}
+    <p class="badge badge-danger mr-1">No publish date set</p>
+{% elif not pin.is_published %}
+    <p class="badge badge-warning mr-1">Publishes {{ pin.publish_date }}</p>
+{% endif %}
+<!-- Expiry Status -->
+{% if pin.expiry_date is not None %}
+    {% if not pin.is_expired %}
+        <p class="badge badge-warning mr-1">Expires {{ pin.expiry_date }}</p>
+    {% else %}
+        <p class="badge badge-danger mr-1">Expired {{ pin.expiry_date }}</p>
+    {% endif %}
+{% endif %}
