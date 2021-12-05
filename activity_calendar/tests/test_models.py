@@ -834,6 +834,23 @@ class ActivityMomentTestCase(TestCase):
         self.assertFalse(ActivityMoment.objects.get(id=3).is_open_for_subscriptions())
         self.assertTrue(ActivityMoment.objects.get(id=1).is_open_for_subscriptions())
 
+    @patch('django.utils.timezone.now', side_effect=mock_now(datetime(2020, 9, 28, 0, 0)))
+    def test_is_open_for_subscriptions_moved_forward(self, mock_tz):
+        activitymoment = ActivityMoment.objects.get(id=6)
+        self.assertTrue(activitymoment.is_open_for_subscriptions())
+        activitymoment.local_start_date = timezone.datetime(2020, 9, 27, 14, 0, tzinfo=timezone.utc)
+        self.assertFalse(activitymoment.is_open_for_subscriptions())
+
+    @patch('django.utils.timezone.now', side_effect=mock_now(datetime(2020, 10, 1, 0, 0)))
+    def test_is_open_for_subscriptions_moved_backward(self, mock_tz):
+        activitymoment = ActivityMoment.objects.get(id=6)
+        self.assertFalse(activitymoment.is_open_for_subscriptions())
+        activitymoment.local_start_date = timezone.datetime(2020, 10, 2, 14, 0, tzinfo=timezone.utc)
+        self.assertTrue(activitymoment.is_open_for_subscriptions())
+        activitymoment.local_start_date = timezone.datetime(2020, 10, 20, 14, 0, tzinfo=timezone.utc)
+        self.assertFalse(activitymoment.is_open_for_subscriptions())
+
+
 
 class ActivitySlotTestCase(TestCase):
     fixtures = ['test_users.json', 'test_activity_slots']

@@ -458,6 +458,7 @@ class Activity(models.Model):
                 return True
         return False
 
+
 class ActivityDuplicate(ModelBase):
     """
     Copy fields defined in local_fields automatically from Activity to ActivityMoment. This way any future changes
@@ -635,8 +636,8 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         :return: Boolean
         """
         now = timezone.now()
-        open_date_in_past = self.recurrence_id - self.parent_activity.subscriptions_open <= now
-        close_date_in_future = self.recurrence_id - self.parent_activity.subscriptions_close >= now
+        open_date_in_past = self.start_date - self.parent_activity.subscriptions_open <= now
+        close_date_in_future = self.start_date - self.parent_activity.subscriptions_close >= now
         return open_date_in_past and close_date_in_future
 
     def is_full(self):
