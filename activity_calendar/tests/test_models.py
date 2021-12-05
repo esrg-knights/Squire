@@ -437,6 +437,21 @@ class ActivityTestCase(TestCase):
             new_start_date=timezone.datetime(2020, 10, 13, 14, 0, 0, tzinfo=timezone.utc)
         )
 
+    def test_get_activitymoments_between_with_nonrecurring_extra_moment(self):
+        """
+            Tests that an activity occuring irregardless of the recurrence setup is returned. Just not as part of
+            that recurrence.
+        """
+        recurrence_id = timezone.datetime(2020, 10, 15, 10, 0, 0, tzinfo=timezone.utc)
+        self._test_get_activitymoments_between(
+            [
+                recurrence_id
+            ],
+            recurrence_id=recurrence_id,
+            after=timezone.datetime(2020, 10, 15, 8, 0, 0, tzinfo=timezone.utc),
+            before=timezone.datetime(2020, 10, 15, 23, 30, 0, tzinfo=timezone.utc)
+        )
+
     def test_get_activitymoments_between_extra_start_outside_bounds(self):
         """
             Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
