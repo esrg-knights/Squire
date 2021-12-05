@@ -1,13 +1,14 @@
+import icalendar
 from datetime import timedelta
 
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.utils import timezone
 
-from activity_calendar.models import Activity
-from activity_calendar.feeds import CESTEventFeed
+from activity_calendar.models import Activity, ActivityMoment
+from activity_calendar.feeds import CESTEventFeed, get_feed_id
 
-import icalendar
+
 
 
 class TestCaseICalendarExport(TestCase):
@@ -92,3 +93,94 @@ class TestCaseICalendarExport(TestCase):
                 self.assertEqual(sub["TZOFFSETTO"].to_ical(), "+0100")
             else:
                 self.fail(f"Only STANDARD or DAYLIGHT components must appear in VTIMEZONE. Got <{str(type(sub))}> instead!")
+
+
+class ICalFeedTestCase(TestCase):
+    fixtures = ['test_users', 'test_activity_slots']
+
+    def setUp(self):
+        self.feed = CESTEventFeed()
+
+        request = RequestFactory().get("/api/calendar/ical")
+        response = self.feed(request)
+        self.calendar = icalendar.Calendar.from_ical(response.content)
+
+    def _get_component(self, activity_item):
+        """
+        The calendar stream contains a collection of several components. This method returns the first
+        component adhering to the given activity_id and (if given) recurrence_id
+        :param activity_item: The activity or activitymoment instance
+        :param recurrence_id: The recurrence id. Returns the first valid component if None.
+        :return: The subcomponent from the calendar with the given data.
+        """
+        guid = get_feed_id(activity_item)
+
+        for subcomponent in self.calendar.subcomponents:
+            if subcomponent.get('UID', None) == guid and subcomponent.get('DTSTART').dt == activity_item.start_date:
+                return subcomponent
+        return None
+
+    def test_activity_in_feed(self):
+        activity = Activity.objects.get(id=2)
+        component = self._get_component(activity)
+        self.assertIsNotNone(component)
+        self.assertIn('SUMMARY', component.keys())
+        self.assertIn('DTSTART', component.keys())
+        self.assertIn('DTEND', component.keys())
+        self.assertIn('DESCRIPTION', component.keys())
+        self.assertIn('LOCATION', component.keys())
+        # Recurrence info
+        self.assertIn('RRULE', component.keys())
+        self.assertIn('EXDATE', component.keys())
+
+        self.assertIn('URL', component.keys())
+        self.assertEqual('/'+component['URL'].split('/', 3)[3], '/activities/')
+
+    def test_extra_nonrecurrent_activitymoment(self):
+        """ Tests that an activity outside the recurrence is in the feed """
+        activitymoment = ActivityMoment.objects.get(id=5)
+        component = self._get_component(activitymoment)
+        self.assertIsNotNone(component, "There was no component for the extra activity instance")
+        self.assertNotIn('RECURRENCE-ID', component.keys())
+
+        self.assertIn('SUMMARY', component.keys())
+        self.assertIn('DTSTART', component.keys())
+        self.assertIn('DTEND', component.keys())
+        self.assertIn('DESCRIPTION', component.keys())
+        self.assertIn('LOCATION', component.keys())
+        self.assertIn('URL', component.keys())
+        self.assertEqual('/'+component['URL'].split('/', 3)[3], activitymoment.get_absolute_url())
+
+    def test_overwritten_activitymoment(self):
+        """ Tests that an activitymoment overwriting a recurrence moment is in the feed """
+        activitymoment = ActivityMoment.objects.get(id=4)
+        component = self._get_component(activitymoment)
+        self.assertIsNotNone(component, "There was no component for the activity instance on the recurrence")
+        self.assertIn('SUMMARY', component.keys())
+        self.assertIn('DESCRIPTION', component.keys())
+        self.assertIn('DTSTART', component.keys())
+        self.assertIn('DTEND', component.keys())
+        self.assertIn('LOCATION', component.keys())
+        self.assertIn('URL', component.keys())
+
+        self.assertEqual('/'+component['URL'].split('/', 3)[3], activitymoment.get_absolute_url())
+        self.assertEqual(component.get('SUMMARY'), activitymoment.title)
+        self.assertIn('RECURRENCE-ID', component.keys())
+        self.assertEqual(component.get('RECURRENCE-ID').dt, activitymoment.recurrence_id)
+
+    def test_moved_activitymoment_of_recurrent(self):
+        """ Tests that an activitymoment that is moving a recurrent activity instance """
+        activitymoment = ActivityMoment.objects.get(id=6)
+        component = self._get_component(activitymoment)
+        self.assertIsNotNone(component, "There was no component for the activity instance on the recurrence")
+        self.assertIn('SUMMARY', component.keys())
+        self.assertIn('DESCRIPTION', component.keys())
+        self.assertIn('DTSTART', component.keys())
+        self.assertIn('DTEND', component.keys())
+        self.assertIn('LOCATION', component.keys())
+        self.assertIn('URL', component.keys())
+
+        self.assertEqual('/'+component['URL'].split('/', 3)[3], activitymoment.get_absolute_url())
+        self.assertEqual(component.get('SUMMARY'), activitymoment.title)
+        self.assertIn('RECURRENCE-ID', component.keys())
+        self.assertEqual(component.get('RECURRENCE-ID').dt, activitymoment.recurrence_id)

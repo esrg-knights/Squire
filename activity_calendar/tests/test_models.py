@@ -315,7 +315,7 @@ class TestCaseActivityClean(TestCase):
 
 
 class ActivityTestCase(TestCase):
-    fixtures = ['test_users.json', 'test_activity_slots']
+    fixtures = ['test_users.json', 'test_activity_slots', 'activity_calendar/test_activity_organisers']
 
     def setUp(self):
         self.activity = Activity.objects.get(id=2)
@@ -437,6 +437,21 @@ class ActivityTestCase(TestCase):
             new_start_date=timezone.datetime(2020, 10, 13, 14, 0, 0, tzinfo=timezone.utc)
         )
 
+    def test_get_activitymoments_between_with_nonrecurring_extra_moment(self):
+        """
+            Tests that an activity occuring irregardless of the recurrence setup is returned. Just not as part of
+            that recurrence.
+        """
+        recurrence_id = timezone.datetime(2020, 10, 15, 10, 0, 0, tzinfo=timezone.utc)
+        self._test_get_activitymoments_between(
+            [
+                recurrence_id
+            ],
+            recurrence_id=recurrence_id,
+            after=timezone.datetime(2020, 10, 15, 8, 0, 0, tzinfo=timezone.utc),
+            before=timezone.datetime(2020, 10, 15, 23, 30, 0, tzinfo=timezone.utc)
+        )
+
     def test_get_activitymoments_between_extra_start_outside_bounds(self):
         """
             Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
@@ -531,6 +546,105 @@ class ActivityTestCase(TestCase):
             before=timezone.datetime(2020, 10, 14, 23, 30, 0, tzinfo=timezone.utc)
         )
 
+    def test_get_next_activitymoment_excluded(self):
+        """ Check that excluded recursion dates are not returned"""
+        self.assertGreater(
+            self.activity.get_next_activitymoment(
+                dtstart=timezone.datetime(2020, 10, 20, 23, 30, 0, tzinfo=timezone.utc)
+            ).start_date,
+            timezone.datetime(2020, 10, 24, 15, 00, 0, tzinfo=timezone.utc)
+        )
+
+    def test_get_next_activitymoment_dsl(self):
+        self.assertEqual(
+            self.activity.get_next_activitymoment(
+                dtstart=timezone.datetime(2020, 10, 25, 23, 30, 0, tzinfo=timezone.utc)
+            ).start_date,
+            timezone.datetime(2020, 10, 28, 15, 00, 0, tzinfo=timezone.utc)
+        )
+
+    def test_get_next_activitymoment_moved(self):
+        # Test moving back
+        am = ActivityMoment.objects.create(
+            parent_activity=self.activity,
+            recurrence_id=timezone.datetime(2021, 7, 14, 14, 00, 0, tzinfo=timezone.utc),
+            local_start_date=timezone.datetime(2021, 7, 15, 14, 00, 0, tzinfo=timezone.utc)
+        )
+        self.assertEqual(
+            self.activity.get_next_activitymoment(
+                dtstart=timezone.datetime(2021, 7, 12, 00, 00, 0, tzinfo=timezone.utc)
+            ).start_date,
+            timezone.datetime(2021, 7, 15, 14, 00, 0, tzinfo=timezone.utc)
+        )
+
+        # Test moving forward in time
+        am.local_start_date = timezone.datetime(2021, 7, 14, 10, 00, 0, tzinfo=timezone.utc)
+        am.save()
+        self.assertEqual(
+            self.activity.get_next_activitymoment(
+                dtstart=timezone.datetime(2021, 7, 12, 00, 00, 0, tzinfo=timezone.utc)
+            ).start_date,
+            timezone.datetime(2021, 7, 14, 10, 00, 0, tzinfo=timezone.utc)
+        )
+
+    def test_get_next_activity_moment_inc_false(self):
+        """ Tests that a get_next does not include the start date """
+        # Test recurrence inclusion
+        self.assertEqual(
+            self.activity.get_next_activitymoment(
+                dtstart=timezone.datetime(2021, 7, 7, 14, 00, 0, tzinfo=timezone.utc),
+                inc=False
+            ).start_date,
+            timezone.datetime(2021, 7, 14, 14, 00, 0, tzinfo=timezone.utc)
+        )
+
+        # Test moved activitymoment inclusion
+        ActivityMoment.objects.create(
+            parent_activity=self.activity,
+            recurrence_id=timezone.datetime(2021, 7, 7, 14, 00, 0, tzinfo=timezone.utc),
+            local_start_date=timezone.datetime(2021, 7, 6, 14, 00, 0, tzinfo=timezone.utc)
+        )
+        self.assertEqual(
+            self.activity.get_next_activitymoment(
+                dtstart=timezone.datetime(2021, 7, 6, 14, 00, 0, tzinfo=timezone.utc),
+                inc=False
+            ).start_date,
+            timezone.datetime(2021, 7, 14, 14, 00, 0, tzinfo=timezone.utc)
+        )
+
+    def test_get_next_activity_moment_inc_true(self):
+        """ Tests that a get_next does not include the start date """
+        # Test recurrence inclusion
+        self.assertEqual(
+            self.activity.get_next_activitymoment(
+                dtstart=timezone.datetime(2021, 7, 7, 14, 00, 0, tzinfo=timezone.utc),
+                inc=True
+            ).start_date,
+            timezone.datetime(2021, 7, 7, 14, 00, 0, tzinfo=timezone.utc)
+        )
+
+        # Test moved activitymoment inclusion
+        ActivityMoment.objects.create(
+            parent_activity=self.activity,
+            recurrence_id=timezone.datetime(2021, 7, 7, 14, 00, 0, tzinfo=timezone.utc),
+            local_start_date=timezone.datetime(2021, 7, 6, 14, 00, 0, tzinfo=timezone.utc)
+        )
+        self.assertEqual(
+            self.activity.get_next_activitymoment(
+                dtstart=timezone.datetime(2021, 7, 6, 14, 00, 0, tzinfo=timezone.utc),
+                inc=True
+            ).start_date,
+            timezone.datetime(2021, 7, 6, 14, 00, 0, tzinfo=timezone.utc)
+        )
+
+    def test_get_next_activitymoment_recurrent(self):
+        self.assertEqual(
+            self.activity.get_next_activitymoment(
+                dtstart=timezone.datetime(2020, 9, 20, 23, 30, 0, tzinfo=timezone.utc)
+            ).start_date,
+            timezone.datetime(2020, 9, 23, 14, 00, 0, tzinfo=timezone.utc)
+        )
+
     def test_recurrence_different_day(self):
         """
             django_recurrences does not always handle recurrences around midnight correctly due to
@@ -573,6 +687,10 @@ class ActivityTestCase(TestCase):
         # Should occur at the activitymoments's recurrence_id, and not its alt start time
         self.assertTrue(self.activity.has_occurrence_at(recurrence_id))
         self.assertFalse(self.activity.has_occurrence_at(alt_start_time))
+
+    def test_is_organiser(self):
+        self.assertTrue(self.activity.is_organiser(User.objects.get(id=40)))
+        self.assertFalse(self.activity.is_organiser(User.objects.get(id=1)))
 
 
 class ActivityMomentTestCase(TestCase):

@@ -1,14 +1,7 @@
 from datetime import timedelta
 import random
-
-from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import FormView
 from django.views.generic import TemplateView
-from django.urls import reverse_lazy
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
-from dynamic_preferences.users.forms import user_preference_form_builder
 
 from activity_calendar.models import Activity
 from core.forms import LoginForm
@@ -75,25 +68,3 @@ class HomeUsersView(TemplateView):
         )
 
         return super(HomeUsersView, self).get_context_data(**kwargs)
-
-
-class UpdateUserPreferencesView(LoginRequiredMixin, FormView):
-    """ View for updating user preferences """
-    template_name = 'user_interaction/preferences_change_form.html'
-    success_url = reverse_lazy('user_interaction:change_preferences')
-    tab_name = 'tab_preferences'
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context[self.tab_name] = True
-        return context
-
-    def get_form_class(self):
-        return user_preference_form_builder(instance=self.request.user, section='layout')
-
-    def form_valid(self, form):
-        message = _("Your preferences have been updated!")
-        messages.success(self.request, message)
-        form.update_preferences()
-        form = self.get_form()
-        return super().form_valid(form)

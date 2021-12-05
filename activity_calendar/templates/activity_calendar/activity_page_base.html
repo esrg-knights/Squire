@@ -72,6 +72,14 @@
                                     {{ activity_moment.start_date|date:"j E H:i" }} - {{ activity_moment.end_date|date:"j E H:i" }}
                                 {% endif %}
                             </p>
+                            {% if activity_moment.is_part_of_recurrence %}
+                                <p class="text-muted">
+                                Repeats:
+                                {% for rule in activity_moment.parent_activity.recurrences.rrules %}
+                                {{ rule.to_text }}
+                                {% endfor %}
+                                </p>
+                            {% endif %}
                             <p>
                                 {% if activity_moment.local_start_date is not None %}
                                     <small id="activity-alt-start-message" class="text-muted">
@@ -112,6 +120,38 @@
                         <p id="event-location">{{ activity_moment.location }}</p>
                     </div>
                 </div>
+
+                {% if activity_moment.parent_activity.organisers.all %}
+                    <div class="d-flex">
+                        <!-- Organiser Icon -->
+                        <div class="col-xs-2">
+                            <img
+                                src="{% static 'octicons/tag.svg' %}"
+                                alt="Organisation-icon"
+                                class="icon"
+                                height="16"
+                                width="16"
+                            />
+                        </div>
+                        <!-- Location -->
+                        <div class="col nospace align-self-center">
+                            <p id="event-organisers">
+                                Organised by
+                                {% for organiser in activity_moment.parent_activity.organisers.all %}
+                                    {% if organiser.icon %}
+                                        <img
+                                            src="{{ organiser.icon.url }}"
+                                            height="32"
+                                            width="32"
+                                        />
+                                    {% endif %}
+                                    {{ organiser.name }}{% if not forloop.last %},{% endif %}
+
+                                {% endfor %}
+                            </p>
+                        </div>
+                    </div>
+                {% endif %}
 
                 <div class="d-flex">
                     <!-- Event Participants Icon -->
@@ -197,7 +237,7 @@
         </div>
         <div class="col-12 col-md-5">
             {% if request.user.is_authenticated %}
-                {% if perms.activity_calendar.change_activitymoment %}
+                {% if can_edit_activity %}
                     <a class="btn-block btn-sm btn btn-outline-primary mb-4"
                         href="{% url "activity_calendar:edit_moment" activity_id=activity.id recurrence_id=recurrence_id %}">
                         Edit

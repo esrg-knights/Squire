@@ -31,8 +31,3 @@ class TestCaseAchievementFrontEndViews(TestCase):
 
     def test_public_achievements(self):
         check_http_response(self, '/achievements', 'get', TestPublicUser)
-
-    def test_account_achievements(self):
-        check_http_response_with_login_redirect(self, '/account/achievements', 'get')
-
-

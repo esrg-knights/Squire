@@ -6,13 +6,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
-from django.http.response import Http404, HttpResponseNotFound
+from django.http.response import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_safe
-from django.views.generic.base import TemplateView
 
 from .forms import RegisterForm
 from .models import MarkdownImage
@@ -42,16 +41,6 @@ def viewNewsletters(request):
         'NEWSLETTER_ARCHIVE_URL': global_preferences['newsletter__share_link'],
     })
 
-
-class AccountView(TemplateView):
-    """ Base account page """
-    template_name = "core/user_accounts/account_info.html"
-    tab_name = 'tab_account'
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context[self.tab_name] = True
-        return context
 
 @require_safe
 def registerSuccess(request):
