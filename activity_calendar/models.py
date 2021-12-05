@@ -150,14 +150,10 @@ class Activity(models.Model):
         surplus_moments_queryset = self.activitymoment_set.filter(surplus_moments).values_list('recurrence_id', flat=True)
         recurrency_occurences = filter(lambda occ: occ not in surplus_moments_queryset, recurrency_occurences)
 
-        # Evaluate the iterable: we want to use it more than once below
-        recurrency_occurences = list(recurrency_occurences)
-
         # Fetch existing activitymoments
         #   They must either be within the bounds
         #   OR be extra ones due to different start/end date(s)
         query_filter = (activity_moments_between_query | extra_moments) & ~surplus_moments
-        # existing_moments = list(self.activitymoment_set.filter(query_filter))
         existing_moments = list(self.activitymoment_set.filter(query_filter))
 
         # Get occurrences for which we have no ActivityMoment

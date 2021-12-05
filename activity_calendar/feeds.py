@@ -1,20 +1,21 @@
 from datetime import datetime
 
 from django.conf import settings
+from django.urls import reverse_lazy
 from django.utils import timezone
 
-import django_ical.feedgenerator
-
+from django_ical import feedgenerator
+from django_ical.feedgenerator import ICal20Feed
 from django_ical.utils import build_rrule_from_recurrences_rrule
 from django_ical.views import ICalFeed
-from django_ical.feedgenerator import ICal20Feed
+
 
 from .models import Activity, ActivityMoment
 import activity_calendar.util as util
 
 # Monkey-patch; Why is this not open for extension in the first place?
-django_ical.feedgenerator.ITEM_EVENT_FIELD_MAP = (
-    *(django_ical.feedgenerator.ITEM_EVENT_FIELD_MAP),
+feedgenerator.ITEM_EVENT_FIELD_MAP = (
+    *(feedgenerator.ITEM_EVENT_FIELD_MAP),
     ('recurrenceid',    'recurrence-id'),
 )
 
@@ -144,7 +145,7 @@ class CESTEventFeed(ICalFeed):
         # When the item was generated, which is at this moment!
         return timezone.now()
 
-    @only_for(ActivityMoment, default="/activities/")
+    @only_for(ActivityMoment, default=reverse_lazy('activity_calendar:activity_upcoming'))
     def item_link(self, item):
         # The local url to the activity
         return item.get_absolute_url()
