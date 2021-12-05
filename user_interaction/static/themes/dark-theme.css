@@ -9,7 +9,8 @@
     --body-alt-dark-bg-color: #333333;
 
     /* Generated at https://codepen.io/sosuke/pen/Pjoqqp using --body-text-color */
-    --body-icon-color: invert(98%) sepia(2%) saturate(2998%) hue-rotate(272deg) brightness(118%) contrast(76%);
+    --body-icon-color: invert(98%) sepia(2%) saturate(2998%) hue-rotate(272deg)
+        brightness(118%) contrast(76%);
 
     /* Colors for (bootstrap) inputs */
     --input-bg-color: #6b6b6b;
@@ -17,9 +18,8 @@
     --input-prepend-bg-color: var(--body-alt-bg-color);
     --input-prepend-text-color: #c3bbbb;
 
-
     /* Colors for highlighted text (e.g. h1, strong) */
-    --title-text-color: #266645;
+    --title-text-color: white;
 
     /* Colors for greenified elements (e.g. buttons) */
     --greenify-bg-color: #195737;
@@ -40,13 +40,28 @@
     --greenify-dropdown-hover-text-color: inherit;
     --greenify-dropdown-active-bg-color: var(--greenify-bg-color);
     --greenify-dropdown-active-text-color: var(--greenify-text-color);
+
+    /*Calendar day color*/
+    --fc-neutral-bg-color: green;
 }
 
 /* Lighten link colors */
 a {
     color: #55a7ff;
 }
+a:hover {
+    color: white;
+}
+/* Text color of tabs*/
+.nav-tabs .nav-link.active {
+    color: white;
+}
 
-.alert-info {
-    /* background-color: #243f44; */
+.text-muted {
+    color: whitesmoke !important;
+}
+
+.btn-outline-success.disabled {
+    color: white;
+    background-color: red;
 }
