@@ -67,6 +67,6 @@ a:hover {
     background-color: red;
 }
 
-.bg-light {
+.bg-light.border-danger {
     background-color: red !important;
 }
