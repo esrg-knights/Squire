@@ -539,6 +539,21 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     local_start_date = models.DateTimeField(blank=True, null=True)
     local_end_date = models.DateTimeField(blank=True, null=True)
 
+    # Define status
+    STATUS_NORMAL = "GO"
+    STATUS_CANCELLED = "STOP"
+    STATUS_REMOVED = "RMV"
+    status = models.CharField(
+        max_length=5,
+        choices=[
+            (STATUS_NORMAL,   "Normal proceeed"),
+            (STATUS_CANCELLED,   "Cancel, with notification"),
+            (STATUS_REMOVED,   "Remove"),
+
+        ],
+        default=STATUS_NORMAL,
+    )
+
     @property
     def start_date(self):
         return self.local_start_date or self.recurrence_id
@@ -576,6 +591,10 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
             dtstart=self.parent_activity.start_date
         )
         return recurrence_date == local_recurrence_id
+
+    @property
+    def is_cancelled(self):
+        return self.status != self.STATUS_NORMAL
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
@@ -635,6 +654,10 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         Whether this activitymoment is open for subscriptions
         :return: Boolean
         """
+        if self.is_cancelled:
+            # A closed activity is never open for subscriptions
+            return False
+
         now = timezone.now()
         open_date_in_past = self.start_date - self.parent_activity.subscriptions_open <= now
         close_date_in_future = self.start_date - self.parent_activity.subscriptions_close >= now
