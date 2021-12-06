@@ -319,7 +319,7 @@ def get_activity_detail_view(request, *args, **kwargs):
         if activity_moment is None:
             activity_moment = activity
 
-        if activity_moment.is_cancelled:
+        if getattr(activity_moment, 'is_cancelled', False):
             view_class = ActivityMomentCancelledView
         elif activity_moment.slot_creation == Activity.SLOT_CREATION_AUTO:
             view_class = ActivitySimpleMomentView
