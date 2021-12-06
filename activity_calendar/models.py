@@ -194,8 +194,8 @@ class Activity(models.Model):
             return self.activitymoment_set.filter(query_removed)
         elif include_cancelled and not include_removed:
             return self.activitymoment_set.filter(query_cancelled)
-        else:
-            return self.activitymoment_set.all()
+        # It shoudl include neither, so return nothing (can occur when chaining methods)
+        return self.activitymoment_set.none()
 
     def get_next_activitymoment(self, dtstart=None, inc=False, exclude_removed=True):
         """

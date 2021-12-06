@@ -211,7 +211,7 @@ class ICalFeedTestCase(TestCase):
             lambda exdate: exdate.dt == dateparse.parse_datetime('2020-10-21T14:00:00+00:00'),
             self._get_component(activity)['EXDATE'].dts)
         ))
-        self.assertEqual(len(self._get_component(activity)['EXDATE'].dts), 1)
+        self.assertEqual(len(self._get_component(activity)['EXDATE'].dts), 2)
 
         # Cancel the activity
         activitymoment.status = ActivityMoment.STATUS_REMOVED
@@ -224,5 +224,5 @@ class ICalFeedTestCase(TestCase):
             lambda exdate: exdate.dt == activitymoment.recurrence_id,
             self._get_component(activity)['EXDATE'].dts)
         ))
-        self.assertEqual(len(self._get_component(activity)['EXDATE'].dts), 2)
+        self.assertEqual(len(self._get_component(activity)['EXDATE'].dts), 3)
 

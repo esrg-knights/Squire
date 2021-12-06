@@ -154,6 +154,28 @@
     }
 },
 {
+    "model": "activity_calendar.activitymoment",
+    "pk": 7,
+    "fields": {
+        "parent_activity": 2,
+        "recurrence_id": "2021-09-15T14:00:00Z",
+        "created_date": "2020-10-08T19:00:00Z",
+        "last_updated": "2020-10-08T19:00:00Z",
+        "status": "STOP"
+    }
+},
+{
+    "model": "activity_calendar.activitymoment",
+    "pk": 8,
+    "fields": {
+    "parent_activity": 2,
+    "recurrence_id": "2021-09-08T14:00:00Z",
+    "created_date": "2020-10-08T19:00:00Z",
+    "last_updated": "2020-10-08T19:00:00Z",
+    "status": "RMV"
+}
+    },
+{
   "model": "activity_calendar.activityslot",
   "pk": 1,
   "fields": {
