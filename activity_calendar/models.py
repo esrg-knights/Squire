@@ -121,13 +121,17 @@ class Activity(models.Model):
             return f'{settings.STATIC_URL}images/default_logo.png'
         return self.slots_image.image.url
 
-    def get_activitymoments_between(self, start_date, end_date):
+    def get_activitymoments_between(self, start_date, end_date, exclude_removed=True):
         """
             Get a list of ActivityMoments, each representing an occurrence of this activity for which
             any point in that ActivityMoment's duration occurs between the specified start and end date.
 
             Note that an ActivityMoment is not entirely the same as an occurrence, as an ActivityMoment can
             have a different start time than the occurrence it represents. This is accounted for.
+
+            :param start_date: The start datetime instance
+            :param end_date: The end datetime instance
+            :param exclude_removed: Whether activitymoments with status removed should not be included (default True)
         """
         # We should also include activities that start before "start_date", but also end after "start_date"
         #   (i.e., their start date is before the specified bounds, but their end date is within it).
@@ -150,11 +154,18 @@ class Activity(models.Model):
         surplus_moments_queryset = self.activitymoment_set.filter(surplus_moments).values_list('recurrence_id', flat=True)
         recurrency_occurences = filter(lambda occ: occ not in surplus_moments_queryset, recurrency_occurences)
 
+        # Filter out removed activities
+        removed_moments_queryset = self.activitymoment_set.filter(status=ActivityMoment.STATUS_REMOVED).values_list('recurrence_id', flat=True)
+        recurrency_occurences = filter(lambda occ: occ not in removed_moments_queryset, recurrency_occurences)
+
         # Fetch existing activitymoments
         #   They must either be within the bounds
         #   OR be extra ones due to different start/end date(s)
         query_filter = (activity_moments_between_query | extra_moments) & ~surplus_moments
-        existing_moments = list(self.activitymoment_set.filter(query_filter))
+        existing_moments = self.activitymoment_set
+        if exclude_removed:
+            existing_moments = existing_moments.exclude(status=ActivityMoment.STATUS_REMOVED)
+        existing_moments = list(existing_moments.filter(query_filter))
 
         # Get occurrences for which we have no ActivityMoment
         unstored_recurrency_occurences = filter(
@@ -173,26 +184,44 @@ class Activity(models.Model):
 
         return list(unstored_recurrency_occurences) + existing_moments
 
-    def get_next_activitymoment(self, dtstart=None, inc=False):
+    def _get_cancelled_activity_moments(self, include_cancelled=False, include_removed=True):
+        """ Returns all activitymoments queryset for this activity that are cancelled and/or removed """
+        query_cancelled = Q(status=ActivityMoment.STATUS_CANCELLED)
+        query_removed = Q(status=ActivityMoment.STATUS_REMOVED)
+        if include_cancelled and include_removed:
+            return self.activitymoment_set.filter(query_cancelled | query_removed)
+        elif not include_cancelled and include_removed:
+            return self.activitymoment_set.filter(query_removed)
+        elif include_cancelled and not include_removed:
+            return self.activitymoment_set.filter(query_cancelled)
+        else:
+            return self.activitymoment_set.all()
+
+    def get_next_activitymoment(self, dtstart=None, inc=False, exclude_removed=True):
         """
         Returns the next activitymoment that will occur (if any)
         :param dtstart: The start datetime instance (if any) from which an occurence needs to be retrieved
         :param inc: Whether the startdate should be included
+        :param exclude_removed: Whether activitymoments with status removed should not be included (default True)
         :return: The activitymoment instance that will occur next
         """
         dtstart = timezone.localtime(dtstart) or timezone.now()
         e_ext = 'e' if inc else '' # Search query for inclusion statement
 
+        activity_moments = self.activitymoment_set
+        if exclude_removed:
+            activity_moments = activity_moments.exclude(status=ActivityMoment.STATUS_REMOVED)
+
         ### Check for activitymoments stored in the database ###
         # Check activity_moment by recurrence id
-        next_activity_moment = self.activitymoment_set.\
+        next_activity_moment = activity_moments.\
             filter(**{'recurrence_id__gt'+e_ext: dtstart}).\
             filter(local_start_date__isnull=True).\
             order_by('recurrence_id').\
             first()
 
         # Check for local start date adjustments
-        local_activity_moment = self.activitymoment_set.\
+        local_activity_moment = activity_moments.\
             filter(**{'local_start_date__gt'+e_ext: dtstart}).\
             order_by('local_start_date').\
             first()
@@ -213,9 +242,14 @@ class Activity(models.Model):
             order_by('recurrence_id').\
             values_list('recurrence_id', flat=True)
 
+        cancelled_activity_moments = self._get_cancelled_activity_moments(
+            include_cancelled=False,
+            include_removed=exclude_removed,
+        ).values_list('recurrence_id', flat=True)
+
         recurrence_dtstart = dtstart
         next_recurrence = self._get_next_recurring_occurence(recurrence_dtstart, inc)
-        while next_recurrence in excluded_activity_moments:
+        while next_recurrence in excluded_activity_moments or next_recurrence in cancelled_activity_moments:
             next_recurrence = self._get_next_recurring_occurence(next_recurrence, False)
 
         if next_recurrence is not None:
