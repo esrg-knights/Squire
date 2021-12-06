@@ -65,3 +65,7 @@ a:hover {
     color: white;
     background-color: red;
 }
+
+.bg-light {
+    background-color: red !important;
+}
