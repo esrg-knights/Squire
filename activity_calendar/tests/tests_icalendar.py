@@ -1,9 +1,9 @@
 import icalendar
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from django.test import TestCase
 from django.test.client import RequestFactory
-from django.utils import timezone
+from django.utils import timezone, dateparse
 
 from activity_calendar.models import Activity, ActivityMoment
 from activity_calendar.feeds import CESTEventFeed, get_feed_id
@@ -100,7 +100,9 @@ class ICalFeedTestCase(TestCase):
 
     def setUp(self):
         self.feed = CESTEventFeed()
+        self._build_response_calendar()
 
+    def _build_response_calendar(self):
         request = RequestFactory().get("/api/calendar/ical")
         response = self.feed(request)
         self.calendar = icalendar.Calendar.from_ical(response.content)
@@ -184,3 +186,43 @@ class ICalFeedTestCase(TestCase):
         self.assertEqual(component.get('SUMMARY'), activitymoment.title)
         self.assertIn('RECURRENCE-ID', component.keys())
         self.assertEqual(component.get('RECURRENCE-ID').dt, activitymoment.recurrence_id)
+
+    def test_cancelled_activitymoment(self):
+        activitymoment = ActivityMoment.objects.get(id=6)
+        component = self._get_component(activitymoment)
+        self.assertIn('STATUS', component.keys())
+        self.assertEqual(component['STATUS'], 'CONFIRMED')
+
+        activitymoment.status = ActivityMoment.STATUS_CANCELLED
+        activitymoment.save()
+        self._build_response_calendar()
+        component = self._get_component(activitymoment)
+
+        self.assertIn('STATUS', component.keys())
+        self.assertEqual(component['STATUS'], 'CANCELLED')
+
+    def test_removed_activitymoment(self):
+        activity = Activity.objects.get(id=2)
+        activitymoment = ActivityMoment.objects.get(id=3)
+
+        # An activity moment should show up and the EXDATE should only contain a given date from fixtures
+        self.assertIsNotNone(self._get_component(activitymoment))
+        self.assertTrue(any(filter(
+            lambda exdate: exdate.dt == dateparse.parse_datetime('2020-10-21T14:00:00+00:00'),
+            self._get_component(activity)['EXDATE'].dts)
+        ))
+        self.assertEqual(len(self._get_component(activity)['EXDATE'].dts), 2)
+
+        # Cancel the activity
+        activitymoment.status = ActivityMoment.STATUS_REMOVED
+        activitymoment.save()
+        self._build_response_calendar()
+
+        # Check that it is now excluded from the calendar (not as a VVent and in the EXDATE)
+        self.assertIsNone(self._get_component(activitymoment))
+        self.assertTrue(any(filter(
+            lambda exdate: exdate.dt == activitymoment.recurrence_id,
+            self._get_component(activity)['EXDATE'].dts)
+        ))
+        self.assertEqual(len(self._get_component(activity)['EXDATE'].dts), 3)
+

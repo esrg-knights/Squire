@@ -397,4 +397,4 @@ class ActivityAdminForm(MarkdownForm):
 class ActivityMomentAdminForm(MarkdownForm):
     class Meta:
         model = ActivityMoment
-        fields = ['parent_activity', 'recurrence_id'] + ActivityMomentForm.Meta.fields
+        fields = ['parent_activity', 'recurrence_id'] + ActivityMomentForm.Meta.fields + ['status']

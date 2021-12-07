@@ -169,33 +169,42 @@ function onEventClick(info, calendar) {
     $('#event-description').html(event.extendedProps.description)
     martorhljs('#event-description') // Update code block highlighting
 
-    if (event.extendedProps.isSubscribed) {
-        $('#subscribe-required').hide()
-        $('#subscribe-done').show()
-        $('#subscribe-info').hide()
-        $('#event-subscription').text("You are registered for this activity!")
-    } else if (event.extendedProps.subscriptionsRequired) {
-        $('#subscribe-required').show()
-        $('#subscribe-done').hide()
-        $('#subscribe-info').hide()
-        $('#event-subscription').html("<i>Registrations are <strong>required</strong>! You cannot join this activity otherwise!</i>")
-    } else {
-        $('#subscribe-required').hide()
-        $('#subscribe-done').hide()
-        $('#subscribe-info').show()
-        $('#event-subscription').html("<small class='text-muted'>Registrations are <i>optional</i>, but are appreciated!</small>")
+    if (event.extendedProps.is_cancelled) {
+        $('#subscribe-required').hide();
+        $('#subscribe-done').hide();
+        $('#subscribe-info').show();
+        $('#event-participants-count').text("This activity is cancelled");
     }
+    else {
+        if (event.extendedProps.isSubscribed) {
+            $('#subscribe-required').hide()
+            $('#subscribe-done').show()
+            $('#subscribe-info').hide()
+            $('#event-subscription').text("You are registered for this activity!")
+        } else if (event.extendedProps.subscriptionsRequired) {
+            $('#subscribe-required').show()
+            $('#subscribe-done').hide()
+            $('#subscribe-info').hide()
+            $('#event-subscription').html("<i>Registrations are <strong>required</strong>! You cannot join this activity otherwise!</i>")
+        } else {
+            $('#subscribe-required').hide()
+            $('#subscribe-done').hide()
+            $('#subscribe-info').show()
+            $('#event-subscription').html("<small class='text-muted'>Registrations are <i>optional</i>, but are appreciated!</small>")
+        }
 
-    if (!event.extendedProps.canSubscribe) {
-        $('#event-subscription-closed').text("Registrations have not opened yet or are closed.")
-    } else {
-        $('#event-subscription-closed').text("")
-    }
 
-    if (event.extendedProps.maxParticipants === -1) {
-        $('#event-participants-count').text(`${event.extendedProps.numParticipants} participant(s) so far.`)
-    } else {
-        $('#event-participants-count').text(`${event.extendedProps.numParticipants}/${event.extendedProps.maxParticipants} participant(s)`)
+        if (!event.extendedProps.canSubscribe) {
+            $('#event-subscription-closed').text("Registrations have not opened yet or are closed.")
+        } else {
+            $('#event-subscription-closed').text("")
+        }
+
+        if (event.extendedProps.maxParticipants === -1) {
+            $('#event-participants-count').text(`${event.extendedProps.numParticipants} participant(s) so far.`)
+        } else {
+            $('#event-participants-count').text(`${event.extendedProps.numParticipants}/${event.extendedProps.maxParticipants} participant(s)`)
+        }
     }
 
     // Link to the correct occurence

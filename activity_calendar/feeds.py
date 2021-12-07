@@ -103,7 +103,9 @@ class CESTEventFeed(ICalFeed):
     def items(self):
         # Only consider published activities
         activities = Activity.objects.filter(published_date__lte=timezone.now()).order_by('-published_date')
-        exceptions = ActivityMoment.objects.filter(parent_activity__published_date__lte=timezone.now())
+        exceptions = ActivityMoment.objects.\
+            filter(parent_activity__published_date__lte=timezone.now()).\
+            exclude(status=ActivityMoment.STATUS_REMOVED)
 
         return [*activities, *exceptions]
 
@@ -144,6 +146,13 @@ class CESTEventFeed(ICalFeed):
     def item_timestamp(self, item):
         # When the item was generated, which is at this moment!
         return timezone.now()
+
+    @only_for(ActivityMoment)
+    def item_status(self, item):
+        if item.is_cancelled:
+            return "CANCELLED"
+        else:
+            return "CONFIRMED"
 
     @only_for(ActivityMoment, default=reverse_lazy('activity_calendar:activity_upcoming'))
     def item_link(self, item):
@@ -187,8 +196,28 @@ class CESTEventFeed(ICalFeed):
     # Dates to exclude for recurrence rules
     @only_for(Activity)
     def item_exdate(self, item):
+        exclude_dates = []
         if item.recurrences:
-            return list(util.set_time_for_RDATE_EXDATE(item.recurrences.exdates, item.start_date))
+            # The RDATES in the recurrency module store only dates and not times, so we need to address that
+            exclude_dates += list(util.set_time_for_RDATE_EXDATE(item.recurrences.exdates, item.start_date))
+
+        cancelled_moments = item.activitymoment_set.\
+            filter(status=ActivityMoment.STATUS_REMOVED).\
+            values_list('recurrence_id', flat=True)
+
+        # Correct timezone to the default timezone settings
+        cancelled_moments = [util.dst_aware_to_dst_ignore(
+            recurrence_id,
+            item.start_date,
+            reverse=True
+        ) for recurrence_id in cancelled_moments ]
+        exclude_dates += filter(lambda occ: occ not in exclude_dates, cancelled_moments)
+
+        # If there are no exclude_dates, don't bother including it
+        if exclude_dates:
+            return exclude_dates
+        else:
+            return None
 
     # RECURRENCE-ID
     @only_for(ActivityMoment)

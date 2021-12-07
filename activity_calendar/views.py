@@ -328,6 +328,10 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
         return kwargs
 
 
+class ActivityMomentCancelledView(ActivityMomentView):
+    template_name = "activity_calendar/activity_page_cancelled.html"
+
+
 def get_activity_detail_view(request, *args, **kwargs):
     """ Returns a HTTP response object by calling the required View Class """
     try:
@@ -345,7 +349,9 @@ def get_activity_detail_view(request, *args, **kwargs):
         if activity_moment is None:
             activity_moment = activity
 
-        if activity_moment.slot_creation == Activity.SLOT_CREATION_AUTO:
+        if getattr(activity_moment, 'is_cancelled', False):
+            view_class = ActivityMomentCancelledView
+        elif activity_moment.slot_creation == Activity.SLOT_CREATION_AUTO:
             view_class = ActivitySimpleMomentView
         else:
             view_class = ActivityMomentWithSlotsView
