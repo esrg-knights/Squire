@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from django.contrib.auth.mixins import AccessMixin
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
@@ -431,6 +432,38 @@ class EditActivityMomentView(LoginRequiredMixin, ActivityMixin, UserPassesTestMi
         message = _("You have successfully changed the settings for '{activity_name}'")
         messages.success(self.request, message.format(activity_name=form.instance.title))
         return super(EditActivityMomentView, self).form_valid(form)
+
+    def get_success_url(self):
+        return self.activity_moment.get_absolute_url()
+
+
+class CancelActivityMomentView(LoginRequiredMixin, ActivityMixin, UserPassesTestMixin, FormView):
+    template_name = "activity_calendar/activity_moment_cancel_page.html"
+    form_class = CancelActivityForm
+
+    def setup(self, request, *args, **kwargs):
+        super(CancelActivityMomentView, self).setup(request, *args, **kwargs)
+        if self.activity_moment.is_cancelled:
+            raise PermissionDenied("Activity was already cancelled")
+
+    def get_form_kwargs(self):
+        kwargs = super(CancelActivityMomentView, self).get_form_kwargs()
+        kwargs.update({
+            'instance': self.activity_moment,
+        })
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+        message = _("{activity_name} of {date} has been cancelled")
+        messages.success(self.request, message.format(
+            activity_name=form.instance.title,
+            date=form.instance.recurrence_id,
+        ))
+        return super(CancelActivityMomentView, self).form_valid(form)
+
+    def get_test_func(self):
+        return self.can_edit_activity
 
     def get_success_url(self):
         return self.activity_moment.get_absolute_url()

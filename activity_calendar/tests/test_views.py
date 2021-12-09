@@ -2,7 +2,6 @@ import datetime
 
 from django.test import TestCase, Client
 from django.contrib import messages
-from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.models import Permission
 from django.test.utils import override_settings
 from django.utils import timezone, dateparse
@@ -14,7 +13,7 @@ from unittest.mock import patch
 
 from activity_calendar.models import *
 from activity_calendar.views import CreateSlotView, ActivityMomentWithSlotsView, ActivitySimpleMomentView,\
-    EditActivityMomentView, ActivityOverview, ActivityMixin
+    EditActivityMomentView, ActivityOverview, ActivityMixin, ActivityMomentCancelledView
 from activity_calendar.forms import *
 
 from core.tests.util import suppress_warnings
@@ -273,6 +272,30 @@ class ActivityMixinTest(TestMixinMixin, TestCase):
 
         # The mock makes sure that is_organiser returns true
         self.assertTrue(self.view.can_edit_activity())
+
+
+class ActivityCancelledViewTest(TestActivityViewMixin, TestCase):
+    default_url_name = "activity_slots_on_day"
+    default_activity_id = 2
+
+    def test_cancelled_activity_page(self):
+        """ Tests that cancelled activitymoments """
+        response = self.build_get_response(
+            iso_dt="2021-09-15T14:00:00+00:00",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.template_name[0], ActivityMomentCancelledView.template_name)
+
+    def test_removed_activity_page(self):
+        """ Test that removed activitymoments can still be visited """
+        response = self.build_get_response(
+            iso_dt="2021-09-08T14:00:00+00:00",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.template_name[0], ActivityMomentCancelledView.template_name)
+
+    def test_class(self):
+        self.assertEqual(ActivityMomentCancelledView.template_name, "activity_calendar/activity_page_cancelled.html")
 
 
 class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
