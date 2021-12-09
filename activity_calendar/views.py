@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import timezone, dateparse
 from django.utils.translation import gettext_lazy as _
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -13,6 +13,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.decorators.http import require_safe
 from django.views.generic import TemplateView, ListView
 from django.views.generic.edit import FormView, FormMixin
+
+from urllib.parse import quote, unquote
 
 from .forms import *
 from .models import Activity, ActivityMoment
@@ -29,18 +31,46 @@ def activity_collection(request):
 class ActivityOverview(ListView):
     template_name = "activity_calendar/activity_overview.html"
     context_object_name = 'activities'
+    DATE_TRANSLATION = "%Y-%m-%d"
+    TD_DEFAULT = timedelta(days=14)
 
     def get_queryset(self):
-        start_date = timezone.now()
-        end_date = start_date + timedelta(days=14)
+        start_date, end_date = self.get_time_range_data()
 
         activities = []
-
         for activity in Activity.objects.filter(published_date__lte=timezone.now()):
             for activity_moment in activity.get_activitymoments_between(start_date, end_date):
                 activities.append(activity_moment)
 
         return sorted(activities, key=lambda activity: activity.start_date)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(ActivityOverview, self).get_context_data(*args, **kwargs)
+
+        start_dt, end_dt = self.get_time_range_data()
+        diff_dt = end_dt - start_dt
+        new_back_dt = max(timezone.now(), start_dt - diff_dt)
+
+        context.update({
+            'dt_range_start': start_dt,
+            'dt_range_end': end_dt,
+            'dt_range_is_standard': abs(timezone.now() - start_dt) < timedelta(days=1),
+            'dt_range_forward_url': end_dt.strftime(self.DATE_TRANSLATION),
+            'dt_range_backward_url': new_back_dt.strftime(self.DATE_TRANSLATION),
+            'dt_range_backward_to_now': abs(timezone.now() - new_back_dt) < timedelta(days=1),
+        })
+        return context
+
+    def get_time_range_data(self):
+        try:
+            start_date = datetime.strptime(self.request.GET.get('start-date', ''), self.DATE_TRANSLATION)
+            start_date = timezone.make_aware(start_date)
+        except ValueError:
+            start_date = timezone.now()
+
+        end_date = start_date + self.TD_DEFAULT
+
+        return start_date, end_date
 
 
 class LoginRequiredForPostMixin(AccessMixin):
