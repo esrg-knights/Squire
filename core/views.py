@@ -17,7 +17,7 @@ from django.views.generic import FormView, ListView, TemplateView
 
 from .forms import PinnableForm, RegisterForm
 from .models import MarkdownImage
-from .pins import Pin
+from .pin_models import Pin
 
 from dynamic_preferences.registries import global_preferences_registry
 global_preferences = global_preferences_registry.manager()
@@ -256,7 +256,7 @@ class PinnableFormView(PermissionRequiredMixin, FormView):
         return self.object.get_absolute_url()
 
 
-class PinnablesMixin:
+class PinnablesViewMixin:
     """
     Mixin that adds a form to the view that allows pinning a model instance
     currently in the View. It can be used alongside any other form in the

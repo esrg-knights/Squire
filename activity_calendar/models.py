@@ -18,7 +18,7 @@ from recurrence.fields import RecurrenceField
 import activity_calendar.util as util
 from core.models import PresetImage
 from core.fields import MarkdownTextField
-from core.pins import PinnableMixin
+from core.pin_models import PinnableModelMixin
 from committees.utils import user_in_association_group
 
 from django.contrib.auth import get_user_model
@@ -515,7 +515,7 @@ class ActivityDuplicate(ModelBase):
         return get_activity_attribute
 
 
-class ActivityMoment(PinnableMixin, models.Model, metaclass=ActivityDuplicate):
+class ActivityMoment(PinnableModelMixin, models.Model, metaclass=ActivityDuplicate):
     parent_activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
     recurrence_id = models.DateTimeField(verbose_name="parent activity date/time")
 
@@ -695,7 +695,7 @@ class ActivityMoment(PinnableMixin, models.Model, metaclass=ActivityDuplicate):
         return f"{self.title} @ {self.start_date}"
 
 
-class ActivitySlot(PinnableMixin, models.Model):
+class ActivitySlot(PinnableModelMixin, models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     location = models.CharField(max_length=255, blank=True, null=True,

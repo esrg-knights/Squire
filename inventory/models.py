@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from membership_file.models import Member
-from core.pins import PinnableMixin
+from core.pin_models import PinnableModelMixin
 
 
 __all__ = ['valid_item_class_ids', 'Ownership', 'Item', 'MiscellaneousItem']
@@ -59,7 +59,7 @@ def get_item_image_upload_path(instance, filename):
     )
 
 
-class Item(PinnableMixin, models.Model):
+class Item(PinnableModelMixin, models.Model):
     """ Item in the inventory system. Abstract root class.
 
     On permissions:

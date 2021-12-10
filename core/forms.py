@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from martor.widgets import MartorWidget
 
 from core.models import MarkdownImage
-from core.pins import Pin
+from core.pin_models import Pin
 from core.widgets import  ImageUploadMartorWidget
 from utils.forms import UpdatingUserFormMixin
 

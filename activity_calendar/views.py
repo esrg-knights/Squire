@@ -15,7 +15,7 @@ from django.views.decorators.http import require_safe
 from django.views.generic import ListView, TemplateView
 from django.views.generic.edit import FormMixin, FormView
 
-from core.views import PinnablesMixin
+from core.views import PinnablesViewMixin
 from .forms import *
 from .models import Activity, ActivityMoment
 
@@ -160,7 +160,7 @@ class ActivityFormMixin:
         return kwargs
 
 
-class ActivityMomentView(ActivityMixin, PinnablesMixin, ActivityFormMixin, TemplateView):
+class ActivityMomentView(ActivityMixin, PinnablesViewMixin, ActivityFormMixin, TemplateView):
     def get_context_data(self, **kwargs):
         return super(ActivityMomentView, self).get_context_data(
             can_edit_activity=self.can_edit_activity(),

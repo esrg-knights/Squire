@@ -10,7 +10,7 @@ from django.utils.text import slugify
 
 from core.fields import MarkdownTextField
 from inventory.models import Item
-from core.pins import PinnableMixin
+from core.pin_models import PinnableModelMixin
 
 
 __all__ = ['RoleplayingSystem', 'RoleplayingItem',]
@@ -30,7 +30,7 @@ def get_system_image_upload_path(instance, filename):
         extension=extension,
     )
 
-class RoleplayingSystem(PinnableMixin, models.Model):
+class RoleplayingSystem(PinnableModelMixin, models.Model):
     name = models.CharField(max_length=128)
     short_description = models.CharField(max_length=128)
     long_description = MarkdownTextField(blank=True, null=True)

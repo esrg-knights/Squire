@@ -2,7 +2,7 @@ from django import template
 from django.contrib.contenttypes.models import ContentType
 from django.template.loader import render_to_string
 
-from core.pins import Pin
+from core.pin_models import Pin
 
 register = template.Library()
 

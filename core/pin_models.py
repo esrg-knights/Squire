@@ -20,12 +20,12 @@ def valid_pinnable_models():
     valid_ids = []
     for content_type in ContentType.objects.all():
         model_class = content_type.model_class()
-        if model_class is not None and issubclass(model_class, PinnableMixin):
+        if model_class is not None and issubclass(model_class, PinnableModelMixin):
             valid_ids.append(content_type.id)
     return {'id__in': valid_ids}
 
 
-class PinnableMixin(models.Model):
+class PinnableModelMixin(models.Model):
     """
         Mixin that marks the model inheriting this class as "Pinnable". This
         allows that model to be linked to a Pin, allowing the pin to automatically

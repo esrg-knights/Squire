@@ -17,7 +17,7 @@ from dynamic_preferences.models import GlobalPreferenceModel
 
 from core.forms import MarkdownImageAdminForm, PinAdminForm
 from core.models import MarkdownImage, PresetImage
-from core.pins import Pin
+from core.pin_models import Pin
 from utils.forms import RequestUserToFormModelAdminMixin
 
 ###################################################

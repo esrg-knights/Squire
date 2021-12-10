@@ -7,11 +7,11 @@ from django.urls import reverse
 from django.utils import timezone
 
 from core.fields import MarkdownTextField
-from core.pins import PinnableMixin
+from core.pin_models import PinnableModelMixin
 from membership_file.models import Member
 
 
-class AssociationGroup(PinnableMixin, models.Model):
+class AssociationGroup(PinnableModelMixin, models.Model):
     site_group = models.OneToOneField(Group, on_delete=models.CASCADE)
     shorthand = models.CharField(max_length=16, blank=True, null=True)
     icon = models.ImageField(upload_to='images/committees/', blank=True, null=True)

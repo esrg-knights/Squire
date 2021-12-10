@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 from core.models import (MarkdownImage, PresetImage,
                          get_image_upload_path)
-from core.pins import Pin, PinManager, PinnableMixin
+from core.pin_models import Pin, PinManager, PinnableModelMixin
 
 User = get_user_model()
 
@@ -123,7 +123,7 @@ class PinManagerTest(TestCase):
         self.pinmanager = PinManager()
 
         # Create a model that we can pin
-        class PinnablePresetImage(PinnableMixin, PresetImage):
+        class PinnablePresetImage(PinnableModelMixin, PresetImage):
             """
                 A wrapper for PresetImages that allows it to be pinned.
                 Note that the `pins` attribute of this model is unavailable
