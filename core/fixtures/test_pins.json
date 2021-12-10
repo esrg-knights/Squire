@@ -1,0 +1,49 @@
+[
+    {
+      "model": "core.presetimage",
+      "pk": 1,
+      "fields": {
+        "name": "test-presetimage",
+        "image": "test.png",
+        "selectable": true
+      }
+    },
+    {
+      "model": "core.pin",
+      "pk": 1,
+      "fields": {
+        "creation_date": "2021-01-01T14:00:00Z",
+        "author": null,
+        "category": "test-category",
+        "pin_date": "2021-01-01T20:00:00Z",
+        "local_title": "",
+        "local_description": "",
+        "local_url": "",
+        "local_image": null,
+        "local_publish_date": "2021-01-01T14:00:00Z",
+        "local_expiry_date": null,
+        "is_members_only": false,
+        "content_type": null,
+        "object_id": null
+      }
+    },
+    {
+        "model": "core.pin",
+        "pk": 2,
+        "fields": {
+          "creation_date": "2021-01-01T14:00:00Z",
+          "author": null,
+          "category": "test-category",
+          "pin_date": "2021-01-01T20:00:00Z",
+          "local_title": "",
+          "local_description": "",
+          "local_url": "",
+          "local_image": null,
+          "local_publish_date": "2021-01-01T14:00:00Z",
+          "local_expiry_date": null,
+          "is_members_only": false,
+          "content_type": null,
+          "object_id": null
+        }
+      }
+]

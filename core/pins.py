@@ -122,13 +122,13 @@ class PinManager(models.Manager):
         if queryset is None:
             queryset = Pin.objects.all()
 
-        # Users cannot see unpublished pins
-        queryset = queryset.exclude(local_publish_date__isnull=True, object_id__isnull=True)
-
         # Is the user unable to view not-yet-published pins?
         if not user.has_perm('core.can_view_future_pins'):
             # Must not have a future publish date
             queryset = queryset.exclude(local_publish_date__gt=now)
+
+            # Must not be unpublished
+            queryset = queryset.exclude(local_publish_date__isnull=True, object_id__isnull=True)
 
         # Is the user unable to view expired pins?
         if not user.has_perm('core.can_view_expired_pins'):
