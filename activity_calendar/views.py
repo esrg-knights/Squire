@@ -488,7 +488,7 @@ class CancelActivityMomentView(LoginRequiredMixin, ActivityMixin, UserPassesTest
         message = _("{activity_name} of {date} has been cancelled")
         messages.success(self.request, message.format(
             activity_name=form.instance.title,
-            date=form.instance.recurrence_id,
+            date=form.instance.recurrence_id.strftime("%A, %d %b %Y"),
         ))
         return super(CancelActivityMomentView, self).form_valid(form)
 

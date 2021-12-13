@@ -27,6 +27,12 @@
 
 {% block content %}
     <h1>{{ activity_moment.title }}</h1>
+    {% if activity_moment.is_cancelled %}
+    <div class="alert alert-danger">
+        This particular activity has been cancelled. If you want to uncancel it, please contact the board.
+    </div>
+    {% endif %}
+
     <div class="d-flex">
         <!-- Calendar Icon -->
         <div class="">
