@@ -26,6 +26,23 @@ class OwnershipAdmin(admin.ModelAdmin):
 
 admin.site.register(Ownership, OwnershipAdmin)
 
+class OwnershipValueProxy(Ownership):
+    class Meta:
+        verbose_name = "Association inventory value"
+        proxy = True
+
+@admin.register(OwnershipValueProxy)
+class OwnershipValues(admin.ModelAdmin):
+    list_display = ('owner', 'content_object', 'value')
+    list_display_links = ('owner',)
+    list_filter = ('group',)
+    fields = ('value',)
+
+    def get_queryset(self, request):
+        return super(OwnershipValues, self).get_queryset(request).filter(
+            group__isnull=False
+        )
+
 
 class ItemAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'current_possession_count')
