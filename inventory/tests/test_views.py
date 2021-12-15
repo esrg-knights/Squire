@@ -632,11 +632,18 @@ class TestUpdateCatalogueLinkView(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(UpdateCatalogueLinkView, PermissionRequiredMixin))
         self.assertTrue(issubclass(UpdateCatalogueLinkView, UpdateView))
         self.assertEqual(UpdateCatalogueLinkView.template_name, "inventory/catalogue_adjust_link.html")
-        self.assertEqual(UpdateCatalogueLinkView.fields, ['note', 'added_since'])
+        self.assertEqual(UpdateCatalogueLinkView.fields, ['note', 'added_since', 'value'])
 
     def test_successful_get(self):
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 200)
+
+    def test_user_form_has_no_value_field(self):
+        response = self.client.get(self.get_base_url(), data={})
+        form = response.context['form']
+        # The value field should not be in fields
+        self.assertNotIn('value', form.fields.keys())
+
 
     def test_post_successful(self):
         """ Tests a succesful post """

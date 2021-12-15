@@ -348,7 +348,13 @@ class OwnershipCatalogueLinkMixin:
 
 class UpdateCatalogueLinkView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, OwnershipCatalogueLinkMixin, PermissionRequiredMixin, UpdateView):
     template_name = "inventory/catalogue_adjust_link.html"
-    fields = ['note', 'added_since']
+    fields = ['note', 'added_since', 'value']
+
+    def get_form(self, form_class=None):
+        form = super(UpdateCatalogueLinkView, self).get_form()
+        if self.ownership.group is None:
+            del form.fields['value']
+        return form
 
     def get_object(self, queryset=None):
         # Assure that the ownership and item are linked correctly
