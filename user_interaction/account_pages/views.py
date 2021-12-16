@@ -1,5 +1,4 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
 from django.views.generic import TemplateView, FormView, UpdateView
 from django.urls import reverse_lazy
@@ -25,7 +24,7 @@ class AccountPasswordChangeView(AccountViewMixin, PasswordChangeView):
         return result
 
 
-class AccountChangeView(LoginRequiredMixin, AccountViewMixin, UpdateView):
+class AccountChangeView(AccountViewMixin, UpdateView):
     template_name = 'user_interaction/account_pages/account_edit.html'
     form_class = AccountForm
     success_url = reverse_lazy('core:user_accounts/account')
