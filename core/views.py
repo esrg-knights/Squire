@@ -6,23 +6,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-<<<<<<< HEAD
-from django.http import JsonResponse, HttpResponseForbidden
-from django.http.response import Http404, HttpResponseNotFound
-=======
 from django.http import JsonResponse
 from django.http.response import Http404
->>>>>>> master
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_safe
-<<<<<<< HEAD
-from django.views.generic.base import TemplateView
-from django.views.generic import UpdateView
-=======
->>>>>>> master
 
 from .forms import RegisterForm, AccountForm
 from .models import MarkdownImage
@@ -55,57 +45,6 @@ def viewNewsletters(request):
     })
 
 
-<<<<<<< HEAD
-class AccountTabsMixin:
-    tab_name = None
-
-    def get_context_data(self, *args, **kwargs):
-        context = super(AccountTabsMixin, self).get_context_data(*args, **kwargs)
-        context[self.tab_name] = True
-        context['tabs'] = self.get_tab_data()
-        return context
-
-    def get_tab_data(self):
-        tabs = [
-            {'name': 'tab_account', 'verbose': 'Account', 'url_name': 'core:user_accounts/account'},
-            {'name': 'tab_membership', 'verbose': 'Membership', 'url_name': 'membership_file/membership'},
-            {'name': 'tab_preferences', 'verbose': 'Preferences', 'url_name': 'user_interaction:change_preferences'},
-        ]
-        for tab in tabs:
-            if tab['name'] == self.tab_name:
-                tab['selected'] = True
-        return tabs
-
-
-class AccountView(AccountTabsMixin, TemplateView):
-    """ Base account page """
-    template_name = "core/user_accounts/account_info.html"
-    tab_name = 'tab_account'
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context[self.tab_name] = True
-        return context
-
-
-class AccountChangeView(LoginRequiredMixin, AccountTabsMixin, UpdateView):
-    template_name = 'core/user_accounts/account_edit.html'
-    form_class = AccountForm
-    success_url = reverse_lazy('core:user_accounts/account')
-    raise_exception = True
-    tab_name = 'tab_account'
-
-    def get_object(self, queryset=None):
-        return self.request.user
-
-    def form_valid(self, form):
-        message = message = _("Your account information has been saved successfully!")
-        messages.success(self.request, message)
-        return super().form_valid(form)
-
-
-=======
->>>>>>> master
 @require_safe
 def registerSuccess(request):
     return render(request, 'core/user_accounts/register/register_done.html', {})

@@ -1,0 +1,36 @@
+{% extends 'core/user_accounts/account_base.html' %}
+{% load generic_field %}
+
+{% block title %}
+  Squire - Edit Account
+{% endblock title %}
+
+{% block content %}
+    <h1>Edit Account Information</h1>
+    <form method="post">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <ul class="errorlist alert alert-danger">
+            {% for error in form.non_field_errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+            {% generic_field form.username -1 %}
+
+            {% generic_field form.first_name -1 %}
+
+            {% generic_field form.email -1 %}>
+
+            <p><i> You can change your password <a href="{% url 'core:user_accounts/password_change' %}">here</a></i></p>
+        <input type="submit" value="Confirm Changes" class="greenify btn btn-dark">
+        <a
+        href="{% url 'core:user_accounts/account' %}"
+        class="btn btn-danger"
+        >Cancel Changes</a
+        >
+    </form>
+    
+
+{% endblock content %}

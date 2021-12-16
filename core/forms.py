@@ -151,4 +151,3 @@ class AccountForm(ModelForm):
         labels = {
             'first_name': 'Real Name',
         }
-  
