@@ -46,13 +46,6 @@ def viewNewsletters(request):
         'NEWSLETTER_ARCHIVE_URL': global_preferences['newsletter__share_link'],
     })
 
-class AccountMixin(LoginRequiredMixin):
-    """
-        Sets the view's object to the user that makes
-        the request.
-    """
-    def get_object(self, queryset=None):
-        return self.request.user
 
 class AccountTabsMixin:
     tab_name = None
@@ -86,17 +79,18 @@ class AccountView(AccountTabsMixin, TemplateView):
         return context
 
 
-class AccountChangeView(AccountMixin, AccountTabsMixin, PermissionRequiredMixin, UpdateView):
+class AccountChangeView(LoginRequiredMixin, AccountTabsMixin, UpdateView):
     template_name = 'core/user_accounts/account_edit.html'
     form_class = AccountForm
     success_url = reverse_lazy('core:user_accounts/account')
-    permission_required = ('core.can_view_account_information_self', 'core.can_change_account_information_self')
     raise_exception = True
     tab_name = 'tab_account'
 
+    def get_object(self, queryset=None):
+        return self.request.user
 
     def form_valid(self, form):
-        message = _("Your account information has been saved successfully! Notice the name disappears when the user is a membership ")
+        message = message = _("Your account information has been saved successfully!")
         messages.success(self.request, message)
         return super().form_valid(form)
 
