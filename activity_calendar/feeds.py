@@ -1,20 +1,21 @@
 from datetime import datetime
 
 from django.conf import settings
+from django.urls import reverse_lazy
 from django.utils import timezone
 
-import django_ical.feedgenerator
-
+from django_ical import feedgenerator
+from django_ical.feedgenerator import ICal20Feed
 from django_ical.utils import build_rrule_from_recurrences_rrule
 from django_ical.views import ICalFeed
-from django_ical.feedgenerator import ICal20Feed
+
 
 from .models import Activity, ActivityMoment
 import activity_calendar.util as util
 
 # Monkey-patch; Why is this not open for extension in the first place?
-django_ical.feedgenerator.ITEM_EVENT_FIELD_MAP = (
-    *(django_ical.feedgenerator.ITEM_EVENT_FIELD_MAP),
+feedgenerator.ITEM_EVENT_FIELD_MAP = (
+    *(feedgenerator.ITEM_EVENT_FIELD_MAP),
     ('recurrenceid',    'recurrence-id'),
 )
 
@@ -27,6 +28,18 @@ def only_for(class_type, default=None):
         return func_wrapper
     return only_for_decorator
 
+
+def get_feed_id(item):
+    # ID should be _globally_ unique
+    if isinstance(item, Activity):
+        return f"local_activity-id-{item.id}@kotkt.nl"
+    elif isinstance(item, ActivityMoment):
+        if item.is_part_of_recurrence:
+            return f"local_activity-id-{item.parent_activity_id}@kotkt.nl"
+        else:
+            return f"local_activity-id-{item.parent_activity_id}-special-{item.id}@kotkt.nl"
+
+    raise RuntimeError(f'An incorrect object instance has entered the calendar feed: {item.__class__.__name__}')
 
 class ExtendedICal20Feed(ICal20Feed):
     """
@@ -90,18 +103,14 @@ class CESTEventFeed(ICalFeed):
     def items(self):
         # Only consider published activities
         activities = Activity.objects.filter(published_date__lte=timezone.now()).order_by('-published_date')
-        exceptions = ActivityMoment.objects.filter(parent_activity__published_date__lte=timezone.now())
+        exceptions = ActivityMoment.objects.\
+            filter(parent_activity__published_date__lte=timezone.now()).\
+            exclude(status=ActivityMoment.STATUS_REMOVED)
 
         return [*activities, *exceptions]
 
     def item_guid(self, item):
-        # ID should be _globally_ unique
-        if isinstance(item, Activity):
-            activity_id = item.id
-        elif isinstance(item, ActivityMoment):
-            activity_id = item.parent_activity_id
-
-        return f"local_activity-id-{activity_id}@kotkt.nl"
+        return get_feed_id(item)
 
     def item_class(self, item):
         return "PUBLIC"
@@ -138,7 +147,14 @@ class CESTEventFeed(ICalFeed):
         # When the item was generated, which is at this moment!
         return timezone.now()
 
-    @only_for(ActivityMoment, default="/calendar/")
+    @only_for(ActivityMoment)
+    def item_status(self, item):
+        if item.is_cancelled:
+            return "CANCELLED"
+        else:
+            return "CONFIRMED"
+
+    @only_for(ActivityMoment, default=reverse_lazy('activity_calendar:activity_upcoming'))
     def item_link(self, item):
         # The local url to the activity
         return item.get_absolute_url()
@@ -180,13 +196,35 @@ class CESTEventFeed(ICalFeed):
     # Dates to exclude for recurrence rules
     @only_for(Activity)
     def item_exdate(self, item):
+        exclude_dates = []
         if item.recurrences:
-            return list(util.set_time_for_RDATE_EXDATE(item.recurrences.exdates, item.start_date))
+            # The RDATES in the recurrency module store only dates and not times, so we need to address that
+            exclude_dates += list(util.set_time_for_RDATE_EXDATE(item.recurrences.exdates, item.start_date))
+
+        cancelled_moments = item.activitymoment_set.\
+            filter(status=ActivityMoment.STATUS_REMOVED).\
+            values_list('recurrence_id', flat=True)
+
+        # Correct timezone to the default timezone settings
+        cancelled_moments = [util.dst_aware_to_dst_ignore(
+            recurrence_id,
+            item.start_date,
+            reverse=True
+        ) for recurrence_id in cancelled_moments ]
+        exclude_dates += filter(lambda occ: occ not in exclude_dates, cancelled_moments)
+
+        # If there are no exclude_dates, don't bother including it
+        if exclude_dates:
+            return exclude_dates
+        else:
+            return None
 
     # RECURRENCE-ID
     @only_for(ActivityMoment)
     def item_recurrenceid(self, item):
-        return item.recurrence_id.astimezone(timezone.get_current_timezone())
+        if item.is_part_of_recurrence:
+            return item.recurrence_id.astimezone(timezone.get_current_timezone())
+        return None
 
     # Include
     def feed_extra_kwargs(self, obj):

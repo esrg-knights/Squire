@@ -6,15 +6,23 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
+<<<<<<< HEAD
 from django.http import JsonResponse, HttpResponseForbidden
 from django.http.response import Http404, HttpResponseNotFound
+=======
+from django.http import JsonResponse
+from django.http.response import Http404
+>>>>>>> master
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_safe
+<<<<<<< HEAD
 from django.views.generic.base import TemplateView
 from django.views.generic import UpdateView
+=======
+>>>>>>> master
 
 from .forms import RegisterForm, AccountForm
 from .models import MarkdownImage
@@ -47,6 +55,7 @@ def viewNewsletters(request):
     })
 
 
+<<<<<<< HEAD
 class AccountTabsMixin:
     tab_name = None
 
@@ -95,6 +104,8 @@ class AccountChangeView(LoginRequiredMixin, AccountTabsMixin, UpdateView):
         return super().form_valid(form)
 
 
+=======
+>>>>>>> master
 @require_safe
 def registerSuccess(request):
     return render(request, 'core/user_accounts/register/register_done.html', {})

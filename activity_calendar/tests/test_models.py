@@ -437,6 +437,21 @@ class ActivityTestCase(TestCase):
             new_start_date=timezone.datetime(2020, 10, 13, 14, 0, 0, tzinfo=timezone.utc)
         )
 
+    def test_get_activitymoments_between_with_nonrecurring_extra_moment(self):
+        """
+            Tests that an activity occuring irregardless of the recurrence setup is returned. Just not as part of
+            that recurrence.
+        """
+        recurrence_id = timezone.datetime(2020, 10, 15, 10, 0, 0, tzinfo=timezone.utc)
+        self._test_get_activitymoments_between(
+            [
+                recurrence_id
+            ],
+            recurrence_id=recurrence_id,
+            after=timezone.datetime(2020, 10, 15, 8, 0, 0, tzinfo=timezone.utc),
+            before=timezone.datetime(2020, 10, 15, 23, 30, 0, tzinfo=timezone.utc)
+        )
+
     def test_get_activitymoments_between_extra_start_outside_bounds(self):
         """
             Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
@@ -530,6 +545,29 @@ class ActivityTestCase(TestCase):
             after=timezone.datetime(2020, 10, 14, 17, 0, 0, tzinfo=timezone.utc),
             before=timezone.datetime(2020, 10, 14, 23, 30, 0, tzinfo=timezone.utc)
         )
+
+    def test_get_activitymoments_between_cancellation(self):
+        # Test that a Cancelled activity still shows up in this query (id=7)
+        self._test_get_activitymoments_between(
+            [
+                timezone.datetime(2021, 9, 15, 14, 0, 0, tzinfo=timezone.utc)
+            ],
+            after=timezone.datetime(2021, 9, 12, 0, 0, 0, tzinfo=timezone.utc),
+            before=timezone.datetime(2021, 9, 18, 0, 0, 0, tzinfo=timezone.utc),
+        )
+        # Test that a Removed activity does not show up in this query (id=8)
+        self._test_get_activitymoments_between(
+            [],
+            after=timezone.datetime(2021, 9, 4, 0, 0, 0, tzinfo=timezone.utc),
+            before=timezone.datetime(2021, 9, 11, 0, 0, 0, tzinfo=timezone.utc),
+        )
+
+        # Test method exclusion parameter
+        self.assertTrue(any(self.activity.get_activitymoments_between(
+            start_date=timezone.datetime(2021, 9, 4, 0, 0, 0, tzinfo=timezone.utc),
+            end_date=timezone.datetime(2021, 9, 11, 0, 0, 0, tzinfo=timezone.utc),
+            exclude_removed=False
+        )))
 
     def test_get_next_activitymoment_excluded(self):
         """ Check that excluded recursion dates are not returned"""
@@ -630,6 +668,36 @@ class ActivityTestCase(TestCase):
             timezone.datetime(2020, 9, 23, 14, 00, 0, tzinfo=timezone.utc)
         )
 
+    def test_get_next_activitymoment_cancelled(self):
+        """ Check that excluded recursion dates are not returned"""
+        # Test that a Cancelled activity still shows up in this query (id=7)
+        activity_moment = self.activity.get_next_activitymoment(
+            dtstart=timezone.datetime(2021, 9, 12, 0, 0, 0, tzinfo=timezone.utc)
+        )
+        self.assertEqual(
+            activity_moment.start_date,
+            timezone.datetime(2021, 9, 15, 14, 0, 0, tzinfo=timezone.utc)
+        )
+        self.assertTrue(activity_moment.is_cancelled)
+
+        # Test that a Removed activity does not show up in this query (id=8)
+        # There is removed activity at 2021-9-8
+        self.assertGreater(
+            self.activity.get_next_activitymoment(
+                dtstart=timezone.datetime(2021, 9, 5, 0, 0, 0, tzinfo=timezone.utc)
+            ).start_date,
+            timezone.datetime(2021, 9, 9, 0, 0, 0, tzinfo=timezone.utc)
+        )
+
+        # Test exclusion parameter
+        self.assertLess(
+            self.activity.get_next_activitymoment(
+                dtstart=timezone.datetime(2021, 9, 5, 0, 0, 0, tzinfo=timezone.utc),
+                exclude_removed=False
+            ).start_date,
+            timezone.datetime(2021, 9, 9, 0, 0, 0, tzinfo=timezone.utc)
+        )
+
     def test_recurrence_different_day(self):
         """
             django_recurrences does not always handle recurrences around midnight correctly due to
@@ -676,6 +744,38 @@ class ActivityTestCase(TestCase):
     def test_is_organiser(self):
         self.assertTrue(self.activity.is_organiser(User.objects.get(id=40)))
         self.assertFalse(self.activity.is_organiser(User.objects.get(id=1)))
+
+    def test_get_cancelled_activity_moments(self):
+        """ Tests the private get cancelled activitymoments method """
+        cancelled_queryset = self.activity._get_cancelled_activity_moments(
+            include_cancelled=True,
+            include_removed=False
+        )
+        self.assertEqual(cancelled_queryset.count(), 1)
+        self.assertIn(7, cancelled_queryset.values_list('id', flat=True))
+
+        cancelled_queryset = self.activity._get_cancelled_activity_moments(
+            include_cancelled=True,
+            include_removed=True
+        )
+        self.assertEqual(cancelled_queryset.count(), 2)
+        self.assertIn(7, cancelled_queryset.values_list('id', flat=True))
+        self.assertIn(8, cancelled_queryset.values_list('id', flat=True))
+
+        cancelled_queryset = self.activity._get_cancelled_activity_moments(
+            include_cancelled=False,
+            include_removed=True
+        )
+        self.assertEqual(cancelled_queryset.count(), 1)
+        self.assertIn(8, cancelled_queryset.values_list('id', flat=True))
+
+        # This may look weird as it will not look useful. But in chained methods calling this for an empty set
+        # can occassionally be better than rewriting the code in the case status is irrelevant
+        cancelled_queryset = self.activity._get_cancelled_activity_moments(
+            include_cancelled=False,
+            include_removed=False
+        )
+        self.assertEqual(cancelled_queryset.count(), 0)
 
 
 class ActivityMomentTestCase(TestCase):
@@ -818,6 +918,22 @@ class ActivityMomentTestCase(TestCase):
     def test_is_open_for_subscriptions(self, mock_tz):
         self.assertFalse(ActivityMoment.objects.get(id=3).is_open_for_subscriptions())
         self.assertTrue(ActivityMoment.objects.get(id=1).is_open_for_subscriptions())
+
+    @patch('django.utils.timezone.now', side_effect=mock_now(datetime(2020, 9, 28, 0, 0)))
+    def test_is_open_for_subscriptions_moved_forward(self, mock_tz):
+        activitymoment = ActivityMoment.objects.get(id=6)
+        self.assertTrue(activitymoment.is_open_for_subscriptions())
+        activitymoment.local_start_date = timezone.datetime(2020, 9, 27, 14, 0, tzinfo=timezone.utc)
+        self.assertFalse(activitymoment.is_open_for_subscriptions())
+
+    @patch('django.utils.timezone.now', side_effect=mock_now(datetime(2020, 10, 1, 0, 0)))
+    def test_is_open_for_subscriptions_moved_backward(self, mock_tz):
+        activitymoment = ActivityMoment.objects.get(id=6)
+        self.assertFalse(activitymoment.is_open_for_subscriptions())
+        activitymoment.local_start_date = timezone.datetime(2020, 10, 2, 14, 0, tzinfo=timezone.utc)
+        self.assertTrue(activitymoment.is_open_for_subscriptions())
+        activitymoment.local_start_date = timezone.datetime(2020, 10, 20, 14, 0, tzinfo=timezone.utc)
+        self.assertFalse(activitymoment.is_open_for_subscriptions())
 
 
 class ActivitySlotTestCase(TestCase):

@@ -1,4 +1,4 @@
-{% extends 'core/base.html' %}
+{% extends 'core/user_accounts/account_base.html' %}
 {% load render_form %}
 
 {% block title %}
@@ -21,7 +21,7 @@
     {% render_form method="post" id="submit_form"  has_submit_button=False %}
 
     <div class="btn-group w-100" role="group" aria-label="Form changing">
-        <a href="{% url "inventory:member_items" %}"
+        <a href="{% url "account:inventory:member_items" %}"
            class="btn btn-secondary">Cancel</a>
         <button form="submit_form" type="submit" class="btn btn-success">
             Save changes

@@ -6,13 +6,12 @@ from django.shortcuts import get_object_or_404
 from activity_calendar.models import Activity, ActivityMoment
 from activity_calendar.committee_pages.forms import CreateActivityMomentForm
 
-from committees.views import AssociationGroupMixin
+from committees.committeecollective import AssociationGroupMixin
 
 
 class ActivityCalendarView(AssociationGroupMixin, ListView):
     template_name = "activity_calendar/committee_pages/committee_activities.html"
     context_object_name = 'activities'
-    selected_tab_name = "tab_activity"
 
     def get_queryset(self):
         return Activity.objects.filter(
@@ -35,7 +34,6 @@ class ActivityCalendarView(AssociationGroupMixin, ListView):
 class AddActivityMomentCalendarView(AssociationGroupMixin, FormView):
     form_class = CreateActivityMomentForm
     template_name = "activity_calendar/committee_pages/committee_add_moment_page.html"
-    selected_tab_name = "tab_activity"
 
     def setup(self, request, *args, **kwargs):
         super(AddActivityMomentCalendarView, self).setup(request, *args, **kwargs)

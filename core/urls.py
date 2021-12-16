@@ -3,7 +3,7 @@ from django.conf import settings
 from django.contrib.auth import views as djangoViews
 from martor.views import markdownfy_view
 
-from .forms import LoginForm, PasswordResetForm, PasswordChangeForm, PasswordResetConfirmForm
+from .forms import LoginForm, PasswordResetForm, PasswordResetConfirmForm
 from . import views
 
 app_name = 'core'
@@ -57,6 +57,7 @@ urlpatterns = [
             extra_context={},
         ),
         name='user_accounts/password_reset/success'),
+<<<<<<< HEAD
     # Password change
     path('account/password_change', djangoViews.PasswordChangeView.as_view(
             template_name='core/user_accounts/password_change/password_change_form.html',
@@ -77,6 +78,8 @@ urlpatterns = [
     # Other pages
     path('account', views.AccountView.as_view(), name='user_accounts/account'),
     path('account/edit', views.AccountChangeView.as_view(), name='user_accounts/account/edit'),
+=======
+>>>>>>> master
     path('register', views.register, name='user_accounts/register'),
     path('register/success', views.registerSuccess, name='user_accounts/register/success'),
     path('newsletters/', views.viewNewsletters, name='newsletters'),

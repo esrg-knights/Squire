@@ -1,11 +1,19 @@
 from django.urls import include, path
 
 from user_interaction import views
+from user_interaction.accountcollective import registry
 
 
-app_name = 'user_interaction'
+def user_interaction_urls():
+    app_name = 'user_interaction'
+
+    urlpatterns = [
+        path('', views.home_screen, name='homepage'),
+    ]
+    return urlpatterns, app_name, app_name
+
 
 urlpatterns = [
-    path('', views.home_screen, name='homepage'),
-    path('account/preferences', views.UpdateUserPreferencesView.as_view(), name='change_preferences')
+    path('', user_interaction_urls()),
+    path('account/', registry.get_urls()),
 ]

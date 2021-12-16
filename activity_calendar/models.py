@@ -121,78 +121,107 @@ class Activity(models.Model):
             return f'{settings.STATIC_URL}images/default_logo.png'
         return self.slots_image.image.url
 
-    def get_activitymoments_between(self, start_date, end_date):
+    def get_activitymoments_between(self, start_date, end_date, exclude_removed=True):
         """
             Get a list of ActivityMoments, each representing an occurrence of this activity for which
             any point in that ActivityMoment's duration occurs between the specified start and end date.
 
             Note that an ActivityMoment is not entirely the same as an occurrence, as an ActivityMoment can
             have a different start time than the occurrence it represents. This is accounted for.
+
+            :param start_date: The start datetime instance
+            :param end_date: The end datetime instance
+            :param exclude_removed: Whether activitymoments with status removed should not be included (default True)
         """
         # We should also include activities that start before "start_date", but also end after "start_date"
         #   (i.e., their start date is before the specified bounds, but their end date is within it).
         # Any occurrence before (start_date - duration) can never partially take place inside the
         #   specified time period, so there's no need to look back even further.
         activity_duration = self.duration
-        occurrences = self.get_occurrences_starting_between(start_date - activity_duration, end_date)
+        recurrency_occurences = self.get_occurrences_starting_between(start_date - activity_duration, end_date)
 
         # Note that DST-offsets have already been handled earlier
         #   in self.get_occurrences_between -> util.dst_aware_to_dst_ignore
 
-        # The above comment isn't entirely True as there are also activity_moments we need to consider,
-        #   which we handle here
+        # Get the correct activitymoment instances from the database
+        activity_moments_between_query = Q(recurrence_id__gte=(start_date - activity_duration)) &\
+                                         Q(recurrence_id__lte=end_date)
+        # Get a list of all activitymoments that due to shift are either
+        # incorrectly included (surplus) or wrongly excluded (extra)
         surplus_moments, extra_moments = self._get_queries_for_alt_start_time_activity_moments(start_date, end_date)
 
         # Filter out all activitymoments with an alt start time outside the bounds
-        surplus_moments = self.activitymoment_set.filter(surplus_moments).values_list('recurrence_id', flat=True)
-        occurrences = filter(lambda occ: occ not in surplus_moments, occurrences)
+        surplus_moments_queryset = self.activitymoment_set.filter(surplus_moments).values_list('recurrence_id', flat=True)
+        recurrency_occurences = filter(lambda occ: occ not in surplus_moments_queryset, recurrency_occurences)
 
-        # Evaluate the iterable: we want to use it more than once below
-        occurrences = list(occurrences)
+        # Filter out removed activities
+        removed_moments_queryset = self.activitymoment_set.filter(status=ActivityMoment.STATUS_REMOVED).values_list('recurrence_id', flat=True)
+        recurrency_occurences = filter(lambda occ: occ not in removed_moments_queryset, recurrency_occurences)
 
         # Fetch existing activitymoments
         #   They must either be within the bounds
         #   OR be extra ones due to different start/end date(s)
-        query_filter = Q(recurrence_id__in=occurrences) | extra_moments
-        existing_moments = list(self.activitymoment_set.filter(query_filter))
+        query_filter = (activity_moments_between_query | extra_moments) & ~surplus_moments
+        existing_moments = self.activitymoment_set
+        if exclude_removed:
+            existing_moments = existing_moments.exclude(status=ActivityMoment.STATUS_REMOVED)
+        existing_moments = list(existing_moments.filter(query_filter))
 
         # Get occurrences for which we have no ActivityMoment
-        occurrences = filter(
+        unstored_recurrency_occurences = filter(
             lambda occ: all(existing_moment.recurrence_id != occ for existing_moment in existing_moments),
-            occurrences
+            recurrency_occurences
         )
 
         # Generate new ActivityMoments for them
-        occurrences = map(
+        unstored_recurrency_occurences = map(
             lambda occ: ActivityMoment(
                 recurrence_id=occ,
                 parent_activity=self,
             ),
-            occurrences
+            unstored_recurrency_occurences
         )
 
-        return list(occurrences) + existing_moments
+        return list(unstored_recurrency_occurences) + existing_moments
 
-    def get_next_activitymoment(self, dtstart=None, inc=False):
+    def _get_cancelled_activity_moments(self, include_cancelled=False, include_removed=True):
+        """ Returns all activitymoments queryset for this activity that are cancelled and/or removed """
+        query_cancelled = Q(status=ActivityMoment.STATUS_CANCELLED)
+        query_removed = Q(status=ActivityMoment.STATUS_REMOVED)
+        if include_cancelled and include_removed:
+            return self.activitymoment_set.filter(query_cancelled | query_removed)
+        elif not include_cancelled and include_removed:
+            return self.activitymoment_set.filter(query_removed)
+        elif include_cancelled and not include_removed:
+            return self.activitymoment_set.filter(query_cancelled)
+        # It shoudl include neither, so return nothing (can occur when chaining methods)
+        return self.activitymoment_set.none()
+
+    def get_next_activitymoment(self, dtstart=None, inc=False, exclude_removed=True):
         """
         Returns the next activitymoment that will occur (if any)
         :param dtstart: The start datetime instance (if any) from which an occurence needs to be retrieved
         :param inc: Whether the startdate should be included
+        :param exclude_removed: Whether activitymoments with status removed should not be included (default True)
         :return: The activitymoment instance that will occur next
         """
         dtstart = timezone.localtime(dtstart) or timezone.now()
         e_ext = 'e' if inc else '' # Search query for inclusion statement
 
+        activity_moments = self.activitymoment_set
+        if exclude_removed:
+            activity_moments = activity_moments.exclude(status=ActivityMoment.STATUS_REMOVED)
+
         ### Check for activitymoments stored in the database ###
         # Check activity_moment by recurrence id
-        next_activity_moment = self.activitymoment_set.\
+        next_activity_moment = activity_moments.\
             filter(**{'recurrence_id__gt'+e_ext: dtstart}).\
             filter(local_start_date__isnull=True).\
             order_by('recurrence_id').\
             first()
 
         # Check for local start date adjustments
-        local_activity_moment = self.activitymoment_set.\
+        local_activity_moment = activity_moments.\
             filter(**{'local_start_date__gt'+e_ext: dtstart}).\
             order_by('local_start_date').\
             first()
@@ -213,9 +242,14 @@ class Activity(models.Model):
             order_by('recurrence_id').\
             values_list('recurrence_id', flat=True)
 
+        cancelled_activity_moments = self._get_cancelled_activity_moments(
+            include_cancelled=False,
+            include_removed=exclude_removed,
+        ).values_list('recurrence_id', flat=True)
+
         recurrence_dtstart = dtstart
         next_recurrence = self._get_next_recurring_occurence(recurrence_dtstart, inc)
-        while next_recurrence in excluded_activity_moments:
+        while next_recurrence in excluded_activity_moments or next_recurrence in cancelled_activity_moments:
             next_recurrence = self._get_next_recurring_occurence(next_recurrence, False)
 
         if next_recurrence is not None:
@@ -458,6 +492,7 @@ class Activity(models.Model):
                 return True
         return False
 
+
 class ActivityDuplicate(ModelBase):
     """
     Copy fields defined in local_fields automatically from Activity to ActivityMoment. This way any future changes
@@ -538,6 +573,21 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     local_start_date = models.DateTimeField(blank=True, null=True)
     local_end_date = models.DateTimeField(blank=True, null=True)
 
+    # Define status
+    STATUS_NORMAL = "GO"
+    STATUS_CANCELLED = "STOP"
+    STATUS_REMOVED = "RMV"
+    status = models.CharField(
+        max_length=5,
+        choices=[
+            (STATUS_NORMAL,   "Normal proceeed"),
+            (STATUS_CANCELLED,   "Cancel, with notification"),
+            (STATUS_REMOVED,   "Remove"),
+
+        ],
+        default=STATUS_NORMAL,
+    )
+
     @property
     def start_date(self):
         return self.local_start_date or self.recurrence_id
@@ -575,6 +625,10 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
             dtstart=self.parent_activity.start_date
         )
         return recurrence_date == local_recurrence_id
+
+    @property
+    def is_cancelled(self):
+        return self.status != self.STATUS_NORMAL
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
@@ -634,9 +688,13 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         Whether this activitymoment is open for subscriptions
         :return: Boolean
         """
+        if self.is_cancelled:
+            # A closed activity is never open for subscriptions
+            return False
+
         now = timezone.now()
-        open_date_in_past = self.recurrence_id - self.parent_activity.subscriptions_open <= now
-        close_date_in_future = self.recurrence_id - self.parent_activity.subscriptions_close >= now
+        open_date_in_past = self.start_date - self.parent_activity.subscriptions_open <= now
+        close_date_in_future = self.start_date - self.parent_activity.subscriptions_close >= now
         return open_date_in_past and close_date_in_future
 
     def is_full(self):

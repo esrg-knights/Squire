@@ -9,6 +9,8 @@ from .models import Activity
 
 
 def get_json_from_activity_moment(activity_moment, user=None):
+
+
     return {
         'groupId': activity_moment.parent_activity.id,
         'title': activity_moment.title,
@@ -31,6 +33,7 @@ def get_json_from_activity_moment(activity_moment, user=None):
         'recurrence_id': activity_moment.recurrence_id.isoformat(),
         'end': activity_moment.end_date.isoformat(),
         'allDay': False,
+        'is_cancelled': activity_moment.is_cancelled,
     }
 
 @require_safe
