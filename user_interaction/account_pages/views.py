@@ -27,7 +27,7 @@ class AccountPasswordChangeView(AccountViewMixin, PasswordChangeView):
 class AccountChangeView(AccountViewMixin, UpdateView):
     template_name = 'user_interaction/account_pages/account_edit.html'
     form_class = AccountForm
-    success_url = reverse_lazy('core:user_accounts/account')
+    success_url = reverse_lazy('account:site_account')
 
     def get_object(self, queryset=None):
         return self.request.user
