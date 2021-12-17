@@ -19,5 +19,5 @@ class AccountSettingsConfig(AccountBaseConfig):
             path('', SiteAccountView.as_view(config=self), name='site_account'),
             path('change-password/', AccountPasswordChangeView.as_view(config=self), name='password_change'),
             path('change-layout/', LayoutPreferencesUpdateView.as_view(config=self), name='layout_change'),
-            path('account/edit', AccountChangeView.as_view(config=self), name='account_change'),
+            path('edit/', AccountChangeView.as_view(config=self), name='account_change'),
         ]
