@@ -5,7 +5,8 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from dynamic_preferences.users.forms import user_preference_form_builder
 
-from core.forms import PasswordChangeForm, AccountForm
+from core.forms import PasswordChangeForm
+from .forms import AccountForm
 from user_interaction.accountcollective import AccountViewMixin
 
 

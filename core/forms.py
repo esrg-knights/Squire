@@ -143,11 +143,3 @@ class MarkdownImageAdminForm(UpdatingUserFormMixin, ModelForm):
         fields = "__all__"
 
     updating_user_field_name = "uploader"
-
-class AccountForm(ModelForm):
-    class Meta:
-        model = User
-        fields = ['username', 'first_name', 'email']
-        labels = {
-            'first_name': 'Real Name',
-        }

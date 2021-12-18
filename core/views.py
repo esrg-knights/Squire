@@ -14,7 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_safe
 
-from .forms import RegisterForm, AccountForm
+from .forms import RegisterForm
 from .models import MarkdownImage
 
 from dynamic_preferences.registries import global_preferences_registry
