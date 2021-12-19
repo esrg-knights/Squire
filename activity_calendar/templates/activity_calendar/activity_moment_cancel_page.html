@@ -1,7 +1,7 @@
 {% extends 'core/base.html' %}
 
-{% load static %}
 {% load render_form %}
+{% load static %}
 
 {% block title %}
     Squire - Edit {{ activity_moment.title }} occurence
@@ -27,12 +27,6 @@
 
 {% block content %}
     <h1>{{ activity_moment.title }}</h1>
-    {% if activity_moment.is_cancelled %}
-    <div class="alert alert-danger">
-        This particular activity has been cancelled. If you want to uncancel it, please contact the board.
-    </div>
-    {% endif %}
-
     <div class="d-flex">
         <!-- Calendar Icon -->
         <div class="">
@@ -93,24 +87,19 @@
         </div>
     </div>
 
-    <h4>Edit occurence data</h4>
+    <h4>Cancel activity instance</h4>
     <p>
-        Below you can edit attributes for this particular activity occurence. Any field can be left empty. In that case
-        it will copy the attribute from the general activity instead.
+        Are you sure you want to use your god-like powers to cancel this activity
     </p>
 
     {% render_form has_submit_button=False id="submit_form" method="post" uses_file_field=True %}
 
-    <div class="btn-group w-100" role="group" aria-label="Form changing">
-        <a href="{% url "activity_calendar:activity_slots_on_day" activity_id=activity.id recurrence_id=recurrence_id %}"
+    <div class="btn-group" role="group" aria-label="Form changing">
+        <a href="{% url "activity_calendar:edit_moment" activity_id=activity.id recurrence_id=recurrence_id %}"
            class="btn btn-secondary">Cancel</a>
-        <button form="submit_form" type="submit" class="btn btn-success">
-            Save changes
+        <button form="submit_form" type="submit" class="btn btn-danger">
+            Cancel activity
         </button>
-        {% if not activity_moment.is_cancelled %}
-            <a href="{% url "activity_calendar:cancel_moment" activity_id=activity.id recurrence_id=recurrence_id %}"
-               class="btn btn-danger">Cancel activity</a>
-        {% endif %}
     </div>
 
 {% endblock %}
