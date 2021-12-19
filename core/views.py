@@ -1,6 +1,7 @@
 import os
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
@@ -8,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.http.response import Http404
 from django.shortcuts import redirect, render
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_safe
@@ -19,6 +20,8 @@ from .models import MarkdownImage
 from dynamic_preferences.registries import global_preferences_registry
 global_preferences = global_preferences_registry.manager()
 
+from django.contrib.auth import get_user_model
+User = get_user_model()
 ##################################################################################
 # Contains render-code for displaying general pages.
 # @since 15 JUL 2019
