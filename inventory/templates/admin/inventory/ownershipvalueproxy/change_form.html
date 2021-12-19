@@ -1,0 +1,16 @@
+{% extends "admin/change_form.html" %}
+
+{% block field_sets %}
+    <div class="form-row field-value aligned">
+        <label>Group:</label>
+        <label style="width: auto;">{{ original.group }}</label>
+    </div>
+    <div class="form-row field-value aligned">
+        <label class="aligned">Item:</label>
+        <label style="width: auto;">{{ original.content_object }}</label>
+    </div>
+
+    {% for fieldset in adminform %}
+        {% include "admin/includes/fieldset.html" %}
+    {% endfor %}
+{% endblock %}

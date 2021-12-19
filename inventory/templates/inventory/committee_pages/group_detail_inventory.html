@@ -51,6 +51,7 @@
                     <th scope="col-auto">Type</th>
                     <th scope="col-auto">Added on</th>
                     <th scope="col-4">Note</th>
+                    <th scope="col-4">Value</th>
                     <th scope="col-auto">Actions</th>
                 </tr>
                 </thead>
@@ -71,6 +72,13 @@
                         </td >
                         <td class="col-4">
                             {{ ownership.note }}
+                        </td>
+                        <td class="col-auto">
+                            {% if ownership.value %}
+                                &euro;{{ ownership.value }}
+                            {% else %}
+                                -
+                            {% endif %}
                         </td>
                         <td class="col-auto">
                             <div class="btn-group" role="group" aria-label="">

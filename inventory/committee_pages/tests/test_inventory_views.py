@@ -79,7 +79,7 @@ class TestAssociationGroupItemLinkUpdateView(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(AssociationGroupItemLinkUpdateView, UpdateView))
         self.assertEqual(AssociationGroupItemLinkUpdateView.model, Ownership)
         self.assertEqual(AssociationGroupItemLinkUpdateView.template_name, "inventory/committee_pages/group_detail_inventory_link_update.html")
-        self.assertEqual(AssociationGroupItemLinkUpdateView.fields, ['note', 'added_since'])
+        self.assertEqual(AssociationGroupItemLinkUpdateView.fields, ['note', 'added_since', 'value'])
 
     def test_successful_get(self):
         response = self.client.get(self.get_base_url(), data={})

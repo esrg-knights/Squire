@@ -39,7 +39,7 @@ class AssociationGroupInventoryView(AssociationGroupMixin, SearchFormMixin, List
 class AssociationGroupItemLinkUpdateView(AssociationGroupMixin, OwnershipMixin, UpdateView):
     template_name = "inventory/committee_pages/group_detail_inventory_link_update.html"
     model = Ownership
-    fields = ['note', 'added_since']
+    fields = ['note', 'added_since', 'value']
     allow_access_through_group = True
 
     def get_object(self, queryset=None):
