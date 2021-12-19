@@ -3,17 +3,18 @@ import datetime
 from django.test import TestCase, Client
 from django.contrib import messages
 from django.contrib.auth.models import Permission
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.test.utils import override_settings
 from django.utils import timezone, dateparse
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
-from django.views.generic import ListView
+from django.views.generic import ListView,FormView
 
 from unittest.mock import patch
 
 from activity_calendar.models import *
 from activity_calendar.views import CreateSlotView, ActivityMomentWithSlotsView, ActivitySimpleMomentView,\
-    EditActivityMomentView, ActivityOverview, ActivityMixin, ActivityMomentCancelledView
+    EditActivityMomentView, ActivityOverview, ActivityMixin, ActivityMomentCancelledView, CancelActivityMomentView
 from activity_calendar.forms import *
 
 from core.tests.util import suppress_warnings
@@ -778,7 +779,7 @@ class CreateSlotViewTest(TestActivityViewMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class EditActivityMomentDataView(TestActivityViewMixin, TestCase):
+class EditActivityMomentDataViewTest(TestActivityViewMixin, TestCase):
     default_url_name = "edit_moment"
     default_activity_id = 2
     default_iso_dt = '2020-08-26T14:00:00+00:00'
@@ -822,3 +823,67 @@ class EditActivityMomentDataView(TestActivityViewMixin, TestCase):
 
         # Assert that the instance is saved
         self.assertIsNotNone(ActivityMoment.objects.filter(local_title=new_title,).first())
+
+
+class CancelActivityMomentViewTest(TestActivityViewMixin, TestCase):
+    default_url_name = "cancel_moment"
+    default_activity_id = 2
+    default_iso_dt = '2020-08-26T14:00:00+00:00'
+
+    def test_view_class(self):
+        self.assertTrue(issubclass(CancelActivityMomentView, LoginRequiredMixin))
+        self.assertTrue(issubclass(CancelActivityMomentView, UserPassesTestMixin))
+        self.assertTrue(issubclass(CancelActivityMomentView, ActivityMixin))
+        self.assertTrue(issubclass(CancelActivityMomentView, FormView))
+        self.assertEqual(CancelActivityMomentView.template_name, "activity_calendar/activity_moment_cancel_page.html")
+        self.assertEqual(CancelActivityMomentView.form_class, CancelActivityForm)
+
+    def test_normal_get_page(self):
+        user = User.objects.get(is_superuser=True)
+        self.client.force_login(user)
+
+        response = self.build_get_response()
+        self.assertEqual(response.status_code, 200)
+
+        # Test standard context attributes
+        self.assertIn('activity', response.context)
+        self.assertIn('form', response.context)
+        self.assertIn('recurrence_id', response.context)
+        self.assertIn('activity_moment', response.context)
+
+        self.assertIsNotNone(response.context['form'])
+        self.assertIsInstance(response.context['form'], CancelActivityForm)
+
+    @suppress_warnings
+    def test_already_cancelled_get_page(self):
+        user = User.objects.get(is_superuser=True)
+        self.client.force_login(user)
+
+        response = self.build_get_response(iso_dt="2021-09-15T14:00:00+00:00")
+        self.assertEqual(response.status_code, 403)
+
+    def test_successful_post(self):
+        """ Tests that a successful post is processed correctly """
+        self.client.force_login(User.objects.get(is_superuser=True))
+        local_datetime = datetime.datetime.fromisoformat(self.default_iso_dt)
+
+        response = self.build_post_response({'status': ActivityMoment.STATUS_CANCELLED,}, follow=True)
+
+        # Assert redirect after success
+        self.assertRedirects(response, reverse('activity_calendar:activity_slots_on_day', kwargs={
+            'activity_id': self.default_activity_id,
+            'recurrence_id': datetime.datetime.fromisoformat(self.default_iso_dt),
+        }))
+
+        msg = _("{activity_name} of {date} has been cancelled").format(
+            activity_name=self.activity.title,
+            date = local_datetime.strftime("%A, %d %b %Y"),
+        )
+        self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
+
+        # Assert that the instance is saved
+        activitymoment = ActivityMoment.objects.get(
+            parent_activity_id=2,
+            recurrence_id=local_datetime
+        )
+        self.assertEqual(activitymoment.status, ActivityMoment.STATUS_CANCELLED)

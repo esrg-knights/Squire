@@ -489,5 +489,36 @@ class ActivityMomentFormTestCase(FormValidityMixin, TestCase):
         self.assertIsInstance(self.form, ModelForm)
 
 
+class CancelActivityFormTestCase(FormValidityMixin, TestCase):
+    form_class = CancelActivityForm
+    fixtures = ['test_users.json', 'test_activity_slots.json']
+
+    def setUp(self):
+        self.activity_moment = ActivityMoment.objects.get(id=1)
+        self.form = CancelActivityForm(instance=self.activity_moment, data={})
+
+    def test_form(self):
+        self.assertTrue(issubclass(CancelActivityForm, ModelForm))
+        self.assertEqual(CancelActivityForm.Meta.fields, ['status'])
+        self.assertEqual(CancelActivityForm.Meta.model, ActivityMoment)
+
+    def test_status_invalid(self):
+        self.assertFormHasError({'status': ActivityMoment.STATUS_NORMAL}, code='not-cancelled')
+
+    def test_status_cancelled(self):
+        form = self.assertFormValid({
+            'status': ActivityMoment.STATUS_CANCELLED,
+        }, instance=self.activity_moment)
+        form.save()
+        self.activity_moment.refresh_from_db()
+        self.assertEqual(self.activity_moment.status, ActivityMoment.STATUS_CANCELLED)
+
+    def test_status_removed(self):
+        form = self.assertFormValid({
+            'status': ActivityMoment.STATUS_REMOVED,
+        }, instance=self.activity_moment)
+        form.save()
+        self.activity_moment.refresh_from_db()
+        self.assertEqual(self.activity_moment.status, ActivityMoment.STATUS_REMOVED)
 
 

@@ -410,7 +410,7 @@ class CancelActivityForm(ModelForm):
         valid_options = [ActivityMoment.STATUS_CANCELLED, ActivityMoment.STATUS_REMOVED]
 
         if not self.cleaned_data['status'] in valid_options:
-            raise ValidationError("You must mark any of the cancellation statuses to cancel this.")
+            raise ValidationError("You must mark any of the cancellation statuses to cancel this.", code='not-cancelled')
 
         return self.cleaned_data['status']
 
