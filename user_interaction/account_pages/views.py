@@ -1,12 +1,12 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
-from django.views.generic import TemplateView, FormView
+from django.views.generic import TemplateView, FormView, UpdateView
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from dynamic_preferences.users.forms import user_preference_form_builder
 
 from core.forms import PasswordChangeForm
+from .forms import AccountForm
 from user_interaction.accountcollective import AccountViewMixin
 
 
@@ -23,6 +23,20 @@ class AccountPasswordChangeView(AccountViewMixin, PasswordChangeView):
         result = super(AccountPasswordChangeView, self).form_valid(form)
         messages.success(self.request, _("Password succesfully changed"))
         return result
+
+
+class AccountChangeView(AccountViewMixin, UpdateView):
+    template_name = 'user_interaction/account_pages/account_edit.html'
+    form_class = AccountForm
+    success_url = reverse_lazy('account:site_account')
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def form_valid(self, form):
+        message = _("Your account information has been saved successfully!")
+        messages.success(self.request, message)
+        return super().form_valid(form)
 
 
 class LayoutPreferencesUpdateView(AccountViewMixin, FormView):

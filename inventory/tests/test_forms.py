@@ -58,7 +58,7 @@ class TestSimpleModelForms(TestCase):
 
     def test_OwnershipCommitteeForm(self):
         self.assertTrue(issubclass(OwnershipCommitteeForm, forms.ModelForm))
-        self.assertEqual(OwnershipCommitteeForm.Meta.fields, ['note', 'added_since'])
+        self.assertEqual(OwnershipCommitteeForm.Meta.fields, ['note', 'added_since', 'value'])
 
 
 class TestAddOwnershipCommitteeLink(FormValidityMixin, TestCase):
@@ -75,6 +75,7 @@ class TestAddOwnershipCommitteeLink(FormValidityMixin, TestCase):
         self.assertHasField('committee')
         self.assertHasField('note')
         self.assertHasField('is_active')
+        self.assertHasField('value')
 
     def test_committee_queryset_one_group(self):
         """ Tests that a user who belongs only to one group has its choice filled in already"""

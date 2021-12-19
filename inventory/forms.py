@@ -62,7 +62,7 @@ class OwnershipCommitteeForm(forms.ModelForm):
     """ Form used by groups/committees to adjust ownership data """
     class Meta:
         model = Ownership
-        fields = ['note', 'added_since']
+        fields = ['note', 'added_since', 'value']
 
 
 class AddOwnershipLinkMixin:
@@ -78,7 +78,7 @@ class AddOwnershipCommitteeLinkForm(AddOwnershipLinkMixin, forms.ModelForm):
 
     class Meta:
         model = Ownership
-        fields = ['committee', 'note', 'is_active']
+        fields = ['committee', 'note', 'value', 'is_active']
 
     def __init__(self, *args, allow_all_groups=False, **kwargs):
         super(AddOwnershipCommitteeLinkForm, self).__init__(*args, **kwargs)
