@@ -25,7 +25,7 @@
             Real Name: <i>{{ user.first_name|default:"No real name provided" }}</i><br>
         {% endif %}
         Email: <i>{{ user.email|default:"No email provided" }}</i><br>
-        <small class="text-muted">This information can currently not be edited on your end. Please notify the <a href="mailto:uups@kotkt.nl">UUPS</a> if something needs to be changed.</small>
+        <small class="text-muted">To change your account information, click <a href="{% url 'account:account_change' %}">here</a></small>
     </p>
     <p>
         You can change your password <a href="{% url 'account:password_change' %}">here</a>
