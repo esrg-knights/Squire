@@ -199,6 +199,32 @@ class Room(models.Model):
 
 ##################################################################################
 
+
+class MemberYear(models.Model):
+    """ Defines the college years periods """
+    name = models.CharField(max_length=16)
+    members = models.ManyToManyField(Member, through='Membership', through_fields=['year', 'member'])
+    is_active = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+
+class Membership(models.Model):
+    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    year = models.ForeignKey(MemberYear, on_delete=models.CASCADE)
+    has_paid = models.BooleanField(default=False)
+    payment_date = models.DateField(null=True, blank=True)
+    created_by = models.ForeignKey(Member, on_delete=models.SET_NULL, null=True, related_name='created_memberships')
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [['member', 'year']]
+
+    def __str__(self):
+        return f'{self.member.get_full_name()} for {self.year}'
+
+
 # The MemberLog Model represents a log entry that is created whenever membership data is updated
 class MemberLog(models.Model):
 

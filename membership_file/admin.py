@@ -8,7 +8,7 @@ from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
 
 from .forms import AdminMemberForm
-from .models import Member, MemberLog, MemberLogField, Room
+from .models import Member, MemberLog, MemberLogField, Room, MemberYear, Membership
 from core.admin import EmptyFieldListFilter
 from membership_file.export import MemberResource
 from utils.forms import RequestUserToFormModelAdminMixin
@@ -23,6 +23,16 @@ def reset_has_paid_membership_fee(modeladmin, request, queryset):
             member.last_updated_by = request.user
             member.save()
 reset_has_paid_membership_fee.short_description = 'Reset membership fee paid status'
+
+
+def mark_as_current_member(modeladmin, request, queryset):
+    for member in queryset:
+        if member.has_paid_membership_fee:
+            Membership.objects.get_or_create(
+                member=member,
+                year=None,
+            )
+
 
 class HideRelatedNameAdmin(admin.ModelAdmin):
     class Media:
@@ -196,3 +206,6 @@ class RoomAdmin(admin.ModelAdmin):
 admin.site.register(Member, MemberWithLog)
 admin.site.register(MemberLog, MemberLogReadOnly)
 admin.site.register(Room, RoomAdmin)
+
+admin.site.register(MemberYear)
+admin.site.register(Membership)
