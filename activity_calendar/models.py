@@ -32,6 +32,17 @@ __all__ = ['Activity', 'ActivityMoment', 'ActivitySlot', 'Participant']
 def now_rounded():
     return timezone.now().replace(minute=0, second=0)
 
+class CoreActivityGrouping(models.Model):
+    """
+        A method to group certain core activities together. E.g. all boardgame evenings,
+        all roleplay-related actitvities, LARP-stuff, etc.
+    """
+    identifier = models.CharField(max_length=127, unique=True)
+
+    def __str__(self):
+        return self.identifier + " (activity grouping)"
+
+
 # The Activity model represents an activity in the calendar
 class Activity(models.Model):
     class Meta:
@@ -53,6 +64,7 @@ class Activity(models.Model):
     # The User that created the activity
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
     organisers = models.ManyToManyField('committees.AssociationGroup', through='OrganiserLink')
+    core_grouping = models.ForeignKey(CoreActivityGrouping, on_delete=models.SET_NULL, blank=True, null=True)
 
     # General information
     title = models.CharField(max_length=255)
@@ -197,12 +209,13 @@ class Activity(models.Model):
         # It shoudl include neither, so return nothing (can occur when chaining methods)
         return self.activitymoment_set.none()
 
-    def get_next_activitymoment(self, dtstart=None, inc=False, exclude_removed=True):
+    def get_next_activitymoment(self, dtstart=None, inc=False, exclude_removed=True, exclude_cancelled=False):
         """
         Returns the next activitymoment that will occur (if any)
         :param dtstart: The start datetime instance (if any) from which an occurence needs to be retrieved
         :param inc: Whether the startdate should be included
         :param exclude_removed: Whether activitymoments with status removed should not be included (default True)
+        :param exclude_cancelled: Whether activitymoments with status cancelled should not be included (default False)
         :return: The activitymoment instance that will occur next
         """
         dtstart = timezone.localtime(dtstart) or timezone.now()
@@ -243,7 +256,7 @@ class Activity(models.Model):
             values_list('recurrence_id', flat=True)
 
         cancelled_activity_moments = self._get_cancelled_activity_moments(
-            include_cancelled=False,
+            include_cancelled=exclude_cancelled,
             include_removed=exclude_removed,
         ).values_list('recurrence_id', flat=True)
 
