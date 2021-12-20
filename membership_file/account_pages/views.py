@@ -34,6 +34,8 @@ class MembershipDataView(AccountViewMixin, PermissionRequiredMixin, TemplateView
 
 
         context['memberyears'] = self.request.member.memberyear_set.order_by('name')
+        # Due to overlapping years at the beginning of the year we need to take multiple instances into account
+        context['activeyear'] = Membership.objects.filter(member=self.request.member, year__is_active=True)
         return context
 
 

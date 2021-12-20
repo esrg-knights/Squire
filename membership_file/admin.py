@@ -30,7 +30,7 @@ def mark_as_current_member(modeladmin, request, queryset):
         if member.has_paid_membership_fee:
             Membership.objects.get_or_create(
                 member=member,
-                year=None,
+                year=MemberYear.objects.filter(is_active=True).last(),
             )
 
 
@@ -42,6 +42,7 @@ class HideRelatedNameAdmin(admin.ModelAdmin):
         css = {
             'all': ('css/hide_related_model_name.css',),
         }
+
 
 class DisableModifications():
     # Disable creation
@@ -56,9 +57,17 @@ class DisableModifications():
     def has_delete_permission(self, request, obj=None):
         return False
 
+
 class RoomInline(admin.TabularInline):
     model = Room.members_with_access.through
     extra = 0
+
+
+class MemberYearInline(admin.TabularInline):
+    model = Membership
+    fk_name = 'member'
+    extra = 0
+    fields = ['year', 'has_paid', 'payment_date']
 
 
 class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
@@ -75,6 +84,8 @@ class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
         return format_html("<a href='/admin/membership_file/memberlog/{0}/change/'>View Details</a>", obj.id)
     get_url.short_description = 'Details'
 
+
+@admin.register(Member)
 class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRelatedNameAdmin):
     ##############################
     #  Export functionality
@@ -135,7 +146,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
             ['notes']}),
     ]
 
-    inlines = [MemberLogReadOnlyInline]
+    inlines = [MemberLogReadOnlyInline, MemberYearInline]
 
     # Show at most 150 members per page (opposed to 100).
     # Show a "show all" button if <999 members are selected (opposed to 200)
@@ -174,6 +185,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
         # The member was marked for deletion, and is being deleted by another user; enable deletion
         return True
 
+
 # Prevents MemberLogField creation, edting, or deletion in the Django Admin Panel
 class MemberLogFieldReadOnlyInline(DisableModifications, admin.TabularInline):
     model = MemberLogField
@@ -182,7 +194,9 @@ class MemberLogFieldReadOnlyInline(DisableModifications, admin.TabularInline):
     # Whether the object can be deleted inline
     can_delete = False
 
+
 # Prevents MemberLog creation, edting, or deletion in the Django Admin Panel
+@admin.register(MemberLog)
 class MemberLogReadOnly(DisableModifications, HideRelatedNameAdmin):
     # Show the date at which the information was updated as well
     readonly_fields = ['date']
@@ -192,6 +206,8 @@ class MemberLogReadOnly(DisableModifications, HideRelatedNameAdmin):
 
     inlines = [MemberLogFieldReadOnlyInline]
 
+
+@admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
     model = Room
 
@@ -202,10 +218,19 @@ class RoomAdmin(admin.ModelAdmin):
     ordering = ("access",)
     filter_horizontal = ('members_with_access',)
 
-# Register the special models, making them show up in the Django admin panel
-admin.site.register(Member, MemberWithLog)
-admin.site.register(MemberLog, MemberLogReadOnly)
-admin.site.register(Room, RoomAdmin)
 
-admin.site.register(MemberYear)
-admin.site.register(Membership)
+@admin.register(MemberYear)
+class MemberYearAdmin(admin.ModelAdmin):
+    list_display = ['name', 'is_active', 'member_count']
+    list_filter = ['is_active',]
+
+    def member_count(self, obj):
+        return obj.members.count()
+
+
+@admin.register(Membership)
+class MembershipAdmin(admin.ModelAdmin):
+    list_display = ['__str__', 'has_paid', 'payment_date']
+    list_filter = ['year', 'has_paid']
+
+

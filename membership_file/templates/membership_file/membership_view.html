@@ -13,19 +13,21 @@
 {% endblock og-description %}
 
 {% block content %}
-    <div id="{{ sign_up_message.msg_id }}" class="w-100 alert alert-{{ sign_up_message.msg_type }}">
-        <div class="row">
-            <div class="col"
-                 style="display: flex; justify-content: center;align-items: center;"
-            >{{ sign_up_message.msg_text }}</div>
-            {% if sign_up_message.btn_text %}
-                <a class="btn btn-{{ sign_up_message.msg_type }} mr-2"
-                   href="{{ sign_up_message.btn_url }}">
-                    {{ sign_up_message.btn_text }}
-                </a>
-            {% endif %}
+    {% if sign_up_message %}
+        <div id="{{ sign_up_message.msg_id }}" class="w-100 alert alert-{{ sign_up_message.msg_type }}">
+            <div class="row">
+                <div class="col"
+                     style="display: flex; justify-content: center;align-items: center;"
+                >{{ sign_up_message.msg_text }}</div>
+                {% if sign_up_message.btn_text %}
+                    <a class="btn btn-{{ sign_up_message.msg_type }} mr-2"
+                       href="{{ sign_up_message.btn_url }}">
+                        {{ sign_up_message.btn_text }}
+                    </a>
+                {% endif %}
+            </div>
         </div>
-    </div>
+    {% endif %}
     <h1>Membership Information</h1>
     {% if member is None %}
         <p>
@@ -69,7 +71,18 @@
                 {% if member.is_honorary_member %}
                     You are a honorary member.
                 {% else %}
-                Your membership fee for this year has {% if not member.has_paid_membership_fee %}<b>not</b> yet{% endif %} been paid.
+                    {% for active_year_link in activeyear %}
+                        {% if active_year_link.has_paid %}
+                            <div>
+                                Membership for {{ active_year_link.year }} has been paid
+                            </div>
+                        {% else %}
+                            <div class="text-danger">
+                                Membership for {{ active_year_link.year }} has not yet been paid*
+                                <br><small>*Or not yet been processed</small>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
                 {% endif %}
             </p>
 

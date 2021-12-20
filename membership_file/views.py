@@ -1,3 +1,5 @@
+from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.views.generic import TemplateView, FormView
 from django.urls import reverse_lazy
 from dynamic_preferences.registries import global_preferences_registry
@@ -24,7 +26,19 @@ class NotAMemberView(TemplateView):
     template_name = 'membership_file/no_member.html'
 
 
-class ExtendMembershipView(FormView):
+class UpdateMemberYearMixin:
+    year = None
+
+    def setup(self, request, *args, **kwargs):
+        self.year = global_preferences['membership__signup_year']
+        if self.year is None:
+            raise PermissionDenied("There is no year active to extend")
+
+        super(UpdateMemberYearMixin, self).setup(request, *args, **kwargs)
+
+
+
+class ExtendMembershipView(UpdateMemberYearMixin, FormView):
     template_name = "membership_file/extend_membership.html"
     form_class = ContinueMembershipForm
     success_url = reverse_lazy('membership_file/continue_success')
@@ -33,14 +47,16 @@ class ExtendMembershipView(FormView):
         kwargs = super(ExtendMembershipView, self).get_form_kwargs()
         kwargs.update({
             'member': self.request.member,
-            'year': global_preferences['membership__signup_year']
+            'year': self.year
         })
         return kwargs
 
     def form_valid(self, form):
         form.save()
+        msg = f"Succesfully extended Knights membership into {self.year}"
+        messages.success(self.request, msg)
         return super(ExtendMembershipView, self).form_valid(form)
 
 
-class ExtendMembershipSuccessView(TemplateView):
+class ExtendMembershipSuccessView(UpdateMemberYearMixin, TemplateView):
     template_name = "membership_file/extend_membership_successpage.html"
