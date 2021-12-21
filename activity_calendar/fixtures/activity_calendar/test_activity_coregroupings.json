@@ -1,0 +1,102 @@
+[
+    {
+        "model": "activity_calendar.coreactivitygrouping",
+        "pk": 1,
+        "fields": {
+            "identifier": "boardgames"
+        }
+    },
+    {
+        "model": "activity_calendar.coreactivitygrouping",
+        "pk": 2,
+        "fields": {
+            "identifier": "roleplay"
+        }
+    },
+    {
+        "model": "activity_calendar.activity",
+        "pk": 1,
+        "fields": {
+            "title": "Boardgame Evening",
+            "description": "Every tuesday",
+            "location": "At home",
+            "created_date": "2021-01-01T12:00:00Z",
+            "last_updated_date": "2021-01-01T12:00:00Z",
+            "published_date": "2021-01-01T12:00:00Z",
+            "start_date": "2021-12-21T19:00:00Z",
+            "end_date": "2021-12-21T22:30:00Z",
+            "recurrences": "RRULE:FREQ=WEEKLY;BYDAY=TU",
+            "core_grouping": 1
+        }
+    },
+    {
+        "model": "activity_calendar.activity",
+        "pk": 2,
+        "fields": {
+            "title": "Tabletop Lunch",
+            "description": "Every wednesday afternoon",
+            "location": "At home",
+            "created_date": "2021-01-01T12:00:00Z",
+            "last_updated_date": "2021-01-01T12:00:00Z",
+            "published_date": "2021-01-01T12:00:00Z",
+            "start_date": "2021-12-22T12:00:00Z",
+            "end_date": "2021-12-22T15:30:00Z",
+            "recurrences": "RRULE:FREQ=WEEKLY;BYDAY=WE",
+            "core_grouping": 1
+        }
+    },
+    {
+        "model": "activity_calendar.activity",
+        "pk": 3,
+        "fields": {
+            "title": "Open Roleplay Evening",
+            "description": "Every first wednesday of the month",
+            "location": "At home",
+            "created_date": "2021-01-01T12:00:00Z",
+            "last_updated_date": "2021-01-01T12:00:00Z",
+            "published_date": "2021-01-01T12:00:00Z",
+            "start_date": "2021-12-22T19:00:00Z",
+            "end_date": "2021-12-22T23:30:00Z",
+            "recurrences": "RRULE:FREQ=WEEKLY;BYDAY=WE;UNTIL=20220101T000000Z",
+            "core_grouping": 2
+        }
+    },
+    {
+        "model": "activity_calendar.activity",
+        "pk": 4,
+        "fields": {
+            "title": "Swordfighting Training",
+            "description": "Every other thursday",
+            "location": "At home",
+            "created_date": "2021-01-01T12:00:00Z",
+            "last_updated_date": "2021-01-01T12:00:00Z",
+            "published_date": "2021-01-01T12:00:00Z",
+            "start_date": "2021-12-23T19:00:00Z",
+            "end_date": "2021-12-23T23:30:00Z",
+            "recurrences": "RRULE:FREQ=WEEKLY;BYDAY=TH;INTERVAL=2",
+            "core_grouping": null
+        }
+    },
+    {
+        "model": "activity_calendar.activitymoment",
+        "pk": 1,
+        "fields": {
+            "parent_activity": 1,
+            "recurrence_id": "2021-12-28T19:00:00Z",
+            "created_date": "2021-01-01T12:00:00Z",
+            "last_updated": "2021-01-01T12:00:00Z",
+            "status": "STOP"
+        }
+    },
+    {
+        "model": "activity_calendar.activitymoment",
+        "pk": 2,
+        "fields": {
+            "parent_activity": 1,
+            "recurrence_id": "2022-01-04T19:00:00Z",
+            "created_date": "2021-01-01T12:00:00Z",
+            "last_updated": "2021-01-01T12:00:00Z",
+            "status": "RMV"
+        }
+    }
+]

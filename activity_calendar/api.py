@@ -79,28 +79,35 @@ def fullcalendar_feed(request):
 def upcoming_core_feed(request):
     """
         A collection of the first occurrence of all core activities. E.g. the first
-        upcoming boardgame evening, the first upcoming swordfighting training, etc.
+        upcoming boardgame-related activity, the first upcoming swordfighting training, etc.
         Skips cancelled and removed activities.
         Used on kotkt.nl
     """
     grouping_identifiers = request.GET.get('groups', "").split(',')
 
     now = timezone.now()
+
+    # Add placeholders to ensure the order of the groupings does not change
     earliest_moments = {
         x:None for x in grouping_identifiers
     }
 
+    # Iterate over all published activities that are part of the core groupings in the GET request
     for activity in Activity.objects.select_related('core_grouping').filter(published_date__lte=now, core_grouping__identifier__in=grouping_identifiers):
+        # Fetch the next activitymoment (if any) for this activity that is not cancelled
         activity_moment = activity.get_next_activitymoment(dtstart=now, exclude_cancelled=True)
         earliest_moment = earliest_moments.get(activity.core_grouping.identifier, None)
+        # Does this activity take place earlier than the current earliest activitymoment for this grouping?
         if earliest_moment is None \
                 or earliest_moment.start_date > activity_moment.start_date:
             earliest_moments[activity.core_grouping.identifier] = activity_moment
 
+    # Fetch data for the selected activitymoments
     activity_moment_jsons = []
     for activity_moment in earliest_moments.values():
         if activity_moment is None:
             continue
+
         activity_moment_jsons.append({
             'title': activity_moment.title,
             'description': activity_moment.description.as_rendered(),

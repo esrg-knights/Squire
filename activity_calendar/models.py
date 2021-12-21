@@ -225,6 +225,9 @@ class Activity(models.Model):
         if exclude_removed:
             activity_moments = activity_moments.exclude(status=ActivityMoment.STATUS_REMOVED)
 
+        if exclude_cancelled:
+            activity_moments = activity_moments.exclude(status=ActivityMoment.STATUS_CANCELLED)
+
         ### Check for activitymoments stored in the database ###
         # Check activity_moment by recurrence id
         next_activity_moment = activity_moments.\
