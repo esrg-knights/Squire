@@ -36,8 +36,12 @@ class MarkdownObjectTest(TestCase):
 
     def test_html_escaped(self):
         """ Tests if HTML that is not created by markdown is escaped """
-        unsafe_text = "<script>alert('hello!')</script>"
-        escaped_text = "&lt;script&gt;alert(&lsquo;hello!&rsquo;)&lt;/script&gt;"
+        # Martor removes HTML tags using Django's (unsafe) strip_tags(..) prior to applying Markdown.
+        #   since martor 1.6.8.
+        #   We're purposely adding specific tokens and check if those're ACTUALLY escaped
+        #   to handle cases where strip_tags(..) would actually yield unsafe HTML.
+        unsafe_text = "<alert('hello!')<"
+        escaped_text = "&lt;alert(&lsquo;hello!&rsquo;)&lt;"
 
         md_object = MarkdownObject(unsafe_text)
         self.assertEqual(md_object.as_raw(), unsafe_text)
