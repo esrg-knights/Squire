@@ -125,7 +125,11 @@ class Member(models.Model):
     notes = models.TextField(blank=True, help_text="Notes are invisible to members.")
 
     def is_considered_member(self):
-        return not self.is_deregistered
+        # Do not block membership if no year is active
+        if MemberYear.objects.filter(is_active=True):
+            return not self.is_deregistered and self.memberyear_set.filter(is_active=True).exists()
+        else:
+            return not self.is_deregistered
 
     ##################################
     # STRING REPRESENTATION METHODS

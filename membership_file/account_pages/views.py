@@ -32,7 +32,6 @@ class MembershipDataView(AccountViewMixin, PermissionRequiredMixin, TemplateView
                 'btn_url': reverse_lazy('membership_file/continue_membership'),
             }
 
-
         context['memberyears'] = self.request.member.memberyear_set.order_by('name')
         # Due to overlapping years at the beginning of the year we need to take multiple instances into account
         context['activeyear'] = Membership.objects.filter(member=self.request.member, year__is_active=True)
@@ -46,6 +45,7 @@ class MembershipChangeView(MembershipRequiredMixin, AccountViewMixin, Permission
     success_url = reverse_lazy('account:membership:view')
     permission_required = ('membership_file.can_view_membership_information_self', 'membership_file.can_change_membership_information_self')
     raise_exception = True
+    requires_active_membership = False
 
     def get_object(self, queryset=None):
         """

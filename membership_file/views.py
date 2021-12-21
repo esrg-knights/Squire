@@ -7,6 +7,8 @@ from dynamic_preferences.registries import global_preferences_registry
 from .util import MembershipRequiredMixin
 
 # Enable the auto-creation of logs
+from .auto_model_update import *
+from .export import *
 from membership_file.forms import ContinueMembershipForm
 
 global_preferences = global_preferences_registry.manager()

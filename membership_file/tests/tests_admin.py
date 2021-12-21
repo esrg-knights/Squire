@@ -123,6 +123,10 @@ class MemberLogTest(TestCase):
             "memberlog_set-INITIAL_FORMS": 0,
             "memberlog_set-MIN_NUM_FORMS": 0,
             "memberlog_set-MAX_NUM_FORMS": 0,
+            "membership_set-TOTAL_FORMS": 0,
+            "membership_set-INITIAL_FORMS": 0,
+            "membership_set-MIN_NUM_FORMS": 0,
+            "membership_set-MAX_NUM_FORMS": 0,
         }
 
     def setUp(self):
@@ -450,6 +454,10 @@ class DeleteMemberTest(TestCase):
             "memberlog_set-INITIAL_FORMS": 0,
             "memberlog_set-MIN_NUM_FORMS": 0,
             "memberlog_set-MAX_NUM_FORMS": 0,
+            "membership_set-TOTAL_FORMS": 0,
+            "membership_set-INITIAL_FORMS": 0,
+            "membership_set-MIN_NUM_FORMS": 0,
+            "membership_set-MAX_NUM_FORMS": 0,
             **self.memberData,
         }
 
