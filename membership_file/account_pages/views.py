@@ -24,14 +24,13 @@ class MembershipDataView(AccountViewMixin, PermissionRequiredMixin, TemplateView
     def get_context_data(self, **kwargs):
         context = super(MembershipDataView, self).get_context_data(**kwargs)
         year = global_preferences['membership__signup_year']
-        if not Membership.objects.filter(member=self.request.member, year=year).exists():
+        if year is not None and not Membership.objects.filter(member=self.request.member, year=year).exists():
             context['sign_up_message'] = {
                 'msg_text': f"A new adventure awaits! Continue your membership into {year} now!",
                 'msg_type': "info",
                 'btn_text': "Continue Questing!",
                 'btn_url': reverse_lazy('membership_file/continue_membership'),
             }
-
         context['memberyears'] = self.request.member.memberyear_set.order_by('name')
         # Due to overlapping years at the beginning of the year we need to take multiple instances into account
         context['activeyear'] = Membership.objects.filter(member=self.request.member, year__is_active=True)

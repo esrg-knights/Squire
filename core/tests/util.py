@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 from dynamic_preferences.registries import global_preferences_registry
+from dynamic_preferences.serializers import UNSET
 
 from core.util import get_permission_objects_from_string
 
@@ -134,3 +135,31 @@ def suppress_warnings(function=None, logger_name='django.request'):
     if function:
         return decorator(function)
     return decorator
+
+
+class DynamicRegistryUsageMixin:
+    """
+    A class that resets dynamic registry to the default values after each test uses.
+    This is needed because django does not clear the cache between testcases and since dynamicregistry uses
+    django caching incorrect values (such as model instances) can linger in the cache while not being present
+    on the database.
+    """
+    @classmethod
+    def _rollback_atomics(cls, atomics):
+        """ dynamic preference manager uses chaching. So just reset everything to make sure no wrong caches remain """
+        dynamic_preference_manager = global_preferences_registry.manager()
+        # Yes, this is an ugly hack. So be it.
+        for preference in global_preferences_registry.preferences():
+            default = preference.default
+            # Complex preferences such as those working with permissions can define UNSET
+            # this can crash it, so let's hack it.
+            if default == UNSET:
+                default = None
+            dynamic_preference_manager.update_db_pref(
+                section=str(preference.section),
+                name=preference.name,
+                value=default
+            )
+
+        # Don't forget to do the normal database rollback
+        super(DynamicRegistryUsageMixin, cls)._rollback_atomics(atomics)
