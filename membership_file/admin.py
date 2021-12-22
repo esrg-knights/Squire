@@ -1,7 +1,7 @@
 
 from datetime import datetime
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ExportActionMixin
@@ -12,26 +12,6 @@ from .models import Member, MemberLog, MemberLogField, Room, MemberYear, Members
 from core.admin import EmptyFieldListFilter
 from membership_file.export import MemberResource
 from utils.forms import RequestUserToFormModelAdminMixin
-
-
-def reset_has_paid_membership_fee(modeladmin, request, queryset):
-    # Iterate over the queryset instead of updating it as to
-    #   make sure this action is logged
-    for member in queryset:
-        if member.has_paid_membership_fee:
-            member.has_paid_membership_fee = False
-            member.last_updated_by = request.user
-            member.save()
-reset_has_paid_membership_fee.short_description = 'Reset membership fee paid status'
-
-
-def mark_as_current_member(modeladmin, request, queryset):
-    for member in queryset:
-        if member.has_paid_membership_fee:
-            Membership.objects.get_or_create(
-                member=member,
-                year=MemberYear.objects.filter(is_active=True).first(),
-            )
 
 
 class HideRelatedNameAdmin(admin.ModelAdmin):
@@ -159,7 +139,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
 
     # Allow bulk updating has_paid_membership_fee = False
     # TODO: This isn't a clean solution but it'll work for now
-    actions = [reset_has_paid_membership_fee, ExportActionMixin.export_admin_action]
+    actions = ['mark_as_current_member', ExportActionMixin.export_admin_action]
 
     # Disable bulk delete
     def get_actions(self, request):
@@ -167,6 +147,38 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+
+    def mark_as_current_member(self, request, queryset):
+        try:
+            year = MemberYear.objects.get(is_active=True)
+        except MemberYear.MultipleObjectsReturned:
+            self.message_user(
+                request,
+                "There are multiple years active,  only  one should be active",
+                level=messages.ERROR
+            )
+            return
+        except MemberYear.DoesNotExist:
+            self.message_user(
+                request,
+                "There is currently no year active, make sure that one is active",
+                level=messages.ERROR
+            )
+            return
+        created_count = 0
+        for member in queryset:
+            member, created = Membership.objects.get_or_create(
+                member=member,
+                year=year,
+            )
+            created_count += int(created)
+
+        self.message_user(
+            request,
+            f"Succesfully created {created_count} new members. {queryset.count() - created_count} instances were already a member",
+            level=messages.SUCCESS
+        )
+    mark_as_current_member.short_description = 'Assign as member of the currently active year'
 
     # Disable deletion if the member was not marked for deletion
     # Disable deletion for the user that marked the member for deletion

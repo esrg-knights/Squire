@@ -8,7 +8,7 @@ membership_section = Section('membership')
 
 
 @global_preferences_registry.register
-class PromteSignUpYear(ModelChoicePreference):
+class PromoteSignUpYear(ModelChoicePreference):
     section = membership_section
     name = 'signup_year'
     verbose_name = 'Year for signup promotion'

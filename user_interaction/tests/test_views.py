@@ -39,7 +39,7 @@ class TestHomePageView(ViewValidityMixin, DynamicRegistryUsageMixin, TestCase):
         self.assertIn('msg_text', msg)
         self.assertEqual(msg['msg_type'], "info")
 
-    def test_home_page_message(self):
+    def test_home_page_extend_membership_message(self):
         # Set environment variables
         global_preferences['membership__signup_year'] = MemberYear.objects.create(name='current year')
 

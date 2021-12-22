@@ -71,7 +71,7 @@
                 {% if member.is_honorary_member %}
                     You are a honorary member.
                 {% else %}
-                    {% for active_year_link in activeyear %}
+                    {% for active_year_link in activeyears %}
                         {% if active_year_link.has_paid %}
                             <div>
                                 Membership for {{ active_year_link.year }} has been paid

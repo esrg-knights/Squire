@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
@@ -5,9 +6,9 @@ from django.test import Client, TestCase, override_settings
 from django.test.client import RequestFactory
 
 from core.tests.util import suppress_warnings
-from membership_file.admin import MemberWithLog, reset_has_paid_membership_fee
+from membership_file.admin import MemberWithLog
 from membership_file.tests.util import fillDictKeys
-from membership_file.models import Member, MemberLog, MemberLogField
+from membership_file.models import Member, MemberLog, MemberLogField, MemberYear, Membership
 
 
 ##################################################################################
@@ -27,41 +28,39 @@ class MemberAdminTest(TestCase):
         self.request = factory.get('/testurl/')
         self.request.user = self.user
 
-    def test_bulk_reset_membership_fee(self):
-        """ Tests if the bulk resetting membership fee admin action updates
-        has_paid_membership_fee and created logs (if needed) """
-        Member.objects.all().update(has_paid_membership_fee=True, last_updated_by=None)
-        # Already reset
-        member = Member.objects.get(id=1)
-        member.has_paid_membership_fee = False
-        member.save()
+    def test_mark_as_current_member(self):
+        # Sneaky hacky work-around due to uninstalled message framework in factorytestcase
+        self.fake_message = None
+        def message_replacement(request, message, level=None):
+            self.fake_message = {
+                'message': message,
+                'level': level
+            }
+        self.model_admin.message_user = message_replacement
 
-        # Get rid of all the logs
-        MemberLog.objects.all().delete()
-
-        # Exclude a single member
         queryset = Member.objects.exclude(id=2)
-        reset_has_paid_membership_fee(self.model_admin, self.request, queryset)
+        # Ensure that an error is caused when there are multiple active years
+        self.model_admin.mark_as_current_member(self.request, queryset)
+        self.assertIsNotNone(self.fake_message)
+        self.assertEqual(self.fake_message['level'], messages.ERROR)
 
-        for member in Member.objects.all():
-            if member.id == 1:
-                # Already reset
-                self.assertIsNone(member.last_updated_by)
-                self.assertFalse(member.has_paid_membership_fee)
-                self.assertIsNone(member.memberlog_set.all().first())
+        # Ensure that an error message is created when there are no active years
+        self.fake_message = None
+        MemberYear.objects.update(is_active=False)
+        self.model_admin.mark_as_current_member(self.request, queryset)
+        self.assertIsNotNone(self.fake_message)
+        self.assertEqual(self.fake_message['level'], messages.ERROR)
 
-            elif member.id == 2:
-                # Not part of the queryset
-                self.assertIsNone(member.last_updated_by)
-                self.assertTrue(member.has_paid_membership_fee)
-                self.assertIsNone(member.memberlog_set.all().first())
-            else:
-                # Updated
-                self.assertEqual(member.last_updated_by, self.user)
-                self.assertFalse(member.has_paid_membership_fee)
-                memberlogs = member.memberlog_set.all()
-                self.assertEqual(len(memberlogs), 1)
-                self.assertEqual(memberlogs.first().updated_fields.first().field, "has_paid_membership_fee")
+        # Ensure that all goes well
+        self.fake_message = None
+        test_year = MemberYear.objects.create(name='new_year', is_active=True)
+        Membership.objects.create(member_id=3, year=test_year)
+        self.model_admin.mark_as_current_member(self.request, queryset)
+        self.assertIsNotNone(self.fake_message)
+        self.assertEqual(self.fake_message['message'],
+                         "Succesfully created 1 new members. 1 instances were already a member")
+        self.assertEqual(self.fake_message['level'], messages.SUCCESS)
+        self.assertEqual(Membership.objects.filter(year__is_active=True).count(), 2)
 
 
 # Tests Log deletion when members are deleted
@@ -109,6 +108,7 @@ class MemberLogCleanupTest(TestCase):
         # No memberlog or memberlogfields should exist after deleting the memberlog
         self.assertIsNone(MemberLog.objects.all().first())
         self.assertIsNone(MemberLogField.objects.all().first())
+
 
 # Tests Log creation when updating members
 class MemberLogTest(TestCase):

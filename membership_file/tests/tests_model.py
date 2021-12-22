@@ -29,7 +29,7 @@ class MemberModelTest(TestCase):
         """ Tests member.is_considered_member when active years are present """
         self.assertTrue(Member.objects.get(id=1).is_considered_member())
         self.assertFalse(Member.objects.get(id=2).is_considered_member())
-        # Member is deregistered so should not be member, even though there is a active membesrhip connected
+        # Member is deregistered so should not be member, even though there is an active membership connected
         # (why this scenario would occur in real life I don't know, but let's set consistent behavior)
         self.assertFalse(Member.objects.get(id=3).is_considered_member())
 
@@ -37,7 +37,7 @@ class MemberModelTest(TestCase):
         MemberYear.objects.update(is_active=False)
         self.assertTrue(Member.objects.get(id=1).is_considered_member())
         self.assertTrue(Member.objects.get(id=2).is_considered_member())
-        # Member is deregistered so should not be member, even though there is a active membesrhip connected
+        # Member is deregistered so should not be member, even though there is an active membership connected
         # (why this scenario would occur in real life I don't know, but let's set consistent behavior)
         self.assertFalse(Member.objects.get(id=3).is_considered_member())
 

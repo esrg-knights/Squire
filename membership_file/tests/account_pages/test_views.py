@@ -46,9 +46,9 @@ class MembershipDataViewTestCase(ViewValidityMixin, TestCase):
         response = self.client.get(reverse('account:membership:view'), data={})
         self.assertNotIn('sign_up_message', response.context)
         self.assertIn('memberyears', response.context)
-        self.assertIn('activeyear', response.context)
-        self.assertEqual(len(response.context['activeyear']), 1)
-        self.assertEqual(response.context['activeyear'][0].id, 1)
+        self.assertIn('activeyears', response.context)
+        self.assertEqual(len(response.context['activeyears']), 1)
+        self.assertEqual(response.context['activeyears'][0].id, 1)
 
     def test_continue_membership_message(self):
         year = MemberYear.objects.get(id=3)
