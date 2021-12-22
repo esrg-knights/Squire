@@ -30,7 +30,7 @@ def mark_as_current_member(modeladmin, request, queryset):
         if member.has_paid_membership_fee:
             Membership.objects.get_or_create(
                 member=member,
-                year=MemberYear.objects.filter(is_active=True).last(),
+                year=MemberYear.objects.filter(is_active=True).first(),
             )
 
 

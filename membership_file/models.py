@@ -210,6 +210,9 @@ class MemberYear(models.Model):
     members = models.ManyToManyField(Member, through='Membership', through_fields=['year', 'member'])
     is_active = models.BooleanField(default=False)
 
+    class Meta:
+        ordering=('-name',)
+
     def __str__(self):
         return self.name
 
