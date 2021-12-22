@@ -95,7 +95,7 @@ def upcoming_core_feed(request):
     # Iterate over all published activities that are part of the core groupings in the GET request
     for activity in Activity.objects.select_related('core_grouping').filter(published_date__lte=now, core_grouping__identifier__in=grouping_identifiers):
         # Fetch the next activitymoment (if any) for this activity that is not cancelled
-        activity_moment = activity.get_next_activitymoment(dtstart=now, exclude_cancelled=True)
+        activity_moment = activity.get_next_activitymoment(dtstart=now, exclude_cancelled=True, exclude_removed=True)
         earliest_moment = earliest_moments.get(activity.core_grouping.identifier, None)
         # Does this activity take place earlier than the current earliest activitymoment for this grouping?
         if earliest_moment is None \
@@ -104,8 +104,14 @@ def upcoming_core_feed(request):
 
     # Fetch data for the selected activitymoments
     activity_moment_jsons = []
-    for activity_moment in earliest_moments.values():
+    for identifier, activity_moment in earliest_moments.items():
         if activity_moment is None:
+            # Silently fail if no activitymoment for the identifier was found.
+            #   This can happen if all remaining occurrences are cancelled/removed,
+            #   if there are no activities with the given identifier,
+            #   or if the given identifier does not even exist.
+            # We're not explicitly failing because there might still be other (valid) activitymoments
+            #   for other identifiers that were also passed in the same request.
             continue
 
         activity_moment_jsons.append({
@@ -121,5 +127,6 @@ def upcoming_core_feed(request):
             'end': activity_moment.end_date.isoformat(),
             'allDay': False,
             'is_cancelled': activity_moment.is_cancelled,
+            'core_grouping_identifier': identifier,
         })
     return JsonResponse({'activities': activity_moment_jsons})

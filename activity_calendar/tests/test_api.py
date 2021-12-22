@@ -36,9 +36,10 @@ class UpcomingCoreActivitiesTest(TestCase):
             self.fail("Malformed json returned; Expected 'activities' to be in the root of the json object")
         return jsonres['activities']
 
-    def _is_activity_in_json(self, activity_title, json, start_date=None):
+    def _is_activity_in_json(self, activity_title, json, start_date=None, core_grouping_identifier=None):
         """
-            Returns whether an activitymoment with the given title (and optionally starting at a specific date)
+            Returns whether an activitymoment with the given title (and optionally starting at a specific date,
+            and/or being part of a specific core grouping)
             is in the json
         """
         if start_date is not None:
@@ -46,24 +47,27 @@ class UpcomingCoreActivitiesTest(TestCase):
 
         for activity in json:
             if activity['title'] == activity_title \
-                    and (start_date is None or datetime.datetime.fromisoformat(activity['start']) == start_date):
+                    and (start_date is None or datetime.datetime.fromisoformat(activity['start']) == start_date) \
+                    and (core_grouping_identifier is None or activity['core_grouping_identifier'] == core_grouping_identifier):
                 return True
         return False
 
-    def assertActivityInJSON(self, activity_title, json, start_date=None):
+    def assertActivityInJSON(self, activity_title, json, start_date=None, core_grouping_identifier=None):
         """
-            Raises an AssertionError if the given activity (optionally starting at a specific datetime) is
-            not in the json
+            Raises an AssertionError if the given activity (optionally starting at a specific datetime,
+            and/or being part of a specific core grouping) is not in the json
         """
-        if not self._is_activity_in_json(activity_title, json, start_date=start_date):
+        if not self._is_activity_in_json(activity_title, json, start_date=start_date,
+                core_grouping_identifier=core_grouping_identifier):
             self.fail(f"{activity_title} ({start_date}) was not located in the JSON activitylist: {json}")
 
-    def assertActivityNotInJSON(self, activity_title, json, start_date=None):
+    def assertActivityNotInJSON(self, activity_title, json, start_date=None, core_grouping_identifier=None):
         """
-            Raises an AssertionError if the given activity (optionally starting at a specific datetime) is
-            in the json
+            Raises an AssertionError if the given activity (optionally starting at a specific datetime,
+            and/or being part of a specific core grouping) is in the json
         """
-        if self._is_activity_in_json(activity_title, json, start_date=start_date):
+        if self._is_activity_in_json(activity_title, json, start_date=start_date,
+                core_grouping_identifier=core_grouping_identifier):
             self.fail(f"{activity_title} ({start_date}) was unexpectedly located in the JSON activitylist: {json}")
 
 
@@ -72,8 +76,10 @@ class UpcomingCoreActivitiesTest(TestCase):
         """ Tests if multiple activities are returned if multiple core groupings are passed """
         activities = self._get_activity_json(groups="boardgames,roleplay")
 
-        self.assertActivityInJSON("Boardgame Evening", activities, start_date="2021-12-21T19:00:00+00:00")
-        self.assertActivityInJSON("Open Roleplay Evening", activities, start_date="2021-12-22T19:00:00+00:00")
+        self.assertActivityInJSON("Boardgame Evening", activities, start_date="2021-12-21T19:00:00+00:00",
+            core_grouping_identifier="boardgames")
+        self.assertActivityInJSON("Open Roleplay Evening", activities, start_date="2021-12-22T19:00:00+00:00",
+            core_grouping_identifier="roleplay")
         self.assertEqual(len(activities), 2, f"There should've only been two activities in the json: {activities}")
 
 
@@ -86,12 +92,18 @@ class UpcomingCoreActivitiesTest(TestCase):
         self.assertEqual(activities[1]["title"], "Open Roleplay Evening",
             "'Open Roleplay Evening' should be the first returned item as its core grouping was passed second")
 
+        self.assertEqual(activities[0]['core_grouping_identifier'], "boardgames")
+        self.assertEqual(activities[1]['core_grouping_identifier'], "roleplay")
+
         # Reverse order
         activities = self._get_activity_json(groups="roleplay,boardgames")
         self.assertEqual(activities[0]["title"], "Open Roleplay Evening",
             "'Open Roleplay Evening' should be the first returned item as its core grouping was passed first")
         self.assertEqual(activities[1]["title"], "Boardgame Evening",
             "'Boardgame Evening' should be the first returned item as its core grouping was passed second")
+
+        self.assertEqual(activities[0]['core_grouping_identifier'], "roleplay")
+        self.assertEqual(activities[1]['core_grouping_identifier'], "boardgames")
 
 
     @patch('django.utils.timezone.now', side_effect=mock_now(datetime.datetime(2021, 12, 21, 0, 0)))
@@ -119,13 +131,15 @@ class UpcomingCoreActivitiesTest(TestCase):
         self.assertActivityNotInJSON("Boardgame Evening", activities, start_date="2022-01-04T19:00:00+00:00")
 
         # Boardgame evening on the 11th continues as usual
-        self.assertActivityInJSON("Boardgame Evening", activities, start_date="2022-01-11T19:00:00+00:00")
+        self.assertActivityInJSON("Boardgame Evening", activities, start_date="2022-01-11T19:00:00+00:00",
+            core_grouping_identifier="boardgames")
 
 
     @patch('django.utils.timezone.now', side_effect=mock_now(datetime.datetime(2023, 1, 1, 0, 0)))
     def test_skips_empty_coregrouping(self, _):
         """ Tests if coregroupings without (valid) activities are skipped"""
-        # Roleplay Evenings end in 2022; There are no activities for the 'foo' grouping
+        # Roleplay Evenings end in 2022 (so there is no next occurrence);
+        # There are no activities for the 'foo' grouping (in fact, the 'foo' grouping does not even exist)
         activities = self._get_activity_json(groups="roleplay,foo")
         self.assertFalse(activities)
 
