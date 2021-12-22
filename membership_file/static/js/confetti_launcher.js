@@ -1,11 +1,28 @@
+//
+//  Code adjusted based of Animated Button codepen as found here:
+//  https://codepen.io/zanewesley/pen/yLgPEON
+//
+
+/*
+    SETUP instructions
+    1)  Canvas with style attributes:
+        position: absolute; top: 0; left: 0; pointer-events: none; height: 100vh;
+
+    2)  Element #confettiButton with onClick=launchConfetti()
+
+    Customisation through button data attributes:
+    - colors *optional
+        Set front and back colors in pairs of two HTML colors seperated with comma. Eg:
+        data-colors="#FF0000,#AA0000,#F5F500,#A5A500"
+ */
+
+
 const button = $('#confettibutton');
 var disabled = false;
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-let cx = ctx.canvas.width / 2;
-let cy = ctx.canvas.height / 2;
 
 // add Confetti/Sequince objects to arrays to draw them
 let confetti = [];
@@ -23,11 +40,23 @@ const dragSequins = 0.02;
 const terminalVelocity = 3;
 
 // colors, back side is darker for confetti flipping
-const colors = [
-    { front : '#198030', back: '#0A3313' },
-    { front : '#10B50B', back: '#10B579' },
-    { front : '#33790A', back: '#33400A' }
-];
+let colors = [];
+if (button.data('colors')) {
+    var colorstrings = button.data('colors').split(',')
+    for (let i = 0; i < colorstrings.length; i+=2){
+        colors.push({
+            front : colorstrings[i],
+            back : colorstrings[i+1]
+        });
+    }
+}
+else {
+    colors = [
+        { front : '#0A3313', back: '#198030' },
+        { front : '#10B50B', back: '#10680B' },
+        { front : '#33790A', back: '#33400A' }
+    ];
+}
 
 // helper function to pick a random number within a range
 randomRange = (min, max) => Math.random() * (max - min) + min;
@@ -104,14 +133,10 @@ Sequin.prototype.update = function() {
 
 // add elements to arrays to be drawn
 initBurst = () => {
-    var button_pos = button.position();
-    var button_width = button.width();
-    var button_height = button.height();
-
-    var x_c = button_pos.left + button_width / 2;
-    var y_c = button_pos.top;
-    var x_var = button_width/4;
-    var y_var =button_height/2;
+    var x_c = button.position().left + button.width() / 2;
+    var y_c = button.position().top;
+    var x_var = button.width()/2;
+    var y_var =0;
 
     for (let i = 0; i < confettiCount; i++) {
         confetti.push(new Confetto(x_c, x_var, y_c, y_var));
