@@ -50,16 +50,16 @@ class MembershipDataViewTestCase(ViewValidityMixin, TestCase):
         self.assertEqual(len(response.context['activeyear']), 1)
         self.assertEqual(response.context['activeyear'][0].id, 1)
 
-    # def test_continue_membership_message(self):
-    #     year = MemberYear.objects.get(id=3)
-    #     global_preferences['membership__signup_year'] = year
-    #     response = self.client.get(reverse('account:membership:view'), data={})
-    #     self.assertIn('sign_up_message', response.context)
-    #     msg = response.context['sign_up_message']
-    #     self.assertIn('msg_text', msg)
-    #     self.assertIn('btn_text', msg)
-    #     self.assertEqual(msg['msg_type'], "info")
-    #     self.assertEqual(msg['btn_url'], reverse('membership_file/continue_membership'))
+    def test_continue_membership_message(self):
+        year = MemberYear.objects.get(id=3)
+        global_preferences['membership__signup_year'] = year
+        response = self.client.get(reverse('account:membership:view'), data={})
+        self.assertIn('sign_up_message', response.context)
+        msg = response.context['sign_up_message']
+        self.assertIn('msg_text', msg)
+        self.assertIn('btn_text', msg)
+        self.assertEqual(msg['msg_type'], "info")
+        self.assertEqual(msg['btn_url'], reverse('membership_file/continue_membership'))
 
 
 class MembershipChangeViewTestCase(ViewValidityMixin, TestCase):
