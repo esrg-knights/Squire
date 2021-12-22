@@ -34,6 +34,8 @@ class MarkdownObject:
         """
             Returns the Markdown in html format.  E.g. <b>bold text</b>
             Tags not compiled by Markdown are escaped, meaning that it is safe to use.
+            Note that markdownify(..) strips HTML tags using django's strip_tags(..) before
+            applying markdown.
         """
         return mark_safe(markdownify(self.raw_value))
 
