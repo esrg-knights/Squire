@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.timezone import localtime
 
 from .forms import ActivityAdminForm, ActivityMomentAdminForm
-from .models import Activity, ActivitySlot, Participant, ActivityMoment, OrganiserLink
+from .models import Activity, ActivitySlot, Participant, ActivityMoment, OrganiserLink, CoreActivityGrouping
 
 from core.admin import MarkdownImageInline
 from utils.forms import RequestUserToFormModelAdminMixin
@@ -31,6 +31,11 @@ class MarkdownImageInlineAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmi
 class OrganiserInline(admin.TabularInline):
     model = OrganiserLink
     extra = 0
+
+@admin.register(CoreActivityGrouping)
+class CoreActivityGroupingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'identifier',)
+    list_filter = ['identifier']
 
 @admin.register(Activity)
 class ActivityAdmin(MarkdownImageInlineAdmin):
