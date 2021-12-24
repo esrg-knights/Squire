@@ -698,6 +698,43 @@ class ActivityTestCase(TestCase):
             timezone.datetime(2021, 9, 9, 0, 0, 0, tzinfo=timezone.utc)
         )
 
+    def test_get_occurrence_at_nonexistent(self):
+        test_date = timezone.datetime(2020, 8, 14, 19, 0, 0, tzinfo=timezone.utc)
+        occurrence = self.activity.get_occurrence_at(test_date)
+        self.assertIsNone(occurrence)
+
+    def test_get_occurrence_at_recurrent(self):
+        test_date = timezone.datetime(2020, 9, 9, 14, 0, 0, tzinfo=timezone.utc)
+        occurrence = self.activity.get_occurrence_at(test_date)
+        self.assertEqual(occurrence.parent_activity, self.activity)
+        self.assertEqual(occurrence.recurrence_id, test_date)
+
+    def test_get_occurrence_at_recurrent_dst(self):
+        test_date = timezone.datetime(2020, 11, 11, 14, 0, 0, tzinfo=timezone.utc)
+        occurrence = self.activity.get_occurrence_at(test_date)
+        self.assertIsNone(occurrence)
+        # Set time to 15:00 instead of 14:00 due to timeshift
+        test_date = timezone.datetime(2020, 11, 11, 15, 0, 0, tzinfo=timezone.utc)
+        occurrence = self.activity.get_occurrence_at(test_date)
+        self.assertEqual(occurrence.parent_activity, self.activity)
+        self.assertEqual(occurrence.recurrence_id, test_date)
+        # recurrence_id should be the date checked and not the date matching the recurrency pattern (i.e. 14:00)
+
+    def test_get_occurrence_at_db_activitymoment(self):
+        """ Make sure the method retrieves activitymoments from the database if present"""
+        test_date = timezone.datetime(2020, 8, 19, 14, 0, 0, tzinfo=timezone.utc)
+        occurrence = self.activity.get_occurrence_at(test_date)
+        self.assertEqual(occurrence.parent_activity, self.activity)
+        self.assertEqual(occurrence.recurrence_id, test_date)
+        self.assertEqual(occurrence.id, 3)  # As defined in the fixture
+
+    def test_get_occurrence_at_db_activitymoment(self):
+        """ Make sure the method retrieves activitymoments from the database if present"""
+        test_date = timezone.datetime(2020, 8, 14, 19, 0, 0, tzinfo=timezone.utc)
+        occurrence = Activity.objects.get(id=3).get_occurrence_at(test_date)
+        self.assertEqual(occurrence.parent_activity_id, 3)
+        self.assertEqual(occurrence.recurrence_id, test_date)
+
     def test_recurrence_different_day(self):
         """
             django_recurrences does not always handle recurrences around midnight correctly due to
