@@ -139,27 +139,12 @@ def suppress_warnings(function=None, logger_name='django.request'):
 
 class DynamicRegistryUsageMixin:
     """
-    A class that resets dynamic registry to the default values after each test uses.
-    This is needed because django does not clear the cache between testcases and since dynamicregistry uses
-    django caching incorrect values (such as model instances) can linger in the cache while not being present
-    on the database.
+    Mixin that is required when testing instances in the dynamicregistryusagemixin. This module uses the django cache
+    that needs clearing whenever a testcases is done.
     """
     @classmethod
     def _rollback_atomics(cls, atomics):
-        """ dynamic preference manager uses chaching. So just reset everything to make sure no wrong caches remain """
         dynamic_preference_manager = global_preferences_registry.manager()
-        # Yes, this is an ugly hack. So be it.
-        for preference in global_preferences_registry.preferences():
-            default = preference.default
-            # Complex preferences such as those working with permissions can define UNSET
-            # this can crash it, so let's hack it.
-            if default == UNSET:
-                default = None
-            dynamic_preference_manager.update_db_pref(
-                section=str(preference.section),
-                name=preference.name,
-                value=default
-            )
-
+        dynamic_preference_manager.cache.clear()
         # Don't forget to do the normal database rollback
         super(DynamicRegistryUsageMixin, cls)._rollback_atomics(atomics)
