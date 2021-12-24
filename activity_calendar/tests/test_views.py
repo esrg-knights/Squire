@@ -438,7 +438,7 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
 
         # User does NOT have the relevant permission to view registrations
         self._verify_show_participants(self.default_iso_dt, [during_perm, after_perm], False)
-        # self._verify_show_participants('2020-08-10T21:00:00+00:00', [before_perm, after_perm], False)
+        self._verify_show_participants('2020-08-10T21:00:00+00:00', [before_perm, after_perm], False)
         self._verify_show_participants('2020-08-01T00:00:00+00:00', [before_perm, during_perm], False)
 
         # User HAS the relevant permission to view registrations
