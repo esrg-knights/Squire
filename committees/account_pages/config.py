@@ -6,9 +6,10 @@ from .views import AssociationGroupAccountView
 
 
 
-class TestAccountConfig(AccountBaseConfig):
+class GroupAccountConfig(AccountBaseConfig):
     url_keyword = 'my_groups'
-    name = 'My groups'
+    name = 'Groups'
+    icon_class = 'fas fa-users'
     url_name = 'account_group'
     order_value = 30
 

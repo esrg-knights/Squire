@@ -30,14 +30,14 @@
                 {{ dt_range_end|date:"l j E" }}
                 </div>
                 <a class=" btn btn-sm btn-secondary" href="{{ request.path }}">
-                    Jump to now
+                    <i class="fas fa-reply-all"></i> Jump to now
                 </a>
             </div>
             {% endif %}
             <p>
                 <a href='{% url "activity_calendar:calendar" %}'
                 class="btn btn-info">
-                    View entire Calendar
+                    <i class="fas fa-calendar-alt"></i> View entire Calendar
                 </a>
             </p>
         </div>
@@ -54,9 +54,9 @@
                     <a class="btn btn-outline-secondary"
                         href="{{ request.path }}?start-date={{ dt_range_backward_url }}">
                         {% if not dt_range_backward_to_now %}
-                            Move to earlier
+                            <i class="fas fa-reply"></i> Browse earlier
                         {% else %}
-                            Jump to now
+                            <i class="fas fa-reply"></i> Browse now
                         {% endif %}
                     </a>
                 {% endif %}
@@ -65,7 +65,7 @@
             <div class="col-auto">
                 <a class="btn btn-outline-secondary"
                     href="{{ request.path }}?start-date={{ dt_range_forward_url }}">
-                    Browse later
+                    <i class="fas fa-share"></i> Browse later
                 </a>
             </div>
 

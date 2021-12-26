@@ -21,6 +21,7 @@ Tabs or any other front end url navigation can be used to move between the vario
 class ViewCollectiveConfig:
     """ This configures a section of the viewcollective with all relevant views and options. Any config should define:
     name: The name displayed in the tab
+    icon_class: The icon classes that create the icon in a span element (e.g. by FontAwesome)
     url_name: The name of the url to navigate to.
     root_namespaces: The namespace where the root is in.
     url_keyword: url-string placed in the url to define this section
@@ -38,6 +39,7 @@ class ViewCollectiveConfig:
 
     """
     name = None
+    icon_class = ''
     url_name = None
     url_keyword = None
     order_value = 10
@@ -124,12 +126,13 @@ class ViewCollectiveViewMixin:
             self.request,
             **self._get_other_check_kwargs()
         )
-        for account_page_config in applicable_configs:
+        for page_config in applicable_configs:
             tabs.append({
                 'name': None, # redacted
-                'verbose': account_page_config.name,
-                'url': self._get_tab_url(registry.namespace+':'+account_page_config.url_name),
-                'selected': account_page_config == self.config,
+                'verbose': page_config.name,
+                'icon_class': page_config.icon_class,
+                'url': self._get_tab_url(registry.namespace+':'+page_config.url_name),
+                'selected': page_config == self.config,
             })
         return tabs
 

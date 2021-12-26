@@ -9,6 +9,7 @@ from .views import *
 class AccountInventoryConfig(AccountBaseConfig):
     url_keyword = 'inventory'
     name = 'Inventory'
+    icon_class = 'fas fa-archive'
     url_name = 'inventory:member_items'
     order_value = 70
 

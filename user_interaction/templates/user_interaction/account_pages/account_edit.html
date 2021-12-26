@@ -24,13 +24,15 @@
             {% generic_field form.email -1 %}
 
             <p><i> You can change your password <a href="{% url 'account:password_change' %}">here</a></i></p>
-        <input type="submit" value="Confirm Changes" class="greenify btn btn-dark">
-        <a
-        href="{% url 'account:site_account' %}"
-        class="btn btn-danger"
-        >Cancel Changes</a
-        >
+        <div class="btn-group">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-edit"></i> Confirm changes
+            </button>
+            <a href="{% url 'account:site_account' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel changes
+            </a>
+        </div>
     </form>
-    
+
 
 {% endblock content %}

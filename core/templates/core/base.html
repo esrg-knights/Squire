@@ -49,6 +49,9 @@
 			<link rel="stylesheet" href="{% static 'css/main.css' %}">
 			<link rel="stylesheet" href="{% static 'css/forms.css' %}">
 		{% endblock css %}
+        <!-- Font awesome icon font -->
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+              integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
 
 		<!-- Js -->
 		{% block js %}
@@ -92,27 +95,32 @@
 					{% if user.is_authenticated %}
 						<li class="nav-item dropdown">
 							<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-								Account
+                                <i class="fas fa-user"></i> Account
 							</a>
 							<div class="dropdown-menu dropdown-menu-right greenify-dropdown" aria-labelledby="navbarDropdownMenuLink">
-								<a class="dropdown-item" href="{% url 'account:site_account' %}">View Account</a>
-								<a class="dropdown-item" href="{% url 'account:achievements' %}">Earned Achievements</a>
+								<a class="dropdown-item" href="{% url 'account:site_account' %}">
+                                    <i class="fas fa-id-card"></i> My Account</a>
+								<a class="dropdown-item" href="{% url 'account:achievements' %}">
+                                    <i class="fas fa-trophy"></i> My  Achievements</a>
                                 {% if member.is_considered_member %}
-                                    <a class="dropdown-item" href="{% url 'account:inventory:member_items' %}">My inventory</a>
+                                    <a class="dropdown-item" href="{% url 'account:inventory:member_items' %}">
+                                        <i class="fas fa-archive"></i> My items</a>
                                     {% if member.associationgroup_set.all %}
-                                        <a class="dropdown-item" href="{% url 'account:account_group' %}">My groups</a>
+                                        <a class="dropdown-item" href="{% url 'account:account_group' %}">
+                                            <i class="fas fa-users"></i> My groups</a>
                                     {% endif %}
                                 {% endif %}
                                 {% if user.is_staff %}
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item"
                                        target="_blank" rel="noopener noreferrer"
-                                       href="{% url 'admin:index' %}">Admin panel</a>
+                                       href="{% url 'admin:index' %}"><i class="fas fa-toolbox"></i> Admin panel</a>
 
                                 {% endif %}
 
 								<div class="dropdown-divider"></div>
-								<a class="dropdown-item" href="{% url 'core:user_accounts/logout' %}">Sign out</a>
+								<a class="dropdown-item" href="{% url 'core:user_accounts/logout' %}">
+                                    <i class="fas fa-power-off"></i> Sign out</a>
 							</div>
 						</li>
 					{% else %}

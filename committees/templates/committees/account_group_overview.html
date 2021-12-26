@@ -25,10 +25,10 @@
                     <div class="row">
                     <div class="col btn-group " role="group" aria-label="{{ group }} pages">
                         <a class="btn btn-info" href="{% url "committees:group_general" group_id=group.id %}">
-                            Details
+                            <i class="fas fa-info-circle"></i> Details
                         </a>
                         <a class="btn btn-outline-info" href="{% url "committees:group_inventory" group_id=group.id %}">
-                            Inventory
+                            <i class="fas fa-archive"></i> Inventory
                         </a>
                     </div>
 
