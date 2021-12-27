@@ -96,7 +96,7 @@
                                 {% if perms.boardgames.maintain_ownerships_for_boardgame %}
                                     <a class="btn btn-sm btn-info"
                                        href="{% url "inventory:catalogue_item_links" type_id=content_type item_id=boardgame.id %}">
-                                        Edit
+                                        <i class="fas fa-pen"></i> Edit
                                     </a>
                                 {% endif %}
                             </div>
@@ -115,7 +115,7 @@
         <div class="d-flex justify-content-end">
             <a href="{% url "inventory:catalogue" type_id=content_type %}"
                class="btn btn-secondary">
-                Maintain catalogue
+                <i class="fas fa-boxes"></i> Go to catalogue
             </a>
         </div>
     {% endif %}
