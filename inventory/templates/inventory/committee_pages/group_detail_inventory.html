@@ -1,5 +1,6 @@
 {% extends 'committees/group_detail_base.html' %}
 {% load static %}
+{% load inventory_tags %}
 
 {% block content-frame-class %}
     container
@@ -30,7 +31,7 @@
                                 {% for content_type in content_types %}
                                     <a href="{% url "inventory:catalogue" type_id=content_type %}"
                                        class="dropdown-item">
-                                        {{ content_type }}
+                                        <span class="{{ content_type|get_item_icon_classes }}"></span> {{ content_type }}
                                     </a>
                                 {% endfor %}
                             </div>
@@ -65,6 +66,7 @@
                             {{ ownership.content_object.name }}
                         </td>
                         <td class="col-auto">
+                            <span class="{{ ownership.content_type|get_item_icon_classes }}"></span>
                             {{ ownership.content_type }}
                         </td>
                         <td class="col-auto">

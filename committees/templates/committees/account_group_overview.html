@@ -35,8 +35,9 @@
                     <div class="col">
                         <div class="btn-group " role="group" aria-label="{{ group }} pages">
                             {% for quicklink in group.shortcut_set.all %}
-                                <a class="btn btn-outline-info" href="{{ quicklink.url }}">
-                                    {{ quicklink.name }}
+                                <a class="btn btn-outline-info" href="{{ quicklink.url }}"
+                                    target="_blank" rel="noopener noreferrer">
+                                    <i class="fas fa-external-link-alt"></i> {{ quicklink.name }}
                                 </a>
                             {% endfor %}
                         </div>

@@ -1,5 +1,6 @@
 {% extends 'core/user_accounts/account_base.html' %}
 {% load static %}
+{% load inventory_tags %}
 
 {% block title %}
     Squire - Inventory
@@ -47,6 +48,7 @@
                             {{ ownership.content_object.name }}
                         </td>
                         <td class="col-auto">
+                            <span class="{{ ownership.content_type|get_item_icon_classes }}"></span>
                             {{ ownership.content_type }}
                         </td>
                         <td class="col-auto">
@@ -73,7 +75,7 @@
     </div>
     {% else %}
         <p class="font-weight-bold">You currently do not have any items loaned to the Knights</p>
-        <div style="height: 10em;"></div>
+        <div style="height: 5em;"></div>
     {% endif %}
 
     {% if ownerships_history %}
@@ -106,6 +108,7 @@
                         {{ ownership.content_object.name }}
                     </td>
                     <td class="col-auto">
+                        <span class="{{ ownership.content_type|get_item_icon_classes }}"></span>
                         {{ ownership.content_type }}
                     </td>
                     <td class="col-auto">
