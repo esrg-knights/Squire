@@ -8,6 +8,7 @@ from committees.committee_pages.views import *
 class AssociationGroupHomeConfig(CommitteeBaseConfig):
     url_keyword = 'main'
     name = 'Overview'
+    icon_class = 'fas fa-users'
     url_name = 'group_general'
     order_value = 10
 

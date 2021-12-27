@@ -1,6 +1,6 @@
 {% load generic_field %}
 
-<form method="get">
+<form method="get" id="filter-form">
     <div class="row justify-content-md-end">
         <div class="col {% if form.visible_fields|length <= 1 %}col-md-auto{% endif %}">
             <div class="row">
@@ -15,9 +15,13 @@
                 </div>
                 <div class="col-auto">
                     <div class="btn-group" role="group" aria-label="Search">
-                        <input type="submit" value="search" class="btn btn-info"/>
+                        <button type="submit" form="filter-form" class="btn btn-info">
+                            <i class="fas fa-search"></i> Search
+                        </button>
                         <a class="btn btn-secondary"
-                           href="{{ request.path }}">Reset</a>
+                           href="{{ request.path }}">
+                            <i class="fas fa-times"></i> Reset
+                        </a>
                     </div>
                 </div>
             </div>

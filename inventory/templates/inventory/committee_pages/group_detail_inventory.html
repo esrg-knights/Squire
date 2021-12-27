@@ -24,7 +24,7 @@
                     <div class="col-auto">
                         <div class="btn-group">
                             <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Go to catalogue
+                                <i class="fas fa-boxes"></i> Catalogue
                             </button>
                             <div class="dropdown-menu dropdown-menu-right">
                                 {% for content_type in content_types %}
@@ -84,7 +84,7 @@
                             <div class="btn-group" role="group" aria-label="">
                                 <!-- Left open for additional actions -->
                                 <a href="{% url "committees:group_inventory" ownership_id=ownership.id group_id=association_group.id %}"
-                                   class="btn btn-outline-secondary">Edit link</a>
+                                   class="btn btn-outline-secondary"><i class="fas fa-pen"></i> Edit</a>
 
                             </div>
                         </td>
