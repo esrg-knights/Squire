@@ -3,7 +3,7 @@
 
 
 <div class="card">
-    <div class="card-img-top greenify-dark" style='height: 10rem;
+    <div class="card-img-top" style='height: 10rem;
         {% if activity_moment.promotion_image %}
             background-image: url({{ activity_moment.promotion_image.url }});
             background-size: cover;
@@ -87,8 +87,8 @@
             </div>
 
             <!-- Link to activity moment page -->
-            <a href="{{ activity_moment.get_absolute_url }}" class="card-link btn btn-success greenify">
-                Go to activity
+            <a href="{{ activity_moment.get_absolute_url }}" class="card-link btn btn-primary">
+                <i class="fas fa-arrow-right"></i> View activity
             </a>
         {% else %}
             <div class="mb-3">
@@ -118,7 +118,7 @@
                 </div>
             </div>
             <a href="{{ activity_moment.get_absolute_url }}" class="card-link btn btn-secondary">
-                Go to activity
+                <i class="fas fa-arrow-right"></i> View activity
             </a>
         {% endif %}
     </div>

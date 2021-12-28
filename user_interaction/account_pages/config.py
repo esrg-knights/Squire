@@ -8,6 +8,7 @@ from .views import SiteAccountView, AccountPasswordChangeView, LayoutPreferences
 class AccountSettingsConfig(AccountBaseConfig):
     url_keyword = 'site'
     name = 'Account'
+    icon_class = 'fas fa-user'
     url_name = 'site_account'
     order_value = 10  # Value determining the order of the tabs on the Account page
 

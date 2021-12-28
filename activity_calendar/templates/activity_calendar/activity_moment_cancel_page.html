@@ -95,11 +95,13 @@
     {% render_form has_submit_button=False id="submit_form" method="post" uses_file_field=True %}
 
     <div class="btn-group" role="group" aria-label="Form changing">
-        <a href="{% url "activity_calendar:edit_moment" activity_id=activity.id recurrence_id=recurrence_id %}"
-           class="btn btn-secondary">Cancel</a>
         <button form="submit_form" type="submit" class="btn btn-danger">
-            Cancel activity
+            <i class="fas fa-trash-alt"></i> Cancel activity
         </button>
+        <a href="{% url "activity_calendar:edit_moment" activity_id=activity.id recurrence_id=recurrence_id %}"
+           class="btn btn-secondary">
+            <i class="fas fa-times"></i> Keep activity
+        </a>
     </div>
 
 {% endblock %}

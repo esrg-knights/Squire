@@ -9,6 +9,7 @@ from activity_calendar.committee_pages.views import ActivityCalendarView, AddAct
 class ActivityConfig(CommitteeBaseConfig):
     url_keyword = 'activity'
     name = 'Activities'
+    icon_class = 'fas fa-calendar'
     url_name = 'group_activities'
     group_requires_permission = 'activity_calendar.view_activity'
 

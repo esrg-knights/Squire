@@ -93,11 +93,11 @@
                             <a class="btn btn-block btn-info"
                                href="{% url "roleplaying:system_details" system_id=system.id %}"
                             >
-                                More information
+                                <i class="fas fa-info"></i> More information
                             </a>
                         {% else %}
                             <a class="btn btn-block btn-info disabled">
-                                More information
+                                <i class="fas fa-info"></i> More information
                             </a>
                         {% endif %}
                     </td>
@@ -114,7 +114,7 @@
         <div class="d-flex justify-content-end">
             <a href="{% url "inventory:catalogue" type_id=item_type %}"
                class="btn btn-secondary">
-                Maintain catalogue
+                <i class="fas fa-boxes"></i> Roleplaying items catalogue
             </a>
         </div>
     {% endif %}

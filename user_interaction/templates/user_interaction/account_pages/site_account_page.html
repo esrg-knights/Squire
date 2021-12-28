@@ -25,18 +25,22 @@
             Real Name: <i>{{ user.first_name|default:"No real name provided" }}</i><br>
         {% endif %}
         Email: <i>{{ user.email|default:"No email provided" }}</i><br>
-        <small class="text-muted">To change your account information, click <a href="{% url 'account:account_change' %}">here</a></small>
     </p>
-    <p>
-        You can change your password <a href="{% url 'account:password_change' %}">here</a>
-    </p>
+    <div class="btn-group">
+        <a class="btn btn-secondary btn-sm" href="{% url "account:account_change" %}">
+            <i class="fas fa-user-edit"></i> Change account
+        </a>
+        <a class="btn btn-primary btn-sm" href="{% url "account:password_change" %}">
+            <i class="fas fa-key"></i> Change password
+        </a>
+    </div>
 
-    <h3>Look and layout</h3>
+    <h3 class="mt-3">Look and layout</h3>
     <p>
         Site theme: {{ user|get_theme }}
     </p>
-    <a class="btn btn-secondary btn-sm" href="{% url "account:layout_change" %}">
-        Edit
+    <a class="btn btn-primary btn-sm" href="{% url "account:layout_change" %}">
+        <i class="fas fa-pen"></i> Edit
     </a>
 
 
