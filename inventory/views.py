@@ -77,12 +77,14 @@ class CatalogueMixin:
         """
         tabs = []
         for item_type in Item.get_item_contenttypes():
-            tabs.append({
-                'verbose': item_type.model_class().__name__,
-                'icon_class': item_type.model_class().icon_class,
-                'url': reverse("inventory:catalogue", kwargs={'type_id': item_type}),
-                'selected': item_type == self.item_type,
-            })
+            if self.request.user.has_perm(f'{item_type.app_label}.view_{item_type.model}'):
+                model_class = item_type.model_class()
+                tabs.append({
+                    'verbose': model_class.__name__,
+                    'icon_class': model_class.icon_class,
+                    'url': reverse("inventory:catalogue", kwargs={'type_id': item_type}),
+                    'selected': item_type == self.item_type,
+                })
         return tabs
 
 
