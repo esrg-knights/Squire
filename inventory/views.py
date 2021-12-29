@@ -5,7 +5,7 @@ from django.http import Http404
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy, reverse
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, TemplateView
 from django.views.generic.edit import FormView, UpdateView, CreateView
 
 from committees.utils import user_in_association_group
@@ -16,7 +16,7 @@ from inventory.models import Ownership, Item
 from inventory.forms import *
 
 
-__all__ = ['TypeCatalogue',
+__all__ = ['TypeCatalogue', 'CatalogueInstructionsView',
            'AddLinkCommitteeView', 'AddLinkMemberView', 'CreateItemView', 'UpdateItemView', 'DeleteItemView',
            'ItemLinkMaintenanceView', 'UpdateCatalogueLinkView', 'LinkActivationStateView', 'LinkDeletionView',]
 
@@ -86,6 +86,10 @@ class CatalogueMixin:
                     'selected': item_type == self.item_type,
                 })
         return tabs
+
+
+class CatalogueInstructionsView(MembershipRequiredMixin, CatalogueMixin, TemplateView):
+    template_name = "inventory/inventory_instructions.html"
 
 
 class ItemMixin:
