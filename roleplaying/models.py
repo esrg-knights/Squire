@@ -86,6 +86,8 @@ class RoleplayingItem(Item):
 
     external_file_url = models.URLField(max_length=256, blank=True, null=True)
 
+    icon_class = "fas fa-dice-d20"
+
     def clean(self):
         if self.local_file and self.external_file_url:
             raise ValidationError(

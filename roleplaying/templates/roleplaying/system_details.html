@@ -15,8 +15,8 @@
 
 {% block content %}
     <a href="{% url "roleplaying:home" %}"
-       class="btn btn-primary">
-        Back to overview
+       class="btn btn-outline-secondary btn-sm">
+        <span class="fas fa-arrow-left"></span> Back to overview
     </a>
 
     <div class="card my-3">
@@ -36,8 +36,8 @@
                 {% if perms.roleplaying.change_roleplayingsystem %}
                     <div class="col-auto">
                         <a href="{% url "roleplaying:system_edit" system_id=system.id %}"
-                           class="btn btn-sm btn-outline-primary">
-                            Edit
+                           class="btn btn-sm btn-primary">
+                            <i class="fas fa-pen"></i> Edit
                         </a>
                     </div>
                 {% endif %}
@@ -131,8 +131,8 @@
                     </div>
                     <div>{% if perms.roleplaying.maintain_ownerships_for_roleplayingitem %}
                         <a href="{% url "inventory:catalogue" type_id=item_type %}"
-                           class="btn btn-sm btn-outline-primary">
-                            Catalogue
+                           class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-boxes"></i> Roleplay items catalogue
                         </a>
                     {% endif %}
                     </div>
@@ -199,9 +199,9 @@
                                 {% if can_maintain_ownership %}
                                     <td style="padding-right: 0;">
                                         <div class="d-flex justify-content-end">
-                                            <a class="btn btn-sm btn-outline-primary"
+                                            <a class="btn btn-sm btn-primary"
                                                href="{% url "inventory:catalogue_item_links" type_id=item_type item_id=item.id %}">
-                                                Edit
+                                                <i class="fas fa-pen"></i> Edit
                                             </a>
                                         </div>
                                     </td>

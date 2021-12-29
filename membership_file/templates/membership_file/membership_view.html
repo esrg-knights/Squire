@@ -129,7 +129,7 @@
             <p>Oops! You do not seem to have the right permissions to view your membership information!</p>
         {% endif %}
 
-        <p>
+        <div class="mt-3">
             {% if member.last_updated_by is not None %}
                 This information was last changed on {{member.last_updated_date|date:"M j, Y \a\t H\:i"}} by {{member.display_last_updated_name}}
             {% else %}
@@ -141,10 +141,12 @@
                 You currently <strong>cannot</strong> edit this information; your membership is about to be cancelled!
                 Please notify the board if this was a mistake.
             {% elif perms.membership_file.can_change_membership_information_self %}
-                You can edit this information <a href="{% url 'account:membership:edit' %}">here</a>.
+                <a class="btn btn-primary btn-sm" href="{% url 'account:membership:edit' %}">
+                    <i class="fas fa-pen"></i> Edit information
+                </a>
             {% else %}
                 You do not have the required permissions to change this information. Please contact the board.
             {% endif %}
-        </p>
+        </div>
     {% endif %}
 {% endblock content %}

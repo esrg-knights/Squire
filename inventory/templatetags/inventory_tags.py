@@ -1,6 +1,7 @@
 import urllib
 
 from django import template
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User, Group
 
 register = template.Library()
@@ -39,3 +40,7 @@ def render_ownership_tags(context, item):
         'is_owned_by_member': is_owned_by_other_member,
         'is_owned_by_knights': item.is_owned_by_association(),
     }
+
+@register.filter
+def get_item_icon_classes(content_type):
+    return content_type.model_class().icon_class

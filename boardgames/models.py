@@ -28,6 +28,8 @@ class BoardGame(Item):
 
     play_duration = models.CharField(max_length=2, choices=play_duration_options, blank=True, null=True)
 
+    icon_class = "fas fa-dice"
+
     def get_players_display(self):
         if self.player_min and not self.player_max:
             return f'{self.player_min}+'

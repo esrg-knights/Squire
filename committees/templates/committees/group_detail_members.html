@@ -5,10 +5,15 @@
 {% block content %}
 {{ block.super }}
 
+    <div class="mb-2">
     <a href="{% url "committees:group_general" group_id=association_group.id %}"
-       class="btn btn-secondary">
-        Back to overview
+       class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left"></i> Back to overview
     </a>
+    </div>
+    <h2>
+        Members
+    </h2>
     <p>
         Member overview, contact the board if you want to add or remove a member from the list.
     </p>
@@ -45,7 +50,7 @@
                                     data-member_name="{{ member_link.member }}"
                                     data-title="{{ member_link.title }}"
                                     data-role="{{ member_link.role }}"
-                            > Edit
+                            > <i class="fas fa-pen"></i> Edit
                             </button>
                         </td>
                     </tr>
@@ -72,9 +77,11 @@
                     {% render_form method="post" has_submit_button=False id="submit_form" action=post_url %}
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Close
+                    </button>
                     <button form="submit_form" type="submit" class="btn btn-success" name="btn_save">
-                        Save item
+                        <i class="fas fa-edit"></i> Save item
                     </button>
                 </div>
             </div>

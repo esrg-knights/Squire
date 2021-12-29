@@ -23,7 +23,9 @@
                         <form method="post">
                             {% csrf_token %}
                             {{ form }}
-                            <input type="submit" class="btn btn-danger btn-subscribe btn-block" value="Deregister">
+                            <button class="btn btn-danger btn-block">
+                                <i class="fas fa-clipboard"></i> Deregister
+                            </button>
                         </form>
                     {% else %}
                         <a tabindex="0"  role="button" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom"
@@ -49,13 +51,15 @@
                         <form method="post">
                             {% csrf_token %}
                             {{ form }}
-                            <input type="submit" class="btn btn-success btn-block" value="Register">
+                            <button class="btn btn-success btn-block">
+                                <i class="fas fa-clipboard"></i> Register
+                            </button>
                         </form>
                     {% else %}
                         <a tabindex="0"  role="button" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom"
                                 data-content="{% form_rejection_reason form %}" style="text-decoration: none">
                             <button class="btn btn-outline-success btn-block disabled">
-                                Register
+                                <i class="fas fa-clipboard"></i> Register
                             </button>
                         </a>
                     {% endif %}

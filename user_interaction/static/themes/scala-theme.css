@@ -1,3 +1,9 @@
+/* Activity Card */
+.card-img-top {
+    background-color: var(--greenify-bg-color);
+    /* Should not be white or the same as background color */
+}
+
 /* Define main colour scheme */
 :root {
     /* Default text and background colors for the body */

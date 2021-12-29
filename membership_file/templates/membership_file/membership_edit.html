@@ -13,7 +13,7 @@
 {% block content %}
     <h1>Edit Membership Information</h1>
     <p>
-      <form method="post">
+      <form method="post" id="member_info_form">
           {% csrf_token %}
           {% if form.non_field_errors %}
             <ul class="errorlist alert alert-danger">
@@ -70,12 +70,14 @@
           {% generic_field form.legal_name -1 %}
 
           {% include 'core/description_required_fields.html' %}
-
-          <input type="submit" value="Confirm Changes" class="greenify btn btn-dark">
       </form>
     </p>
-
-    <p>
-      Click <a href="{% url 'account:membership:view' %}">here</a> to cancel all changes.
-    </p>
+    <div class="btn-group">
+        <button type="submit" form="member_info_form" class="btn btn-success">
+            <i class="fas fa-edit"></i> Confirm changes
+        </button>
+        <a href="{% url 'account:membership:view' %}" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancel changes
+        </a>
+    </div>
 {% endblock content %}
