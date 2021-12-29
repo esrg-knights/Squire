@@ -1,10 +1,17 @@
 from datetime import timedelta
 import random
 from django.views.generic import TemplateView
+from django.urls import reverse_lazy
 from django.utils import timezone
+
+from dynamic_preferences.registries import global_preferences_registry
 
 from activity_calendar.models import Activity
 from core.forms import LoginForm
+from membership_file.models import Membership
+
+
+global_preferences = global_preferences_registry.manager()
 
 
 def home_screen(request, *args, **kwargs):
@@ -64,7 +71,27 @@ class HomeUsersView(TemplateView):
 
         kwargs.update(
             activities=sorted(activities, key=lambda activity: activity.start_date),
-            greeting_line = random.choice(welcome_messages)
+            greeting_line = random.choice(welcome_messages),
+            unique_messages = self.get_unique_messages(),
         )
 
         return super(HomeUsersView, self).get_context_data(**kwargs)
+
+    def get_unique_messages(self):
+        unique_messages = []
+        if global_preferences['homepage__home_page_message']:
+            unique_messages.append({
+                'msg_text': str(global_preferences['homepage__home_page_message']),
+                'msg_type': "info",
+            })
+        if global_preferences['membership__signup_year']:
+            year = global_preferences['membership__signup_year']
+            if not Membership.objects.filter(member=self.request.member, year=year).exists():
+                unique_messages.append({
+                    'msg_text': f"A new adventure awaits! Continue your membership into {year} now!",
+                    'msg_type': "info",
+                    'btn_text': "Continue Questing!",
+                    'btn_url': reverse_lazy('membership_file/continue_membership'),
+                })
+
+        return unique_messages

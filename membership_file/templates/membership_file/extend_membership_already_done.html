@@ -1,0 +1,31 @@
+
+{% extends 'core/base.html' %}
+{% load render_form %}
+{% load static %}
+
+{% block title %}
+    Squire - Extend membership
+{% endblock title %}
+
+{% block og-title %}
+    Squire - Extend membership
+{% endblock og-title %}
+
+{% block content %}
+    <h1>You are already registered for {{ new_year }}</h1>
+    <p>
+        You have already extended your membership into the year {{ new_year }} so there is no need to do it again.
+        If you want to, you an press the button below. It won't do anything, but it might make you feel better :)
+    </p>
+    <button id="confettibutton" type="submit" class="btn btn-success btn-lg"
+            onclick="launchConfetti();">
+        I am a Knight!
+    </button>
+
+    <canvas id="canvas" style="position: absolute; top: 0; left: 0; pointer-events: none; height: 100vh;"></canvas>
+{% endblock %}
+
+{% block js_bottom %}
+    {{ js_bottom.super }}
+    <script src="{% static "js/confetti_launcher.js" %}"></script>
+{% endblock %}
