@@ -728,8 +728,7 @@ class ActivityTestCase(TestCase):
         self.assertEqual(occurrence.recurrence_id, test_date)
         self.assertEqual(occurrence.id, 3)  # As defined in the fixture
 
-    def test_get_occurrence_at_db_activitymoment(self):
-        """ Make sure the method retrieves activitymoments from the database if present"""
+    def test_get_occurrence_from_non_db_instance(self):
         test_date = timezone.datetime(2020, 8, 14, 19, 0, 0, tzinfo=timezone.utc)
         occurrence = Activity.objects.get(id=3).get_occurrence_at(test_date)
         self.assertEqual(occurrence.parent_activity_id, 3)

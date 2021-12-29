@@ -344,8 +344,6 @@ class Activity(models.Model):
         activitymoments = self.activitymoment_set.filter(recurrence_id=date)
         if activitymoments.count() == 1:
             return activitymoments.first()
-        elif activitymoments.count() > 1:
-            raise ActivityMoment.MultipleObjectsReturned()
 
         # Find recurrent moments that have not yet been created on the server
         if self.is_recurring:
