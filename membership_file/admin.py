@@ -1,28 +1,18 @@
 
 from datetime import datetime
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
 
 from .forms import AdminMemberForm
-from .models import Member, MemberLog, MemberLogField, Room
+from .models import Member, MemberLog, MemberLogField, Room, MemberYear, Membership
 from core.admin import EmptyFieldListFilter
 from membership_file.export import MemberResource
 from utils.forms import RequestUserToFormModelAdminMixin
 
-
-def reset_has_paid_membership_fee(modeladmin, request, queryset):
-    # Iterate over the queryset instead of updating it as to
-    #   make sure this action is logged
-    for member in queryset:
-        if member.has_paid_membership_fee:
-            member.has_paid_membership_fee = False
-            member.last_updated_by = request.user
-            member.save()
-reset_has_paid_membership_fee.short_description = 'Reset membership fee paid status'
 
 class HideRelatedNameAdmin(admin.ModelAdmin):
     class Media:
@@ -32,6 +22,7 @@ class HideRelatedNameAdmin(admin.ModelAdmin):
         css = {
             'all': ('css/hide_related_model_name.css',),
         }
+
 
 class DisableModifications():
     # Disable creation
@@ -46,9 +37,17 @@ class DisableModifications():
     def has_delete_permission(self, request, obj=None):
         return False
 
+
 class RoomInline(admin.TabularInline):
     model = Room.members_with_access.through
     extra = 0
+
+
+class MemberYearInline(admin.TabularInline):
+    model = Membership
+    fk_name = 'member'
+    extra = 0
+    fields = ['year', 'has_paid', 'payment_date']
 
 
 class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
@@ -65,6 +64,8 @@ class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
         return format_html("<a href='/admin/membership_file/memberlog/{0}/change/'>View Details</a>", obj.id)
     get_url.short_description = 'Details'
 
+
+@admin.register(Member)
 class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRelatedNameAdmin):
     ##############################
     #  Export functionality
@@ -125,7 +126,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
             ['notes']}),
     ]
 
-    inlines = [MemberLogReadOnlyInline]
+    inlines = [MemberLogReadOnlyInline, MemberYearInline]
 
     # Show at most 150 members per page (opposed to 100).
     # Show a "show all" button if <999 members are selected (opposed to 200)
@@ -138,7 +139,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
 
     # Allow bulk updating has_paid_membership_fee = False
     # TODO: This isn't a clean solution but it'll work for now
-    actions = [reset_has_paid_membership_fee, ExportActionMixin.export_admin_action]
+    actions = ['mark_as_current_member', ExportActionMixin.export_admin_action]
 
     # Disable bulk delete
     def get_actions(self, request):
@@ -146,6 +147,38 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+
+    def mark_as_current_member(self, request, queryset):
+        try:
+            year = MemberYear.objects.get(is_active=True)
+        except MemberYear.MultipleObjectsReturned:
+            self.message_user(
+                request,
+                "There are multiple years active,  only  one should be active",
+                level=messages.ERROR
+            )
+            return
+        except MemberYear.DoesNotExist:
+            self.message_user(
+                request,
+                "There is currently no year active, make sure that one is active",
+                level=messages.ERROR
+            )
+            return
+        created_count = 0
+        for member in queryset:
+            member, created = Membership.objects.get_or_create(
+                member=member,
+                year=year,
+            )
+            created_count += int(created)
+
+        self.message_user(
+            request,
+            f"Succesfully created {created_count} new members. {queryset.count() - created_count} instances were already a member",
+            level=messages.SUCCESS
+        )
+    mark_as_current_member.short_description = 'Assign as member of the currently active year'
 
     # Disable deletion if the member was not marked for deletion
     # Disable deletion for the user that marked the member for deletion
@@ -164,6 +197,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
         # The member was marked for deletion, and is being deleted by another user; enable deletion
         return True
 
+
 # Prevents MemberLogField creation, edting, or deletion in the Django Admin Panel
 class MemberLogFieldReadOnlyInline(DisableModifications, admin.TabularInline):
     model = MemberLogField
@@ -172,7 +206,9 @@ class MemberLogFieldReadOnlyInline(DisableModifications, admin.TabularInline):
     # Whether the object can be deleted inline
     can_delete = False
 
+
 # Prevents MemberLog creation, edting, or deletion in the Django Admin Panel
+@admin.register(MemberLog)
 class MemberLogReadOnly(DisableModifications, HideRelatedNameAdmin):
     # Show the date at which the information was updated as well
     readonly_fields = ['date']
@@ -182,6 +218,8 @@ class MemberLogReadOnly(DisableModifications, HideRelatedNameAdmin):
 
     inlines = [MemberLogFieldReadOnlyInline]
 
+
+@admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
     model = Room
 
@@ -192,7 +230,19 @@ class RoomAdmin(admin.ModelAdmin):
     ordering = ("access",)
     filter_horizontal = ('members_with_access',)
 
-# Register the special models, making them show up in the Django admin panel
-admin.site.register(Member, MemberWithLog)
-admin.site.register(MemberLog, MemberLogReadOnly)
-admin.site.register(Room, RoomAdmin)
+
+@admin.register(MemberYear)
+class MemberYearAdmin(admin.ModelAdmin):
+    list_display = ['name', 'is_active', 'member_count']
+    list_filter = ['is_active',]
+
+    def member_count(self, obj):
+        return obj.members.count()
+
+
+@admin.register(Membership)
+class MembershipAdmin(admin.ModelAdmin):
+    list_display = ['__str__', 'has_paid', 'payment_date']
+    list_filter = ['year', 'has_paid']
+
+

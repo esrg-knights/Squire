@@ -125,7 +125,11 @@ class Member(models.Model):
     notes = models.TextField(blank=True, help_text="Notes are invisible to members.")
 
     def is_considered_member(self):
-        return not self.is_deregistered
+        # Do not block membership if no year is active
+        if MemberYear.objects.filter(is_active=True):
+            return not self.is_deregistered and self.memberyear_set.filter(is_active=True).exists()
+        else:
+            return not self.is_deregistered
 
     ##################################
     # STRING REPRESENTATION METHODS
@@ -198,6 +202,37 @@ class Room(models.Model):
         return f"{self.name} ({self.access})"
 
 ##################################################################################
+
+
+class MemberYear(models.Model):
+    """ Defines the college years periods """
+    name = models.CharField(max_length=16)
+    members = models.ManyToManyField(Member, through='Membership', through_fields=['year', 'member'])
+    is_active = models.BooleanField(default=False)
+
+    class Meta:
+        ordering=('-name',)
+
+    def __str__(self):
+        return self.name
+
+
+class Membership(models.Model):
+    """ Defines membership details of a member in a certain memberyear"""
+    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    year = models.ForeignKey(MemberYear, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(Member, on_delete=models.SET_NULL, null=True, related_name='created_memberships')
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    has_paid = models.BooleanField(default=False)
+    payment_date = models.DateField(null=True, blank=True)
+
+    class Meta:
+        unique_together = [['member', 'year']]
+
+    def __str__(self):
+        return f'{self.member.get_full_name()} for {self.year}'
+
 
 # The MemberLog Model represents a log entry that is created whenever membership data is updated
 class MemberLog(models.Model):
