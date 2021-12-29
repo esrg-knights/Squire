@@ -1,19 +1,13 @@
-{% extends 'core/base.html' %}
+{% extends 'inventory/catalogue_base.html' %}
 {% load static %}
 {% load paginator %}
 {% load inventory_tags %}
 
-{% block title %}
-    Squire - Boardgames
-{% endblock title %}
-
-{% block content-frame-class %}
-    container
-{% endblock %}
-
 
 {% block content %}
-    <h1>Item catalogue for {{ item_type }}</h1>
+    {{ block.super }}
+
+    <h2>Overview</h2>
 
     {% if can_add_items %}
         <a href="{% url "inventory:catalogue_add_new_item" type_id=item_type %}"

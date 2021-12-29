@@ -1,16 +1,9 @@
-{% extends 'core/base.html' %}
+{% extends 'inventory/catalogue_base.html' %}
 {% load render_form %}
 
-{% block title %}
-    Squire - Inventory
-{% endblock title %}
-
-{% block content-frame-class %}
-    container
-{% endblock %}
-
 {% block content %}
-    <h1>Update {{ item }}</h1>
+    {{ block.super }}
+    <h3>Update {{ item }}</h3>
 
     {% render_form method="post" id="submit_form"  has_submit_button=False uses_file_field=True %}
 

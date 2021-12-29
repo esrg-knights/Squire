@@ -66,8 +66,24 @@ class CatalogueMixin:
         context = super(CatalogueMixin, self).get_context_data(*args, **kwargs)
         context.update({
             'item_type': self.item_type,
+            'tabs': self.get_tabs()
         })
         return context
+
+    def get_tabs(self):
+        """
+        Returns a list of dictionary objects for tab information
+        :return:
+        """
+        tabs = []
+        for item_type in Item.get_item_contenttypes():
+            tabs.append({
+                'verbose': item_type.model_class().__name__,
+                'icon_class': item_type.model_class().icon_class,
+                'url': reverse("inventory:catalogue", kwargs={'type_id': item_type}),
+                'selected': item_type == self.item_type,
+            })
+        return tabs
 
 
 class ItemMixin:

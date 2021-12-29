@@ -1,0 +1,23 @@
+{% extends 'core/base.html' %}
+{% load bootstrap_tabs %}
+{% load static %}
+
+{% block title %}
+    Squire - Catalogue for {{ item_type }}
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/bootstrap_tabs.css' %}">
+{% endblock css %}
+
+
+{% block content %}
+    <h1>Catalogue for {{ item_type }}</h1>
+
+    {% bootstrap_tabs tabs %}
+{% endblock %}
