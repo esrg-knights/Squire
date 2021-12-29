@@ -240,7 +240,7 @@
                 {% if can_edit_activity %}
                     <a class="btn-block btn-sm btn btn-outline-primary mb-4"
                         href="{% url "activity_calendar:edit_moment" activity_id=activity.id recurrence_id=recurrence_id %}">
-                        Edit
+                        <i class="fas fa-pen"></i> Edit
                     </a>
                 {% endif %}
 

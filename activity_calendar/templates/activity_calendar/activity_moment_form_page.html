@@ -101,15 +101,19 @@
 
     {% render_form has_submit_button=False id="submit_form" method="post" uses_file_field=True %}
 
-    <div class="btn-group w-100" role="group" aria-label="Form changing">
-        <a href="{% url "activity_calendar:activity_slots_on_day" activity_id=activity.id recurrence_id=recurrence_id %}"
-           class="btn btn-secondary">Cancel</a>
+    <div class="btn-group mt-5" role="group" aria-label="Form changing">
         <button form="submit_form" type="submit" class="btn btn-success">
-            Save changes
+            <i class="fas fa-edit"></i> Save changes
         </button>
+        <a href="{% url "activity_calendar:activity_slots_on_day" activity_id=activity.id recurrence_id=recurrence_id %}"
+           class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancel changes
+        </a>
         {% if not activity_moment.is_cancelled %}
             <a href="{% url "activity_calendar:cancel_moment" activity_id=activity.id recurrence_id=recurrence_id %}"
-               class="btn btn-danger">Cancel activity</a>
+               class="btn btn-danger">
+                <i class="fas fa-trash-alt"></i> Cancel activity
+            </a>
         {% endif %}
     </div>
 

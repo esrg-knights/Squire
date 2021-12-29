@@ -5,7 +5,8 @@ from .views import AchievementAccountView
 
 class AchievementConfig(AccountBaseConfig):
     url_keyword = 'achievements'
-    name = 'My achievements'
+    name = 'Achievements'
+    icon_class = 'fas fa-trophy'
     url_name = 'achievements'
     order_value = 99
 

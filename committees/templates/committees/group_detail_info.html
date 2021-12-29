@@ -60,7 +60,7 @@
                 <div class="" style="position: absolute; top: 0; right: 0;">
                     <a href="{% url "committees:group_update" group_id=association_group.id %}"
                        class="btn btn-outline-primary btn-sm">
-                        Edit
+                        <i class="fas fa-pen"></i> Edit
                     </a>
                 </div>
             </div>
@@ -77,7 +77,7 @@
                 <div class="col d-flex justify-content-end">
                     <a href="{% url "committees:group_members" group_id=association_group.id %}"
                        class="btn btn-outline-primary btn-sm">
-                        Edit
+                        <i class="fas fa-pen"></i> Edit
                     </a>
                 </div>
             </div>
@@ -104,14 +104,14 @@
                 <div class="col d-flex justify-content-end">
                     <a class="btn btn-outline-primary btn-sm"
                        href="{% url "committees:group_quicklinks" group_id=association_group.id %}">
-                        Edit
+                        <i class="fas fa-pen"></i> Edit
                     </a>
                 </div>
             </div>
             {% for link in quicklinks_internal %}
                 <div>
                     <a href="{{ link.url }}" class="btn btn-outline-info my-1 w-100">
-                        {{ link.name|capfirst }}
+                        <i class="fas fa-arrow-right"></i> {{ link.name|capfirst }}
                     </a>
                 </div>
             {% endfor %}
@@ -124,7 +124,7 @@
                     <div><small>{{ link.description|default:'' }}</small></div>
                     <a href="{{ link.url }}" class="btn btn-sm btn-outline-info my-1 w-100"
                        target="_blank" rel="noopener noreferrer">
-                        {{ link.name }}
+                        <i class="fas fa-external-link-alt"></i> {{ link.name }}
                     </a>
                 </div>
             {% endfor %}

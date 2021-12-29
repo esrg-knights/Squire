@@ -19,12 +19,14 @@
 
     {% render_form method="post" id="submit_form"  has_submit_button=False uses_file_field=True %}
 
-    <div class="btn-group" role="group" aria-label="Form changing">
-        <a href="{% url "committees:group_general" group_id=association_group.id %}"
-           class="btn btn-secondary">Back to overview</a>
-        <button form="submit_form" type="submit" class="btn btn-primary">
-            Save changes
+    <div class="btn-group">
+        <button type="submit" form="submit_form" class="btn btn-success">
+            <i class="fas fa-edit"></i> Save changes
         </button>
+        <a href="{% url "committees:group_general" group_id=association_group.id %}"
+           class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancel changes
+        </a>
     </div>
 
 {% endblock %}

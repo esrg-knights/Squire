@@ -76,6 +76,8 @@ class Item(models.Model):
     description = models.TextField(max_length=512, blank=True, null=True)
     image = models.ImageField(upload_to=get_item_image_upload_path, blank=True, null=True)
 
+    icon_class = None  # CSS classes for the icon
+
     ownerships = GenericRelation('inventory.Ownership')
     # An achievement can also apply to roleplay items
     achievements = GenericRelation('achievements.AchievementItemLink')
@@ -192,6 +194,6 @@ class Ownership(models.Model):
 
 
 class MiscellaneousItem(Item):
-    pass
+    icon_class = "fas fa-box"
 
 

@@ -90,20 +90,19 @@
         Are you sure you want to delete {{ item }}?
         </p>
 
+        {% render_form method="post" id="submit_form"  has_submit_button=False %}
+
         <div class="btn-group" role="group" aria-label="Form changing">
+            <button type="submit" class="btn btn-danger" form="submit_form">
+                <i class="fas fa-trash-alt"></i> Yes, delete {{ item.name }}
+            </button>
             {% if redirect_to_url %}
                 <a href="{{ redirect_to_url }}"
-                   class="btn btn-secondary">Cancel</a>
+                   class="btn btn-secondary px-4"><i class="fas fa-times"></i> Cancel</a>
             {% else %}
                 <a href="{% url "inventory:catalogue" type_id=item_type %}"
-                   class="btn btn-secondary">Cancel</a>
+                   class="btn btn-secondary px-4"><i class="fas fa-times"></i> Cancel</a>
             {% endif %}
-            <form method="post">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">
-                    Yes, delete {{ item.name }}
-                </button>
-            </form>
         </div>
     {% endif %}
 

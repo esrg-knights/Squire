@@ -9,6 +9,7 @@ from .views import AssociationGroupInventoryView, AssociationGroupItemLinkUpdate
 class InventoryConfig(CommitteeBaseConfig):
     url_keyword = 'inventory'
     name = 'Inventory'
+    icon_class = 'fas fa-archive'
     url_name = 'group_inventory'
     order_value = 50
 

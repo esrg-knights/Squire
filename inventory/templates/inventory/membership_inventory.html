@@ -1,5 +1,6 @@
 {% extends 'core/user_accounts/account_base.html' %}
 {% load static %}
+{% load inventory_tags %}
 
 {% block title %}
     Squire - Inventory
@@ -19,7 +20,7 @@
         Remember: items stored at the Knights are at your own risk.
     </div>
     <p>
-        If you miss any items that you have stored at the Knights in the list below or if something is wrong with these items, 
+        If you miss any items that you have stored at the Knights in the list below or if something is wrong with these items,
         <br>
         please notify the <A HREF="mailto:bg@kotkt.nl?SUBJECT=Missing Boardgame in Squire">BG</A> for boardgames, the <A HREF="mailto:rp@kotkt.nl?SUBJECT=Missing Roleplay System in Squire">RP</A> for Roleplay systems or the <A HREF="mailto:bestuur@kotkt.nl?SUBJECT=Missing item in Squire">board</A> for other items.
     </p>
@@ -47,6 +48,7 @@
                             {{ ownership.content_object.name }}
                         </td>
                         <td class="col-auto">
+                            <span class="{{ ownership.content_type|get_item_icon_classes }}"></span>
                             {{ ownership.content_type }}
                         </td>
                         <td class="col-auto">
@@ -56,13 +58,13 @@
                             {{ ownership.note }}
                             <a class="btn btn-sm btn-outline-secondary"
                                href="{% url "account:inventory:owner_link_edit" ownership_id=ownership.id %}">
-                                Edit
+                                <i class="fas fa-pen"></i> Edit
                             </a>
                         </td>
                         <td class="col-auto">
                             <a class="btn btn-sm btn-warning"
                                 href="{% url "account:inventory:member_take_home" ownership_id=ownership.id %}">
-                                Take home
+                                <i class="fas fa-angle-double-right"></i> Take home
                             </a>
                         </td>
                     </tr>
@@ -73,7 +75,7 @@
     </div>
     {% else %}
         <p class="font-weight-bold">You currently do not have any items loaned to the Knights</p>
-        <div style="height: 10em;"></div>
+        <div style="height: 5em;"></div>
     {% endif %}
 
     {% if ownerships_history %}
@@ -106,6 +108,7 @@
                         {{ ownership.content_object.name }}
                     </td>
                     <td class="col-auto">
+                        <span class="{{ ownership.content_type|get_item_icon_classes }}"></span>
                         {{ ownership.content_type }}
                     </td>
                     <td class="col-auto">
@@ -115,13 +118,13 @@
                         {{ ownership.note }}
                         <a class="btn btn-sm btn-outline-secondary"
                            href="{% url "account:inventory:owner_link_edit" ownership_id=ownership.id %}">
-                            Edit
+                            <i class="fas fa-pen"></i> Edit
                         </a>
                     </td>
                     <td class="col-auto">
                         <a class="btn btn-sm btn-secondary"
                            href="{% url "account:inventory:member_loan_out" ownership_id=ownership.id %}">
-                            Leave at Knights
+                            <i class="fas fa-angle-double-left"></i> Leave at Knights
                         </a>
                     </td>
                 </tr>

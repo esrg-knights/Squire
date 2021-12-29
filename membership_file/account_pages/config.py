@@ -6,6 +6,7 @@ from .views import MembershipDataView, MembershipChangeView
 class MembershipConfig(AccountBaseConfig):
     url_keyword = 'membership'
     name = 'Membership'
+    icon_class = 'fas fa-id-card'
     url_name = 'membership:view'
     order_value = 20
 

@@ -51,7 +51,7 @@
                     <div class="col-2">
                         <a class="btn btn-sm btn-info"
                            href="{{ activity_moment.get_absolute_url }}">
-                            View
+                            <i class="fas fa-arrow-right"></i> View
                         </a>
                     </div>
                 </div>
@@ -64,9 +64,9 @@
             <a class="btn btn-primary btn-sm"
                 href="{% url "committees:add_activity_moment" group_id=association_group.id activity_id=activity.id %}">
                 {% if activity.is_recurring %}
-                    Add extra activity instance
+                    <i class="fas fa-plus"></i> Extra activity instance
                 {% else %}
-                    Add activity instance
+                    <i class="fas fa-plus"></i> Activity instance
                 {% endif %}
             </a>
             {% endif %}

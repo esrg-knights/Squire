@@ -6,12 +6,15 @@
     <h3>Adjust link to {{ ownership.content_object.name }}</h3>
     {% render_form method="post" id="submit_form"  has_submit_button=False %}
 
-    <div class="btn-group w-100" role="group" aria-label="Form changing">
-        <a href="{% url "committees:group_inventory" group_id=association_group.id %}"
-           class="btn btn-secondary">Cancel</a>
+    <div class="btn-group" role="group" aria-label="Form changing">
         <button form="submit_form" type="submit" class="btn btn-success">
-            Save changes
+            <i class="fas fa-edit"></i> Save changes
         </button>
+        <a href="{% url "committees:group_inventory" group_id=association_group.id %}"
+           class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancel changes
+        </a>
+
     </div>
 
 {% endblock %}
