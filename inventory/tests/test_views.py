@@ -62,6 +62,7 @@ class TestOwnershipMixin(TestMixinWithMemberMiddleware, TestMixinMixin, TestCase
 class TestCatalogueMixin(TestMixinMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     mixin_class = CatalogueMixin
+    base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
@@ -85,6 +86,7 @@ class TestItemMixin(TestMixinMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     mixin_class = ItemMixin
     pre_inherit_classes = [CatalogueMixin]
+    base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
@@ -562,6 +564,7 @@ class TestOwnershipCatalogueLinkMixin(TestMixinMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     mixin_class = OwnershipCatalogueLinkMixin
     pre_inherit_classes = [CatalogueMixin, ItemMixin]
+    base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
