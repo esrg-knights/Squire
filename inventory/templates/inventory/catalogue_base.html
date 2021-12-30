@@ -3,7 +3,7 @@
 {% load static %}
 
 {% block title %}
-    Squire - Catalogue for {{ item_type }}
+    Squire - Catalogue for {{ item_type|capfirst }}
 {% endblock title %}
 
 {% block content-frame-class %}
@@ -17,6 +17,6 @@
 
 
 {% block content %}
-    <h1>Catalogue for {{ item_type }}</h1>
+    <h1>Catalogue for <b>{{ item_type|capfirst }}</b></h1>
     {% bootstrap_tabs tabs %}
 {% endblock %}
