@@ -332,15 +332,38 @@ class Activity(models.Model):
         """ Gets the duration of this activity """
         return self.end_date - self.start_date
 
-    def has_occurrence_at(self, date, is_dst_aware=False):
-        """ Whether this activity has an occurrence that starts at the specified time """
-        if not self.is_recurring:
-            return date == self.start_date
+    def get_occurrence_at(self, date, is_dst_aware=False):
+        """
+        Whether this activity has an occurrence that starts at the specified time
+        Note: This does not take shifts in starting moment into account!
+        :param date: Datetime instance of the occurrence
+        :param is_dst_aware: Whether the datetime instance is dst aware (relevant for recurrent activities)
+        :return:
+        """
+        # Check activitymoments on server
+        activitymoments = self.activitymoment_set.filter(recurrence_id=date)
+        if activitymoments.count() == 1:
+            return activitymoments.first()
 
-        if not is_dst_aware:
-            date = util.dst_aware_to_dst_ignore(date, self.start_date, reverse=True)
-        occurences = self.get_occurrences_starting_between(date, date)
-        return list(occurences)
+        # Find recurrent moments that have not yet been created on the server
+        if self.is_recurring:
+            if not is_dst_aware:
+                dst_ignored_date = util.dst_aware_to_dst_ignore(date, self.start_date, reverse=True)
+            occurences = list(self.get_occurrences_starting_between(dst_ignored_date, dst_ignored_date))
+            if occurences:
+                # Make sure to use the ORIGINAL data and not the moved one.
+                return ActivityMoment(
+                    parent_activity=self,
+                    recurrence_id=date,
+                )
+        else:
+            # A single activity that is non-recurrent and also contains no activitymoment yet
+            if date == self.start_date:
+                return ActivityMoment(
+                    parent_activity=self,
+                    recurrence_id=date,
+                )
+        return None
 
     def _get_queries_for_alt_start_time_activity_moments(self, after, before):
         """
@@ -792,7 +815,7 @@ class ActivitySlot(models.Model):
             if self.recurrence_id is None:
                 errors.update({'recurrence_id': 'Must set a date/time when this activity takes place'})
             else:
-                if not self.parent_activity.has_occurrence_at(self.recurrence_id):
+                if not self.parent_activity.get_occurrence_at(self.recurrence_id):
                     # Bounce activities if it is not fitting with the recurrence scheme
                     errors.update({'recurrence_id': 'Parent activity has no occurence at the given date/time'})
 
