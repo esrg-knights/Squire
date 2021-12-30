@@ -62,6 +62,13 @@ class CatalogueMixin:
         super(CatalogueMixin, self).setup(request, *args, **kwargs)
         self.item_type = kwargs.get('type_id')
 
+    def dispatch(self, request, *args, **kwargs):
+        if self.item_type:
+            if not self.request.user.has_perm(f'{self.item_type.app_label}.view_{self.item_type.model}'):
+                raise PermissionDenied
+        return super(CatalogueMixin, self).dispatch(request, *args, **kwargs)
+
+
     def get_context_data(self, *args, **kwargs):
         context = super(CatalogueMixin, self).get_context_data(*args, **kwargs)
         context.update({
@@ -80,11 +87,18 @@ class CatalogueMixin:
             if self.request.user.has_perm(f'{item_type.app_label}.view_{item_type.model}'):
                 model_class = item_type.model_class()
                 tabs.append({
-                    'verbose': model_class.__name__,
+                    'verbose': str.title(str(model_class._meta.verbose_name_plural)),
                     'icon_class': model_class.icon_class,
                     'url': reverse("inventory:catalogue", kwargs={'type_id': item_type}),
                     'selected': item_type == self.item_type,
                 })
+        # Add instructions tab
+        tabs.append({
+            'verbose': "Instructions",
+            'icon_class': 'fas fa-info',
+            'url': reverse("inventory:catalogue_info"),
+            'selected': isinstance(self, CatalogueInstructionsView),
+        })
         return tabs
 
 
