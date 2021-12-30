@@ -91,19 +91,10 @@ class ActivityMixin:
         self.activity = get_object_or_404(Activity, id=self.kwargs.get('activity_id'))
         self.recurrence_id = self.kwargs.get('recurrence_id', None)
 
-        self.activity_moment = ActivityMoment.objects.filter(
-            parent_activity=self.activity,
-            recurrence_id=self.recurrence_id
-        ).first()
+        self.activity_moment = self.activity.get_occurrence_at(self.recurrence_id)
 
         if self.activity_moment is None:
-            if not self.activity.has_occurrence_at(self.recurrence_id):
-                raise Http404("We could not find the activity you are trying to reach")
-            else:
-                self.activity_moment = ActivityMoment(
-                    parent_activity=self.activity,
-                    recurrence_id=self.recurrence_id,
-                )
+            raise Http404("We could not find the activity you are trying to reach")
 
     def get_context_data(self, **kwargs):
         kwargs = super(ActivityMixin, self).get_context_data(**kwargs)
