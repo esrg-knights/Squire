@@ -17,7 +17,7 @@ __all__ = ['MemberItemsOverview', 'MemberItemRemovalFormView', 'MemberItemLoanFo
 
 
 class MemberItemsOverview(AccountViewMixin, ListView):
-    template_name = "inventory/membership_inventory.html"
+    template_name = "inventory/account_pages/inventory/membership_inventory.html"
     context_object_name = 'ownerships'
 
     def get_queryset(self):
@@ -33,7 +33,7 @@ class MemberItemsOverview(AccountViewMixin, ListView):
 
 
 class MemberItemRemovalFormView(AccountViewMixin, OwnershipMixin, FormView):
-    template_name = "inventory/membership_take_home.html"
+    template_name = "inventory/account_pages/inventory/membership_take_home.html"
     form_class = OwnershipRemovalForm
     success_url = reverse_lazy("account:inventory:member_items")
 
@@ -55,7 +55,7 @@ class MemberItemRemovalFormView(AccountViewMixin, OwnershipMixin, FormView):
 
 
 class MemberItemLoanFormView(AccountViewMixin, OwnershipMixin, FormView):
-    template_name = "inventory/membership_loan_out.html"
+    template_name = "inventory/account_pages/inventory/membership_loan_out.html"
     form_class = OwnershipActivationForm
     success_url = reverse_lazy("account:inventory:member_items")
 
@@ -77,7 +77,7 @@ class MemberItemLoanFormView(AccountViewMixin, OwnershipMixin, FormView):
 
 
 class MemberOwnershipAlterView(AccountViewMixin, OwnershipMixin, FormView):
-    template_name = "inventory/membership_adjust_note.html"
+    template_name = "inventory/account_pages/inventory/membership_adjust_note.html"
     form_class = OwnershipNoteForm
     success_url = reverse_lazy("account:inventory:member_items")
 

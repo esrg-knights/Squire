@@ -62,6 +62,7 @@ class TestOwnershipMixin(TestMixinWithMemberMiddleware, TestMixinMixin, TestCase
 class TestCatalogueMixin(TestMixinMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     mixin_class = CatalogueMixin
+    base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
@@ -74,17 +75,46 @@ class TestCatalogueMixin(TestMixinMixin, TestCase):
         response = self._build_get_response()
         self.assertEqual(response.status_code, 200)
 
+    @suppress_warnings
+    def test_denied_access(self):
+        """ Tests that only those with view access can access this page """
+        user = User.objects.get(id=self.base_user_id)
+        self.assertTrue(
+            user.user_permissions.filter(codename='view_miscellaneousitem').exists(),
+            msg="Fixtures should set up the view permission on this base user"
+        )
+        user.user_permissions.remove(Permission.objects.get(codename='view_miscellaneousitem'))
+
+        # permission is no longer present, so it should deny access
+        self.assertRaises403()
+
     def test_context_data(self):
         self._build_get_response(save_view=True)
         context = self.view.get_context_data()
         self.assertIn('item_type', context.keys())
+        self.assertIn('tabs', context.keys())
         self.assertEqual(context['item_type'], self.content_type)
+
+    def test_tabs(self):
+        self._build_get_response(save_view=True)
+        tabs = self.view.get_tabs()
+        self.assertEqual(len(tabs), 2)
+        self.assertEqual(tabs[0]['verbose'], "Miscellaneous Items")
+        self.assertEqual(tabs[0]['icon_class'], MiscellaneousItem.icon_class)
+        self.assertIn('url', tabs[0].keys())
+        self.assertTrue(tabs[0]['selected'])
+
+        self.assertEqual(tabs[1]['verbose'], "Instructions")
+        self.assertEqual(tabs[1]['icon_class'], 'fas fa-info')
+        self.assertEqual(tabs[1]['url'], reverse("inventory:catalogue_info"))
+        self.assertFalse(tabs[1]['selected'])
 
 
 class TestItemMixin(TestMixinMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     mixin_class = ItemMixin
     pre_inherit_classes = [CatalogueMixin]
+    base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
@@ -112,6 +142,17 @@ class TestItemMixin(TestMixinMixin, TestCase):
         context = self.view.get_context_data()
         self.assertIn('item_type', context.keys())
         self.assertEqual(context['item_type'], self.content_type)
+
+
+class TestCatalogueInstructions(ViewValidityMixin, TestCase):
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    base_user_id = 100
+
+    def test_succesful_get(self):
+        response = self.client.get(reverse('inventory:catalogue_info'), data={})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "inventory/inventory_instructions.html")
+        self.assertTrue(response.context['tabs'][1]['selected'])
 
 
 class TestTypeCatalogue(ViewValidityMixin, TestCase):
@@ -216,6 +257,7 @@ class TestAddLinkCommitteeView(ViewValidityMixin, TestCase):
         response = self.client.post(url, data=data, follow=False)
         self.assertRedirects(response, '/alt_url/', fetch_redirect_response=False)
 
+
 class TestAddLinkMemberView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     base_user_id = 100
@@ -270,6 +312,7 @@ class TestAddLinkMemberView(ViewValidityMixin, TestCase):
         url = self.get_base_url()+'?redirect_to=/alt_url/'
         response = self.client.post(url, data=data, follow=False)
         self.assertRedirects(response, '/alt_url/', fetch_redirect_response=False)
+
 
 class TestItemCreateView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
@@ -562,6 +605,7 @@ class TestOwnershipCatalogueLinkMixin(TestMixinMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     mixin_class = OwnershipCatalogueLinkMixin
     pre_inherit_classes = [CatalogueMixin, ItemMixin]
+    base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)

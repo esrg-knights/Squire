@@ -1,16 +1,9 @@
-{% extends 'core/base.html' %}
+{% extends 'inventory/catalogue_base.html' %}
 {% load render_form %}
 
-{% block title %}
-    Squire - Inventory
-{% endblock title %}
-
-{% block content-frame-class %}
-    container
-{% endblock %}
-
 {% block content %}
-    <h1>{{ ownership }}</h1>
+    {{ block.super }}
+    <h3>{{ ownership }}</h3>
     <div class="mb-3">
         <div class="row">
             <div class="col-3">

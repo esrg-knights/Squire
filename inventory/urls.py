@@ -35,6 +35,7 @@ register_converter(CatalogueConverter, 'cat_item')
 app_name = 'inventory'
 
 urlpatterns = [
+    path('catalogue/info/', CatalogueInstructionsView.as_view(), name='catalogue_info'),
     path('catalogue/<cat_item:type_id>/', include([
         path('', TypeCatalogue.as_view(), name="catalogue"),
         path('add_new/', CreateItemView.as_view(), name='catalogue_add_new_item'),

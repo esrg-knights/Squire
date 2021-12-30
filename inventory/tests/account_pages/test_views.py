@@ -26,7 +26,7 @@ class TestMemberItemsOverview(TestCase):
 
     def test_class(self):
         self.assertTrue(issubclass(MemberItemsOverview, AccountViewMixin))
-        self.assertEqual(MemberItemsOverview.template_name, "inventory/membership_inventory.html")
+        self.assertEqual(MemberItemsOverview.template_name, "inventory/account_pages/inventory/membership_inventory.html")
         self.assertEqual(MemberItemsOverview.context_object_name, "ownerships")
 
     def test_member_items_successful(self):
@@ -58,7 +58,7 @@ class TestMemberItemRemovalFormView(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(MemberItemRemovalFormView, OwnershipMixin))
         self.assertTrue(issubclass(MemberItemRemovalFormView, AccountViewMixin))
         self.assertEqual(MemberItemRemovalFormView.form_class, OwnershipRemovalForm)
-        self.assertEqual(MemberItemRemovalFormView.template_name, "inventory/membership_take_home.html")
+        self.assertEqual(MemberItemRemovalFormView.template_name, "inventory/account_pages/inventory/membership_take_home.html")
 
     def test_get_successful(self):
         response = self.client.get(self.get_base_url(), data={})
@@ -95,7 +95,7 @@ class TestMemberItemLoanFormView(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(MemberItemLoanFormView, OwnershipMixin))
         self.assertTrue(issubclass(MemberItemRemovalFormView, AccountViewMixin))
         self.assertEqual(MemberItemLoanFormView.form_class, OwnershipActivationForm)
-        self.assertEqual(MemberItemLoanFormView.template_name, "inventory/membership_loan_out.html")
+        self.assertEqual(MemberItemLoanFormView.template_name, "inventory/account_pages/inventory/membership_loan_out.html")
 
     def test_get_successful(self):
         response = self.client.get(self.get_base_url(), data={})
@@ -130,7 +130,7 @@ class TestMemberOwnershipAlterView(ViewValidityMixin, TestCase):
     def test_class(self):
         self.assertTrue(issubclass(MemberItemLoanFormView, FormView))
         self.assertEqual(MemberOwnershipAlterView.form_class, OwnershipNoteForm)
-        self.assertEqual(MemberOwnershipAlterView.template_name, "inventory/membership_adjust_note.html")
+        self.assertEqual(MemberOwnershipAlterView.template_name, "inventory/account_pages/inventory/membership_adjust_note.html")
 
     def test_get_successful(self):
         response = self.client.get(self.get_base_url(), data={})

@@ -1,16 +1,9 @@
-{% extends 'core/base.html' %}
+{% extends 'inventory/catalogue_base.html' %}
 {% load render_form %}
 
-{% block title %}
-    Squire - Inventory
-{% endblock title %}
-
-{% block content-frame-class %}
-    container
-{% endblock %}
-
 {% block content %}
-    <h1>Add link to {{ item }}</h1>
+    {{ block.super }}
+    <h3>Add link to {{ item }}</h3>
     <p>
         Below you can make a new link to {{ item.name }}.
     </p>
