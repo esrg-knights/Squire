@@ -116,6 +116,16 @@ class TestItemMixin(TestMixinMixin, TestCase):
         self.assertEqual(context['item_type'], self.content_type)
 
 
+class TestCatalogueInstructions(ViewValidityMixin, TestCase):
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    base_user_id = 100
+
+    def test_succesful_get(self):
+        response = self.client.get(reverse('inventory:catalogue_info'), data={})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "inventory/inventory_instructions.html")
+
+
 class TestTypeCatalogue(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     base_user_id = 100
@@ -218,6 +228,7 @@ class TestAddLinkCommitteeView(ViewValidityMixin, TestCase):
         response = self.client.post(url, data=data, follow=False)
         self.assertRedirects(response, '/alt_url/', fetch_redirect_response=False)
 
+
 class TestAddLinkMemberView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     base_user_id = 100
@@ -272,6 +283,7 @@ class TestAddLinkMemberView(ViewValidityMixin, TestCase):
         url = self.get_base_url()+'?redirect_to=/alt_url/'
         response = self.client.post(url, data=data, follow=False)
         self.assertRedirects(response, '/alt_url/', fetch_redirect_response=False)
+
 
 class TestItemCreateView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
