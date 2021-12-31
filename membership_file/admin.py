@@ -91,8 +91,9 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
 
     list_display = ('id', 'user', 'first_name', 'tussenvoegsel', 'last_name', 'educational_institution', 'is_deregistered', 'marked_for_deletion')
     list_filter = [
+        'memberyear',
         'is_deregistered', 'marked_for_deletion',
-        'has_paid_membership_fee', 'is_honorary_member',
+        'is_honorary_member',
         'educational_institution',
         ('tue_card_number', EmptyFieldListFilter), ('external_card_number', EmptyFieldListFilter),
         ('key_id', EmptyFieldListFilter), ('phone_number', EmptyFieldListFilter),
@@ -242,7 +243,7 @@ class MemberYearAdmin(admin.ModelAdmin):
 
 @admin.register(Membership)
 class MembershipAdmin(admin.ModelAdmin):
-    list_display = ['__str__', 'has_paid', 'payment_date']
+    list_display = ['member', 'year', 'has_paid', 'payment_date']
     list_filter = ['year', 'has_paid']
 
 
