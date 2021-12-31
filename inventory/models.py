@@ -59,7 +59,7 @@ def get_item_image_upload_path(instance, filename):
     )
 
 
-class Item(PinnableModelMixin, models.Model):
+class Item(models.Model):
     """ Item in the inventory system. Abstract root class.
 
     On permissions:

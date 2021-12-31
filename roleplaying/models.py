@@ -30,7 +30,7 @@ def get_system_image_upload_path(instance, filename):
         extension=extension,
     )
 
-class RoleplayingSystem(PinnableModelMixin, models.Model):
+class RoleplayingSystem(models.Model):
     name = models.CharField(max_length=128)
     short_description = models.CharField(max_length=128)
     long_description = MarkdownTextField(blank=True, null=True)

@@ -180,6 +180,7 @@ class PinnableForm(forms.Form):
     def __init__(self, *args, obj=None, user=None, **kwargs):
         self.object = obj
         self.user = user
+        self.kwargs = kwargs
         super().__init__(*args, **kwargs)
 
     def create_pin(self):
@@ -191,7 +192,7 @@ class PinnableForm(forms.Form):
             print("!!!!!!!!!!!!!!!!!!!!!!!!! WOW, we created a new object!")
             # Handle cases where the object we need to attach our pin to doesn't yet exist!
             self.object.save()
-        return Pin.objects.create(content_object=self.object, category="auto-pin", author=self.user)
+        return Pin.objects.create(content_object=self.object, category="auto-pin", author=self.user, **self.kwargs)
 
     def delete_pin(self):
         """ Removes all (automatically created) pins attached to this model instance """

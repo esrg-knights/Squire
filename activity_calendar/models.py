@@ -7,8 +7,9 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, F, Value
 from django.db.models.base import ModelBase
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.formats import date_format
 from django.utils.translation import gettext_lazy as _
@@ -659,27 +660,71 @@ class ActivityMoment(PinnableModelMixin, models.Model, metaclass=ActivityDuplica
 
     ################################
     # Pin Info
-    pin_title_field = "title"
-    pin_expiry_field = "end_date"
 
-    def get_pin_message_name(self, pin):
-        return self.title
+    # todo
+    pin_description_field = "description"
+    pin_url_field = None
+    pin_image_field = None
+    # endtodo
 
-    def get_pin_description(self, pin):
-        # Pin description also contains the location
-        return self.location + self.description.as_plaintext()
+    pin_publish_field = "parent_activity__published_date"
 
-    def get_pin_url(self, pin):
-        return self.get_absolute_url()
+    @classmethod
+    def get_pin_title_query(cls):
+        return Coalesce(F('local_title'), F('parent_activity__title'))
 
-    def get_pin_image(self, pin):
-        return self.parent_activity.image_url
+    @classmethod
+    def get_pin_description_query(cls):
+        return Coalesce(F('local_description'), F('parent_activity__description'))
 
-    def get_pin_publish_date(self, pin):
-        return self.parent_activity.published_date
+    @classmethod
+    def get_pin_date_query(cls):
+        # TODO?: https://code.djangoproject.com/ticket/30631
+        return Coalesce(cls.F('local_start_date'), cls.F('recurrence_id'))
 
-    def get_pin_expiry_date(self, pin):
-        return self.end_date
+    @classmethod
+    def F(cls, name):
+        """
+        Identical to F expressions, but applies the relevant field lookup for the
+        pin field as a prefix to the name passed as the parameter.
+
+        Example: F('title') becomes F('<app_label>_<model>_pinnable__title')
+        """
+        prefix = cls.pins.rel.related_name + "__"
+        return F(prefix + name)
+
+
+    # @classmethod
+    # def get_pin_date_query(cls):
+    #     return Coalesce(F('local_start_date'), F('recurrence_id'))
+
+    @classmethod
+    def get_pin_expiry_query(cls):
+        """ Expire the pin when the activitymoment ends """
+        return models.ExpressionWrapper(F('recurrence_id') + models.ExpressionWrapper(F('parent_activity__end_date') - F('parent_activity__start_date'), output_field=models.DurationField()), output_field=models.DateTimeField())
+        return Coalesce(
+            F('local_end_date'), # Take end-date override if it exists
+            Coalesce(F('local_start_date'), F('recurrence_id')) # Take the start time
+                + F('parent_activity__end_date') - F('parent_activity__start_date') # And add the duration
+
+        )
+
+    # @classmethod
+    # def get_pin_publish_date_query(cls, start_dt):
+    #     # Publish when the parent_activity publishes
+    #     return Q(parent_activity__published_date__lte=start_dt)
+
+    # @classmethod
+    # def get_pin_expiry_date_query(cls, start_dt):
+    #     # Expire when the activitymoment ends
+    #     #   end_date is not actually a field we can query in the database, so we have to do some trickery
+
+    #     #   Swap around some calculations so we can use Django's syntax:
+    #     #   self.recurrence_id + (parent_activity.end_date - parent_activity.start_date) > start_dt
+    #     #       <==>
+    #     #       self.recurrence_id > start_date - parent_activity.end_date + parent_activity.start_date
+    #     max_expiration_date = F('parent_activity__end_date') - F('parent_activity__start_date') - Value(start_dt)
+    #     return models.Q(local_end_date__gt=start_dt) | models.Q(local_end_date__isnull=True, recurrence_id__gt=max_expiration_date)
 
     def clean_pin(self, pin):
         if pin.local_publish_date is not None and pin.local_publish_date < self.parent_activity.published_date:
@@ -695,7 +740,7 @@ class ActivityMoment(PinnableModelMixin, models.Model, metaclass=ActivityDuplica
         return f"{self.title} @ {self.start_date}"
 
 
-class ActivitySlot(PinnableModelMixin, models.Model):
+class ActivitySlot(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     location = models.CharField(max_length=255, blank=True, null=True,

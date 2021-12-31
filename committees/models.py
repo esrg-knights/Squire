@@ -11,7 +11,7 @@ from core.pin_models import PinnableModelMixin
 from membership_file.models import Member
 
 
-class AssociationGroup(PinnableModelMixin, models.Model):
+class AssociationGroup(models.Model):
     site_group = models.OneToOneField(Group, on_delete=models.CASCADE)
     shorthand = models.CharField(max_length=16, blank=True, null=True)
     icon = models.ImageField(upload_to='images/committees/', blank=True, null=True)

@@ -173,6 +173,12 @@ class ActivityMomentView(ActivityMixin, PinnablesViewMixin, ActivityFormMixin, T
             self.activity_moment.get_slots(),
         )
 
+    def get_pin_kwargs_for_obj(self, obj):
+        return {
+            # Although
+            "pin_date": self.activity_moment.recurrence_id,
+        }
+
 class ActivitySimpleMomentView(LoginRequiredForPostMixin, FormMixin, ActivityMomentView):
     form_class = RegisterForActivityForm
     template_name = "activity_calendar/activity_page_no_slots.html"

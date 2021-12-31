@@ -230,13 +230,14 @@ class PinnableFormView(PermissionRequiredMixin, FormView):
     form_class = None # Passed when instantiated
     permission_required = ('core.add_pin', 'core.delete_pin')
 
-    def setup(self, request, obj, *args, **kwargs):
+    def setup(self, request, obj, pin_kwargs, *args, **kwargs):
         self.object = obj
+        self.pin_kwargs = pin_kwargs
         return super().setup(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update(user=self.request.user, obj=self.object)
+        kwargs.update(user=self.request.user, obj=self.object, **self.pin_kwargs)
         return kwargs
 
     def form_valid(self, form):
@@ -284,7 +285,7 @@ class PinnablesViewMixin:
                         prefix=prefix
                     )
                     # Pass the object to the view
-                    return view(request, obj, *args, **kwargs)
+                    return view(request, obj, self.get_pin_kwargs_for_obj(obj), *args, **kwargs)
 
         # The "pin" form was not submitted; so another form was
         #   submitted instead. Call the parent's post method instead.
@@ -308,6 +309,10 @@ class PinnablesViewMixin:
             although they will be saved once they are pinned.
         """
         raise NotImplementedError("Subclasses of PinnablesMixin should override get_pinnable_objects()")
+
+    def get_pin_kwargs_for_obj(self, obj):
+        """ Values used during pin creation """
+        return {}
 
     def is_pinnable_pinned(self, obj):
         return obj.pins.exists()

@@ -215,27 +215,27 @@ admin.site.register(GlobalPreferenceModel, SquireGlobalPreferencesAdmin)
 
 class PinAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmin):
     form = PinAdminForm
-    date_hierarchy = 'pin_date'
+    # date_hierarchy = 'pin_date'
 
-    list_display = ('id', 'category', 'title', 'content_object', 'pin_date', 'publish_date', 'expiry_date')
-    list_display_links = ('id', 'category')
-    list_filter = ('category', 'pin_date', 'local_publish_date', 'local_expiry_date')
-    search_fields = ('title', 'author',)
-    readonly_fields = (
-        'creation_date', 'id', 'author', 'content_object',
-    )
+    # list_display = ('id', 'category', 'title', 'content_object', 'publish_date', 'expiry_date')
+    # list_display_links = ('id', 'category')
+    # list_filter = ('category', 'local_publish_date', 'local_expiry_date')
+    # search_fields = ('title', 'author',)
+    # readonly_fields = (
+    #     'creation_date', 'id', 'author', 'content_object',
+    # )
 
-    fieldsets = [
-        (None, {
-            'fields': ('id', 'author', 'creation_date', 'pin_date', 'category', 'is_members_only')
-        }),
-        ("Overrides", {
-            'fields': ('content_object', 'content_type', 'object_id',
-                'local_title', 'local_description',
-                'local_publish_date', 'local_expiry_date',
-                'local_url', 'local_image',
-            )
-        }),
-    ]
+    # fieldsets = [
+    #     (None, {
+    #         'fields': ('id', 'author', 'creation_date', 'category', 'is_members_only')
+    #     }),
+    #     ("Overrides", {
+    #         'fields': ('content_object', 'content_type', 'object_id',
+    #             'local_title', 'local_description',
+    #             'local_publish_date', 'local_expiry_date',
+    #             'local_url', 'local_image',
+    #         )
+    #     }),
+    # ]
 
 admin.site.register(Pin, PinAdmin)
