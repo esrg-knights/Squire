@@ -7,7 +7,7 @@
             <div>
                 <h6 class="card-title mb-1">{{ pin.title|default:"Pin" }}</h6>
                 <p class="card-text">
-                    <span style="white-space: pre-line;">{{ pin.description|truncatechars:max_desc_length|default:"This pin is lacking a description. High-five the person on your left without telling them why!" }}</span>
+                    <span style="white-space: pre-line;">{{ pin.description|truncatechars_html:max_desc_length|default:"This pin is lacking a description. High-five the person on your left without telling them why!" }}</span>
                     {% if pin.description|length > max_desc_length %}
                         <br>
                         <a href="#" data-toggle="modal" data-target="#pin-{{ pin.id }}">

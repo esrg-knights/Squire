@@ -13,6 +13,7 @@ from django.db.models.base import ModelBase
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.formats import date_format
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 from recurrence.fields import RecurrenceField
@@ -661,110 +662,45 @@ class ActivityMoment(PinnableModelMixin, models.Model, metaclass=ActivityDuplica
 
     ################################
     # Pin Info
+    pin_date_query_fields = ('local_start_date', 'recurrence_id')
+    pin_publish_query_fields = ('parent_activity__published_date',)
 
+    def _activitymoment_end_date(start, parent_end, parent_start):
+        # end_date = start_date + duration = start_date + (parent_end_date - parent_start_date)
 
-    pin_date_fields = ('local_start_date', 'recurrence_id')
-
-    def _xxx(start, parent_end, parent_start):
-        return models.ExpressionWrapper(start + \
+        # We need ExpressionWrapper so we can explicitly provide the output field. Without it, Django
+        #   has trouble performing arithmetic on datetimes and is unable to calculate the result.
+        # Note: If any of the fields used here are None, then the final result is None as well.
+        return models.ExpressionWrapper(
+            start + \
             models.ExpressionWrapper(parent_end - parent_start, output_field=models.DurationField()),
-            output_field=models.DateTimeField())
+            output_field=models.DateTimeField()
+        )
 
-    def _firstfieldnotnull(*args):
-        return {f"{args[0]}__isnull": False}
-
-    pin_expiry_fields = (
+    pin_expiry_query_fields = (
         'local_end_date',
-        [_xxx, _firstfieldnotnull, ('local_start_date', 'parent_activity__end_date', 'parent_activity__start_date')],
-        [_xxx, _firstfieldnotnull, ('recurrence_id', 'parent_activity__end_date', 'parent_activity__start_date')],
+        [_activitymoment_end_date, ('local_start_date', 'parent_activity__end_date', 'parent_activity__start_date')],
+        [_activitymoment_end_date, ('recurrence_id', 'parent_activity__end_date', 'parent_activity__start_date')],
     )
 
 
+    pin_title_field = "title"
+    pin_date_field = "start_date"
+    pin_expiry_field = "end_date"
 
-    @classmethod
-    def filter_expired_pins(cls, queryset, now):
-        #   Swap around some calculations so we can use Django's syntax:
-        #   self.recurrence_id + (parent_activity.end_date - parent_activity.start_date) > start_dt
-        #       <==>
-        #       self.recurrence_id > start_date - parent_activity.end_date + parent_activity.start_date
-        queryset.annotate()
+    def get_pin_description(self, pin):
+        return self.description.as_raw()
 
-        max_expiration_date = F('parent_activity__end_date') - F('parent_activity__start_date') - Value(start_dt)
-        return models.Q(local_end_date__gt=start_dt) | models.Q(local_end_date__isnull=True, recurrence_id__gt=max_expiration_date)
+    def get_pin_url(self, pin):
+        return self.get_absolute_url()
 
+    def get_pin_image(self, pin):
+        if self.slots_image is None:
+            return None
+        return self.parent_activity.slots_image.image.url
 
-        return models.ExpressionWrapper(F('recurrence_id') + models.ExpressionWrapper(F('parent_activity__end_date') - F('parent_activity__start_date'), output_field=models.DurationField()), output_field=models.DateTimeField())
-        return Coalesce(
-            F('local_end_date'), # Take end-date override if it exists
-            Coalesce(F('local_start_date'), F('recurrence_id')) # Take the start time
-                + F('parent_activity__end_date') - F('parent_activity__start_date') # And add the duration
-
-        )
-
-    # todo
-    pin_description_field = "description"
-    pin_url_field = None
-    pin_image_field = None
-    # endtodo
-
-    pin_publish_field = "parent_activity__published_date"
-
-    @classmethod
-    def get_pin_title_query(cls):
-        return Coalesce(F('local_title'), F('parent_activity__title'))
-
-    @classmethod
-    def get_pin_description_query(cls):
-        return Coalesce(F('local_description'), F('parent_activity__description'))
-
-    @classmethod
-    def get_pin_date_query(cls):
-        # TODO?: https://code.djangoproject.com/ticket/30631
-        return Coalesce(cls.F('local_start_date'), cls.F('recurrence_id'))
-
-    @classmethod
-    def F(cls, name):
-        """
-        Identical to F expressions, but applies the relevant field lookup for the
-        pin field as a prefix to the name passed as the parameter.
-
-        Example: F('title') becomes F('<app_label>_<model>_pinnable__title')
-        """
-        prefix = cls.pins.rel.related_name + "__"
-        return F(prefix + name)
-
-
-    # @classmethod
-    # def get_pin_date_query(cls):
-    #     return Coalesce(F('local_start_date'), F('recurrence_id'))
-
-    @classmethod
-    def get_pin_expiry_query(cls):
-        """ Expire the pin when the activitymoment ends """
-        return models.ExpressionWrapper(F('recurrence_id') + models.ExpressionWrapper(F('parent_activity__end_date') - F('parent_activity__start_date'), output_field=models.DurationField()), output_field=models.DateTimeField())
-        return Coalesce(
-            F('local_end_date'), # Take end-date override if it exists
-            Coalesce(F('local_start_date'), F('recurrence_id')) # Take the start time
-                + F('parent_activity__end_date') - F('parent_activity__start_date') # And add the duration
-
-        )
-
-    # @classmethod
-    # def get_pin_publish_date_query(cls, start_dt):
-    #     # Publish when the parent_activity publishes
-    #     return Q(parent_activity__published_date__lte=start_dt)
-
-    # @classmethod
-    # def get_pin_expiry_date_query(cls, start_dt):
-    #     # Expire when the activitymoment ends
-    #     #   end_date is not actually a field we can query in the database, so we have to do some trickery
-
-    #     #   Swap around some calculations so we can use Django's syntax:
-    #     #   self.recurrence_id + (parent_activity.end_date - parent_activity.start_date) > start_dt
-    #     #       <==>
-    #     #       self.recurrence_id > start_date - parent_activity.end_date + parent_activity.start_date
-    #     max_expiration_date = F('parent_activity__end_date') - F('parent_activity__start_date') - Value(start_dt)
-    #     return models.Q(local_end_date__gt=start_dt) | models.Q(local_end_date__isnull=True, recurrence_id__gt=max_expiration_date)
+    def get_pin_publish_date(self, pin):
+        return self.parent_activity.published_date
 
     def clean_pin(self, pin):
         if pin.local_publish_date is not None and pin.local_publish_date < self.parent_activity.published_date:

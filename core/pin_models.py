@@ -55,57 +55,67 @@ class PinnableModelMixin(models.Model):
         #   we still need to inherit from models.Model
         abstract = True
 
-
-    pin_date_fields = None # Iterable of fields to retrieve pin date from. First non-null field value is used.
-
-
-
-
-
     pin_template_short = None
     pin_template_long = None
     pin_view_permissions = () # Additional permissions needed to view this pin
+
+    # Iterables of field names to copy information from, taking the first non-null field value.
+    #   TODO
+    pin_date_query_fields = None
+    pin_publish_query_fields = None
+    pin_expiry_query_fields = None
 
     # Fieldnames to copy pin information from
     pin_title_field = None
     pin_description_field = None
     pin_url_field = None
     pin_image_field = None
+    pin_date_field = None
     pin_publish_field = None
     pin_expiry_field = None
-    pin_date_field = None
+
+    def get_pin_title(self, pin):
+        """ Title for pins that have this object attached to them """
+        if self.pin_title_field:
+            return getattr(self, self.pin_title_field, None)
+
+    def get_pin_description(self, pin):
+        """ Description for pins that have this object attached to them """
+        if self.pin_description_field:
+            return getattr(self, self.pin_description_field, None)
+
+    def get_pin_url(self, pin):
+        """ Title for pins that have this object attached to them """
+        if self.pin_url_field:
+            return getattr(self, self.pin_url_field, None)
+
+    def get_pin_image(self, pin):
+        """ Image for pins that have this object attached to them """
+        if self.pin_image_field:
+            image_field = getattr(self, self.pin_image_field, None)
+            if image_field:
+                return image_field.url
+        return None
+
+    def get_pin_date(self, pin):
+        if self.pin_date_field:
+            return getattr(self, self.pin_date_field, None)
+
+    def get_pin_publish_date(self, pin):
+        """ Publish date for pins that have this object attached to them """
+        if self.pin_publish_field:
+            return getattr(self, self.pin_publish_field, None)
+
+    def get_pin_expiry_date(self, pin):
+        """ Expiry Date for pins that have this object attached to them """
+        if self.pin_expiry_field:
+            return getattr(self, self.pin_expiry_field, None)
+
+
 
     # Add a GenericRelation, which handles auto-deleting a pin if the related
-    #   object no longer exists
+    #   object no longer exists. Also allows reverse relations.
     pins = GenericRelation("core.Pin", related_query_name="%(app_label)s_%(class)s_pinnable")
-
-    @classmethod
-    def get_pin_title_query(cls):
-        return F(cls.pin_title_field)
-
-    @classmethod
-    def get_pin_description_query(cls):
-        return F(cls.pin_description_field)
-
-    @classmethod
-    def get_pin_url_query(cls):
-        return F(cls.pin_url_field)
-
-    @classmethod
-    def get_pin_image_query(cls):
-        return F(cls.pin_image_field)
-
-    @classmethod
-    def get_pin_publish_query(cls):
-        return F(cls.pin_publish_field)
-
-    @classmethod
-    def get_pin_expiry_query(cls):
-        return F(cls.pin_expiry_field)
-
-    @classmethod
-    def get_pin_date_query(cls):
-        return F(cls.pin_date_field)
 
     def clean_pin(self, pin):
         """
@@ -123,188 +133,62 @@ class PinManager(models.Manager):
         Model Manager that also provides a method to list pins
         that are visible to a given user.
     """
-    def _get_pin_date_cases(self, model_class):
+
+    def _get_pin_field_cases(self, model_class, pin_fields):
         whens = []
-        for field in model_class.pin_expiry_fields:
+        for field in pin_fields:
             if isinstance(field, str):
                 whens.append(F(f"{model_class.pins.rel.related_name}__{field}"))
                 # # Just an existing field name; easy
-                # prefixed_field = f"{model_class.pins.rel.related_name}__{field}"
-                # whens.append(models.When(**{f"{prefixed_field}__isnull": False}, then=prefixed_field))
             else:
                 # Method was passed
                 method = field[0]
-                conditions = field[1]
                 d = []
-                for actual_field in field[2]:
+                for actual_field in field[1]:
                     val = F(f"{model_class.pins.rel.related_name}__{actual_field}")
                     d.append(val)
-                    print(val)
                 whens.append(
                     method(*d)
                 )
-        print(whens)
         return whens
 
-    def _get_pin_date_query(self, model_class):
+    def _get_pin_field_query(self, model_class, local_field, pin_fields):
+        # Coalesce takes the first non-NULL value.
         return Coalesce(
-            'local_expiry_date',
-            *self._get_pin_date_cases(model_class),
+            local_field,
+            *self._get_pin_field_cases(model_class, pin_fields),
         )
 
     def for_user(self, user, limit_to_highlights=False, queryset=None):
         assert user is not None
         now = timezone.now()
 
+        # Get all pins without a content_object and fetch their information
+        #   Annotate certain fields to a unified name
         pins = Pin.objects.filter(content_type_id__isnull=True).annotate(
-            pin_date=F('local_pin_date'),
-            # publish_date=F('local_publish_date'),
-            # expiry_date=F('local_expiry_date'),
+            pin_query_date=F('local_pin_date'),
+            publish_query_date=F('local_publish_date'),
+            expiry_query_date=F('local_expiry_date'),
         )
 
+        # For each pinnable object, fetch their info
         for content_type in ContentType.objects.all():
             model_class: PinnableModelMixin = content_type.model_class()
+            # Must be a pinnable model
             if model_class is not None and issubclass(model_class, PinnableModelMixin):
-                model_class_pins = Pin.objects.filter(content_type_id=content_type.id).prefetch_related('content_object').annotate(
-                    pin_date=self._get_pin_date_query(model_class),
-                    # publish_date=F('local_publish_date'),
-                    # expiry_date=F('local_expiry_date'),
+                # Fetch all pins related to this model
+                model_class_pins = Pin.objects.filter(content_type_id=content_type.id).annotate(
+                    pin_query_date=self._get_pin_field_query(model_class, 'local_pin_date', model_class.pin_date_query_fields),
+                    publish_query_date=self._get_pin_field_query(model_class, 'local_publish_date', model_class.pin_publish_query_fields),
+                    expiry_query_date=self._get_pin_field_query(model_class, 'local_expiry_date', model_class.pin_expiry_query_fields),
                 )
+
+                # Obtain the UNION of the pins for this model class and those that were fetched earlier
                 pins = pins.union(model_class_pins)
 
-        # Method 2
-        #
-        # for content_type in ContentType.objects.all():
-        #     model_class: PinnableModelMixin = content_type.model_class()
-        #     if model_class is not None and issubclass(model_class, PinnableModelMixin):
-        #         model_class_pins = Pin.objects.filter(content_type_id=content_type.id).prefetch_related('content_object').annotate(
-        #             pin_date=Coalesce(F('local_pin_date'), model_class.get_pin_date_query()),
-        #             # publish_date=F('local_publish_date'),
-        #             # expiry_date=F('local_expiry_date'),
-        #         )
-
-        #         pins = pins.union(model_class_pins)
-
-        # Method 1
-        #
-        # pins = Pin.objects.filter(content_type_id__isnull=True).annotate(
-        #     pin_title=F('local_title'),
-        #     # pinnable_description=Coalesce(F('pins__local_description'), model_class.get_pin_description_query()),
-        #     pin_pin_date=F('local_pin_date'),
-        #     pin_publish_date=F('local_publish_date'),
-        #     pin_expiry_date=F('local_expiry_date'),
-        # ).values('pin_title', 'pin_pin_date', 'pin_publish_date', 'pin_expiry_date')
-
-        # for content_type in ContentType.objects.all():
-        #     model_class: PinnableModelMixin = content_type.model_class()
-        #     if model_class is not None and issubclass(model_class, PinnableModelMixin):
-
-        #         # TODO: limit selection;
-        #         # TODO: select_related
-        #         pinnables = model_class.objects.filter(pins__isnull=False).annotate(
-        #             pin_creation_date=models.F('pins__creation_date'),
-        #             pin_title=Coalesce(F('pins__local_title'), model_class.get_pin_title_query()),
-        #             # pinnable_description=Coalesce(F('pins__local_description'), model_class.get_pin_description_query()),
-        #             pin_pin_date=Coalesce(F('pins__local_pin_date'), model_class.get_pin_date_query()),
-        #             pin_publish_date=Coalesce(F('pins__local_publish_date'), model_class.get_pin_publish_query()),
-        #             pin_expiry_date=model_class.get_pin_expiry_query(),
-        #         ).values('pin_title', 'pin_pin_date', 'pin_publish_date', 'pin_expiry_date')
-
-
-        #         print(pinnables.query)
-        #         print(pinnables)
-        #         pins = pins.union(pinnables)
-
-        #         # django.core.exceptions.FieldError: Field 'content_object' does not generate an automatic
-        #         #   reverse relation and therefore cannot be used for reverse querying. If it is a
-        #         #   GenericForeignKey, consider adding a GenericRelation.
-        #         #
-        #         # Pin.objects.filter(content_type_id=content_type.id) \
-        #         #     .prefetch_related('content_object') \
-        #         #     .annotate(pin_title=Coalesce(models.F('local_title'), models.F('content_object__title')))
-        #         #
-        #         # Pin.objects.filter(content_type_id=22) \
-        #         #     .prefetch_related('content_object') \
-        #         #     .annotate(pin_title=Coalesce(models.F('local_title'), models.F('content_object__title')))
-
-        #         # TODO: limit selection;
-        #         # TODO: select_related
-        #         # from activity_calendar.models import ActivityMoment
-        #         # x = ActivityMoment.objects.filter(pins__isnull=False).select_related('parent_activity').annotate(
-        #         #     pin_title=Coalesce(models.F('pins__local_title'), models.F('local_title')),
-        #         #     pin_creation_date=models.F('pins__creation_date'),
-        #         #     pin_publish_date=Coalesce(models.F('pins__local_publish_date'), models.F('parent_activity__published_date')),
-        #         # ).order_by('-id')
-
-        # print(pins)
-
-        # print("----")
-        # for pin in pins.order_by('pin_date'):
-        #     print(f"{pin.local_title}/{pin.content_object} - {pin.pin_date}")
-        #     # print(pin.pin_title)
-        #     # print(pin.pin_pin_date)
-        #     # print(pin.pin_expiry_date)
-        #     # print(pin.content_object)
-
-        # print(f"There are {len(pins)} pins total")
-        # print(pins.query)
-
-        return pins
-                # Annotate with attributes to copy to pin, Perform a Union
-
-
-
-    def for_user_____OLD(self, user, limit_to_highlights=False, queryset=None):
-        """ Return a queryset consisting of Pins visible to the given user. """
-        assert user is not None
-        now = timezone.now()
-
-        if queryset is None:
-            queryset = Pin.objects.all()
-
-        # Is the user unable to view not-yet-published pins?
-        if not user.has_perm('core.can_view_future_pins'):
-            # Must not have a future publish date
-            queryset = queryset.exclude(local_publish_date__gt=now)
-
-            # Must not be unpublished
-            queryset = queryset.exclude(local_publish_date__isnull=True, object_id__isnull=True)
-
-        # Is the user unable to view expired pins?
-        if not user.has_perm('core.can_view_expired_pins'):
-            # Must not have passed its expiration date
-            queryset = queryset.exclude(local_expiry_date__lte=now)
-
-        # Is the user unable to view member-only pins?
-        if not user.has_perm('core.can_view_members_only_pins'):
-            queryset = queryset.exclude(is_members_only=True)
-
-        # Handle highlights
-        if limit_to_highlights:
-            queryset = queryset.exclude(pin_sort_date__gt=True)
-
-        # Handle auto-copying from content_object that inherits from PinnableMixin (local values have priority)
-        #   This'll create a separate query for each Pinnable model (just like prefetch_related), but in
-        #   return we don't need to perform any joins over generic foreign keys.
-        content_type_queries = models.Q()
-        for content_type in ContentType.objects.all():
-            if not issubclass(content_type, PinnableModelMixin):
-                model_class: PinnableModelMixin = content_type.model_class()
-                ct_query = models.Q()
-
-                if not user.has_perm('core.can_view_future_pins'):
-                    # Filter only published pinnables
-                    ct_query &= model_class.get_pin_publish_date_query(now)
-
-                if not user.has_perm('core.can_view_expired_pins'):
-                    # Filter only non-expired pinnables
-                    ct_query &= model_class.get_pin_expiry_date_query(now)
-
-                valid_objs = content_type.model_class().objects.filter(ct_query).values_list('pk', flat=True)
-                content_type_queries |= models.Q(content_type_id=content_type.id, object_id__in=valid_objs)
-        queryset = queryset.filter(content_type_queries | models.Q(content_type_id__isnull=True))
-
-        return queryset
+        # Prefetch related content objects to reduce further queries
+        # Newest pins appear first
+        return pins.prefetch_related('content_object').order_by('-pin_query_date')
 
 
 class Pin(models.Model):
@@ -350,65 +234,72 @@ class Pin(models.Model):
     object_id = models.PositiveIntegerField(blank=True, null=True)
     content_object = GenericForeignKey('content_type', 'object_id')
 
-    # @property
-    # def title(self):
-    #     if not self.local_title and self.content_object is not None:
-    #         # No local title, so fetch related model title
-    #         return self.content_object.get_pin_title(self)
-    #     return self.local_title
+    @property
+    def title(self):
+        if not self.local_title and self.content_object is not None:
+            # No local title, so fetch related model title
+            return self.content_object.get_pin_title(self)
+        return self.local_title
 
-    # @property
-    # def description(self):
-    #     if not self.local_description and self.content_object is not None:
-    #         return self.content_object.get_pin_description(self)
-    #     return self.local_description
+    @property
+    def description(self):
+        if not self.local_description and self.content_object is not None:
+            return self.content_object.get_pin_description(self)
+        return self.local_description
 
-    # @property
-    # def url(self):
-    #     if not self.local_url and self.content_object is not None:
-    #         return self.content_object.get_pin_url(self)
-    #     return self.local_url or None
+    @property
+    def url(self):
+        if not self.local_url and self.content_object is not None:
+            return self.content_object.get_pin_url(self)
+        return self.local_url
 
-    # @property
-    # def image(self):
-    #     if self.local_image is not None:
-    #         # local override
-    #         return self.local_image.image.url
+    @property
+    def image(self):
+        return self.get_image()
 
-    #     if self.content_object is not None:
-    #         # image provided by content object
-    #         img = self.content_object.get_pin_image(self)
-    #         if img is not None:
-    #             return img
-    #     # no image whatsoever
-    #     return f"{settings.STATIC_URL}images/default_logo.png"
+    def get_image(self, default=f"{settings.STATIC_URL}images/default_logo.png"):
+        if self.local_image is not None:
+            # local override
+            return self.local_image.image.url
 
-    # @property
-    # def has_image(self):
-    #     return self.local_image is not None or \
-    #         (self.content_object is not None and self.content_object.get_pin_image(self) is not None)
+        if self.content_object is not None:
+            # image provided by content object
+            img = self.content_object.get_pin_image(self)
+            if img is not None:
+                return img
+        return default
 
-    # @property
-    # def publish_date(self):
-    #     if self.local_publish_date is None and self.content_object is not None:
-    #         return self.content_object.get_pin_publish_date(self)
-    #     return self.local_publish_date
+    @property
+    def has_image(self):
+        return self.get_image(default=None) is not None
 
-    # @property
-    # def expiry_date(self):
-    #     if self.local_expiry_date is None and self.content_object is not None:
-    #         return self.content_object.get_pin_expiry_date(self)
-    #     return self.local_expiry_date
+    @property
+    def pin_date(self):
+        if self.local_pin_date is None and self.content_object is not None:
+            return self.content_object.get_pin_date(self)
+        return self.local_pin_date
 
-    # def is_published(self):
-    #     """ Whether this pin is published """
-    #     publish_date = self.publish_date
-    #     return publish_date is not None and publish_date <= timezone.now()
+    @property
+    def publish_date(self):
+        if self.local_publish_date is None and self.content_object is not None:
+            return self.content_object.get_pin_publish_date(self)
+        return self.local_publish_date
 
-    # def is_expired(self):
-    #     """ Whether this pin has expired """
-    #     expiry_date = self.expiry_date
-    #     return expiry_date is not None and expiry_date <= timezone.now()
+    @property
+    def expiry_date(self):
+        if self.local_expiry_date is None and self.content_object is not None:
+            return self.content_object.get_pin_expiry_date(self)
+        return self.local_expiry_date
+
+    def is_published(self):
+        """ Whether this pin is published """
+        publish_date = self.publish_date
+        return publish_date is not None and publish_date <= timezone.now()
+
+    def is_expired(self):
+        """ Whether this pin has expired """
+        expiry_date = self.expiry_date
+        return expiry_date is not None and expiry_date <= timezone.now()
 
     # def can_view_pin(self, user):
     #     """ Whether the given user can see this pin """
