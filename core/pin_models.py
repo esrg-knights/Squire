@@ -55,6 +55,13 @@ class PinnableModelMixin(models.Model):
         #   we still need to inherit from models.Model
         abstract = True
 
+
+    pin_date_fields = None # Iterable of fields to retrieve pin date from. First non-null field value is used.
+
+
+
+
+
     pin_template_short = None
     pin_template_long = None
     pin_view_permissions = () # Additional permissions needed to view this pin
@@ -116,6 +123,35 @@ class PinManager(models.Manager):
         Model Manager that also provides a method to list pins
         that are visible to a given user.
     """
+    def _get_pin_date_cases(self, model_class):
+        whens = []
+        for field in model_class.pin_expiry_fields:
+            if isinstance(field, str):
+                whens.append(F(f"{model_class.pins.rel.related_name}__{field}"))
+                # # Just an existing field name; easy
+                # prefixed_field = f"{model_class.pins.rel.related_name}__{field}"
+                # whens.append(models.When(**{f"{prefixed_field}__isnull": False}, then=prefixed_field))
+            else:
+                # Method was passed
+                method = field[0]
+                conditions = field[1]
+                d = []
+                for actual_field in field[2]:
+                    val = F(f"{model_class.pins.rel.related_name}__{actual_field}")
+                    d.append(val)
+                    print(val)
+                whens.append(
+                    method(*d)
+                )
+        print(whens)
+        return whens
+
+    def _get_pin_date_query(self, model_class):
+        return Coalesce(
+            'local_expiry_date',
+            *self._get_pin_date_cases(model_class),
+        )
+
     def for_user(self, user, limit_to_highlights=False, queryset=None):
         assert user is not None
         now = timezone.now()
@@ -130,12 +166,24 @@ class PinManager(models.Manager):
             model_class: PinnableModelMixin = content_type.model_class()
             if model_class is not None and issubclass(model_class, PinnableModelMixin):
                 model_class_pins = Pin.objects.filter(content_type_id=content_type.id).prefetch_related('content_object').annotate(
-                    pin_date=Coalesce(F('local_pin_date'), model_class.get_pin_date_query()),
+                    pin_date=self._get_pin_date_query(model_class),
                     # publish_date=F('local_publish_date'),
                     # expiry_date=F('local_expiry_date'),
                 )
-
                 pins = pins.union(model_class_pins)
+
+        # Method 2
+        #
+        # for content_type in ContentType.objects.all():
+        #     model_class: PinnableModelMixin = content_type.model_class()
+        #     if model_class is not None and issubclass(model_class, PinnableModelMixin):
+        #         model_class_pins = Pin.objects.filter(content_type_id=content_type.id).prefetch_related('content_object').annotate(
+        #             pin_date=Coalesce(F('local_pin_date'), model_class.get_pin_date_query()),
+        #             # publish_date=F('local_publish_date'),
+        #             # expiry_date=F('local_expiry_date'),
+        #         )
+
+        #         pins = pins.union(model_class_pins)
 
         # Method 1
         #
@@ -188,18 +236,18 @@ class PinManager(models.Manager):
         #         #     pin_publish_date=Coalesce(models.F('pins__local_publish_date'), models.F('parent_activity__published_date')),
         #         # ).order_by('-id')
 
-        print(pins)
+        # print(pins)
 
-        print("----")
-        for pin in pins.order_by('pin_date'):
-            print(f"{pin.local_title}/{pin.content_object} - {pin.pin_date}")
-            # print(pin.pin_title)
-            # print(pin.pin_pin_date)
-            # print(pin.pin_expiry_date)
-            # print(pin.content_object)
+        # print("----")
+        # for pin in pins.order_by('pin_date'):
+        #     print(f"{pin.local_title}/{pin.content_object} - {pin.pin_date}")
+        #     # print(pin.pin_title)
+        #     # print(pin.pin_pin_date)
+        #     # print(pin.pin_expiry_date)
+        #     # print(pin.content_object)
 
-        print(f"There are {len(pins)} pins total")
-        print(pins.query)
+        # print(f"There are {len(pins)} pins total")
+        # print(pins.query)
 
         return pins
                 # Annotate with attributes to copy to pin, Perform a Union
@@ -407,14 +455,14 @@ class Pin(models.Model):
 
     def get_pin_template_short(self):
         """ Gets the short template used by this pin"""
-        if self.content_object is not None:
-            return self.content_object.pin_template_short or self.default_pin_template_short
+        # if self.content_object is not None:
+        #     return self.content_object.pin_template_short or self.default_pin_template_short
         return self.default_pin_template_short
 
     def get_pin_template_long(self):
         """ Gets the large template used by this pin """
-        if self.content_object is not None:
-            return self.content_object.pin_template_long or self.default_pin_template_long
+        # if self.content_object is not None:
+        #     return self.content_object.pin_template_long or self.default_pin_template_long
         return self.default_pin_template_long
 
     def __str__(self):

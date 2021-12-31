@@ -2,6 +2,7 @@ import copy
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db.models.fields import DateTimeField
 User = get_user_model()
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
@@ -660,6 +661,45 @@ class ActivityMoment(PinnableModelMixin, models.Model, metaclass=ActivityDuplica
 
     ################################
     # Pin Info
+
+
+    pin_date_fields = ('local_start_date', 'recurrence_id')
+
+    def _xxx(start, parent_end, parent_start):
+        return models.ExpressionWrapper(start + \
+            models.ExpressionWrapper(parent_end - parent_start, output_field=models.DurationField()),
+            output_field=models.DateTimeField())
+
+    def _firstfieldnotnull(*args):
+        return {f"{args[0]}__isnull": False}
+
+    pin_expiry_fields = (
+        'local_end_date',
+        [_xxx, _firstfieldnotnull, ('local_start_date', 'parent_activity__end_date', 'parent_activity__start_date')],
+        [_xxx, _firstfieldnotnull, ('recurrence_id', 'parent_activity__end_date', 'parent_activity__start_date')],
+    )
+
+
+
+    @classmethod
+    def filter_expired_pins(cls, queryset, now):
+        #   Swap around some calculations so we can use Django's syntax:
+        #   self.recurrence_id + (parent_activity.end_date - parent_activity.start_date) > start_dt
+        #       <==>
+        #       self.recurrence_id > start_date - parent_activity.end_date + parent_activity.start_date
+        queryset.annotate()
+
+        max_expiration_date = F('parent_activity__end_date') - F('parent_activity__start_date') - Value(start_dt)
+        return models.Q(local_end_date__gt=start_dt) | models.Q(local_end_date__isnull=True, recurrence_id__gt=max_expiration_date)
+
+
+        return models.ExpressionWrapper(F('recurrence_id') + models.ExpressionWrapper(F('parent_activity__end_date') - F('parent_activity__start_date'), output_field=models.DurationField()), output_field=models.DateTimeField())
+        return Coalesce(
+            F('local_end_date'), # Take end-date override if it exists
+            Coalesce(F('local_start_date'), F('recurrence_id')) # Take the start time
+                + F('parent_activity__end_date') - F('parent_activity__start_date') # And add the duration
+
+        )
 
     # todo
     pin_description_field = "description"

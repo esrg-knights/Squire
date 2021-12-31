@@ -5,7 +5,7 @@
         </div>
     {% endif %}
     <div class="d-flex align-items-start flex-wrap">
-        <h4 class="mr-1">{{ pin.title|default:"Pin" }}</h4>
+        <h4 class="mr-1">{{ pin.title|default:"Pin" }} ({{pin.id}})</h4>
         {% if context.perms.core.view_pin %}
             {% include "core/pins/pin_badges.html" %}
         {% endif %}
