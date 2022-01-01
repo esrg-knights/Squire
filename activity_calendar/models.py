@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models.fields import DateTimeField
 
-from activity_calendar.pin_models import ActivityMomentPinVisualiser
+from activity_calendar.pin_models import ActivityMomentPinVisualiser, ActivitySlotPinVisualiser
 User = get_user_model()
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
@@ -677,7 +677,7 @@ class ActivityMoment(PinnableModelMixin, models.Model, metaclass=ActivityDuplica
         return f"{self.title} @ {self.start_date}"
 
 
-class ActivitySlot(models.Model):
+class ActivitySlot(PinnableModelMixin, models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     location = models.CharField(max_length=255, blank=True, null=True,
@@ -763,27 +763,7 @@ class ActivitySlot(models.Model):
 
     ################################
     # Pin Info
-    pin_title_field = "title"
-
-    def get_pin_description(self, pin):
-        # Pin description also contains the location
-        return str(self.location) + self.description
-
-    def get_pin_url(self, pin):
-        return self.get_absolute_url()
-
-    def get_pin_image(self, pin):
-        return self.image_url
-
-    def get_pin_publish_date(self, pin):
-        return self.parent_activity.published_date
-
-    def get_pin_expiry_date(self, pin):
-        # This isn't entirely correct, as activitymoments can have alternative
-        #   start/end times. There is no way, however, to fetch that from
-        #   the slot object itself. Can be fixed once slots are properly
-        #   attached to ActivityMoments instead. See #83
-        return self.recurrence_id
+    pin_visualiser_class = ActivitySlotPinVisualiser
 
     def clean_pin(self, pin):
         if pin.local_publish_date is not None and pin.local_publish_date < self.parent_activity.published_date:
