@@ -31,41 +31,43 @@ def valid_pinnable_models():
     return {'id__in': valid_ids}
 
 
-class PinnableModelMixin(models.Model):
+class PinVisualiserBase:
     """
-        Mixin that marks the model inheriting this class as "Pinnable". This
-        allows that model to be linked to a Pin, allowing the pin to automatically
-        copy values from the inheriting model.
+        This class is to be linked to a specific model and specifies how pins attached
+        to that model should be visualised by copying over certain attributes from the
+        model to which it is attached.
 
-        The instance variables pin_foo_field (for each field 'foo') determine
-        where to copy information from. If None, this information will not be copied.
+        The instance variables `pin_foo_field` (for each field 'foo') determine where to
+        copy information from. If left None, this information will not be copied. For
+        example, `pin_title_field` defines from which model property to copy to the pin's
+        title.
 
-        The methods get_pin_foo(self, pin) (for each field 'foo') can be overridden to
+        The methods `get_pin_foo(self, pin)` (for each field 'foo') can be overridden to
         directly determine what should be returned for the pin's 'foo' attribute. This
         is a more flexible alternative to providing just a field to copy from.
-        For instance, it can be used to combine two model fields and return that as the
-        pin's description.
-
-        The field 'pins' is added as a GenericRelation in order to auto-delete pins that
-        are linked to the inherited object.
+        For instance, `get_pin_description(self, pin)` can be overridden to combine two
+        model attributes as the pin's description.
     """
-    class Meta:
-        # We don't actually want this class in the database, but
-        #   since we're adding a field (even if it's only a lookup)
-        #   we still need to inherit from models.Model
-        abstract = True
+    def __init__(self, instance):
+        self.instance = instance
 
-    pin_template_short = None
-    pin_template_long = None
-    pin_view_permissions = () # Additional permissions needed to view this pin
+    # Templates to render a pin of this type
+    pin_base_template = "core/pins/default_long.html"
+    pin_highlight_template = "core/pins/default.html"
+
+    # Additional permissions needed to a view a pin of this type
+    pin_view_permissions = ()
 
     # Iterables of field names to copy information from, taking the first non-null field value.
-    #   TODO
+    #   Subclasses must override these values
+    #   These are different from the instance variables below in that they operate on the database level
+    #       to allow them to be used in queries.
     pin_date_query_fields = None
     pin_publish_query_fields = None
     pin_expiry_query_fields = None
 
     # Fieldnames to copy pin information from
+    #   Subclasses can leave these values as is to not copy anything
     pin_title_field = None
     pin_description_field = None
     pin_url_field = None
@@ -74,48 +76,94 @@ class PinnableModelMixin(models.Model):
     pin_publish_field = None
     pin_expiry_field = None
 
+    # The following methods take the value from the fields in the instance variables above
+    #   by default (if they're not None), but these can be overridden for more flexibility.
     def get_pin_title(self, pin):
         """ Title for pins that have this object attached to them """
         if self.pin_title_field:
-            return getattr(self, self.pin_title_field, None)
+            return getattr(self.instance, self.pin_title_field, None)
 
     def get_pin_description(self, pin):
         """ Description for pins that have this object attached to them """
         if self.pin_description_field:
-            return getattr(self, self.pin_description_field, None)
+            return getattr(self.instance, self.pin_description_field, None)
 
     def get_pin_url(self, pin):
         """ Title for pins that have this object attached to them """
         if self.pin_url_field:
-            return getattr(self, self.pin_url_field, None)
+            return getattr(self.instance, self.pin_url_field, None)
 
     def get_pin_image(self, pin):
         """ Image for pins that have this object attached to them """
         if self.pin_image_field:
-            image_field = getattr(self, self.pin_image_field, None)
+            image_field = getattr(self.instance, self.pin_image_field, None)
             if image_field:
                 return image_field.url
         return None
 
     def get_pin_date(self, pin):
+        """ Pin date for pins with this object attached. This value is used for sorting. """
         if self.pin_date_field:
-            return getattr(self, self.pin_date_field, None)
+            return getattr(self.instance, self.pin_date_field, None)
 
     def get_pin_publish_date(self, pin):
         """ Publish date for pins that have this object attached to them """
         if self.pin_publish_field:
-            return getattr(self, self.pin_publish_field, None)
+            return getattr(self.instance, self.pin_publish_field, None)
 
     def get_pin_expiry_date(self, pin):
         """ Expiry Date for pins that have this object attached to them """
         if self.pin_expiry_field:
-            return getattr(self, self.pin_expiry_field, None)
+            return getattr(self.instance, self.pin_expiry_field, None)
 
 
+class PinnableModelMixin(models.Model):
+    """
+        Mixin that marks the model inheriting this class as "Pinnable". This
+        allows that model to be linked to a Pin, allowing the pin to automatically
+        copy values from the inheriting model. Also allows the pin to fail validation
+        based on the inherting model's attributes (through the `clean_pin` method).
+
+        The `pin_visualiser_class` defines how pins of this type should be visualised,
+        allowing to modify how certain model attributes are copied over to the pin.
+        Models inheriting this class should override this value and implement an appropriate
+        visualiser.
+
+        The field 'pins' is added as a GenericRelation in order to auto-delete pins that
+        are linked to the inherited object. They also allow reverse relations, appropriately
+        being named `<app_label>_<model>_pinnable` (depending on the attached model and its
+        app label).
+    """
+    class Meta:
+        # We don't actually want this class in the database, but
+        #   since we're adding a field (even if it's only a lookup)
+        #   we still need to inherit from models.Model
+        abstract = True
 
     # Add a GenericRelation, which handles auto-deleting a pin if the related
-    #   object no longer exists. Also allows reverse relations.
+    #   object no longer exists. Also allows reverse relations, which is needed for querying.
     pins = GenericRelation("core.Pin", related_query_name="%(app_label)s_%(class)s_pinnable")
+
+    # Class that defines how pins with this model attached should be displayed
+    pin_visualiser_class = PinVisualiserBase
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._pin_visualiser = None
+
+    def get_pin_visualiser(self, force_reload=False):
+        """
+        Gets the visualiser for this model instance, which defines what pins
+        with this instance attached to them should copy, and how this should
+        be displayed.
+
+        The return value of this method is cached for subsequent calls,
+        although it can be ignored by passing `force_reload=True`.
+        """
+        if self._pin_visualiser is None or force_reload:
+            # Cache value
+            self._pin_visualiser = self.pin_visualiser_class(self)
+        return self._pin_visualiser
 
     def clean_pin(self, pin):
         """
@@ -185,7 +233,6 @@ class PinManager(models.Manager):
                 highlight_duration__isnull=False,
                 publish_query_date__lte=now - F('highlight_duration')
             )
-
         return queryset
 
     def for_user(self, user, limit_to_highlights=False, queryset=None):
@@ -208,11 +255,13 @@ class PinManager(models.Manager):
             model_class: PinnableModelMixin = content_type.model_class()
             # Must be a pinnable model
             if model_class is not None and issubclass(model_class, PinnableModelMixin):
+                visualiser_class = model_class.pin_visualiser_class
+
                 # Fetch all pins related to this model
                 model_class_pins = queryset.filter(content_type_id=content_type.id).annotate(
-                    pin_query_date=self._get_pin_field_query(model_class, 'local_pin_date', model_class.pin_date_query_fields),
-                    publish_query_date=self._get_pin_field_query(model_class, 'local_publish_date', model_class.pin_publish_query_fields),
-                    expiry_query_date=self._get_pin_field_query(model_class, 'local_expiry_date', model_class.pin_expiry_query_fields),
+                    pin_query_date=self._get_pin_field_query(model_class, 'local_pin_date', visualiser_class.pin_date_query_fields),
+                    publish_query_date=self._get_pin_field_query(model_class, 'local_publish_date', visualiser_class.pin_publish_query_fields),
+                    expiry_query_date=self._get_pin_field_query(model_class, 'local_expiry_date', visualiser_class.pin_expiry_query_fields),
                 )
                 model_class_pins = self._filter_for_user(model_class_pins, user, limit_to_highlights=limit_to_highlights)
 
@@ -227,13 +276,12 @@ class PinManager(models.Manager):
 class Pin(models.Model):
     """
     A pin is a small notification on the homepage. If linked to a specific model instance that inherits
-    PinnableMixin, it copies over the attributes for the title, description, etc. based on fields (or
-    methods) of that model instance. This auto-copying can be overridden if local values for the pin are
-    provided instead.
+    PinnableModelMixin, it copies over the attributes for the title, description, etc. based on
+    attributes of that model instance.
+    Note that local values for the pin always override information that is auto-copied from attached
+    objects.
     """
     objects = PinManager()
-    default_pin_template_short = "core/pins/default.html" # The default template used to render a pin
-    default_pin_template_long = "core/pins/default_long.html"
 
     class Meta:
         permissions = [
@@ -271,19 +319,19 @@ class Pin(models.Model):
     def title(self):
         if not self.local_title and self.content_object is not None:
             # No local title, so fetch related model title
-            return self.content_object.get_pin_title(self)
+            return self.content_object.get_pin_visualiser().get_pin_title(self)
         return self.local_title
 
     @property
     def description(self):
         if not self.local_description and self.content_object is not None:
-            return self.content_object.get_pin_description(self)
+            return self.content_object.get_pin_visualiser().get_pin_description(self)
         return self.local_description
 
     @property
     def url(self):
         if not self.local_url and self.content_object is not None:
-            return self.content_object.get_pin_url(self)
+            return self.content_object.get_pin_visualiser().get_pin_url(self)
         return self.local_url
 
     @property
@@ -297,7 +345,7 @@ class Pin(models.Model):
 
         if self.content_object is not None:
             # image provided by content object
-            img = self.content_object.get_pin_image(self)
+            img = self.content_object.get_pin_visualiser().get_pin_image(self)
             if img is not None:
                 return img
         return default
@@ -309,19 +357,19 @@ class Pin(models.Model):
     @property
     def pin_date(self):
         if self.local_pin_date is None and self.content_object is not None:
-            return self.content_object.get_pin_date(self)
+            return self.content_object.get_pin_visualiser().get_pin_date(self)
         return self.local_pin_date
 
     @property
     def publish_date(self):
         if self.local_publish_date is None and self.content_object is not None:
-            return self.content_object.get_pin_publish_date(self)
+            return self.content_object.get_pin_visualiser().get_pin_publish_date(self)
         return self.local_publish_date
 
     @property
     def expiry_date(self):
         if self.local_expiry_date is None and self.content_object is not None:
-            return self.content_object.get_pin_expiry_date(self)
+            return self.content_object.get_pin_visualiser().get_pin_expiry_date(self)
         return self.local_expiry_date
 
     def is_published(self):
@@ -377,17 +425,17 @@ class Pin(models.Model):
             #   other data is copied form the related object
             self.content_object.clean_pin(self)
 
-    def get_pin_template_short(self):
+    def get_pin_highlight_template(self):
         """ Gets the short template used by this pin"""
-        # if self.content_object is not None:
-        #     return self.content_object.pin_template_short or self.default_pin_template_short
-        return self.default_pin_template_short
+        if self.content_object is not None:
+            return self.content_object.get_pin_visualiser().pin_highlight_template
+        return PinVisualiserBase.pin_highlight_template
 
-    def get_pin_template_long(self):
+    def get_pin_base_template(self):
         """ Gets the large template used by this pin """
-        # if self.content_object is not None:
-        #     return self.content_object.pin_template_long or self.default_pin_template_long
-        return self.default_pin_template_long
+        if self.content_object is not None:
+            return self.content_object.get_pin_visualiser().pin_base_template
+        return PinVisualiserBase.pin_base_template
 
     def __str__(self):
         return f"Pin {self.id} - {self.local_title} ({self.content_object})"

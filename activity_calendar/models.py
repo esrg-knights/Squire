@@ -3,6 +3,8 @@ import copy
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models.fields import DateTimeField
+
+from activity_calendar.pin_models import ActivityMomentPinVisualiser
 User = get_user_model()
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
@@ -660,57 +662,16 @@ class ActivityMoment(PinnableModelMixin, models.Model, metaclass=ActivityDuplica
             'recurrence_id': self.recurrence_id,
         })
 
-    ################################
-    # Pin Info
-    pin_date_query_fields = ('local_start_date', 'recurrence_id')
-    pin_publish_query_fields = ('parent_activity__published_date',)
-
-    def _activitymoment_end_date(start, parent_end, parent_start):
-        # end_date = start_date + duration = start_date + (parent_end_date - parent_start_date)
-
-        # We need ExpressionWrapper so we can explicitly provide the output field. Without it, Django
-        #   has trouble performing arithmetic on datetimes and is unable to calculate the result.
-        # Note: If any of the fields used here are None, then the final result is None as well.
-        return models.ExpressionWrapper(
-            start + \
-            models.ExpressionWrapper(parent_end - parent_start, output_field=models.DurationField()),
-            output_field=models.DateTimeField()
-        )
-
-    pin_expiry_query_fields = (
-        'local_end_date',
-        [_activitymoment_end_date, ('local_start_date', 'parent_activity__end_date', 'parent_activity__start_date')],
-        [_activitymoment_end_date, ('recurrence_id', 'parent_activity__end_date', 'parent_activity__start_date')],
-    )
-
-
-    pin_title_field = "title"
-    pin_date_field = "start_date"
-    pin_expiry_field = "end_date"
-
-    def get_pin_description(self, pin):
-        return self.description.as_raw()
-
-    def get_pin_url(self, pin):
-        return self.get_absolute_url()
-
-    def get_pin_image(self, pin):
-        if self.slots_image is None:
-            return None
-        return self.parent_activity.slots_image.image.url
-
-    def get_pin_publish_date(self, pin):
-        return self.parent_activity.published_date
+    # Pinformation
+    pin_visualiser_class = ActivityMomentPinVisualiser
 
     def clean_pin(self, pin):
+        # Prevent a pin's local_publish_date to be earlier than
+        #   the activitymoment's parent_activity's publish date
         if pin.local_publish_date is not None and pin.local_publish_date < self.parent_activity.published_date:
             raise ValidationError({'local_publish_date':
                 f"Pin cannot be published before the related activity is published ({self.parent_activity.published_date})"
             })
-
-    # End Pinfo
-    ################################
-
 
     def __str__(self):
         return f"{self.title} @ {self.start_date}"

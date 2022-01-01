@@ -20,7 +20,7 @@ def get_pins(user):
 @register.simple_tag(takes_context=True)
 def render_pin(context, pin, short=True):
     """ Renders a pin """
-    template = pin.get_pin_template_short() if short else pin.get_pin_template_long()
+    template = pin.get_pin_highlight_template() if short else pin.get_pin_base_template()
     return render_to_string(template, {
         'pin': pin,
         'context': context,
