@@ -15,7 +15,7 @@ register = template.Library()
 @register.filter
 def get_pins(user):
     """ Returns a Queryset containing the pins accessible to the given user """
-    return Pin.objects.for_user(user)
+    return Pin.objects.for_user(user, limit_to_highlights=True)
 
 @register.simple_tag(takes_context=True)
 def render_pin(context, pin, short=True):

@@ -159,17 +159,49 @@ class PinManager(models.Manager):
             *self._get_pin_field_cases(model_class, pin_fields),
         )
 
+    def _filter_for_user(self, queryset, user, limit_to_highlights=False):
+        now = timezone.now()
+
+        # Is the user unable to view not-yet-published pins?
+        if not user.has_perm('core.can_view_future_pins'):
+            # Must not have a future publish date
+            queryset = queryset.exclude(publish_query_date__gt=now)
+
+            # Must not be unpublished
+            queryset = queryset.exclude(publish_query_date__isnull=True)
+
+        # Is the user unable to view expired pins?
+        if not user.has_perm('core.can_view_expired_pins'):
+            # Must not have passed its expiration date
+            queryset = queryset.exclude(expiry_query_date__lte=now)
+
+        # Is the user unable to view member-only pins?
+        if not user.has_perm('core.can_view_members_only_pins'):
+            queryset = queryset.exclude(is_members_only=True)
+
+        # Handle highlights
+        if limit_to_highlights:
+            queryset = queryset.exclude(
+                highlight_duration__isnull=False,
+                publish_query_date__lte=now - F('highlight_duration')
+            )
+
+        return queryset
+
     def for_user(self, user, limit_to_highlights=False, queryset=None):
         assert user is not None
-        now = timezone.now()
+
+        if queryset is None:
+            queryset = Pin.objects.all()
 
         # Get all pins without a content_object and fetch their information
         #   Annotate certain fields to a unified name
-        pins = Pin.objects.filter(content_type_id__isnull=True).annotate(
+        pins = queryset.filter(content_type_id__isnull=True).annotate(
             pin_query_date=F('local_pin_date'),
             publish_query_date=F('local_publish_date'),
             expiry_query_date=F('local_expiry_date'),
         )
+        pins = self._filter_for_user(pins, user, limit_to_highlights=limit_to_highlights)
 
         # For each pinnable object, fetch their info
         for content_type in ContentType.objects.all():
@@ -177,11 +209,12 @@ class PinManager(models.Manager):
             # Must be a pinnable model
             if model_class is not None and issubclass(model_class, PinnableModelMixin):
                 # Fetch all pins related to this model
-                model_class_pins = Pin.objects.filter(content_type_id=content_type.id).annotate(
+                model_class_pins = queryset.filter(content_type_id=content_type.id).annotate(
                     pin_query_date=self._get_pin_field_query(model_class, 'local_pin_date', model_class.pin_date_query_fields),
                     publish_query_date=self._get_pin_field_query(model_class, 'local_publish_date', model_class.pin_publish_query_fields),
                     expiry_query_date=self._get_pin_field_query(model_class, 'local_expiry_date', model_class.pin_expiry_query_fields),
                 )
+                model_class_pins = self._filter_for_user(model_class_pins, user, limit_to_highlights=limit_to_highlights)
 
                 # Obtain the UNION of the pins for this model class and those that were fetched earlier
                 pins = pins.union(model_class_pins)
