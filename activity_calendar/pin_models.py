@@ -9,24 +9,7 @@ class ActivityMomentPinVisualiser(PinVisualiserBase):
     # Database fieldnames
     pin_date_query_fields = ('local_start_date', 'recurrence_id')
     pin_publish_query_fields = ('parent_activity__published_date',)
-
-    def _activitymoment_end_date(start, parent_end, parent_start):
-        # end_date = start_date + duration = start_date + (parent_end_date - parent_start_date)
-
-        # We need ExpressionWrapper so we can explicitly provide the output field. Without it, Django
-        #   has trouble performing arithmetic on datetimes and is unable to calculate the result.
-        # Note: If any of the fields used here are None, then the final result is None as well.
-        return ExpressionWrapper(
-            start + \
-            ExpressionWrapper(parent_end - parent_start, output_field=DurationField()),
-            output_field=DateTimeField()
-        )
-
-    pin_expiry_query_fields = (
-        'local_end_date',
-        [_activitymoment_end_date, ('local_start_date', 'parent_activity__end_date', 'parent_activity__start_date')],
-        [_activitymoment_end_date, ('recurrence_id', 'parent_activity__end_date', 'parent_activity__start_date')],
-    )
+    pin_expiry_query_fields = ('local_start_date', 'recurrence_id')
 
     # Attributes
     pin_title_field = "title"

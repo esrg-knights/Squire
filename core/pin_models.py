@@ -181,23 +181,10 @@ class PinManager(models.Manager):
         Model Manager that also provides a method to list pins
         that are visible to a given user.
     """
-
     def _get_pin_field_cases(self, model_class, pin_fields):
         whens = []
         for field in pin_fields:
-            if isinstance(field, str):
-                whens.append(F(f"{model_class.pins.rel.related_name}__{field}"))
-                # # Just an existing field name; easy
-            else:
-                # Method was passed
-                method = field[0]
-                d = []
-                for actual_field in field[1]:
-                    val = F(f"{model_class.pins.rel.related_name}__{actual_field}")
-                    d.append(val)
-                whens.append(
-                    method(*d)
-                )
+            whens.append(F(f"{model_class.pins.rel.related_name}__{field}"))
         return whens
 
     def _get_pin_field_query(self, model_class, local_field, pin_fields):
