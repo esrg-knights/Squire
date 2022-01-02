@@ -66,6 +66,8 @@ INSTALLED_APPS = [
     'boardgames',
     'roleplaying',
     'user_interaction.apps.UserInteractionConfig',
+    # Test components
+    'core.tests.tests_pins', # Test models for pins
     # More External Libraries
     'django_cleanup.apps.CleanupConfig',
     'martor',

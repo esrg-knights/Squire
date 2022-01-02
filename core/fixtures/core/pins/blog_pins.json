@@ -1,0 +1,49 @@
+[
+    {
+        "model": "tests_pins.blogpost",
+        "pk": 1,
+        "fields": {
+            "title": "First post",
+            "content": "This is a very short post",
+            "for_date": "2022-01-02T00:00:00Z",
+            "publishes_on": "2021-01-02T14:00:00Z"
+        }
+    },
+    {
+        "model": "tests_pins.blogcomment",
+        "pk": 1,
+        "fields": {
+            "blog_post_id": 1,
+            "content": "Wow what a cool blog!",
+            "publish_date": null
+        }
+    },
+    {
+        "model": "core.pin",
+        "pk": 1,
+        "fields": {
+            "creation_date": "2022-01-02T14:00:00Z",
+            "category": "test-category",
+            "local_pin_date": "2022-01-02T20:00:00Z",
+            "local_publish_date": "2022-01-02T14:00:00Z",
+            "local_expiry_date": null,
+            "is_members_only": false,
+            "content_type": null,
+            "object_id": null
+        }
+    },
+    {
+        "model": "core.pin",
+        "pk": 2,
+        "fields": {
+            "creation_date": "2022-02-02T14:00:00Z",
+            "category": "test-category",
+            "local_pin_date": "2022-02-02T20:00:00Z",
+            "local_publish_date": "2022-02-02T14:00:00Z",
+            "local_expiry_date": null,
+            "is_members_only": false,
+            "content_type": null,
+            "object_id": null
+        }
+    }
+]

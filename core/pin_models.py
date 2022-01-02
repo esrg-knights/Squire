@@ -189,10 +189,14 @@ class PinManager(models.Manager):
 
     def _get_pin_field_query(self, model_class, local_field, pin_fields):
         # Coalesce takes the first non-NULL value.
-        return Coalesce(
-            local_field,
-            *self._get_pin_field_cases(model_class, pin_fields),
-        )
+        fields = self._get_pin_field_cases(model_class, pin_fields)
+        if fields:
+            return Coalesce(
+                local_field,
+                *fields,
+            )
+        # No alternative fields to consider
+        return F(local_field)
 
     def _filter_for_user(self, queryset, user, limit_to_highlights=False):
         now = timezone.now()
@@ -208,7 +212,7 @@ class PinManager(models.Manager):
         # Is the user unable to view expired pins?
         if not user.has_perm('core.can_view_expired_pins'):
             # Must not have passed its expiration date
-            queryset = queryset.exclude(expiry_query_date__lte=now)
+            queryset = queryset.exclude(expiry_query_date__isnull=False, expiry_query_date__lte=now)
 
         # Is the user unable to view member-only pins?
         if not user.has_perm('core.can_view_members_only_pins'):
