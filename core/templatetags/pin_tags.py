@@ -1,5 +1,6 @@
 from django import template
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ImproperlyConfigured
 from django.template.loader import render_to_string
 
 from core.pin_models import Pin
@@ -27,7 +28,7 @@ def render_pin(context, pin, short=True):
     })
 
 @register.inclusion_tag("core/pins/pinnable_form.html", takes_context=True)
-def pinnable_form(context, obj, index=0, btn_classes=""):
+def pinnable_form(context, pinnable_prefix, btn_classes=""):
     """
         Renders a form to (un)pin an item in this View. This View must
         inherit `PinnablesMixin` in order for this to work.
@@ -37,8 +38,11 @@ def pinnable_form(context, obj, index=0, btn_classes=""):
             This is used to identify the correct form.
         - `btn_classes` can be used to attach extra CSS classes to the (un)pin button
     """
-    pinnable_prefix = f"pinnable_form-{ContentType.objects.get_for_model(obj).id}-{index}"
     pinnable_form = context.get(pinnable_prefix, None)
+
+    if pinnable_form is None: # pragma: no cover
+        raise ImproperlyConfigured(f"Form with prefix {pinnable_prefix} does not exist in this context.")
+
     return {
         'pinnable_form': pinnable_form,
         'do_pin': pinnable_form.initial['do_pin'],

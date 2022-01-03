@@ -227,17 +227,17 @@ class PinnableFormView(PermissionRequiredMixin, FormView):
         View that handles instantiation of a form to create a
         pin for a specific model instance.
     """
-    form_class = None # Passed when instantiated
+    form_class = None # Set when instantiated through as_view(..)
     permission_required = ('core.add_pin', 'core.delete_pin')
 
-    def setup(self, request, obj, pin_kwargs, *args, **kwargs):
+    def setup(self, request, obj, pinnable_form_kwargs, *args, **kwargs):
         self.object = obj
-        self.pin_kwargs = pin_kwargs
+        self.pinnable_form_kwargs = pinnable_form_kwargs
         return super().setup(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update(user=self.request.user, obj=self.object, **self.pin_kwargs)
+        kwargs.update(user=self.request.user, obj=self.object, **self.pinnable_form_kwargs)
         return kwargs
 
     def form_valid(self, form):
@@ -246,7 +246,7 @@ class PinnableFormView(PermissionRequiredMixin, FormView):
             message = _("'{pinnable_obj}' was successfully pinned!")
         else:
             message = _("'{pinnable_obj}' was successfully unpinned!")
-        messages.success(self.request, message.format(pinnable_obj=self.object.get_pin_message_name(pin).capitalize()))
+        messages.success(self.request, message.format(pinnable_obj=str(self.object).capitalize()))
         return super().form_valid(form)
 
     def form_invalid(self, form):
@@ -275,17 +275,15 @@ class PinnablesViewMixin:
     pinnable_form_class = PinnableForm
 
     def post(self, request, *args, **kwargs):
-        for objs in self.get_pinnable_objects():
-            for i, obj in enumerate(objs):
-                prefix = self.get_prefix_for_pinnable(obj, i)
-                # Was this pinnable (un)pinned?
-                if prefix in self.request.POST:
-                    view = self.pinnable_formview_class.as_view(
-                        form_class=self.get_form_class_for_pinnable(obj),
-                        prefix=prefix
-                    )
-                    # Pass the object to the view
-                    return view(request, obj, self.get_pin_kwargs_for_obj(obj), *args, **kwargs)
+        for (prefix, obj) in self.get_pinnable_objects():
+            # Was this pinnable (un)pinned?
+            if prefix in self.request.POST:
+                view = self.pinnable_formview_class.as_view(
+                    form_class=self.get_form_class_for_pinnable(obj),
+                    prefix=prefix
+                )
+                # Pass the object to the view
+                return view(request, obj, self.get_form_kwargs_for_pinnable(obj), *args, **kwargs)
 
         # The "pin" form was not submitted; so another form was
         #   submitted instead. Call the parent's post method instead.
@@ -308,34 +306,28 @@ class PinnablesViewMixin:
             Model instances do not need to exist in the database when they are passed here,
             although they will be saved once they are pinned.
         """
+        # [(prefix1, obj1), (prefix2, obj2), ...]
         raise NotImplementedError("Subclasses of PinnablesMixin should override get_pinnable_objects()")
-
-    def get_pin_kwargs_for_obj(self, obj):
-        """ Values used during pin creation """
-        return {}
-
-    def is_pinnable_pinned(self, obj):
-        return obj.pins.exists()
-
-    def get_prefix_for_pinnable(self, obj, i):
-        """ The prefix used to identify the i'th object of its type """
-        # pinnable_form-<content_type_id>-<index>
-        return f"pinnable_form-{ContentType.objects.get_for_model(obj).pk}-{i}"
 
     def get_form_class_for_pinnable(self, obj):
         return self.pinnable_form_class
 
+    def get_form_kwargs_for_pinnable(self, obj):
+        return {}
+
+    def is_pinnable_pinned(self, obj):
+        return obj.pins.filter(category="auto-pin").exists()
+
     def get_context_data(self, **kwargs):
         """ Insert the pinnable forms into the context dict. """
         context = super().get_context_data(**kwargs)
-        for objs in self.get_pinnable_objects():
-            for i, obj in enumerate(objs):
-                prefix = self.get_prefix_for_pinnable(obj, i)
-                form_kwargs = {
-                    'initial': {'do_pin': not self.is_pinnable_pinned(obj)},
-                    'prefix': prefix,
-                    'user': self.request.user,
-                    'obj': obj,
-                }
-                context[prefix] = self.get_form_class_for_pinnable(obj)(**form_kwargs)
+        for (prefix, obj) in self.get_pinnable_objects():
+            assert prefix != "", "A pin's forms prefix cannot be empty"
+            form_kwargs = {
+                'initial': {'do_pin': not self.is_pinnable_pinned(obj)},
+                'prefix': prefix,
+                'user': self.request.user,
+                'obj': obj,
+            }
+            context[prefix] = self.get_form_class_for_pinnable(obj)(**form_kwargs)
         return context

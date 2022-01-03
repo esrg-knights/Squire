@@ -185,14 +185,10 @@ class PinnableForm(forms.Form):
 
     def create_pin(self):
         """ Creates a pin for the attached model instance """
-        if self.object.pins.exists():
-            # There technically is a race condition here if two users pin the object at the exact same time
-            return
         if self.object.pk is None:
-            print("!!!!!!!!!!!!!!!!!!!!!!!!! WOW, we created a new object!")
             # Handle cases where the object we need to attach our pin to doesn't yet exist!
             self.object.save()
-        return Pin.objects.create(content_object=self.object, category="auto-pin", author=self.user, **self.kwargs)
+        return Pin.objects.create(content_object=self.object, category="auto-pin", author=self.user)
 
     def delete_pin(self):
         """ Removes all (automatically created) pins attached to this model instance """
@@ -202,5 +198,4 @@ class PinnableForm(forms.Form):
         """ Saves the form. If the object was pinned, returns the newly created pin. """
         if self.cleaned_data['do_pin']:
             return self.create_pin()
-        else:
-            self.delete_pin()
+        return self.delete_pin()

@@ -46,9 +46,12 @@
                 </div>
             </div>
         </div>
-        {% if perms.core.change_pin %}
+        {% if perms.core.add_pin and perms.core.delete_pin %}
             <div class="col-2 col-md-1 align-self-center pr-2 pt-3 pt-md-0">
-                {% pinnable_form slot index %}
+                {# Adding numbers and strings together won't work #}
+                {% with slot_id=slot.id|stringformat:"s" %}
+                    {% pinnable_form "pinnable_slot_"|add:slot_id %}
+                {% endwith %}
             </div>
         {% endif %}
         <div class="col-10 col-md-2 d-flex align-items-center pt-3 pt-md-0">

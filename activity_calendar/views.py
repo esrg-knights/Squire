@@ -168,16 +168,10 @@ class ActivityMomentView(ActivityMixin, PinnablesViewMixin, ActivityFormMixin, T
         )
 
     def get_pinnable_objects(self):
-        return (
-            (self.activity_moment,),
-            self.activity_moment.get_slots(),
-        )
-
-    def get_pin_kwargs_for_obj(self, obj):
-        return {
-            # Although
-            "pin_date": self.activity_moment.recurrence_id,
-        }
+        pinnables = [('pinnable_activitymoment', self.activity_moment)]
+        for slot in self.activity_moment.get_slots():
+            pinnables.append((f"pinnable_slot_{slot.id}", slot))
+        return pinnables
 
 class ActivitySimpleMomentView(LoginRequiredForPostMixin, FormMixin, ActivityMomentView):
     form_class = RegisterForActivityForm
