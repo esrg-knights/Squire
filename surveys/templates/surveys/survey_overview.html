@@ -1,0 +1,36 @@
+{% extends 'core/base.html' %}
+
+{% load static %}
+{% load survey_tags %}
+
+{% block content-frame-class %}
+    wideContentFrame
+{% endblock %}
+
+{% block content %}
+
+    <h4>Surveys</h4>
+
+    {% for survey in surveys %}
+        <div class="row">
+            <div class="col-4">
+                {{ survey.name }}
+            </div>
+            <div class="col-4">
+                <a class="btn btn-primary"
+                href="{% url 'surveys:fill_in' survey_id=survey.id %}">
+                    Answer
+                </a>
+            </div>
+            <div>
+                {% if survey|get_response_of:member %}
+                    Answered
+                {% else %}
+                    Not answered
+                {% endif %}
+            </div>
+        </div>
+
+    {% endfor %}
+
+{% endblock %}

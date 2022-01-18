@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'inventory',
     'committees',
     'activity_calendar',
+    'surveys',
     'utils',
     'boardgames',
     'roleplaying',

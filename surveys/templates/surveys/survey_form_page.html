@@ -1,0 +1,26 @@
+{% extends 'core/base.html' %}
+
+{% load static %}
+{% load render_form %}
+
+{% block content-frame-class %}
+    wideContentFrame
+{% endblock %}
+
+{% block content %}
+
+    <h4>Survey</h4>
+
+    {% render_form has_submit_button=False id="submit_form" method="post" uses_file_field=True %}
+
+    <div class="btn-group mt-5" role="group" aria-label="Form changing">
+        <button form="submit_form" type="submit" class="btn btn-success">
+            <i class="fas fa-edit"></i> Save answers
+        </button>
+        <a href="{% url "surveys:overview" %}"
+           class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancel
+        </a>
+    </div>
+
+{% endblock %}

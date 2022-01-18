@@ -35,6 +35,8 @@ urlpatterns = [
     path('boardgames/', include(('boardgames.urls', 'boardgames'), namespace='boardgames')),
     path('roleplay/', include(('roleplaying.urls', 'roleplaying'), namespace='roleplaying')),
 
+    path('surveys/', include('surveys.urls')),
+
     # Activity Calendar
     path('', include(('activity_calendar.urls', 'activity_calendar'), namespace='activity_calendar')),
     # Committee pages
