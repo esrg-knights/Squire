@@ -9,7 +9,28 @@
 
 {% block content %}
 
-    <h4>Survey</h4>
+    <h2>Survey: {{ survey.name }}</h2>
+
+    <div class="row mb-3">
+        {% if survey.organisers.exists %}
+            <div class="col-12">
+                The answers of this survey will be shared with
+                {% for organiser in survey.organisers.all %}
+                    {% if organiser.icon %}
+                        <img
+                            class="ml-1"
+                            src="{{ organiser.icon.url }}"
+                            height="32"
+                            width="32"
+                        />
+                    {% endif %}
+                    {{ organiser.name }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+
 
     {% render_form has_submit_button=False id="submit_form" method="post" uses_file_field=True %}
 
