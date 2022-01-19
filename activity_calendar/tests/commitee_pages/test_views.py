@@ -1,42 +1,16 @@
-from django.core.exceptions import ImproperlyConfigured
 from django.contrib.auth.models import Permission
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.urls import reverse
 from django.views.generic import ListView, FormView
 
 from activity_calendar.models import Activity, OrganiserLink
-from committees.models import AssociationGroup
 from committees.committeecollective import AssociationGroupMixin
+from committees.testing import AssocationGroupTestingMixin
 from core.tests.util import suppress_warnings
 from utils.testing.view_test_utils import ViewValidityMixin
 
 from activity_calendar.committee_pages.forms import CreateActivityMomentForm
 from activity_calendar.committee_pages.views import ActivityCalendarView, AddActivityMomentCalendarView
-
-
-
-class AssocationGroupTestingMixin:
-    association_group_id = None
-    association_group = None
-    url_name = None
-
-    def setUp(self):
-        super(AssocationGroupTestingMixin, self).setUp()
-        if self.association_group_id is None:
-            raise ImproperlyConfigured(f"'association_group_id' was not defined on {self.__class__.__name__}")
-        self.association_group = AssociationGroup.objects.get(id=self.association_group_id)
-
-    def get_base_url(self):
-        if self.url_name is None:
-            raise ImproperlyConfigured(f"'url_name' was not defined on {self.__class__.__name__}")
-        return reverse('committees:'+self.url_name, kwargs=self.get_url_kwargs())
-
-    def get_url_kwargs(self, **kwargs):
-        url_kwargs = {
-            'group_id': self.association_group_id,
-        }
-        url_kwargs.update(kwargs)
-        return url_kwargs
 
 
 class TestCommitteeActivityOverview(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
