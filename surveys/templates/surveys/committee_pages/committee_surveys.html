@@ -1,0 +1,25 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    {{ block.super }}
+
+    {% for survey in surveys %}
+        <div class="mb-4">
+            <h4>
+                {{ survey.name}}
+            </h4>
+            <p>Response: {{ survey.response_set.count }}</p>
+            <a class="btn btn-info"
+               href="{% url "committees:surveys:results" group_id=association_group.id survey_id=survey.id %}">
+                <i class="fas fa-poll-h"></i> Results
+            </a>
+        </div>
+    {% endfor %}
+
+{% endblock %}

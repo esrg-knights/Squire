@@ -41,6 +41,32 @@ class ViewValidityMixin:
         self.assertEqual(response.status_code, 200, "Response was not a valid Http200 response")
         return response
 
+    def assertGetResponsePermissionDenied(self, data=None, url=None):
+        """
+        Assert that the response symbolises a denied response
+        :param data: Get data, defaults to an empty dict
+        :param url: The url, defaults to self.get_base_url
+        :return: Either a raised assertion error or the HttpResponse instance
+        """
+        url = url or self.get_base_url()
+        data = data or {}
+        response = self.client.get(url, data=data)
+        self.assertEqual(response.status_code, 403, "Response was not a valid Http403 response")
+        return response
+
+    def assertGetResponseNotFound(self, data=None, url=None):
+        """
+        Assert that the response symbolises a denied response
+        :param data: Get data, defaults to an empty dict
+        :param url: The url, defaults to self.get_base_url
+        :return: Either a raised assertion error or the HttpResponse instance
+        """
+        url = url or self.get_base_url()
+        data = data or {}
+        response = self.client.get(url, data=data)
+        self.assertEqual(response.status_code, 404, "Response was not a valid Http404 response")
+        return response
+
     def assertValidPostResponse(self, data=None, url=None, redirect_url=None, fetch_redirect_response=True):
         """
         Assert that a post does not create errors

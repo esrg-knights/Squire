@@ -1,0 +1,73 @@
+[
+    {
+        "model": "auth.group",
+        "pk": 61,
+        "fields": {
+            "name": "Survey_hosts",
+            "permissions": [
+                [
+                    "view_survey",
+                    "surveys",
+                    "survey"
+                ]
+            ]
+        }
+    },
+    {
+        "model": "committees.associationgroup",
+        "pk": 61,
+        "fields": {
+            "site_group": 61,
+            "shorthand": "SH",
+            "type": "C",
+            "contact_email": "sh@test_kotkt.nl"
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 60,
+        "fields": {
+            "password": "pbkdf2_sha25eKF0vuQUz1WFfv3lGvfnJpPvlco=",
+            "last_login": "1970-01-01T12:00:00Z",
+            "username": "survey_host_test_user",
+            "first_name": "",
+            "last_name": "",
+            "email": "",
+            "is_active": true,
+            "date_joined": "1970-01-01T12:00:00Z"
+        }
+    },
+    {
+        "model": "membership_file.member",
+        "pk": 60,
+        "fields": {
+            "user": 60,
+            "is_deregistered": true,
+            "legal_name": "S.H.",
+            "first_name": "Maurice",
+            "tussenvoegsel": "",
+            "last_name": "de Hond",
+            "email": "mauricedehond@example.com",
+            "member_since": "2020-01-01",
+            "last_updated_date": "1970-01-01T12:00:00Z",
+            "last_updated_by": null,
+            "marked_for_deletion": false
+        }
+    },
+    {
+        "model": "committees.associationgroupmembership",
+        "pk": 64,
+        "fields": {
+            "member": 60,
+            "group": 61
+        }
+    },
+    {
+        "model": "surveys.survey_organisers",
+        "pk": 62,
+        "fields":  {
+            "survey_id": 1,
+            "associationgroup_id": 61
+        }
+    }
+]

@@ -17,10 +17,10 @@ class AssocationGroupTestingMixin:
             raise ImproperlyConfigured(f"'association_group_id' was not defined on {self.__class__.__name__}")
         self.association_group = AssociationGroup.objects.get(id=self.association_group_id)
 
-    def get_base_url(self):
+    def get_base_url(self, **url_kwargs):
         if self.url_name is None:
             raise ImproperlyConfigured(f"'url_name' was not defined on {self.__class__.__name__}")
-        return reverse('committees:'+self.url_name, kwargs=self.get_url_kwargs())
+        return reverse('committees:'+self.url_name, kwargs=self.get_url_kwargs(**url_kwargs))
 
     def get_url_kwargs(self, **kwargs):
         url_kwargs = {

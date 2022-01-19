@@ -11,7 +11,7 @@ class Survey(models.Model):
     name = models.CharField(max_length=32)
     description = models.CharField(max_length=128)
     created_on = models.DateTimeField(auto_now_add=True)
-    organisers = models.ManyToManyField(AssociationGroup, null=True, blank=True)
+    organisers = models.ManyToManyField(AssociationGroup, blank=True)
 
     def __str__(self):
         return self.name
