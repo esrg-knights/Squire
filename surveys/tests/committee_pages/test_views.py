@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.views.generic import ListView, TemplateView
 
 from core.tests.util import suppress_warnings
-from committees.testing import AssocationGroupTestingMixin
+from committees.tests import AssocationGroupTestingMixin
 from utils.testing.view_test_utils import ViewValidityMixin
 
 from surveys.models import Survey

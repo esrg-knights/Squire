@@ -1,6 +1,9 @@
 from django.contrib.messages import success
+from django.template.response import TemplateResponse
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from django.urls import reverse_lazy
+from django.utils.timezone import now
 from django.views.generic import FormView, ListView
 from django.views.generic.detail import SingleObjectMixin
 
@@ -25,6 +28,32 @@ class SurveyFormView(SingleObjectMixin, FormView):
     def setup(self, request, *args, **kwargs):
         super(SurveyFormView, self).setup(request, *args, **kwargs)
         self.object = self.get_object()
+
+    def dispatch(self, request, *args, **kwargs):
+        if self.object.end_date is not None and self.object.end_date < now():
+            return self.render_expired_response()
+        if self.object.start_date is not None and self.object.start_date > now():
+            raise Http404("This survey does not exist")
+
+        return super(SurveyFormView, self).dispatch(request, *args, **kwargs)
+
+    def render_expired_response(self):
+        """ Returns a rendereed template response signalling that the survey has expired """
+        expired_template = "surveys/survey_expired.html"
+
+        return TemplateResponse(
+            request=self.request,
+            template=expired_template,
+            context={
+                self.context_object_name: self.object,
+                'response': Response.objects.filter(
+                    member=self.request.member,
+                    survey=self.object
+                ).prefetch_related(
+                    'answer_set'
+                ).first()
+            }
+        )
 
     def get_form_kwargs(self):
         survey = self.object

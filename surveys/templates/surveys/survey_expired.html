@@ -1,0 +1,62 @@
+{% extends 'core/base.html' %}
+
+{% load static %}
+{% load survey_tags %}
+
+{% block content-frame-class %}
+    wideContentFrame
+{% endblock %}
+
+{% block content %}
+
+    {% if response %}
+        <div class="alert alert-danger">
+            This survey's deadline has passed, you can no longer adjust your answers.
+        </div>
+        <h2>Survey: {{ survey.name }}</h2>
+        <div class="row mb-3">
+            {% if survey.organisers.exists %}
+                <div class="col-12">
+                    The answers of this survey are shared with
+                    {% for organiser in survey.organisers.all %}
+                        {% if organiser.icon %}
+                            <img
+                                class="ml-1"
+                                src="{{ organiser.icon.url }}"
+                                height="32"
+                                width="32"
+                            />
+                        {% endif %}
+                        {{ organiser.name }}{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <p>
+            You have answered the survey as follows:
+        </p>
+
+        {% for question in survey.question_set.all %}
+            <div class="row">
+                <div class="col-3">
+                    {{ question.label }}:
+                </div>
+                <div class="col-9">
+                    {{ question|get_answer_of:response }}
+                </div>
+
+            </div>
+        {% endfor %}
+
+    {% else %}
+        <div class="alert alert-danger">
+            This survey's deadline has passed, you can not longer respond
+        </div>
+        <h2>Survey: {{ survey.name }}</h2>
+        <p>
+        It is no longer possible to respond to this survey
+        </p>
+    {% endif %}
+
+{% endblock %}

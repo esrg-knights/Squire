@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
 from membership_file.models import Member
 from committees.models import AssociationGroup
@@ -12,6 +13,14 @@ class Survey(models.Model):
     description = models.CharField(max_length=128)
     created_on = models.DateTimeField(auto_now_add=True)
     organisers = models.ManyToManyField(AssociationGroup, blank=True)
+    start_date = models.DateTimeField(blank=True, null=True)
+    end_date = models.DateTimeField(blank=True, null=True)
+
+    def clean(self):
+        super(Survey, self).clean()
+
+        if self.start_date and self.end_date and self.end_date<= self.start_date:
+            raise ValidationError({'end_date': "Any survey end date should be later than the survey start date"})
 
     def __str__(self):
         return self.name
