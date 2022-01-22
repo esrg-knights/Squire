@@ -5,7 +5,7 @@ from django.views.generic import ListView, FormView
 
 from activity_calendar.models import Activity, OrganiserLink
 from committees.committeecollective import AssociationGroupMixin
-from committees.testing import AssocationGroupTestingMixin
+from committees.tests import AssocationGroupTestingMixin
 from core.tests.util import suppress_warnings
 from utils.testing.view_test_utils import ViewValidityMixin
 
