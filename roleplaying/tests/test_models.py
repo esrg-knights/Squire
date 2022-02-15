@@ -36,7 +36,7 @@ class TestRoleplayingSystem(TestCase):
         # Test choice field
         field = RoleplayingSystem._meta.get_field("rate_complexity")
         self.assertTrue(hasattr(field, 'choices'))
-        self.assertTrue(len(field.choices), 5)
+        self.assertEqual(len(field.choices), 5)
 
     def test_system_upload_path(self):
         system = RoleplayingSystem.objects.get(id=1)
