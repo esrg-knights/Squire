@@ -356,6 +356,10 @@ def get_activity_detail_view(request, *args, **kwargs):
         raise Http404("We could not find the activity you are trying to reach")
 
 
+# #######################################
+# ######   Slot related Views      ######
+# #######################################
+
 class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
     form_class = RegisterNewSlotForm
     template_name = "activity_calendar/activity_page_new_slot.html"
@@ -426,6 +430,21 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
         else:
             messages.error(self.request, _("Some input was not valid. Please correct your data below"))
             return super(CreateSlotView, self).form_invalid(form)
+
+
+class SlotView(LoginRequiredMixin, ActivityMixin, TemplateView):
+    template_name = "activity_calendar/slot_blocks/slot.html"
+
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+
+        self.slot = self.activity_moment.get_slots().filter(id=kwargs['slot_id']).first()
+        # todo, throw 404 on non existent slot
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['slot'] = self.slot
+        return context
 
 
 # #######################################

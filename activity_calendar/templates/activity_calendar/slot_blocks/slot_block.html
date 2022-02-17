@@ -50,5 +50,11 @@
                 {% register_button slot %}
             {% endif %}
         </div>
+        {% if user == slot.owner %}
+        <a class="btn-sm btn btn-primary"
+                        href="{% url "activity_calendar:slot" activity_id=activity.id recurrence_id=recurrence_id slot_id=slot.id %}">
+                        <i class="fas fa-pen"></i> Slot
+                    </a>
+        {% endif %}
     </div>
 </div>
