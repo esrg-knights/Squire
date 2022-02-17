@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'utils',
     'boardgames',
     'roleplaying',
+    'info_pages',
     'user_interaction.apps.UserInteractionConfig',
     # More External Libraries
     'django_cleanup.apps.CleanupConfig',
