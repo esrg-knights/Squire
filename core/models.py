@@ -84,3 +84,22 @@ class MarkdownImage(models.Model):
 
     def __str__(self):
         return f"{self.content_type}-MarkdownImage ({self.id})"
+
+
+class Shortcut(models.Model):
+    """ A model class that function as an url shortener.
+
+    Url shortening system should ALWAYS be the last in urls.
+
+    """
+    title = models.CharField(max_length=16)
+    # A description that will appear when link is loaded through Open Graph previews
+    description = models.CharField(max_length=128, blank=True, null=True)
+
+    # The local name e.g. 'intro' can be found under <squire-domain>.nl/intro
+    location = models.CharField(max_length=32, unique=True)
+    # The url it references to. It should be the full url e.g. 'https://www.google.com'
+    referrence_url = models.URLField()
+
+    def __str__(self):
+        return f'{self.title} @ {self.location}'

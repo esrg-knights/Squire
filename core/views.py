@@ -6,16 +6,18 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.http.response import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import ugettext_lazy as _
+from django.shortcuts import get_object_or_404
 from django.views import View
+from django.views.generic import TemplateView
 from django.views.decorators.http import require_safe
 
 from .forms import RegisterForm
-from .models import MarkdownImage
+from .models import MarkdownImage, Shortcut
 
 from dynamic_preferences.registries import global_preferences_registry
 global_preferences = global_preferences_registry.manager()
@@ -169,6 +171,20 @@ class MartorImageUploadAPIView(LoginRequiredMixin, PermissionRequiredMixin, View
             'link':  markdown_img.image.url,
             'name': os.path.splitext(uploaded_file.name)[0]
         })
+
+
+class UrlRedirectView(TemplateView):
+    template_name = "core/redirect_url_page.html"
+
+    def setup(self, request, *args, **kwargs):
+        super(UrlRedirectView, self).setup(request, *args, **kwargs)
+        self.shortcut = get_object_or_404(Shortcut, location=kwargs.get('url_shortener', ''))
+
+    def get_context_data(self, **kwargs):
+        context = super(UrlRedirectView, self).get_context_data(**kwargs)
+        context['shortcut'] = self.shortcut
+        return context
+
 
 def show_error_403(request, exception=None):
     return render(request, 'core/errors/error403.html', status=403)
