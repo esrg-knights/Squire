@@ -45,6 +45,9 @@ urlpatterns = [
     path('', include('core.urls', namespace='core')),
 
     path('', include('user_interaction.urls')),
+
+    # Shortcuts should always be last to prevent replacements of functional build-in urls
+    path('', include('core.shortcut_urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 # NB: 'static(...) above only works when Debug=True! In production, the web server should be set up to serve files
 # For production use, view the following:
