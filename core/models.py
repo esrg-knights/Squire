@@ -92,14 +92,18 @@ class Shortcut(models.Model):
     Url shortening system should ALWAYS be the last in urls.
 
     """
+    # Title and description are used for displaying through Open Graph
     title = models.CharField(max_length=16)
-    # A description that will appear when link is loaded through Open Graph previews
-    description = models.CharField(max_length=128, blank=True, null=True)
+    description = models.CharField(
+        max_length=256, blank=True, null=True,
+        help_text="Will be displayed when sharing the link on e.g. Telegram or Whatsapp")
 
-    # The local name e.g. 'intro' can be found under <squire-domain>.nl/intro
-    location = models.CharField(max_length=32, unique=True)
-    # The url it references to. It should be the full url e.g. 'https://www.google.com'
-    referrence_url = models.URLField()
+    location = models.CharField(
+        max_length=32, unique=True,
+        help_text="The local url e.g. intro results in <squire-domain>.nl/intro")
+    reference_url = models.URLField(
+        help_text="The url it references to. It should be the full url e.g. 'https://www.google.com'"
+    )
 
     def __str__(self):
-        return f'{self.title} @ {self.location}'
+        return f'{self.title} on {self.location}'
