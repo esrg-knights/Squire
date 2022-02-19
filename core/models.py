@@ -99,7 +99,7 @@ class Shortcut(models.Model):
         help_text="Will be displayed when sharing the link on e.g. Telegram or Whatsapp")
 
     location = models.CharField(
-        max_length=32, unique=True,
+        max_length=128, unique=True,
         help_text="The local url e.g. intro results in <squire-domain>.nl/intro")
     reference_url = models.URLField(
         help_text="The url it references to. It should be the full url e.g. 'https://www.google.com'"
