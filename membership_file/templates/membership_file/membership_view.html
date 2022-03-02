@@ -1,6 +1,6 @@
 
 {% extends 'core/user_accounts/account_base.html' %}
-
+{% load static %}
 {% block title %}
   Squire - Membership Data
 {% endblock title %}
@@ -124,6 +124,12 @@
                     Student Number: <i>{{ member.student_number|default:"Not provided" }}</i><br>
                 {% endif %}
                 Educational Institution: <i>{{ member.educational_institution|default:"None" }}</i>
+            </p>
+            <h3>Membership Card</h3>
+            <p>
+            <img src="{% static 'images/MembershipCard.jpg' %}" alt="MembershipCard" height='256px'>
+                <br>
+                Show this card to the people at Jolie spellen, a boardgame store in Eindhoven, and get a 10% discount on your purchase.
             </p>
         {% else %}
             <p>Oops! You do not seem to have the right permissions to view your membership information!</p>
