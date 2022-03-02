@@ -126,6 +126,10 @@ htdocs/media/images/*
 /output/
 /test/output/
 
+#Disables tracking of membership Card file, need to be added manually
+/membership_file/static/images/MembershipCard.jpg 
+
+
 # Visual Studio Code
 .vscode
 
