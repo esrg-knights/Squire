@@ -107,7 +107,18 @@ class CESTEventFeed(ICalFeed):
             filter(parent_activity__published_date__lte=timezone.now()).\
             exclude(status=ActivityMoment.STATUS_REMOVED)
 
-        return [*activities, *exceptions]
+        # Activities should only be processed if either it is recurring or it is non-recurring, but the activitymoment
+        # object has not yet been created. Otherwise it would yield two calendar activity copies
+        # as described in issue #213
+        def recurring_activities():
+            """ Generator for activities to exclude invalid activity instances """
+            for activity in activities:
+                if activity.is_recurring:
+                    yield activity
+                elif not activity.activitymoment_set.exists():
+                    yield activity
+
+        return [*recurring_activities(), *exceptions]
 
     def item_guid(self, item):
         return get_feed_id(item)
