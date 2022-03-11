@@ -192,3 +192,6 @@ def show_error_403(request, exception=None):
 
 def show_error_404(request, exception=None):
     return render(request, 'core/errors/error404.html', status=404)
+
+def show_error_500(request, exception=None):
+    return render(request, 'core/errors/error500.html',  status=500, context={'exception': exception})
