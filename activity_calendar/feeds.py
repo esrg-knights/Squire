@@ -3,6 +3,7 @@ from datetime import datetime
 from django.conf import settings
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
 
 from django_ical import feedgenerator
 from django_ical.feedgenerator import ICal20Feed
@@ -10,7 +11,7 @@ from django_ical.utils import build_rrule_from_recurrences_rrule
 from django_ical.views import ICalFeed
 
 
-from .models import Activity, ActivityMoment
+from .models import Activity, ActivityMoment, Calendar
 import activity_calendar.util as util
 
 # Monkey-patch; Why is this not open for extension in the first place?
@@ -69,7 +70,11 @@ class CESTEventFeed(ICalFeed):
     product_id = '-//Squire//Activity Calendar//EN'
     file_name = "knights-calendar.ics"
 
-    # Quick overwrite to allow results to be printed in the browser instead
+    calendar_title = None
+    calendar_description = None
+
+
+# Quick overwrite to allow results to be printed in the browser instead
     # Good for testing
     # def __call__(self, *args, **kwargs):
     #     response = super(CESTEventFeed, self).__call__(*args, **kwargs)
@@ -77,12 +82,18 @@ class CESTEventFeed(ICalFeed):
     #     return HttpResponse(content=response._container, content_type='text')
 
     def title(self):
-        # TODO: unhardcode
-        return "Activiteiten Agenda - Knights"
+        if self.calendar_title is None:
+            raise KeyError(
+                f"'calendar_title' for {self.__class__.__name__} has not been defined."
+            )
+        return self.calendar_title
 
     def description(self):
-        # TODO: unhardcode
-        return "Knights of the Kitchen Table Activiteiten en Evenementen."
+        if self.calendar_description is None:
+            raise KeyError(
+                f"'calendar_description' for {self.__class__.__name__} has not been defined."
+            )
+        return self.calendar_description
 
     def method(self):
         return "PUBLISH"
@@ -242,3 +253,46 @@ class CESTEventFeed(ICalFeed):
         if val:
             kwargs['recurrenceid'] = val
         return kwargs
+
+
+class PublicCalendarFeed(CESTEventFeed):
+    """ Define the feed for the public calendar """
+    product_id = '-//Squire//Activity Calendar//EN'
+    file_name = "knights-calendar.ics"
+    calendar_title = "Activiteiten Agenda - Knights"
+    calendar_description = "Knights of the Kitchen Table Activiteiten en Evenementen."
+
+    def items(self):
+        # Only consider published activities
+        activities = Activity.objects.\
+            filter(published_date__lte=timezone.now()).order_by('-published_date'). \
+            filter(is_public=True)
+        exceptions = ActivityMoment.objects. \
+            filter(parent_activity__in=activities). \
+            exclude(status=ActivityMoment.STATUS_REMOVED)
+
+        return [*activities, *exceptions]
+
+
+class CustomCalendarFeed(CESTEventFeed):
+    file_name = "knights-calendar.ics"
+
+    @property
+    def product_id(self):
+        return f'-//Squire//Activity Calendar {self.calendar.name}//EN'
+
+    def __call__(self, *args, **kwargs):
+        self.calendar = get_object_or_404(Calendar, slug=kwargs['calendar_slug'])
+        self.calendar_title = self.calendar.name
+        self.calendar_description = self.calendar.description
+
+        return super(CustomCalendarFeed, self).__call__(*args, **kwargs)
+
+    def items(self):
+        activities = self.calendar.activities.\
+            filter(published_date__lte=timezone.now()).order_by('-published_date')
+        exceptions = ActivityMoment.objects. \
+            filter(parent_activity__in=activities). \
+            exclude(status=ActivityMoment.STATUS_REMOVED)
+
+        return [*activities, *exceptions]

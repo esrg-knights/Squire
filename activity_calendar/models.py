@@ -79,6 +79,7 @@ class Activity(models.Model):
 
     # The date at which the activity will become visible for all users
     published_date = models.DateTimeField(default=now_rounded)
+    is_public = models.BooleanField(default=True, help_text="If activity should be on public calendar")
 
     # Start and end times
     start_date = models.DateTimeField()
@@ -872,3 +873,23 @@ class OrganiserLink(models.Model):
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
     association_group = models.ForeignKey('committees.AssociationGroup', on_delete=models.CASCADE)
     archived = models.BooleanField(default=False)
+
+
+class Calendar(models.Model):
+    """ Symbolises a calendar with certain activities """
+    name = models.CharField(max_length=128, unique=True)
+    slug = models.SlugField(verbose_name='url string', help_text="The local url string", unique=True)
+    description = models.CharField(max_length=256)
+
+    activities = models.ManyToManyField(Activity, through="CalendarActivityLink")
+
+    def __str__(self):
+        return self.name
+
+
+class CalendarActivityLink(models.Model):
+    calendar = models.ForeignKey(Calendar, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.calendar} - {self.activity}'

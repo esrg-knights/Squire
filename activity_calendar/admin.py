@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.utils.timezone import localtime
 
 from .forms import ActivityAdminForm, ActivityMomentAdminForm
-from .models import Activity, ActivitySlot, Participant, ActivityMoment, OrganiserLink, CoreActivityGrouping
+from .models import Activity, ActivitySlot, Participant, ActivityMoment, OrganiserLink, CoreActivityGrouping, \
+    Calendar, CalendarActivityLink
 
 from core.admin import MarkdownImageInline
 from utils.forms import RequestUserToFormModelAdminMixin
@@ -46,7 +47,7 @@ class ActivityAdmin(MarkdownImageInlineAdmin):
     is_recurring.boolean = True
 
     list_display = ('id', 'title', 'start_date', 'is_recurring', 'subscriptions_required', )
-    list_filter = ['subscriptions_required', 'start_date']
+    list_filter = ['subscriptions_required', 'start_date', 'is_public']
     list_display_links = ('id', 'title')
     date_hierarchy = 'start_date'
     search_fields = ['title']
@@ -111,3 +112,5 @@ class ActivitySlotAdmin(admin.ModelAdmin):
     inlines = [ParticipantInline]
 
 admin.site.register(ActivitySlot, ActivitySlotAdmin)
+admin.site.register(Calendar)
+admin.site.register(CalendarActivityLink)
