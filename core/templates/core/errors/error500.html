@@ -1,0 +1,26 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}
+    Squire - 500 Database error
+{% endblock title %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/glitchtext.css' %}">
+{% endblock %}
+
+{% block content %}
+
+    <h1 class="glitch" data-text="This ain't good. I seem to be broken!">This ain't good</h1>
+    <p>
+        It appears I made an error processing your request. That is... unfortunate.
+        The UUPS (the ICT committee) has been informed of this error, so hopefully it will be resolved soon.
+    </p>
+    <p>
+        If at any point you again encounter the problem, or discover another glitch. Please report it on our issues list
+        on github:
+        <a href="https://github.com/esrg-knights/Squire/issues/">https://github.com/esrg-knights/Squire/issues/</a>
+    </p>
+
+{% endblock %}
