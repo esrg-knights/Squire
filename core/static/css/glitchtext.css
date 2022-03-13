@@ -1,0 +1,163 @@
+/*
+    CSS code taken from:
+    https://codepen.io/lbebber/pen/nqwBKK
+ */
+
+.glitch {
+    position: relative;
+}
+
+@keyframes noise-anim {
+    0% {
+        clip: rect(97px, 9999px, 16px, 0);
+    }
+    5% {
+        clip: rect(92px, 9999px, 97px, 0);
+    }
+    10% {
+        clip: rect(53px, 9999px, 84px, 0);
+    }
+    15% {
+        clip: rect(23px, 9999px, 77px, 0);
+    }
+    20% {
+        clip: rect(42px, 9999px, 93px, 0);
+    }
+    25% {
+        clip: rect(18px, 9999px, 34px, 0);
+    }
+    30% {
+        clip: rect(71px, 9999px, 85px, 0);
+    }
+    35% {
+        clip: rect(49px, 9999px, 80px, 0);
+    }
+    40% {
+        clip: rect(56px, 9999px, 24px, 0);
+    }
+    45% {
+        clip: rect(71px, 9999px, 42px, 0);
+    }
+    50% {
+        clip: rect(16px, 9999px, 46px, 0);
+    }
+    55% {
+        clip: rect(24px, 9999px, 92px, 0);
+    }
+    60% {
+        clip: rect(77px, 9999px, 27px, 0);
+    }
+    65% {
+        clip: rect(25px, 9999px, 95px, 0);
+    }
+    70% {
+        clip: rect(43px, 9999px, 46px, 0);
+    }
+    75% {
+        clip: rect(69px, 9999px, 49px, 0);
+    }
+    80% {
+        clip: rect(9px, 9999px, 76px, 0);
+    }
+    85% {
+        clip: rect(9px, 9999px, 10px, 0);
+    }
+    90% {
+        clip: rect(15px, 9999px, 64px, 0);
+    }
+    95% {
+        clip: rect(91px, 9999px, 67px, 0);
+    }
+    100% {
+        clip: rect(21px, 9999px, 35px, 0);
+    }
+}
+.glitch:after {
+    content: attr(data-text);
+    position: absolute;
+    left: 2px;
+    text-shadow: -1px 0 white;
+    top: 0;
+
+    overflow: hidden;
+    clip: rect(0, 900px, 0, 0);
+    animation: noise-anim 2s infinite linear alternate-reverse;
+}
+
+@keyframes noise-anim-2 {
+    0% {
+        clip: rect(41px, 9999px, 67px, 0);
+    }
+    5% {
+        clip: rect(91px, 9999px, 81px, 0);
+    }
+    10% {
+        clip: rect(63px, 9999px, 6px, 0);
+    }
+    15% {
+        clip: rect(34px, 9999px, 93px, 0);
+    }
+    20% {
+        clip: rect(41px, 9999px, 77px, 0);
+    }
+    25% {
+        clip: rect(74px, 9999px, 94px, 0);
+    }
+    30% {
+        clip: rect(98px, 9999px, 23px, 0);
+    }
+    35% {
+        clip: rect(21px, 9999px, 98px, 0);
+    }
+    40% {
+        clip: rect(18px, 9999px, 36px, 0);
+    }
+    45% {
+        clip: rect(13px, 9999px, 90px, 0);
+    }
+    50% {
+        clip: rect(54px, 9999px, 33px, 0);
+    }
+    55% {
+        clip: rect(35px, 9999px, 71px, 0);
+    }
+    60% {
+        clip: rect(16px, 9999px, 87px, 0);
+    }
+    65% {
+        clip: rect(43px, 9999px, 2px, 0);
+    }
+    70% {
+        clip: rect(80px, 9999px, 63px, 0);
+    }
+    75% {
+        clip: rect(98px, 9999px, 53px, 0);
+    }
+    80% {
+        clip: rect(49px, 9999px, 9px, 0);
+    }
+    85% {
+        clip: rect(63px, 9999px, 67px, 0);
+    }
+    90% {
+        clip: rect(33px, 9999px, 7px, 0);
+    }
+    95% {
+        clip: rect(69px, 9999px, 47px, 0);
+    }
+    100% {
+        clip: rect(77px, 9999px, 100px, 0);
+    }
+}
+.glitch:before {
+    content: attr(data-text);
+    position: absolute;
+    left: -2px;
+    text-shadow: 1px 0 black;
+    top: 0;
+
+
+    overflow: hidden;
+    clip: rect(0, 900px, 0, 0);
+    animation: noise-anim-2 3s infinite linear alternate-reverse;
+}

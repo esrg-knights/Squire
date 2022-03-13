@@ -170,6 +170,24 @@ class ICalFeedTestCase(TestCase):
         self.assertIn('RECURRENCE-ID', component.keys())
         self.assertEqual(component.get('RECURRENCE-ID').dt, activitymoment.recurrence_id)
 
+    def test_non_recurrent_doubleglicth(self):
+        """ Non-recurrent activities should have activity displayed ONLY when activitymoment is not present yet.
+        Otherswise the activitymoment will appear next to instead of override activity.
+        As described in issue #213 """
+
+        activity = Activity.objects.get(id=1)
+        component = self._get_component(activity)
+        self.assertIsNone(component)
+
+        # Clear activitymoments
+        ActivityMoment.objects.filter(parent_activity_id=1).delete()
+        # Refresh calendar response
+        self._build_response_calendar()
+
+        # Activity should no longer be None
+        component = self._get_component(activity)
+        self.assertIsNotNone(component)
+
     def test_moved_activitymoment_of_recurrent(self):
         """ Tests that an activitymoment that is moving a recurrent activity instance """
         activitymoment = ActivityMoment.objects.get(id=6)
