@@ -63,3 +63,4 @@ if settings.DEBUG and os.getenv('DJANGO_ENV') != 'TESTING':
 
 handler403 = 'core.views.show_error_403'
 handler404 = 'core.views.show_error_404'
+handler500 = 'core.views.show_error_500'
