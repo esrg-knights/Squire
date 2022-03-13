@@ -13,6 +13,7 @@ from django_ical.views import ICalFeed
 
 from .models import Activity, ActivityMoment, Calendar
 import activity_calendar.util as util
+from membership_file.models import Member
 
 # Monkey-patch; Why is this not open for extension in the first place?
 feedgenerator.ITEM_EVENT_FIELD_MAP = (
@@ -57,6 +58,17 @@ class ExtendedICal20Feed(ICal20Feed):
             calendar.add_component(tz_info)
 
         super().write_items(calendar)
+
+# Activities should only be processed if either it is recurring or it is non-recurring, but the activitymoment
+# object has not yet been created. Otherwise it would yield two calendar activity copies
+# as described in issue #213
+def recurring_activities(activities):
+    """ Generator for activities to exclude invalid activity instances """
+    for activity in activities:
+        if activity.is_recurring:
+            yield activity
+        elif not activity.activitymoment_set.exists():
+            yield activity
 
 
 class CESTEventFeed(ICalFeed):
@@ -112,24 +124,9 @@ class CESTEventFeed(ICalFeed):
     # Activities
 
     def items(self):
-        # Only consider published activities
-        activities = Activity.objects.filter(published_date__lte=timezone.now()).order_by('-published_date')
-        exceptions = ActivityMoment.objects.\
-            filter(parent_activity__published_date__lte=timezone.now()).\
-            exclude(status=ActivityMoment.STATUS_REMOVED)
-
-        # Activities should only be processed if either it is recurring or it is non-recurring, but the activitymoment
-        # object has not yet been created. Otherwise it would yield two calendar activity copies
-        # as described in issue #213
-        def recurring_activities():
-            """ Generator for activities to exclude invalid activity instances """
-            for activity in activities:
-                if activity.is_recurring:
-                    yield activity
-                elif not activity.activitymoment_set.exists():
-                    yield activity
-
-        return [*recurring_activities(), *exceptions]
+        raise NotImplementedError(
+            "This has not yet been implemented. "
+            "Overwrite items() to add the activity gathering logic.")
 
     def item_guid(self, item):
         return get_feed_id(item)
@@ -151,12 +148,24 @@ class CESTEventFeed(ICalFeed):
     def item_start_datetime(self, item):
         # Convert to Europe/Amsterdam to ensure daylight saving time is accounted for in recurring events
         start_dt = item.start_date
-        return start_dt.astimezone(timezone.get_current_timezone())
+        start_dt = start_dt.astimezone(timezone.get_current_timezone())
+
+        if item.full_day:
+            # If full day, return this as a date instance instead
+            return start_dt.date()
+        else:
+            return start_dt
 
     def item_end_datetime(self, item):
         # Convert to Europe/Amsterdam to ensure daylight saving time is accounted for in recurring events
         end_dt = item.end_date
-        return end_dt.astimezone(timezone.get_current_timezone())
+        end_dt = end_dt.astimezone(timezone.get_current_timezone())
+
+        if item.full_day:
+            # If full day, return this as a date instance instead
+            return end_dt.date()
+        else:
+            return end_dt
 
     def item_created(self, item):
         return item.created_date
@@ -282,7 +291,7 @@ class PublicCalendarFeed(CESTEventFeed):
             filter(parent_activity__in=activities). \
             exclude(status=ActivityMoment.STATUS_REMOVED)
 
-        return [*activities, *exceptions]
+        return [*recurring_activities(activities), *exceptions]
 
 
 class CustomCalendarFeed(CESTEventFeed):
@@ -306,4 +315,4 @@ class CustomCalendarFeed(CESTEventFeed):
             filter(parent_activity__in=activities). \
             exclude(status=ActivityMoment.STATUS_REMOVED)
 
-        return [*activities, *exceptions]
+        return [*recurring_activities(activities), *exceptions]

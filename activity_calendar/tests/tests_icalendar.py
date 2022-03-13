@@ -1,14 +1,12 @@
 import icalendar
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.utils import timezone, dateparse
 
 from activity_calendar.models import Activity, ActivityMoment
-from activity_calendar.feeds import CESTEventFeed, get_feed_id
-
-
+from activity_calendar.feeds import PublicCalendarFeed, get_feed_id
 
 
 class TestCaseICalendarExport(TestCase):
@@ -21,7 +19,7 @@ class TestCaseICalendarExport(TestCase):
         non_published.save()
 
         request = RequestFactory().get("/api/calendar/ical")
-        view = CESTEventFeed()
+        view = PublicCalendarFeed()
 
         response = view(request)
         calendar = icalendar.Calendar.from_ical(response.content)
@@ -34,7 +32,7 @@ class TestCaseICalendarExport(TestCase):
 
     # Ensure that DST does not affect EXDATE's start dates
     def test_recurrence_dst(self):
-        class DSTTestItemsFeed(CESTEventFeed):
+        class DSTTestItemsFeed(PublicCalendarFeed):
             def items(self):
                 return Activity.objects.filter(title='Weekly CEST Event')
 
@@ -65,7 +63,7 @@ class TestCaseICalendarExport(TestCase):
     # Ensure that the VTIMEZONE field is correctly set
     def test_vtimezone(self):
         request = RequestFactory().get("/api/calendar/ical")
-        view = CESTEventFeed()
+        view = PublicCalendarFeed()
 
         response = view(request)
         calendar = icalendar.Calendar.from_ical(response.content)
@@ -99,7 +97,7 @@ class ICalFeedTestCase(TestCase):
     fixtures = ['test_users', 'test_activity_slots']
 
     def setUp(self):
-        self.feed = CESTEventFeed()
+        self.feed = PublicCalendarFeed()
         self._build_response_calendar()
 
     def _build_response_calendar(self):
@@ -118,7 +116,9 @@ class ICalFeedTestCase(TestCase):
         guid = get_feed_id(activity_item)
 
         for subcomponent in self.calendar.subcomponents:
-            if subcomponent.get('UID', None) == guid and subcomponent.get('DTSTART').dt == activity_item.start_date:
+            start_dt = activity_item.start_date.date() if activity_item.full_day else activity_item.start_date
+
+            if subcomponent.get('UID', None) == guid and subcomponent.get('DTSTART').dt == start_dt:
                 return subcomponent
         return None
 
@@ -170,7 +170,7 @@ class ICalFeedTestCase(TestCase):
         self.assertIn('RECURRENCE-ID', component.keys())
         self.assertEqual(component.get('RECURRENCE-ID').dt, activitymoment.recurrence_id)
 
-    def test_non_recurrent_doubleglicth(self):
+    def test_non_recurrent_doubleglitch(self):
         """ Non-recurrent activities should have activity displayed ONLY when activitymoment is not present yet.
         Otherswise the activitymoment will appear next to instead of override activity.
         As described in issue #213 """
@@ -244,3 +244,20 @@ class ICalFeedTestCase(TestCase):
         ))
         self.assertEqual(len(self._get_component(activity)['EXDATE'].dts), 3)
 
+    def test_full_day_events(self):
+        """ Asserts that when a day is marked as full day, a date is given instead """
+        activity = Activity.objects.get(id=3)
+        component = self._get_component(activity)
+        self.assertIsNotNone(component)
+        self.assertIsInstance(component['DTSTART'].dt, datetime)
+        self.assertIsInstance(component['DTEND'].dt, datetime)
+
+        # Make activity a full day activity
+        activity.full_day = True
+        activity.save()
+        self._build_response_calendar()
+        component = self._get_component(activity)
+        self.assertIsNotNone(component)
+        # start and end times should now be dates instead of datetimes
+        self.assertIsInstance(component['DTSTART'].dt, date)
+        self.assertIsInstance(component['DTEND'].dt, date)

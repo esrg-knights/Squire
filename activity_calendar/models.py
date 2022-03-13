@@ -84,6 +84,7 @@ class Activity(models.Model):
     # Start and end times
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
+    full_day = models.BooleanField(default=False, help_text="Whether this event marks the entire day")
 
     # Recurrence information (e.g. a weekly event)
     # This means we do not need to store (nor create!) recurring activities separately
@@ -600,7 +601,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         # Define the fields that can be locally be overwritten
         copy_fields = [
             'title', 'description', 'promotion_image', 'location', 'max_participants', 'subscriptions_required',
-            'slot_creation', 'private_slot_locations']
+            'slot_creation', 'private_slot_locations', 'full_day']
         # Define fields that are instantly looked for in the parent_activity
         # If at any point in the future these must become customisable, one only has to move the field name to the
         # copy_fields attribute
