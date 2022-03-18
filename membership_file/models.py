@@ -95,6 +95,7 @@ class Member(models.Model):
     ##################################
     # The date of birth of the member
     date_of_birth = models.DateField(blank=True, null=True)
+    display_birthday_in_calendar = models.BooleanField(default=None, null=True, blank=True)
 
     # The date at which the member became a member (automatically handled, but is overridable)
     member_since = models.DateField(default=date.today)

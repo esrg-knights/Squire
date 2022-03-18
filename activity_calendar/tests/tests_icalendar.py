@@ -4,9 +4,12 @@ from datetime import timedelta, datetime, date
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.utils import timezone, dateparse
+from django.utils.text import slugify
 
 from activity_calendar.models import Activity, ActivityMoment
-from activity_calendar.feeds import PublicCalendarFeed, get_feed_id
+from activity_calendar.feeds import PublicCalendarFeed, get_feed_id, BirthdayCalendarFeed
+
+from membership_file.models import Member
 
 
 class TestCaseICalendarExport(TestCase):
@@ -93,11 +96,13 @@ class TestCaseICalendarExport(TestCase):
                 self.fail(f"Only STANDARD or DAYLIGHT components must appear in VTIMEZONE. Got <{str(type(sub))}> instead!")
 
 
-class ICalFeedTestCase(TestCase):
-    fixtures = ['test_users', 'test_activity_slots']
+class FeedTestMixin:
+    feed_class = None
 
     def setUp(self):
-        self.feed = PublicCalendarFeed()
+        if self.feed_class is None:
+            raise KeyError(f"Please define a feed_class in {self.__class__.__name__}")
+        self.feed = self.feed_class()
         self._build_response_calendar()
 
     def _build_response_calendar(self):
@@ -121,6 +126,10 @@ class ICalFeedTestCase(TestCase):
             if subcomponent.get('UID', None) == guid and subcomponent.get('DTSTART').dt == start_dt:
                 return subcomponent
         return None
+
+class ICalFeedTestCase(FeedTestMixin, TestCase):
+    fixtures = ['test_users', 'test_activity_slots']
+    feed_class = PublicCalendarFeed
 
     def test_activity_in_feed(self):
         activity = Activity.objects.get(id=2)
@@ -261,3 +270,44 @@ class ICalFeedTestCase(TestCase):
         # start and end times should now be dates instead of datetimes
         self.assertIsInstance(component['DTSTART'].dt, date)
         self.assertIsInstance(component['DTEND'].dt, date)
+
+
+class BirthdayFeedTestCase(FeedTestMixin, TestCase):
+    fixtures = ['activity_calendar/test_birthdays']
+    feed_class = BirthdayCalendarFeed
+
+    def test_generated_birthdays(self):
+        """ Tests that the birthdays that should be present are """
+        member = Member.objects.get(id=25)
+        activity = BirthdayCalendarFeed.construct_birthday(member)
+        component = self._get_component(activity)
+        self.assertIsNotNone(component)
+        self.assertEqual(component['DTSTART'].dt, member.date_of_birth)
+        self.assertEqual(component['DTEND'].dt, member.date_of_birth)
+
+        member = Member.objects.get(id=27)
+        activity = BirthdayCalendarFeed.construct_birthday(member)
+        component = self._get_component(activity)
+        self.assertIsNotNone(component)
+        self.assertEqual(component['DTSTART'].dt, member.date_of_birth)
+        self.assertEqual(component['DTEND'].dt, member.date_of_birth)
+
+    def test_exclude_nonshared_birthdays(self):
+        """ Members who do not want to share their birthday should be in here """
+        member = Member.objects.get(id=26)
+        activity = BirthdayCalendarFeed.construct_birthday(member)
+        component = self._get_component(activity)
+        self.assertIsNone(component)
+
+        # Make sure that the member is considered member so the testcase data is still correct
+        self.assertTrue(member.is_considered_member(), msg="Data incorrect. Member 26 should be a current member")
+
+    def test_exclude_nonmembers(self):
+        member = Member.objects.get(id=26)
+        activity = BirthdayCalendarFeed.construct_birthday(member)
+        component = self._get_component(activity)
+        self.assertIsNone(component)
+
+        # Make sure that the old-member still wants to share their birthday
+        self.assertFalse(member.display_birthday_in_calendar,
+                         msg="Data incorrect. Member 28 should have display_birthday_in_calendar set to true")

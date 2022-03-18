@@ -1,9 +1,12 @@
-from datetime import datetime
+import recurrence
+
+from datetime import datetime, date
 
 from django.conf import settings
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
+from django.utils.text import slugify
 
 from django_ical import feedgenerator
 from django_ical.feedgenerator import ICal20Feed
@@ -34,7 +37,14 @@ def only_for(class_type, default=None):
 def get_feed_id(item):
     # ID should be _globally_ unique
     if isinstance(item, Activity):
-        return f"local_activity-id-{item.id}@kotkt.nl"
+        # Sometimes a specific feed_name is given along with the object. Prioritise that.
+        if hasattr(item, 'feed_name'):
+            return f"local_activity-name-{item.feed_name}@kotkt.nl"
+        if item.id:
+            return f"local_activity-id-{item.id}@kotkt.nl"
+        else:
+            raise KeyError("For activities without an id, a feed_name needs to be declared on the instance.")
+
     elif isinstance(item, ActivityMoment):
         if item.is_part_of_recurrence:
             return f"local_activity-id-{item.parent_activity_id}@kotkt.nl"
@@ -316,3 +326,45 @@ class CustomCalendarFeed(CESTEventFeed):
             exclude(status=ActivityMoment.STATUS_REMOVED)
 
         return [*recurring_activities(activities), *exceptions]
+
+
+class BirthdayCalendarFeed(CESTEventFeed):
+    product_id = '-//Squire//Birthday Calendar//EN'
+    file_name = "knights-birthday-calendar.ics"
+    calendar_title = "Birthday calendar - Knights"
+    calendar_description = "Knights of the Kitchen Table Activiteiten en Evenementen."
+
+    @classmethod
+    def construct_birthday(cls, member):
+        """ Constructs the birthday for the given member"""
+        recurrence_pattern = recurrence.Recurrence(rrules=[recurrence.Rule(recurrence.YEARLY)])
+        start_time = datetime.combine(
+            member.date_of_birth,
+            datetime.min.time(),
+            tzinfo=timezone.get_current_timezone())
+        activity = Activity(
+            title=f"It's {member.get_full_name()}'s birthday!",
+            full_day=True,
+            start_date=start_time,
+            end_date=start_time,
+            recurrences=recurrence_pattern,
+        )
+        # Declare a feed name
+        activity.feed_name = f"bday-{slugify(member.get_full_name())}"
+        return activity
+
+    def items(self):
+        """ Constructs a list of activities that represent the birthdays of the members """
+        # Create iterator that builds activities from the list of members
+        return map(
+            self.construct_birthday,
+            Member.objects.filter(
+                memberyear__is_active=True,
+                display_birthday_in_calendar=True)
+        )
+
+    def item_link(self, item):
+        return "" # There is no page for a birthday
+
+    def item_end_datetime(self, item):
+        return item.start_date.date()
