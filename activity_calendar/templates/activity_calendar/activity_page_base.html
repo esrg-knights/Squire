@@ -191,44 +191,45 @@
                     </div>
                 </div>
 
-                <div class="d-flex">
-                    <!-- Text Icon -->
-                    <div class="col-xs-2">
-                        <img
-                                src="{% static 'octicons/clippy.svg' %}"
-                                alt=""
-                                class="icon"
-                                height="16"
-                                width="16"
-                        />
-                    </div>
-                    <!-- Event Description -->
-                    <div class="col align-self-center">
-                        <p id="event-status">
-                            {% if subscriptions_open %}
-                                {% if activity_moment.is_full %}
-                                    Activity is full.
+                {% if not activity_moment.slot_creation == activity.SLOT_CREATION_NONE %}
+                    <div class="d-flex">
+                        <!-- Text Icon -->
+                        <div class="col-xs-2">
+                            <img
+                                    src="{% static 'octicons/clippy.svg' %}"
+                                    alt=""
+                                    class="icon"
+                                    height="16"
+                                    width="16"
+                            />
+                        </div>
+                        <!-- Event Description -->
+                        <div class="col align-self-center">
+                            <p id="event-status">
+                                {% if subscriptions_open %}
+                                    {% if activity_moment.is_full %}
+                                        Activity is full.
+                                    {% else %}
+                                        Activity is open for sign-ups
+                                    {% endif %}
                                 {% else %}
-                                    Activity is open for sign-ups
+                                    {% opens_in_future as opens_in_future %}
+                                    {% if opens_in_future %}
+                                        Subscriptions will open on {% get_opening_time "j E, H:i" %}
+                                    {% else %}
+                                        Sign-ups are closed
+                                    {% endif %}
                                 {% endif %}
-                            {% else %}
-                                {% opens_in_future as opens_in_future %}
-                                {% if opens_in_future %}
-                                    Subscriptions will open on {% get_opening_time "j E, H:i" %}
+                                <br>
+                                {% if activity_moment.subscriptions_required %}
+                                    <i>Registrations are <strong>required</strong>! You cannot join this activity otherwise!</i>
                                 {% else %}
-                                    Sign-ups are closed
+                                    <small class="text-muted">Registrations are <i>optional</i>, but are appreciated!</small>
                                 {% endif %}
-                            {% endif %}
-                            <br>
-                            {% if activity_moment.subscriptions_required %}
-                                <i>Registrations are <strong>required</strong>! You cannot join this activity otherwise!</i>
-                            {% else %}
-                                <small class="text-muted">Registrations are <i>optional</i>, but are appreciated!</small>
-                            {% endif %}
-                        </p>
+                            </p>
+                        </div>
                     </div>
-                </div>
-
+                {% endif %}
 
                 <div style="height: 4em;" class="d-none d-md-flex">
 
