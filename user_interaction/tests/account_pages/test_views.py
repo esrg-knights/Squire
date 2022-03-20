@@ -61,7 +61,34 @@ class AccountPasswordChangeTestCase(ViewValidityMixin, TestCase):
         )
 
 
-class PreferencesUpdateTestCase(ViewValidityMixin, TestCase):
+class LayoutPreferencesUpdateTestCase(ViewValidityMixin, TestCase):
+    """ Tests for general individual pages """
+    fixtures = ['test_users']
+    base_user_id = 1
+
+    def get_base_url(self):
+        return reverse('account:layout_change')
+
+    def test_class(self):
+        self.assertTrue(issubclass(LayoutPreferencesUpdateView, AccountViewMixin))
+        self.assertTrue(issubclass(LayoutPreferencesUpdateView, FormView))
+        self.assertEqual(LayoutPreferencesUpdateView.template_name, "user_interaction/preferences_change_form.html")
+        self.assertEqual(LayoutPreferencesUpdateView.success_url, reverse('account:site_account'))
+
+    def test_successful_get(self):
+        self.assertValidGetResponse()
+
+    def test_post_succesful(self):
+        data = {'layout__theme': "THEME_LIGHT"}
+        self.assertValidPostResponse(
+            data=data,
+            redirect_url=LayoutPreferencesUpdateView.success_url
+        )
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.preferences['layout__theme'], data['layout__theme'])
+
+
+class CalendarPreferencesUpdateTestCase(ViewValidityMixin, TestCase):
     """ Tests for general individual pages """
     fixtures = ['test_users']
     base_user_id = 1
