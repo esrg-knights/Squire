@@ -98,6 +98,10 @@ class ActivityMixin:
 
     def get_context_data(self, **kwargs):
         kwargs = super(ActivityMixin, self).get_context_data(**kwargs)
+        subscription_open_date = self.activity_moment.start_date - self.activity_moment.parent_activity.subscriptions_open
+        if subscription_open_date < timezone.now():
+            subscription_open_date = None
+
         kwargs.update({
             'activity': self.activity,
             'activity_moment': self.activity_moment,
@@ -109,6 +113,7 @@ class ActivityMixin:
             'user_subscriptions': self.activity_moment.get_user_subscriptions(self.request.user),
             'show_participants': self.show_participants(),
             'can_edit_activity': self.can_edit_activity(),
+            'subscription_open_date': subscription_open_date,
         })
 
         return kwargs

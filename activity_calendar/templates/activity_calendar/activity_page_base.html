@@ -213,9 +213,8 @@
                                         Activity is open for sign-ups
                                     {% endif %}
                                 {% else %}
-                                    {% opens_in_future as opens_in_future %}
-                                    {% if opens_in_future %}
-                                        Subscriptions will open on {% get_opening_time "j E, H:i" %}
+                                    {% if subscription_open_date %}
+                                        Subscriptions will open on {{ subscription_open_date|date:"j E, H:i" }}
                                     {% else %}
                                         Sign-ups are closed
                                     {% endif %}
