@@ -153,26 +153,28 @@
                     </div>
                 {% endif %}
 
-                <div class="d-flex">
-                    <!-- Event Participants Icon -->
-                    <div class="col-xs-2">
-                        <img
-                            src="{% static 'octicons/people.svg' %}"
-                            alt=""
-                            class="icon"
-                            height="16"
-                            width="16"
-                        />
+                {% if not activity_moment.slot_creation == activity.SLOT_CREATION_NONE %}
+                    <div class="d-flex">
+                        <!-- Event Participants Icon -->
+                        <div class="col-xs-2">
+                            <img
+                                src="{% static 'octicons/people.svg' %}"
+                                alt=""
+                                class="icon"
+                                height="16"
+                                width="16"
+                            />
+                        </div>
+                        <!-- Patricipants -->
+                        <div class="col nospace align-self-center">
+                            <p id="event-participants">
+                                {{ num_total_participants }} /
+                                {% if num_max_participants == -1 %}&infin;
+                                {% else %}{{ num_max_participants }}{% endif %}
+                            </p>
+                        </div>
                     </div>
-                    <!-- Patricipants -->
-                    <div class="col nospace align-self-center">
-                        <p id="event-participants">
-                            {{ num_total_participants }} /
-                            {% if num_max_participants == -1 %}&infin;
-                            {% else %}{{ num_max_participants }}{% endif %}
-                        </p>
-                    </div>
-                </div>
+                {% endif %}
 
                 <div class="d-flex">
                     <!-- Text Icon -->
