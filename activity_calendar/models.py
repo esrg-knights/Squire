@@ -16,6 +16,7 @@ import activity_calendar.util as util
 from core.models import PresetImage
 from core.fields import MarkdownTextField
 from committees.utils import user_in_association_group
+from membership_file.models import Member
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -894,3 +895,13 @@ class CalendarActivityLink(models.Model):
 
     def __str__(self):
         return f'{self.calendar} - {self.activity}'
+
+
+class MemberCalendarSettings(models.Model):
+    member = models.OneToOneField(Member, on_delete=models.CASCADE)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    use_birthday = models.BooleanField(default=False, verbose_name="Display my birthday in Knights birthday calendar")
+
+    def __str__(self):
+        return f'calendar settings for {self.member}: {self.use_birthday}'

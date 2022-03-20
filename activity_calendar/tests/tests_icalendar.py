@@ -309,5 +309,5 @@ class BirthdayFeedTestCase(FeedTestMixin, TestCase):
         self.assertIsNone(component)
 
         # Make sure that the old-member still wants to share their birthday
-        self.assertFalse(member.display_birthday_in_calendar,
-                         msg="Data incorrect. Member 28 should have display_birthday_in_calendar set to true")
+        self.assertFalse(member.membercalendarsettings.use_birthday,
+                         msg="Data incorrect. MemberCalendarSettings 28 should have use_birthday set to true")

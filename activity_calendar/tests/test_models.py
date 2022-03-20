@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.db import models
 from django.contrib.auth.models import AnonymousUser
 from django.core.validators import ValidationError
 from django.conf import settings
@@ -11,7 +12,7 @@ from recurrence import deserialize as deserialize_recurrence_test
 
 from . import mock_now
 
-from activity_calendar.models import Activity, ActivitySlot, Participant, ActivityMoment
+from activity_calendar.models import Activity, ActivitySlot, Participant, ActivityMoment, MemberCalendarSettings
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -1060,5 +1061,11 @@ class ActivityParticipantTestCase(TestCase):
         )
 
 
+class MemberCalendarSettingsTestCase(TestCase):
 
-
+    def test_fields(self):
+        # Test image field
+        field = MemberCalendarSettings._meta.get_field("use_birthday")
+        self.assertIsInstance(field, models.BooleanField)
+        self.assertEqual(field.default, False,
+                         msg="Use of birthday should default to False for privacy reasons")

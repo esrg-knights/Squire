@@ -2,12 +2,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
 from django.test import TestCase
 from django.urls import reverse
-from django.views.generic import TemplateView, FormView
+from django.views.generic import TemplateView, FormView, UpdateView
 
 from core.forms import PasswordChangeForm
-from user_interaction.account_pages.views import AccountPasswordChangeView, SiteAccountView, LayoutPreferencesUpdateView
+from user_interaction.account_pages.views import *
 from utils.testing.view_test_utils import ViewValidityMixin
 from user_interaction.accountcollective import AccountViewMixin
+from membership_file.models import Member
 
 
 class AccountViewPageTestCase(ViewValidityMixin, TestCase):
@@ -54,7 +55,7 @@ class AccountPasswordChangeTestCase(ViewValidityMixin, TestCase):
             'new_password1': "1337^cc3sGAME",
             'new_password2': "1337^cc3sGAME",
         }
-        response = self.assertValidPostResponse(
+        self.assertValidPostResponse(
             data=data,
             redirect_url=AccountPasswordChangeView.success_url,
             fetch_redirect_response=True
@@ -72,7 +73,7 @@ class LayoutPreferencesUpdateTestCase(ViewValidityMixin, TestCase):
     def test_class(self):
         self.assertTrue(issubclass(LayoutPreferencesUpdateView, AccountViewMixin))
         self.assertTrue(issubclass(LayoutPreferencesUpdateView, FormView))
-        self.assertEqual(LayoutPreferencesUpdateView.template_name, "user_interaction/preferences_change_form.html")
+        self.assertEqual(LayoutPreferencesUpdateView.template_name, "user_interaction/account_pages/layout_preferences_change_form.html")
         self.assertEqual(LayoutPreferencesUpdateView.success_url, reverse('account:site_account'))
 
     def test_successful_get(self):
@@ -90,26 +91,30 @@ class LayoutPreferencesUpdateTestCase(ViewValidityMixin, TestCase):
 
 class CalendarPreferencesUpdateTestCase(ViewValidityMixin, TestCase):
     """ Tests for general individual pages """
-    fixtures = ['test_users']
-    base_user_id = 1
+    fixtures = ['test_users', 'test_members']
+    base_user_id = 100
 
     def get_base_url(self):
-        return reverse('account:layout_change')
+        return reverse('account:calendar_change')
 
     def test_class(self):
-        self.assertTrue(issubclass(LayoutPreferencesUpdateView, AccountViewMixin))
-        self.assertTrue(issubclass(LayoutPreferencesUpdateView, FormView))
-        self.assertEqual(LayoutPreferencesUpdateView.template_name, "user_interaction/preferences_change_form.html")
-        self.assertEqual(LayoutPreferencesUpdateView.success_url, reverse('account:site_account'))
+        self.assertTrue(issubclass(CalendarPreferenceView, AccountViewMixin))
+        self.assertTrue(issubclass(CalendarPreferenceView, UpdateView))
+        self.assertEqual(CalendarPreferenceView.template_name, "user_interaction/account_pages/calendar_preferences_change_form.html")
+        self.assertEqual(CalendarPreferenceView.success_url, reverse('account:site_account'))
 
     def test_successful_get(self):
         self.assertValidGetResponse()
 
     def test_post_succesful(self):
-        data = {'layout__theme': "THEME_LIGHT"}
+        data = {'use_birthday': ['on']}
         self.assertValidPostResponse(
             data=data,
-            redirect_url=LayoutPreferencesUpdateView.success_url
+            redirect_url=CalendarPreferenceView.success_url
         )
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.preferences['layout__theme'], data['layout__theme'])
+        self.user.member.refresh_from_db()
+
+        self.assertEqual(
+            self.user.member.membercalendarsettings.use_birthday,
+            True
+        )

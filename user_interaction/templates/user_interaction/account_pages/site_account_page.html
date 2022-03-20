@@ -48,12 +48,14 @@
         <h3 class="mt-3">Calendar preferences</h3>
         <p>
             Display birthday in Knights birthday calendar:
-            {% if member.display_birthday_in_calendar %}
-                <span class="badge-pill badge-success">Yes</span>
-            {% elif member.display_birthday_in_calendar == None %}
-                <span class="badge-pill badge-secondary">Unanswered</span>
+            {% if member.membercalendarsettings %}
+                {% if member.membercalendarsettings.use_birthday %}
+                    <span class="badge-pill badge-success">Yes</span>
+                {% else %}
+                    <span class="badge-pill badge-danger">No</span>
+                {% endif %}
             {% else %}
-                <span class="badge-pill badge-danger">No</span>
+                <span class="badge-pill badge-secondary">Unanswered</span>
             {% endif %}
         </p>
         <a class="btn btn-primary btn-sm" href="{% url "account:calendar_change" %}">

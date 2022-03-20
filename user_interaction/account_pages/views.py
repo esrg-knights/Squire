@@ -10,6 +10,7 @@ from .forms import AccountForm
 from user_interaction.accountcollective import AccountViewMixin
 from membership_file.models import Member
 from membership_file.util import MembershipRequiredMixin
+from activity_calendar.models import MemberCalendarSettings
 
 
 __all__ = ['SiteAccountView', 'AccountPasswordChangeView', 'AccountChangeView', 'LayoutPreferencesUpdateView',
@@ -62,10 +63,13 @@ class LayoutPreferencesUpdateView(AccountViewMixin, FormView):
 
 class CalendarPreferenceView(MembershipRequiredMixin, AccountViewMixin, UpdateView):
     template_name = "user_interaction/account_pages/calendar_preferences_change_form.html"
-    model = Member
-    fields = ['display_birthday_in_calendar']
+    model = MemberCalendarSettings
+    fields = ['use_birthday']
     requires_active_membership = False
     success_url = reverse_lazy('account:site_account')
 
     def get_object(self, queryset=None):
-        return self.request.member
+        return self.model.objects.get_or_create(
+            member = self.request.member
+        )[0]
+

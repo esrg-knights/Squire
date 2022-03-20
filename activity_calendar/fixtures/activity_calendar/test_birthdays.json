@@ -7,8 +7,16 @@
             "last_name": "Jansen",
             "email": "janjansen@example.com",
             "date_of_birth": "1995-05-12",
-            "display_birthday_in_calendar": true,
             "last_updated_date": "1970-01-01T12:00:00Z"
+        }
+    },
+    {
+        "model": "activity_calendar.membercalendarsettings",
+        "pk": 25,
+        "fields": {
+            "member": 25,
+            "last_updated": "1970-01-01T12:00:00Z",
+            "use_birthday": true
         }
     },
     {
@@ -19,8 +27,16 @@
             "last_name": "Hansen",
             "email": "samhansen@example.com",
             "date_of_birth": "2001-10-10",
-            "display_birthday_in_calendar": false,
             "last_updated_date": "1970-01-01T12:00:00Z"
+        }
+    },
+    {
+        "model": "activity_calendar.membercalendarsettings",
+        "pk": 26,
+        "fields": {
+            "member": 26,
+            "last_updated": "1970-01-01T12:00:00Z",
+            "use_birthday": false
         }
     },
     {
@@ -31,8 +47,16 @@
             "last_name": "Nieuwehuizen",
             "email": "nieuwelaura@example.com",
             "date_of_birth": "1998-12-27",
-            "display_birthday_in_calendar": true,
             "last_updated_date": "1970-01-01T12:00:00Z"
+        }
+    },
+    {
+        "model": "activity_calendar.membercalendarsettings",
+        "pk": 27,
+        "fields": {
+            "member": 27,
+            "last_updated": "1970-01-01T12:00:00Z",
+            "use_birthday": true
         }
     },
     {
@@ -43,8 +67,16 @@
             "last_name": "Vox",
             "email": "johnvox@example.com",
             "date_of_birth": "1980-01-01",
-            "display_birthday_in_calendar": true,
             "last_updated_date": "1970-01-01T12:00:00Z"
+        }
+    },
+    {
+        "model": "activity_calendar.membercalendarsettings",
+        "pk": 28,
+        "fields": {
+            "member": 28,
+            "last_updated": "1970-01-01T12:00:00Z",
+            "use_birthday": true
         }
     },
     {

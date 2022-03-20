@@ -360,7 +360,7 @@ class BirthdayCalendarFeed(CESTEventFeed):
             self.construct_birthday,
             Member.objects.filter(
                 memberyear__is_active=True,
-                display_birthday_in_calendar=True)
+                membercalendarsettings__use_birthday=True)
         )
 
     def item_link(self, item):
