@@ -122,7 +122,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
             'external_card_deposit', 'accessible_rooms']}),
         ('Legal Information', {'fields':
             ['educational_institution', 'student_number',
-            'date_of_birth', 'display_birthday_in_calendar', 'legal_name']}),
+            'date_of_birth', 'legal_name']}),
         ('Notes', {'fields':
             ['notes']}),
     ]
