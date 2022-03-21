@@ -73,3 +73,8 @@ class CalendarPreferenceView(MembershipRequiredMixin, AccountViewMixin, UpdateVi
             member = self.request.member
         )[0]
 
+    def form_valid(self, form):
+        result = super().form_valid(form)
+        message = _("Your preferences have been updated!")
+        messages.success(self.request, message)
+        return result

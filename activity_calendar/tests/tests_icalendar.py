@@ -6,8 +6,8 @@ from django.test.client import RequestFactory
 from django.utils import timezone, dateparse
 from django.utils.text import slugify
 
-from activity_calendar.models import Activity, ActivityMoment
-from activity_calendar.feeds import PublicCalendarFeed, get_feed_id, BirthdayCalendarFeed
+from activity_calendar.models import Activity, ActivityMoment, CalendarActivityLink
+from activity_calendar.feeds import PublicCalendarFeed, get_feed_id, BirthdayCalendarFeed, CustomCalendarFeed
 
 from membership_file.models import Member
 
@@ -98,16 +98,17 @@ class TestCaseICalendarExport(TestCase):
 
 class FeedTestMixin:
     feed_class = None
+    url_kwargs = {}
 
     def setUp(self):
         if self.feed_class is None:
             raise KeyError(f"Please define a feed_class in {self.__class__.__name__}")
         self.feed = self.feed_class()
-        self._build_response_calendar()
+        self._build_response_calendar(**self.url_kwargs)
 
-    def _build_response_calendar(self):
-        request = RequestFactory().get("/api/calendar/ical")
-        response = self.feed(request)
+    def _build_response_calendar(self, **url_kwargs):
+        request = RequestFactory().get("/api/calendar/ical", data=url_kwargs)
+        response = self.feed(request, **url_kwargs)
         self.calendar = icalendar.Calendar.from_ical(response.content)
 
     def _get_component(self, activity_item):
@@ -270,6 +271,52 @@ class ICalFeedTestCase(FeedTestMixin, TestCase):
         # start and end times should now be dates instead of datetimes
         self.assertIsInstance(component['DTSTART'].dt, date)
         self.assertIsInstance(component['DTEND'].dt, date)
+
+
+class CustomCalendarFeedTestCase(FeedTestMixin, TestCase):
+    fixtures = ['test_users', 'test_activity_slots', 'activity_calendar/test_custom_feed']
+    feed_class = CustomCalendarFeed
+    url_kwargs = {'calendar_slug': 'test_calendar'}
+
+    def test_included_public_non_recurrent(self):
+        """ Test that a single activity with custom activitymoment settings does not present double """
+        # Assert link existence
+        self.assertTrue(CalendarActivityLink.objects.filter(activity_id=1, calendar_id=1).exists())
+
+        activity = Activity.objects.get(id=1)
+        component = self._get_component(activity)
+        self.assertIsNone(component)
+
+        component = self._get_component(activity.activitymoment_set.first())
+        self.assertIsNotNone(component)
+
+    def test_included_public_recurrent(self):
+        activity = Activity.objects.get(id=2)
+        self.assertEqual(activity.is_public, True)
+        component = self._get_component(activity)
+        self.assertIsNotNone(component)
+
+        # Test that it also loads overwritten activitymoments
+        component = self._get_component(activity.activitymoment_set.first())
+        self.assertIsNotNone(component)
+
+    def test_included_non_public(self):
+        activity = Activity.objects.get(id=4)
+        self.assertEqual(activity.is_public, False)
+        component = self._get_component(activity)
+        self.assertIsNotNone(component)
+
+    def test_excluded_public(self):
+        activity = Activity.objects.get(id=3)
+        self.assertEqual(activity.is_public, True)
+        component = self._get_component(activity)
+        self.assertIsNone(component)
+
+    def test_excluded_non_public(self):
+        activity = Activity.objects.get(id=5)
+        self.assertEqual(activity.is_public, False)
+        component = self._get_component(activity)
+        self.assertIsNone(component)
 
 
 class BirthdayFeedTestCase(FeedTestMixin, TestCase):

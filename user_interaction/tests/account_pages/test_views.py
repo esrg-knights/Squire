@@ -1,14 +1,13 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
 from django.test import TestCase
 from django.urls import reverse
 from django.views.generic import TemplateView, FormView, UpdateView
 
 from core.forms import PasswordChangeForm
+from user_interaction.account_pages.forms import AccountForm
 from user_interaction.account_pages.views import *
 from utils.testing.view_test_utils import ViewValidityMixin
 from user_interaction.accountcollective import AccountViewMixin
-from membership_file.models import Member
 
 
 class AccountViewPageTestCase(ViewValidityMixin, TestCase):
@@ -22,6 +21,37 @@ class AccountViewPageTestCase(ViewValidityMixin, TestCase):
 
     def test_successful_get(self):
         self.assertValidGetResponse(url=reverse('account:site_account'))
+
+
+class AccountChangeTestCase(ViewValidityMixin, TestCase):
+    """ Tests for general individual pages """
+    fixtures = ['test_users']
+    base_user_id = 1
+
+    def get_base_url(self):
+        return reverse('account:account_change')
+
+    def test_class(self):
+        self.assertTrue(issubclass(AccountChangeView, AccountViewMixin))
+        self.assertTrue(issubclass(AccountChangeView, UpdateView))
+        self.assertEqual(AccountChangeView.template_name, "user_interaction/account_pages/account_edit.html")
+        self.assertEqual(AccountChangeView.success_url, reverse('account:site_account'))
+        self.assertEqual(AccountChangeView.form_class, AccountForm)
+
+    def test_successful_get(self):
+        self.assertValidGetResponse()
+
+    def test_post_succesful(self):
+        # Set the password as the fixture is the hashed password
+        data = {
+            'username': 'mynewaccountname',
+            'first_name': "newName",
+            'email': "testmail@example.com",
+        }
+        self.assertValidPostResponse(
+            data=data,
+            redirect_url=AccountChangeView.success_url
+        )
 
 
 class AccountPasswordChangeTestCase(ViewValidityMixin, TestCase):
