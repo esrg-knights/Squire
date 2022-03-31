@@ -8,13 +8,14 @@ from django.test.utils import override_settings
 from django.utils import timezone, dateparse
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
-from django.views.generic import ListView,FormView
+from django.views.generic import ListView,FormView, TemplateView
 
 from unittest.mock import patch
 
 from activity_calendar.models import *
 from activity_calendar.views import CreateSlotView, ActivityMomentWithSlotsView, ActivitySimpleMomentView,\
-    EditActivityMomentView, ActivityOverview, ActivityMixin, ActivityMomentCancelledView, CancelActivityMomentView
+    EditActivityMomentView, ActivityOverview, ActivityMixin, ActivityMomentCancelledView, CancelActivityMomentView,\
+    ActivityMomentNoSignupView
 from activity_calendar.forms import *
 
 from core.tests.util import suppress_warnings
@@ -297,6 +298,27 @@ class ActivityCancelledViewTest(TestActivityViewMixin, TestCase):
 
     def test_class(self):
         self.assertEqual(ActivityMomentCancelledView.template_name, "activity_calendar/activity_page_cancelled.html")
+
+
+class ActivityNoSignupViewTestcase(TestActivityViewMixin, TestCase):
+    default_url_name = "activity_slots_on_day"
+    default_activity_id = 1
+    default_iso_dt = '2020-08-14T19:00:00+00:00'
+
+    def setUp(self):
+        super(ActivityNoSignupViewTestcase, self).setUp()
+        self.activity.slot_creation = Activity.SLOT_CREATION_NONE
+        self.activity.save()
+
+    def test_base_class_values(self):
+        self.assertTrue(issubclass(ActivityMomentNoSignupView, TemplateView))
+        self.assertEqual(ActivityMomentNoSignupView.template_name, "activity_calendar/activity_page_no_signup.html")
+
+    @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_normal_get_page(self, mock_tz):
+        # The basic set-up is valid. User can create a slot
+        response = self.build_get_response()
+        self.assertEqual(response.status_code, 200)
 
 
 class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):

@@ -84,7 +84,7 @@
     "max_participants": -1,
     "max_slots_join_per_participant": 1,
     "subscriptions_required": true,
-    "slot_creation": "CREATION_NONE",
+    "slot_creation": "CREATION_STAFF",
     "subscriptions_open": "7 00:00:00",
     "subscriptions_close": "00:30:00"
   }
