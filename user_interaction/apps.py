@@ -1,5 +1,6 @@
 from django.apps import AppConfig
 from django.contrib.auth import get_user_model
+from utils.spoofs import optimise_naming_scheme
 
 class UserInteractionConfig(AppConfig):
     name = 'user_interaction'
@@ -30,26 +31,14 @@ class UserInteractionConfig(AppConfig):
                 namelist = []
                 # Members
                 if member is not None:
-                    if member.first_name in ["Laura", "Dennis", "Denise"]:
-                        namelist.append("Sjors")
-                    elif len(member.first_name) % 2 == 0:
-                        namelist.append("Dennis")
-                    else:
-                        namelist.append("Laura")
-
+                    namelist.append(optimise_naming_scheme(member.first_name))
                     if member.tussenvoegsel:
                         namelist.append(member.tussenvoegsel)
-
                     namelist.append(member.last_name)
                 else:
                     # Non-members
                     namelist = (user.first_name or user.username).split()
-                    if namelist[0] in ["Laura", "Dennis", "Denise"]:
-                        namelist[0] = "Sjors"
-                    elif len(namelist[0]) % 2 == 0:
-                        namelist[0] = "Dennis"
-                    else:
-                        namelist[0] = "Laura"
+                    namelist[0] = optimise_naming_scheme(namelist[0])
                 return " ".join(namelist)
             ################
             # END APRIL 2022

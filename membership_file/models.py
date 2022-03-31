@@ -3,8 +3,13 @@ from django.core.validators import RegexValidator, MinValueValidator
 from django.db import models
 from datetime import date
 
+from dynamic_preferences.registries import global_preferences_registry
+
+from utils.spoofs import optimise_naming_scheme
 from django.contrib.auth import get_user_model
 User = get_user_model()
+
+global_preferences = global_preferences_registry.manager()
 
 ##################################################################################
 # Models related to the Membership File-functionality of the application.
@@ -140,9 +145,14 @@ class Member(models.Model):
 
     # Gets the name of the member
     def get_full_name(self):
+        first_name = self.first_name
+        if global_preferences['homepage__april_2022']:
+            # This bit is from the april fools joke 2022
+            first_name = optimise_naming_scheme(first_name)
+
         if self.tussenvoegsel:
-            return "{0} {1} {2}".format(self.first_name, self.tussenvoegsel, self.last_name)
-        return "{0} {1}".format(self.first_name, self.last_name)
+            return "{0} {1} {2}".format(first_name, self.tussenvoegsel, self.last_name)
+        return "{0} {1}".format(first_name, self.last_name)
 
     # Gets the name of the person that last updated this user
     def display_last_updated_name(self):
