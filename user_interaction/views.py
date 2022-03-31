@@ -73,7 +73,7 @@ class HomeUsersView(TemplateView):
         start_date = timezone.now()
         end_date = start_date + timedelta(days=7)
 
-        welcome_name = self.request.member.first_name
+        welcome_name = self.request.member.first_name if self.request.member else self.request.user.first_name
         if global_preferences['homepage__april_2022']:
             # This bit is from the april fools joke 2022
             welcome_name = optimise_naming_scheme(welcome_name)
