@@ -1,0 +1,66 @@
+
+{% extends 'core/base.html' %}
+
+{% block title %}
+    Squire - Upgrade
+{% endblock title %}
+
+{% block og-title %}
+    Upgrade Squire
+{% endblock og-title %}
+
+{% block content-frame-class %}
+    wideContentFrame
+{% endblock %}
+
+{% block content %}
+    <!-- Adapted from Template: https://getbootstrap.com/docs/4.0/examples/pricing/ -->
+    <div class="pricing-header px-3 py-3 pt-md-4 pb-md-3 mx-auto text-center">
+        <h1 class="display-4">Squire 2.0</h1>
+        <p class="lead">Reshaping Urban Living Together</p>
+    </div>
+    <p class="pb-3">
+        Squire has been a victim of feature-creep since its release two years ago in 2020, and has as a result required more and more
+        resources to host. With the chip shortage and other components becoming more expensive with no visible end, we had to find a
+        solution to the ever-rising costs. Hence, we have decided to introduce <strong>Squire Premium</strong>.
+
+        All current Squire accounts will be migrated to <i>Squire Basic</i> by the end of next week.
+    </p>
+
+    <div class="container">
+        <div class="card-deck mb-3 text-center" style="max-width: 800px; margin-right: auto; margin-left: auto;">
+            <div class="card mb-4 box-shadow">
+                <div class="card-header">
+                    <h4 class="my-0 font-weight-normal">Squire Basic</h4>
+                </div>
+                <div class="card-body">
+                    <h1 class="card-title pricing-card-title">€0 <small class="text-muted">/ mo</small></h1>
+                    <ul class="list-unstyled mt-3 mb-4">
+                    <li>Advertisements</li>
+                    <li>Register for activities</li>
+                    <li>Earn achievements</li>
+                    <li>View committees</li>
+                    <li>Browse tabletop materials</li>
+                    </ul>
+                    <button type="button" disabled class="btn btn-lg btn-block btn-outline-primary">Current Plan</button>
+                </div>
+            </div>
+            <div class="card mb-4 box-shadow">
+                <div class="card-header">
+                    <h4 class="my-0 font-weight-normal">Squire Premium</h4>
+                </div>
+                <div class="card-body">
+                    <h1 class="card-title pricing-card-title">€20 <small class="text-muted">/ mo</small></h1>
+                    <ul class="list-unstyled mt-3 mb-4">
+                    <li>An ad-free experience</li>
+                    <li>An extra vote in Knights GMMs</li>
+                    <li>View anyone's membership details</li>
+                    <li>Priority email support</li>
+                    <li>All <i>Squire Basic</i> benefits</li>
+                    </ul>
+                    <a href="http://timheiszwolf.com/contact" class="btn btn-lg btn-block btn-primary">Get started</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
