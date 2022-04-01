@@ -9,6 +9,7 @@ from dynamic_preferences.registries import global_preferences_registry
 from activity_calendar.models import Activity
 from core.forms import LoginForm
 from membership_file.models import Membership
+from utils.spoofs import optimise_naming_scheme
 
 
 global_preferences = global_preferences_registry.manager()
@@ -72,6 +73,11 @@ class HomeUsersView(TemplateView):
         start_date = timezone.now()
         end_date = start_date + timedelta(days=7)
 
+        welcome_name = self.request.member.first_name if self.request.member else self.request.user.first_name
+        if global_preferences['homepage__april_2022']:
+            # This bit is from the april fools joke 2022
+            welcome_name = optimise_naming_scheme(welcome_name)
+
         activities = []
         for activity in Activity.objects.filter(published_date__lte=timezone.now()):
             for activity_moment in activity.get_activitymoments_between(start_date, end_date):
@@ -81,6 +87,7 @@ class HomeUsersView(TemplateView):
             activities=sorted(activities, key=lambda activity: activity.start_date),
             greeting_line = random.choice(welcome_messages),
             unique_messages = self.get_unique_messages(),
+            welcome_name=welcome_name,
         )
 
         return super(HomeUsersView, self).get_context_data(**kwargs)
