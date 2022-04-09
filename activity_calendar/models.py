@@ -767,14 +767,8 @@ class ActivitySlot(models.Model):
     # User that created the slot (or one that's in the slot if the original owner is no longer in the slot)
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
 
-    # The activity that this slot belongs to
-    # NB: The slot belongs to just a single _occurence_ of a (recurring) activity.
-    #   Hence, we need to store both the foreign key and a date representing one if its occurences
-    # TODO: Create a widget for the parent_activity_recurrence so editing is a bit more user-friendly
-    parent_activity = models.ForeignKey(Activity, related_name="activity_slot_set", on_delete=models.CASCADE)
-    recurrence_id = models.DateTimeField(blank=True, null=True,
-        help_text="If the activity is recurring, set this to the date/time of one of its occurences. Leave this field empty if the parent activity is non-recurring.",
-        verbose_name="parent activity date/time")
+    # The activitymoment that this slot belongs to
+    parent_activitymoment = models.ForeignKey(ActivityMoment, related_name="activity_slot_set", on_delete=models.CASCADE)
 
     max_participants = models.IntegerField(default=-1, validators=[MinValueValidator(-1)],
         help_text="-1 denotes unlimited participants", verbose_name="maximum number of participants")

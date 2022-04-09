@@ -91,19 +91,19 @@ class ParticipantInline(admin.TabularInline):
 
 
 class ActivitySlotAdmin(admin.ModelAdmin):
-    def recurrence_id_with_day(self, obj):
-        if obj.recurrence_id is not None:
-            return localtime(obj.recurrence_id).strftime("%a, %d %b %Y, %H:%M")
-        return None
-    recurrence_id_with_day.admin_order_field = 'recurrence_id'
-    recurrence_id_with_day.short_description = 'Activity Start Date'
 
-    list_display = ('id', 'title', 'parent_activity', 'recurrence_id_with_day', 'owner')
-    list_filter = ['recurrence_id']
+    # Django doesn't allow a foreign key attribute in list_display, so this is a workaround
+    def get_recurrence_id(self, obj):
+        return obj.parent_activitymoment.recurrence_id
+    get_recurrence_id.short_description = 'Author'
+    get_recurrence_id.admin_order_field = 'book__author'
+
+    list_display = ('id', 'title', 'parent_activitymoment', 'get_recurrence_id', 'owner')
+    list_filter = ['parent_activitymoment__recurrence_id']
     list_display_links = ('id', 'title')
-    date_hierarchy = 'recurrence_id'
-    search_fields = ['parent_activity__title', 'title']
-    autocomplete_fields = ['parent_activity',]
+    date_hierarchy = 'parent_activitymoment__recurrence_id'
+    search_fields = ['parent_activitymoment__parent_activity__title, parent_activitymoment__title', 'title']
+    autocomplete_fields = ['parent_activitymoment',]
 
     # Not supported yet
     exclude = ('start_date', 'end_date')
