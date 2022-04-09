@@ -51,15 +51,7 @@
             {% block activity-info %}
                 <div class="d-flex">
                     <!-- Calendar Icon -->
-                    <div class="">
-                        <img
-                            src="{% static 'octicons/calendar.svg' %}"
-                            alt="Calendar-icon"
-                            class="icon"
-                            height="16"
-                            width="16"
-                        />
-                    </div>
+                    <div><i class="far fa-calendar fa-fw"></i></div>
                     <!-- Event Date & Recurrence Information -->
                     <div class="col align-self-center">
                         <div class='nospace'>
@@ -107,15 +99,7 @@
                 {% if activity_moment.parent_activity.organisers.all %}
                     <div class="d-flex">
                         <!-- Organiser Icon -->
-                        <div class="col-xs-2">
-                            <img
-                                src="{% static 'octicons/tag.svg' %}"
-                                alt="Organisation-icon"
-                                class="icon"
-                                height="16"
-                                width="16"
-                            />
-                        </div>
+                        <div class="col-xs-2"><i class="fas fa-user-tag fa-fw"></i></div>
                         <!-- Location -->
                         <div class="col nospace align-self-center">
                             <p id="event-organisers">
@@ -138,15 +122,7 @@
 
                 <div class="d-flex">
                     <!-- Text Icon -->
-                    <div class="col-xs-2">
-                        <img
-                            src="{% static 'octicons/three-bars.svg' %}"
-                            alt="Description-icon"
-                            class="icon"
-                            height="16"
-                            width="16"
-                        />
-                    </div>
+                    <div class="col-xs-2"><i class="fas fa-bars fa-fw"></i></div>
                     <!-- Event Description -->
                     <div class="col align-self-center">
                         <div id="event-description"
@@ -157,16 +133,8 @@
                 </div>
 
                 <div class="d-flex">
-                    <!-- Text Icon -->
-                    <div class="col-xs-2">
-                        <img
-                                src="{% static 'octicons/clippy.svg' %}"
-                                alt=""
-                                class="icon"
-                                height="16"
-                                width="16"
-                        />
-                    </div>
+                    <!-- Clipboard Icon -->
+                    <div class="col-xs-2"><i class="far fa-clipboard fa-fw"></i></div>
                     <!-- Event Description -->
                     <div class="col align-self-center">
                         <p id="event-status" class="text-danger">
