@@ -690,8 +690,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
 
     def get_guest_subscriptions(self):
         return Participant.objects.filter_guests_only().filter(
-            activity_slot__parent_activity_id=self.parent_activity.id,
-            activity_slot__recurrence_id=self.recurrence_id,
+            activity_slot__parent_activitymoment_id=self.id,
         )
 
     def get_user_subscriptions(self, user=None):
@@ -701,8 +700,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         :return: Queryset of all participant entries
         """
         participants = Participant.objects.filter_users_only().filter(
-            activity_slot__parent_activity_id=self.parent_activity_id,
-            activity_slot__recurrence_id=self.recurrence_id,
+            activity_slot__parent_activitymoment_id=self.id,
         )
         if user:
             if user.is_anonymous:
@@ -717,10 +715,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         Gets all slots for this activity moment
         :return: Queryset of all slots associated with this activity at this moment
         """
-        return ActivitySlot.objects.filter(
-            parent_activity__id=self.parent_activity_id,
-            recurrence_id=self.recurrence_id,
-        )
+        return self.activity_slot_set.all()
 
     def is_open_for_subscriptions(self):
         """
@@ -782,7 +777,7 @@ class ActivitySlot(models.Model):
     @property
     def image_url(self):
         if self.image is None:
-            return self.parent_activity.image_url
+            return self.parent_activitymoment.slots_image
         return self.image.image.url
 
     def get_subscribed_users(self):
@@ -805,19 +800,12 @@ class ActivitySlot(models.Model):
             if self.start_date and self.end_date and self.start_date >= self.end_date:
                 errors.update({'start_date': 'Start date must be before the end date'})
 
-        if 'parent_activity' not in exclude:
-            if self.recurrence_id is None:
-                errors.update({'recurrence_id': 'Must set a date/time when this activity takes place'})
-            else:
-                if not self.parent_activity.get_occurrence_at(self.recurrence_id):
-                    # Bounce activities if it is not fitting with the recurrence scheme
-                    errors.update({'recurrence_id': 'Parent activity has no occurence at the given date/time'})
-
+        if 'parent_activitymoment' not in exclude:
             if not exclude_start_or_end:
                 # Start/end times must be within start/end times of parent activity
-                if self.start_date and self.start_date < self.parent_activity.start_date:
+                if self.start_date and self.start_date < self.parent_activitymoment.start_date:
                     errors.update({'start_date': 'Start date cannot be before the start date of the parent activity'})
-                if self.start_date and self.end_date > self.parent_activity.end_date:
+                if self.start_date and self.end_date > self.parent_activitymoment.end_date:
                     errors.update({'end_date': 'End date cannot be after the end date of the parent activity'})
 
         if errors:
@@ -828,8 +816,8 @@ class ActivitySlot(models.Model):
 
     def get_absolute_url(self):
         return reverse('activity_calendar:activity_slots_on_day', kwargs={
-            'activity_id': self.parent_activity.id,
-            'recurrence_id': self.recurrence_id,
+            'activity_id': self.parent_activitymoment.parent_activity_id,
+            'recurrence_id': self.parent_activitymoment.recurrence_id,
         })
 
 

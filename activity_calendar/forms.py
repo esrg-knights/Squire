@@ -149,16 +149,13 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
     def save(self):
         """ Saves the form. Returns whether the user was added (True) or removed (False) """
         if self.cleaned_data['sign_up']:
-            kwargs = {
-                'parent_activity': self.activity,
-                'recurrence_id':self.recurrence_id,
-            }
-            activity_slot = ActivitySlot.objects.filter(**kwargs).first()
-            if activity_slot is None:
-                activity_slot = ActivitySlot.objects.create(**kwargs)
+            if self.activity_moment is None:
+                self.activity_moment, _ = ActivityMoment.objects.get_or_create(parent_activity=self.activity, recurrence_id=self.recurrence_id)
+
+            slot, _ = ActivitySlot.objects.get_or_create(parent_activitymoment=self.activity_moment, defaults={'title': 'Standard Slot'})
 
             Participant.objects.create(
-                activity_slot=activity_slot,
+                activity_slot=slot,
                 user=self.user,
             )
             return True
@@ -233,8 +230,7 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
 
     def save(self):
         """ Saves the form. Returns whether the user was added (True) or removed (False) """
-        slot_obj = self.activity.activity_slot_set.filter(
-            recurrence_id=self.recurrence_id,
+        slot_obj = self.activity_moment.activity_slot_set.filter(
             id=self.cleaned_data.get('slot_id', -1)
         ).first()
 
@@ -254,6 +250,7 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
 
 
 class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
+    """ Form for creating a new slot """
 
     class Meta:
         model = ActivitySlot
@@ -309,8 +306,10 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
     def save(self, commit=True):
         # Set fixed attributes
-        self.instance.parent_activity = self.activity
-        self.instance.recurrence_id = self.recurrence_id
+        if self.activity_moment is None:
+            self.activity_moment, _ = ActivityMoment.objects.get_or_create(parent_activity=self.activity, recurrence_id=self.recurrence_id)
+
+        self.instance.parent_activitymoment = self.activity_moment
         self.instance.owner = self.user
 
         slot_obj = super(RegisterNewSlotForm, self).save(commit=commit)
