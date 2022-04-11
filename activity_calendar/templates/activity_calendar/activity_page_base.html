@@ -153,7 +153,7 @@
                     </div>
                 {% endif %}
 
-                {% if not activity_moment.slot_creation == activity.SLOT_CREATION_NONE %}
+                {% if activity_moment.slot_creation != activity.SLOT_CREATION_NONE %}
                     <div class="d-flex">
                         <!-- Event Participants Icon -->
                         <div class="col-xs-2">
@@ -193,7 +193,7 @@
                     </div>
                 </div>
 
-                {% if not activity_moment.slot_creation == activity.SLOT_CREATION_NONE %}
+                {% if activity_moment.slot_creation != activity.SLOT_CREATION_NONE %}
                     <div class="d-flex">
                         <!-- Text Icon -->
                         <div class="col-xs-2">

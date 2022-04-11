@@ -40,12 +40,12 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='activity',
             name='slot_creation',
-            field=models.CharField(choices=[('CREATION_STAFF', 'Never/By Administrators'), ('CREATION_AUTO', 'Automatically'), ('CREATION_USER', 'By Users'), ('CREATION_NONE', 'No signup')], default='CREATION_AUTO', max_length=15),
+            field=models.CharField(choices=[('CREATION_STAFF', 'By Organisers'), ('CREATION_AUTO', 'Automatically'), ('CREATION_USER', 'By Users'), ('CREATION_NONE', 'No signup')], default='CREATION_AUTO', max_length=15),
         ),
         migrations.AlterField(
             model_name='activitymoment',
             name='local_slot_creation',
-            field=models.CharField(blank=True, choices=[('CREATION_STAFF', 'Never/By Administrators'), ('CREATION_AUTO', 'Automatically'), ('CREATION_USER', 'By Users'), ('CREATION_NONE', 'No signup')], default=None, max_length=15, null=True),
+            field=models.CharField(blank=True, choices=[('CREATION_STAFF', 'By Organisers'), ('CREATION_AUTO', 'Automatically'), ('CREATION_USER', 'By Users'), ('CREATION_NONE', 'No signup')], default=None, max_length=15, null=True),
         ),
         migrations.RunPython(forwards_func,backwards_func)
     ]

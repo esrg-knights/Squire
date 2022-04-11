@@ -117,7 +117,7 @@ class Activity(models.Model):
     slot_creation = models.CharField(
         max_length=15,
         choices=[
-            (SLOT_CREATION_STAFF,   "Never/By Administrators"),
+            (SLOT_CREATION_STAFF,   "By Organisers"),
             (SLOT_CREATION_AUTO,   "Automatically"),
             (SLOT_CREATION_USER,   "By Users"),
             (SLOT_CREATION_NONE,   "No signup"),
