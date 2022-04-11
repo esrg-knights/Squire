@@ -129,7 +129,7 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
         super(RegisterForActivityForm, self).check_validity(data)
 
         # Subscribing directly on activities can only happen if we don't use the multiple-slots feature
-        if not self.activity_moment.slot_creation == Activity.SLOT_CREATION_AUTO:
+        if self.activity_moment.slot_creation != Activity.SLOT_CREATION_AUTO:
             raise ValidationError(
                 _("Activity mode is incorrect. Please refresh the page."), code='invalid_slot_mode')
 
@@ -149,7 +149,8 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
     def save(self):
         """ Saves the form. Returns whether the user was added (True) or removed (False) """
         if self.cleaned_data['sign_up']:
-            if self.activity_moment is None:
+            if self.activity_moment.id is None:
+                # Activitymoment did not yet exist in the database, but we need it for the slot
                 self.activity_moment, _ = ActivityMoment.objects.get_or_create(parent_activity=self.activity, recurrence_id=self.recurrence_id)
 
             slot, _ = ActivitySlot.objects.get_or_create(parent_activitymoment=self.activity_moment, defaults={'title': 'Standard Slot'})

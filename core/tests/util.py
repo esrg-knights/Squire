@@ -1,4 +1,4 @@
-from collections import Collection
+from collections.abc import Collection
 import logging
 from functools import wraps
 

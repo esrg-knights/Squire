@@ -28,5 +28,15 @@
             "end_date":"2020-08-16T15:30:00Z",
             "recurrences":"RRULE:FREQ=WEEKLY;BYDAY=SA\nEXDATE:20201016T220000Z\nEXDATE:20201113T230000Z"
         }
+    },
+    {
+        "model": "activity_calendar.activitymoment",
+        "pk": 1,
+        "fields": {
+            "parent_activity": 1,
+            "recurrence_id": "2020-07-14T17:30:00Z",
+            "created_date": "2020-08-08T19:00:00Z",
+            "last_updated": "2020-08-08T19:00:00Z"
+        }
     }
 ]

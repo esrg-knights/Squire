@@ -771,9 +771,6 @@ class ActivitySlot(models.Model):
     image = models.ForeignKey(PresetImage, blank=True, null=True, related_name="slot_image", on_delete=models.SET_NULL,
         help_text="If left empty, matches the image of the activity.")
 
-    def __str__(self):
-        return f"{self.id}"
-
     @property
     def image_url(self):
         if self.image is None:

@@ -932,7 +932,7 @@ class ActivityMomentTestCase(TestCase):
         participations = ActivityMoment.objects.get(id=3).get_user_subscriptions(User.objects.get(id=1))
         self.assertEqual(participations.count(), 2)
         self.assertIsInstance(participations.first(), Participant)
-        self.assertEqual(participations.first().activity_slot.parent_activity_id, 2)
+        self.assertEqual(participations.first().activity_slot.parent_activitymoment_id, 3)
         self.assertEqual(participations.last().user_id, 1)
 
         # AnonymousUsers return empty querysets
@@ -942,7 +942,7 @@ class ActivityMomentTestCase(TestCase):
         participants = ActivityMoment.objects.get(id=3).get_guest_subscriptions()
         self.assertEqual(participants.count(), 3)
         self.assertIsInstance(participants.first(), Participant)
-        self.assertEqual(participants.first().activity_slot.parent_activity_id, 2)
+        self.assertEqual(participants.first().activity_slot.parent_activitymoment_id, 3)
 
     def test_get_slots(self):
         slots = ActivityMoment.objects.get(id=3).get_slots()
@@ -1001,35 +1001,6 @@ class ActivitySlotTestCase(TestCase):
             slot.get_guest_subscriptions().count(),
             0
         )
-
-    def test_clean_recurrence_id_omitted(self):
-        slot = ActivitySlot(
-            title='test_recurrentce_clean',
-            parent_activity_id=1,
-        )
-
-        with self.assertRaises(ValidationError) as error:
-            slot.clean_fields()
-        self.assertIn('recurrence_id', error.exception.error_dict.keys())
-
-    def test_clean_recurrence_id_invalid(self):
-        slot = ActivitySlot(
-            title='test_recurrentce_clean',
-            parent_activity_id=1,
-            recurrence_id="2020-08-15T19:00:00Z"
-        )   # There is no activity_moment on this recurrence moment
-
-        with self.assertRaises(ValidationError) as error:
-            slot.clean_fields()
-        self.assertIn('recurrence_id', error.exception.error_dict.keys())
-
-        slot = ActivitySlot(
-            title='test_recurrentce_clean',
-            parent_activity_id=1,
-            recurrence_id="2020-08-14T19:00:00Z"
-        )
-        # Recurrence_id is valid, so it does not raise an error
-        slot.clean_fields()
 
 
 class ActivityParticipantTestCase(TestCase):

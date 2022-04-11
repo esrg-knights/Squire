@@ -137,7 +137,7 @@ class RegisterForActivityFormTestCase(ActivityFormValidationMixin, TestCase):
     def test_save_sign_up_new_slot(self, mock_tz):
         """ Checks if a new slot is made when no slots are present """
         # Remove all (1) current slots on this activity
-        self.activity.activity_slot_set.all().delete()
+        ActivitySlot.objects.filter(parent_activitymoment__parent_activity=self.activity).delete()
 
         form = self.assertFormValid({'sign_up': True})
         self.assertEqual(0, self.activity_moment.get_user_subscriptions(self.user).count())
@@ -393,8 +393,7 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
             'max_participants': -1,
             'description': "Some various text about my slot"})
         slot_query = ActivitySlot.objects.filter(
-            parent_activity=self.activity,
-            recurrence_id=self.recurrence_id,
+            parent_activitymoment=self.activity_moment,
             title='My slot'
         )
         self.assertFalse(slot_query.exists())
@@ -419,8 +418,7 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
             'max_participants': -1,
             'description': "Some various text about this slot"})
         slot_query = ActivitySlot.objects.filter(
-            parent_activity=self.activity,
-            recurrence_id=self.recurrence_id,
+            parent_activitymoment=self.activity_moment,
             title='Some slot'
         )
         self.assertFalse(slot_query.exists())
