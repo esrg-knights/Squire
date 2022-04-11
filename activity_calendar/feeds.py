@@ -38,13 +38,7 @@ def get_feed_id(item):
     # ID should be _globally_ unique
     if isinstance(item, Activity):
         # Sometimes a specific feed_name is given along with the object. Prioritise that.
-        if hasattr(item, 'feed_name'):
-            return f"local_activity-name-{item.feed_name}@kotkt.nl"
-        if item.id:
-            return f"local_activity-id-{item.id}@kotkt.nl"
-        else:
-            raise KeyError("For activities without an id, a feed_name needs to be declared on the instance.")
-
+        return f"{item.feed_id}@kotkt.nl"
     elif isinstance(item, ActivityMoment):
         if item.is_part_of_recurrence:
             return f"local_activity-id-{item.parent_activity_id}@kotkt.nl"
@@ -332,7 +326,7 @@ class BirthdayCalendarFeed(CESTEventFeed):
     product_id = '-//Squire//Birthday Calendar//EN'
     file_name = "knights-birthday-calendar.ics"
     calendar_title = "Birthday calendar - Knights"
-    calendar_description = "Knights of the Kitchen Table Activiteiten en Evenementen."
+    calendar_description = "Knights of the Kitchen Table Birthday Calendar."
 
     @classmethod
     def construct_birthday(cls, member):
@@ -360,7 +354,9 @@ class BirthdayCalendarFeed(CESTEventFeed):
             self.construct_birthday,
             Member.objects.filter(
                 memberyear__is_active=True,
-                membercalendarsettings__use_birthday=True)
+                membercalendarsettings__use_birthday=True,
+                date_of_birth__isnull=False,
+            )
         )
 
     def item_link(self, item):

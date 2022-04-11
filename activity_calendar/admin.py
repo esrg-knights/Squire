@@ -85,6 +85,22 @@ class ActivityMomentAdmin(MarkdownImageInlineAdmin):
                     "is_part_of_recurrence", activity_moment_has_changes]
 
 
+class CalendarActivityLinkInline(admin.TabularInline):
+    model = CalendarActivityLink
+    extra = 0
+
+
+@admin.register(Calendar)
+class CalendarAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'connected_activities')
+    list_display_links = ('id', 'name')
+
+
+    inlines = [CalendarActivityLinkInline]
+
+    def connected_activities(self, obj):
+        return obj.activities.count()
+
 
 class ParticipantInline(admin.TabularInline):
     model = Participant
@@ -113,5 +129,4 @@ class ActivitySlotAdmin(admin.ModelAdmin):
     inlines = [ParticipantInline]
 
 admin.site.register(ActivitySlot, ActivitySlotAdmin)
-admin.site.register(Calendar)
 admin.site.register(CalendarActivityLink)
