@@ -34,7 +34,23 @@ def forwards_func(apps, schema_editor):
         slot.save()
 
 def backwards_func(apps, schema_editor):
-    pass
+    """
+        The reverse of the previous function. ActivitySlots should regain their recurrence_id.
+        NB: This is not a 1-to-1 reversion:
+        1) ActivitySlots that used to have no recurrence_id will keep their new recurrence_id. Not only is there no way to
+            know which ActivitySlot used to work like this, they're also not visible in the current version of Squire.
+        2) Newly created ActivityMoments are not removed. It would technically be possible to get rid of non-cancelled
+            ActivityMoments that do not feature changes from their parent activity and which also fall in their parent's
+            recurrence scheme, but there's no real benefit there. Furthermore, this could also remove ActivityMoments
+            that match those requirements but were also there prior to this migration (though removing those wouldn't hurt
+            either).
+    """
+    ActivitySlot = apps.get_model("activity_calendar", "ActivitySlot")
+
+    for slot in ActivitySlot.objects.all():
+        slot.parent_activity = slot.parent_activitymoment.parent_activity
+        slot.recurrence_id = slot.parent_activitymoment.recurrence_id
+        slot.save()
 
 class Migration(migrations.Migration):
 
@@ -49,5 +65,23 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(default=None, on_delete=django.db.models.deletion.CASCADE, related_name='activity_slot_set', to='activity_calendar.ActivityMoment', null=True),
             preserve_default=False,
         ),
+        migrations.AlterField(
+            model_name='activityslot',
+            name='parent_activity',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='activity_slot_set', to='activity_calendar.Activity', blank=True, null=True),
+        ),
         migrations.RunPython(forwards_func, backwards_func),
+        migrations.RemoveField(
+            model_name='activityslot',
+            name='parent_activity',
+        ),
+        migrations.RemoveField(
+            model_name='activityslot',
+            name='recurrence_id',
+        ),
+        migrations.AlterField(
+            model_name='activityslot',
+            name='parent_activitymoment',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='activity_slot_set', to='activity_calendar.ActivityMoment')
+        ),
     ]
