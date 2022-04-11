@@ -17,6 +17,7 @@
             <div class="row">
                 <div class="col-12">
                     <div class="p-1">
+                        <i class="far fa-check-circle"></i>
                         {% if user_subscriptions.count == 1 %}
                             You are subscribed to slot '{{ user_subscriptions.first.activity_slot.title }}'
                         {% else %}
