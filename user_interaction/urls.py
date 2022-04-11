@@ -9,6 +9,13 @@ def user_interaction_urls():
 
     urlpatterns = [
         path('', views.home_screen, name='homepage'),
+        ################
+        # BEGIN APRIL 2022
+        ################
+        path('upgrade', views.SquirePremiumView.as_view(), name='squire_premium'),
+        ################
+        # END APRIL 2022
+        ################
     ]
     return urlpatterns, app_name, app_name
 
