@@ -14,7 +14,7 @@ class ActivitySlotLinkToActivityMomentTest(MigratorTestCase):
     """
 
     migrate_from = ('activity_calendar', '0017_core_activity_groupings')
-    migrate_to = ('activity_calendar', '0019_remove_activitymoment_recurrence_id')
+    migrate_to = ('activity_calendar', '0018_activityslot_link_to_activitymoment')
 
     @suppress_warnings(logger_name="activity_calendar.migrations.0018_activityslot_link_to_activitymoment")
     def setUp(self):
