@@ -66,15 +66,7 @@
               <div class="container-fluid">
                 <div class="row">
                   <!-- Calendar Icon -->
-                  <div class="col-xs-2">
-                    <img
-                      src="{% static 'octicons/calendar.svg' %}"
-                      alt="Calendar-icon"
-                      class="icon"
-                      height="16"
-                      width="16"
-                    />
-                  </div>
+                  <div class="col-xs-2"><i class="far fa-calendar fa-fw"></i></div>
                   <!-- Event Date & Recurrence Information -->
                   <div class="col align-self-center">
                     <div class='nospace'>
@@ -92,15 +84,7 @@
 
                 <div class="row">
                   <!-- Location Icon -->
-                  <div class="col-xs-2">
-                    <img
-                      src="{% static 'octicons/location.svg' %}"
-                      alt="Location-icon"
-                      class="icon"
-                      height="16"
-                      width="16"
-                    />
-                  </div>
+                  <div class="col-xs-2"><i class="fas fa-map-marker-alt fa-fw"></i></div>
                   <!-- Location -->
                   <div class="col nospace align-self-center">
                     <small><p id="event-location"></p></small>
@@ -108,35 +92,11 @@
                 </div>
 
                 <div class="row largespace">
-                  <!-- Alert Icon -->
+                  <!-- Alert/Check Icon -->
                   <div class="col-xs-2">
-                    <img
-                      src="{% static 'octicons/alert.svg' %}"
-                      alt="Alert-icon"
-                      height="16"
-                      width="16"
-                      class="icon-warning"
-                      style="display:none"
-                      id="subscribe-required"
-                    />
-                    <img
-                      src="{% static 'octicons/check-circle.svg' %}"
-                      alt="Check-icon"
-                      height="16"
-                      width="16"
-                      class="icon-success"
-                      style="display:none"
-                      id="subscribe-done"
-                    />
-                    <img
-                      src="{% static 'octicons/info.svg' %}"
-                      alt="Check-icon"
-                      height="16"
-                      width="16"
-                      style="display:none"
-                      id="subscribe-info"
-                      class="icon"
-                    />
+                    <i id="subscribe-required" class="fas fa-exclamation-triangle fa-fw text-warning" style="display: none;"></i>
+                    <i id="subscribe-done" class="far fa-check-circle fa-fw text-success" style="display: none;"></i>
+                    <i id="subscribe-info" class="fas fa-info-circle fa-fw" style="display: none;"></i>
                   </div>
                   <!-- Subscription -->
                   <div class="col nospace align-self-center">
@@ -149,16 +109,8 @@
                 </div>
 
                 <div class="row">
-                  <!-- Calendar Icon -->
-                  <div class="col-xs-2">
-                    <img
-                      src="{% static 'octicons/three-bars.svg' %}"
-                      alt="Description-icon"
-                      class="icon"
-                      height="16"
-                      width="16"
-                    />
-                  </div>
+                  <!-- Text Icon -->
+                  <div class="col-xs-2"><i class="fas fa-bars fa-fw"></i></div>
                   <!-- Event Description -->
                   <div class="col align-self-center">
                     <div id="event-description" class="rendered-md"></div>
