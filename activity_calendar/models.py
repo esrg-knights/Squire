@@ -110,15 +110,17 @@ class Activity(models.Model):
     # - Auto: Slots are created automatically. They are only actually created in the DB once a participant joins.
     #                                          Until that time they do look like real slots though (in the UI)
     # - Users: Slots can be created by users. Users can be the owner of at most max_slots_join_per_participant slots
-    SLOT_CREATION_STAFF = "CREATION_NONE"
+    SLOT_CREATION_STAFF = "CREATION_STAFF"
     SLOT_CREATION_AUTO = "CREATION_AUTO"
     SLOT_CREATION_USER = "CREATION_USER"
+    SLOT_CREATION_NONE = "CREATION_NONE"
     slot_creation = models.CharField(
         max_length=15,
         choices=[
-            (SLOT_CREATION_STAFF,   "Never/By Administrators"),
+            (SLOT_CREATION_STAFF,   "By Organisers"),
             (SLOT_CREATION_AUTO,   "Automatically"),
             (SLOT_CREATION_USER,   "By Users"),
+            (SLOT_CREATION_NONE,   "No signup"),
         ],
         default='CREATION_AUTO',
     )
