@@ -4,7 +4,7 @@ from django.utils.timezone import localtime
 from .forms import ActivityAdminForm, ActivityMomentAdminForm
 from .models import Activity, ActivitySlot, Participant, ActivityMoment, OrganiserLink, CoreActivityGrouping
 
-from core.admin import MarkdownImageInline
+from core.admin import DisableModificationsAdminMixin, MarkdownImageInline, URLLinkInlineAdminMixin
 from utils.forms import RequestUserToFormModelAdminMixin
 
 class MarkdownImageInlineAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmin):
@@ -26,6 +26,28 @@ class MarkdownImageInlineAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmi
     #     inlines = super().get_inlines(request, obj=obj)
     #     inlines.append(MarkdownImageInline)
     #     return inlines
+
+########################################################
+# INLINES WITH LINK
+########################################################
+class ActivityMomentInline(URLLinkInlineAdminMixin, DisableModificationsAdminMixin, admin.TabularInline):
+    model = ActivityMoment
+    extra = 0
+    readonly_fields = ['last_updated', 'get_url']
+    fields = ['recurrence_id', 'status', 'local_title', 'get_url']
+    ordering = ("-recurrence_id",)
+
+class ActivitySlotInline(URLLinkInlineAdminMixin, DisableModificationsAdminMixin, admin.TabularInline):
+    model = ActivitySlot
+    extra = 0
+    readonly_fields = ['get_url']
+    fields = ['title', 'location', 'owner', 'max_participants', 'get_url']
+    ordering = ("title",)
+
+
+########################################################
+# OTHER
+########################################################
 
 
 class OrganiserInline(admin.TabularInline):
@@ -52,7 +74,7 @@ class ActivityAdmin(MarkdownImageInlineAdmin):
     search_fields = ['title']
     autocomplete_fields = ['author',]
 
-    inlines = [OrganiserInline]
+    inlines = [OrganiserInline, ActivityMomentInline]
 
     def get_view_on_site_url(self, obj=None):
         if hasattr(obj, 'get_absolute_url') and obj.get_absolute_url() is None:
@@ -68,6 +90,8 @@ class ActivityMomentAdmin(MarkdownImageInlineAdmin):
     date_hierarchy = 'recurrence_id'
     search_fields = ['local_title', 'parent_activity__title']
     autocomplete_fields = ['parent_activity',]
+
+    inlines=[ActivitySlotInline]
 
     def activity_moment_has_changes(obj):
         """ Check if this ActivityModel has any data it overwrites """
@@ -111,3 +135,4 @@ class ActivitySlotAdmin(admin.ModelAdmin):
     inlines = [ParticipantInline]
 
 admin.site.register(ActivitySlot, ActivitySlotAdmin)
+
