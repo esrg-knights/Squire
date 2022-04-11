@@ -25,15 +25,7 @@
                 {% if activity_moment.location and not activity_moment.is_cancelled %}
                     <div class="d-flex">
                         <!-- Location Icon -->
-                        <div class="col-xs-2">
-                            <img
-                                src="{% static 'octicons/location.svg' %}"
-                                alt="Location-icon"
-                                class="icon"
-                                height="16"
-                                width="16"
-                            />
-                        </div>
+                        <div class="col-xs-2"><i class="fas fa-map-marker-alt fa-fw"></i></div>
                         <!-- Location -->
                         <div class="col nospace align-self-center">
                             <p id="event-location">{{ activity_moment.location }} </p>
@@ -43,16 +35,8 @@
 
                 {% if activity_moment.max_participants != 0 or activity_moment.subscriptions_required %}
                     <div class="d-flex">
-                        <!-- Subscription Icon -->
-                        <div class="col-xs-2">
-                            <img
-                                src="{% static 'octicons/clippy.svg' %}"
-                                alt=""
-                                class="icon"
-                                height="16"
-                                width="16"
-                            />
-                        </div>
+                        <!-- Clipboard Icon -->
+                        <div class="col-xs-2"><i class="far fa-clipboard fa-fw"></i></div>
                         <!-- Subscription status -->
                         <div class="col align-self-center">
                             <p id="event-status">
@@ -99,16 +83,8 @@
             </div>
             <div style="min-height: 5em;">
                 <div class="d-flex">
-                    <!-- Subscription Icon -->
-                    <div class="col-xs-2">
-                        <img
-                            src="{% static 'octicons/clippy.svg' %}"
-                            alt=""
-                            class="icon"
-                            height="16"
-                            width="16"
-                        />
-                    </div>
+                    <!-- Clipboard Icon -->
+                    <div class="col-xs-2"><i class="far fa-clipboard fa-fw"></i></div>
                     <!-- Subscription status -->
                     <div class="col align-self-center">
                         <p id="event-status" class="text-danger">

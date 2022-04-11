@@ -4,7 +4,7 @@ from django.contrib.auth.models import Permission
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
-from dynamic_preferences.types import ModelMultipleChoicePreference, StringPreference
+from dynamic_preferences.types import ModelMultipleChoicePreference, StringPreference, BooleanPreference
 from dynamic_preferences.preferences import Section
 from dynamic_preferences.registries import global_preferences_registry
 
@@ -23,6 +23,20 @@ class HomePageMessage(StringPreference):
     help_text = "Leave empty to not show any home page message."
     default = ""
     required = False
+
+
+@global_preferences_registry.register
+class April2022Active(BooleanPreference):
+    """
+        April 2022 message enabling. This should've probably been coded as a user theme instead,
+        but at the moment there's no easy way to make it the default & switch everyone to it,
+        nor can additional pages be added through it.
+    """
+    section = homepage
+    name = 'april_2022'
+    verbose_name = "April Fools 2022"
+    description = "When enabled, the April Fools 2022 messaging activates."
+    default = False
 
 ##############################################################################
 # COVID-19 / Corona
