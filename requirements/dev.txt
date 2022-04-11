@@ -7,3 +7,4 @@
 # Import the dev-dependencies
 coverage~=4.5.3 # Code Coverage
 django-debug-toolbar~=3.2.2 # Debug Panel
+django-test-migrations==1.2.0 # Testing migrations

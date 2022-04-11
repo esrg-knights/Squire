@@ -16,10 +16,6 @@ def forwards_func(apps, schema_editor):
         1) Find a matching ActivityMoment with an identical parent_activity and recurrence_id
         2) Create a new ActivityMoment if such an ActivityMoment does not exist yet
     """
-
-
-    # This migration introduces a new slot mode: none. But this was already the name for staff related activities
-    # So we need to shift that in the databse to the new name
     ActivityMoment = apps.get_model("activity_calendar", "ActivityMoment")
     ActivitySlot = apps.get_model("activity_calendar", "ActivitySlot")
 
