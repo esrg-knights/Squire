@@ -129,18 +129,20 @@
                     </div>
                 {% endif %}
 
-                <div class="d-flex">
-                    <!-- Event Participants Icon -->
-                    <div class="col-xs-2"><i class="fas fa-user-friends fa-fw"></i></div>
-                    <!-- Patricipants -->
-                    <div class="col nospace align-self-center">
-                        <p id="event-participants">
-                            {{ num_total_participants }} /
-                            {% if num_max_participants == -1 %}&infin;
-                            {% else %}{{ num_max_participants }}{% endif %}
-                        </p>
+                {% if activity_moment.slot_creation != activity.SLOT_CREATION_NONE %}
+                    <div class="d-flex">
+                        <!-- Event Participants Icon -->
+                        <div class="col-xs-2"><i class="fas fa-user-friends fa-fw"></i>
+                        <!-- Patricipants -->
+                        <div class="col nospace align-self-center">
+                            <p id="event-participants">
+                                {{ num_total_participants }} /
+                                {% if num_max_participants == -1 %}&infin;
+                                {% else %}{{ num_max_participants }}{% endif %}
+                            </p>
+                        </div>
                     </div>
-                </div>
+                {% endif %}
 
                 <div class="d-flex">
                     <!-- Text Icon -->
@@ -151,36 +153,36 @@
                     </div>
                 </div>
 
-                <div class="d-flex">
-                    <!-- Clipboard Icon -->
-                    <div class="col-xs-2"><i class="far fa-clipboard fa-fw"></i></div>
-                    <!-- Registration Status -->
-                    <div class="col align-self-center">
-                        <p id="event-status">
-                            {% if subscriptions_open %}
-                                {% if activity_moment.is_full %}
-                                    Activity is full.
+                {% if activity_moment.slot_creation != activity.SLOT_CREATION_NONE %}
+                    <div class="d-flex">
+                        <!-- Text Icon -->
+                        <div class="col-xs-2"><i class="far fa-clipboard fa-fw"></i></div>
+                        <!-- Event Description -->
+                        <div class="col align-self-center">
+                            <p id="event-status">
+                                {% if subscriptions_open %}
+                                    {% if activity_moment.is_full %}
+                                        Activity is full.
+                                    {% else %}
+                                        Activity is open for sign-ups
+                                    {% endif %}
                                 {% else %}
-                                    Activity is open for sign-ups
+                                    {% if subscription_open_date %}
+                                        Subscriptions will open on {{ subscription_open_date|date:"j E, H:i" }}
+                                    {% else %}
+                                        Sign-ups are closed
+                                    {% endif %}
                                 {% endif %}
-                            {% else %}
-                                {% opens_in_future as opens_in_future %}
-                                {% if opens_in_future %}
-                                    Subscriptions will open on {% get_opening_time "j E, H:i" %}
+                                <br>
+                                {% if activity_moment.subscriptions_required %}
+                                    <i>Registrations are <strong>required</strong>! You cannot join this activity otherwise!</i>
                                 {% else %}
-                                    Sign-ups are closed
+                                    <small class="text-muted">Registrations are <i>optional</i>, but are appreciated!</small>
                                 {% endif %}
-                            {% endif %}
-                            <br>
-                            {% if activity_moment.subscriptions_required %}
-                                <i>Registrations are <strong>required</strong>! You cannot join this activity otherwise!</i>
-                            {% else %}
-                                <small class="text-muted">Registrations are <i>optional</i>, but are appreciated!</small>
-                            {% endif %}
-                        </p>
+                            </p>
+                        </div>
                     </div>
-                </div>
-
+                {% endif %}
 
                 <div style="height: 4em;" class="d-none d-md-flex">
 

@@ -98,6 +98,10 @@ class ActivityMixin:
 
     def get_context_data(self, **kwargs):
         kwargs = super(ActivityMixin, self).get_context_data(**kwargs)
+        subscription_open_date = self.activity_moment.start_date - self.activity_moment.parent_activity.subscriptions_open
+        if subscription_open_date < timezone.now():
+            subscription_open_date = None
+
         kwargs.update({
             'activity': self.activity,
             'activity_moment': self.activity_moment,
@@ -108,6 +112,8 @@ class ActivityMixin:
             'num_max_participants': self.activity_moment.max_participants,
             'user_subscriptions': self.activity_moment.get_user_subscriptions(self.request.user),
             'show_participants': self.show_participants(),
+            'can_edit_activity': self.can_edit_activity(),
+            'subscription_open_date': subscription_open_date,
         })
 
         return kwargs
@@ -179,12 +185,12 @@ class ActivityFormMixin:
         return kwargs
 
 
+class ActivityMomentNoSignupView(ActivityMixin, TemplateView):
+    template_name = "activity_calendar/activity_page_no_signup.html"
+
+
 class ActivityMomentView(ActivityMixin, ActivityFormMixin, TemplateView):
-    def get_context_data(self, **kwargs):
-        return super(ActivityMomentView, self).get_context_data(
-            can_edit_activity=self.can_edit_activity(),
-            **kwargs
-        )
+    pass
 
 
 class ActivitySimpleMomentView(LoginRequiredForPostMixin, FormMixin, ActivityMomentView):
@@ -345,6 +351,8 @@ def get_activity_detail_view(request, *args, **kwargs):
             view_class = ActivityMomentCancelledView
         elif activity_moment.slot_creation == Activity.SLOT_CREATION_AUTO:
             view_class = ActivitySimpleMomentView
+        elif activity_moment.slot_creation == Activity.SLOT_CREATION_NONE:
+            view_class = ActivityMomentNoSignupView
         else:
             view_class = ActivityMomentWithSlotsView
 
