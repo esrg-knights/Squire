@@ -38,7 +38,7 @@ class ActivityOverview(ListView):
         start_date, end_date = self.get_time_range_data()
 
         activities = []
-        for activity in Activity.objects.filter(published_date__lte=timezone.now()):
+        for activity in Activity.objects.filter(published_date__lte=timezone.now(), is_public=True):
             for activity_moment in activity.get_activitymoments_between(start_date, end_date):
                 activities.append(activity_moment)
 

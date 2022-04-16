@@ -38,7 +38,8 @@
     "subscriptions_required": true,
     "slot_creation": "CREATION_AUTO",
     "subscriptions_open": "7 00:00:00",
-    "subscriptions_close": "00:30:00"
+    "subscriptions_close": "00:30:00",
+      "is_public": true
   }
 },
 {
@@ -62,7 +63,8 @@
     "subscriptions_required": true,
     "slot_creation": "CREATION_USER",
     "subscriptions_open": "7 00:00:00",
-    "subscriptions_close": "02:00:00"
+    "subscriptions_close": "02:00:00",
+      "is_public": true
   }
 },
 {
@@ -86,8 +88,34 @@
     "subscriptions_required": true,
     "slot_creation": "CREATION_STAFF",
     "subscriptions_open": "7 00:00:00",
-    "subscriptions_close": "00:30:00"
+    "subscriptions_close": "00:30:00",
+    "is_public": true
   }
+},
+{
+    "model": "activity_calendar.activity",
+    "pk": 4,
+    "fields": {
+        "author": null,
+        "title": "Board meeting",
+        "description": "Non-public board meeting",
+        "location": "Online",
+        "slots_image": 2,
+        "created_date": "2021-09-01T20:00:00Z",
+        "last_updated_date": "2021-09-01T20:00:00Z",
+        "published_date": "2021-09-01T20:00:00Z",
+        "start_date": "2021-09-01T20:00:00Z",
+        "end_date": "2021-09-01T22:00:00Z",
+        "recurrences": "RRULE:FREQ=WEEKLY;BYDAY=MO",
+        "max_slots": -1,
+        "max_participants": 30,
+        "max_slots_join_per_participant": 1,
+        "subscriptions_required": true,
+        "slot_creation": "CREATION_NONE",
+        "subscriptions_open": "7 00:00:00",
+        "subscriptions_close": "02:00:00",
+        "is_public": false
+    }
 },
 {
     "model": "activity_calendar.activitymoment",

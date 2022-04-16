@@ -1,0 +1,59 @@
+[
+    {
+        "model": "activity_calendar.activity",
+        "pk": 5,
+        "fields": {
+            "author": null,
+            "title": "Private activity",
+            "location": "Online",
+            "slots_image": 2,
+            "created_date": "2021-09-01T20:00:00Z",
+            "last_updated_date": "2021-09-01T20:00:00Z",
+            "published_date": "2021-09-01T20:00:00Z",
+            "start_date": "2021-09-01T20:00:00Z",
+            "end_date": "2021-09-01T22:00:00Z",
+            "recurrences": "RRULE:FREQ=WEEKLY;BYDAY=MO",
+            "max_slots": -1,
+            "max_participants": 30,
+            "max_slots_join_per_participant": 1,
+            "subscriptions_required": true,
+            "slot_creation": "CREATION_NONE",
+            "subscriptions_open": "7 00:00:00",
+            "subscriptions_close": "02:00:00",
+            "is_public": false
+        }
+    },
+    {
+    "model": "activity_calendar.calendar",
+    "pk": 1,
+    "fields": {
+        "name": "Test calendar",
+        "slug": "test_calendar",
+        "description": "A simple test calendar"
+    }
+    },
+    {
+        "model": "activity_calendar.calendaractivitylink",
+        "pk": 1,
+        "fields": {
+            "calendar": 1,
+            "activity": 1
+        }
+    },
+    {
+        "model": "activity_calendar.calendaractivitylink",
+        "pk": 2,
+        "fields": {
+            "calendar": 1,
+            "activity": 2
+        }
+    },
+    {
+        "model": "activity_calendar.calendaractivitylink",
+        "pk": 3,
+        "fields": {
+            "calendar": 1,
+            "activity": 4
+        }
+    }
+]

@@ -1,14 +1,15 @@
 import icalendar
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.utils import timezone, dateparse
+from django.utils.text import slugify
 
-from activity_calendar.models import Activity, ActivityMoment
-from activity_calendar.feeds import CESTEventFeed, get_feed_id
+from activity_calendar.models import Activity, ActivityMoment, CalendarActivityLink
+from activity_calendar.feeds import PublicCalendarFeed, get_feed_id, BirthdayCalendarFeed, CustomCalendarFeed
 
-
+from membership_file.models import Member
 
 
 class TestCaseICalendarExport(TestCase):
@@ -21,7 +22,7 @@ class TestCaseICalendarExport(TestCase):
         non_published.save()
 
         request = RequestFactory().get("/api/calendar/ical")
-        view = CESTEventFeed()
+        view = PublicCalendarFeed()
 
         response = view(request)
         calendar = icalendar.Calendar.from_ical(response.content)
@@ -34,7 +35,7 @@ class TestCaseICalendarExport(TestCase):
 
     # Ensure that DST does not affect EXDATE's start dates
     def test_recurrence_dst(self):
-        class DSTTestItemsFeed(CESTEventFeed):
+        class DSTTestItemsFeed(PublicCalendarFeed):
             def items(self):
                 return Activity.objects.filter(title='Weekly CEST Event')
 
@@ -65,7 +66,7 @@ class TestCaseICalendarExport(TestCase):
     # Ensure that the VTIMEZONE field is correctly set
     def test_vtimezone(self):
         request = RequestFactory().get("/api/calendar/ical")
-        view = CESTEventFeed()
+        view = PublicCalendarFeed()
 
         response = view(request)
         calendar = icalendar.Calendar.from_ical(response.content)
@@ -95,16 +96,19 @@ class TestCaseICalendarExport(TestCase):
                 self.fail(f"Only STANDARD or DAYLIGHT components must appear in VTIMEZONE. Got <{str(type(sub))}> instead!")
 
 
-class ICalFeedTestCase(TestCase):
-    fixtures = ['test_users', 'test_activity_slots']
+class FeedTestMixin:
+    feed_class = None
+    url_kwargs = {}
 
     def setUp(self):
-        self.feed = CESTEventFeed()
-        self._build_response_calendar()
+        if self.feed_class is None:
+            raise KeyError(f"Please define a feed_class in {self.__class__.__name__}")
+        self.feed = self.feed_class()
+        self._build_response_calendar(**self.url_kwargs)
 
-    def _build_response_calendar(self):
-        request = RequestFactory().get("/api/calendar/ical")
-        response = self.feed(request)
+    def _build_response_calendar(self, **url_kwargs):
+        request = RequestFactory().get("/api/calendar/ical", data=url_kwargs)
+        response = self.feed(request, **url_kwargs)
         self.calendar = icalendar.Calendar.from_ical(response.content)
 
     def _get_component(self, activity_item):
@@ -118,9 +122,15 @@ class ICalFeedTestCase(TestCase):
         guid = get_feed_id(activity_item)
 
         for subcomponent in self.calendar.subcomponents:
-            if subcomponent.get('UID', None) == guid and subcomponent.get('DTSTART').dt == activity_item.start_date:
+            start_dt = activity_item.start_date.date() if activity_item.full_day else activity_item.start_date
+
+            if subcomponent.get('UID', None) == guid and subcomponent.get('DTSTART').dt == start_dt:
                 return subcomponent
         return None
+
+class ICalFeedTestCase(FeedTestMixin, TestCase):
+    fixtures = ['test_users', 'test_activity_slots']
+    feed_class = PublicCalendarFeed
 
     def test_activity_in_feed(self):
         activity = Activity.objects.get(id=2)
@@ -170,7 +180,7 @@ class ICalFeedTestCase(TestCase):
         self.assertIn('RECURRENCE-ID', component.keys())
         self.assertEqual(component.get('RECURRENCE-ID').dt, activitymoment.recurrence_id)
 
-    def test_non_recurrent_doubleglicth(self):
+    def test_non_recurrent_doubleglitch(self):
         """ Non-recurrent activities should have activity displayed ONLY when activitymoment is not present yet.
         Otherswise the activitymoment will appear next to instead of override activity.
         As described in issue #213 """
@@ -244,3 +254,107 @@ class ICalFeedTestCase(TestCase):
         ))
         self.assertEqual(len(self._get_component(activity)['EXDATE'].dts), 3)
 
+    def test_full_day_events(self):
+        """ Asserts that when a day is marked as full day, a date is given instead """
+        activity = Activity.objects.get(id=3)
+        component = self._get_component(activity)
+        self.assertIsNotNone(component)
+        self.assertIsInstance(component['DTSTART'].dt, datetime)
+        self.assertIsInstance(component['DTEND'].dt, datetime)
+
+        # Make activity a full day activity
+        activity.full_day = True
+        activity.save()
+        self._build_response_calendar()
+        component = self._get_component(activity)
+        self.assertIsNotNone(component)
+        # start and end times should now be dates instead of datetimes
+        self.assertIsInstance(component['DTSTART'].dt, date)
+        self.assertIsInstance(component['DTEND'].dt, date)
+
+
+class CustomCalendarFeedTestCase(FeedTestMixin, TestCase):
+    fixtures = ['test_users', 'test_activity_slots', 'activity_calendar/test_custom_feed']
+    feed_class = CustomCalendarFeed
+    url_kwargs = {'calendar_slug': 'test_calendar'}
+
+    def test_included_public_non_recurrent(self):
+        """ Test that a single activity with custom activitymoment settings does not present double """
+        # Assert link existence
+        self.assertTrue(CalendarActivityLink.objects.filter(activity_id=1, calendar_id=1).exists())
+
+        activity = Activity.objects.get(id=1)
+        component = self._get_component(activity)
+        self.assertIsNone(component)
+
+        component = self._get_component(activity.activitymoment_set.first())
+        self.assertIsNotNone(component)
+
+    def test_included_public_recurrent(self):
+        activity = Activity.objects.get(id=2)
+        self.assertEqual(activity.is_public, True)
+        component = self._get_component(activity)
+        self.assertIsNotNone(component)
+
+        # Test that it also loads overwritten activitymoments
+        component = self._get_component(activity.activitymoment_set.first())
+        self.assertIsNotNone(component)
+
+    def test_included_non_public(self):
+        activity = Activity.objects.get(id=4)
+        self.assertEqual(activity.is_public, False)
+        component = self._get_component(activity)
+        self.assertIsNotNone(component)
+
+    def test_excluded_public(self):
+        activity = Activity.objects.get(id=3)
+        self.assertEqual(activity.is_public, True)
+        component = self._get_component(activity)
+        self.assertIsNone(component)
+
+    def test_excluded_non_public(self):
+        activity = Activity.objects.get(id=5)
+        self.assertEqual(activity.is_public, False)
+        component = self._get_component(activity)
+        self.assertIsNone(component)
+
+
+class BirthdayFeedTestCase(FeedTestMixin, TestCase):
+    fixtures = ['activity_calendar/test_birthdays']
+    feed_class = BirthdayCalendarFeed
+
+    def test_generated_birthdays(self):
+        """ Tests that the birthdays that should be present are """
+        member = Member.objects.get(id=25)
+        activity = BirthdayCalendarFeed.construct_birthday(member)
+        component = self._get_component(activity)
+        self.assertIsNotNone(component)
+        self.assertEqual(component['DTSTART'].dt, member.date_of_birth)
+        self.assertEqual(component['DTEND'].dt, member.date_of_birth)
+
+        member = Member.objects.get(id=27)
+        activity = BirthdayCalendarFeed.construct_birthday(member)
+        component = self._get_component(activity)
+        self.assertIsNotNone(component)
+        self.assertEqual(component['DTSTART'].dt, member.date_of_birth)
+        self.assertEqual(component['DTEND'].dt, member.date_of_birth)
+
+    def test_exclude_nonshared_birthdays(self):
+        """ Members who do not want to share their birthday should be in here """
+        member = Member.objects.get(id=26)
+        activity = BirthdayCalendarFeed.construct_birthday(member)
+        component = self._get_component(activity)
+        self.assertIsNone(component)
+
+        # Make sure that the member is considered member so the testcase data is still correct
+        self.assertTrue(member.is_considered_member(), msg="Data incorrect. Member 26 should be a current member")
+
+    def test_exclude_nonmembers(self):
+        member = Member.objects.get(id=26)
+        activity = BirthdayCalendarFeed.construct_birthday(member)
+        component = self._get_component(activity)
+        self.assertIsNone(component)
+
+        # Make sure that the old-member still wants to share their birthday
+        self.assertFalse(member.membercalendarsettings.use_birthday,
+                         msg="Data incorrect. MemberCalendarSettings 28 should have use_birthday set to true")
