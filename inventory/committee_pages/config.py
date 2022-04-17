@@ -1,5 +1,4 @@
-from django.contrib.contenttypes.models import ContentType
-from django.urls import path, include, reverse
+from django.urls import path, reverse
 
 from committees.committeecollective import CommitteeBaseConfig
 
@@ -12,6 +11,7 @@ class InventoryConfig(CommitteeBaseConfig):
     icon_class = 'fas fa-archive'
     url_name = 'group_inventory'
     order_value = 50
+    group_requires_permission = 'inventory.view_ownership'
 
     def get_urls(self):
         """ Builds a list of urls """

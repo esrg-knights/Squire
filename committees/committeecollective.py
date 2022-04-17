@@ -34,7 +34,7 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
                 content_type__app_label=app_label,
                 codename=codename,
                 group__associationgroup=association_group
-            ).exists() or Permission.objects.filter( # Check for associationgroup permissions
+            ).exists() and not Permission.objects.filter( # Check for associationgroup permissions
                 content_type__app_label=app_label,
                 codename=codename,
                 associationgroup=association_group
