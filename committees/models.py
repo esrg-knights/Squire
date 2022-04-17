@@ -1,6 +1,6 @@
 import datetime
 
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -13,6 +13,10 @@ class AssociationGroup(models.Model):
     name =  models.CharField(max_length=150)
     shorthand = models.CharField(max_length=16, blank=True, null=True)
     icon = models.ImageField(upload_to='images/committees/', blank=True, null=True)
+    permissions = models.ManyToManyField(
+        Permission,
+        blank=True,
+    )
 
     COMMITTEE = 'C'
     GUILD = 'O'

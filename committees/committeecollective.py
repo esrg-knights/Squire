@@ -30,11 +30,15 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
         # Check group permission
         if self.group_requires_permission is not None:
             app_label, codename = self.group_requires_permission.split('.', maxsplit=1)
-            if not Permission.objects.filter(
+            if not Permission.objects.filter(       # Check for django group permissions
                 content_type__app_label=app_label,
                 codename=codename,
                 group__associationgroup=association_group
-            ):  return False
+            ).exists() or Permission.objects.filter( # Check for associationgroup permissions
+                content_type__app_label=app_label,
+                codename=codename,
+                associationgroup=association_group
+            ).exists():  return False
 
         return True
 

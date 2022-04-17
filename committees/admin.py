@@ -19,11 +19,14 @@ class AssociationGroupAdmin(MarkdownImageInlineAdmin):
     list_filter = ['type', 'is_public']
     list_display_links = ('id', 'name')
     search_fields = ('site_group__name', 'shorthand', 'contact_email')
-    fields = [('site_group', 'shorthand', 'name'), ('type', 'is_public'), 'icon', 'short_description', 'long_description',
+    fields = [('site_group', 'shorthand', 'name'), ('type', 'is_public'), 'icon', 'short_description',
+              'permissions',
+              'long_description',
               'contact_email', 'instructions']
 
     inlines = [MembershipInline]
     autocomplete_fields = ['site_group',]
+    filter_horizontal = ("permissions",)
 
 
 @admin.register(GroupExternalUrl)
