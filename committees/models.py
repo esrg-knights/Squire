@@ -9,7 +9,8 @@ from membership_file.models import Member
 
 
 class AssociationGroup(models.Model):
-    site_group = models.OneToOneField(Group, on_delete=models.CASCADE)
+    site_group = models.OneToOneField(Group, on_delete=models.CASCADE, blank=True, null=True)
+    name =  models.CharField(max_length=150)
     shorthand = models.CharField(max_length=16, blank=True, null=True)
     icon = models.ImageField(upload_to='images/committees/', blank=True, null=True)
 
@@ -47,12 +48,8 @@ class AssociationGroup(models.Model):
             ("can_view_board_members", "Can view board members"),
         ]
 
-    @property
-    def name(self):
-        return self.site_group.name
-
     def __str__(self):
-        return self.site_group.name
+        return self.name
 
 
 class GroupExternalUrl(models.Model):
