@@ -22,11 +22,13 @@ class AssociationGroup(models.Model):
     GUILD = 'O'
     WORKGROUP = 'WG'
     BOARD = 'B'
+    CAMPAIGN = 'GC'
     GROUPTYPES = [
         (COMMITTEE, 'Committee'),
         (GUILD, 'Order'),
         (WORKGROUP, 'Workgroup'),
         (BOARD, 'Board'),
+        (CAMPAIGN, 'Campaign')
     ]
     type = models.CharField(max_length=2, choices=GROUPTYPES)
     is_public = models.BooleanField(default=True)
