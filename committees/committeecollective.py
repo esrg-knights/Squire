@@ -54,8 +54,8 @@ class AssociationGroupMixin(ViewCollectiveViewMixin):
     association_group = None
     selected_tab_name = None
 
-    def setup(self, request, *args, **kwargs):
-        self.association_group = get_object_or_404(AssociationGroup, id=kwargs['group_id'])
+    def setup(self, request, *args, group_id: AssociationGroup, **kwargs):
+        self.association_group = group_id
         return super(AssociationGroupMixin, self).setup(request, *args, **kwargs)
 
     def _get_other_check_kwargs(self):
@@ -74,7 +74,7 @@ class AssociationGroupMixin(ViewCollectiveViewMixin):
 
     def _get_tab_url(self, url_name, **url_kwargs):
         """ Returns the url for the tab. Interject url_kwargs to add extra perameters"""
-        url_kwargs['group_id'] = self.association_group.id
+        url_kwargs['group_id'] = self.association_group
         return super(AssociationGroupMixin, self)._get_tab_url(url_name, **url_kwargs)
 
 
