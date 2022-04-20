@@ -1,4 +1,4 @@
-{% extends 'committees/group_detail_base.html' %}
+{% extends 'committees/committee_pages/group_detail_base.html' %}
 {% load static %}
 {% block content-frame-class %}
     container
@@ -56,14 +56,6 @@
                 <hr>
             </div>
 
-            <div class="d-none d-sm-block" style="position: relative;">
-                <div class="" style="position: absolute; top: 0; right: 0;">
-                    <a href="{% url "committees:group_update" group_id=association_group.id %}"
-                       class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-pen"></i> Edit
-                    </a>
-                </div>
-            </div>
             <div style="min-height: 2em;" class="rendered-md">
                 {{ association_group.instructions.as_rendered }}
             </div>
@@ -73,12 +65,6 @@
             <div class="row">
                 <div class="col font-weight-bold">
                     Members
-                </div>
-                <div class="col d-flex justify-content-end">
-                    <a href="{% url "committees:group_members" group_id=association_group.id %}"
-                       class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-pen"></i> Edit
-                    </a>
                 </div>
             </div>
 
@@ -100,12 +86,6 @@
             <div class="row">
                 <div class="col">
                     <p class="font-weight-bold mb-0">Quick links:</p>
-                </div>
-                <div class="col d-flex justify-content-end">
-                    <a class="btn btn-outline-primary btn-sm"
-                       href="{% url "committees:group_quicklinks" group_id=association_group.id %}">
-                        <i class="fas fa-pen"></i> Edit
-                    </a>
                 </div>
             </div>
             {% for link in quicklinks_internal %}

@@ -192,8 +192,9 @@ class ViewCollectiveRegistry:
                 pass
             else:
                 for name, cls in module.__dict__.items():
-                    if isinstance(cls, type):
+                    if isinstance(cls, type) and cls.__module__ == module.__name__:
                         # Get all subclasses of the root config class, but not accidental imported copies of itself
+
                         if issubclass(cls, self.config_class) and cls != self.config_class:
                             config = cls(self)  # Initialise config
                             configs.append(config)

@@ -1,0 +1,20 @@
+{% extends 'committees/committee_pages/group_detail_base.html' %}
+{% load static %}
+{% load setting_blocks %}
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    {{ block.super }}
+    {% for option in options %}
+        <div class="row my-4">
+            <div class="col-12">
+                <h4>{{ option.title }}</h4>
+                {% render_options option %}
+            </div>
+        </div>
+        <hr>
+    {% endfor %}
+{% endblock %}

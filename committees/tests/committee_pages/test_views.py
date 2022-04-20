@@ -40,7 +40,7 @@ class TestGroupMixin(TestMixinWithMemberMiddleware, TestMixinMixin, TestCase):
         return cls
 
     def get_base_url_kwargs(self):
-        return {'group_id': self.associationgroup.id}
+        return {'group_id': self.associationgroup}
 
     def test_get_successful(self):
         response = self._build_get_response()
@@ -53,11 +53,7 @@ class TestGroupMixin(TestMixinWithMemberMiddleware, TestMixinMixin, TestCase):
 
     def test_get_no_access(self):
         # Nobody is part of group 3, so this should faulter
-        self.assertRaises403(url_kwargs={'group_id': 3})
-
-    def test_get_non_existent(self):
-        # This group does not exist
-        self.assertRaises404(url_kwargs={'group_id': 99})
+        self.assertRaises403(url_kwargs={'group_id': AssociationGroup.objects.get(id=3)})
 
 
 class TestAssociationGroupDetailView(ViewValidityMixin, TestCase):

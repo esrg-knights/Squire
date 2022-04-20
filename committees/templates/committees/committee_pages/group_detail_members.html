@@ -1,4 +1,4 @@
-{% extends 'committees/group_detail_base.html' %}
+{% extends 'committees/committee_pages/group_detail_base.html' %}
 {% load static %}
 {% load render_form %}
 
@@ -6,7 +6,7 @@
 {{ block.super }}
 
     <div class="mb-2">
-    <a href="{% url "committees:group_general" group_id=association_group.id %}"
+    <a href="{% url "committees:settings_home" group_id=association_group.id %}"
        class="btn btn-outline-secondary btn-sm">
         <i class="fas fa-arrow-left"></i> Back to overview
     </a>
@@ -15,7 +15,7 @@
         Members
     </h2>
     <p>
-        Member overview, contact the board if you want to add or remove a member from the list.
+        <small>Member overview, contact the board if you want to add or remove a member from the list.</small>
     </p>
 
     <div class="table-responsive">

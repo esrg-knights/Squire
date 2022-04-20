@@ -1,0 +1,23 @@
+<div class="mb-2">
+    <small>Contact the board if you want to add or remove a member from the list.</small>
+</div>
+
+{% for membership in association_group.associationgroupmembership_set.all %}
+    <div class="row">
+        <div class="col">
+            {{ membership.member }}
+        </div>
+        <div class="col">
+            {{ membership.role }}
+        </div>
+        <div class="col">
+            {{ membership.title|default_if_none:"" }}
+        </div>
+    </div>
+{% endfor %}
+
+
+<a href="{% url "committees:group_members" group_id=association_group.id %}"
+   class="btn btn-primary btn-sm mt-2">
+    <i class="fas fa-pen"></i> Edit member information
+</a>
