@@ -4,7 +4,13 @@ const currentDirectoryThemes = "/static/themes/";
 
 // Modify the DOM
 $(document).ready(function () {
-    console.debug('hello!')
+    console.debug('こんにちは！')
+
+    try {
+        performance.mark("金人初め")
+    } catch (e) {
+        console.warn(e);
+    }
 
     //Array.from(document.getElementsByClassName("knights-logo-img")).forEach((e) => e.src = "/static/themes/images/kinjin/KinjinSpoof.png");
 
@@ -17,7 +23,7 @@ $(document).ready(function () {
 
     textReplaceFn(/board\s*games?/muig, 'ボードゲーム');
     textReplaceFn(/Evening/muig, '夕');
-    textReplaceFn(/Sword\s*fighting/muig, '侍');
+    textReplaceFn(/Sword(\s|-)*fight(ing)?s?/muig, '侍');
     textReplaceFn(/training/muig, '訓練');
 
     textReplaceFn('Activities in the next 7 days', '今後7日間の活動')
@@ -53,7 +59,7 @@ $(document).ready(function () {
     textReplaceFn('Contact', 'コンタクト')
     textReplaceFn('contact', 'コンタクト')
 
-    textReplaceFn(/Luna/muig, 'ルーナー');
+    textReplaceFn(/Luna/mug, 'ルーナー');
     textReplaceFn(/living\s+room/muig, '居間');
     textReplaceFn('Calendar', 'カレンダー')
     textReplaceFn('calendar', 'カレンダー')
@@ -137,6 +143,12 @@ $(document).ready(function () {
     if (document.getElementById("WelcomeMessage")) //Saw no better way to do it.
         document.getElementById("WelcomeMessage").textContent += "san";
     console.debug("san");
+
+    try {
+        performance.mark("金人終わり")
+    } catch (e) {
+        console.warn(e);
+    }
 })
 
 {

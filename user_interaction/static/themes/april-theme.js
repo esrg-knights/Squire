@@ -1,5 +1,5 @@
 // Modify the DOM
-$( document ).ready(function() {
+$(document).ready(function () {
     /****************************************************************
      * Generate Navbar Rickroll
      *****************************************************************/
@@ -33,7 +33,7 @@ $( document ).ready(function() {
      *****************************************************************/
     var children = $("#mainContent").find("div")
     console.log(children)
-    $(children[Math.floor(Math.random()*children.length)]).after(`
+    $(children[Math.floor(Math.random() * children.length)]).after(`
         <center>
         <a href="https://timheiszwolf.jimdofree.com/contact/">
             <div class="april-ad left">
