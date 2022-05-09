@@ -9,7 +9,7 @@ from inventory.views import OwnershipMixin
 from utils.views import SearchFormMixin
 
 
-from committees.views import AssociationGroupMixin
+from committees.committeecollective import AssociationGroupMixin
 
 
 class AssociationGroupInventoryView(AssociationGroupMixin, SearchFormMixin, ListView):
@@ -32,7 +32,6 @@ class AssociationGroupInventoryView(AssociationGroupMixin, SearchFormMixin, List
 
         return super(AssociationGroupInventoryView, self).get_context_data(
             content_types=adjustable_items,
-            tab_selected='tab_inventory',
             **kwargs,
         )
 
@@ -40,16 +39,11 @@ class AssociationGroupInventoryView(AssociationGroupMixin, SearchFormMixin, List
 class AssociationGroupItemLinkUpdateView(AssociationGroupMixin, OwnershipMixin, UpdateView):
     template_name = "inventory/committee_pages/group_detail_inventory_link_update.html"
     model = Ownership
-    fields = ['note', 'added_since']
+    fields = ['note', 'added_since', 'value']
     allow_access_through_group = True
 
     def get_object(self, queryset=None):
         return self.ownership
-
-    def get_context_data(self, **kwargs):
-        context = super(AssociationGroupItemLinkUpdateView, self).get_context_data(**kwargs)
-        context['tab_selected'] = 'tab_inventory'
-        return context
 
     def form_valid(self, form):
         messages.success(self.request, f"Link data has been updated")

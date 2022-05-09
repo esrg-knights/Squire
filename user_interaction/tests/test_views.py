@@ -1,15 +1,18 @@
 from django.contrib.auth.models import User
-from django.urls.base import reverse, reverse_lazy
 from django.test import TestCase
-from dynamic_preferences.users.forms import UserPreferenceForm
+from django.urls import reverse
+
+from dynamic_preferences.registries import global_preferences_registry
+global_preferences = global_preferences_registry.manager()
 
 from core.forms import LoginForm
-from core.tests.util import TestAccountUser, check_http_response_with_login_redirect
-from user_interaction.views import HomeNonAuthenticatedView, HomeUsersView, UpdateUserPreferencesView
+from core.tests.util import DynamicRegistryUsageMixin
+from user_interaction.views import HomeNonAuthenticatedView, HomeUsersView
 from utils.testing.view_test_utils import ViewValidityMixin
+from membership_file.models import MemberYear
 
 
-class TestHomePageView(ViewValidityMixin, TestCase):
+class TestHomePageView(ViewValidityMixin, DynamicRegistryUsageMixin, TestCase):
     base_url = '/'
 
     def test_anonymoususer(self):
@@ -26,19 +29,24 @@ class TestHomePageView(ViewValidityMixin, TestCase):
         self.assertTemplateUsed(response, HomeUsersView.template_name)
         self.assertIn('activities', response.context)
 
+    def test_home_page_message(self):
+        # Set environment variables
+        global_preferences['homepage__home_page_message'] = "Here is a message"
 
-class TestsFrontend(TestCase):
-    """ Tests for general individual pages """
-    fixtures = TestAccountUser.get_fixtures()
+        self.client.force_login(User.objects.create())
+        msg = self.assertValidGetResponse().context['unique_messages'][0]
 
-    def test_preferences(self):
-        """ Tests accessibility of the page to change user preference """
-        # Account users should be able to access the page properly
-        # Anonymous users should be redirected to the login page
-        res, _ = check_http_response_with_login_redirect(self, reverse("user_interaction:change_preferences"), "get")
+        self.assertIn('msg_text', msg)
+        self.assertEqual(msg['msg_type'], "info")
 
-        # Ensure the correct template is used, and that the change form is present
-        self.assertTemplateUsed(res, UpdateUserPreferencesView.template_name)
-        self.assertIn('form', res.context)
-        self.assertIsInstance(res.context['form'], UserPreferenceForm)
+    def test_home_page_extend_membership_message(self):
+        # Set environment variables
+        global_preferences['membership__signup_year'] = MemberYear.objects.create(name='current year')
 
+        self.client.force_login(User.objects.create())
+        msg = self.assertValidGetResponse().context['unique_messages'][0]
+
+        self.assertIn('msg_text', msg)
+        self.assertIn('btn_text', msg)
+        self.assertEqual(msg['msg_type'], "info")
+        self.assertEqual(msg['btn_url'],  reverse('membership_file/continue_membership'))

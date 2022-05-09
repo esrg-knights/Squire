@@ -1,9 +1,9 @@
 from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from .models import Member, Room
+from .models import Member, Room, MemberYear, Membership
 from utils.forms import UpdatingUserFormMixin
 
 ##################################################################################
@@ -77,3 +77,28 @@ class MemberForm(UpdatingUserFormMixin, MemberRoomForm):
         for field in self.errors:
             self.fields[field].widget.attrs.update({'class': self.fields[field].widget.attrs.get('class', '') + ' alert-danger'})
         return ret
+
+
+class ContinueMembershipForm(forms.Form):
+
+    def __init__(self, *args, member=None, year=None, **kwargs):
+        assert member is not None
+        assert year is not None
+        self.member = member
+        self.year = year
+        super(ContinueMembershipForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        membership = Membership.objects.filter(
+            year=self.year,
+            member=self.member
+        )
+        if membership.exists():
+            raise ValidationError(f"Member is already a member for {self.year}", code='already_member')
+        return self.cleaned_data
+
+    def save(self):
+        Membership.objects.create(
+            year=self.year,
+            member=self.member,
+        )

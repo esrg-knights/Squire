@@ -38,7 +38,8 @@
     "subscriptions_required": true,
     "slot_creation": "CREATION_AUTO",
     "subscriptions_open": "7 00:00:00",
-    "subscriptions_close": "00:30:00"
+    "subscriptions_close": "00:30:00",
+      "is_public": true
   }
 },
 {
@@ -62,7 +63,8 @@
     "subscriptions_required": true,
     "slot_creation": "CREATION_USER",
     "subscriptions_open": "7 00:00:00",
-    "subscriptions_close": "02:00:00"
+    "subscriptions_close": "02:00:00",
+      "is_public": true
   }
 },
 {
@@ -84,10 +86,36 @@
     "max_participants": -1,
     "max_slots_join_per_participant": 1,
     "subscriptions_required": true,
-    "slot_creation": "CREATION_NONE",
+    "slot_creation": "CREATION_STAFF",
     "subscriptions_open": "7 00:00:00",
-    "subscriptions_close": "00:30:00"
+    "subscriptions_close": "00:30:00",
+    "is_public": true
   }
+},
+{
+    "model": "activity_calendar.activity",
+    "pk": 4,
+    "fields": {
+        "author": null,
+        "title": "Board meeting",
+        "description": "Non-public board meeting",
+        "location": "Online",
+        "slots_image": 2,
+        "created_date": "2021-09-01T20:00:00Z",
+        "last_updated_date": "2021-09-01T20:00:00Z",
+        "published_date": "2021-09-01T20:00:00Z",
+        "start_date": "2021-09-01T20:00:00Z",
+        "end_date": "2021-09-01T22:00:00Z",
+        "recurrences": "RRULE:FREQ=WEEKLY;BYDAY=MO",
+        "max_slots": -1,
+        "max_participants": 30,
+        "max_slots_join_per_participant": 1,
+        "subscriptions_required": true,
+        "slot_creation": "CREATION_NONE",
+        "subscriptions_open": "7 00:00:00",
+        "subscriptions_close": "02:00:00",
+        "is_public": false
+    }
 },
 {
     "model": "activity_calendar.activitymoment",
@@ -131,6 +159,50 @@
         "local_title": "Different_boardgame_title"
     }
 },
+{
+    "model": "activity_calendar.activitymoment",
+    "pk": 5,
+    "fields": {
+        "parent_activity": 2,
+        "local_title": "Extra non-recurrent activity",
+        "recurrence_id": "2020-09-01T16:00:00Z",
+        "created_date": "2020-08-08T19:00:00Z",
+        "last_updated": "2020-08-08T19:00:00Z"
+    }
+},
+{
+    "model": "activity_calendar.activitymoment",
+    "pk": 6,
+    "fields": {
+        "parent_activity": 2,
+        "recurrence_id": "2020-09-30T14:00:00Z",
+        "local_start_date": "2020-09-30T16:20:00Z",
+        "created_date": "2020-10-08T19:00:00Z",
+        "last_updated": "2020-10-08T19:00:00Z"
+    }
+},
+{
+    "model": "activity_calendar.activitymoment",
+    "pk": 7,
+    "fields": {
+        "parent_activity": 2,
+        "recurrence_id": "2021-09-15T14:00:00Z",
+        "created_date": "2020-10-08T19:00:00Z",
+        "last_updated": "2020-10-08T19:00:00Z",
+        "status": "STOP"
+    }
+},
+{
+    "model": "activity_calendar.activitymoment",
+    "pk": 8,
+    "fields": {
+    "parent_activity": 2,
+    "recurrence_id": "2021-09-08T14:00:00Z",
+    "created_date": "2020-10-08T19:00:00Z",
+    "last_updated": "2020-10-08T19:00:00Z",
+    "status": "RMV"
+}
+    },
 {
   "model": "activity_calendar.activityslot",
   "pk": 1,

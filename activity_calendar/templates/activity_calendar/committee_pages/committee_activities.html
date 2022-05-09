@@ -1,0 +1,76 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% load activity_tags %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    {{ block.super }}
+
+    <p>
+        Below is a list of all upcoming (max 3) activities organised by this committee
+    </p>
+    <hr>
+
+    {% for activity in activities %}
+        <div class="mb-4">
+            <h4>
+                {{ activity.title }}
+            </h4>
+            {% if activity.is_recurring %}
+            <div class="text mb-3">
+                Recurring: {% for rrule in activity.recurrences.rrules %}{{ rrule.to_text }}{% endfor %}
+            </div>
+            {% endif %}
+            {% for activity_moment in activity|get_next_activity_instances %}
+                <div class="row">
+                    <div class="col-3">
+                        {{ activity_moment.start_date|date:"l b j H:i" }}
+                    </div>
+                    <div class="col-4">
+                        {% if activity_moment.is_cancelled %}
+                            <del>{{ activity_moment.title }}</del>
+                        {% else %}
+                        {{ activity_moment.title }}
+                        {% endif %}
+                    </div>
+                    <div class="col-3">
+                        {% if not activity_moment.is_cancelled %}
+                            Participants: {{ activity_moment.participant_count }}
+                            {% if activity_moment.slot_creation != activity.SLOT_CREATION_AUTO %}
+                                Slots: {{ activity_moment.get_slots.count }}
+                            {% endif %}
+                        {% else %}
+                            Cancelled
+                        {% endif %}
+                    </div>
+
+                    <div class="col-2">
+                        <a class="btn btn-sm btn-info"
+                           href="{{ activity_moment.get_absolute_url }}">
+                            <i class="fas fa-arrow-right"></i> View
+                        </a>
+                    </div>
+                </div>
+            {% empty %}
+                <div>
+                    There are no instances of this activity planned
+                </div>
+            {% endfor %}
+            {% if can_add_activitymoments %}
+            <a class="btn btn-primary btn-sm"
+                href="{% url "committees:add_activity_moment" group_id=association_group.id activity_id=activity.id %}">
+                {% if activity.is_recurring %}
+                    <i class="fas fa-plus"></i> Extra activity instance
+                {% else %}
+                    <i class="fas fa-plus"></i> Activity instance
+                {% endif %}
+            </a>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+{% endblock %}

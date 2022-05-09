@@ -1,17 +1,20 @@
 from datetime import datetime, timedelta
 
 from django.contrib.auth.mixins import AccessMixin
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import timezone, dateparse
 from django.utils.translation import gettext_lazy as _
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from django.views.decorators.http import require_safe
 from django.views.generic import TemplateView, ListView
 from django.views.generic.edit import FormView, FormMixin
+
+from urllib.parse import quote, unquote
 
 from .forms import *
 from .models import Activity, ActivityMoment
@@ -28,18 +31,46 @@ def activity_collection(request):
 class ActivityOverview(ListView):
     template_name = "activity_calendar/activity_overview.html"
     context_object_name = 'activities'
+    DATE_TRANSLATION = "%Y-%m-%d"
+    TD_DEFAULT = timedelta(days=14)
 
     def get_queryset(self):
-        start_date = timezone.now()
-        end_date = start_date + timedelta(days=14)
+        start_date, end_date = self.get_time_range_data()
 
         activities = []
-
-        for activity in Activity.objects.filter(published_date__lte=timezone.now()):
+        for activity in Activity.objects.filter(published_date__lte=timezone.now(), is_public=True):
             for activity_moment in activity.get_activitymoments_between(start_date, end_date):
                 activities.append(activity_moment)
 
         return sorted(activities, key=lambda activity: activity.start_date)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(ActivityOverview, self).get_context_data(*args, **kwargs)
+
+        start_dt, end_dt = self.get_time_range_data()
+        diff_dt = end_dt - start_dt
+        new_back_dt = max(timezone.now(), start_dt - diff_dt)
+
+        context.update({
+            'dt_range_start': start_dt,
+            'dt_range_end': end_dt,
+            'dt_range_is_standard': abs(timezone.now() - start_dt) < timedelta(days=1),
+            'dt_range_forward_url': end_dt.strftime(self.DATE_TRANSLATION),
+            'dt_range_backward_url': new_back_dt.strftime(self.DATE_TRANSLATION),
+            'dt_range_backward_to_now': abs(timezone.now() - new_back_dt) < timedelta(days=1),
+        })
+        return context
+
+    def get_time_range_data(self):
+        try:
+            start_date = datetime.strptime(self.request.GET.get('start-date', ''), self.DATE_TRANSLATION)
+            start_date = timezone.make_aware(start_date)
+        except ValueError:
+            start_date = timezone.now()
+
+        end_date = start_date + self.TD_DEFAULT
+
+        return start_date, end_date
 
 
 class LoginRequiredForPostMixin(AccessMixin):
@@ -60,22 +91,17 @@ class ActivityMixin:
         self.activity = get_object_or_404(Activity, id=self.kwargs.get('activity_id'))
         self.recurrence_id = self.kwargs.get('recurrence_id', None)
 
-        self.activity_moment = ActivityMoment.objects.filter(
-            parent_activity=self.activity,
-            recurrence_id=self.recurrence_id
-        ).first()
+        self.activity_moment = self.activity.get_occurrence_at(self.recurrence_id)
 
         if self.activity_moment is None:
-            if not self.activity.has_occurrence_at(self.recurrence_id):
-                raise Http404("We could not find the activity you are trying to reach")
-            else:
-                self.activity_moment = ActivityMoment(
-                    parent_activity=self.activity,
-                    recurrence_id=self.recurrence_id,
-                )
+            raise Http404("We could not find the activity you are trying to reach")
 
     def get_context_data(self, **kwargs):
         kwargs = super(ActivityMixin, self).get_context_data(**kwargs)
+        subscription_open_date = self.activity_moment.start_date - self.activity_moment.parent_activity.subscriptions_open
+        if subscription_open_date < timezone.now():
+            subscription_open_date = None
+
         kwargs.update({
             'activity': self.activity,
             'activity_moment': self.activity_moment,
@@ -86,9 +112,15 @@ class ActivityMixin:
             'num_max_participants': self.activity_moment.max_participants,
             'user_subscriptions': self.activity_moment.get_user_subscriptions(self.request.user),
             'show_participants': self.show_participants(),
+            'can_edit_activity': self.can_edit_activity(),
+            'subscription_open_date': subscription_open_date,
         })
 
         return kwargs
+
+    def can_edit_activity(self):
+        has_perm = self.request.user.has_perm('activity_calendar.change_activitymoment')
+        return self.activity.is_organiser(self.request.user) or has_perm
 
     def show_participants(self):
         """ Returns whether to show participant names """
@@ -151,6 +183,10 @@ class ActivityFormMixin:
         })
 
         return kwargs
+
+
+class ActivityMomentNoSignupView(ActivityMixin, TemplateView):
+    template_name = "activity_calendar/activity_page_no_signup.html"
 
 
 class ActivityMomentView(ActivityMixin, ActivityFormMixin, TemplateView):
@@ -261,7 +297,8 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
                 activity_moment=self.activity_moment,
             )
         elif self.activity_moment.slot_creation == Activity.SLOT_CREATION_STAFF and \
-                self.request.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type'):
+            (self.request.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type') or\
+            self.can_edit_activity()):
             # In a none based slot mode, don't automatically register the creator to the slot
             new_slot_form = RegisterNewSlotForm(
                 initial={
@@ -289,6 +326,10 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
         return kwargs
 
 
+class ActivityMomentCancelledView(ActivityMomentView):
+    template_name = "activity_calendar/activity_page_cancelled.html"
+
+
 def get_activity_detail_view(request, *args, **kwargs):
     """ Returns a HTTP response object by calling the required View Class """
     try:
@@ -306,8 +347,12 @@ def get_activity_detail_view(request, *args, **kwargs):
         if activity_moment is None:
             activity_moment = activity
 
-        if activity_moment.slot_creation == Activity.SLOT_CREATION_AUTO:
+        if getattr(activity_moment, 'is_cancelled', False):
+            view_class = ActivityMomentCancelledView
+        elif activity_moment.slot_creation == Activity.SLOT_CREATION_AUTO:
             view_class = ActivitySimpleMomentView
+        elif activity_moment.slot_creation == Activity.SLOT_CREATION_NONE:
+            view_class = ActivityMomentNoSignupView
         else:
             view_class = ActivityMomentWithSlotsView
 
@@ -396,10 +441,12 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
 # #######################################
 
 
-class EditActivityMomentView(LoginRequiredMixin, PermissionRequiredMixin, ActivityMixin, FormView):
+class EditActivityMomentView(LoginRequiredMixin, ActivityMixin, UserPassesTestMixin, FormView):
     form_class = ActivityMomentForm
     template_name = "activity_calendar/activity_moment_form_page.html"
-    permission_required = ('activity_calendar.change_activitymoment',)
+
+    def get_test_func(self):
+        return self.can_edit_activity
 
     def get_form_kwargs(self):
         kwargs = super(EditActivityMomentView, self).get_form_kwargs()
@@ -414,6 +461,38 @@ class EditActivityMomentView(LoginRequiredMixin, PermissionRequiredMixin, Activi
         message = _("You have successfully changed the settings for '{activity_name}'")
         messages.success(self.request, message.format(activity_name=form.instance.title))
         return super(EditActivityMomentView, self).form_valid(form)
+
+    def get_success_url(self):
+        return self.activity_moment.get_absolute_url()
+
+
+class CancelActivityMomentView(LoginRequiredMixin, ActivityMixin, UserPassesTestMixin, FormView):
+    template_name = "activity_calendar/activity_moment_cancel_page.html"
+    form_class = CancelActivityForm
+
+    def setup(self, request, *args, **kwargs):
+        super(CancelActivityMomentView, self).setup(request, *args, **kwargs)
+        if self.activity_moment.is_cancelled:
+            raise PermissionDenied("Activity was already cancelled")
+
+    def get_form_kwargs(self):
+        kwargs = super(CancelActivityMomentView, self).get_form_kwargs()
+        kwargs.update({
+            'instance': self.activity_moment,
+        })
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+        message = _("{activity_name} of {date} has been cancelled")
+        messages.success(self.request, message.format(
+            activity_name=form.instance.title,
+            date=form.instance.recurrence_id.strftime("%A, %d %b %Y"),
+        ))
+        return super(CancelActivityMomentView, self).form_valid(form)
+
+    def get_test_func(self):
+        return self.can_edit_activity
 
     def get_success_url(self):
         return self.activity_moment.get_absolute_url()

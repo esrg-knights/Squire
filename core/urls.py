@@ -3,7 +3,7 @@ from django.conf import settings
 from django.contrib.auth import views as djangoViews
 from martor.views import markdownfy_view
 
-from .forms import LoginForm, PasswordResetForm, PasswordChangeForm, PasswordResetConfirmForm
+from .forms import LoginForm, PasswordResetForm, PasswordResetConfirmForm
 from . import views
 
 app_name = 'core'
@@ -57,30 +57,12 @@ urlpatterns = [
             extra_context={},
         ),
         name='user_accounts/password_reset/success'),
-    # Password change
-    path('account/password_change', djangoViews.PasswordChangeView.as_view(
-            template_name='core/user_accounts/password_change/password_change_form.html',
-            extra_context={
-                'tab_account': True,
-            },
-            success_url='password_change/success',
-            form_class=PasswordChangeForm,
-        ),
-        name='user_accounts/password_change'),
-    path('account/password_change/success', djangoViews.PasswordChangeDoneView.as_view(
-            template_name='core/user_accounts/password_change/password_change_done.html',
-            extra_context={
-                'tab_account': True,
-            },
-        ),
-        name='user_accounts/password_change/success'),
-    # Other pages
-    path('account', views.AccountView.as_view(), name='user_accounts/account'),
     path('register', views.register, name='user_accounts/register'),
     path('register/success', views.registerSuccess, name='user_accounts/register/success'),
     path('newsletters/', views.viewNewsletters, name='newsletters'),
-    # Mock 403 and 404 views for display testing in production
+    # Mock 403 and 404 views for display testing in development
     path('mock/', include([
+        path('500/', views.show_error_500),
         path('404/', views.show_error_404),
         path('403/', views.show_error_403),
     ])),

@@ -77,5 +77,69 @@
             "last_updated_by": null,
             "marked_for_deletion": false
         }
+    },
+    {
+        "model": "membership_file.memberyear",
+        "pk": 1,
+        "fields": {
+            "name": "ActiveYear",
+            "is_active": true
+        }
+    },
+    {
+        "model": "membership_file.memberyear",
+        "pk": 2,
+        "fields": {
+            "name": "OldYear",
+            "is_active": false
+        }
+    },
+    {
+        "model": "membership_file.memberyear",
+        "pk": 3,
+        "fields": {
+            "name": "Overlap year",
+            "is_active": true
+        }
+    },
+    {
+        "model": "membership_file.membership",
+        "pk": 1,
+        "fields": {
+            "member": 1,
+            "year": 1,
+            "created_on": "2021-12-21T12:00:00Z",
+            "created_by": 1
+        }
+    },
+    {
+        "model": "membership_file.membership",
+        "pk": 2,
+        "fields": {
+            "member": 1,
+            "year": 2,
+            "created_on": "2021-12-21T12:00:00Z",
+            "created_by": 1,
+            "has_paid": true,
+            "payment_date": "2021-12-22"
+        }
+    },
+    {
+        "model": "membership_file.membership",
+        "pk": 3,
+        "fields": {
+            "member": 2,
+            "year": 2,
+            "created_on": "2021-12-21T12:00:00Z"
+        }
+    },
+    {
+        "model": "membership_file.membership",
+        "pk": 4,
+        "fields": {
+            "member": 3,
+            "year": 1,
+            "created_on": "2021-12-21T12:00:00Z"
+        }
     }
 ]

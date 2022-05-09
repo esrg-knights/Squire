@@ -17,10 +17,6 @@
         Below is a list of all roleplaying systems that are known at the Knights. Click on more info
         to learn more about the system and the materials we have at the association.
     </p>
-    <div class="alert alert-info">
-        The current list is not yet complete. We have information on 50+ different systems and need some time to write
-        texts about them all. Please be patient as we add more.
-    </div>
 
     {% if not user.member %}
         <div class="alert alert-warning" role="alert">
@@ -93,11 +89,11 @@
                             <a class="btn btn-block btn-info"
                                href="{% url "roleplaying:system_details" system_id=system.id %}"
                             >
-                                More information
+                                <i class="fas fa-info"></i> More information
                             </a>
                         {% else %}
                             <a class="btn btn-block btn-info disabled">
-                                More information
+                                <i class="fas fa-info"></i> More information
                             </a>
                         {% endif %}
                     </td>
@@ -114,7 +110,7 @@
         <div class="d-flex justify-content-end">
             <a href="{% url "inventory:catalogue" type_id=item_type %}"
                class="btn btn-secondary">
-                Maintain catalogue
+                <i class="fas fa-boxes"></i> Roleplaying items catalogue
             </a>
         </div>
     {% endif %}

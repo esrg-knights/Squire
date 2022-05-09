@@ -1,4 +1,5 @@
 {% extends 'core/base.html' %}
+{% load activity_tags %}
 {% load static %}
 
 {% block og-title %}Squire - Activities{% endblock %}
@@ -18,22 +19,55 @@
     <div class="m-auto" style="max-width: 1250px;">
         <h1>Upcoming Activities</h1>
         <div class="d-flex justify-content-between align-items-center">
+            {% if dt_range_is_standard %}
             <p>
                 Below is a list of activities for the upcoming two weeks.
             </p>
+            {% else %}
+            <div class="mb-3">
+                <div>
+                Below are all activities between {{ dt_range_start|date:"l j E" }} and
+                {{ dt_range_end|date:"l j E" }}
+                </div>
+                <a class=" btn btn-sm btn-secondary" href="{{ request.path }}">
+                    <i class="fas fa-reply-all"></i> Jump to now
+                </a>
+            </div>
+            {% endif %}
             <p>
-                <a href='{% url "activity_calendar:calendar" %}'
-                class="btn btn-info">
-                    View entire Calendar
+                <a class="btn btn-info" href='{% url "activity_calendar:calendar" %}'>
+                    <i class="fas fa-calendar-alt"></i> View entire Calendar
                 </a>
             </p>
         </div>
         <div class="row px-2">
             {% for activity_moment in activities %}
                 <div class="col-12 col-md-6 col-xl-4 p-1">
-                    {% include "activity_calendar/snippet_activity_moment.html" %}
+                    {% render_activity_block activity_moment %}
                 </div>
             {% endfor %}
+        </div>
+        <div class="row justify-content-between mt-3">
+            <div class="col-auto">
+                {% if not dt_range_is_standard %}
+                    <a class="btn btn-outline-secondary"
+                        href="{{ request.path }}?start-date={{ dt_range_backward_url }}">
+                        {% if not dt_range_backward_to_now %}
+                            <i class="fas fa-reply"></i> Browse earlier
+                        {% else %}
+                            <i class="fas fa-reply"></i> Browse now
+                        {% endif %}
+                    </a>
+                {% endif %}
+            </div>
+
+            <div class="col-auto">
+                <a class="btn btn-outline-secondary"
+                    href="{{ request.path }}?start-date={{ dt_range_forward_url }}">
+                    <i class="fas fa-share"></i> Browse later
+                </a>
+            </div>
+
         </div>
     </div>
 {% endblock %}

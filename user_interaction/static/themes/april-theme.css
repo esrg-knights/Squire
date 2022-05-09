@@ -1,3 +1,9 @@
+/* Activity Card */
+.card-img-top {
+    background-color: var(--greenify-bg-color);
+    /* Should not be white or the same as background color */
+}
+
 /* Define main colour scheme */
 :root {
     /* Default text and background colors for the body */
@@ -9,7 +15,8 @@
     --body-alt-dark-bg-color: #f6f6f6;
 
     /* Generated at https://codepen.io/sosuke/pen/Pjoqqp using --body-text-color */
-    --body-icon-color: invert(7%) sepia(4%) saturate(3534%) hue-rotate(169deg) brightness(92%) contrast(81%);
+    --body-icon-color: invert(7%) sepia(4%) saturate(3534%) hue-rotate(169deg)
+        brightness(92%) contrast(81%);
 
     /* Colors for (bootstrap) inputs */
     --input-bg-color: var(--body-alt-bg-color);
@@ -21,7 +28,7 @@
     --title-text-color: #caaf17;
 
     /* Colors for greenified elements (e.g. buttons) */
-    --greenify-bg-color: #6C3461;
+    --greenify-bg-color: #6c3461;
     --greenify-text-color: white;
 
     /* Colors for darker greenified elements (e.g. navbar, card images) */
@@ -29,7 +36,7 @@
     --greenify-dark-text-color: var(--greenify-text-color);
 
     /* Colors for lighter greenified elements (e.g. cards) */
-    --greenify-light-bg-color: #94568C;
+    --greenify-light-bg-color: #94568c;
     --greenify-light-text-color: var(--body-text-color);
 
     /* Colors for greenified dropdowns */
@@ -41,7 +48,9 @@
     --greenify-dropdown-active-text-color: var(--greenify-text-color);
 }
 
-.text-muted, .april-footer, .april-ad {
+.text-muted,
+.april-footer,
+.april-ad {
     color: #ffea70 !important;
 }
 

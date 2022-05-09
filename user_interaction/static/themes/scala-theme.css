@@ -1,3 +1,9 @@
+/* Activity Card */
+.card-img-top {
+    background-color: var(--greenify-bg-color);
+    /* Should not be white or the same as background color */
+}
+
 /* Define main colour scheme */
 :root {
     /* Default text and background colors for the body */
@@ -9,14 +15,14 @@
     --body-alt-dark-bg-color: #333333;
 
     /* Generated at https://codepen.io/sosuke/pen/Pjoqqp using --body-text-color */
-    --body-icon-color: invert(98%) sepia(2%) saturate(2998%) hue-rotate(272deg) brightness(118%) contrast(76%);
+    --body-icon-color: invert(98%) sepia(2%) saturate(2998%) hue-rotate(272deg)
+        brightness(118%) contrast(76%);
 
     /* Colors for (bootstrap) inputs */
     --input-bg-color: #6b6b6b;
     --input-text-color: var(--body-text-color);
     --input-prepend-bg-color: var(--body-alt-bg-color);
     --input-prepend-text-color: #c3bbbb;
-
 
     /* Colors for highlighted text (e.g. h1, strong) */
     --title-text-color: #3e6690;
@@ -40,6 +46,9 @@
     --greenify-dropdown-hover-text-color: inherit;
     --greenify-dropdown-active-bg-color: var(--greenify-bg-color);
     --greenify-dropdown-active-text-color: var(--greenify-text-color);
+
+    /*Calendar day color*/
+    --fc-neutral-bg-color: #375a7f;
 }
 
 /* Lighten link colors */
@@ -47,6 +56,23 @@ a {
     color: #55a7ff;
 }
 
-.alert-info {
-    /* background-color: #243f44; */
+a:hover {
+    color: white;
+}
+/* Text color of tabs*/
+.nav-tabs .nav-link.active {
+    color: white;
+}
+
+.text-muted {
+    color: whitesmoke !important;
+}
+
+.btn-outline-success.disabled {
+    color: white;
+    background-color: red;
+}
+
+.bg-light.border-danger {
+    background-color: red !important;
 }

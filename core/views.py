@@ -1,25 +1,29 @@
 import os
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import JsonResponse
-from django.http.response import Http404, HttpResponseNotFound
+from django.http import JsonResponse, HttpResponseRedirect
+from django.http.response import Http404
 from django.shortcuts import redirect, render
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils.translation import ugettext_lazy as _
+from django.shortcuts import get_object_or_404
 from django.views import View
+from django.views.generic import TemplateView
 from django.views.decorators.http import require_safe
-from django.views.generic.base import TemplateView
 
 from .forms import RegisterForm
-from .models import MarkdownImage
+from .models import MarkdownImage, Shortcut
 
 from dynamic_preferences.registries import global_preferences_registry
 global_preferences = global_preferences_registry.manager()
 
+from django.contrib.auth import get_user_model
+User = get_user_model()
 ##################################################################################
 # Contains render-code for displaying general pages.
 # @since 15 JUL 2019
@@ -42,16 +46,6 @@ def viewNewsletters(request):
         'NEWSLETTER_ARCHIVE_URL': global_preferences['newsletter__share_link'],
     })
 
-
-class AccountView(TemplateView):
-    """ Base account page """
-    template_name = "core/user_accounts/account_info.html"
-    tab_name = 'tab_account'
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context[self.tab_name] = True
-        return context
 
 @require_safe
 def registerSuccess(request):
@@ -178,9 +172,26 @@ class MartorImageUploadAPIView(LoginRequiredMixin, PermissionRequiredMixin, View
             'name': os.path.splitext(uploaded_file.name)[0]
         })
 
+
+class UrlRedirectView(TemplateView):
+    template_name = "core/redirect_url_page.html"
+
+    def setup(self, request, *args, **kwargs):
+        super(UrlRedirectView, self).setup(request, *args, **kwargs)
+        self.shortcut = get_object_or_404(Shortcut, location=kwargs.get('url_shortener', ''))
+
+    def get_context_data(self, **kwargs):
+        context = super(UrlRedirectView, self).get_context_data(**kwargs)
+        context['shortcut'] = self.shortcut
+        return context
+
+
 def show_error_403(request, exception=None):
     return render(request, 'core/errors/error403.html', status=403)
 
 
 def show_error_404(request, exception=None):
     return render(request, 'core/errors/error404.html', status=404)
+
+def show_error_500(request, exception=None):
+    return render(request, 'core/errors/error500.html',  status=500, context={'exception': exception})

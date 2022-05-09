@@ -1,0 +1,32 @@
+{% load bootstrap_tabs %}
+
+<div class="nav nav-tabs px-3 mt-3 d-none d-md-flex">
+    <div class="container d-flex flex-wrap">
+        {% for tab in tabs %}
+            <div class="nav-item">
+                <a class="nav-link {% if tab.selected %}active{% endif %}" href="{{ tab.url }}">
+                    <span class="{{ tab.icon_class }}"></span> {{ tab.verbose }}
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+<div class="my-2">
+    <div class="d-flex d-md-none nav nav-tabs">
+        <div class="container d-flex flex-wrap dropdown">
+            <button class="nav-link active w-100 dropdown-toggle"
+                    type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                {{ selected.verbose }}
+            </button>
+            <div class="collapse w-100" id="collapseExample">
+                {% for tab in tabs %}
+                    {% if not tab.selected %}
+                    <a class="nav-link tab" href="{{ tab.url }}">
+                        <span class="{{ tab.icon_class }}"></span> {{ tab.verbose }}
+                    </a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>

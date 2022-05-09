@@ -1,0 +1,178 @@
+{% extends 'core/base.html' %}
+
+{% load static %}
+{% load get_login_url %}
+{% load calendar_tags %}
+{% load martortags %}
+{% load martor_render %}
+{% load build_absolute_uri %}
+
+{% block title %}
+    Squire - {{ activity_moment.title }}
+{% endblock title %}
+
+<!-- Link Preview -->
+{% block og-title %}
+    {{ activity_moment.title }}
+{% endblock og-title %}
+{% block og-description %}
+    [{{ activity_moment.start_date|date:"l j E H:i" }}] {{ activity_moment.description.as_plaintext|truncatewords:20 }}
+{% endblock og-description %}
+{% block og-image %}{% build_absolute_uri request activity.image_url %}{% endblock og-image %}
+{% block og-image-alt %}{{ activity_moment.title }} Icon{% endblock og-image-alt %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/slot_frames.css' %}">
+    {% martor_render_css %}
+{% endblock css %}
+
+{% block js %}
+    {{ block.super }}
+    {% martor_render_js %}
+{% endblock js %}
+
+{% block js_bottom %}
+    {{ block.super }}
+    <script src="{% static "js/activate_bootstrap_popover.js" %}"></script>
+
+    {% martor_render_js import_hljs=False invoke_hljs_method=True method_param="'#event-description'" %}
+{% endblock js_bottom %}
+
+{% block content-frame-class %}
+    wideContentFrame
+{% endblock %}
+
+{% block content %}
+    <!-- Slots -->
+    <h1 class="text-muted"><del>{{ activity_moment.title }}</del></h1>
+    <div class="row">
+        <div class="col-12 col-md-7">
+            {% block activity-info %}
+                <div class="d-flex">
+                    <!-- Calendar Icon -->
+                    <div><i class="far fa-calendar fa-fw"></i></div>
+                    <!-- Event Date & Recurrence Information -->
+                    <div class="col align-self-center">
+                        <div class='nospace'>
+                            <p id="event-date">
+                                {% if activity_moment.start_date.date == activity_moment.end_date.date %}
+                                    <!-- Activity starts and ends on the same day -->
+                                    {{ activity_moment.start_date|date:"l j E H:i" }} - {{ activity_moment.end_date|date:"H:i" }}
+                                {% else %}
+                                    <!-- Activity starts and ends on a different day -->
+                                    {{ activity_moment.start_date|date:"j E H:i" }} - {{ activity_moment.end_date|date:"j E H:i" }}
+                                {% endif %}
+                            </p>
+                            {% if activity_moment.is_part_of_recurrence %}
+                                <p class="text-muted">
+                                Repeats:
+                                {% for rule in activity_moment.parent_activity.recurrences.rrules %}
+                                {{ rule.to_text }}
+                                {% endfor %}
+                                </p>
+                            {% endif %}
+                            <p>
+                                {% if activity_moment.local_start_date is not None %}
+                                    <small id="activity-alt-start-message" class="text-muted">
+                                        {% if activity_moment.recurrence_id.date != activity_moment.local_start_date.date %}
+                                            Replacement for the same activity on {{ activity_moment.recurrence_id|date:"l j E (H:i)" }}
+                                        {% else %}
+                                            Starts
+                                            {% is_alt_start_before_normal_occurrence as is_alt_start_before_normal_occurrence %}
+                                            {% if is_alt_start_before_normal_occurrence %}
+                                                {{ activity_moment.recurrence_id|timeuntil:activity_moment.local_start_date }}
+                                                earlier
+                                            {% else %}
+                                                {{ activity_moment.recurrence_id|timesince:activity_moment.local_start_date }}
+                                                later
+                                            {% endif %}
+                                            than normal!
+                                        {% endif %}
+                                    </small>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {% if activity_moment.parent_activity.organisers.all %}
+                    <div class="d-flex">
+                        <!-- Organiser Icon -->
+                        <div class="col-xs-2"><i class="fas fa-user-tag fa-fw"></i></div>
+                        <!-- Location -->
+                        <div class="col nospace align-self-center">
+                            <p id="event-organisers">
+                                Organised by
+                                {% for organiser in activity_moment.parent_activity.organisers.all %}
+                                    {% if organiser.icon %}
+                                        <img
+                                            src="{{ organiser.icon.url }}"
+                                            height="32"
+                                            width="32"
+                                        />
+                                    {% endif %}
+                                    {{ organiser.name }}{% if not forloop.last %},{% endif %}
+
+                                {% endfor %}
+                            </p>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="d-flex">
+                    <!-- Text Icon -->
+                    <div class="col-xs-2"><i class="fas fa-bars fa-fw"></i></div>
+                    <!-- Event Description -->
+                    <div class="col align-self-center">
+                        <div id="event-description"
+                             class="rendered-md text-muted">
+                            {{ activity_moment.description.as_rendered  }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex">
+                    <!-- Clipboard Icon -->
+                    <div class="col-xs-2"><i class="far fa-clipboard fa-fw"></i></div>
+                    <!-- Event Description -->
+                    <div class="col align-self-center">
+                        <p id="event-status" class="text-danger">
+                            Activity is cancelled
+                        </p>
+                    </div>
+                </div>
+
+
+                <div style="height: 4em;" class="d-none d-md-flex">
+
+                </div>
+            {% endblock activity-info %}
+        </div>
+        <div class="col-12 col-md-5">
+            {% if request.user.is_authenticated %}
+                {% if can_edit_activity %}
+                    <a class="btn-block btn-sm btn btn-outline-primary mb-4"
+                        href="{% url "activity_calendar:edit_moment" activity_id=activity.id recurrence_id=recurrence_id %}">
+                        Edit
+                    </a>
+                {% endif %}
+
+
+                {% block sign-up-status %}
+
+                {% endblock sign-up-status %}
+            {% endif %}
+            {% if global_preferences.covid__covid_protocol %}
+                <div class="alert alert-warning">
+                    Corona protocol is active! Got symptoms? Stay home!<br>
+                    <a href="{{ global_preferences.covid__covid_protocol }}">
+                        More information
+                    </a>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+{% endblock content %}

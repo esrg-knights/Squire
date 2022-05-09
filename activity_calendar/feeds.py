@@ -1,20 +1,26 @@
-from datetime import datetime
+import recurrence
+
+from datetime import datetime, date
 
 from django.conf import settings
+from django.urls import reverse_lazy
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
+from django.utils.text import slugify
 
-import django_ical.feedgenerator
-
+from django_ical import feedgenerator
+from django_ical.feedgenerator import ICal20Feed
 from django_ical.utils import build_rrule_from_recurrences_rrule
 from django_ical.views import ICalFeed
-from django_ical.feedgenerator import ICal20Feed
 
-from .models import Activity, ActivityMoment
+
+from .models import Activity, ActivityMoment, Calendar
 import activity_calendar.util as util
+from membership_file.models import Member
 
 # Monkey-patch; Why is this not open for extension in the first place?
-django_ical.feedgenerator.ITEM_EVENT_FIELD_MAP = (
-    *(django_ical.feedgenerator.ITEM_EVENT_FIELD_MAP),
+feedgenerator.ITEM_EVENT_FIELD_MAP = (
+    *(feedgenerator.ITEM_EVENT_FIELD_MAP),
     ('recurrenceid',    'recurrence-id'),
 )
 
@@ -27,6 +33,19 @@ def only_for(class_type, default=None):
         return func_wrapper
     return only_for_decorator
 
+
+def get_feed_id(item):
+    # ID should be _globally_ unique
+    if isinstance(item, Activity):
+        # Sometimes a specific feed_name is given along with the object. Prioritise that.
+        return f"{item.feed_id}@kotkt.nl"
+    elif isinstance(item, ActivityMoment):
+        if item.is_part_of_recurrence:
+            return f"local_activity-id-{item.parent_activity_id}@kotkt.nl"
+        else:
+            return f"local_activity-id-{item.parent_activity_id}-special-{item.id}@kotkt.nl"
+
+    raise RuntimeError(f'An incorrect object instance has entered the calendar feed: {item.__class__.__name__}')
 
 class ExtendedICal20Feed(ICal20Feed):
     """
@@ -44,6 +63,17 @@ class ExtendedICal20Feed(ICal20Feed):
 
         super().write_items(calendar)
 
+# Activities should only be processed if either it is recurring or it is non-recurring, but the activitymoment
+# object has not yet been created. Otherwise it would yield two calendar activity copies
+# as described in issue #213
+def recurring_activities(activities):
+    """ Generator for activities to exclude invalid activity instances """
+    for activity in activities:
+        if activity.is_recurring:
+            yield activity
+        elif not activity.activitymoment_set.exists():
+            yield activity
+
 
 class CESTEventFeed(ICalFeed):
     """
@@ -56,7 +86,11 @@ class CESTEventFeed(ICalFeed):
     product_id = '-//Squire//Activity Calendar//EN'
     file_name = "knights-calendar.ics"
 
-    # Quick overwrite to allow results to be printed in the browser instead
+    calendar_title = None
+    calendar_description = None
+
+
+# Quick overwrite to allow results to be printed in the browser instead
     # Good for testing
     # def __call__(self, *args, **kwargs):
     #     response = super(CESTEventFeed, self).__call__(*args, **kwargs)
@@ -64,12 +98,18 @@ class CESTEventFeed(ICalFeed):
     #     return HttpResponse(content=response._container, content_type='text')
 
     def title(self):
-        # TODO: unhardcode
-        return "Activiteiten Agenda - Knights"
+        if self.calendar_title is None:
+            raise KeyError(
+                f"'calendar_title' for {self.__class__.__name__} has not been defined."
+            )
+        return self.calendar_title
 
     def description(self):
-        # TODO: unhardcode
-        return "Knights of the Kitchen Table Activiteiten en Evenementen."
+        if self.calendar_description is None:
+            raise KeyError(
+                f"'calendar_description' for {self.__class__.__name__} has not been defined."
+            )
+        return self.calendar_description
 
     def method(self):
         return "PUBLISH"
@@ -88,20 +128,12 @@ class CESTEventFeed(ICalFeed):
     # Activities
 
     def items(self):
-        # Only consider published activities
-        activities = Activity.objects.filter(published_date__lte=timezone.now()).order_by('-published_date')
-        exceptions = ActivityMoment.objects.filter(parent_activity__published_date__lte=timezone.now())
-
-        return [*activities, *exceptions]
+        raise NotImplementedError(
+            "This has not yet been implemented. "
+            "Overwrite items() to add the activity gathering logic.")
 
     def item_guid(self, item):
-        # ID should be _globally_ unique
-        if isinstance(item, Activity):
-            activity_id = item.id
-        elif isinstance(item, ActivityMoment):
-            activity_id = item.parent_activity_id
-
-        return f"local_activity-id-{activity_id}@kotkt.nl"
+        return get_feed_id(item)
 
     def item_class(self, item):
         return "PUBLIC"
@@ -120,12 +152,24 @@ class CESTEventFeed(ICalFeed):
     def item_start_datetime(self, item):
         # Convert to Europe/Amsterdam to ensure daylight saving time is accounted for in recurring events
         start_dt = item.start_date
-        return start_dt.astimezone(timezone.get_current_timezone())
+        start_dt = start_dt.astimezone(timezone.get_current_timezone())
+
+        if item.full_day:
+            # If full day, return this as a date instance instead
+            return start_dt.date()
+        else:
+            return start_dt
 
     def item_end_datetime(self, item):
         # Convert to Europe/Amsterdam to ensure daylight saving time is accounted for in recurring events
         end_dt = item.end_date
-        return end_dt.astimezone(timezone.get_current_timezone())
+        end_dt = end_dt.astimezone(timezone.get_current_timezone())
+
+        if item.full_day:
+            # If full day, return this as a date instance instead
+            return end_dt.date()
+        else:
+            return end_dt
 
     def item_created(self, item):
         return item.created_date
@@ -138,7 +182,14 @@ class CESTEventFeed(ICalFeed):
         # When the item was generated, which is at this moment!
         return timezone.now()
 
-    @only_for(ActivityMoment, default="/calendar/")
+    @only_for(ActivityMoment)
+    def item_status(self, item):
+        if item.is_cancelled:
+            return "CANCELLED"
+        else:
+            return "CONFIRMED"
+
+    @only_for(ActivityMoment, default=reverse_lazy('activity_calendar:activity_upcoming'))
     def item_link(self, item):
         # The local url to the activity
         return item.get_absolute_url()
@@ -180,13 +231,35 @@ class CESTEventFeed(ICalFeed):
     # Dates to exclude for recurrence rules
     @only_for(Activity)
     def item_exdate(self, item):
+        exclude_dates = []
         if item.recurrences:
-            return list(util.set_time_for_RDATE_EXDATE(item.recurrences.exdates, item.start_date))
+            # The RDATES in the recurrency module store only dates and not times, so we need to address that
+            exclude_dates += list(util.set_time_for_RDATE_EXDATE(item.recurrences.exdates, item.start_date))
+
+        cancelled_moments = item.activitymoment_set.\
+            filter(status=ActivityMoment.STATUS_REMOVED).\
+            values_list('recurrence_id', flat=True)
+
+        # Correct timezone to the default timezone settings
+        cancelled_moments = [util.dst_aware_to_dst_ignore(
+            recurrence_id,
+            item.start_date,
+            reverse=True
+        ) for recurrence_id in cancelled_moments ]
+        exclude_dates += filter(lambda occ: occ not in exclude_dates, cancelled_moments)
+
+        # If there are no exclude_dates, don't bother including it
+        if exclude_dates:
+            return exclude_dates
+        else:
+            return None
 
     # RECURRENCE-ID
     @only_for(ActivityMoment)
     def item_recurrenceid(self, item):
-        return item.recurrence_id.astimezone(timezone.get_current_timezone())
+        if item.is_part_of_recurrence:
+            return item.recurrence_id.astimezone(timezone.get_current_timezone())
+        return None
 
     # Include
     def feed_extra_kwargs(self, obj):
@@ -204,3 +277,90 @@ class CESTEventFeed(ICalFeed):
         if val:
             kwargs['recurrenceid'] = val
         return kwargs
+
+
+class PublicCalendarFeed(CESTEventFeed):
+    """ Define the feed for the public calendar """
+    product_id = '-//Squire//Activity Calendar//EN'
+    file_name = "knights-calendar.ics"
+    calendar_title = "Activiteiten Agenda - Knights"
+    calendar_description = "Knights of the Kitchen Table Activiteiten en Evenementen."
+
+    def items(self):
+        # Only consider published activities
+        activities = Activity.objects.\
+            filter(published_date__lte=timezone.now()).order_by('-published_date'). \
+            filter(is_public=True)
+        exceptions = ActivityMoment.objects. \
+            filter(parent_activity__in=activities). \
+            exclude(status=ActivityMoment.STATUS_REMOVED)
+
+        return [*recurring_activities(activities), *exceptions]
+
+
+class CustomCalendarFeed(CESTEventFeed):
+    file_name = "knights-calendar.ics"
+
+    @property
+    def product_id(self):
+        return f'-//Squire//Activity Calendar {self.calendar.name}//EN'
+
+    def __call__(self, *args, **kwargs):
+        self.calendar = get_object_or_404(Calendar, slug=kwargs['calendar_slug'])
+        self.calendar_title = self.calendar.name
+        self.calendar_description = self.calendar.description
+
+        return super(CustomCalendarFeed, self).__call__(*args, **kwargs)
+
+    def items(self):
+        activities = self.calendar.activities.\
+            filter(published_date__lte=timezone.now()).order_by('-published_date')
+        exceptions = ActivityMoment.objects. \
+            filter(parent_activity__in=activities). \
+            exclude(status=ActivityMoment.STATUS_REMOVED)
+
+        return [*recurring_activities(activities), *exceptions]
+
+
+class BirthdayCalendarFeed(CESTEventFeed):
+    product_id = '-//Squire//Birthday Calendar//EN'
+    file_name = "knights-birthday-calendar.ics"
+    calendar_title = "Birthday calendar - Knights"
+    calendar_description = "Knights of the Kitchen Table Birthday Calendar."
+
+    @classmethod
+    def construct_birthday(cls, member):
+        """ Constructs the birthday for the given member"""
+        recurrence_pattern = recurrence.Recurrence(rrules=[recurrence.Rule(recurrence.YEARLY)])
+        start_time = datetime.combine(
+            member.date_of_birth,
+            datetime.min.time(),
+            tzinfo=timezone.get_current_timezone())
+        activity = Activity(
+            title=f"It's {member.get_full_name()}'s birthday!",
+            full_day=True,
+            start_date=start_time,
+            end_date=start_time,
+            recurrences=recurrence_pattern,
+        )
+        # Declare a feed name
+        activity.feed_name = f"bday-{slugify(member.get_full_name())}"
+        return activity
+
+    def items(self):
+        """ Constructs a list of activities that represent the birthdays of the members """
+        # Create iterator that builds activities from the list of members
+        return map(
+            self.construct_birthday,
+            Member.objects.filter(
+                memberyear__is_active=True,
+                membercalendarsettings__use_birthday=True,
+                date_of_birth__isnull=False,
+            )
+        )
+
+    def item_link(self, item):
+        return "" # There is no page for a birthday
+
+    def item_end_datetime(self, item):
+        return item.start_date.date()

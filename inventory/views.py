@@ -5,7 +5,7 @@ from django.http import Http404
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy, reverse
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, TemplateView
 from django.views.generic.edit import FormView, UpdateView, CreateView
 
 from committees.utils import user_in_association_group
@@ -16,26 +16,9 @@ from inventory.models import Ownership, Item
 from inventory.forms import *
 
 
-__all__ = ['MemberItemsOverview', 'MemberItemRemovalFormView', 'MemberItemLoanFormView',
-           'MemberOwnershipAlterView', 'OwnershipMixin', 'TypeCatalogue',
+__all__ = ['TypeCatalogue', 'CatalogueInstructionsView',
            'AddLinkCommitteeView', 'AddLinkMemberView', 'CreateItemView', 'UpdateItemView', 'DeleteItemView',
            'ItemLinkMaintenanceView', 'UpdateCatalogueLinkView', 'LinkActivationStateView', 'LinkDeletionView',]
-
-
-class MemberItemsOverview(MembershipRequiredMixin, ListView):
-    template_name = "inventory/membership_inventory.html"
-    context_object_name = 'ownerships'
-
-    def get_queryset(self):
-        return Ownership.objects.filter(member=self.request.member).filter(is_active=True)
-
-    def get_context_data(self, *args, **kwargs):
-        context = super(MemberItemsOverview, self).get_context_data(*args, **kwargs)
-        # Get items previously stored at the associatoin
-        context[self.context_object_name+'_history'] = Ownership.objects.\
-            filter(member=self.request.member).\
-            filter(is_active=False)
-        return context
 
 
 class OwnershipMixin:
@@ -66,66 +49,6 @@ class OwnershipMixin:
         return context
 
 
-class MemberItemRemovalFormView(MembershipRequiredMixin, OwnershipMixin, FormView):
-    template_name = "inventory/membership_take_home.html"
-    form_class = OwnershipRemovalForm
-    success_url = reverse_lazy("inventory:member_items")
-
-    def get_form_kwargs(self):
-        kwargs = super(MemberItemRemovalFormView, self).get_form_kwargs()
-        kwargs['ownership'] = self.ownership
-        return kwargs
-
-    def form_valid(self, form):
-        form.save()
-        messages.success(self.request, f"{self.ownership.content_object} has been marked as taken home")
-        return super(MemberItemRemovalFormView, self).form_valid(form)
-
-    def form_invalid(self, form):
-        message = f"This action was not possible: {form.non_field_errors()[0]}"
-        messages.error(self.request, message)
-        # Form is fieldless, invalid thus means user can't address it
-        return HttpResponseRedirect(self.get_success_url())
-
-
-class MemberItemLoanFormView(MembershipRequiredMixin, OwnershipMixin, FormView):
-    template_name = "inventory/membership_loan_out.html"
-    form_class = OwnershipActivationForm
-    success_url = reverse_lazy("inventory:member_items")
-
-    def get_form_kwargs(self):
-        kwargs = super(MemberItemLoanFormView, self).get_form_kwargs()
-        kwargs['ownership'] = self.ownership
-        return kwargs
-
-    def form_valid(self, form):
-        form.save()
-        messages.success(self.request, f"{self.ownership.content_object} has been marked as stored at the Knights")
-        return super(MemberItemLoanFormView, self).form_valid(form)
-
-    def form_invalid(self, form):
-        message = f"This action was not possible: {form.non_field_errors()[0]}"
-        messages.error(self.request, message)
-        # Form is fieldless, invalid thus means user can't address it
-        return HttpResponseRedirect(self.get_success_url())
-
-
-class MemberOwnershipAlterView(MembershipRequiredMixin, OwnershipMixin, FormView):
-    template_name = "inventory/membership_adjust_note.html"
-    form_class = OwnershipNoteForm
-    success_url = reverse_lazy("inventory:member_items")
-
-    def get_form_kwargs(self):
-        kwargs = super(MemberOwnershipAlterView, self).get_form_kwargs()
-        kwargs['instance'] = self.ownership
-        return kwargs
-
-    def form_valid(self, form):
-        form.save()
-        messages.success(self.request, f"Your version of {self.ownership.content_object} has been updated")
-        return super(MemberOwnershipAlterView, self).form_valid(form)
-
-
 ###########################################################
 ###############        Catalogue        ###################
 ###########################################################
@@ -139,12 +62,48 @@ class CatalogueMixin:
         super(CatalogueMixin, self).setup(request, *args, **kwargs)
         self.item_type = kwargs.get('type_id')
 
+    def dispatch(self, request, *args, **kwargs):
+        if self.item_type:
+            if not self.request.user.has_perm(f'{self.item_type.app_label}.view_{self.item_type.model}'):
+                raise PermissionDenied
+        return super(CatalogueMixin, self).dispatch(request, *args, **kwargs)
+
+
     def get_context_data(self, *args, **kwargs):
         context = super(CatalogueMixin, self).get_context_data(*args, **kwargs)
         context.update({
             'item_type': self.item_type,
+            'tabs': self.get_tabs()
         })
         return context
+
+    def get_tabs(self):
+        """
+        Returns a list of dictionary objects for tab information
+        :return:
+        """
+        tabs = []
+        for item_type in Item.get_item_contenttypes():
+            if self.request.user.has_perm(f'{item_type.app_label}.view_{item_type.model}'):
+                model_class = item_type.model_class()
+                tabs.append({
+                    'verbose': str.title(str(model_class._meta.verbose_name_plural)),
+                    'icon_class': model_class.icon_class,
+                    'url': reverse("inventory:catalogue", kwargs={'type_id': item_type}),
+                    'selected': item_type == self.item_type,
+                })
+        # Add instructions tab
+        tabs.append({
+            'verbose': "Instructions",
+            'icon_class': 'fas fa-info',
+            'url': reverse("inventory:catalogue_info"),
+            'selected': isinstance(self, CatalogueInstructionsView),
+        })
+        return tabs
+
+
+class CatalogueInstructionsView(MembershipRequiredMixin, CatalogueMixin, TemplateView):
+    template_name = "inventory/inventory_instructions.html"
 
 
 class ItemMixin:
@@ -425,7 +384,13 @@ class OwnershipCatalogueLinkMixin:
 
 class UpdateCatalogueLinkView(MembershipRequiredMixin, CatalogueMixin, ItemMixin, OwnershipCatalogueLinkMixin, PermissionRequiredMixin, UpdateView):
     template_name = "inventory/catalogue_adjust_link.html"
-    fields = ['note', 'added_since']
+    fields = ['note', 'added_since', 'value']
+
+    def get_form(self, form_class=None):
+        form = super(UpdateCatalogueLinkView, self).get_form()
+        if self.ownership.group is None:
+            del form.fields['value']
+        return form
 
     def get_object(self, queryset=None):
         # Assure that the ownership and item are linked correctly

@@ -1,0 +1,69 @@
+{% extends 'core/user_accounts/account_base.html' %}
+{% load theme_tags %}
+
+{% block title %}
+    Squire - Membership Data
+{% endblock title %}
+
+{% block og-title %}
+    View Knights Membership Information
+{% endblock og-title %}
+{% block og-description %}
+    View your Knights' membership information here.
+{% endblock og-description %}
+
+{% block content %}
+    <h1>Account</h1>
+    This page contains all information relevant to your account on the site.
+
+    <p>
+        Username: <i>{{ user.username }}</i><br>
+        {% if member is None %}
+            {# No need to show "Real Name" if the user is a member as it won't be used then #}
+            {# Furthermore, this used to be a "nickname", and to prevent confusion among people who #}
+            {#  have entered it like that, we'll just hide it so we won't be asked 100 times to fix it. #}
+            Real Name: <i>{{ user.first_name|default:"No real name provided" }}</i><br>
+        {% endif %}
+        Email: <i>{{ user.email|default:"No email provided" }}</i><br>
+    </p>
+    <div class="btn-group">
+        <a class="btn btn-secondary btn-sm" href="{% url "account:account_change" %}">
+            <i class="fas fa-user-edit"></i> Change account
+        </a>
+        <a class="btn btn-primary btn-sm" href="{% url "account:password_change" %}">
+            <i class="fas fa-key"></i> Change password
+        </a>
+    </div>
+
+    <h3 class="mt-3">Look and layout</h3>
+    <p>
+        Site theme: {{ user|get_theme }}
+    </p>
+    <a class="btn btn-primary btn-sm" href="{% url "account:layout_change" %}">
+        <i class="fas fa-pen"></i> Edit
+    </a>
+
+    {% if member %}
+    <div>
+        <h3 class="mt-3">Calendar preferences</h3>
+        <p>
+            Display birthday in Knights birthday calendar:
+            {% if member.membercalendarsettings %}
+                {% if member.membercalendarsettings.use_birthday %}
+                    <span class="badge-pill badge-success">Yes</span>
+                {% else %}
+                    <span class="badge-pill badge-danger">No</span>
+                {% endif %}
+            {% else %}
+                <span class="badge-pill badge-secondary">Unanswered</span>
+            {% endif %}
+        </p>
+        <a class="btn btn-primary btn-sm" href="{% url "account:calendar_change" %}">
+            <i class="fas fa-pen"></i> Edit
+        </a>
+
+    </div>
+    {% endif %}
+
+
+{% endblock content %}

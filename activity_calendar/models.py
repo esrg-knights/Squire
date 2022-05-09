@@ -15,6 +15,8 @@ from recurrence.fields import RecurrenceField
 import activity_calendar.util as util
 from core.models import PresetImage
 from core.fields import MarkdownTextField
+from committees.utils import user_in_association_group
+from membership_file.models import Member
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -30,6 +32,17 @@ __all__ = ['Activity', 'ActivityMoment', 'ActivitySlot', 'Participant']
 # Rounds the current time (used as a default value below)
 def now_rounded():
     return timezone.now().replace(minute=0, second=0)
+
+class CoreActivityGrouping(models.Model):
+    """
+        A method to group certain core activities together. E.g. all boardgame evenings,
+        all roleplay-related actitvities, LARP-stuff, etc.
+    """
+    identifier = models.CharField(max_length=127, unique=True)
+
+    def __str__(self):
+        return self.identifier + " (activity grouping)"
+
 
 # The Activity model represents an activity in the calendar
 class Activity(models.Model):
@@ -51,6 +64,8 @@ class Activity(models.Model):
 
     # The User that created the activity
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
+    organisers = models.ManyToManyField('committees.AssociationGroup', through='OrganiserLink')
+    core_grouping = models.ForeignKey(CoreActivityGrouping, on_delete=models.SET_NULL, blank=True, null=True)
 
     # General information
     title = models.CharField(max_length=255)
@@ -65,10 +80,12 @@ class Activity(models.Model):
 
     # The date at which the activity will become visible for all users
     published_date = models.DateTimeField(default=now_rounded)
+    is_public = models.BooleanField(default=True, help_text="If activity should be on public calendar")
 
     # Start and end times
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
+    full_day = models.BooleanField(default=False, help_text="Whether this event marks the entire day")
 
     # Recurrence information (e.g. a weekly event)
     # This means we do not need to store (nor create!) recurring activities separately
@@ -96,15 +113,17 @@ class Activity(models.Model):
     # - Auto: Slots are created automatically. They are only actually created in the DB once a participant joins.
     #                                          Until that time they do look like real slots though (in the UI)
     # - Users: Slots can be created by users. Users can be the owner of at most max_slots_join_per_participant slots
-    SLOT_CREATION_STAFF = "CREATION_NONE"
+    SLOT_CREATION_STAFF = "CREATION_STAFF"
     SLOT_CREATION_AUTO = "CREATION_AUTO"
     SLOT_CREATION_USER = "CREATION_USER"
+    SLOT_CREATION_NONE = "CREATION_NONE"
     slot_creation = models.CharField(
         max_length=15,
         choices=[
-            (SLOT_CREATION_STAFF,   "Never/By Administrators"),
+            (SLOT_CREATION_STAFF,   "By Organisers"),
             (SLOT_CREATION_AUTO,   "Automatically"),
             (SLOT_CREATION_USER,   "By Users"),
+            (SLOT_CREATION_NONE,   "No signup"),
         ],
         default='CREATION_AUTO',
     )
@@ -119,57 +138,188 @@ class Activity(models.Model):
             return f'{settings.STATIC_URL}images/default_logo.png'
         return self.slots_image.image.url
 
-    def get_activitymoments_between(self, start_date, end_date):
+    def get_activitymoments_between(self, start_date, end_date, exclude_removed=True):
         """
             Get a list of ActivityMoments, each representing an occurrence of this activity for which
             any point in that ActivityMoment's duration occurs between the specified start and end date.
 
             Note that an ActivityMoment is not entirely the same as an occurrence, as an ActivityMoment can
             have a different start time than the occurrence it represents. This is accounted for.
+
+            :param start_date: The start datetime instance
+            :param end_date: The end datetime instance
+            :param exclude_removed: Whether activitymoments with status removed should not be included (default True)
         """
         # We should also include activities that start before "start_date", but also end after "start_date"
         #   (i.e., their start date is before the specified bounds, but their end date is within it).
         # Any occurrence before (start_date - duration) can never partially take place inside the
         #   specified time period, so there's no need to look back even further.
         activity_duration = self.duration
-        occurrences = self.get_occurrences_starting_between(start_date - activity_duration, end_date)
+        recurrency_occurences = self.get_occurrences_starting_between(start_date - activity_duration, end_date)
 
         # Note that DST-offsets have already been handled earlier
         #   in self.get_occurrences_between -> util.dst_aware_to_dst_ignore
 
-        # The above comment isn't entirely True as there are also activity_moments we need to consider,
-        #   which we handle here
+        # Get the correct activitymoment instances from the database
+        activity_moments_between_query = Q(recurrence_id__gte=(start_date - activity_duration)) &\
+                                         Q(recurrence_id__lte=end_date)
+        # Get a list of all activitymoments that due to shift are either
+        # incorrectly included (surplus) or wrongly excluded (extra)
         surplus_moments, extra_moments = self._get_queries_for_alt_start_time_activity_moments(start_date, end_date)
 
         # Filter out all activitymoments with an alt start time outside the bounds
-        surplus_moments = self.activitymoment_set.filter(surplus_moments).values_list('recurrence_id', flat=True)
-        occurrences = filter(lambda occ: occ not in surplus_moments, occurrences)
+        surplus_moments_queryset = self.activitymoment_set.filter(surplus_moments).values_list('recurrence_id', flat=True)
+        recurrency_occurences = filter(lambda occ: occ not in surplus_moments_queryset, recurrency_occurences)
 
-        # Evaluate the iterable: we want to use it more than once below
-        occurrences = list(occurrences)
+        # Filter out removed activities
+        removed_moments_queryset = self.activitymoment_set.filter(status=ActivityMoment.STATUS_REMOVED).values_list('recurrence_id', flat=True)
+        recurrency_occurences = filter(lambda occ: occ not in removed_moments_queryset, recurrency_occurences)
 
         # Fetch existing activitymoments
         #   They must either be within the bounds
         #   OR be extra ones due to different start/end date(s)
-        query_filter = Q(recurrence_id__in=occurrences) | extra_moments
-        existing_moments = list(self.activitymoment_set.filter(query_filter))
+        query_filter = (activity_moments_between_query | extra_moments) & ~surplus_moments
+        existing_moments = self.activitymoment_set
+        if exclude_removed:
+            existing_moments = existing_moments.exclude(status=ActivityMoment.STATUS_REMOVED)
+        existing_moments = list(existing_moments.filter(query_filter))
 
         # Get occurrences for which we have no ActivityMoment
-        occurrences = filter(
+        unstored_recurrency_occurences = filter(
             lambda occ: all(existing_moment.recurrence_id != occ for existing_moment in existing_moments),
-            occurrences
+            recurrency_occurences
         )
 
         # Generate new ActivityMoments for them
-        occurrences = map(
+        unstored_recurrency_occurences = map(
             lambda occ: ActivityMoment(
                 recurrence_id=occ,
                 parent_activity=self,
             ),
-            occurrences
+            unstored_recurrency_occurences
         )
 
-        return list(occurrences) + existing_moments
+        return list(unstored_recurrency_occurences) + existing_moments
+
+    def _get_cancelled_activity_moments(self, include_cancelled=False, include_removed=True):
+        """ Returns all activitymoments queryset for this activity that are cancelled and/or removed """
+        query_cancelled = Q(status=ActivityMoment.STATUS_CANCELLED)
+        query_removed = Q(status=ActivityMoment.STATUS_REMOVED)
+        if include_cancelled and include_removed:
+            return self.activitymoment_set.filter(query_cancelled | query_removed)
+        elif not include_cancelled and include_removed:
+            return self.activitymoment_set.filter(query_removed)
+        elif include_cancelled and not include_removed:
+            return self.activitymoment_set.filter(query_cancelled)
+        # It shoudl include neither, so return nothing (can occur when chaining methods)
+        return self.activitymoment_set.none()
+
+    def get_next_activitymoment(self, dtstart=None, inc=False, exclude_removed=True, exclude_cancelled=False):
+        """
+        Returns the next activitymoment that will occur (if any)
+        :param dtstart: The start datetime instance (if any) from which an occurence needs to be retrieved
+        :param inc: Whether the startdate should be included
+        :param exclude_removed: Whether activitymoments with status removed should not be included (default True)
+        :param exclude_cancelled: Whether activitymoments with status cancelled should not be included (default False)
+        :return: The activitymoment instance that will occur next
+        """
+        dtstart = timezone.localtime(dtstart) or timezone.now()
+        e_ext = 'e' if inc else '' # Search query for inclusion statement
+
+        activity_moments = self.activitymoment_set
+        if exclude_removed:
+            activity_moments = activity_moments.exclude(status=ActivityMoment.STATUS_REMOVED)
+
+        if exclude_cancelled:
+            activity_moments = activity_moments.exclude(status=ActivityMoment.STATUS_CANCELLED)
+
+        ### Check for activitymoments stored in the database ###
+        # Check activity_moment by recurrence id
+        next_activity_moment = activity_moments.\
+            filter(**{'recurrence_id__gt'+e_ext: dtstart}).\
+            filter(local_start_date__isnull=True).\
+            order_by('recurrence_id').\
+            first()
+
+        # Check for local start date adjustments
+        local_activity_moment = activity_moments.\
+            filter(**{'local_start_date__gt'+e_ext: dtstart}).\
+            order_by('local_start_date').\
+            first()
+
+        # Compare through start dates, which take local changes into account
+        if local_activity_moment is not None:
+            if next_activity_moment is None or local_activity_moment.start_date < next_activity_moment.start_date:
+                next_activity_moment = local_activity_moment
+
+
+        ### Check for recurrence patterns ###
+
+        # Get a list of activity_moments that are not allowed because they have been moved and will therefore
+        # already have been detected with the local_start_date search
+        excluded_activity_moments = self.activitymoment_set. \
+            filter(**{'recurrence_id__gt'+e_ext: dtstart}). \
+            filter(local_start_date__isnull=False). \
+            order_by('recurrence_id').\
+            values_list('recurrence_id', flat=True)
+
+        cancelled_activity_moments = self._get_cancelled_activity_moments(
+            include_cancelled=exclude_cancelled,
+            include_removed=exclude_removed,
+        ).values_list('recurrence_id', flat=True)
+
+        recurrence_dtstart = dtstart
+        next_recurrence = self._get_next_recurring_occurence(recurrence_dtstart, inc)
+        while next_recurrence in excluded_activity_moments or next_recurrence in cancelled_activity_moments:
+            next_recurrence = self._get_next_recurring_occurence(next_recurrence, False)
+
+        if next_recurrence is not None:
+            # Check if recurrence ids do not match for the activitymoment and the recurrent activity
+            # otherwise it could be the current activity that has been postponed.
+            if next_activity_moment is None or\
+                (next_activity_moment.start_date > next_recurrence and
+                 next_activity_moment.recurrence_id != next_recurrence):
+
+                next_activity_moment = ActivityMoment(
+                    recurrence_id=next_recurrence,
+                    parent_activity=self,
+                )
+
+        return next_activity_moment
+
+    def _get_next_recurring_occurence(self, dtstart, inc=False):
+        """
+         Returns the next occurence according to the recurring format.
+        :param dtstart: The starttime of the search
+        :param inc: Whether dtstart is included in the search
+        :return: A DST-ignored datetime instance of the next occurence since dtstart
+        """
+        # Make a copy so we don't modify our own recurrence
+        recurrences = copy.deepcopy(self.recurrences)
+
+        # EXDATEs and RDATEs should match the event's start time, but in the recurrence-widget they
+        #   occur at midnight!
+        # Since there is no possibility to select the RDATE/EXDATE time in the UI either, we need to
+        #   override their time here so that it matches the event's start time. Their timezones are
+        #   also changed into that of the event's start date
+        # recurrences.exdates = list(util.set_time_for_RDATE_EXDATE(recurrences.exdates, dtstart, make_dst_ignore=True))
+        # recurrences.rdates = list(util.set_time_for_RDATE_EXDATE(recurrences.rdates, dtstart, make_dst_ignore=True))
+
+        # The after function does not know the initial start date of the recurrent activities
+        # So dtstart should be set to the activity start date not search start date
+        next_recurrence = recurrences.after(
+            dtstart,
+            inc=inc,
+            dtstart=timezone.localtime(self.start_date)
+        )
+
+        # the recurrences package does not work with DST. Since we want our activities
+        #   to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00
+        #   in winter, and vice versa), we have to account for the difference here.
+        if next_recurrence is not None:
+            next_recurrence = util.dst_aware_to_dst_ignore(next_recurrence, timezone.localtime(self.start_date))
+
+        return next_recurrence
 
     # String-representation of an instance of the model
     def __str__(self):
@@ -187,15 +337,38 @@ class Activity(models.Model):
         """ Gets the duration of this activity """
         return self.end_date - self.start_date
 
-    def has_occurrence_at(self, date, is_dst_aware=False):
-        """ Whether this activity has an occurrence that starts at the specified time """
-        if not self.is_recurring:
-            return date == self.start_date
+    def get_occurrence_at(self, date, is_dst_aware=False):
+        """
+        Whether this activity has an occurrence that starts at the specified time
+        Note: This does not take shifts in starting moment into account!
+        :param date: Datetime instance of the occurrence
+        :param is_dst_aware: Whether the datetime instance is dst aware (relevant for recurrent activities)
+        :return:
+        """
+        # Check activitymoments on server
+        activitymoments = self.activitymoment_set.filter(recurrence_id=date)
+        if activitymoments.count() == 1:
+            return activitymoments.first()
 
-        if not is_dst_aware:
-            date = util.dst_aware_to_dst_ignore(date, self.start_date, reverse=True)
-        occurences = self.get_occurrences_starting_between(date, date)
-        return list(occurences)
+        # Find recurrent moments that have not yet been created on the server
+        if self.is_recurring:
+            if not is_dst_aware:
+                dst_ignored_date = util.dst_aware_to_dst_ignore(date, self.start_date, reverse=True)
+            occurences = list(self.get_occurrences_starting_between(dst_ignored_date, dst_ignored_date))
+            if occurences:
+                # Make sure to use the ORIGINAL data and not the moved one.
+                return ActivityMoment(
+                    parent_activity=self,
+                    recurrence_id=date,
+                )
+        else:
+            # A single activity that is non-recurrent and also contains no activitymoment yet
+            if date == self.start_date:
+                return ActivityMoment(
+                    parent_activity=self,
+                    recurrence_id=date,
+                )
+        return None
 
     def _get_queries_for_alt_start_time_activity_moments(self, after, before):
         """
@@ -357,6 +530,17 @@ class Activity(models.Model):
             'recurrence_id': recurrence_id
         })
 
+    def is_organiser(self, user):
+        for association_group in self.organisers.all():
+            if user_in_association_group(user, association_group):
+                return True
+        return False
+
+    @property
+    def feed_id(self):
+        """ Get a unique identifier to distinguish this activity in the feed """
+        return f'local_activity-name-{self.id}'
+
 
 class ActivityDuplicate(ModelBase):
     """
@@ -425,7 +609,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         # Define the fields that can be locally be overwritten
         copy_fields = [
             'title', 'description', 'promotion_image', 'location', 'max_participants', 'subscriptions_required',
-            'slot_creation', 'private_slot_locations']
+            'slot_creation', 'private_slot_locations', 'full_day']
         # Define fields that are instantly looked for in the parent_activity
         # If at any point in the future these must become customisable, one only has to move the field name to the
         # copy_fields attribute
@@ -437,6 +621,21 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     #   the start/end date of the parent activity.
     local_start_date = models.DateTimeField(blank=True, null=True)
     local_end_date = models.DateTimeField(blank=True, null=True)
+
+    # Define status
+    STATUS_NORMAL = "GO"
+    STATUS_CANCELLED = "STOP"
+    STATUS_REMOVED = "RMV"
+    status = models.CharField(
+        max_length=5,
+        choices=[
+            (STATUS_NORMAL,   "Normal proceeed"),
+            (STATUS_CANCELLED,   "Cancel, with notification"),
+            (STATUS_REMOVED,   "Remove"),
+
+        ],
+        default=STATUS_NORMAL,
+    )
 
     @property
     def start_date(self):
@@ -454,6 +653,31 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     def participant_count(self):
         return self.get_subscribed_users().count() + \
                self.get_guest_subscriptions().count()
+
+    @property
+    def is_part_of_recurrence(self):
+        # A non-recurring activity can not be part of a recurrence
+        if not self.parent_activity.is_recurring:
+            return False
+
+        # Shift daylight savings time to connect to the correct time
+        local_recurrence_id = util.dst_aware_to_dst_ignore(
+            self.recurrence_id,
+            self.parent_activity.start_date,
+            reverse=True
+        )
+        # Get the next instance of the recurring activity, include the given date. So it should return the activity
+        # iteself. If not, than it is not part of the recurring activity
+        recurrence_date = self.parent_activity.recurrences.after(
+            local_recurrence_id,
+            inc=True,
+            dtstart=self.parent_activity.start_date
+        )
+        return recurrence_date == local_recurrence_id
+
+    @property
+    def is_cancelled(self):
+        return self.status != self.STATUS_NORMAL
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
@@ -513,9 +737,13 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         Whether this activitymoment is open for subscriptions
         :return: Boolean
         """
+        if self.is_cancelled:
+            # A closed activity is never open for subscriptions
+            return False
+
         now = timezone.now()
-        open_date_in_past = self.recurrence_id - self.parent_activity.subscriptions_open <= now
-        close_date_in_future = self.recurrence_id - self.parent_activity.subscriptions_close >= now
+        open_date_in_past = self.start_date - self.parent_activity.subscriptions_open <= now
+        close_date_in_future = self.start_date - self.parent_activity.subscriptions_close >= now
         return open_date_in_past and close_date_in_future
 
     def is_full(self):
@@ -597,7 +825,7 @@ class ActivitySlot(models.Model):
             if self.recurrence_id is None:
                 errors.update({'recurrence_id': 'Must set a date/time when this activity takes place'})
             else:
-                if not self.parent_activity.has_occurrence_at(self.recurrence_id):
+                if not self.parent_activity.get_occurrence_at(self.recurrence_id):
                     # Bounce activities if it is not fitting with the recurrence scheme
                     errors.update({'recurrence_id': 'Parent activity has no occurence at the given date/time'})
 
@@ -648,3 +876,39 @@ class Participant(models.Model):
         if self.guest_name:
             return self.guest_name + ' (ext)'
         return str(self.user)
+
+
+class OrganiserLink(models.Model):
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+    association_group = models.ForeignKey('committees.AssociationGroup', on_delete=models.CASCADE)
+    archived = models.BooleanField(default=False)
+
+
+class Calendar(models.Model):
+    """ Symbolises a calendar with certain activities """
+    name = models.CharField(max_length=128, unique=True)
+    slug = models.SlugField(verbose_name='url string', help_text="The local url string", unique=True)
+    description = models.CharField(max_length=256)
+
+    activities = models.ManyToManyField(Activity, through="CalendarActivityLink")
+
+    def __str__(self):
+        return self.name
+
+
+class CalendarActivityLink(models.Model):
+    calendar = models.ForeignKey(Calendar, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.calendar} - {self.activity}'
+
+
+class MemberCalendarSettings(models.Model):
+    member = models.OneToOneField(Member, on_delete=models.CASCADE)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    use_birthday = models.BooleanField(default=False, verbose_name="Display my birthday in Knights birthday calendar")
+
+    def __str__(self):
+        return f'calendar settings for {self.member}: {self.use_birthday}'

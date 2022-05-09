@@ -15,7 +15,7 @@ from django.utils.translation import gettext_lazy as _
 from dynamic_preferences.admin import GlobalPreferenceAdmin
 from dynamic_preferences.models import GlobalPreferenceModel
 
-from .models import MarkdownImage, PresetImage
+from .models import MarkdownImage, PresetImage, Shortcut
 
 from core.forms import MarkdownImageAdminForm
 from utils.forms import RequestUserToFormModelAdminMixin
@@ -208,3 +208,4 @@ class SquireGlobalPreferencesAdmin(GlobalPreferenceAdmin):
 # Use our custom admin panel instead
 admin.site.unregister(GlobalPreferenceModel)
 admin.site.register(GlobalPreferenceModel, SquireGlobalPreferencesAdmin)
+admin.site.register(Shortcut)

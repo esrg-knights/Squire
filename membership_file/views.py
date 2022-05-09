@@ -1,20 +1,19 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.http import HttpResponseForbidden
-from django.shortcuts import render
+from django.core.exceptions import PermissionDenied
+from django.views.generic import TemplateView, FormView
+from django.template.response import TemplateResponse
 from django.urls import reverse_lazy
-from django.utils.translation import gettext_lazy as _
-from django.views.generic import DetailView, TemplateView, UpdateView
-from django.views.decorators.http import require_safe
+from dynamic_preferences.registries import global_preferences_registry
 
-from .forms import MemberForm
-from .models import Member
-from .util import MembershipRequiredMixin, membership_required
+from .util import MembershipRequiredMixin
 
 # Enable the auto-creation of logs
 from .auto_model_update import *
 from .export import *
+from membership_file.forms import ContinueMembershipForm
+from membership_file.models import Membership
+
+global_preferences = global_preferences_registry.manager()
 
 
 class MemberMixin(MembershipRequiredMixin):
@@ -31,52 +30,55 @@ class NotAMemberView(TemplateView):
     template_name = 'membership_file/no_member.html'
 
 
-# Page for viewing membership information
-class MemberView(TemplateView):
-    model = Member
-    template_name = 'membership_file/membership_view.html'
-    tab_name = 'tab_membership'
+class UpdateMemberYearMixin:
+    year = None
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context[self.tab_name] = True
+    def setup(self, request, *args, **kwargs):
+        self.year = global_preferences['membership__signup_year']
+        if self.year is None:
+            raise PermissionDenied("There is no year active to extend")
+
+        super(UpdateMemberYearMixin, self).setup(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(UpdateMemberYearMixin, self).get_context_data(**kwargs)
+        context['new_year'] = self.year
         return context
 
-# Page for changing membership information using a form
-class MemberChangeView(MemberMixin, PermissionRequiredMixin, UpdateView):
-    template_name = 'membership_file/membership_edit.html'
-    form_class = MemberForm
-    success_url = reverse_lazy('membership_file/membership')
-    permission_required = ('membership_file.can_view_membership_information_self', 'membership_file.can_change_membership_information_self')
-    raise_exception = True
-    tab_name = 'tab_membership'
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context[self.tab_name] = True
-        return context
 
-    def get_form_kwargs(self, *args, **kwargs):
-        kwargs = super().get_form_kwargs(*args, **kwargs)
-        kwargs['user'] = self.request.user
-        return kwargs
+class ExtendMembershipView(UpdateMemberYearMixin, FormView):
+    template_name = "membership_file/extend_membership.html"
+    form_class = ContinueMembershipForm
+    success_url = reverse_lazy('membership_file/continue_success')
 
     def dispatch(self, request, *args, **kwargs):
-        # Members who are marked for deletion cannot edit their membership information
-        obj = self.get_object()
-        if obj is not None and obj.marked_for_deletion:
-            return HttpResponseForbidden("Your membership is about to be cancelled. Please contact the board if this was a mistake.")
-        return super().dispatch(request, *args, **kwargs)
+        if Membership.objects.filter(
+            year=self.year,
+            member=self.request.member
+        ).exists():
+            return TemplateResponse(
+                request,
+                template="membership_file/extend_membership_already_done.html",
+                context=self.get_context_data()
+            )
+
+        return super(ExtendMembershipView, self).dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super(ExtendMembershipView, self).get_form_kwargs()
+        kwargs.update({
+            'member': self.request.member,
+            'year': self.year
+        })
+        return kwargs
 
     def form_valid(self, form):
-        message = _("Your membership information has been saved successfully!")
-        messages.success(self.request, message)
-        return super().form_valid(form)
+        form.save()
+        msg = f"Succesfully extended Knights membership into {self.year}"
+        messages.success(self.request, msg)
+        return super(ExtendMembershipView, self).form_valid(form)
 
 
-# Renders the webpage for viewing a user's own membership information
-@require_safe
-@membership_required
-@permission_required('membership_file.can_view_membership_information_self', raise_exception=True)
-def viewGroups(request):
-    return render(request, 'membership_file/member_group_overview.html', {})
+class ExtendMembershipSuccessView(UpdateMemberYearMixin, TemplateView):
+    template_name = "membership_file/extend_membership_successpage.html"

@@ -1,3 +1,9 @@
+/* Activity Card */
+.card-img-top {
+    background-color: var(--greenify-bg-color);
+    /* Should not be white or the same as background color */
+}
+
 /* Define main colour scheme */
 :root {
     /* Default text and background colors for the body */
@@ -9,7 +15,8 @@
     --body-alt-dark-bg-color: #f6f6f6;
 
     /* Generated at https://codepen.io/sosuke/pen/Pjoqqp using --body-text-color */
-    --body-icon-color: invert(7%) sepia(4%) saturate(3534%) hue-rotate(169deg) brightness(92%) contrast(81%);
+    --body-icon-color: invert(7%) sepia(4%) saturate(3534%) hue-rotate(169deg)
+        brightness(92%) contrast(81%);
 
     /* Colors for (bootstrap) inputs */
     --input-bg-color: var(--body-alt-bg-color);
@@ -51,5 +58,5 @@ nav .nav-link {
 }
 
 p {
-    font-family: 'Source Sans Pro', sans-serif;
+    font-family: "Source Sans Pro", sans-serif;
 }

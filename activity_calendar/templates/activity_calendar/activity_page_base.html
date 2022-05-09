@@ -51,15 +51,7 @@
             {% block activity-info %}
                 <div class="d-flex">
                     <!-- Calendar Icon -->
-                    <div class="">
-                        <img
-                            src="{% static 'octicons/calendar.svg' %}"
-                            alt="Calendar-icon"
-                            class="icon"
-                            height="16"
-                            width="16"
-                        />
-                    </div>
+                    <div><i class="far fa-calendar fa-fw"></i></div>
                     <!-- Event Date & Recurrence Information -->
                     <div class="col align-self-center">
                         <div class='nospace'>
@@ -72,6 +64,14 @@
                                     {{ activity_moment.start_date|date:"j E H:i" }} - {{ activity_moment.end_date|date:"j E H:i" }}
                                 {% endif %}
                             </p>
+                            {% if activity_moment.is_part_of_recurrence %}
+                                <p class="text-muted">
+                                Repeats:
+                                {% for rule in activity_moment.parent_activity.recurrences.rrules %}
+                                {{ rule.to_text }}
+                                {% endfor %}
+                                </p>
+                            {% endif %}
                             <p>
                                 {% if activity_moment.local_start_date is not None %}
                                     <small id="activity-alt-start-message" class="text-muted">
@@ -98,97 +98,91 @@
 
                 <div class="d-flex">
                     <!-- Location Icon -->
-                    <div class="col-xs-2">
-                        <img
-                            src="{% static 'octicons/location.svg' %}"
-                            alt="Location-icon"
-                            class="icon"
-                            height="16"
-                            width="16"
-                        />
-                    </div>
+                    <div class="col-xs-2"><i class="fas fa-map-marker-alt fa-fw"></i></div>
                     <!-- Location -->
                     <div class="col nospace align-self-center">
                         <p id="event-location">{{ activity_moment.location }}</p>
                     </div>
                 </div>
 
-                <div class="d-flex">
-                    <!-- Event Participants Icon -->
-                    <div class="col-xs-2">
-                        <img
-                            src="{% static 'octicons/people.svg' %}"
-                            alt=""
-                            class="icon"
-                            height="16"
-                            width="16"
-                        />
+                {% if activity_moment.parent_activity.organisers.all %}
+                    <div class="d-flex">
+                        <!-- Organiser Icon -->
+                        <div class="col-xs-2"><i class="fas fa-user-tag fa-fw"></i></div>
+                        <!-- Location -->
+                        <div class="col nospace align-self-center">
+                            <p id="event-organisers">
+                                Organised by
+                                {% for organiser in activity_moment.parent_activity.organisers.all %}
+                                    {% if organiser.icon %}
+                                        <img
+                                            src="{{ organiser.icon.url }}"
+                                            height="32"
+                                            width="32"
+                                        />
+                                    {% endif %}
+                                    {{ organiser.name }}{% if not forloop.last %},{% endif %}
+
+                                {% endfor %}
+                            </p>
+                        </div>
                     </div>
-                    <!-- Patricipants -->
-                    <div class="col nospace align-self-center">
-                        <p id="event-participants">
-                            {{ num_total_participants }} /
-                            {% if num_max_participants == -1 %}&infin;
-                            {% else %}{{ num_max_participants }}{% endif %}
-                        </p>
+                {% endif %}
+
+                {% if activity_moment.slot_creation != activity.SLOT_CREATION_NONE %}
+                    <div class="d-flex">
+                        <!-- Event Participants Icon -->
+                        <div class="col-xs-2"><i class="fas fa-user-friends fa-fw"></i>
+                        <!-- Patricipants -->
+                        <div class="col nospace align-self-center">
+                            <p id="event-participants">
+                                {{ num_total_participants }} /
+                                {% if num_max_participants == -1 %}&infin;
+                                {% else %}{{ num_max_participants }}{% endif %}
+                            </p>
+                        </div>
                     </div>
-                </div>
+                {% endif %}
 
                 <div class="d-flex">
                     <!-- Text Icon -->
-                    <div class="col-xs-2">
-                        <img
-                            src="{% static 'octicons/three-bars.svg' %}"
-                            alt="Description-icon"
-                            class="icon"
-                            height="16"
-                            width="16"
-                        />
-                    </div>
+                    <div class="col-xs-2"><i class="fas fa-bars fa-fw"></i></div>
                     <!-- Event Description -->
                     <div class="col align-self-center">
                         <div id="event-description" class="rendered-md">{{ activity_moment.description.as_rendered  }}</div>
                     </div>
                 </div>
 
-                <div class="d-flex">
-                    <!-- Text Icon -->
-                    <div class="col-xs-2">
-                        <img
-                                src="{% static 'octicons/clippy.svg' %}"
-                                alt=""
-                                class="icon"
-                                height="16"
-                                width="16"
-                        />
-                    </div>
-                    <!-- Event Description -->
-                    <div class="col align-self-center">
-                        <p id="event-status">
-                            {% if subscriptions_open %}
-                                {% if activity_moment.is_full %}
-                                    Activity is full.
+                {% if activity_moment.slot_creation != activity.SLOT_CREATION_NONE %}
+                    <div class="d-flex">
+                        <!-- Text Icon -->
+                        <div class="col-xs-2"><i class="far fa-clipboard fa-fw"></i></div>
+                        <!-- Event Description -->
+                        <div class="col align-self-center">
+                            <p id="event-status">
+                                {% if subscriptions_open %}
+                                    {% if activity_moment.is_full %}
+                                        Activity is full.
+                                    {% else %}
+                                        Activity is open for sign-ups
+                                    {% endif %}
                                 {% else %}
-                                    Activity is open for sign-ups
+                                    {% if subscription_open_date %}
+                                        Subscriptions will open on {{ subscription_open_date|date:"j E, H:i" }}
+                                    {% else %}
+                                        Sign-ups are closed
+                                    {% endif %}
                                 {% endif %}
-                            {% else %}
-                                {% opens_in_future as opens_in_future %}
-                                {% if opens_in_future %}
-                                    Subscriptions will open on {% get_opening_time "j E, H:i" %}
+                                <br>
+                                {% if activity_moment.subscriptions_required %}
+                                    <i>Registrations are <strong>required</strong>! You cannot join this activity otherwise!</i>
                                 {% else %}
-                                    Sign-ups are closed
+                                    <small class="text-muted">Registrations are <i>optional</i>, but are appreciated!</small>
                                 {% endif %}
-                            {% endif %}
-                            <br>
-                            {% if activity_moment.subscriptions_required %}
-                                <i>Registrations are <strong>required</strong>! You cannot join this activity otherwise!</i>
-                            {% else %}
-                                <small class="text-muted">Registrations are <i>optional</i>, but are appreciated!</small>
-                            {% endif %}
-                        </p>
+                            </p>
+                        </div>
                     </div>
-                </div>
-
+                {% endif %}
 
                 <div style="height: 4em;" class="d-none d-md-flex">
 
@@ -197,10 +191,10 @@
         </div>
         <div class="col-12 col-md-5">
             {% if request.user.is_authenticated %}
-                {% if perms.activity_calendar.change_activitymoment %}
+                {% if can_edit_activity %}
                     <a class="btn-block btn-sm btn btn-outline-primary mb-4"
                         href="{% url "activity_calendar:edit_moment" activity_id=activity.id recurrence_id=recurrence_id %}">
-                        Edit
+                        <i class="fas fa-pen"></i> Edit
                     </a>
                 {% endif %}
 

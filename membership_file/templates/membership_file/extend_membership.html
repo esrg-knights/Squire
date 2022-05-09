@@ -1,0 +1,25 @@
+
+{% extends 'core/base.html' %}
+{% load render_form %}
+
+{% block title %}
+    Squire - Extend membership
+{% endblock title %}
+
+{% block og-title %}
+    Squire - Extend membership
+{% endblock og-title %}
+
+{% block content %}
+    <h1>Continue your quest</h1>
+    <p>
+        Another new year awaits filled with new adventures in distant realms and beautiful victories. Do you want to
+        continue your adventure for the year {{ new_year }}?
+    </p>
+    {% render_form method="post" id="submit_form"  has_submit_button=False %}
+    <div class="btn-group" role="group" aria-label="Form changing">
+        <button form="submit_form" type="submit" class="btn btn-success btn-lg">
+            Yes, I want to stay a Knight!
+        </button>
+    </div>
+{% endblock %}

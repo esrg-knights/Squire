@@ -1,0 +1,26 @@
+
+{% extends 'core/user_accounts/account_base.html' %}
+
+{% load render_form %}
+
+{% block title %}
+    Squire - Update Preferences
+{% endblock title %}
+
+{% block og-title %}
+    Squire Update Preferences
+{% endblock og-title %}
+
+{% block content %}
+    <h1>Change layout Preferences</h1>
+    {% render_form id="update_preferences_form" method="post" has_submit_button=False %}
+
+    <div class="btn-group">
+        <button type="submit" form="update_preferences_form" class="btn btn-success">
+            <i class="fas fa-edit"></i> Confirm changes
+        </button>
+        <a href="{% url 'account:site_account' %}" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancel changes
+        </a>
+    </div>
+{% endblock %}

@@ -1,5 +1,6 @@
 {% extends 'committees/group_detail_base.html' %}
 {% load static %}
+{% load inventory_tags %}
 
 {% block content-frame-class %}
     container
@@ -24,13 +25,13 @@
                     <div class="col-auto">
                         <div class="btn-group">
                             <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Go to catalogue
+                                <i class="fas fa-boxes"></i> Catalogue
                             </button>
                             <div class="dropdown-menu dropdown-menu-right">
                                 {% for content_type in content_types %}
                                     <a href="{% url "inventory:catalogue" type_id=content_type %}"
                                        class="dropdown-item">
-                                        {{ content_type }}
+                                        <span class="{{ content_type|get_item_icon_classes }}"></span> {{ content_type }}
                                     </a>
                                 {% endfor %}
                             </div>
@@ -51,6 +52,7 @@
                     <th scope="col-auto">Type</th>
                     <th scope="col-auto">Added on</th>
                     <th scope="col-4">Note</th>
+                    <th scope="col-4">Value</th>
                     <th scope="col-auto">Actions</th>
                 </tr>
                 </thead>
@@ -64,6 +66,7 @@
                             {{ ownership.content_object.name }}
                         </td>
                         <td class="col-auto">
+                            <span class="{{ ownership.content_type|get_item_icon_classes }}"></span>
                             {{ ownership.content_type }}
                         </td>
                         <td class="col-auto">
@@ -73,10 +76,17 @@
                             {{ ownership.note }}
                         </td>
                         <td class="col-auto">
+                            {% if ownership.value %}
+                                &euro;{{ ownership.value }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="col-auto">
                             <div class="btn-group" role="group" aria-label="">
                                 <!-- Left open for additional actions -->
                                 <a href="{% url "committees:group_inventory" ownership_id=ownership.id group_id=association_group.id %}"
-                                   class="btn btn-outline-secondary">Edit link</a>
+                                   class="btn btn-outline-secondary"><i class="fas fa-pen"></i> Edit</a>
 
                             </div>
                         </td>

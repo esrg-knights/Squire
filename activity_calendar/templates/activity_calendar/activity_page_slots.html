@@ -10,6 +10,7 @@
             <div class="row">
                 <div class="col-12">
                     <div class="p-1">
+                        <i class="far fa-check-circle"></i>
                         {% if user_subscriptions.count == 1 %}
                             You are subscribed to slot '{{ user_subscriptions.first.activity_slot.title }}'
                         {% else %}
@@ -58,14 +59,14 @@
     {% if slot_creation_form %}
         <div class="pt-3 pt-md-0" comment="Create vertical spacing on small screens">
         {% if not slot_creation_form.get_base_validity_error %}
-            <button type="button" class="btn btn-success btn-lg" data-toggle="modal" data-target="#slot-creation-modal">
-                Create Slot
+            <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#slot-creation-modal">
+                <i class="fas fa-plus"></i> Create Slot
             </button>
         {% else %}
             <a tabindex="0"  role="button" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom"
                data-content="{% form_rejection_reason slot_creation_form %}" style="text-decoration: none">
-                <button class="btn btn-outline-success disabled">
-                    Create slot
+                <button class="btn btn-outline-primary disabled">
+                    <i class="fas fa-plus"></i> Create slot
                 </button>
             </a>
         {% endif %}
@@ -86,10 +87,10 @@
                     {% render_form form=slot_creation_form id="create_slot_form" has_submit_button=False method="post" action=register_link %}
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" form="create_slot_form" id='slot-creation-btn' class="btn btn-dark greenify">
-                        Create Slot
+                    <button type="submit" form="create_slot_form" id='slot-creation-btn' class="btn btn-success">
+                        <i class="fas fa-plus"></i> Create Slot
                     </button>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
                 </div>
             </div>
         </div>

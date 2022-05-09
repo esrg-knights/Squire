@@ -27,25 +27,23 @@
 
 {% block content %}
     <h1>{{ activity_moment.title }}</h1>
+    {% if activity_moment.is_cancelled %}
+    <div class="alert alert-danger">
+        This particular activity has been cancelled. If you want to uncancel it, please contact the board.
+    </div>
+    {% endif %}
+
     <div class="d-flex">
-        <!-- Calendar Icon -->
-        <div class="">
-            <img
-                src="{% static 'octicons/info.svg' %}"
-                alt="Info-icon"
-                class="icon"
-                height="16"
-                width="16"
-            />
-        </div>
+        <!-- Info Icon -->
+        <div><i class="fas fa-info-circle fa-fw"></i></div>
         <!-- Event Date & Recurrence Information -->
         <div class="col align-self-center">
             <div class='nospace'>
                 <p id="event-name">
-                    Part of: {{ activity_moment.parent_activity.title }}
-                    {% if activity_moment.parent_activity.recurrences.rrules %}
+                    Instance of: {{ activity_moment.parent_activity.title }}
+                    {% if activity_moment.is_part_of_recurrence %}
                         <br>
-                        Repeats:
+                        Part of recurrence:
                         {% for rule in activity_moment.parent_activity.recurrences.rrules %}
                             {{ rule.to_text }}
                         {% endfor %}
@@ -56,15 +54,7 @@
     </div>
     <div class="d-flex">
         <!-- Calendar Icon -->
-        <div class="">
-            <img
-                src="{% static 'octicons/calendar.svg' %}"
-                alt="Calendar-icon"
-                class="icon"
-                height="16"
-                width="16"
-            />
-        </div>
+        <div><i class="far fa-calendar fa-fw"></i></div>
         <!-- Event Date -->
         <div class="col align-self-center">
             <div class='nospace'>
@@ -78,7 +68,7 @@
                     {% endif %}
                     <br>
                     <small class="text-muted">
-                        {% if activity_moment.start_date is not None %}
+                        {% if activity_moment.local_start_date is not None and activity_moment.is_part_of_recurrence %}
                             Normally occurs on {{ activity_moment.recurrence_id|date:"l j E (H:i)" }}
                         {% endif %}
                     </small>
@@ -95,12 +85,20 @@
 
     {% render_form has_submit_button=False id="submit_form" method="post" uses_file_field=True %}
 
-    <div class="btn-group w-100" role="group" aria-label="Form changing">
-        <a href="{% url "activity_calendar:activity_slots_on_day" activity_id=activity.id recurrence_id=recurrence_id %}"
-           class="btn btn-secondary">Cancel</a>
+    <div class="btn-group mt-5" role="group" aria-label="Form changing">
         <button form="submit_form" type="submit" class="btn btn-success">
-            Save changes
+            <i class="fas fa-edit"></i> Save changes
         </button>
+        <a href="{% url "activity_calendar:activity_slots_on_day" activity_id=activity.id recurrence_id=recurrence_id %}"
+           class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancel changes
+        </a>
+        {% if not activity_moment.is_cancelled %}
+            <a href="{% url "activity_calendar:cancel_moment" activity_id=activity.id recurrence_id=recurrence_id %}"
+               class="btn btn-danger">
+                <i class="fas fa-trash-alt"></i> Cancel activity
+            </a>
+        {% endif %}
     </div>
 
 {% endblock %}

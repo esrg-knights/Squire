@@ -1,24 +1,19 @@
-{% extends 'core/base.html' %}
+{% extends 'inventory/catalogue_base.html' %}
 {% load static %}
 {% load paginator %}
 {% load inventory_tags %}
 
-{% block title %}
-    Squire - Boardgames
-{% endblock title %}
-
-{% block content-frame-class %}
-    container
-{% endblock %}
-
 
 {% block content %}
-    <h1>Item catalogue for {{ item_type }}</h1>
+    {{ block.super }}
+
+    <h2>Overview</h2>
 
     {% if can_add_items %}
         <a href="{% url "inventory:catalogue_add_new_item" type_id=item_type %}"
            class="btn btn-sm btn-primary mb-3">
-            Add new {{ item_type }}
+            <i class="fas fa-plus"></i> <span class="{{ item_type|get_item_icon_classes }}"></span>
+            New {{ item_type|capfirst }}
         </a>
     {% endif %}
     {% include "utils/snippets/filter_form_snippet.html" with form=filter_form %}
@@ -77,35 +72,37 @@
                     {% if can_maintain_ownerships %}
                         <a class="btn btn-sm btn-info"
                            href="{% url "inventory:catalogue_item_links" type_id=item_type item_id=item.id %}">
-                            Details
+                            <i class="fas fa-info"></i> Details
                         </a>
                     {% elif can_change_items %}
                         <a href="{% url "inventory:catalogue_update_item" type_id=item_type item_id=item.id %}"
                            class="btn btn-sm btn-primary">
-                            Edit
+                            <i class="fas fa-pen"></i> Edit
                         </a>
                     {% endif %}
                 </td>
                 <td>
                     <div class="d-lg-flex justify-content-end">
+                        <div class="btn-group">
                         {% if can_add_to_group %}
                             <a href="{% url "inventory:catalogue_add_group_link" type_id=item_type item_id=item.id %}"
                                class="btn btn-sm btn-primary mb-2 mb-lg-0">
-                                Add to committee
+                                <i class="fas fa-plus"></i> <i class="fas fa-users"></i> Link committee
                             </a>
                         {% endif %}
                         {% if can_add_to_member %}
                             <a href="{% url "inventory:catalogue_add_member_link" type_id=item_type item_id=item.id %}"
                                class="btn btn-sm btn-secondary">
-                                Add to member
-                        </a>
+                                <i class="fas fa-plus"></i> <i class="fas fa-user"></i> Link member
+                            </a>
                         {% endif %}
+                        </div>
                     </div>
                 </td>
             </tr>
         {% empty %}
             <tr>
-                <td colspan="{% if can_change_items %}4{% else %}3{% endif %}">This catalogue is still empty</td>
+                <td colspan="5">This catalogue is still empty</td>
             </tr>
         {% endfor %}
 

@@ -1,17 +1,18 @@
 from datetime import timedelta
 import random
-
-from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import FormView
 from django.views.generic import TemplateView
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
-from dynamic_preferences.users.forms import user_preference_form_builder
+
+from dynamic_preferences.registries import global_preferences_registry
 
 from activity_calendar.models import Activity
 from core.forms import LoginForm
+from membership_file.models import Membership
+from utils.spoofs import optimise_naming_scheme
+
+
+global_preferences = global_preferences_registry.manager()
 
 
 def home_screen(request, *args, **kwargs):
@@ -30,6 +31,14 @@ class HomeNonAuthenticatedView(TemplateView):
             **kwargs
         )
 
+################
+# BEGIN APRIL 2022
+################
+class SquirePremiumView(TemplateView):
+    template_name = "user_interaction/april_2022.html"
+################
+# END APRIL 2022
+################
 
 welcome_messages = [
     "Do not be alarmed by the Dragons. They're friendly :)",
@@ -64,36 +73,56 @@ class HomeUsersView(TemplateView):
         start_date = timezone.now()
         end_date = start_date + timedelta(days=7)
 
+        welcome_name = self.request.member.first_name if self.request.member else self.request.user.first_name
+        if global_preferences['homepage__april_2022']:
+            # This bit is from the april fools joke 2022
+            welcome_name = optimise_naming_scheme(welcome_name)
+
         activities = []
-        for activity in Activity.objects.filter(published_date__lte=timezone.now()):
+        for activity in Activity.objects.filter(published_date__lte=timezone.now(), is_public=True):
             for activity_moment in activity.get_activitymoments_between(start_date, end_date):
                 activities.append(activity_moment)
 
         kwargs.update(
             activities=sorted(activities, key=lambda activity: activity.start_date),
-            greeting_line = random.choice(welcome_messages)
+            greeting_line = random.choice(welcome_messages),
+            unique_messages = self.get_unique_messages(),
+            welcome_name=welcome_name,
         )
 
         return super(HomeUsersView, self).get_context_data(**kwargs)
 
+    def get_unique_messages(self):
+        unique_messages = []
 
-class UpdateUserPreferencesView(LoginRequiredMixin, FormView):
-    """ View for updating user preferences """
-    template_name = 'user_interaction/preferences_change_form.html'
-    success_url = reverse_lazy('user_interaction:change_preferences')
-    tab_name = 'tab_preferences'
+        if global_preferences['homepage__home_page_message']:
+            unique_messages.append({
+                'msg_text': str(global_preferences['homepage__home_page_message']),
+                'msg_type': "info",
+            })
+        if global_preferences['membership__signup_year']:
+            year = global_preferences['membership__signup_year']
+            if not Membership.objects.filter(member=self.request.member, year=year).exists():
+                unique_messages.append({
+                    'msg_text': f"A new adventure awaits! Continue your membership into {year} now!",
+                    'msg_type': "info",
+                    'btn_text': "Continue Questing!",
+                    'btn_url': reverse_lazy('membership_file/continue_membership'),
+                })
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context[self.tab_name] = True
-        return context
+        ################
+        # BEGIN APRIL 2022
+        ################
+        # Squire Premium
+        if global_preferences['homepage__april_2022']:
+            unique_messages.append({
+                'msg_text': "Squire 2.0 will release soon. Read about the details and new features it brings, and upgrade now!",
+                'msg_type': "danger",
+                'btn_text': "Visit Upgrade Page",
+                'btn_url': reverse_lazy('user_interaction:squire_premium'),
+            })
+        ################
+        # BEGIN APRIL 2022
+        ################
 
-    def get_form_class(self):
-        return user_preference_form_builder(instance=self.request.user, section='layout')
-
-    def form_valid(self, form):
-        message = _("Your preferences have been updated!")
-        messages.success(self.request, message)
-        form.update_preferences()
-        form = self.get_form()
-        return super().form_valid(form)
+        return unique_messages

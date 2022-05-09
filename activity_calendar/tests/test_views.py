@@ -2,25 +2,26 @@ import datetime
 
 from django.test import TestCase, Client
 from django.contrib import messages
-from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.models import Permission
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.test.utils import override_settings
-from django.utils import timezone
+from django.utils import timezone, dateparse
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
-from django.views.generic import ListView
+from django.views.generic import ListView,FormView, TemplateView
 
 from unittest.mock import patch
 
 from activity_calendar.models import *
 from activity_calendar.views import CreateSlotView, ActivityMomentWithSlotsView, ActivitySimpleMomentView,\
-    EditActivityMomentView, ActivityOverview
+    EditActivityMomentView, ActivityOverview, ActivityMixin, ActivityMomentCancelledView, CancelActivityMomentView,\
+    ActivityMomentNoSignupView
 from activity_calendar.forms import *
 
 from core.tests.util import suppress_warnings
-from utils.testing.view_test_utils import ViewValidityMixin
+from utils.testing.view_test_utils import ViewValidityMixin, TestMixinMixin
 
-from . import mock_now
+from . import mock_now, mock_is_organiser
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -185,6 +186,139 @@ class TestActivityOverview(ViewValidityMixin, TestCase):
 
         self.assertEqual(len(context['activities']), 2)
         self.assertIsInstance(context['activities'][0], ActivityMoment)
+
+
+class ActivityMixinTest(TestMixinMixin, TestCase):
+    fixtures = ['test_users.json', 'test_activity_slots.json']
+    mixin_class = ActivityMixin
+    base_user_id = 2
+
+    def setUp(self):
+        self.activity = Activity.objects.get(id=2)
+        super(ActivityMixinTest, self).setUp()
+
+    def get_base_url_kwargs(self):
+        return {
+            'activity_id': self.activity.id,
+            'recurrence_id': dateparse.parse_datetime('2020-08-26T14:00:00+00:00'),
+        }
+
+    def test_activity_moment_retrieval(self):
+        response = self._build_get_response(url_kwargs={
+            'activity_id': 2,
+            'recurrence_id': dateparse.parse_datetime('2020-08-26T14:00:00+00:00'),
+        })
+        self.assertEqual(response.status_code, 200)
+
+        #Activity does not exist
+        self.assertRaises404(url_kwargs={
+            'activity_id': 99,
+            'recurrence_id':  dateparse.parse_datetime('2020-08-26T14:00:00+00:00'),
+        })
+
+        # Moment does not exist
+        self.assertRaises404(url_kwargs={
+            'activity_id': 2,
+            'recurrence_id':  dateparse.parse_datetime('2020-08-27T14:00:00+00:00'),
+        })
+
+
+    def test_context_data(self):
+        self._build_get_response(url_kwargs={
+            'activity_id': 2,
+            'recurrence_id': dateparse.parse_datetime('2020-08-26T14:00:00+00:00'),
+        }, save_view=True)
+
+        context_data = self.view.get_context_data()
+
+        self.assertIn('activity', context_data)
+        self.assertIn('activity_moment', context_data)
+        self.assertIn('recurrence_id', context_data)
+        # General information displayed on all relevant pages
+        self.assertIn('subscriptions_open', context_data)
+        self.assertIn('num_total_participants', context_data)
+        self.assertIn('num_max_participants', context_data)
+        self.assertIn('user_subscriptions', context_data)
+        self.assertIn('show_participants', context_data)
+
+    def test_can_edit_activity_through_permission(self):
+        """ Tests that editing access is availlable through change_activitymoment permission """
+        # Set base user to 2 as that is not a superuser
+        self.base_user_id = 2
+
+        self._build_get_response(url_kwargs={
+            'activity_id': 2,
+            'recurrence_id': dateparse.parse_datetime('2020-08-26T14:00:00+00:00'),
+        }, save_view=True)
+        self.assertFalse(self.view.can_edit_activity())
+
+        # Set the user permission
+        User.objects.get(id=2).user_permissions.add(Permission.objects.get(
+            codename='change_activitymoment',
+        ))
+
+        # Redo the response so request.user is updated
+        self._build_get_response(url_kwargs={
+            'activity_id': 2,
+            'recurrence_id': dateparse.parse_datetime('2020-08-26T14:00:00+00:00'),
+        }, save_view=True)
+        self.assertTrue(self.view.can_edit_activity())
+
+    @patch('activity_calendar.models.Activity.is_organiser', side_effect=mock_is_organiser())
+    def test_can_edit_activity_through_ownership(self, m_organiser):
+        """ Tests that activity organiser check is activated and thus allows editing"""
+        self._build_get_response(url_kwargs={
+            'activity_id': 2,
+            'recurrence_id': dateparse.parse_datetime('2020-08-26T14:00:00+00:00'),
+        }, save_view=True)
+
+        # The mock makes sure that is_organiser returns true
+        self.assertTrue(self.view.can_edit_activity())
+
+
+class ActivityCancelledViewTest(TestActivityViewMixin, TestCase):
+    default_url_name = "activity_slots_on_day"
+    default_activity_id = 2
+
+    def test_cancelled_activity_page(self):
+        """ Tests that cancelled activitymoments """
+        response = self.build_get_response(
+            iso_dt="2021-09-15T14:00:00+00:00",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.template_name[0], ActivityMomentCancelledView.template_name)
+
+    def test_removed_activity_page(self):
+        """ Test that removed activitymoments can still be visited """
+        response = self.build_get_response(
+            iso_dt="2021-09-08T14:00:00+00:00",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.template_name[0], ActivityMomentCancelledView.template_name)
+
+    def test_class(self):
+        self.assertEqual(ActivityMomentCancelledView.template_name, "activity_calendar/activity_page_cancelled.html")
+
+
+class ActivityNoSignupViewTestcase(TestActivityViewMixin, TestCase):
+    default_url_name = "activity_slots_on_day"
+    default_activity_id = 1
+    default_iso_dt = '2020-08-14T19:00:00+00:00'
+
+    def setUp(self):
+        super(ActivityNoSignupViewTestcase, self).setUp()
+        self.activity.slot_creation = Activity.SLOT_CREATION_NONE
+        self.activity.save()
+
+    def test_base_class_values(self):
+        self.assertTrue(issubclass(ActivityMomentNoSignupView, TemplateView))
+        self.assertEqual(ActivityMomentNoSignupView.template_name, "activity_calendar/activity_page_no_signup.html")
+
+    @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_normal_get_page(self, mock_tz):
+        # The basic set-up is valid. User can create a slot
+        response = self.build_get_response()
+        self.assertEqual(response.status_code, 200)
 
 
 class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
@@ -369,7 +503,6 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         response = self.build_get_response(iso_dt=recurrence_id.isoformat())
         self.assertContains(response, "than normal!", status_code=200)
         self.assertContains(response, "later")
-
 
 
 class ActivitySlotViewTest(TestActivityViewMixin, TestCase):
@@ -668,7 +801,7 @@ class CreateSlotViewTest(TestActivityViewMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class EditActivityMomentDataView(TestActivityViewMixin, TestCase):
+class EditActivityMomentDataViewTest(TestActivityViewMixin, TestCase):
     default_url_name = "edit_moment"
     default_activity_id = 2
     default_iso_dt = '2020-08-26T14:00:00+00:00'
@@ -694,10 +827,6 @@ class EditActivityMomentDataView(TestActivityViewMixin, TestCase):
         # User must've been passed to the form (for MarkdownImage uploads)
         self.assertEqual(response.context['form'].user, user)
 
-    def test_requires_permission(self):
-        self.assertTrue(issubclass(EditActivityMomentView, PermissionRequiredMixin))
-        self.assertIn('activity_calendar.change_activitymoment', EditActivityMomentView.permission_required)
-
     def test_successful_post(self):
         """ Tests that a successful post is processed correctly """
         self.client.force_login(User.objects.get(is_superuser=True))
@@ -716,3 +845,67 @@ class EditActivityMomentDataView(TestActivityViewMixin, TestCase):
 
         # Assert that the instance is saved
         self.assertIsNotNone(ActivityMoment.objects.filter(local_title=new_title,).first())
+
+
+class CancelActivityMomentViewTest(TestActivityViewMixin, TestCase):
+    default_url_name = "cancel_moment"
+    default_activity_id = 2
+    default_iso_dt = '2020-08-26T14:00:00+00:00'
+
+    def test_view_class(self):
+        self.assertTrue(issubclass(CancelActivityMomentView, LoginRequiredMixin))
+        self.assertTrue(issubclass(CancelActivityMomentView, UserPassesTestMixin))
+        self.assertTrue(issubclass(CancelActivityMomentView, ActivityMixin))
+        self.assertTrue(issubclass(CancelActivityMomentView, FormView))
+        self.assertEqual(CancelActivityMomentView.template_name, "activity_calendar/activity_moment_cancel_page.html")
+        self.assertEqual(CancelActivityMomentView.form_class, CancelActivityForm)
+
+    def test_normal_get_page(self):
+        user = User.objects.get(is_superuser=True)
+        self.client.force_login(user)
+
+        response = self.build_get_response()
+        self.assertEqual(response.status_code, 200)
+
+        # Test standard context attributes
+        self.assertIn('activity', response.context)
+        self.assertIn('form', response.context)
+        self.assertIn('recurrence_id', response.context)
+        self.assertIn('activity_moment', response.context)
+
+        self.assertIsNotNone(response.context['form'])
+        self.assertIsInstance(response.context['form'], CancelActivityForm)
+
+    @suppress_warnings
+    def test_already_cancelled_get_page(self):
+        user = User.objects.get(is_superuser=True)
+        self.client.force_login(user)
+
+        response = self.build_get_response(iso_dt="2021-09-15T14:00:00+00:00")
+        self.assertEqual(response.status_code, 403)
+
+    def test_successful_post(self):
+        """ Tests that a successful post is processed correctly """
+        self.client.force_login(User.objects.get(is_superuser=True))
+        local_datetime = datetime.datetime.fromisoformat(self.default_iso_dt)
+
+        response = self.build_post_response({'status': ActivityMoment.STATUS_CANCELLED,}, follow=True)
+
+        # Assert redirect after success
+        self.assertRedirects(response, reverse('activity_calendar:activity_slots_on_day', kwargs={
+            'activity_id': self.default_activity_id,
+            'recurrence_id': datetime.datetime.fromisoformat(self.default_iso_dt),
+        }))
+
+        msg = _("{activity_name} of {date} has been cancelled").format(
+            activity_name=self.activity.title,
+            date = local_datetime.strftime("%A, %d %b %Y"),
+        )
+        self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
+
+        # Assert that the instance is saved
+        activitymoment = ActivityMoment.objects.get(
+            parent_activity_id=2,
+            recurrence_id=local_datetime
+        )
+        self.assertEqual(activitymoment.status, ActivityMoment.STATUS_CANCELLED)

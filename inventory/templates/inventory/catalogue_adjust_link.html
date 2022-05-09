@@ -1,16 +1,9 @@
-{% extends 'core/base.html' %}
+{% extends 'inventory/catalogue_base.html' %}
 {% load render_form %}
 
-{% block title %}
-    Squire - Inventory
-{% endblock title %}
-
-{% block content-frame-class %}
-    container
-{% endblock %}
-
 {% block content %}
-    <h1>{{ ownership }}</h1>
+    {{ block.super }}
+    <h3>{{ ownership }}</h3>
     <div class="mb-3">
         <div class="row">
             <div class="col-3">
@@ -42,12 +35,12 @@
 
     {% render_form method="post" id="submit_form"  has_submit_button=False %}
 
-    <div class="btn-group w-100" role="group" aria-label="Form changing">
-        <a href="{% url "inventory:catalogue_item_links" type_id=item_type item_id=item.id %}"
-           class="btn btn-secondary">Cancel</a>
+    <div class="btn-group" role="group" aria-label="Form changing">
         <button form="submit_form" type="submit" class="btn btn-success">
-            Save changes
+            <i class="fas fa-edit"></i> Save changes
         </button>
+        <a href="{% url "inventory:catalogue_item_links" type_id=item_type item_id=item.id %}"
+           class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
     </div>
 
 {% endblock %}

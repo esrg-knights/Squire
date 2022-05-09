@@ -1,5 +1,8 @@
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
+from import_export.admin import ExportActionMixin
+from import_export.fields import Field
+from import_export.resources import ModelResource
 
 from core.admin import EmptyFieldListFilter
 from inventory.models import *
@@ -25,6 +28,41 @@ class OwnershipAdmin(admin.ModelAdmin):
     )
 
 admin.site.register(Ownership, OwnershipAdmin)
+
+
+class OwnershipValueProxy(Ownership):
+    class Meta:
+        verbose_name = "Association inventory value"
+        proxy = True
+
+
+class OwnershipValueResource(ModelResource):
+    item_type = Field()
+    item_name = Field()
+    class Meta:
+        model = OwnershipValueProxy
+        fields = ('id', 'group__name', 'value')
+        export_order = ('id', 'group__name', 'item_type', 'item_name', 'value')
+
+    def dehydrate_item_type(self, ownership):
+        return str(ownership.content_object.__class__.__name__)
+
+    def dehydrate_item_name(self, ownership):
+        return str(ownership.content_object.name)
+
+
+@admin.register(OwnershipValueProxy)
+class OwnershipValues(ExportActionMixin, admin.ModelAdmin):
+    list_display = ('owner', 'content_object', 'value')
+    list_display_links = ('owner',)
+    list_filter = ('group',)
+    fields = ('value',)
+    resource_class = OwnershipValueResource
+
+    def get_queryset(self, request):
+        return super(OwnershipValues, self).get_queryset(request).filter(
+            group__isnull=False
+        )
 
 
 class ItemAdmin(admin.ModelAdmin):

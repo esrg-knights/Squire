@@ -1,9 +1,9 @@
-from django.urls import path
+from django.urls import path, include
+
 from . import views as views
 
 urlpatterns = [
     path('no_member', views.NotAMemberView.as_view(), name='membership_file/no_member'),
-    path('account/membership', views.MemberView.as_view(), name='membership_file/membership'),
-    path('account/membership/edit', views.MemberChangeView.as_view(), name='membership_file/membership/edit'),
-    path('account/groups', views.viewGroups, name='membership_file/groups'),
+    path('continue_membership/', views.ExtendMembershipView.as_view(), name='membership_file/continue_membership'),
+    path('continue_membership/success/', views.ExtendMembershipSuccessView.as_view(), name='membership_file/continue_success')
 ]

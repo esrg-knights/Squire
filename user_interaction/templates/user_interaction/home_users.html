@@ -18,19 +18,31 @@
         <div class="row">
             <div class="col-12  text-center ">
                 <p class="lead display-4" id="WelcomeMessage">
-                    Hello {{ member.first_name }}
+                    Hello {{ welcome_name }}
                 </p>
+                {% if not unique_messages %}
                 <p>
                     {{ greeting_line|urlize }}
                 </p>
+                {% endif %}
             </div>
         </div>
         <div class="row">
-            {% if global_preferences.homepage__home_page_message %}
-                <div id="homepage_message" class="alert alert-info w-100">
-                    {{ global_preferences.homepage__home_page_message }}
+            {% for message in unique_messages %}
+                <div id="{{ message.msg_id }}" class="w-100 alert alert-{{ message.msg_type }}">
+                    <div class="row">
+                        <div class="col"
+                             style="display: flex; justify-content: center;align-items: center;"
+                            >{{ message.msg_text }}</div>
+                        {% if message.btn_text %}
+                            <a class="btn btn-{{ message.msg_type }} mr-2"
+                               href="{{ message.btn_url }}">
+                                {{ message.btn_text }}
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
-            {% endif %}
+            {% endfor %}
             <div class="col-md-8">
                 <div class="row">
                     <div class="col-12">
@@ -83,7 +95,7 @@
                                                 </div>
                                                 <a class="col btn btn-sm btn-outline-primary"
                                                    href="{% url "committees:group_general" group_id=group.id %}"
-                                                >   Go to
+                                                >   <i class="fas fa-arrow-right"></i> Go to
                                                 </a>
                                             </div>
                                         </li>
@@ -95,7 +107,7 @@
                                                     </div>
                                                     <a class="col btn btn-sm btn-outline-primary"
                                                        href="{{ shortcut.url }}"
-                                                    >   Go to
+                                                    >   <i class="fas fa-external-link-alt"></i> Go to
                                                     </a>
                                                 </div>
                                             </li>
@@ -113,9 +125,9 @@
                         we will send in our troops!
                     </p>
                     <p>
-                        <a class="btn btn-outline-dark greenify" href="https://github.com/esrg-knights/Squire/issues"
+                        <a class="btn btn-secondary" href="https://github.com/esrg-knights/Squire/issues"
                         target="_blank" rel="noreferrer noopener"
-                        >Report Bug</a>
+                        ><i class="fas fa-bug"></i> Report Bug</a>
                     </p>
                 </div>
             </div>

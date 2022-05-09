@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.views.generic import UpdateView, ListView
 
 from committees.models import AssociationGroup
-from committees.views import AssociationGroupMixin
+from committees.committeecollective import AssociationGroupMixin
 from utils.testing.view_test_utils import ViewValidityMixin
 from utils.views import SearchFormMixin
 
@@ -79,7 +79,7 @@ class TestAssociationGroupItemLinkUpdateView(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(AssociationGroupItemLinkUpdateView, UpdateView))
         self.assertEqual(AssociationGroupItemLinkUpdateView.model, Ownership)
         self.assertEqual(AssociationGroupItemLinkUpdateView.template_name, "inventory/committee_pages/group_detail_inventory_link_update.html")
-        self.assertEqual(AssociationGroupItemLinkUpdateView.fields, ['note', 'added_since'])
+        self.assertEqual(AssociationGroupItemLinkUpdateView.fields, ['note', 'added_since', 'value'])
 
     def test_successful_get(self):
         response = self.client.get(self.get_base_url(), data={})

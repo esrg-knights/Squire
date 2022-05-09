@@ -76,6 +76,8 @@ class Item(models.Model):
     description = models.TextField(max_length=512, blank=True, null=True)
     image = models.ImageField(upload_to=get_item_image_upload_path, blank=True, null=True)
 
+    icon_class = None  # CSS classes for the icon
+
     ownerships = GenericRelation('inventory.Ownership')
     # An achievement can also apply to roleplay items
     achievements = GenericRelation('achievements.AchievementItemLink')
@@ -152,6 +154,7 @@ class Ownership(models.Model):
     is_active = models.BooleanField(default=True,
                                     help_text="Whether item is currently at the Knights")
     note = models.TextField(max_length=256, blank=True, null=True)
+    value = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="initial purchase value")
 
     # The owned item
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, limit_choices_to=valid_item_class_ids)
@@ -191,6 +194,6 @@ class Ownership(models.Model):
 
 
 class MiscellaneousItem(Item):
-    pass
+    icon_class = "fas fa-box"
 
 

@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.utils.timezone import localtime
 
 from .forms import ActivityAdminForm, ActivityMomentAdminForm
-from .models import Activity, ActivitySlot, Participant, ActivityMoment
+from .models import Activity, ActivitySlot, Participant, ActivityMoment, OrganiserLink, CoreActivityGrouping, \
+    Calendar, CalendarActivityLink
 
 from core.admin import MarkdownImageInline
 from utils.forms import RequestUserToFormModelAdminMixin
@@ -28,6 +29,16 @@ class MarkdownImageInlineAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmi
     #     return inlines
 
 
+class OrganiserInline(admin.TabularInline):
+    model = OrganiserLink
+    extra = 0
+
+@admin.register(CoreActivityGrouping)
+class CoreActivityGroupingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'identifier',)
+    list_filter = ['identifier']
+
+@admin.register(Activity)
 class ActivityAdmin(MarkdownImageInlineAdmin):
     form = ActivityAdminForm
 
@@ -36,18 +47,18 @@ class ActivityAdmin(MarkdownImageInlineAdmin):
     is_recurring.boolean = True
 
     list_display = ('id', 'title', 'start_date', 'is_recurring', 'subscriptions_required', )
-    list_filter = ['subscriptions_required', 'start_date']
+    list_filter = ['subscriptions_required', 'start_date', 'is_public']
     list_display_links = ('id', 'title')
     date_hierarchy = 'start_date'
     search_fields = ['title']
     autocomplete_fields = ['author',]
 
+    inlines = [OrganiserInline]
+
     def get_view_on_site_url(self, obj=None):
         if hasattr(obj, 'get_absolute_url') and obj.get_absolute_url() is None:
             return None
         return super().get_view_on_site_url(obj=obj)
-
-admin.site.register(Activity, ActivityAdmin)
 
 
 @admin.register(ActivityMoment)
@@ -70,8 +81,25 @@ class ActivityMomentAdmin(MarkdownImageInlineAdmin):
         return False
     activity_moment_has_changes.boolean = True
     activity_moment_has_changes.short_description = 'Is tweaked'
-    list_display = ["title", "recurrence_id", "local_start_date", "last_updated", activity_moment_has_changes]
+    list_display = ["title", "recurrence_id", "local_start_date", "last_updated", "full_day",
+                    "is_part_of_recurrence", activity_moment_has_changes]
 
+
+class CalendarActivityLinkInline(admin.TabularInline):
+    model = CalendarActivityLink
+    extra = 0
+
+
+@admin.register(Calendar)
+class CalendarAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'connected_activities')
+    list_display_links = ('id', 'name')
+
+
+    inlines = [CalendarActivityLinkInline]
+
+    def connected_activities(self, obj):
+        return obj.activities.count()
 
 
 class ParticipantInline(admin.TabularInline):
@@ -101,3 +129,4 @@ class ActivitySlotAdmin(admin.ModelAdmin):
     inlines = [ParticipantInline]
 
 admin.site.register(ActivitySlot, ActivitySlotAdmin)
+admin.site.register(CalendarActivityLink)

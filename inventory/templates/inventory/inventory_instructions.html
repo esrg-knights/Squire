@@ -1,0 +1,56 @@
+{% extends 'core/base.html' %}
+{% load bootstrap_tabs %}
+{% load static %}
+
+{% block title %}
+    Squire - Catalogue information
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/bootstrap_tabs.css' %}">
+{% endblock css %}
+
+{% block content %}
+    <h1>Cataloging instructions</h1>
+    {% bootstrap_tabs tabs %}
+
+    <h3>Knights inventory</h3>
+    <p>
+        Squire maintains the inventory of the Knights. This is structured by maintaining items in a catalogue and
+        linking ownerships to those items. An item in the catalogue therefore does not mean that the item is at the Knights!
+    </p>
+
+    <p>
+        <b>Adding items to the catalogue</b><br>
+        To add an item to the catalogue, press the `New &lt;Item type&gt;' button at the top of the catalogue screen.
+        Depending on the committees you are in, this button may not be available to you.
+    </p>
+    <p>
+        <b>Linking items to a member</b><br>
+        In order to link an item to a member, use the link member button next to the item. Depending on the committees you
+        are in this button may not be available for you.
+    </p>
+    <p>
+        <b>Linking items to a committee or order</b><br>
+        In order to link an item to as part of the Knights inventory it needs to be linked to
+        a Knights group (committee/ order). This can be done by pressing the link committee button.
+        Depending on the committees you are in, this button may not be
+        available to you.
+    </p>
+
+    <h4>Maintaining catalogue</h4>
+    <p>
+        Each committee or member can see and edit their own items as registered in the system. Besides that some
+        committees have rights to maintain certain catalogues. For instance the BG (Boardgame committee) can maintain
+        the entire boardgame catalogue. This allows them to adjust the ownerships of any committee or member
+        on the boardgames; set certain items as no longer at the Knights or tweak notes on ownerships
+        (eg box is lightly damaged/ figure is painted red).
+    </p>
+
+
+{% endblock %}

@@ -10,11 +10,16 @@
 {% block content %}
     {{ block.super }}
 
-    <a href="{% url "committees:group_general" group_id=association_group.id %}"
-       class="btn btn-secondary">
-        Back to overview
-    </a>
-    <div class="px-3 mt-3">
+    <div class="mb-2">
+        <a href="{% url "committees:group_general" group_id=association_group.id %}"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Back to overview
+        </a>
+    </div>
+    <h2>
+        Useful links
+    </h2>
+    <div class="mt-3">
         <p>
             Add shortcuts to other sites or places such as groupchat, cloud services, or other often used websites.
             The links will be displayed on the overview page for the group.
@@ -58,14 +63,16 @@
                                         data-name="{{ quicklink.name }}"
                                         data-url="{{ quicklink.url }}"
                                         data-description="{{ quicklink.description|default:'' }}"
-                                > Edit
+                                > <i class="fas fa-pen"></i> Edit
                                 </button>
                                 <form method="post"
                                       action="{% url "committees:group_quicklink_delete" group_id=association_group.id quicklink_id=quicklink.id %}"
                                     id="delete-{{ quicklink.id }}">
                                     {% csrf_token %}
                                 </form>
-                                <input type="submit" class="btn btn-danger" form="delete-{{ quicklink.id }}" value="Delete">
+                                <button type="submit" form="delete-{{ quicklink.id }}" class="btn btn-danger">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -83,7 +90,7 @@
             data-name=""
             data-url="https://"
             data-description=""
-    > Add new link
+    > <i class="fas fa-plus"></i> Add new link
     </button>
 
 
@@ -104,9 +111,11 @@
                     {% render_form method="post" has_submit_button=False id="submit_form" action=post_url %}
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Close
+                    </button>
                     <button form="submit_form" type="submit" class="btn btn-success" name="btn_save">
-                        Save item
+                        <i class="fas fa-edit"></i> Save link
                     </button>
                 </div>
             </div>

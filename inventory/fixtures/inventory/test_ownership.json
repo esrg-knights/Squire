@@ -104,5 +104,14 @@
             "content_type": ["inventory", "miscellaneousitem"],
             "object_id": 4
         }
+    },
+    {
+        "_remark": "Add persmission to access inventory catalogue view tests",
+        "model": "auth.user_user_permissions",
+        "pk": 64,
+        "fields": {
+            "user_id": 100,
+            "permission_id": ["view_miscellaneousitem", "inventory", "miscellaneousitem"]
+        }
     }
 ]

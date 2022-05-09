@@ -1,16 +1,9 @@
-{% extends 'core/base.html' %}
+{% extends 'inventory/catalogue_base.html' %}
 {% load render_form %}
 
-{% block title %}
-    Squire - Inventory
-{% endblock title %}
-
-{% block content-frame-class %}
-    container
-{% endblock %}
-
 {% block content %}
-    <h1>Add link to {{ item }}</h1>
+    {{ block.super }}
+    <h3>Add link to {{ item }}</h3>
     <p>
         Below you can make a new link to {{ item.name }}.
     </p>
@@ -19,16 +12,16 @@
     {% render_form method="post" id="submit_form"  has_submit_button=False %}
 
     <div class="btn-group" role="group" aria-label="Form changing">
+        <button form="submit_form" type="submit" class="btn btn-success">
+            <i class="fas fa-edit"></i> Save ownership link
+        </button>
         {% if redirect_to_url %}
             <a href="{{ redirect_to_url }}"
-               class="btn btn-secondary">Cancel</a>
+               class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
         {% else %}
             <a href="{% url "inventory:catalogue" type_id=item_type %}"
-               class="btn btn-secondary">Cancel</a>
+               class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
         {% endif %}
-        <button form="submit_form" type="submit" class="btn btn-success">
-            Save ownership link
-        </button>
     </div>
 
 {% endblock %}

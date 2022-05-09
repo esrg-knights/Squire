@@ -17,6 +17,7 @@
             <div class="row">
                 <div class="col-12">
                     <div class="p-1">
+                        <i class="far fa-check-circle"></i>
                         {% if user_subscriptions.count == 1 %}
                             You are subscribed to slot '{{ user_subscriptions.first.activity_slot.title }}'
                         {% else %}
@@ -45,8 +46,8 @@
         </div>
     {% endif %}
     <a href="{% url 'activity_calendar:activity_slots_on_day' activity_id=activity.id recurrence_id=recurrence_id %}"
-       class="btn btn-secondary greenify btn-block my-2">
-        Back to main page
+       class="btn btn-outline-secondary btn-block my-2">
+        <i class="fas fa-arrow-left"></i> Back to main page
     </a>
 {% endblock sign-up-status %}
 
@@ -56,7 +57,17 @@
     <h2>Create new slot</h2>
 
     <div class="wideContentFrame">
-        {% render_form id="create_slot_form" method="post" submit_class="btn btn-success btn-block" submit_text="Create slot" %}
+        {% render_form id="create_slot_form" method="post" has_submit_button=False %}
+
+        <div class="btn-group">
+            <button type="submit" form="create_slot_form" class="btn btn-success">
+                <i class="fas fa-plus"></i> Create slot
+            </button>
+            <a class="btn btn-secondary"
+               href="{% url 'activity_calendar:activity_slots_on_day' activity_id=activity.id recurrence_id=recurrence_id %}">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+        </div>
     </div>
 
 {% endblock %}

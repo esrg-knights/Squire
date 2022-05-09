@@ -1,30 +1,23 @@
-{% extends 'core/base.html' %}
+{% extends 'inventory/catalogue_base.html' %}
 {% load render_form %}
 
-{% block title %}
-    Squire - Inventory
-{% endblock title %}
-
-{% block content-frame-class %}
-    container
-{% endblock %}
-
 {% block content %}
-    <h1>Update {{ item }}</h1>
+    {{ block.super }}
+    <h3>Update {{ item }}</h3>
 
     {% render_form method="post" id="submit_form"  has_submit_button=False uses_file_field=True %}
 
     <div class="btn-group" role="group" aria-label="Form changing">
+        <button form="submit_form" type="submit" class="btn btn-success">
+            <i class="fas fa-edit"></i> Save changes
+        </button>
         {% if redirect_to_url %}
             <a href="{{ redirect_to_url }}"
-               class="btn btn-outline-secondary">Cancel</a>
+               class="btn btn-outline-secondary"><i class="fas fa-times"></i> Cancel</a>
         {% else %}
             <a href="{% url "inventory:catalogue" type_id=item_type %}"
-               class="btn btn-outline-secondary">Cancel</a>
+               class="btn btn-outline-secondary"><i class="fas fa-times"></i> Cancel</a>
         {% endif %}
-        <button form="submit_form" type="submit" class="btn btn-primary" name="btn_save">
-            Save item
-        </button>
     </div>
 
 {% endblock %}

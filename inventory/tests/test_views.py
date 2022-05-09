@@ -9,6 +9,7 @@ from django.views.generic import DetailView, FormView, UpdateView, CreateView, L
 
 from core.tests.util import suppress_warnings
 from membership_file.models import Member
+from membership_file.tests.mixins import TestMixinWithMemberMiddleware
 from membership_file.util import MembershipRequiredMixin
 from utils.testing.view_test_utils import ViewValidityMixin, TestMixinMixin
 from utils.views import SearchFormMixin, RedirectMixin
@@ -19,33 +20,7 @@ from inventory.views import *
 from inventory.views import OwnershipMixin, CatalogueMixin, ItemMixin, OwnershipCatalogueLinkMixin
 
 
-class TestMemberItemsOverview(TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-
-    def setUp(self):
-        self.client = Client()
-        self.user = User.objects.get(id=100)
-        self.client.force_login(self.user)
-
-        self.base_url = reverse('inventory:member_items')
-        # self.base_response = self.client.get(self.base_url, data={})
-
-    def test_class(self):
-        self.assertTrue(issubclass(MemberItemsOverview, MembershipRequiredMixin))
-
-    def test_member_items_successful(self):
-        response = self.client.get(self.base_url, data={})
-        self.assertEqual(response.status_code, 200)
-
-    def test_template_context(self):
-        response  = self.client.get(self.base_url, data={})
-        context = response.context
-
-        self.assertEqual(context['ownerships'].first().id, 1)
-        self.assertEqual(context['ownerships_history'].first().id, 2)
-
-
-class TestOwnershipMixin(TestMixinMixin, TestCase):
+class TestOwnershipMixin(TestMixinWithMemberMiddleware, TestMixinMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     mixin_class = OwnershipMixin
     base_user_id = 100
@@ -84,111 +59,10 @@ class TestOwnershipMixin(TestMixinMixin, TestCase):
         self.assertRaises404(url_kwargs={'ownership_id': 99})
 
 
-class TestMemberItemRemovalFormView(ViewValidityMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-    base_user_id = 100
-
-    def setUp(self):
-        self.ownership = Ownership.objects.get(id=1)
-        super(TestMemberItemRemovalFormView, self).setUp()
-
-    def get_base_url(self, ownership_id=None):
-        ownership_id = ownership_id or self.ownership.id
-        return reverse('inventory:member_take_home', kwargs={'ownership_id':ownership_id,})
-
-    def test_class(self):
-        self.assertTrue(issubclass(MemberItemRemovalFormView, FormView))
-        self.assertTrue(issubclass(MemberItemRemovalFormView, OwnershipMixin))
-        self.assertTrue(issubclass(MemberItemRemovalFormView, MembershipRequiredMixin))
-        self.assertEqual(MemberItemRemovalFormView.form_class, OwnershipRemovalForm)
-        self.assertEqual(MemberItemRemovalFormView.template_name, "inventory/membership_take_home.html")
-
-    def test_get_successful(self):
-        response = self.client.get(self.get_base_url(), data={})
-        self.assertEqual(response.status_code, 200)
-
-    def test_post_successful(self):
-        response = self.client.post(self.get_base_url(), data={}, follow=True)
-        self.assertRedirects(response, reverse('inventory:member_items'))
-        msg = "{item} has been marked as taken home".format(item=self.ownership.content_object)
-        self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
-
-    def test_post_invalid_form(self):
-        # Get an item that causes the form to fail. This form should automatically forward when failing
-        # as the user can not adjust form data to fix it
-        response = self.client.post(self.get_base_url(ownership_id=2), data={}, follow=True)
-        self.assertRedirects(response, reverse('inventory:member_items'))
-        self.assertHasMessage(response, level=messages.ERROR)
-
-
-class TestMemberItemLoanFormView(ViewValidityMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-    base_user_id = 100
-
-    def setUp(self):
-        self.ownership = Ownership.objects.get(id=2)
-        super(TestMemberItemLoanFormView, self).setUp()
-
-    def get_base_url(self, ownership_id=None):
-        ownership_id = ownership_id or self.ownership.id
-        return reverse('inventory:member_loan_out', kwargs={'ownership_id':ownership_id,})
-
-    def test_class(self):
-        self.assertTrue(issubclass(MemberItemLoanFormView, FormView))
-        self.assertTrue(issubclass(MemberItemLoanFormView, OwnershipMixin))
-        self.assertTrue(issubclass(MemberItemLoanFormView, MembershipRequiredMixin))
-        self.assertEqual(MemberItemLoanFormView.form_class, OwnershipActivationForm)
-        self.assertEqual(MemberItemLoanFormView.template_name, "inventory/membership_loan_out.html")
-
-    def test_get_successful(self):
-        response = self.client.get(self.get_base_url(), data={})
-        self.assertEqual(response.status_code, 200)
-
-    def test_post_successful(self):
-        response = self.client.post(self.get_base_url(), data={}, follow=True)
-        self.assertRedirects(response, reverse('inventory:member_items'))
-        msg = "{item} has been marked as stored at the Knights".format(item=self.ownership.content_object)
-        self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
-
-    def test_post_invalid_form(self):
-        # Get an item that causes the form to fail. This form should automatically forward when failing
-        # as the user can not adjust form data to fix it
-        response = self.client.post(self.get_base_url(ownership_id=1), data={}, follow=True)
-        self.assertRedirects(response, reverse('inventory:member_items'))
-        self.assertHasMessage(response, level=messages.ERROR)
-
-
-class TestMemberOwnershipAlterView(ViewValidityMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
-    base_user_id = 100
-
-    def setUp(self):
-        self.ownership = Ownership.objects.get(id=2)
-        super(TestMemberOwnershipAlterView, self).setUp()
-
-    def get_base_url(self, ownership_id=None):
-        ownership_id = ownership_id or self.ownership.id
-        return reverse('inventory:owner_link_edit', kwargs={'ownership_id':ownership_id,})
-
-    def test_class(self):
-        self.assertTrue(issubclass(MemberItemLoanFormView, FormView))
-        self.assertEqual(MemberOwnershipAlterView.form_class, OwnershipNoteForm)
-        self.assertEqual(MemberOwnershipAlterView.template_name, "inventory/membership_adjust_note.html")
-
-    def test_get_successful(self):
-        response = self.client.get(self.get_base_url(), data={})
-        self.assertEqual(response.status_code, 200)
-
-    def test_post_successful(self):
-        response = self.client.post(self.get_base_url(), data={}, follow=True)
-        self.assertRedirects(response, reverse('inventory:member_items'))
-        msg = "Your version of {item} has been updated".format(item=self.ownership.content_object)
-        self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
-
-
 class TestCatalogueMixin(TestMixinMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     mixin_class = CatalogueMixin
+    base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
@@ -201,17 +75,46 @@ class TestCatalogueMixin(TestMixinMixin, TestCase):
         response = self._build_get_response()
         self.assertEqual(response.status_code, 200)
 
+    @suppress_warnings
+    def test_denied_access(self):
+        """ Tests that only those with view access can access this page """
+        user = User.objects.get(id=self.base_user_id)
+        self.assertTrue(
+            user.user_permissions.filter(codename='view_miscellaneousitem').exists(),
+            msg="Fixtures should set up the view permission on this base user"
+        )
+        user.user_permissions.remove(Permission.objects.get(codename='view_miscellaneousitem'))
+
+        # permission is no longer present, so it should deny access
+        self.assertRaises403()
+
     def test_context_data(self):
         self._build_get_response(save_view=True)
         context = self.view.get_context_data()
         self.assertIn('item_type', context.keys())
+        self.assertIn('tabs', context.keys())
         self.assertEqual(context['item_type'], self.content_type)
+
+    def test_tabs(self):
+        self._build_get_response(save_view=True)
+        tabs = self.view.get_tabs()
+        self.assertEqual(len(tabs), 2)
+        self.assertEqual(tabs[0]['verbose'], "Miscellaneous Items")
+        self.assertEqual(tabs[0]['icon_class'], MiscellaneousItem.icon_class)
+        self.assertIn('url', tabs[0].keys())
+        self.assertTrue(tabs[0]['selected'])
+
+        self.assertEqual(tabs[1]['verbose'], "Instructions")
+        self.assertEqual(tabs[1]['icon_class'], 'fas fa-info')
+        self.assertEqual(tabs[1]['url'], reverse("inventory:catalogue_info"))
+        self.assertFalse(tabs[1]['selected'])
 
 
 class TestItemMixin(TestMixinMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     mixin_class = ItemMixin
     pre_inherit_classes = [CatalogueMixin]
+    base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
@@ -239,6 +142,17 @@ class TestItemMixin(TestMixinMixin, TestCase):
         context = self.view.get_context_data()
         self.assertIn('item_type', context.keys())
         self.assertEqual(context['item_type'], self.content_type)
+
+
+class TestCatalogueInstructions(ViewValidityMixin, TestCase):
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    base_user_id = 100
+
+    def test_succesful_get(self):
+        response = self.client.get(reverse('inventory:catalogue_info'), data={})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "inventory/inventory_instructions.html")
+        self.assertTrue(response.context['tabs'][1]['selected'])
 
 
 class TestTypeCatalogue(ViewValidityMixin, TestCase):
@@ -343,6 +257,7 @@ class TestAddLinkCommitteeView(ViewValidityMixin, TestCase):
         response = self.client.post(url, data=data, follow=False)
         self.assertRedirects(response, '/alt_url/', fetch_redirect_response=False)
 
+
 class TestAddLinkMemberView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     base_user_id = 100
@@ -397,6 +312,7 @@ class TestAddLinkMemberView(ViewValidityMixin, TestCase):
         url = self.get_base_url()+'?redirect_to=/alt_url/'
         response = self.client.post(url, data=data, follow=False)
         self.assertRedirects(response, '/alt_url/', fetch_redirect_response=False)
+
 
 class TestItemCreateView(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
@@ -689,6 +605,7 @@ class TestOwnershipCatalogueLinkMixin(TestMixinMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
     mixin_class = OwnershipCatalogueLinkMixin
     pre_inherit_classes = [CatalogueMixin, ItemMixin]
+    base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
@@ -759,11 +676,18 @@ class TestUpdateCatalogueLinkView(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(UpdateCatalogueLinkView, PermissionRequiredMixin))
         self.assertTrue(issubclass(UpdateCatalogueLinkView, UpdateView))
         self.assertEqual(UpdateCatalogueLinkView.template_name, "inventory/catalogue_adjust_link.html")
-        self.assertEqual(UpdateCatalogueLinkView.fields, ['note', 'added_since'])
+        self.assertEqual(UpdateCatalogueLinkView.fields, ['note', 'added_since', 'value'])
 
     def test_successful_get(self):
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 200)
+
+    def test_user_form_has_no_value_field(self):
+        response = self.client.get(self.get_base_url(), data={})
+        form = response.context['form']
+        # The value field should not be in fields
+        self.assertNotIn('value', form.fields.keys())
+
 
     def test_post_successful(self):
         """ Tests a succesful post """

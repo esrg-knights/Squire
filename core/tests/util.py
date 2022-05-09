@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 from dynamic_preferences.registries import global_preferences_registry
+from dynamic_preferences.serializers import UNSET
 
 from core.util import get_permission_objects_from_string
 
@@ -134,3 +135,16 @@ def suppress_warnings(function=None, logger_name='django.request'):
     if function:
         return decorator(function)
     return decorator
+
+
+class DynamicRegistryUsageMixin:
+    """
+    Mixin that is required when testing instances in the dynamicregistryusagemixin. This module uses the django cache
+    that needs clearing whenever a testcases is done.
+    """
+    @classmethod
+    def _rollback_atomics(cls, atomics):
+        dynamic_preference_manager = global_preferences_registry.manager()
+        dynamic_preference_manager.cache.clear()
+        # Don't forget to do the normal database rollback
+        super(DynamicRegistryUsageMixin, cls)._rollback_atomics(atomics)

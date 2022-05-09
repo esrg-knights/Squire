@@ -3,8 +3,13 @@ from django.core.validators import RegexValidator, MinValueValidator
 from django.db import models
 from datetime import date
 
+from dynamic_preferences.registries import global_preferences_registry
+
+from utils.spoofs import optimise_naming_scheme
 from django.contrib.auth import get_user_model
 User = get_user_model()
+
+global_preferences = global_preferences_registry.manager()
 
 ##################################################################################
 # Models related to the Membership File-functionality of the application.
@@ -125,7 +130,11 @@ class Member(models.Model):
     notes = models.TextField(blank=True, help_text="Notes are invisible to members.")
 
     def is_considered_member(self):
-        return not self.is_deregistered
+        # Do not block membership if no year is active
+        if MemberYear.objects.filter(is_active=True):
+            return not self.is_deregistered and self.memberyear_set.filter(is_active=True).exists()
+        else:
+            return not self.is_deregistered
 
     ##################################
     # STRING REPRESENTATION METHODS
@@ -136,9 +145,14 @@ class Member(models.Model):
 
     # Gets the name of the member
     def get_full_name(self):
+        first_name = self.first_name
+        if global_preferences['homepage__april_2022']:
+            # This bit is from the april fools joke 2022
+            first_name = optimise_naming_scheme(first_name)
+
         if self.tussenvoegsel:
-            return "{0} {1} {2}".format(self.first_name, self.tussenvoegsel, self.last_name)
-        return "{0} {1}".format(self.first_name, self.last_name)
+            return "{0} {1} {2}".format(first_name, self.tussenvoegsel, self.last_name)
+        return "{0} {1}".format(first_name, self.last_name)
 
     # Gets the name of the person that last updated this user
     def display_last_updated_name(self):
@@ -198,6 +212,37 @@ class Room(models.Model):
         return f"{self.name} ({self.access})"
 
 ##################################################################################
+
+
+class MemberYear(models.Model):
+    """ Defines the college years periods """
+    name = models.CharField(max_length=16)
+    members = models.ManyToManyField(Member, through='Membership', through_fields=['year', 'member'])
+    is_active = models.BooleanField(default=False)
+
+    class Meta:
+        ordering=('-name',)
+
+    def __str__(self):
+        return self.name
+
+
+class Membership(models.Model):
+    """ Defines membership details of a member in a certain memberyear"""
+    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    year = models.ForeignKey(MemberYear, on_delete=models.PROTECT)
+    created_by = models.ForeignKey(Member, on_delete=models.SET_NULL, null=True, related_name='created_memberships')
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    has_paid = models.BooleanField(default=False)
+    payment_date = models.DateField(null=True, blank=True)
+
+    class Meta:
+        unique_together = [['member', 'year']]
+
+    def __str__(self):
+        return f'{self.member.get_full_name()} for {self.year}'
+
 
 # The MemberLog Model represents a log entry that is created whenever membership data is updated
 class MemberLog(models.Model):

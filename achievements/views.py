@@ -6,21 +6,6 @@ from .models import Category
 from .serializers import CategorySerializer, AchievementSortType
 
 
-# View user Achievements Page
-@require_safe
-@login_required
-def viewAchievementsUser(request):
-    serializer = CategorySerializer(Category.objects.all(), many=True, context={
-        'user_id': request.user.id,
-        'sort_type': AchievementSortType.ACHIEVEMENTSORT_LATEST_UNLOCK_DATE,
-    })
-
-    return render(request, 'achievements/view_achievements_user.html', {
-        "categories": serializer.data,
-        "request_user_id": request.user.id,
-        "show_claimants": True,
-    })
-
 # View all Achievements Page
 @require_safe
 def viewAchievementsAll(request):

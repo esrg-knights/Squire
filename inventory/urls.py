@@ -35,15 +35,7 @@ register_converter(CatalogueConverter, 'cat_item')
 app_name = 'inventory'
 
 urlpatterns = [
-    path('my_items/', include([
-        path('', MemberItemsOverview.as_view(), name='member_items'),
-        path('<int:ownership_id>/', include([
-            path('take_home/', MemberItemRemovalFormView.as_view(), name='member_take_home'),
-            path('give_out/', MemberItemLoanFormView.as_view(), name='member_loan_out'),
-            path('edit_note/', MemberOwnershipAlterView.as_view(), name='owner_link_edit'),
-        ])),
-    ])),
-
+    path('catalogue/info/', CatalogueInstructionsView.as_view(), name='catalogue_info'),
     path('catalogue/<cat_item:type_id>/', include([
         path('', TypeCatalogue.as_view(), name="catalogue"),
         path('add_new/', CreateItemView.as_view(), name='catalogue_add_new_item'),
