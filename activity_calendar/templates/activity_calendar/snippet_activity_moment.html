@@ -1,5 +1,6 @@
 {% load static %}
 {% load calendar_tags %}
+{% load activity_tags %}
 
 
 <div class="card">
@@ -19,7 +20,7 @@
         {% if not activity_moment.is_cancelled %}
             <div class="mb-3">
                 <h4 class="card-title">{{ activity_moment.title }}</h4>
-                <h6 class="card-subtitle mb-2 text-muted">{{ activity_moment.start_date|date:"l j E H:i" }}</h6>
+                <h6 class="card-subtitle mb-2 text-muted">{{ activity_moment|readable_activity_datetime }}</h6>
             </div>
             <div style="min-height: 5em;">
                 {% if activity_moment.location and not activity_moment.is_cancelled %}
