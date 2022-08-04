@@ -1,6 +1,6 @@
 import recurrence
 
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 from django.conf import settings
 from django.urls import reverse_lazy
@@ -167,7 +167,8 @@ class CESTEventFeed(ICalFeed):
 
         if item.full_day:
             # If full day, return this as a date instance instead
-            return end_dt.date()
+            # Return date must be a day further as it is interpreted at 0:00 instead of 24:00
+            return end_dt.date() + timedelta(days=1)
         else:
             return end_dt
 

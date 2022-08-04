@@ -272,6 +272,10 @@ class ICalFeedTestCase(FeedTestMixin, TestCase):
         self.assertIsInstance(component['DTSTART'].dt, date)
         self.assertIsInstance(component['DTEND'].dt, date)
 
+        # test that the day is one day more than the original day
+        # end day is not taken into account by calendar software as it is interpreted at day 0:00
+        self.assertEqual(activity.end_date.date(), component['DTEND'].dt - timedelta(days=1))
+
 
 class CustomCalendarFeedTestCase(FeedTestMixin, TestCase):
     fixtures = ['test_users', 'test_activity_slots', 'activity_calendar/test_custom_feed']
