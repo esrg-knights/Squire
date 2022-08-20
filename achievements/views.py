@@ -23,11 +23,11 @@ def viewAchievementsAll(request):
 
 class AllAchievementsView(ListView):
     template_name = 'achievements/view_achievements_all.html'
-    model = Achievement
+    model = Category
+    context_object_name = "categories"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
 
-    def get_queryset(self) -> _SupportsPagination[_M]:
-        return super().get_queryset().filter(is_public=True)
-    
+    def get_queryset(self):
+        return super().get_queryset()

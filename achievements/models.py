@@ -16,7 +16,7 @@ import os
 
 # File path to upload achievement images to
 
-//todo: lint
+#todo: lint
 
 
 def get_achievement_image_upload_path(instance, filename):
@@ -88,7 +88,7 @@ class Achievement(models.Model):
         settings.AUTH_USER_MODEL, blank=True, through="Claimant", related_name="claimant_info")
 
     # Achievement Icon
-    image = models.ImageField(upload_to=get_achievement_image_upload_path, null=True, blank=True) // todo: code fallback image
+    image = models.ImageField(upload_to=get_achievement_image_upload_path, null=True, blank=True) # todo: code fallback image
 
     # Text used to display unlocked status. Can be used to display extra data for high scores.
     # {0} User

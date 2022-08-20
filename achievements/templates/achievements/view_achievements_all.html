@@ -32,7 +32,7 @@
             <p>{{category.description}}</p>
             <!-- List Achievements -->
             <div class='achievementList'>
-                {% for achievement in category.achievements %}
+                {% for achievement in category.related_achievements %}
                     <div id="ach-{{achievement.id}}">
                         {% include "achievements/achievement_block_wide.html" %}
                     </div>

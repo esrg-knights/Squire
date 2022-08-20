@@ -1,0 +1,3 @@
+[submodule "user_interaction/static/themes/images/kinjin/nengo"]
+	path = user_interaction/static/themes/images/kinjin/nengo
+	url = https://github.com/KevinAdu/nengo.git
