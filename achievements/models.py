@@ -1,3 +1,5 @@
+from email.mime import image
+from unicodedata import category
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -11,27 +13,12 @@ __all__ = ['Category', 'Achievement', 'Claimant', 'AchievementItemLink']
 
 import os
 
-# Create categories for the Achievements like Boardgames, Roleplay, General
-class Category(models.Model):
-    class Meta:
-        # Enabled proper plurality
-        verbose_name_plural = "categories"
-
-        # Sort by priority, then name, then Id
-        ordering = ['priority', 'name','id']
-
-    name = models.CharField(max_length=63)
-    description = models.TextField(max_length=255)
-    priority = models.IntegerField(default=1)
-
-    def __str__(self):
-        return self.name
-
-# Gets or creates the default Category
-def get_or_create_default_category():
-    return Category.objects.get_or_create(name='General', description='Contains Achievements that do not belong to any other Category.')[0]
 
 # File path to upload achievement images to
+
+//todo: lint
+
+
 def get_achievement_image_upload_path(instance, filename):
     # Obtain extension
     # NB: A file can be renamed to have ANY extension
@@ -40,24 +27,68 @@ def get_achievement_image_upload_path(instance, filename):
     # file will be uploaded to MEDIA_ROOT / images/achievement_<achievement_id>.<file_extension>
     return 'images/achievements/achievement_{0}{1}'.format(slugify(instance.name), extension)
 
+
+# File path to upload achievement images to
+
+
+def get_achievement_category_image_upload_path(instance, filename):
+    # Obtain extension
+    # NB: A file can be renamed to have ANY extension
+    _, extension = os.path.splitext(filename)
+
+    # file will be uploaded to MEDIA_ROOT / images/achievement_<achievement_id>.<file_extension>
+    return 'images/achievements/category_{0}{1}'.format(slugify(instance.name), extension)
+
+
+# Create categories for the Achievements like Boardgames, Roleplay, General
+
+
+class Category(models.Model):
+    class Meta:
+        # Enabled proper plurality
+        verbose_name_plural = "categories"
+
+        # Sort by priority, then name, then Id
+        ordering = ['priority', 'name', 'id']
+
+    name = models.CharField(max_length=63)
+    description = models.TextField(max_length=255)
+    priority = models.IntegerField(default=1)
+    image = models.ImageField(
+        upload_to=get_achievement_category_image_upload_path)
+
+    def __str__(self):
+        return self.name
+
+
+def get_or_create_default_category():
+    '''Gets or creates the default Category'''
+    return Category.objects.get_or_create(name='General', description='Contains Achievements that do not belong to any other Category.')[0]
+
+
 # Achievements that can be earned by users
+
+
 class Achievement(models.Model):
     class Meta:
-        ordering = ['name','id']
+        ordering = ['name', 'id']
         permissions = [
-            ("can_view_claimants", "[F] Can view the claimants of Achievements."),
+            ("can_view_claimants",
+             "[F] Can view the claimants of Achievements."),
         ]
 
     # Basic Information
     name = models.CharField(max_length=63)
     description = models.TextField(max_length=255)
-    category = models.ForeignKey(Category, on_delete=models.SET(get_or_create_default_category), related_name="related_achievements")
+    category = models.ForeignKey(Category, on_delete=models.SET(
+        get_or_create_default_category), related_name="related_achievements")
 
     # An Achievement can be claimed by more members (claimants) and a member can have more achievements.
-    claimants = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, through="Claimant", related_name="claimant_info")
+    claimants = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, blank=True, through="Claimant", related_name="claimant_info")
 
     # Achievement Icon
-    image = models.ImageField(upload_to=get_achievement_image_upload_path)
+    image = models.ImageField(upload_to=get_achievement_image_upload_path, null=True, blank=True) // todo: code fallback image
 
     # Text used to display unlocked status. Can be used to display extra data for high scores.
     # {0} User
@@ -67,8 +98,7 @@ class Achievement(models.Model):
     # {4} extra_data_3
     # E.g. {0} unlocked this achievement on {1} with a score of {2}!
     unlocked_text = models.CharField(max_length=127, default="Claimed by {0} on {1}.",
-        help_text="{0}: User Display Name, {1}: Date Unlocked, {2}: Extra Data 1 (int), {3}: Extra Data 2 (string), {4}: Extra Data 3 (string)")
-
+                                     help_text="{0}: User Display Name, {1}: Date Unlocked, {2}: Extra Data 1 (int), {3}: Extra Data 2 (string), {4}: Extra Data 3 (string)")
 
     # Possible sort options
     FIELD_OPTIONS = [
@@ -92,8 +122,13 @@ class Achievement(models.Model):
     # Whether the achievement can be accessed outside the admin panel
     is_public = models.BooleanField(default=True)
 
+    def get_achievement_picture(self):
+        """looks for the image by itself and in the category"""
+        return self.category.image.image.url if self.image is None else self.image.image.url
+
     def __str__(self):
         return self.name
+
 
 class AchievementItemLink(models.Model):
     """ Links an achievement with an item (e.g. boardgame) """
@@ -109,7 +144,8 @@ class AchievementItemLink(models.Model):
 # Represents a user earning an achievement
 class Claimant(models.Model):
     achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
     date_unlocked = models.DateField(default=timezone.now)
 
     # Extra data fields that can be used to track high-scores
