@@ -23,7 +23,7 @@ __all__ = ['RegisterNewSlotForm', 'RegisterForActivitySlotForm', 'RegisterForAct
     'ActivityAdminForm', 'ActivityMomentAdminForm', 'CancelActivityForm']
 
 
-class RegisterAcitivityMixin:
+class RegisterActivityMixin:
     """ A mixin that defines default behaviour for any activity registration
     Activity or slot registration has several invalidation codes:
     'invalid': general catch all for non-specified errors
@@ -48,7 +48,7 @@ class RegisterAcitivityMixin:
         self.user = user
         self.activity_moment = activity_moment
 
-        super(RegisterAcitivityMixin, self).__init__(*args, **kwargs)
+        super(RegisterActivityMixin, self).__init__(*args, **kwargs)
 
         # Manually add sign_up field to fields as this is not done here automatically.
         self.fields['sign_up'] = self.sign_up
@@ -59,7 +59,7 @@ class RegisterAcitivityMixin:
         return self.cleaned_data['sign_up']
 
     def clean(self):
-        super(RegisterAcitivityMixin, self).clean()
+        super(RegisterActivityMixin, self).clean()
 
         # Check the validity
         self.check_validity(self.cleaned_data)
@@ -120,7 +120,7 @@ class RegisterAcitivityMixin:
             return None
 
 
-class RegisterForActivityForm(RegisterAcitivityMixin, Form):
+class RegisterForActivityForm(RegisterActivityMixin, Form):
     """
     Form for registering for normal activities that do not use multiple slots
     """
@@ -153,7 +153,13 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
                 # Activitymoment did not yet exist in the database, but we need it for the slot
                 self.activity_moment, _ = ActivityMoment.objects.get_or_create(parent_activity=self.activity, recurrence_id=self.recurrence_id)
 
-            slot, _ = ActivitySlot.objects.get_or_create(parent_activitymoment=self.activity_moment, defaults={'title': 'Standard Slot'})
+            # Create a new Slot if one doesn't exist yet. A race condition is prevented by select_for_update(),
+            #   which locks the selected objects (i.e., all slots) in the db
+            #   Note: We cannot use _just_ get_or_create() as parent_activitymoment is not a unique field
+            slot, _ = ActivitySlot.objects.select_for_update().get_or_create(
+                parent_activitymoment=self.activity_moment,
+                defaults={'title': 'Standard Slot'}
+            )
 
             Participant.objects.create(
                 activity_slot=slot,
@@ -165,7 +171,7 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
             return False
 
 
-class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
+class RegisterForActivitySlotForm(RegisterActivityMixin, Form):
     """ Form that handles registering for a specific slot """
     slot_id = forms.IntegerField(initial=-1, widget=HiddenInput)
 
@@ -250,7 +256,7 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
             return False
 
 
-class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
+class RegisterNewSlotForm(RegisterActivityMixin, ModelForm):
     """ Form for creating a new slot """
 
     class Meta:
@@ -307,7 +313,7 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
     def save(self, commit=True):
         # Set fixed attributes
-        if self.activity_moment is None:
+        if self.activity_moment.id is None:
             self.activity_moment, _ = ActivityMoment.objects.get_or_create(parent_activity=self.activity, recurrence_id=self.recurrence_id)
 
         self.instance.parent_activitymoment = self.activity_moment

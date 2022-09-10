@@ -26,15 +26,19 @@ class ActivityFormValidationMixin(FormValidityMixin):
         if isinstance(self.recurrence_id, str):
             self.recurrence_id = dateparse.parse_datetime(self.recurrence_id)
 
-        self.activity_moment = ActivityMoment.objects.get_or_create(
+        self.activity_moment: ActivityMoment = ActivityMoment.objects.get_or_create(
             parent_activity_id=self.activity.id,
             recurrence_id=self.recurrence_id,
         )[0]
 
     def get_form_kwargs(self, **kwargs):
-        kwargs = super(ActivityFormValidationMixin, self).get_form_kwargs(**kwargs)
-        # Reload activity_moment as we may have made changes to its cached parent object
-        self.activity_moment.refresh_from_db()
+        kwargs = super().get_form_kwargs(**kwargs)
+
+        if self.activity_moment.id is not None:
+            # Reload activity_moment as we may have made changes to its cached parent object
+            #   This can't happen if the activity_moment isn't actually in the database
+            self.activity_moment.refresh_from_db()
+
         kwargs.update({
             'user': self.user,
             'activity': self.activity,
@@ -132,6 +136,32 @@ class RegisterForActivityFormTestCase(ActivityFormValidationMixin, TestCase):
         self.assertEqual(0, self.activity_moment.get_user_subscriptions(self.user).count())
         form.save()
         self.assertEqual(1, self.activity_moment.get_user_subscriptions(self.user).count())
+
+    @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_activitymoment_created_if_not_exists(self, mock_tz):
+        """ Checks that a new activitymoment is created if one does not yet exist when a new slot is created """
+        # Delete existing activitymoment
+        self.activity_moment.delete()
+
+        # Create a new one, but don't save it to the database
+        self.activity_moment = ActivityMoment(
+            parent_activity_id=self.activity.id,
+            recurrence_id=self.recurrence_id,
+        )
+
+        form = self.assertFormValid({
+            'sign_up': True,
+            'title': 'My slot',
+            'max_participants': -1,
+            'description': "Some various text about my slot"
+        })
+        form.save()
+
+        # A new activitymoment should've been created
+        self.assertTrue(ActivityMoment.objects.filter(
+                parent_activity_id=self.activity.id,
+                recurrence_id=self.recurrence_id,).exists()
+        )
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_save_sign_up_new_slot(self, mock_tz):
@@ -383,6 +413,32 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
         self.activity.max_slots = 2
         self.activity.save()
         self.assertFormHasError({'sign_up': True, 'title': 'My slot', 'max_participants': -1}, code='max-slots-claimed')
+
+    @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_activitymoment_created_if_not_exists(self, mock_tz):
+        """ Checks that a new activitymoment is created if one does not yet exist when a new slot is created """
+        # Delete existing activitymoment
+        self.activity_moment.delete()
+
+        # Create a new one, but don't save it to the database
+        self.activity_moment = ActivityMoment(
+            parent_activity_id=self.activity.id,
+            recurrence_id=self.recurrence_id,
+        )
+
+        form = self.assertFormValid({
+            'sign_up': True,
+            'title': 'My slot',
+            'max_participants': -1,
+            'description': "Some various text about my slot"
+        })
+        form.save()
+
+        # A new activitymoment should've been created
+        self.assertTrue(ActivityMoment.objects.filter(
+                parent_activity_id=self.activity.id,
+                recurrence_id=self.recurrence_id,).exists()
+        )
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_save_form_creation(self, mock_tz):
