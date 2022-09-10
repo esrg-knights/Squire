@@ -55,7 +55,7 @@ class CovidProtocol(StringPreference):
     required = False
 
 ##############################################################################
-# NEWSLETTER
+# SHARE URLS
 ##############################################################################
 
 newsletter = Section('newsletter')
@@ -64,12 +64,24 @@ newsletter = Section('newsletter')
 class NewsletterShareLink(StringPreference):
     section = newsletter
     name = 'share_link'
-    verbose_name = "Public Share Link"
+    verbose_name = "Newsletter Public Share Link"
     description = 'A public link towards a page where anyone can view newsletters. For instance, can be a Nextcloud share URL.'
     help_text = "Leave empty to disable the newsletter page."
     default = ""
     required = False
 
+
+downloads = Section('downloads')
+
+@global_preferences_registry.register
+class DownloadsShareLink(StringPreference):
+    section = downloads
+    name = 'share_link'
+    verbose_name = "Downloads Public Share Link"
+    description = 'A public link towards a page where anyone can view things like association protocols or documents.'
+    help_text = "Leave empty to disable the downloads page."
+    default = ""
+    required = False
 
 ##############################################################################
 # PERMISSIONS
