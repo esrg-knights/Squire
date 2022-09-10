@@ -115,18 +115,11 @@ class ParticipantInline(admin.TabularInline):
 
 
 class ActivitySlotAdmin(admin.ModelAdmin):
-
-    # Django doesn't allow a foreign key attribute in list_display, so this is a workaround
-    def get_recurrence_id(self, obj):
-        return obj.parent_activitymoment.recurrence_id
-    get_recurrence_id.short_description = 'Author'
-    get_recurrence_id.admin_order_field = 'book__author'
-
-    list_display = ('id', 'title', 'parent_activitymoment', 'get_recurrence_id', 'owner')
+    list_display = ('id', 'title', 'parent_activitymoment', 'owner')
     list_filter = ['parent_activitymoment__recurrence_id']
     list_display_links = ('id', 'title')
     date_hierarchy = 'parent_activitymoment__recurrence_id'
-    search_fields = ['parent_activitymoment__parent_activity__title, parent_activitymoment__title', 'title']
+    search_fields = ['parent_activitymoment__parent_activity__title', 'parent_activitymoment__local_title', 'title']
     autocomplete_fields = ['parent_activitymoment',]
 
     # Not supported yet
