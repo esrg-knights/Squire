@@ -15,11 +15,11 @@ class MarkdownImageInlineAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmi
         }
 
     # Add MarkdownImages to the Admin's Inline models
-    def get_inlines(self, request, obj):
-        inlines = super().get_inlines(request, obj=obj)
-        inlines.append(MarkdownImageInline)
-        return inlines
-
+    #   Note: Appending classes to get_inlines(..) makes them load additional times upon a page reload
+    def get_inline_instances(self, request, obj=None):
+        instances = super().get_inline_instances(request, obj=obj)
+        instances.append(MarkdownImageInline(self.model, self.admin_site))
+        return instances
 
 class OrganiserInline(admin.TabularInline):
     model = OrganiserLink
