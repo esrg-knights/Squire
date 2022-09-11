@@ -15,18 +15,10 @@ class MarkdownImageInlineAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmi
         }
 
     # Add MarkdownImages to the Admin's Inline models
-    # TODO: Remove in Django 3.0
-    def get_inline_instances(self, request, obj=None):
-        instances = super().get_inline_instances(request, obj=obj)
-        instances.append(MarkdownImageInline(self.model, self.admin_site))
-        return instances
-
-    # Add MarkdownImages to the Admin's Inline models
-    # TODO: Django 3.0
-    # def get_inlines(self, request, obj):
-    #     inlines = super().get_inlines(request, obj=obj)
-    #     inlines.append(MarkdownImageInline)
-    #     return inlines
+    def get_inlines(self, request, obj):
+        inlines = super().get_inlines(request, obj=obj)
+        inlines.append(MarkdownImageInline)
+        return inlines
 
 
 class OrganiserInline(admin.TabularInline):
