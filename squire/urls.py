@@ -45,9 +45,6 @@ urlpatterns = [
     path('', include('core.urls', namespace='core')),
 
     path('', include('user_interaction.urls')),
-
-    # Shortcuts should always be last to prevent replacements of functional build-in urls
-    path('', include('core.shortcut_urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 # NB: 'static(...) above only works when Debug=True! In production, the web server should be set up to serve files
 # For production use, view the following:
@@ -56,10 +53,13 @@ urlpatterns = [
 #
 
 if settings.DEBUG and os.getenv('DJANGO_ENV') != 'TESTING':
-    import debug_toolbar
     # Debugging (Django Debug Toolbar)
-    urlpatterns.append(path('__debug__/', include(debug_toolbar.urls)))
+    urlpatterns.append(path('__debug__/', include('debug_toolbar.urls')))
 
+urlpatterns += [
+    # Shortcuts should always be last to prevent replacements of functional built-in urls
+    path('', include('core.shortcut_urls')),
+]
 
 handler403 = 'core.views.show_error_403'
 handler404 = 'core.views.show_error_404'
