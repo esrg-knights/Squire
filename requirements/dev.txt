@@ -5,5 +5,5 @@
 -r common.txt
 
 # Import the dev-dependencies
-coverage~=4.5.3 # Code Coverage
-django-debug-toolbar~=3.2.2 # Debug Panel
+coverage~=6.4.4 # Code Coverage
+django-debug-toolbar~=3.6.0 # Debug Panel
