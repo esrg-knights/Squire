@@ -49,7 +49,7 @@
                         </td>
                         <td class="col-auto">
                             <span class="{{ ownership.content_type|get_item_icon_classes }}"></span>
-                            {{ ownership.content_type }}
+                            {{ ownership.content_type.name }}
                         </td>
                         <td class="col-auto">
                             {{ ownership.added_since }}
@@ -109,7 +109,7 @@
                     </td>
                     <td class="col-auto">
                         <span class="{{ ownership.content_type|get_item_icon_classes }}"></span>
-                        {{ ownership.content_type }}
+                        {{ ownership.content_type.name }}
                     </td>
                     <td class="col-auto">
                         {{ ownership.added_since }}
