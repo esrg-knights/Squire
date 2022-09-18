@@ -75,6 +75,7 @@ class NavGlobalPreferenceTest(TestCase):
         check_http_response(self, page_url, 'get', user, response_status=404)
 
         # Enable share URL
+        #   The share URL should logically be somewhere on the preference page
         self.global_preferences[preference_name] = "https://www.example.com"
         res = check_http_response(self, page_url, 'get', user)
         self.assertContains(res, "https://www.example.com")
@@ -88,9 +89,11 @@ class NavGlobalPreferenceTest(TestCase):
         self.assertNotContains(res, page_url)
 
         # Enable share URL
+        #   We don't care what the share URL actually is here, as long as something is there;
+        #   we just want to see that our preference page is located in the navigation bar.
         self.global_preferences[preference_name] = "https://www.example.com"
         res = check_http_response(self, '/', 'get', user)
-        self.assertContains(res, page_url)
+        self.assertContains(res, page_url) # Note: Actually checks the entire page rather than just the nav
 
     def test_newsletter(self):
         """ Tests if the newsletter global preference is working """
