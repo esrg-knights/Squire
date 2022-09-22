@@ -14,3 +14,6 @@ django-dynamic-preferences~=1.11.0 # Global Preferences / User Preferences
 martor~=1.6.8 # Markdown Editor
 pymdown-extensions~=8.1.1 # Extra markdown features
 django-pwa~=1.0.10
+
+
+easywebdav~=1.2.0
