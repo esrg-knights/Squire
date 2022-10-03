@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
+from django.db import models
 from django.contrib.auth.models import AnonymousUser
 from django.core.validators import ValidationError
 from django.conf import settings
@@ -11,7 +12,7 @@ from recurrence import deserialize as deserialize_recurrence_test
 
 from . import mock_now
 
-from activity_calendar.models import Activity, ActivitySlot, Participant, ActivityMoment
+from activity_calendar.models import Activity, ActivitySlot, Participant, ActivityMoment, MemberCalendarSettings
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -320,6 +321,35 @@ class ActivityTestCase(TestCase):
     def setUp(self):
         self.activity = Activity.objects.get(id=2)
 
+    def test_model_cleaning_subscription_values(self):
+        """ Tests model validation for subscriptions_open and subscriptions_close values """
+        activity = Activity(
+            title='test_subscription_open_times',
+            description='test description',
+            start_date=datetime(year=2021, month=1, day=1, hour=14),
+            end_date=datetime(year=2021, month=1, day=1, hour=18),
+            location='home'
+        )
+        try:
+            activity.clean_fields()
+        except ValidationError as v:
+            print(v)
+            raise AssertionError("Activity was not valid")
+
+        # Subscription deadline may not be before subscription open time
+        activity.subscriptions_open = timedelta(days=1)
+        activity.subscriptions_close = timedelta(days=7)
+        self.assertRaises(ValidationError, activity.clean_fields)
+
+        activity.subscriptions_open = timedelta(days=-1)
+        activity.subscriptions_close = timedelta(days=-7)
+        try:
+            activity.clean_fields()
+        except ValidationError as v:
+            self.assertEqual(len(v.messages), 2, msg="Both subscription_open and subscription_close should fail")
+        else:
+            raise AssertionError("Negative subscription values should not be allowed")
+
     def test_get_activitymoments_between(self):
         """ Tests the Activity get_activitymoments_between method"""
         after = timezone.datetime(2020, 10, 2, 0, 0, 0, tzinfo=timezone.utc)
@@ -352,7 +382,6 @@ class ActivityTestCase(TestCase):
                     break
         else:
             raise AssertionError("ActivityMoments from rrule overwritten database instances or were not obtained")
-
 
     def test_get_occurrences_starting_between(self):
         """ Tests the get_occurrences_starting_between method, returning all activities according to the recurring rules """
@@ -1031,5 +1060,11 @@ class ActivityParticipantTestCase(TestCase):
         )
 
 
+class MemberCalendarSettingsTestCase(TestCase):
 
-
+    def test_fields(self):
+        # Test image field
+        field = MemberCalendarSettings._meta.get_field("use_birthday")
+        self.assertIsInstance(field, models.BooleanField)
+        self.assertEqual(field.default, False,
+                         msg="Use of birthday should default to False for privacy reasons")

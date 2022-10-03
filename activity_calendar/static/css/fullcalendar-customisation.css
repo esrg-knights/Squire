@@ -61,21 +61,3 @@
 #event-modal .largespace {
     margin-bottom: 15px;
 }
-
-/*
-SVG Icon colours
-Generated using from hexcodes using: https://codepen.io/sosuke/pen/Pjoqqp
-Colours were roughly based on the Bootstrap Alert-text colours
-*/
-.icon-warning {
-    /* filter: invert(80%) sepia(63%) saturate(2885%) hue-rotate(354deg) brightness(107%) contrast(102%); */
-    filter: invert(30%) sepia(60%) saturate(1737%) hue-rotate(30deg) brightness(101%) contrast(97%);
-}
-
-.icon-error {
-    filter: invert(13%) sepia(44%) saturate(3595%) hue-rotate(334deg) brightness(91%) contrast(94%);
-}
-
-.icon-success {
-    filter: invert(25%) sepia(46%) saturate(720%) hue-rotate(82deg) brightness(93%) contrast(94%);
-}

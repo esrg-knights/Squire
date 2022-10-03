@@ -378,7 +378,7 @@ class ActivityMomentForm(ActivityMomentFormMixin, MarkdownForm):
         fields = ['local_title', 'local_description',
             'local_promotion_image',
             'local_location',
-            'local_start_date', 'local_end_date',
+            'local_start_date', 'local_end_date', 'local_full_day',
             'local_max_participants', 'local_subscriptions_required',
             'local_slot_creation', 'local_private_slot_locations'
         ]

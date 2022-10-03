@@ -79,7 +79,7 @@ class HomeUsersView(TemplateView):
             welcome_name = optimise_naming_scheme(welcome_name)
 
         activities = []
-        for activity in Activity.objects.filter(published_date__lte=timezone.now()):
+        for activity in Activity.objects.filter(published_date__lte=timezone.now(), is_public=True):
             for activity_moment in activity.get_activitymoments_between(start_date, end_date):
                 activities.append(activity_moment)
 

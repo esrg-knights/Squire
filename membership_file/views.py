@@ -47,7 +47,7 @@ class UpdateMemberYearMixin:
 
 
 
-class ExtendMembershipView(UpdateMemberYearMixin, FormView):
+class ExtendMembershipView(MemberMixin, UpdateMemberYearMixin, FormView):
     template_name = "membership_file/extend_membership.html"
     form_class = ContinueMembershipForm
     success_url = reverse_lazy('membership_file/continue_success')
@@ -80,5 +80,5 @@ class ExtendMembershipView(UpdateMemberYearMixin, FormView):
         return super(ExtendMembershipView, self).form_valid(form)
 
 
-class ExtendMembershipSuccessView(UpdateMemberYearMixin, TemplateView):
+class ExtendMembershipSuccessView(MemberMixin, UpdateMemberYearMixin, TemplateView):
     template_name = "membership_file/extend_membership_successpage.html"

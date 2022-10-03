@@ -16,6 +16,7 @@ import activity_calendar.util as util
 from core.models import PresetImage
 from core.fields import MarkdownTextField
 from committees.utils import user_in_association_group
+from membership_file.models import Member
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -79,10 +80,13 @@ class Activity(models.Model):
 
     # The date at which the activity will become visible for all users
     published_date = models.DateTimeField(default=now_rounded)
+    is_public = models.BooleanField(default=True, help_text="If activity should be on public calendar")
 
     # Start and end times
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
+    full_day = models.BooleanField(default=False, help_text="Whether this event marks the entire day")
+    display_end_time = models.BooleanField(default=False, help_text="Whether the end time is displayed on the site")
 
     # Recurrence information (e.g. a weekly event)
     # This means we do not need to store (nor create!) recurring activities separately
@@ -110,15 +114,17 @@ class Activity(models.Model):
     # - Auto: Slots are created automatically. They are only actually created in the DB once a participant joins.
     #                                          Until that time they do look like real slots though (in the UI)
     # - Users: Slots can be created by users. Users can be the owner of at most max_slots_join_per_participant slots
-    SLOT_CREATION_STAFF = "CREATION_NONE"
+    SLOT_CREATION_STAFF = "CREATION_STAFF"
     SLOT_CREATION_AUTO = "CREATION_AUTO"
     SLOT_CREATION_USER = "CREATION_USER"
+    SLOT_CREATION_NONE = "CREATION_NONE"
     slot_creation = models.CharField(
         max_length=15,
         choices=[
-            (SLOT_CREATION_STAFF,   "Never/By Administrators"),
+            (SLOT_CREATION_STAFF,   "By Organisers"),
             (SLOT_CREATION_AUTO,   "Automatically"),
             (SLOT_CREATION_USER,   "By Users"),
+            (SLOT_CREATION_NONE,   "No signup"),
         ],
         default='CREATION_AUTO',
     )
@@ -531,6 +537,11 @@ class Activity(models.Model):
                 return True
         return False
 
+    @property
+    def feed_id(self):
+        """ Get a unique identifier to distinguish this activity in the feed """
+        return f'local_activity-name-{self.id}'
+
 
 class ActivityDuplicate(ModelBase):
     """
@@ -599,11 +610,11 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         # Define the fields that can be locally be overwritten
         copy_fields = [
             'title', 'description', 'promotion_image', 'location', 'max_participants', 'subscriptions_required',
-            'slot_creation', 'private_slot_locations']
+            'slot_creation', 'private_slot_locations', 'full_day']
         # Define fields that are instantly looked for in the parent_activity
         # If at any point in the future these must become customisable, one only has to move the field name to the
         # copy_fields attribute
-        link_fields = ['slots_image', 'subscriptions_required']
+        link_fields = ['slots_image', 'subscriptions_required', 'display_end_time']
 
     # Alternative start/end date of the activity. If left empty, matches the start/end time
     #   of this OCCURRENCE.
@@ -851,3 +862,33 @@ class OrganiserLink(models.Model):
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
     association_group = models.ForeignKey('committees.AssociationGroup', on_delete=models.CASCADE)
     archived = models.BooleanField(default=False)
+
+
+class Calendar(models.Model):
+    """ Symbolises a calendar with certain activities """
+    name = models.CharField(max_length=128, unique=True)
+    slug = models.SlugField(verbose_name='url string', help_text="The local url string", unique=True)
+    description = models.CharField(max_length=256)
+
+    activities = models.ManyToManyField(Activity, through="CalendarActivityLink")
+
+    def __str__(self):
+        return self.name
+
+
+class CalendarActivityLink(models.Model):
+    calendar = models.ForeignKey(Calendar, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.calendar} - {self.activity}'
+
+
+class MemberCalendarSettings(models.Model):
+    member = models.OneToOneField(Member, on_delete=models.CASCADE)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    use_birthday = models.BooleanField(default=False, verbose_name="Display my birthday in Knights birthday calendar")
+
+    def __str__(self):
+        return f'calendar settings for {self.member}: {self.use_birthday}'

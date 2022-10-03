@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.utils.timezone import localtime
 
 from .forms import ActivityAdminForm, ActivityMomentAdminForm
-from .models import Activity, ActivitySlot, Participant, ActivityMoment, OrganiserLink, CoreActivityGrouping
+from .models import Activity, ActivitySlot, Participant, ActivityMoment, OrganiserLink, CoreActivityGrouping, \
+    Calendar, CalendarActivityLink
 
 from core.admin import DisableModificationsAdminMixin, MarkdownImageInline, URLLinkInlineAdminMixin
 from utils.forms import RequestUserToFormModelAdminMixin
@@ -68,7 +69,7 @@ class ActivityAdmin(MarkdownImageInlineAdmin):
     is_recurring.boolean = True
 
     list_display = ('id', 'title', 'start_date', 'is_recurring', 'subscriptions_required', )
-    list_filter = ['subscriptions_required', 'start_date']
+    list_filter = ['subscriptions_required', 'start_date', 'is_public']
     list_display_links = ('id', 'title')
     date_hierarchy = 'start_date'
     search_fields = ['title']
@@ -104,8 +105,25 @@ class ActivityMomentAdmin(MarkdownImageInlineAdmin):
         return False
     activity_moment_has_changes.boolean = True
     activity_moment_has_changes.short_description = 'Is tweaked'
-    list_display = ["title", "recurrence_id", "local_start_date", "last_updated", "is_part_of_recurrence", activity_moment_has_changes]
+    list_display = ["title", "recurrence_id", "local_start_date", "last_updated", "full_day",
+                    "is_part_of_recurrence", activity_moment_has_changes]
 
+
+class CalendarActivityLinkInline(admin.TabularInline):
+    model = CalendarActivityLink
+    extra = 0
+
+
+@admin.register(Calendar)
+class CalendarAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'connected_activities')
+    list_display_links = ('id', 'name')
+
+
+    inlines = [CalendarActivityLinkInline]
+
+    def connected_activities(self, obj):
+        return obj.activities.count()
 
 
 class ParticipantInline(admin.TabularInline):
@@ -128,4 +146,4 @@ class ActivitySlotAdmin(admin.ModelAdmin):
     inlines = [ParticipantInline]
 
 admin.site.register(ActivitySlot, ActivitySlotAdmin)
-
+admin.site.register(CalendarActivityLink)
