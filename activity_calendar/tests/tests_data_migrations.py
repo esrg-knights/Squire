@@ -13,8 +13,8 @@ class ActivitySlotLinkToActivityMomentTest(MigratorTestCase):
         This tests whether old ActivitySlots are migrated properly through the data migration.
     """
 
-    migrate_from = ('activity_calendar', '0017_core_activity_groupings')
-    migrate_to = ('activity_calendar', '0018_activityslot_link_to_activitymoment')
+    migrate_from = ('activity_calendar', '0022_activity_display_end_time')
+    migrate_to = ('activity_calendar', '0023_activityslot_link_to_activitymoment')
 
     @suppress_warnings(logger_name="activity_calendar.migrations.0018_activityslot_link_to_activitymoment")
     def setUp(self):

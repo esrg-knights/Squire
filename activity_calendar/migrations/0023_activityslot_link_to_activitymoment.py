@@ -55,7 +55,7 @@ def backwards_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('activity_calendar', '0017_core_activity_groupings'),
+        ('activity_calendar', '0022_activity_display_end_time'),
     ]
 
     operations = [
