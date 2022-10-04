@@ -45,6 +45,8 @@ class TestActivityViewMixin:
         self.recurrence_id = datetime.datetime.fromisoformat(self.default_iso_dt)
         self.activity = Activity.objects.get(id=self.default_activity_id)
 
+        self.activity_moment, _ = ActivityMoment.objects.get_or_create(parent_activity_id=self.activity.id, recurrence_id=self.recurrence_id)
+
         self.base_url = reverse('activity_calendar:'+self.default_url_name, kwargs={
             'activity_id': self.default_activity_id,
             'recurrence_id': datetime.datetime.fromisoformat(self.default_iso_dt),
@@ -366,10 +368,7 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_normal_get_page_signed_up(self, mock_tz):
         # Add the user
-        slot = ActivitySlot.objects.get(
-            parent_activity_id=self.default_activity_id,
-            recurrence_id=self.recurrence_id,
-        )
+        slot = ActivitySlot.objects.get(parent_activitymoment=self.activity_moment)
         Participant.objects.create(
             activity_slot=slot,
             user=self.user,
@@ -388,12 +387,12 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         }, follow=True)
 
         self.assertRedirects(response, self.base_url) # Should redirect to prevent resending the post on page refresh
-        self.assertTrue(ActivityMoment(
+        self.assertTrue(ActivityMoment.objects.get(
             parent_activity_id=self.default_activity_id,
             recurrence_id=self.recurrence_id,
         ).get_user_subscriptions(self.user).exists())
 
-        self.assertTrue(ActivitySlot.objects.filter().exists())
+        self.assertTrue(ActivitySlot.objects.all().exists())
         msg = _("You have succesfully been added to '{activity_name}'").format(activity_name="Single")
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
 
@@ -403,24 +402,24 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         }, follow=True)
 
         self.assertRedirects(response, self.base_url) # Should redirect to prevent resending the post on page refresh
-        self.assertFalse(ActivityMoment(
+        self.assertFalse(ActivityMoment.objects.get(
             parent_activity_id=self.default_activity_id,
             recurrence_id=self.recurrence_id,
         ).get_user_subscriptions(self.user).exists())
 
-        self.assertTrue(ActivitySlot.objects.filter().exists())
+        self.assertTrue(ActivitySlot.objects.all().exists())
         msg = _("You have successfully been removed from '{activity_name}'").format(activity_name="Single")
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_invalid_post(self, mock_tz):
-        # Can not unsubscribe from an activity you are not regitered to.
+        # Can not unsubscribe from an activity you are not registered to.
         response = self.build_post_response({
             'sign_up': False,
         }, follow=True)
 
         self.assertRedirects(response, self.base_url) # Should redirect to prevent resending the post on page refresh
-        self.assertTrue(ActivitySlot.objects.filter().exists())
+        self.assertTrue(ActivitySlot.objects.all().exists())
         self.assertHasMessage(response,
                               level=messages.ERROR,
                               text=ActivitySimpleMomentView.error_messages['not-registered'])
@@ -577,10 +576,7 @@ class ActivitySlotViewTest(TestActivityViewMixin, TestCase):
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_normal_get_page_signed_up(self, mock_tz):
         # Add the user
-        slot = ActivitySlot.objects.filter(
-            parent_activity_id=self.default_activity_id,
-            recurrence_id=self.recurrence_id,
-        ).first()
+        slot = ActivitySlot.objects.filter(parent_activitymoment=self.activity_moment).first()
         Participant.objects.create(
             activity_slot=slot,
             user=self.user,
@@ -638,10 +634,7 @@ class ActivitySlotViewTest(TestActivityViewMixin, TestCase):
         self.activity.private_slot_locations = True
         self.activity.save()
 
-        slots = ActivitySlot.objects.filter(
-            parent_activity_id=self.default_activity_id,
-            recurrence_id=self.recurrence_id,
-        )
+        slots = ActivitySlot.objects.filter(parent_activitymoment=self.activity_moment)
         for slot in slots:
             slot.location = f"Secret Location #{slot.id}"
             slot.save()

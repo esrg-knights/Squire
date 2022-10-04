@@ -9,7 +9,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models import CharField, Q, Value
 from django.db.models.functions import Concat
 from django.urls import reverse
-from django.utils.html import escape
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from dynamic_preferences.admin import GlobalPreferenceAdmin
@@ -73,6 +73,32 @@ class EmptyFieldListFilter(admin.FieldListFilter): # pragma: no cover
 
 ###################################################
 
+class DisableModificationsAdminMixin:
+    """ Mixin that disables modifications for an (Inline) admin """
+    # Disable creation
+    def has_add_permission(self, request):
+        return False
+
+    # Disable editing
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    # Disable deletion
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+class URLLinkInlineAdminMixin:
+    """
+    Mixin that adds a url to the admin change page of an Inline object.
+    To use, add `"get_url"` to the Inline's `fields` and `readonly_fields`
+    """
+    def get_url(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        url = reverse(f"admin:{content_type.app_label}_{content_type.model}_change", args=[obj.id])
+        return format_html("<a href='{0}'>View Details</a>", url)
+    get_url.short_description = 'Details'
+
+###################################################
 
 class SquireUserAdmin(UserAdmin):
     list_filter = (
