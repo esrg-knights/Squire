@@ -74,6 +74,7 @@ class SynchFileToFolderForm(ModelForm):
 
         super(SynchFileToFolderForm, self).__init__(*args, **kwargs)
         self.instance.folder = self.folder
+        self.instance.connection = "NcS"
         self.fields["selected_file"].choices = [(file.name, file) for file in self.file_list]
 
     def save(self, commit=True):

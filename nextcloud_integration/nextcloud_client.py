@@ -112,8 +112,6 @@ class NextCloudClient(Client):
         if resource:
             path = resource.path
 
-        print(path)
-
         return super(NextCloudClient, self).exists(remote_path=path)
 
 
@@ -132,8 +130,6 @@ def construct_client():
         protocol='https',
         path=web_data['local_a'],
     )
-
-
 
 
 # Append OperationFailed operations with additional methods

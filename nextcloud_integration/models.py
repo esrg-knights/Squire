@@ -16,6 +16,9 @@ class NCFolder(models.Model):
                             max_length=64, blank=True, default=None)
     folder: NextCloudFolder = None  # Used to translate Nextcloud folder contents
 
+    # Define status for the link to Nextcloud
+    is_missing = models.BooleanField(default=False) # Whether the folder is non-existant on nextcloud
+
     def __init__(self, *args, **kwargs):
         super(NCFolder, self).__init__(*args, **kwargs)
         if self.id:
@@ -26,7 +29,7 @@ class NCFolder(models.Model):
             raise ValidationError("Either path or folder should be defined")
 
     def save(self, **kwargs):
-        if self.folder:
+        if self.folder and self.path == "":
             self.path = self.folder.path
 
         if self.slug is None:
@@ -55,8 +58,19 @@ class NCFile(models.Model):
     slug = models.SlugField()
     file: NextCloudFolder = None  # Used to translate Nextcloud folder contents
 
+    is_missing = models.BooleanField(default=False) # Whether the file is non-existant on nextcloud
+    connection = models.CharField(max_length=3, choices=[
+        ("NcS", "Synched through file on Nextcloud"),
+        ("SqU", "Uploaded through Squire")
+    ]) # Defines how the connection occured
+
+    def __init__(self, *args, **kwargs):
+        super(NCFile, self).__init__(*args, **kwargs)
+        if self.id:
+            self.file = NextCloudFile(path=self.path)
+
     def save(self, **kwargs):
-        if self.file:
+        if self.file and self.file_name == "":
             self.file_name = self.file.name
 
         if self.slug is None:
@@ -67,7 +81,7 @@ class NCFile(models.Model):
     def exists_on_nextcloud(self):
         """ Checks whether the folder exists on the nextcloud """
         client = construct_client()
-        return client.exists(self.folder)
+        return client.exists(self.file)
 
     def __str__(self):
         return f"File: {self.display_name}"

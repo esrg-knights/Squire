@@ -8,26 +8,46 @@
         <p class="mb-0">
             {{ folder.description }}
         </p>
+        {% if folder.is_missing %}
+            <div class="text-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Folder missing on disk
+                </div>
+        {% endif %}
     </div>
 
-    <ul class="list-group list-group-flush">
+    <ul class="list-group list-group-flush {% if folder.is_missing %}text-muted{% endif %}">
         {% for file in folder.files.all %}
             <li class="list-group-item">
                 <div class="row">
                     <div class="col-4">
-                        <span class="">{{ file.display_name }}</span><br>
+                        <span class="h5">{{ file.display_name }}</span>
+                        <br>
                         <div style="margin-top: -0.5em;" class="font-weight-lighter small">
-                            <i class="{{ file.get_file_type.icon_class }}"></i>
-                            {{ file.file_name }}
-                            - {{ file.get_file_type.name }}
+                            {% if file.is_missing %}
+                                <div class="text-danger">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    File missing
+                                </div>
+                            {% else %}
+                                <i class="{{ file.get_file_type.icon_class }}"></i>
+                                {{ file.file_name }}
+                                - {{ file.get_file_type.name }}
+                            {% endif %}
                         </div>
                     </div>
                     <div class="col-6">
                         {{ file.description }}
                     </div>
                     <div class="col-2">
+                        {% if file.is_missing or folder.is_missing %}
+                            <a class="btn btn-secondary text-dark">
+                                <i class="fas fa-download"></i> Missing
+                            </a>
+                        {% else %}
                         <a class="btn btn-primary"
                            href="{{ file.get_absolute_url }}"><i class="fas fa-download"></i> Download</a>
+                        {% endif %}
                     </div>
                 </div>
             </li>

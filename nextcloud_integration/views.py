@@ -1,4 +1,5 @@
-from django.http.response import HttpResponse
+from django.http.response import HttpResponse, HttpResponseRedirect
+from django.contrib.messages import error as error_msg
 from django.template.response import TemplateResponse
 from django.urls import reverse_lazy
 from django.views import View
@@ -8,6 +9,7 @@ from django.views.generic.edit import CreateView
 from django.shortcuts import get_object_or_404
 
 from requests.exceptions import ConnectionError
+from easywebdav import OperationFailed
 
 from nextcloud_integration.nextcloud_client import construct_client, OperationFailed
 from nextcloud_integration.forms import *
@@ -17,17 +19,34 @@ from nextcloud_integration.models import NCFolder, NCFile
 class NextcloudConnectionViewMixin:
     """ Mixin that catches ConnectionErrors from the requests module and throws a 424 (Failed Dependency) instead """
     failed_connection_template = "nextcloud_integration/failed_nextcloud_link.html"
+    _client = None
 
     def dispatch(self, request, *args, **kwargs):
         try:
             return super(NextcloudConnectionViewMixin, self).dispatch(request, *args, **kwargs)
-        except ConnectionError:
-            return TemplateResponse(
-                request,
-                self.failed_connection_template,
-                context={},
-                status=424 # Failed dependency
-            )
+        except ConnectionError as error:
+            return self.nextcloud_connection_failed(error)
+        except OperationFailed as error:
+            return self.nextcloud_operation_failed(error)
+
+    def nextcloud_connection_failed(self, error):
+        """ Runs code to handle a fail in the nextcloud connection. Should return a HttpResponse """
+        return TemplateResponse(
+            self.request,
+            self.failed_connection_template,
+            context={"error": error},
+            status=424 # Failed dependency
+        )
+
+    def nextcloud_operation_failed(self, error):
+        """ Runs code to handle a fail in the nextcloud connection. Should return a HttpResponse """
+        return self.nextcloud_connection_failed(None)
+
+    @property
+    def client(self):
+        if self._client is None:
+            self._client = construct_client()
+        return self._client
 
 
 class FileBrowserView(NextcloudConnectionViewMixin, ListView):
@@ -120,9 +139,6 @@ class SynchFileToFolderView(NextcloudConnectionViewMixin, FolderMixin, FormView)
         return super(SynchFileToFolderView, self).form_valid(form)
 
     def form_invalid(self, form):
-        print("Invalid")
-        print(form.errors)
-        print(self.request.POST)
         return super(SynchFileToFolderView, self).form_invalid(form)
 
     def get_success_url(self):
@@ -142,18 +158,43 @@ class DownloadFileview(NextcloudConnectionViewMixin, SingleObjectMixin, View):
     context_object_name = "file"
 
     def get(self, request, *args, **kwargs):
-        file = get_object_or_404(
+        self.file = get_object_or_404(
             NCFile,
             folder__slug = self.kwargs.get('folder_slug'),
             slug = self.kwargs.get('file_slug'),
         )
-        file_data = self.get_file(file)
+        file_data = self.get_file(self.file)
 
         response = HttpResponse(file_data, content_type='application/vnd.ms-excel')
-        response['Content-Disposition'] = f'attachment; filename="{file.file_name}"'
+        response['Content-Disposition'] = f'attachment; filename="{self.file.file_name}"'
 
         return response
 
     def get_file(self, file):
-        client = construct_client()
-        return client.download(file)
+        return self.client.download(file)
+
+    def nextcloud_operation_failed(self, error: OperationFailed):
+        msg = None
+        if error.actual_code == 404:
+            if not self.client.exists(self.file.folder.folder):
+                # Set folder
+                self.file.folder.is_missing = True
+                self.file.folder.save(update_fields=["is_missing"])
+                msg = "The folder could not be retrieved as it has been moved or renamed. " \
+                      "It is unknown when it will be fixed as it needs to be addressed manually."
+            elif not self.client.exists(self.file.file):
+                self.file.is_missing = True
+                self.file.save(update_fields=["is_missing"])
+                msg = "The file could not be retrieved as it has been moved or renamed. " \
+                      "It is unknown when it will be fixed as it needs to be addressed manually."
+        if msg is None:
+            msg = "Something unexpected occurred. Please inform the UUPS is this keeps occuring."
+        error_msg(self.request, msg)
+
+        return HttpResponseRedirect(redirect_to=reverse_lazy(
+            "nextcloud:folder_view",
+            kwargs={
+                'folder_slug': self.file.folder.slug,
+            }
+        ))
+
