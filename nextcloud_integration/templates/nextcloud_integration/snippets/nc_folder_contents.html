@@ -1,0 +1,42 @@
+{% load nextcloud_tags %}
+
+<div class="card">
+    <div class="card-header">
+        <h4 class="mb-0">
+            {{ folder.display_name }}
+        </h4>
+        <p class="mb-0">
+            {{ folder.description }}
+        </p>
+    </div>
+
+    <ul class="list-group list-group-flush">
+        {% for file in folder.files.all %}
+            <li class="list-group-item">
+                <div class="row">
+                    <div class="col-4">
+                        <span class="">{{ file.display_name }}</span><br>
+                        <div style="margin-top: -0.5em;" class="font-weight-lighter small">
+                            <i class="{{ file.get_file_type.icon_class }}"></i>
+                            {{ file.file_name }}
+                            - {{ file.get_file_type.name }}
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        {{ file.description }}
+                    </div>
+                    <div class="col-2">
+                        <a class="btn btn-primary"
+                           href="{{ file.get_absolute_url }}"><i class="fas fa-download"></i> Download</a>
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+        {% if folder|has_edit_access:user %}
+            <li class="list-group-item">
+                <a class="btn btn-primary" href="{% url "nextcloud:synch_file" folder_slug=folder.slug %}">Sync file</a>
+                <a class="btn btn-secondary">Upload file</a>
+            </li>
+        {% endif %}
+    </ul>
+</div>

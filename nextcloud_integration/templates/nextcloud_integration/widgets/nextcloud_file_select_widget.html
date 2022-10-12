@@ -1,0 +1,42 @@
+<div class="table-responsive">
+<table class="table">
+    <thead>
+    <tr>
+        <th scope="col"></th>
+        <th scope="col">Filename</th>
+        <th scope="col">Type</th>
+        <th scope="col">Last edited</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for group, options, index in widget.optgroups %}
+        {% for option in options %}
+            <tr>
+                <td>
+                    <div class="custom-control custom-radio">
+                        <input type="radio" name="{{ option.name }}" class="custom-control-input"
+                            {% if option.value != None %} value="{{ option.value|stringformat:'s' }}"{% endif %}
+                            {% include "django/forms/widgets/attrs.html" with widget=option %}>
+                        <label class="custom-control-label" for="{{ option.attrs.id }}"></label>
+                    </div>
+                </td>
+            <td>
+                <label for="{{ option.attrs.id }}">{{ option.label.name }}</label>
+            </td>
+            <td>
+                <label for="{{ option.attrs.id }}">
+                <i class="{{ option.label.file_type.icon_class }}"></i>
+                {{ option.label.file_type.name }}
+                </label>
+            </td>
+            <td>
+                <label for="{{ option.attrs.id }}">
+                {{ option.label.last_modified }}
+                </label>
+            </td>
+
+            </tr>
+        {% endfor %}{% endfor %}
+    </tbody>
+</table>
+</div>

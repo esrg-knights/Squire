@@ -1,0 +1,43 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}
+    Squire - Nextcloud
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+
+
+
+    {% for folder in folders %}
+    <div class="row">
+        <div class="col-4">
+            {{ folder.display_name }}
+        </div>
+        <div class="col-6">
+            {{ folder.description }}
+        </div>
+        <div class="col-2">
+            <a class="btn btn-primary"
+            href="{{ folder.get_absolute_url }}">Open</a>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div>
+        <a class="btn btn-primary"
+           href="{% url "nextcloud:add_folder" %}"
+        >
+            Add
+        </a>
+    </div>
+
+
+
+
+{% endblock %}

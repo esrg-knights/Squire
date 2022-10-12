@@ -20,6 +20,8 @@ class NextCloudFile(NextCloudResource):
     def __str__(self):
         return f"File {self.name} of {self.content_type}"
 
+    def file_type(self):
+        return get_file_type(self.name)
 
 
 class NextCloudFolder(NextCloudResource):
@@ -31,3 +33,52 @@ class NextCloudFolder(NextCloudResource):
 
     def __str__(self):
         return f'Folder: {self.name}'
+
+
+class TextFileType:
+    extension = ['txt', 'md']
+    name = "Textfile"
+    icon_class = "fas fa-file-alt"
+
+
+class WordFileType:
+    extension = ['doc', 'docx', 'odt']
+    name = "Word file"
+    icon_class = "fas fa-file-word"
+
+
+class PDFFileType:
+    extension = ['pdf',]
+    name = "PDF file"
+    icon_class = "fas fa-file-pdf"
+
+
+class ImageFileType:
+    extension = ['jpg', 'jpeg', 'png', 'gif']
+    name = "Image file"
+    icon_class = "fas fa-file-image"
+
+
+class CompressedFileType:
+    extension = ['zip', '7zip', 'rar']
+    name = "Compressed files"
+    icon_class = "fas fa-file-archive"
+
+
+file_types = [TextFileType, WordFileType, PDFFileType, ImageFileType]
+
+
+def get_file_type(file_name):
+    extention = file_name.split('.')[-1]
+
+    file_type_class = None
+
+    for file_type in file_types:
+        if extention in file_type.extension:
+            file_type_class = file_type
+            break
+
+    if file_type_class:
+        return file_type_class
+    else:
+        return None

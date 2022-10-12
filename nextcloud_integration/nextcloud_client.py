@@ -1,8 +1,5 @@
-import requests
-from numbers import Number
 from django.conf import settings
 import xml.etree.cElementTree as xml
-from http.client import responses as HTTP_CODES
 from urllib.parse import urlparse
 from django.utils.text import slugify
 
@@ -58,16 +55,23 @@ def construct_nextcloud_resource(dav_node):
 
 
 class NextCloudClient(Client):
-    def download(self, file: NextCloudFile):
-        local_file_path = '{0}\\{1}\\{2}'.format(
-            settings.MEDIA_ROOT,
-            'NextCloud',
-            file.name,
-        )
-
-        super.download(file.path, local_file_path)
-
-        return local_file_path
+    def download(self, file: NextCloudFile, store_locally=False):
+        """
+        Downloads the indicated file from Nextcloud
+        :param file: The NextCloudFile to be downloaded
+        :param store_locally: Whether the file should be stored on local disk (True) or not (False)
+        :return:
+        """
+        if store_locally:
+            local_file_path = '{0}\\{1}\\{2}'.format(
+                settings.MEDIA_ROOT,
+                'NextCloud',
+                file.name,
+            )
+            super.download(file.path, local_file_path)
+            return local_file_path
+        else:
+            return self._send('GET', file.path, 200, stream=True)
 
     def mkdir(self, folder):
         if isinstance(folder, NextCloudFolder):
@@ -95,8 +99,10 @@ class NextCloudClient(Client):
         return list(filter(lambda r: r.name != remote_path, resources))
 
     def mv(self, file:NextCloudFile, to_folder: NextCloudFolder):
-        headers = {'DESTINATION': self._get_url(to_folder.path).strip('/')+'/'+file.path.split('/')[-1]}
+        new_path = self._get_url(to_folder.path).strip('/')+'/'+file.path.split('/')[-1]
+        headers = {'DESTINATION': new_path}
         self._send('MOVE', file.path, 201, headers=headers)
+        file.path = new_path
 
     def exists(self, resource:NextCloudResource=None, path:str=None):
         """ Determines whether a certain resource or path exists on the nextcloud """
