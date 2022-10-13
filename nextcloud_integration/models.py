@@ -32,7 +32,7 @@ class NCFolder(models.Model):
         if self.folder and self.path == "":
             self.path = self.folder.path
 
-        if self.slug is None:
+        if self.slug is None or self.slug == "":
             self.slug = slugify(self.display_name)
 
         return super(NCFolder, self).save(**kwargs)
@@ -55,7 +55,7 @@ class NCFile(models.Model):
     description = models.CharField(max_length=256, blank=True)
     file_name = models.CharField(help_text="The file name", max_length=64, blank=True, default=None)
     folder = models.ForeignKey(NCFolder, on_delete=models.CASCADE, related_name="files")
-    slug = models.SlugField()
+    slug = models.SlugField(blank=True)
     file: NextCloudFolder = None  # Used to translate Nextcloud folder contents
 
     is_missing = models.BooleanField(default=False) # Whether the file is non-existant on nextcloud
@@ -73,10 +73,14 @@ class NCFile(models.Model):
         if self.file and self.file_name == "":
             self.file_name = self.file.name
 
-        if self.slug is None:
-            self.slug = slugify(self.file_name)
+        if self.slug is None or self.slug == "":
+            self.slug = slugify(self.file_name.replace('.', '_'))
 
         return super(NCFile, self).save(**kwargs)
+
+    def clean(self):
+        if self.file is None and (self.file_name is None or self.file_name == ""):
+            raise ValidationError("Either file or filename should be defined")
 
     def exists_on_nextcloud(self):
         """ Checks whether the folder exists on the nextcloud """

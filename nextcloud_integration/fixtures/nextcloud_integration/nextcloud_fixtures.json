@@ -1,0 +1,24 @@
+[
+    {
+        "model": "nextcloud_integration.ncfolder",
+        "pk": 1,
+        "fields": {
+            "display_name": "Initial folder",
+            "slug": "initial_folder",
+            "path": "/TestFolder/",
+            "is_missing": false
+        }
+    },
+    {
+        "model": "nextcloud_integration.ncfile",
+        "pk": 1,
+        "fields": {
+            "display_name": "Initial file",
+            "slug": "initial_file",
+            "file_name": "testfile.md",
+            "folder": 1,
+            "is_missing": false,
+            "connection": "NcS"
+        }
+    }
+]

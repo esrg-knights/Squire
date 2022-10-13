@@ -16,6 +16,9 @@ from nextcloud_integration.forms import *
 from nextcloud_integration.models import NCFolder, NCFile
 
 
+__all__ = ["FolderContentView", "FileBrowserView", "FolderCreateView", "SynchFileToFolderView", "DownloadFileview"]
+
+
 class NextcloudConnectionViewMixin:
     """ Mixin that catches ConnectionErrors from the requests module and throws a 424 (Failed Dependency) instead """
     failed_connection_template = "nextcloud_integration/failed_nextcloud_link.html"
@@ -69,6 +72,7 @@ class FileBrowserView(NextcloudConnectionViewMixin, ListView):
         return construct_client().ls(remote_path=self.kwargs.get('path', ''))
 
 class TestFormView(NextcloudConnectionViewMixin, FormView):
+    # Todo: Redact
     form_class = FileMoveForm
     template_name = "nextcloud_integration/form.html"
 

@@ -1,5 +1,5 @@
 
-
+__all__ = ["NextCloudFile", "NextCloudFolder"]
 
 class NextCloudResource(object):
     def __init__(self, path, name=None):
@@ -35,6 +35,11 @@ class NextCloudFolder(NextCloudResource):
         return f'Folder: {self.name}'
 
 
+class AbstractFileType:
+    name = "File"
+    icon_class = "fas fa-file"
+
+
 class TextFileType:
     extension = ['txt', 'md']
     name = "Textfile"
@@ -54,7 +59,7 @@ class PDFFileType:
 
 
 class ImageFileType:
-    extension = ['jpg', 'jpeg', 'png', 'gif']
+    extension = ['jpg', 'jpeg', 'png', 'gif', 'bmp']
     name = "Image file"
     icon_class = "fas fa-file-image"
 
@@ -65,7 +70,26 @@ class CompressedFileType:
     icon_class = "fas fa-file-archive"
 
 
-file_types = [TextFileType, WordFileType, PDFFileType, ImageFileType]
+class PowerpointFileType:
+    extension = ['ppt', 'pptx', 'odp']
+    name = "Powerpoint file"
+    icon_class = "fas fa-file-powerpoint"
+
+
+class ExcelFileType:
+    extension = ['odx', 'xls', 'xlsx', 'csv']
+    name = "Excel file"
+    icon_class = "fas fa-file-excel"
+
+
+class CreativeFileType:
+    extension = ['psd', 'indd', 'psb', 'ai', 'svg', 'eps']
+    name = "Creative file"
+    icon_class = "fas fa-file-image"
+
+
+file_types = [TextFileType, WordFileType, PDFFileType, ImageFileType, CompressedFileType, PowerpointFileType,
+              ExcelFileType, CreativeFileType]
 
 
 def get_file_type(file_name):
@@ -81,4 +105,4 @@ def get_file_type(file_name):
     if file_type_class:
         return file_type_class
     else:
-        return None
+        return AbstractFileType
