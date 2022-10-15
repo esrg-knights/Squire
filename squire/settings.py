@@ -459,3 +459,12 @@ PWA_SERVICE_WORKER_PATH =  os.path.join(BASE_DIR, 'core', 'static', 'js', 'servi
 PWA_APP_DIR = 'ltr'
 PWA_APP_LANG = 'en-US'
 
+try:
+    from .local_settings import *
+except ImportError:
+    try:
+        util.create_local_settings(
+            os.path.join(BASE_DIR, 'squire', 'local_settings.py')
+        )
+    except FileExistsError:
+        pass

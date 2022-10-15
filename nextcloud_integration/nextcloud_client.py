@@ -1,6 +1,7 @@
 from django.conf import settings
 import xml.etree.cElementTree as xml
 from urllib.parse import urlparse
+from django.conf import settings
 from django.utils.text import slugify
 
 from easywebdav import Client, OperationFailed
@@ -24,37 +25,19 @@ https://github.com/amnong/easywebdav
 """
 
 
-nextcloud_path = "/nextcloud/remote.php/dav/files/squire/"
-
-
-def get_dav_prop(elem, name, default=None):
-    """ Obtain data for the given property or return default if it is not present """
-    child = elem.find('.//{DAV:}' + name)
-    return default if child is None or child.text is None else child.text
-
-
-def construct_nextcloud_resource(dav_node):
-    """ Factory method for the given method """
-    path=get_dav_prop(dav_node, 'href')[len(nextcloud_path):]
-
-    # Get the name
-    name = path[max(0, path[:-1].rfind('/')):].replace('%20', ' ').strip('/')
-
-    if get_dav_prop(dav_node, 'getcontentlength') is None:
-        return NextCloudFolder(
-            path=path,
-            name=name,
-        )
-    else:
-        return NextCloudFile(
-            path=path,
-            name=name,
-            last_modified=get_dav_prop(dav_node, 'getlastmodified', ''),
-            content_type=get_dav_prop(dav_node, 'getcontenttype', ''),
-        )
-
-
 class NextCloudClient(Client):
+    dav_path = "remote.php/dav/files/"
+
+    def __init__(self, *args, path=None, **kwargs):
+        self.site_path = path
+        path = "{0}/{1}/{2}".format(
+            self.site_path.strip('/'),
+            self.dav_path.strip('/'),
+            kwargs.get('username', ""))
+
+        print(path)
+        super(NextCloudClient, self).__init__(*args, path=path, **kwargs)
+
     def download(self, file: NextCloudFile, store_locally=False):
         """
         Downloads the indicated file from Nextcloud
@@ -81,8 +64,6 @@ class NextCloudClient(Client):
             folder = NextCloudFolder(folder)
         return folder
 
-
-
     def ls(self, remote_path=''):
         headers = {'Depth': '1'}
         response = self._send('PROPFIND', remote_path, (207, 301), headers=headers)
@@ -94,7 +75,7 @@ class NextCloudClient(Client):
 
         tree = xml.fromstring(response.content)
         # The bit below is adjusted to take the new constructs into account
-        resources = [construct_nextcloud_resource(dav_node) for dav_node in tree.findall('{DAV:}response')]
+        resources = [self.construct_nextcloud_resource(dav_node) for dav_node in tree.findall('{DAV:}response')]
         # It also returns the folder itself, which is redundant, so remove it from the results
         return list(filter(lambda r: r.name != remote_path, resources))
 
@@ -114,22 +95,54 @@ class NextCloudClient(Client):
 
         return super(NextCloudClient, self).exists(remote_path=path)
 
+    def _get_dav_prop(elem, name, default=None):
+        """ Obtain data for the given property or return default if it is not present """
+        child = elem.find('.//{DAV:}' + name)
+        return default if child is None or child.text is None else child.text
+
+    def construct_nextcloud_resource(self, dav_node):
+        """ Factory method for the given method """
+        path=self._get_dav_prop(dav_node, 'href')[len(f"/{self.site_path}"):]
+
+        # Get the name
+        name = path[max(0, path[:-1].rfind('/')):].replace('%20', ' ').strip('/')
+
+        if self._get_dav_prop(dav_node, 'getcontentlength') is None:
+            return NextCloudFolder(
+                path=path,
+                name=name,
+            )
+        else:
+            return NextCloudFile(
+                path=path,
+                name=name,
+                last_modified=self._get_dav_prop(dav_node, 'getlastmodified', ''),
+                content_type=self._get_dav_prop(dav_node, 'getcontenttype', ''),
+            )
+
+
+class ClientNotImplemented(Exception):
+    def __str__(self):
+        return "Client is not active, as not all neccessary attributes are set correctly. Make sure that " \
+               "the following settings are defined in your settings or local_settings file: " \
+               "NEXTCLOUD_HOST, NEXTCLOUD_USERNAME, and NEXTCLOUD_PASSWORD"
 
 
 def construct_client():
-    web_data = {
-        'website': 'beta.kotkt.nl',
-        'local_a': 'nextcloud/remote.php/dav/files/squire',
-        'username': 'squire',
-        'password':  'vENRJ87ksiXU5Rj',
-    }
-    return NextCloudClient(
-        host=web_data['website'],
-        username=web_data['username'],
-        password=web_data['password'],
-        protocol='https',
-        path=web_data['local_a'],
-    )
+    try:
+        host = settings.NEXTCLOUD_HOST
+        username = settings.NEXTCLOUD_USERNAME
+        password = settings.NEXTCLOUD_PASSWORD
+    except AttributeError:
+        raise ClientNotImplemented()
+    else:
+        return NextCloudClient(
+            host=host,
+            username=username,
+            password=password,
+            protocol='https',
+            path=getattr(settings, "NEXTCLOUD_URL", ""),  # Local url is optional
+        )
 
 
 # Append OperationFailed operations with additional methods
