@@ -19,6 +19,11 @@ class NCFolder(models.Model):
     # Define status for the link to Nextcloud
     is_missing = models.BooleanField(default=False) # Whether the folder is non-existant on nextcloud
 
+    # Access settings
+    requires_membership = models.BooleanField(default=True)
+    on_overview_page = models.BooleanField(default=True, help_text="Whether this folder is displayed on the"
+                                                                   "association download page")
+
     def __init__(self, *args, **kwargs):
         super(NCFolder, self).__init__(*args, **kwargs)
         if self.id:

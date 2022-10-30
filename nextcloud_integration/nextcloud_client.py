@@ -95,7 +95,7 @@ class NextCloudClient(Client):
 
         return super(NextCloudClient, self).exists(remote_path=path)
 
-    def _get_dav_prop(elem, name, default=None):
+    def _get_dav_prop(self, elem, name, default=None):
         """ Obtain data for the given property or return default if it is not present """
         child = elem.find('.//{DAV:}' + name)
         return default if child is None or child.text is None else child.text

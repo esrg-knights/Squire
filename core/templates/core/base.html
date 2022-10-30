@@ -85,6 +85,9 @@
 							<a class="nav-link" href="{% url 'committees:home' %}">Committees</a>
 						</li>
 					{% endif %}
+                    <li>
+                        <a class="nav-link" href="{% url 'nextcloud:site_downloads' %}">Downloads</a>
+                    </li>
 					{% if global_preferences.newsletter__share_link and user.is_authenticated %}
 						<li>
 							<a class="nav-link" href="{% url 'core:newsletters' %}">Newsletter</a>

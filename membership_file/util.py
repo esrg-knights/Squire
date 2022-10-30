@@ -7,6 +7,11 @@ from django.shortcuts import resolve_url
 from functools import wraps
 
 
+def user_is_current_member(user):
+    member = get_member_from_user(user)
+    return not (member is None or not member.is_considered_member())
+
+
 def get_member_from_user(user):
     """
     Retrieves the member associated with this user (if any)

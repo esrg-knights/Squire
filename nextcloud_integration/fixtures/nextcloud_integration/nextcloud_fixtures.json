@@ -6,7 +6,33 @@
             "display_name": "Initial folder",
             "slug": "initial_folder",
             "path": "/TestFolder/",
-            "is_missing": false
+            "is_missing": false,
+            "on_overview_page": true,
+            "requires_membership": false
+        }
+    },
+    {
+        "model": "nextcloud_integration.ncfolder",
+        "pk": 2,
+        "fields": {
+            "display_name": "Member-only-folder",
+            "slug": "members_only",
+            "path": "/private/",
+            "is_missing": false,
+            "on_overview_page": true,
+            "requires_membership": true
+        }
+    },
+    {
+        "model": "nextcloud_integration.ncfolder",
+        "pk": 3,
+        "fields": {
+            "display_name": "Non overview folder",
+            "slug": "non-overview",
+            "path": "/test2/",
+            "is_missing": false,
+            "on_overview_page": false,
+            "requires_membership": false
         }
     },
     {
@@ -17,6 +43,42 @@
             "slug": "initial_file",
             "file_name": "testfile.md",
             "folder": 1,
+            "is_missing": false,
+            "connection": "NcS"
+        }
+    },
+    {
+        "model": "nextcloud_integration.ncfile",
+        "pk": 2,
+        "fields": {
+            "display_name": "Secondary file",
+            "slug": "second_file",
+            "file_name": "otherfile.md",
+            "folder": 1,
+            "is_missing": false,
+            "connection": "NcS"
+        }
+    },
+    {
+        "model": "nextcloud_integration.ncfile",
+        "pk": 3,
+        "fields": {
+            "display_name": "Private file",
+            "slug": "private",
+            "file_name": "foryoureyesonly.avi",
+            "folder": 2,
+            "is_missing": false,
+            "connection": "NcS"
+        }
+    },
+    {
+        "model": "nextcloud_integration.ncfile",
+        "pk": 4,
+        "fields": {
+            "display_name": "Not openly shared file",
+            "slug": "not_openly_shared",
+            "file_name": "quoties.docx",
+            "folder": 3,
             "is_missing": false,
             "connection": "NcS"
         }

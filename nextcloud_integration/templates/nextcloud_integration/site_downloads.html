@@ -1,0 +1,27 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}
+    Squire - Nextcloud - {{ folder.display_name }}
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    <h2>Downloads</h2>
+    <p>
+        Below are all files availlable for download.
+    </p>
+    {% for alert in unique_messages %}
+        {% include "snippets/unique_alerts.html" with message=alert %}
+    {% endfor %}
+
+    {% for folder in folders %}
+        <div class="mb-4">
+            {% include "nextcloud_integration/snippets/nc_folder_contents.html" with folder=folder %}
+        </div>
+    {% endfor %}
+{% endblock %}

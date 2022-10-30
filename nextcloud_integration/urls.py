@@ -16,5 +16,6 @@ urlpatterns = [
             path('file/<slug:file_slug>', views.DownloadFileview.as_view(), name='file_dl'),
         ])),
     ])),
+    path('downloads/', views.SiteDownloadView.as_view(), name='site_downloads')
 
 ]

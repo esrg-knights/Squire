@@ -11,6 +11,8 @@ from django.shortcuts import get_object_or_404
 from requests.exceptions import ConnectionError
 from easywebdav import OperationFailed
 
+from membership_file.util import user_is_current_member
+
 from nextcloud_integration.nextcloud_client import construct_client, OperationFailed
 from nextcloud_integration.forms import *
 from nextcloud_integration.models import NCFolder, NCFile
@@ -102,6 +104,40 @@ class FolderView(NextcloudConnectionViewMixin, TemplateView):
         else:
             context['folders'] = NCFolder.objects.all()
 
+        return context
+
+
+class SiteDownloadView(ListView):
+    template_name = "nextcloud_integration/site_downloads.html"
+    model = NCFolder
+    context_object_name = "folders"
+
+    def get_queryset(self):
+        queryset = super(SiteDownloadView, self).get_queryset()
+        queryset = queryset.filter(on_overview_page=True)
+
+        if not user_is_current_member(self.request.user):
+            queryset = queryset.filter(requires_membership=False)
+
+        return queryset
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(SiteDownloadView, self).get_context_data(*args, **kwargs)
+        unique_messages = []
+        if not self.request.user.is_authenticated:
+            unique_messages.append({
+                'msg_text': "You are currently not logged in. Not all files might be availlable to you.",
+                'msg_type': "warning",
+                'btn_text': "Log in!",
+                'btn_url': reverse_lazy('core:user_accounts/login'),
+            })
+        elif not user_is_current_member(self.request.user):
+            unique_messages.append({
+                'msg_text': "You are currently not a member. Not all files might be availlable to you.",
+                'msg_type': "warning",
+            })
+
+        context["unique_messages"] = unique_messages
         return context
 
 
