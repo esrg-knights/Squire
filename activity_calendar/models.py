@@ -134,7 +134,7 @@ class Activity(models.Model):
     subscriptions_close = models.DurationField(default=timezone.timedelta(hours=2))
 
     @property
-    def image_url(self):
+    def slots_image_url(self):
         if self.slots_image is None:
             return f'{settings.STATIC_URL}images/default_logo.png'
         return self.slots_image.image.url
@@ -614,7 +614,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         # Define fields that are instantly looked for in the parent_activity
         # If at any point in the future these must become customisable, one only has to move the field name to the
         # copy_fields attribute
-        link_fields = ['slots_image', 'subscriptions_required', 'display_end_time']
+        link_fields = ['slots_image_url', 'subscriptions_required', 'display_end_time']
 
     # Alternative start/end date of the activity. If left empty, matches the start/end time
     #   of this OCCURRENCE.
@@ -785,7 +785,7 @@ class ActivitySlot(models.Model):
     @property
     def image_url(self):
         if self.image is None:
-            return self.parent_activitymoment.slots_image
+            return self.parent_activitymoment.slots_image_url
         return self.image.image.url
 
     def get_subscribed_users(self):

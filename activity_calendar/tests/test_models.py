@@ -10,6 +10,8 @@ from django.utils import timezone
 from unittest.mock import patch
 from recurrence import deserialize as deserialize_recurrence_test
 
+from core.models import PresetImage
+
 from . import mock_now
 
 from activity_calendar.models import Activity, ActivitySlot, Participant, ActivityMoment, MemberCalendarSettings
@@ -18,19 +20,41 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 # Tests model properties related to fetching participants, slots, etc.
-class ModelMethodsTest(TestCase):
+class SlotImageTest(TestCase):
     fixtures = ['test_users.json', 'test_activity_methods']
 
     def setUp(self):
-        self.activity = Activity.objects.get(id=2)
+        self.preset_image = PresetImage.objects.get(id=2)
 
-    # Should provide the correct url if the activity has an image, or the default image if no image is given
-    def test_image_url(self):
-        self.assertEqual(self.activity.image_url, f"{settings.MEDIA_URL}images/presets/rpg.jpg")
+    def test_activity_image_url(self):
+        """ Slot images for Activities have a default, but can be overridden """
+        activity = Activity.objects.all().first()
+        activity.slots_image = self.preset_image
+        self.assertEqual(activity.slots_image_url, f"{settings.MEDIA_URL}images/presets/rpg.jpg")
 
-        self.activity.slots_image = None
-        self.assertEqual(self.activity.image_url, f"{settings.STATIC_URL}images/default_logo.png")
+        # Default image
+        activity.slots_image = None
+        self.assertEqual(activity.slots_image_url, f"{settings.STATIC_URL}images/default_logo.png")
 
+    def test_activitymoment_image_url(self):
+        """ ActivityMoments inherit their slot image from their parent activity """
+        activitymoment = ActivityMoment.objects.all().first()
+        self.assertEqual(activitymoment.slots_image_url, activitymoment.parent_activity.slots_image_url)
+
+    def test_activityslot_image_url(self):
+        """ ActivitySlots inherit their slot image from their parent activitymoment, unless they've set their own """
+        activityslot = ActivitySlot.objects.all().first()
+        # Use own image when set, regardless of parent value
+        activityslot.image = self.preset_image
+        activityslot.parent_activitymoment.parent_activity.slots_image = None
+        self.assertEqual(activityslot.image_url, f"{settings.MEDIA_URL}images/presets/rpg.jpg")
+
+        activityslot.parent_activitymoment.parent_activity.slots_image = PresetImage.objects.get(id=1)
+        self.assertEqual(activityslot.image_url, f"{settings.MEDIA_URL}images/presets/rpg.jpg")
+
+        # Default to parent's image if none is set
+        activityslot.image = None
+        self.assertEqual(activityslot.image_url, activityslot.parent_activitymoment.parent_activity.slots_image_url)
 
 class ModelMethodsDSTDependentTests(TestCase):
     """
@@ -854,7 +878,7 @@ class ActivityMomentTestCase(TestCase):
 
         self.assertEqual(moment.title, moment.parent_activity.title)
         self.assertEqual(moment.description, moment.parent_activity.description)
-        self.assertEqual(moment.slots_image, moment.parent_activity.slots_image)
+        self.assertEqual(moment.slots_image_url, moment.parent_activity.slots_image_url)
         self.assertEqual(moment.location, moment.parent_activity.location)
         self.assertEqual(moment.max_participants, moment.parent_activity.max_participants)
 

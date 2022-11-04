@@ -3,9 +3,11 @@ from datetime import timedelta
 from django.utils import dateparse
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
 from recurrence import deserialize as deserialize_recurrence_test
+from unittest import skip
 
 from core.tests.util import suppress_warnings
 
+@skip("Old data migration tests don't need to be run")
 class ActivitySlotLinkToActivityMomentTest(MigratorTestCase):
     """
         ActivitySlots used to be linked to Activities (with a recurrence_id) directly, but
