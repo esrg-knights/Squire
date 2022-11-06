@@ -35,7 +35,6 @@ class NextCloudClient(Client):
             self.dav_path.strip('/'),
             kwargs.get('username', ""))
 
-        print(path)
         super(NextCloudClient, self).__init__(*args, path=path, **kwargs)
 
     def download(self, file: NextCloudFile, store_locally=False):
@@ -66,7 +65,7 @@ class NextCloudClient(Client):
 
     def ls(self, remote_path=''):
         headers = {'Depth': '1'}
-        response = self._send('PROPFIND', remote_path, (207, 301), headers=headers)
+        response = self._send('PROPFIND', remote_path, expected_code=(207, 301), headers=headers)
 
         # Redirect
         if response.status_code == 301:
@@ -82,7 +81,7 @@ class NextCloudClient(Client):
     def mv(self, file:NextCloudFile, to_folder: NextCloudFolder):
         new_path = self._get_url(to_folder.path).strip('/')+'/'+file.path.split('/')[-1]
         headers = {'DESTINATION': new_path}
-        self._send('MOVE', file.path, 201, headers=headers)
+        self._send('MOVE', file.path, expected_code=201, headers=headers)
         file.path = new_path
 
     def exists(self, resource:NextCloudResource=None, path:str=None):
@@ -95,7 +94,7 @@ class NextCloudClient(Client):
 
         return super(NextCloudClient, self).exists(remote_path=path)
 
-    def _get_dav_prop(elem, name, default=None):
+    def _get_dav_prop(self, elem, name, default=None):
         """ Obtain data for the given property or return default if it is not present """
         child = elem.find('.//{DAV:}' + name)
         return default if child is None or child.text is None else child.text
