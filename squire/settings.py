@@ -43,12 +43,13 @@ if os.getenv('SQUIRE_ALLOWED_HOSTS'): # pragma: no cover
 
 # Application definition
 INSTALLED_APPS = [
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'core', # Core Module should load first
+    'django.contrib.admin',
     # External Libraries
     'bootstrap4',
     'dynamic_preferences', # Global Preferences
@@ -56,7 +57,6 @@ INSTALLED_APPS = [
     'recurrence',
     'rest_framework',
     # Internal Components
-    'core', # Core Module should load first
     'achievements',
     'membership_file',
     'inventory',
@@ -247,7 +247,9 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'htdocs', 'media')
 
 # Additional places to look for static files
-STATICFILES_DIRS = []
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'core', 'static_compiled'),
+]
 
 
 # The directory in which the coverage reports should be stored
@@ -361,6 +363,11 @@ MARKDOWN_IMAGE_MODELS = (
     'committees.associationgroup',
     'roleplaying.roleplayingsystem'
 )
+
+# Maror static overrides
+MARTOR_ALTERNATIVE_JS_FILE_THEME = None
+MARTOR_ALTERNATIVE_CSS_FILE_THEME = "theming/martor-admin-bootstrap.css" # default None
+MARTOR_ALTERNATIVE_JQUERY_JS_FILE = None
 
 ####################################################################
 # Other Settings
