@@ -69,6 +69,11 @@ class NCFile(models.Model):
         ("SqU", "Uploaded through Squire")
     ]) # Defines how the connection occured
 
+    class Meta:
+        # Set the default permissions. Each item has a couple of addiotional default permissions
+        default_permissions = ('add', 'change', 'delete', 'view',
+                               'synch',)
+
     def __init__(self, *args, **kwargs):
         super(NCFile, self).__init__(*args, **kwargs)
         if self.id:

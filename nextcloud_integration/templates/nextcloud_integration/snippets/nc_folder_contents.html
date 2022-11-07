@@ -52,11 +52,17 @@
                 </div>
             </li>
         {% endfor %}
-        {% if folder|has_edit_access:user %}
-            <li class="list-group-item">
-                <a class="btn btn-primary" href="{% url "nextcloud:synch_file" folder_slug=folder.slug %}">Sync file</a>
-                <a class="btn btn-secondary">Upload file</a>
-            </li>
-        {% endif %}
+        <li class="list-group-item">
+            {% if user|has_edit_access:folder %}
+                <a class="btn btn-primary" href="{% url "nextcloud:folder_edit" folder_slug=folder.slug %}">
+                    <i class="fas fa-pen"></i> Edit
+                </a>
+            {% endif %}
+            {% if user|has_synch_access %}
+                <a class="btn btn-primary" href="{% url "nextcloud:synch_file" folder_slug=folder.slug %}">
+                    <i class="fas fa-cloud-download-alt"></i> Sync file
+                </a>
+            {% endif %}
+        </li>
     </ul>
 </div>
