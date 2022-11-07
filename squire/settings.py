@@ -145,6 +145,10 @@ DATABASES = {
     }
 }
 
+# Default primary key field field type to use for models that don't have a field with primary_key=True
+#   This changed to BigAutoField in Django 3.2, but migrating to it doesn't work properly
+#   for ManyToManyFields that do _not_ have an explicit `through` attribute set.
+#   See: https://docs.djangoproject.com/en/3.2/ref/settings/#std-setting-DEFAULT_AUTO_FIELD
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Password validation
