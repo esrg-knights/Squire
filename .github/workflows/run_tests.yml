@@ -10,7 +10,7 @@ jobs:
       DJANGO_ENV: 'TESTING'
     strategy:
       matrix:
-        python: ["3.7"]
+        python: ["3.8"]
         ubuntu: ["ubuntu-20.04"]
     steps:
       - name: Checkout code

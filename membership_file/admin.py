@@ -9,6 +9,7 @@ from import_export.formats.base_formats import CSV
 
 from .forms import AdminMemberForm
 from .models import Member, MemberLog, MemberLogField, Room, MemberYear, Membership
+from core.admin import DisableModificationsAdminMixin, URLLinkInlineAdminMixin
 from membership_file.export import MemberResource
 from utils.forms import RequestUserToFormModelAdminMixin
 
@@ -23,20 +24,6 @@ class HideRelatedNameAdmin(admin.ModelAdmin):
         }
 
 
-class DisableModifications:
-    # Disable creation
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    # Disable editing
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    # Disable deletion
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
 class RoomInline(admin.TabularInline):
     model = Room.members_with_access.through
     extra = 0
@@ -49,7 +36,7 @@ class MemberYearInline(admin.TabularInline):
     fields = ['year', 'has_paid', 'payment_date']
 
 
-class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
+class MemberLogReadOnlyInline(DisableModificationsAdminMixin, URLLinkInlineAdminMixin, admin.TabularInline):
     model = MemberLog
     extra = 0
     readonly_fields = ['date', 'get_url']
@@ -58,11 +45,6 @@ class MemberLogReadOnlyInline(DisableModifications, admin.TabularInline):
 
     # Whether the object can be deleted inline
     can_delete = False
-
-    def get_url(self, obj):
-        return format_html("<a href='/admin/membership_file/memberlog/{0}/change/'>View Details</a>", obj.id)
-    get_url.short_description = 'Details'
-
 
 @admin.register(Member)
 class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRelatedNameAdmin):
@@ -199,7 +181,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
 
 
 # Prevents MemberLogField creation, edting, or deletion in the Django Admin Panel
-class MemberLogFieldReadOnlyInline(DisableModifications, admin.TabularInline):
+class MemberLogFieldReadOnlyInline(DisableModificationsAdminMixin, admin.TabularInline):
     model = MemberLogField
     extra = 0
 
@@ -209,7 +191,7 @@ class MemberLogFieldReadOnlyInline(DisableModifications, admin.TabularInline):
 
 # Prevents MemberLog creation, edting, or deletion in the Django Admin Panel
 @admin.register(MemberLog)
-class MemberLogReadOnly(DisableModifications, HideRelatedNameAdmin):
+class MemberLogReadOnly(DisableModificationsAdminMixin, HideRelatedNameAdmin):
     # Show the date at which the information was updated as well
     readonly_fields = ['date']
     list_display = ('id', 'log_type', 'user', 'member', 'date')
