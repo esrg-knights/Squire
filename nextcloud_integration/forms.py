@@ -30,11 +30,13 @@ class FileMoveForm(Form):
 
         return [(file.name, file.name) for file in self.availlable_files]
 
-
     def clean_directory_name(self):
         directory_name = self.cleaned_data['directory_name']
         if directory_name.startswith('/'):
-            raise ValidationError("directory_name can not start with a /")
+            raise ValidationError(
+                "directory_name can not start with a /",
+                code='invalid_directory_name',
+            )
         return directory_name
 
     def execute(self):
@@ -77,11 +79,14 @@ class SynchFileToFolderForm(ModelForm):
         self.instance.connection = "NcS"
         self.fields["selected_file"].choices = [(file.name, file) for file in self.file_list]
 
+    def clean_selected_file(self):
+        self.instance.file_name = self.cleaned_data["selected_file"]
+        print(self.instance.file_name)
+        return self.cleaned_data["selected_file"]
+
+
     def save(self, commit=True):
         client = construct_client()
-        # client.mv()
-
-
         file = next(file for file in self.file_list if file.name == self.cleaned_data["selected_file"])
         folder = self.folder.folder
         client.mv(file, folder)
