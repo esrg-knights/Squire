@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 from datetime import datetime
 from dataclasses import dataclass
@@ -32,8 +33,8 @@ class MailcowAlias(MailcowAPIResponse):
     sogo_visible: bool # Alias can be used as a selectable sender in SOGo
     sogo_visible_int: int # ???
 
-    created: datetime|None
-    modified: datetime|None
+    created: Optional[datetime]
+    modified: Optional[datetime]
 
     def get_type(self) -> AliasType:
         try:

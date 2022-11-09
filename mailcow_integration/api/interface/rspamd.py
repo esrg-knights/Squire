@@ -1,11 +1,12 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from mailcow_integration.api.interface.base import MailcowAPIResponse
 
 @dataclass
 class RspamdSettings(MailcowAPIResponse):
     """ Rspamd Settings """
-    id: int
+    id: Optional[int]
     desc: str
     content: str # rspamd configuration
     active: bool

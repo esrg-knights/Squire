@@ -16,6 +16,20 @@ global_preferences = global_preferences_registry.manager()
 # @since 06 JUL 2019
 ##################################################################################
 
+class MemberManager(models.Manager):
+    def filter_active(self):
+        """ Filter all 'active' members. That is, members who have a membership in
+            one of the currently active years, excluding those that are specifically
+            marked as 'deregistered'.
+        """
+        active_years = MemberYear.objects.filter(is_active=True).values_list('id', flat=True)
+        if not active_years:
+            # No active membership year set; only return registered members
+            return self.filter(is_deregistered=False)
+
+        # Active membership year set; only return members registered in these years.
+        return self.filter(is_deregistered=False, memberyear__in=active_years)
+
 # The Member model represents a Member in the membership file
 class Member(models.Model):
     class Meta:
@@ -25,6 +39,8 @@ class Member(models.Model):
             ('can_export_membership_file',              "Can export the membership file.")
         ]
         ordering = ['first_name', 'last_name']
+
+    objects = MemberManager()
 
     # The User that is linked to this member
     # NB: Only one user can be linked to one member at the same time!

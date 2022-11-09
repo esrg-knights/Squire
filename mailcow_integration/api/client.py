@@ -48,6 +48,9 @@ class MailcowAPIClient:
                 else:
                     # Some other error (should not happen)
                     raise MailcowException(content['msg'])
+            elif content.get('type', None) == 'danger':
+                # Unknown exception occurred. E.g. invalid parameters passed to POST
+                raise MailcowException(content['msg'])
             elif not content:
                 # API returned an empty response
                 raise MailcowIDNotFoundException(f'{url} returned an empty response.')
@@ -92,3 +95,11 @@ class MailcowAPIClient:
         })
         return self._make_request(f"edit/rsetting", request_type=RequestType.POST, data=data)
 
+    def create_rspamd_setting(self, setting: RspamdSettings) -> requests.Response:
+        """ Creates a new Rspamd setting """
+        data = json.dumps({
+            'desc': setting.desc,
+            'content': setting.content,
+            'active': int(setting.active),
+        })
+        return self._make_request(f"add/rsetting", request_type=RequestType.POST, data=data)
