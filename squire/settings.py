@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'boardgames',
     'roleplaying',
     'user_interaction.apps.UserInteractionConfig',
+    'mailcow_integration',
     # More External Libraries
     'django_cleanup.apps.CleanupConfig',
     'martor',

@@ -14,3 +14,4 @@ django-dynamic-preferences~=1.14.0 # Global Preferences / User Preferences
 martor~=1.6.14 # Markdown Editor
 pymdown-extensions~=9.5 # Extra markdown features
 django-pwa~=1.0.10 # Progressive Webapp
+requests~=2.28.1 # Requests (needed for Mailcow API)
