@@ -19,6 +19,11 @@ class NCFolder(models.Model):
     # Define status for the link to Nextcloud
     is_missing = models.BooleanField(default=False) # Whether the folder is non-existant on nextcloud
 
+    # Access settings
+    requires_membership = models.BooleanField(default=True)
+    on_overview_page = models.BooleanField(default=True, help_text="Whether this folder is displayed on the"
+                                                                   "association download page")
+
     def __init__(self, *args, **kwargs):
         super(NCFolder, self).__init__(*args, **kwargs)
         if self.id:
@@ -63,6 +68,11 @@ class NCFile(models.Model):
         ("NcS", "Synched through file on Nextcloud"),
         ("SqU", "Uploaded through Squire")
     ]) # Defines how the connection occured
+
+    class Meta:
+        # Set the default permissions. Each item has a couple of addiotional default permissions
+        default_permissions = ('add', 'change', 'delete', 'view',
+                               'synch',)
 
     def __init__(self, *args, **kwargs):
         super(NCFile, self).__init__(*args, **kwargs)
