@@ -1,11 +1,15 @@
+from enum import Enum
 import json
+from typing import Callable
 import requests
 
-from mailcow_integration.exceptions import *
-from mailcow_integration.interface.alias import MailcowAlias
-from mailcow_integration.interface.rspamd import RspamdSettings
+from mailcow_integration.api.exceptions import *
+from mailcow_integration.api.interface.alias import MailcowAlias
+from mailcow_integration.api.interface.rspamd import RspamdSettings
 
-
+class RequestType(Enum):
+    GET = "get"
+    POST = "post"
 
 class MailcowAPIClient:
     """ TODO """
@@ -22,10 +26,10 @@ class MailcowAPIClient:
             "user-agent": "squire/1.0.0",
         }
 
-    def _make_request(self, url: str, params: dict = None) -> requests.Response:
+    def _make_request(self, url: str, request_type: RequestType=RequestType.GET, params: dict = None, data: dict = None) -> requests.Response:
         url = self.API_FORMAT % {'host': self.host} + url
         print(url)
-        res = requests.get(url, params, headers=self._get_headers())
+        res = requests.request(request_type.value, url, params=params, data=data, headers=self._get_headers())
         content = json.loads(res.content)
 
         if isinstance(content, dict):
@@ -34,6 +38,8 @@ class MailcowAPIClient:
                 if content.get('msg', None) == "authentication failed":
                     # Invalid API key
                     raise MailcowAuthException(content['msg'])
+                elif content.get("msg", "").startswith("API read/write access denied"):
+                    raise MailcowAPIReadWriteAccessDenied(content['msg'])
                 elif content.get('msg', "").startswith("api access denied"):
                     # IP is not whitelisted
                     raise MailcowAPIAccessDenied(content['msg'])
@@ -72,6 +78,17 @@ class MailcowAPIClient:
     def get_rspamd_setting(self, id: int) -> RspamdSettings:
         """ Gets an Rspamd settings map with a specific id """
         res = self._make_request(f"get/rsetting/{id}")
-        print(res.content)
         return RspamdSettings.from_json(json.loads(res.content))
+
+    def update_rspamd_setting(self, setting: RspamdSettings) -> requests.Response:
+        """ Updates the RspamdSetting associated to the given ID with the given data """
+        data = json.dumps({
+            'items': [setting.id],
+            'attr': {
+                'active': int(setting.active),
+                'desc': setting.desc,
+                'content': setting.content,
+            }
+        })
+        return self._make_request(f"edit/rsetting", request_type=RequestType.POST, data=data)
 

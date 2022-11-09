@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from mailcow_integration.interface.base import MailcowAPIResponse
+from mailcow_integration.api.interface.base import MailcowAPIResponse
 
 @dataclass
 class RspamdSettings(MailcowAPIResponse):

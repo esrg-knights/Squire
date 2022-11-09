@@ -3,7 +3,7 @@ from enum import Enum
 from datetime import datetime
 from dataclasses import dataclass
 
-from mailcow_integration.interface.base import MailcowAPIResponse
+from mailcow_integration.api.interface.base import MailcowAPIResponse
 
 class AliasType(Enum):
     NORMAL = "internal-mails"

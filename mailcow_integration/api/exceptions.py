@@ -8,6 +8,9 @@ class MailcowAuthException(MailcowException):
 class MailcowAPIAccessDenied(MailcowException):
     """ Raised if API access is denied for some IP """
 
+class MailcowAPIReadWriteAccessDenied(MailcowAPIAccessDenied):
+    """ Raised if API read/write access is denied (only read access is granted) """
+
 class MailcowRouteNotFoundException(MailcowException):
     """ Invalid API route """
 
