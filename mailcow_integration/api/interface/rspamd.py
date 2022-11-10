@@ -9,7 +9,7 @@ class RspamdSettings(MailcowAPIResponse):
     id: Optional[int]
     desc: str
     content: str # rspamd configuration
-    active: bool
+    active: bool = True
 
     @classmethod
     def from_json(cls, json: dict) -> 'RspamdSettings':

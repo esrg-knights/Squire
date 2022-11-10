@@ -238,6 +238,10 @@ LOGGING = {
             'handlers': ['console'],
             'level': APPLICATION_LOG_LEVEL,
         },
+        'mailcow_integration': {
+            'handlers': ['console'],
+            'level': APPLICATION_LOG_LEVEL,
+        },
     },
 }
 
@@ -373,6 +377,20 @@ MARKDOWN_IMAGE_MODELS = (
 MARTOR_ALTERNATIVE_JS_FILE_THEME = None
 MARTOR_ALTERNATIVE_CSS_FILE_THEME = "theming/martor-admin-bootstrap.css" # default None
 MARTOR_ALTERNATIVE_JQUERY_JS_FILE = None
+
+
+####################################################################
+# Mailcow API
+#   If MAILCOW_HOST is None, no API connection is established
+MAILCOW_HOST = os.getenv('MAILCOW_HOST')
+MAILCOW_API_KEY = os.getenv('MAILCOW_API_KEY')
+
+INTERNAL_MEMBERS_ALIAS = ["squiredev@kotkt.nl"]
+
+# Mailcow API cannot handle ipv6. This hack forces usage of ipv4
+# TODO: DO NOT USE IN PRODUCTION
+import requests
+requests.packages.urllib3.util.connection.HAS_IPV6 = False
 
 ####################################################################
 # Other Settings

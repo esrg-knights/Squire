@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import Optional, List
 
 from datetime import datetime
 from dataclasses import dataclass
@@ -16,25 +16,25 @@ class AliasType(Enum):
 @dataclass
 class MailcowAlias(MailcowAPIResponse):
     """ Mailcow Alias """
-    id: int
     address: str
-    goto: list[str]
+    goto: List[str]
 
-    active: bool
-    active_int: int # ???
+    id: Optional[int] = None
+    active: bool = True
+    active_int: int = 1 # ???
 
-    in_primary_domain: str
-    domain: str
-    is_catch_all: bool
+    in_primary_domain: str = ""
+    domain: str = ""
+    is_catch_all: bool = False
 
-    public_comment: str
-    private_comment: str
+    public_comment: str = ""
+    private_comment: str = ""
 
-    sogo_visible: bool # Alias can be used as a selectable sender in SOGo
-    sogo_visible_int: int # ???
+    sogo_visible: bool = True # Alias can be used as a selectable sender in SOGo
+    sogo_visible_int: int = 1 # ???
 
-    created: Optional[datetime]
-    modified: Optional[datetime]
+    created: Optional[datetime] = None
+    modified: Optional[datetime] = None
 
     def get_type(self) -> AliasType:
         try:
