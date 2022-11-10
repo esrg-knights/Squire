@@ -103,7 +103,7 @@ class NextCloudClientTestCase(TestCase):
         self.set_send_response(status_code=201)
         self.client.mv(file, folder)
 
-        new_path = "https://example.com:443//remote.php/dav/files/example_user/exampleFolder/example.file"
+        new_path = "https://example.com:443/remote.php/dav/files/example_user/exampleFolder/example.file"
         # Test send data
         self.assertEqual(self.client._send_data["args"][0], "MOVE")
         self.assertEqual(self.client._send_data["kwargs"]["expected_code"], 201)

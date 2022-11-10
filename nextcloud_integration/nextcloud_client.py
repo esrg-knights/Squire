@@ -29,11 +29,13 @@ class NextCloudClient(Client):
     dav_path = "remote.php/dav/files/"
 
     def __init__(self, *args, path=None, **kwargs):
-        self.site_path = path
-        path = "{0}/{1}/{2}".format(
-            self.site_path.strip('/'),
-            self.dav_path.strip('/'),
-            kwargs.get('username', ""))
+        self.local_baseurl = "{local_url}/{username}".format(
+            local_url=self.dav_path.strip('/'),
+            username=kwargs.get('username', ""))
+        if path:
+            path = f"{path.strip('/')}/{self.local_baseurl}"
+        else:
+            path = self.local_baseurl
 
         super(NextCloudClient, self).__init__(*args, path=path, **kwargs)
 
@@ -92,7 +94,9 @@ class NextCloudClient(Client):
         if resource:
             path = resource.path
 
-        return super(NextCloudClient, self).exists(remote_path=path)
+        res = super(NextCloudClient, self).exists(remote_path=path)
+
+        return res
 
     def _get_dav_prop(self, elem, name, default=None):
         """ Obtain data for the given property or return default if it is not present """
@@ -101,7 +105,8 @@ class NextCloudClient(Client):
 
     def construct_nextcloud_resource(self, dav_node):
         """ Factory method for the given method """
-        path=self._get_dav_prop(dav_node, 'href')[len(f"/{self.site_path}"):]
+        path=self._get_dav_prop(dav_node, 'href')
+        path=path[path.index(self.local_baseurl)+len(self.local_baseurl):]
 
         # Get the name
         name = path[max(0, path[:-1].rfind('/')):].replace('%20', ' ').strip('/')
