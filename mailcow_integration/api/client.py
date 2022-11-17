@@ -13,7 +13,7 @@ class RequestType(Enum):
 
 class MailcowAPIClient:
     """ TODO """
-    API_FORMAT = "https://%(host)s/api/v1/"
+    API_FORMAT = "%(host)s/api/v1/"
 
     def __init__(self, host: str, api_key: str):
         self.host = host

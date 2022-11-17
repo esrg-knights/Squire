@@ -25,10 +25,10 @@ class MemberManager(models.Manager):
         active_years = MemberYear.objects.filter(is_active=True).values_list('id', flat=True)
         if not active_years:
             # No active membership year set; only return registered members
-            return self.filter(is_deregistered=False)
+            return self.filter(is_deregistered=False, marked_for_deletion=False)
 
         # Active membership year set; only return members registered in these years.
-        return self.filter(is_deregistered=False, memberyear__in=active_years)
+        return self.filter(is_deregistered=False, marked_for_deletion=False, memberyear__in=active_years)
 
 # The Member model represents a Member in the membership file
 class Member(models.Model):

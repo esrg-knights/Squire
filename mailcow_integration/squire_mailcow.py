@@ -1,5 +1,6 @@
+from enum import Enum
 import re
-from typing import Optional, List
+from typing import Dict, Optional, List
 
 from django.apps import apps
 from django.conf import settings
@@ -41,6 +42,7 @@ class SquireMailcowManager:
                 return setting
         return None
 
+    # TODO: What happens if I set one of the internal-addresses as my own address, and then email a committee's address that "my address" is also
     def set_internal_addresses(self) -> None:
         """ Makes a list of aliases 'internal'. That is, these aliases can only
             be emailed from within one of the domains set up in Mailcow.
@@ -79,6 +81,10 @@ class SquireMailcowManager:
             # Setting exists but should be updated
             setting.content = setting_content
             self._client.update_rspamd_setting(setting)
+
+    def get_all_aliases(self) -> List[MailcowAlias]:
+        """ Gets all email aliases """
+        return self._client.get_alias_all()
 
     def _get_alias_by_name(self, alias_address: str) -> MailcowAlias:
         """ TODO """

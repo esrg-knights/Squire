@@ -1,0 +1,71 @@
+
+{% extends 'core/base.html' %}
+
+{% load static %}
+
+{% block title %}
+  Mailcow Server Status
+{% endblock title %}
+
+{% block content %}
+    <h1>Mailcow Server Status</h1>
+    {% if not mailcow_host %}
+        <p>Mailcow client is not set up. Modify settings.py and add a host and API key.</p>
+    {% else %}
+        <p>Mailcow Host: <a href="{{ mailcow_host }}">{{ mailcow_host }}</a></p>
+
+        {% if error %}
+        <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle"></i> {{ error }}
+        </div>
+        {% endif %}
+
+        <h1>Member Aliases</h1>
+        <p>
+            A member alias is an internal alias that can be used to send mails to specific groups of members registered in Squire, depending on their <a href="{% url 'account:site_account' %}">personal preferences</a>.
+            The alias is 'internal' in the sense that any mailbox in the domain can send emails to this alias. Note that this includes other aliases, <b>including those that are public</b>.
+        </p>
+        {% if member_aliases %}
+        <ul class="list-group">
+            {% for address, data in member_aliases.items %}
+                {{ address }}: {{ data }}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ address }}
+                    <div>
+                        {% if data.alias is None %}
+                            <span class="badge badge-danger badge-pill"><i class="fas fa-question-circle"></i> Missing</span>
+                        {% elif data.status == "NOT_MANAGED_BY_SQUIRE" %}
+                            <span class="badge badge-secondary badge-pill"><i class="fas fa-exclamation-triangle"></i> Not managed by Squire</span>
+                        {% elif data.status == "OUTDATED" %}
+                            <span class="badge badge-warning badge-pill"><i class="fas fa-exclamation-triangle"></i> Outdated</span>
+                        {% else %}
+                        <span class="badge badge-success badge-pill"><i class="fas fa-check-circle"></i> Valid</span>
+
+                        {% endif %}
+                        <span class="badge badge-info badge-pill">
+                            {{ data.squire_subscribers|length }} <i class="fas fa-user-friends"></i> Subscribers</span>
+                        <button type="button" class="btn btn-primary btn-sm"><i class="fas fa-redo-alt"></i> Update</button>
+                    </div>
+                </li>
+            {% endfor %}
+
+            <!-- <li class="list-group-item d-flex justify-content-between align-items-center">
+              Dapibus ac facilisis in
+              <span class="badge badge-primary badge-pill">2</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              Morbi leo risus
+              <span class="badge badge-primary badge-pill">1</span>
+            </li> -->
+          </ul>
+        {% else %}
+          <p><i>No member aliases set up</i></p>
+        {% endif %}
+
+        <h1>Committee Aliases</h1>
+        <p>
+            A committee alias is a <b>public</b> alias that can be used to send mails to specific members of a committee, order, or workgroup set up in Squire.
+            These aliases are public, allowing external domains to also send emails to members of such committees. Automatic creation of such aliases can be disabled manually for specific commitees in the admin panel. For example, if a committee already has a mailbox, then an alias is not needed.
+        </p>
+        {% endif %}
+{% endblock content %}
