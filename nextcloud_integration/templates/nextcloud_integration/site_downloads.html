@@ -23,5 +23,10 @@
         <div class="mb-4">
             {% include "nextcloud_integration/snippets/nc_folder_contents.html" with folder=folder %}
         </div>
+    {% empty %}
+        <hr>
+        <div>
+            There are currently no availlable downloads for you
+        </div>
     {% endfor %}
 {% endblock %}

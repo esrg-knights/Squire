@@ -73,25 +73,6 @@ class FileBrowserView(NextcloudConnectionViewMixin, ListView):
     def get_queryset(self):
         return construct_client().ls(remote_path=self.kwargs.get('path', ''))
 
-class TestFormView(NextcloudConnectionViewMixin, FormView):
-    # Todo: Redact
-    form_class = FileMoveForm
-    template_name = "nextcloud_integration/form.html"
-
-    def get_form_kwargs(self):
-        kwargs = super(TestFormView, self).get_form_kwargs()
-        kwargs.update({
-            'local_path': self.kwargs.get('path', '')
-        })
-        return kwargs
-
-    def form_valid(self, form):
-        form.execute()
-        return super(TestFormView, self).form_valid(form)
-
-    def get_success_url(self):
-        return self.request.path
-
 
 class FolderView(NextcloudConnectionViewMixin, TemplateView):
     template_name = "nextcloud_integration/folder_list.html"
