@@ -25,6 +25,11 @@ class SquireMailcowManager:
         # Cannot import directly because this file is imported before the app registry is set up
         self._model = apps.get_model("membership_file", "Member")
 
+        # List of internal addresses (sorted in order of appearance in the config)
+        self._internal_aliases: List[str] = [
+            alias_data['address'] for alias_data in settings.MEMBER_ALIASES.values() if alias_data['internal']
+        ]
+
     def __str__(self) -> str:
         return f"SquireMailcowManager[{self._client.host}]"
 
@@ -55,9 +60,9 @@ class SquireMailcowManager:
                 discarded), while `importantperson@example.com` can send emails to
                 `members@example.com`.
         """
-        # Sort & escape addresses
-        addresses = settings.INTERNAL_MEMBERS_ALIAS
-        addresses = list(map(lambda addr: re.escape(addr), sorted(addresses)))
+        # Escape addresses
+        addresses = self._internal_aliases
+        addresses = list(map(lambda addr: re.escape(addr), addresses))
 
         # Fetch existing rspamd settings
         setting = self._get_rspamd_internal_alias_setting()
@@ -119,6 +124,7 @@ class SquireMailcowManager:
 
     def update_member_aliases(self) -> None:
         """ TODO """
-        emails = self._model.objects.filter_active().values_list('email', flat=True)
+        emails = self._model.objects.filter_active().order_by('email').values_list('email', flat=True)
         print(emails)
-        self._set_alias_by_name(settings.INTERNAL_MEMBERS_ALIAS[0], emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT, sogo_visible=True)
+        for alias_data in settings.MEMBER_ALIASES.values():
+            self._set_alias_by_name(alias_data['address'], emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT, sogo_visible=False)

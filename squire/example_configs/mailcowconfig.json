@@ -1,0 +1,18 @@
+{
+    "host": "https://example.com/mailcow",
+    "api_key": "AAAAAA-AAAAAA-AAAAAA-AAAAAA-AAAAAA",
+    "member_aliases": {
+        "id_leden": {
+            "address": "leden@example.com",
+            "description": "General emails.",
+            "internal": true,
+            "allow_opt_out": false
+        },
+        "id_newsletter": {
+            "address": "newsletter@example.com",
+            "description": "Receive the newsletter.",
+            "internal": true,
+            "allow_opt_out": true
+        }
+    }
+}

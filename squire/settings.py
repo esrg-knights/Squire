@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import os
-from time import strftime
+import json
 
 from . import util
 
@@ -382,10 +382,17 @@ MARTOR_ALTERNATIVE_JQUERY_JS_FILE = None
 ####################################################################
 # Mailcow API
 #   If MAILCOW_HOST is None, no API connection is established
-MAILCOW_HOST = os.getenv('MAILCOW_HOST')
-MAILCOW_API_KEY = os.getenv('MAILCOW_API_KEY')
 
-INTERNAL_MEMBERS_ALIAS = ["squiredev@kotkt.nl"]
+with open(os.path.join(BASE_DIR, "squire", "mailcowconfig.json"), "r") as mailcow_config_fp:
+    _mailcow_config = json.load(mailcow_config_fp)
+
+    MAILCOW_HOST = _mailcow_config['host']
+    MAILCOW_API_KEY = _mailcow_config['api_key']
+
+    MEMBER_ALIASES = _mailcow_config['member_aliases']
+
+    MAILCOW_HOST = "https://beta.kotkt.nl"
+    MAILCOW_API_KEY = "1CB942-8E92D4-D751D4-0585CA-A65232"
 
 # Mailcow API cannot handle ipv6. This hack forces usage of ipv4
 # TODO: DO NOT USE IN PRODUCTION

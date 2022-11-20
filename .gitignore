@@ -119,14 +119,6 @@ myvenv
 local_settings.py
 *.sqlite3
 
-# Squire-specific gitignore (Secret Keys, etc.)
-/squire/secret_key.txt
-htdocs/media/local_only/*
-htdocs/media/images/*
-htdocs/static
-/output/
-/test/output/
-
 #Disables tracking of membership Card file, need to be added manually
 /membership_file/static/images/MembershipCard.jpg
 
@@ -140,3 +132,14 @@ Squire.iml
 
 # coverage.py files
 /coverage
+
+# Squire-specific gitignore
+htdocs/media/local_only/*
+htdocs/media/images/*
+htdocs/static
+/output/
+/test/output/
+
+# Secrets
+/squire/mailcowconfig.json
+/squire/secret_key.txt

@@ -3,14 +3,14 @@ from typing import Dict, List, Optional
 
 from django.apps import apps
 from django.conf import settings
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, FormView
 
 from mailcow_integration.api.exceptions import MailcowAPIAccessDenied, MailcowAPIReadWriteAccessDenied, MailcowAuthException, MailcowException
 from mailcow_integration.api.interface.alias import MailcowAlias
 from mailcow_integration.squire_mailcow import SquireMailcowManager
 from membership_file.models import Member
 
-from utils.views import SuperUserRequiredMixin
+from utils.views import PostOnlyFormViewMixin, SuperUserRequiredMixin
 
 # apps.get_app_config("mailcow_integration")
 
@@ -30,20 +30,24 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
         self.mailcow_client: Optional[SquireMailcowManager] = config.mailcow_client
 
     # TODO: Placeholder; move elsewhere
-    def _get_subscribed_member_addresses(self, alias_address: str) -> List[str]:
+    def _get_subscribed_member_addresses(self, alias_id: str) -> List[str]:
         """ TODO """
         # TODO: Support opt-outs for specific lists
         return list(Member.objects.filter_active().order_by('email').values_list('email', flat=True))
 
-    def _verify_aliasses_exist(self, alias_addresses: List[str], all_aliases: List[MailcowAlias], public_comment: str) -> Dict[str, AliasStatus]:
+    def _verify_aliasses_exist(self, alias_addresses: Dict[str, Dict], all_aliases: List[MailcowAlias], public_comment: str) -> Dict[str, Dict]:
         """ TODO """
         results = {
-            alias: {
+            alias_id: {
                 'alias': None,
                 'status': AliasStatus.MISSING.name,
-                'squire_subscribers': self._get_subscribed_member_addresses(alias),
+                'squire_subscribers': self._get_subscribed_member_addresses(alias_id),
+                'address': alias_config['address'],
+                'description': alias_config['description'],
+                'internal': alias_config['internal'],
+                'allow_opt_out': alias_config['allow_opt_out'],
             }
-            for alias in alias_addresses
+            for alias_id, alias_config in alias_addresses.items()
         }
 
         for alias in all_aliases:
@@ -76,14 +80,11 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             except MailcowException as e:
                 context['error'] = print(", ".join(e.args))
             else:
-                context['member_aliases'] = self._verify_aliasses_exist(settings.INTERNAL_MEMBERS_ALIAS, aliases, self.mailcow_client.ALIAS_MEMBERS_PUBLIC_COMMENT)
+                context['member_aliases'] = self._verify_aliasses_exist(settings.MEMBER_ALIASES, aliases, self.mailcow_client.ALIAS_MEMBERS_PUBLIC_COMMENT)
 
 
                 # TODO: committee-aliases
 
-
-
-
-
+                # TODO: List "Managed by Squire" aliases that are no longer in use (to allow cleanup)
 
         return context
