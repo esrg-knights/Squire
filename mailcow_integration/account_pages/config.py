@@ -1,3 +1,4 @@
+from django.apps import apps
 from django.urls import path
 
 from user_interaction.accountcollective import AccountBaseConfig
@@ -15,6 +16,10 @@ class MailSettingsConfig(AccountBaseConfig):
 
     def get_urls(self):
         """ Builds a list of urls """
-        return [
-            path('', EmailPreferencesChangeView.as_view(config=self), name='email_preferences'),
-        ]
+        mailcow_client: Optional[SquireMailcowManager] = apps.get_app_config("mailcow_integration").mailcow_client
+        if mailcow_client is not None:
+            # Can only update mail preferences if a Mailcow client is set up
+            return [
+                path('', EmailPreferencesChangeView.as_view(config=self), name='email_preferences'),
+            ]
+        return []

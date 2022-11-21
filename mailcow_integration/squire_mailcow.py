@@ -4,6 +4,7 @@ from typing import Dict, Optional, List
 
 from django.apps import apps
 from django.conf import settings
+from django.db.models import Q
 from django.template.loader import get_template
 
 from mailcow_integration.api.client import MailcowAPIClient
@@ -11,6 +12,7 @@ from mailcow_integration.api.interface.alias import AliasType, MailcowAlias
 from mailcow_integration.api.interface.rspamd import RspamdSettings
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 class SquireMailcowManager:
@@ -122,9 +124,32 @@ class SquireMailcowManager:
         print(res)
         print(res.content)
 
+
+    def _get_subscribed_member_addresses(self, active_members, alias_id: str, default: bool=True) -> List[str]:
+        """ TODO """
+        # Member must have their preference set
+        query = Q(
+            user__userpreferencemodel__section="mail",
+            user__userpreferencemodel__name=alias_id,
+            # Convert value to string (dynamic preferences serializes everything to a string)
+            user__userpreferencemodel__raw_value=str(True),
+        )
+
+        # If the default is opt-in, members that do not have a corresponding user should also be included
+        if default:
+            query |= Q(user__isnull=True)
+
+        # Filter members and fetch their emails
+        active_members = active_members.filter(query)
+        print(active_members)
+        return list(active_members.values_list('email', flat=True))
+
     def update_member_aliases(self) -> None:
         """ TODO """
-        emails = self._model.objects.filter_active().order_by('email').values_list('email', flat=True)
-        print(emails)
-        for alias_data in settings.MEMBER_ALIASES.values():
+        active_members = self._model.objects.filter_active().order_by('email')
+
+        for alias_id, alias_data in settings.MEMBER_ALIASES.items():
+            print(f"updating {alias_id} ({alias_data['address']})")
+            emails = self._get_subscribed_member_addresses(active_members, alias_id, default=alias_data['default_opt'])
+            print(emails)
             self._set_alias_by_name(alias_data['address'], emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT, sogo_visible=False)

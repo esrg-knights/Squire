@@ -26,34 +26,47 @@ class MailcowAPIClient:
             "user-agent": "squire/1.0.0",
         }
 
+    def _verify_response_content(self, content: dict, request_url: str) -> None:
+        """ TODO """
+        if content.get('type', None) == "error":
+            # API returned an error
+            if content.get('msg', None) == "authentication failed":
+                # Invalid API key
+                raise MailcowAuthException(f"{request_url}: {content['msg']}")
+            elif content.get("msg", "").startswith("API read/write access denied"):
+                raise MailcowAPIReadWriteAccessDenied(f"{request_url}: {content['msg']}")
+            elif content.get('msg', "").startswith("api access denied"):
+                # IP is not whitelisted
+                raise MailcowAPIAccessDenied(f"{request_url}: {content['msg']}")
+            elif content.get('msg', None) == "route not found":
+                raise MailcowRouteNotFoundException(f"{request_url}: {content['msg']}")
+            else:
+                # Some other error (should not happen)
+                raise MailcowException(f"{request_url}: {content['msg']}")
+        elif content.get('type', None) == 'danger':
+            # Unknown exception occurred. E.g. invalid parameters passed to POST
+            raise MailcowException(f"{request_url}: {content['msg']}")
+        elif not content:
+            # API returned an empty response
+            raise MailcowIDNotFoundException(f'{request_url} returned an empty response.')
+
+
     def _make_request(self, url: str, request_type: RequestType=RequestType.GET, params: dict = None, data: dict = None) -> requests.Response:
         url = self.API_FORMAT % {'host': self.host} + url
         print(url)
         res = requests.request(request_type.value, url, params=params, data=data, headers=self._get_headers())
         content = json.loads(res.content)
 
-        if isinstance(content, dict):
-            if content.get('type', None) == "error":
-                # API returned an error
-                if content.get('msg', None) == "authentication failed":
-                    # Invalid API key
-                    raise MailcowAuthException(content['msg'])
-                elif content.get("msg", "").startswith("API read/write access denied"):
-                    raise MailcowAPIReadWriteAccessDenied(content['msg'])
-                elif content.get('msg', "").startswith("api access denied"):
-                    # IP is not whitelisted
-                    raise MailcowAPIAccessDenied(content['msg'])
-                elif content.get('msg', None) == "route not found":
-                    raise MailcowRouteNotFoundException(content['msg'])
-                else:
-                    # Some other error (should not happen)
-                    raise MailcowException(content['msg'])
-            elif content.get('type', None) == 'danger':
-                # Unknown exception occurred. E.g. invalid parameters passed to POST
-                raise MailcowException(content['msg'])
-            elif not content:
-                # API returned an empty response
-                raise MailcowIDNotFoundException(f'{url} returned an empty response.')
+        if isinstance(content, list):
+            # Responses are sometimes packed in a list (e.g., when updating multiple entries at the same time)
+            for c in content:
+                self._verify_response_content(c, url)
+        elif isinstance(content, dict):
+            self._verify_response_content(content, url)
+        else:
+            # This should never happen
+            raise MailcowException(f"Unexpected response for {url}: {content}")
+
         return res
 
     ################
