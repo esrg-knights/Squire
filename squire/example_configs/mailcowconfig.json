@@ -6,13 +6,15 @@
             "address": "leden@example.com",
             "description": "General emails.",
             "internal": true,
-            "allow_opt_out": false
+            "allow_opt_out": false,
+            "default_opt": true
         },
         "id_newsletter": {
             "address": "newsletter@example.com",
             "description": "Receive the newsletter.",
             "internal": true,
-            "allow_opt_out": true
+            "allow_opt_out": true,
+            "default_opt": true
         }
     }
 }
