@@ -1,14 +1,13 @@
-from enum import Enum
 import re
-from typing import Dict, Optional, List
+from typing import Optional, List
 
 from django.apps import apps
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.template.loader import get_template
 
 from mailcow_integration.api.client import MailcowAPIClient
-from mailcow_integration.api.interface.alias import AliasType, MailcowAlias
+from mailcow_integration.api.interface.alias import MailcowAlias
 from mailcow_integration.api.interface.rspamd import RspamdSettings
 
 import logging
@@ -16,7 +15,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 class SquireMailcowManager:
-    """ TODO """
+    """ All interactions Squire makes with the Mailcow API are handled through this class.
+        It is responsible for adding members' emails to a group of member aliases (depending
+        on their stored preferences), and adding members' emails to the aliases of committees
+        they are in.
+
+        When this class interacts with the Mailcow API, it leaves behind some form of
+        "MANAGED BY SQUIRE" comment. If this class sees an already existing item in the API it
+        wishes to modify, it will only do so if this comment is present. This prevents it from
+        accidentally overwriting information that a Mailcow admin may have added. Furthermore,
+        it also allows manual overrides by Mailcow admins.
+    """
     INTERNAL_ALIAS_SETTING_NAME = "[MANAGED BY SQUIRE] Internal Alias"
     ALIAS_COMMITTEE_PUBLIC_COMMENT = "[MANAGED BY SQUIRE] Committee Alias"
     ALIAS_MEMBERS_PUBLIC_COMMENT = "[MANAGED BY SQUIRE] Members Alias"
@@ -51,16 +60,17 @@ class SquireMailcowManager:
 
     # TODO: What happens if I set one of the internal-addresses as my own address, and then email a committee's address that "my address" is also
     def set_internal_addresses(self) -> None:
-        """ Makes a list of aliases 'internal'. That is, these aliases can only
+        """ Makes a list of member aliases 'internal'. That is, these aliases can only
             be emailed from within one of the domains set up in Mailcow.
-            See `internal_mailbox.conf` for the Rspamd configuration to achieve this.
+            See `internal_mailbox.conf` for the Rspamd configuration used to achieve this.
 
             Example:
                 `@example.com` is a domain set up in Mailcow.
                 Using this function to make `members@example.com` interal ensures that
                 `foo@spam.com` cannot send emails to `members@example.com` (those are
                 discarded), while `importantperson@example.com` can send emails to
-                `members@example.com`.
+                `members@example.com`. Spoofed sender addresses are properly discarded
+                as well.
         """
         # Escape addresses
         addresses = self._internal_aliases
@@ -93,15 +103,18 @@ class SquireMailcowManager:
         """ Gets all email aliases """
         return self._client.get_alias_all()
 
-    def _get_alias_by_name(self, alias_address: str) -> MailcowAlias:
-        """ TODO """
+    def _get_alias_by_name(self, alias_address: str) -> Optional[MailcowAlias]:
+        """ Gets the corresponding data of some alias address. E.g. foo@example.com """
         aliases = self._client.get_alias_all()
         for alias in aliases:
             if alias.address == alias_address:
                 return alias
 
     def _set_alias_by_name(self, alias_address: str, goto_addresses: List[str], public_comment: str, sogo_visible: bool) -> None:
-        """ TODO """
+        """ Sets an alias's goto addresses, and optionally sets its visible in SOGo. If the corresponding
+            Mailcow alias's public comment does not match `public_comment`, modifications are aborted.
+            If the alias indicated by `alias_address` does not yet exist, it is created.
+        """
         alias = self._get_alias_by_name(alias_address)
 
         # There is a race condition here when an alias is created in the Mailcow admin before Squire does so,
@@ -112,21 +125,25 @@ class SquireMailcowManager:
             return
 
         # Failsafe in case we attempt to overwrite an alias that is not managed by Squire.
-        #   This should only happen if such an alias is modified in the Mailcow admin after its creation,
-        #   as Squire _should_ prevent setting this alias in model fields otherwise.
+        #   This should only happen if such an alias is modified in the Mailcow admin after its creation.
         if alias.public_comment != public_comment:
             logging.error(f"Cannot update alias for {alias_address}. It already exists and is not managed by Squire! <{alias.public_comment}>")
             return
 
         alias.goto = goto_addresses
         alias.sogo_visible = sogo_visible
-        res = self._client.update_alias(alias)
-        print(res)
-        print(res.content)
+        self._client.update_alias(alias)
 
+    def get_active_members(self) -> QuerySet:
+        """ Helper method to obtain a queryset of active members. That is, those that have active membership. """
+        return self._model.objects.filter_active().order_by('email')
 
-    def _get_subscribed_member_addresses(self, active_members, alias_id: str, default: bool=True) -> List[str]:
-        """ TODO """
+    def get_subscribed_members(self, active_members, alias_id: str, default: bool=True) -> QuerySet:
+        """ Gets a Queryset of members subscribed to a specific member alias, based on their
+            associated user's preferences. If users are opted-in by default for the given alias,
+            then members without an associated user are included in this Queryset as well.
+            If the default is opted-out, then such members are excluded.
+        """
         # Member must have their preference set
         query = Q(
             user__userpreferencemodel__section="mail",
@@ -139,17 +156,18 @@ class SquireMailcowManager:
         if default:
             query |= Q(user__isnull=True)
 
-        # Filter members and fetch their emails
-        active_members = active_members.filter(query)
-        print(active_members)
-        return list(active_members.values_list('email', flat=True))
+        # Filter members
+        return active_members.filter(query)
 
     def update_member_aliases(self) -> None:
-        """ TODO """
-        active_members = self._model.objects.filter_active().order_by('email')
+        """ Updates all member aliases """
+        # Fetch active members here so the results can be cached
+        active_members = self.get_active_members()
 
         for alias_id, alias_data in settings.MEMBER_ALIASES.items():
             print(f"updating {alias_id} ({alias_data['address']})")
-            emails = self._get_subscribed_member_addresses(active_members, alias_id, default=alias_data['default_opt'])
+            emails = list(
+                self.get_subscribed_members(active_members, alias_id, default=alias_data['default_opt'])\
+                    .values_list('email', flat=True))
             print(emails)
             self._set_alias_by_name(alias_data['address'], emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT, sogo_visible=False)

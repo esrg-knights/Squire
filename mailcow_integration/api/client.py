@@ -8,18 +8,30 @@ from mailcow_integration.api.interface.alias import AliasType, MailcowAlias
 from mailcow_integration.api.interface.rspamd import RspamdSettings
 
 class RequestType(Enum):
+    """ Different types of requests that can be made to the Mailcow API """
     GET = "get"
     POST = "post"
 
 class MailcowAPIClient:
-    """ TODO """
+    """ A client that connects to and acts as a wrapper for the Mailcow API (v1).
+        It is by no means meant to be a complete representation of the (poorly
+        documented) API, but rather only includes functionality needed for Squire.
+
+        For an incomplete overview of the Mailcow API, see: https://mailcow.docs.apiary.io
+
+        In order to connect to a `host`'s API, an `api_key` needs to be generated in the
+        Mailcow admin. Additionally, the API needs to be activated, and the ipv4 address
+        of the client needs to be added to an IP whitelist (alternatively, the IP whitelist
+        can be disabled entirely).
+    """
     API_FORMAT = "%(host)s/api/v1/"
 
     def __init__(self, host: str, api_key: str):
         self.host = host
         self.api_key = api_key
 
-    def _get_headers(self):
+    def _get_headers(self) -> dict:
+        """ Retrieves the headers required to fetch info from the Mailcow API. """
         return {
             "Content-Type": "application/json",
             "X-API-Key": self.api_key,
@@ -27,7 +39,7 @@ class MailcowAPIClient:
         }
 
     def _verify_response_content(self, content: dict, request_url: str) -> None:
-        """ TODO """
+        """ Checks some response data, and generates an appropriate exception based on it """
         if content.get('type', None) == "error":
             # API returned an error
             if content.get('msg', None) == "authentication failed":
@@ -50,8 +62,9 @@ class MailcowAPIClient:
             # API returned an empty response
             raise MailcowIDNotFoundException(f'{request_url} returned an empty response.')
 
-
     def _make_request(self, url: str, request_type: RequestType=RequestType.GET, params: dict = None, data: dict = None) -> requests.Response:
+        """ Makes a request to the endpoint specified by `url`, with some parameters `params` and some `data`.
+        """
         url = self.API_FORMAT % {'host': self.host} + url
         print(url)
         res = requests.request(request_type.value, url, params=params, data=data, headers=self._get_headers())
@@ -134,7 +147,7 @@ class MailcowAPIClient:
         return self._make_request(f"add/alias", request_type=RequestType.POST, data=data)
 
     ################
-    # RSPAMD SETTINGS
+    # RSPAMD SETTINGS (undocumented API)
     ################
     def get_rspamd_setting_all(self) -> List[RspamdSettings]:
         """ Gets all Rspamd settings maps """

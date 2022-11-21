@@ -1,4 +1,3 @@
-from typing import Optional
 from django.apps import apps
 from django.contrib import messages
 from django.forms import BooleanField
