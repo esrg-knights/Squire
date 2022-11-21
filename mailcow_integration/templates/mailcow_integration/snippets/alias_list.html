@@ -1,0 +1,83 @@
+{% if alias_dict %}
+    <p>
+        <ul class="list-group">
+        {% for address, data in alias_dict.items %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span data-toggle="tooltip" data-placement="top" title="{{ data.description }}">{{ address }}</span>
+                <div>
+                    <!-- Status -->
+                    {% if data.alias is None %}
+                        <span class="badge badge-danger badge-pill"><i class="fas fa-question-circle"></i> Missing</span>
+                    {% elif data.status == "NOT_MANAGED_BY_SQUIRE" %}
+                        <span class="badge badge-secondary badge-pill"><i class="fas fa-unlink"></i> Not managed by Squire</span>
+                    {% elif data.status == "OUTDATED" %}
+                        <span class="badge badge-danger badge-pill"><i class="fas fa-exclamation-triangle"></i> Outdated</span>
+                    {% else %}
+                        <span class="badge badge-success badge-pill"><i class="fas fa-check-circle"></i> Up-to-date</span>
+                    {% endif %}
+                    <!-- TODO: Status "Mailbox"? -->
+
+                    <!-- Internal/opt-out status -->
+                    <!-- TODO: Verify that internal addresses do not occur in other (non-internal) aliases -->
+                    {% if data.internal %}
+                        <span class="badge badge-success badge-pill"><i class="fas fa-home"></i> Internal</span>
+                    {% else %}
+                        <span class="badge badge-primary badge-pill"><i class="fas fas fa-globe"></i> Public</span>
+                    {% endif %}
+
+                    {% if not data.allow_opt_out %}
+                        <span class="badge badge-warning badge-pill" data-toggle="modal" data-target="#subsModal"><i class="fas fa-lock"></i> Cannot opt-out</span>
+                    {% endif %}
+
+                    <!-- Subscribers -->
+                    <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#subsModal-{{ data.id }}">
+                        {% if data.status != "NOT_MANAGED_BY_SQUIRE" %}
+                            <i class="fas fa-user-friends"></i> {{ data.squire_subscribers|length }} Subscriber{{ data.squire_subscribers|length|pluralize }}
+                        {% else %}
+                            <i class="fas fa-user-friends"></i> {{ data.alias.goto|length }} Subscriber{{ data.alias.goto|length|pluralize }}
+                        {% endif %}
+                    </button>
+
+                    <div class="modal fade" id="subsModal-{{ data.id }}" tabindex="-1" role="dialog" aria-labelledby="subsModalLabel-{{ data.id }}" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="subsModalLabel-{{ data.id }}">{{ address }}</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>{{ data.description }}</p>
+                                    {% if data.status != "NOT_MANAGED_BY_SQUIRE" %}
+                                        <h4><i class="fas fa-user-friends"></i> Subscribers ({{ data.squire_subscribers|length }})</h4>
+                                        <ul>
+                                            {% for member in data.squire_subscribers %}
+                                                <li>{{member.get_full_name}} &mdash; {{member.email}}</li>
+                                            {% empty %}
+                                                <li><i>No subscribers</i></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p><span class="badge badge-secondary badge-pill"><i class="fas fa-unlink"></i> Not managed by Squire</span></p>
+                                        <h4><i class="fas fa-user-friends"></i> Subscribers ({{ data.alias.goto|length }})</h4>
+                                        <ul>
+                                            {% for email in data.alias.goto %}
+                                                <li>{{email}}</li>
+                                            {% empty %}
+                                                <li><i>No subscribers</i></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+        </ul>
+    </p>
+{% else %}
+    <p><i>No member aliases set up{{ empty_message }}</i></p>
+{% endif %}

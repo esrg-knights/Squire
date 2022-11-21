@@ -13,6 +13,8 @@ from mailcow_integration.squire_mailcow import SquireMailcowManager
 
 from utils.views import SuperUserRequiredMixin
 
+from committees.models import AssociationGroup
+
 class AliasStatus(Enum):
     """ Aliases that should exist according to Squire may not be in sync with those in Mailcow.
         This Enum indicates the disparity between the two.
@@ -72,6 +74,43 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
                     results[alias.address].update({'alias': alias, 'status': AliasStatus.VALID.name})
         return results
 
+    def _verify_committee_aliases(self, mailcow_aliases: List[MailcowAlias], public_comment: str) -> Dict:
+        """ TODO """
+        self.mailcow_client: SquireMailcowManager
+        assoc_groups = AssociationGroup.objects.filter(
+            type__in=[AssociationGroup.COMMITTEE, AssociationGroup.GUILD, AssociationGroup.WORKGROUP],
+            contact_email__isnull=False
+        )
+        results = {
+            assoc_group.contact_email: {
+                'alias': None,
+                'status': AliasStatus.MISSING.name,
+                'squire_subscribers': assoc_group.members.filter_active().order_by('email'),
+                'id': assoc_group.id,
+                'description': assoc_group.site_group.name,
+                'internal': False,
+                'allow_opt_out': False,
+            }
+            for assoc_group in assoc_groups
+        }
+
+        print(mailcow_aliases)
+
+        # Verify that each of our aliases actually exists in Mailcow
+        for alias in mailcow_aliases:
+            if alias.address in results.keys():
+                if alias.public_comment != public_comment:
+                    # Public comment of the alias does not indicate it is managed by Squire
+                    results[alias.address].update({'alias': alias, 'status': AliasStatus.NOT_MANAGED_BY_SQUIRE.name})
+                elif alias.goto != list(results[alias.address]['squire_subscribers'].values_list('email', flat=True)):
+                    # Subscribers are out of date
+                    #   Note: Lists are sorted
+                    results[alias.address].update({'alias': alias, 'status': AliasStatus.OUTDATED.name})
+                else:
+                    results[alias.address].update({'alias': alias, 'status': AliasStatus.VALID.name})
+        return results
+
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -91,7 +130,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
                 context['error'] = print(", ".join(e.args))
             else:
                 context['member_aliases'] = self._verify_aliasses_exist(settings.MEMBER_ALIASES, aliases, self.mailcow_client.ALIAS_MEMBERS_PUBLIC_COMMENT)
-
+                context['committee_aliases'] = self._verify_committee_aliases(aliases, self.mailcow_client.ALIAS_COMMITTEE_PUBLIC_COMMENT)
 
                 # TODO: committee-aliases
 
@@ -108,7 +147,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
         else:
             # Update all committee aliases
             # TODO: Update user aliases
+            self.mailcow_client.update_committee_aliases()
             messages.success(self.request, "Committee aliases updated.")
-            pass
 
         return HttpResponseRedirect(self.request.get_full_path())

@@ -1,6 +1,6 @@
 from enum import Enum
 import json
-from typing import List
+from typing import Generator, List
 import requests
 
 from mailcow_integration.api.exceptions import *
@@ -85,7 +85,7 @@ class MailcowAPIClient:
     ################
     # ALIASES
     ################
-    def get_alias_all(self) -> List[MailcowAlias]:
+    def get_alias_all(self) -> Generator[MailcowAlias, None, None]:
         """ Gets a list of all email aliases """
         res = self._make_request(f"get/alias/all")
         return map(lambda alias: MailcowAlias.from_json(alias), json.loads(res.content))
@@ -149,7 +149,7 @@ class MailcowAPIClient:
     ################
     # RSPAMD SETTINGS (undocumented API)
     ################
-    def get_rspamd_setting_all(self) -> List[RspamdSettings]:
+    def get_rspamd_setting_all(self) -> Generator[RspamdSettings, None, None]:
         """ Gets all Rspamd settings maps """
         res = self._make_request("get/rsetting/all")
         return map(lambda rspamdsetting: RspamdSettings.from_json(rspamdsetting), json.loads(res.content))

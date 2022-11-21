@@ -47,7 +47,7 @@ class MailcowAlias(MailcowAPIResponse):
         json.update({
             'goto': json['goto'].split(","),
             'active': bool(json['active']),
-            'active_int': bool(json['is_catch_all']),
+            'is_catch_all': bool(json['is_catch_all']),
             'sogo_visible': bool(json['sogo_visible']),
             'created': datetime.fromisoformat(json['created']),
             'modified': datetime.fromisoformat(json['modified']) if json['modified'] is not None else None,

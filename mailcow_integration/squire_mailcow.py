@@ -34,7 +34,8 @@ class SquireMailcowManager:
         self._client = MailcowAPIClient(mailcow_host, mailcow_api_key)
 
         # Cannot import directly because this file is imported before the app registry is set up
-        self._model = apps.get_model("membership_file", "Member")
+        self._member_model = apps.get_model("membership_file", "Member")
+        self._committee_model = apps.get_model("committees", "AssociationGroup")
 
         # List of internal addresses (sorted in order of appearance in the config)
         self._internal_aliases: List[str] = [
@@ -101,7 +102,7 @@ class SquireMailcowManager:
 
     def get_all_aliases(self) -> List[MailcowAlias]:
         """ Gets all email aliases """
-        return self._client.get_alias_all()
+        return list(self._client.get_alias_all())
 
     def _get_alias_by_name(self, alias_address: str) -> Optional[MailcowAlias]:
         """ Gets the corresponding data of some alias address. E.g. foo@example.com """
@@ -116,9 +117,11 @@ class SquireMailcowManager:
             If the alias indicated by `alias_address` does not yet exist, it is created.
         """
         alias = self._get_alias_by_name(alias_address)
+        # TODO: if updating multiple aliases, we don't need to do this every time
 
         # There is a race condition here when an alias is created in the Mailcow admin before Squire does so,
         #   but there is no way around that. The Mailcow API does not have a "create-if-not-exists" endpoint
+        # TODO: Check mailboxes; this breaks if the alias is already a mailbox
         if alias is None:
             alias = MailcowAlias(alias_address, goto_addresses, active=True, public_comment=public_comment, sogo_visible=sogo_visible)
             self._client.create_alias(alias)
@@ -136,7 +139,7 @@ class SquireMailcowManager:
 
     def get_active_members(self) -> QuerySet:
         """ Helper method to obtain a queryset of active members. That is, those that have active membership. """
-        return self._model.objects.filter_active().order_by('email')
+        return self._member_model.objects.filter_active().order_by('email')
 
     def get_subscribed_members(self, active_members, alias_id: str, default: bool=True) -> QuerySet:
         """ Gets a Queryset of members subscribed to a specific member alias, based on their
@@ -171,3 +174,21 @@ class SquireMailcowManager:
                     .values_list('email', flat=True))
             print(emails)
             self._set_alias_by_name(alias_data['address'], emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT, sogo_visible=False)
+
+    def update_committee_aliases(self) -> None:
+        """ TODO
+        """
+        AssociationGroup = self._committee_model
+        assoc_groups = AssociationGroup.objects.filter(
+            type__in=[AssociationGroup.COMMITTEE, AssociationGroup.GUILD, AssociationGroup.WORKGROUP],
+            contact_email__isnull=False
+        ) # TODO: Remove this duplication
+
+        for assoc_group in assoc_groups:
+            emails = list(assoc_group.members.filter_active().order_by('email').values_list('email', flat=True))
+            print(assoc_group)
+            print(emails)
+
+            self._set_alias_by_name(assoc_group.contact_email, emails, public_comment=self.ALIAS_COMMITTEE_PUBLIC_COMMENT, sogo_visible=False)
+
+
