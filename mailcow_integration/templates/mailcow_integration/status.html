@@ -21,18 +21,27 @@
         {% endif %}
 
         <div class="d-flex justify-content-between align-items-center">
-            <h1>Member Aliases</h1>
-            {% if not error %} <button type="button" class="btn btn-primary btn-sm"><i class="fas fa-redo-alt"></i> Update</button> {% endif %}
+            <h2>Member Aliases</h2>
+            {% if error %}
+                <button type="button" class="btn btn-primary" disabled><i class="fas fa-redo-alt"></i> Update</button>
+            {% else %}
+                <form id="update_member_aliases" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="alias_type" value="members"/>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-redo-alt"></i> Update</button>
+                </form>
+            {% endif %}
         </div>
         <p>
             A member alias is an alias that can be used to send mails to specific groups of members registered in Squire, depending on their <a href="{% url 'account:site_account' %}">personal preferences</a>.
             The alias can be 'internal' in the sense that only mailboxes in the domain can send emails to this alias. Note that this also includes <b>public</b> aliases set up on the domain, meaning that internal aliases can still be emailed from external domains this way.
         </p>
         {% if member_aliases %}
+            <p>
             <ul class="list-group">
-            {% for data in member_aliases.values %}
+            {% for address, data in member_aliases.items %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span data-toggle="tooltip" data-placement="top" title="{{ data.description }}">{{ data.address }}</span>
+                    <span data-toggle="tooltip" data-placement="top" title="{{ data.description }}">{{ address }}</span>
                     <div>
                         <!-- Status -->
                         {% if data.alias is None %}
@@ -42,7 +51,7 @@
                         {% elif data.status == "OUTDATED" %}
                             <span class="badge badge-danger badge-pill"><i class="fas fa-exclamation-triangle"></i> Outdated</span>
                         {% else %}
-                            <span class="badge badge-success badge-pill"><i class="fas fa-check-circle"></i> Valid</span>
+                            <span class="badge badge-success badge-pill"><i class="fas fa-check-circle"></i> Up-to-date</span>
                         {% endif %}
 
                         <!-- Internal/opt-out status -->
@@ -54,21 +63,53 @@
                         {% endif %}
 
                         {% if not data.allow_opt_out %}
-                            <span class="badge badge-warning badge-pill"><i class="fas fa-lock"></i> Cannot opt-out</span>
+                            <span class="badge badge-warning badge-pill" data-toggle="modal" data-target="#subsModal"><i class="fas fa-lock"></i> Cannot opt-out</span>
                         {% endif %}
 
-                        <!-- Subscriber Count -->
-                        <span class="badge badge-info badge-pill">
-                            {{ data.squire_subscribers|length }} <i class="fas fa-user-friends"></i> Subscribers</span>
+                        <!-- Subscribers -->
+                        <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#subsModal">
+                            <i class="fas fa-user-friends"></i> {{ data.squire_subscribers|length }} Subscriber{{ data.squire_subscribers|length|pluralize }}
+                        </button>
+
+                        <div class="modal fade" id="subsModal" tabindex="-1" role="dialog" aria-labelledby="subsModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="subsModalLabel">{{ address }}</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>{{ data.description }}</p>
+                                        <h4><i class="fas fa-user-friends"></i> Subscribers ({{ data.squire_subscribers|length }})</h4>
+                                        <ul>
+                                            {% for member in data.squire_subscribers %}
+                                                <li>{{member.get_full_name}} &mdash; {{member.email}}</li>
+                                            {% empty %}
+                                                <li><i>No subscribers</i></li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary">Save changes</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
                     </div>
                 </li>
             {% endfor %}
           </ul>
+          </p>
         {% else %}
           <p><i>No member aliases set up</i></p>
         {% endif %}
 
-        <h1>Committee Aliases</h1>
+        <h2>Committee Aliases</h2>
         <p>
             A committee alias is a <b>public</b> alias that can be used to send mails to specific members of a committee, order, or workgroup set up in Squire.
             These aliases are public, allowing external domains to also send emails to members of such committees. Automatic creation of such aliases can be disabled manually for specific commitees in the admin panel. For example, if a committee already has a mailbox, then an alias is not needed.
