@@ -3,7 +3,7 @@ from django.urls import path, include, register_converter, reverse_lazy
 from django.views.generic.base import RedirectView
 
 from . import views, api
-from .feeds import CESTEventFeed
+from .feeds import PublicCalendarFeed, CustomCalendarFeed, BirthdayCalendarFeed
 
 from activity_calendar.url_converters import DateTimeIsoConverter
 
@@ -22,7 +22,9 @@ urlpatterns = [
         ])),
     ])),
 
-    path('api/calendar/ical', CESTEventFeed(), name='icalendar'),
+    path('api/calendar/ical', PublicCalendarFeed(), name='icalendar'),
+    path('api/calendar/birthdays/', BirthdayCalendarFeed(), name='ical_birthdays'),
+    path('api/calendar/<slug:calendar_slug>/', CustomCalendarFeed(), name='icalendar'),
     path('api/calendar/fullcalendar', api.fullcalendar_feed, name='fullcalendar_feed'),
     path('api/activities/upcoming/', api.upcoming_core_feed, name='upcoming_core_feed'),
 

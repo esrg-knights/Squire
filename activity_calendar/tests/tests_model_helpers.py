@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from activity_calendar.models import Activity, ActivitySlot, Participant
+from activity_calendar.models import Activity, ActivityMoment, ActivitySlot, Participant
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -15,7 +15,8 @@ class ActivityRelatedModelHelpersTest(TestCase):
 
     def setUp(self):
         self.activity = Activity(id=4, title="Wow")
-        self.slot = ActivitySlot(id=1, parent_activity=self.activity, title="Wow2")
+        self.activitymoment = ActivityMoment(id=1, parent_activity=self.activity)
+        self.slot = ActivitySlot(id=1, parent_activitymoment=self.activitymoment, title="Wow2")
 
     # Tests the display method of Activity
     def test_activity_display(self):

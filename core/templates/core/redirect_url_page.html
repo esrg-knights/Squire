@@ -1,0 +1,26 @@
+{% load build_absolute_uri %}
+
+<!DOCTYPE html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- We imitate a normal page meta data so normal data can be obtained for link previews -->
+    <meta property="og:title" content="{{ shortcut.title|default:"Squire" }}" />
+    <meta property="og:description"
+          content="{{ shortcut.description|default:'Squire is the new webapp developed by the UUPS-committee of ESRG Knights of the Kitchen Table.'}}" />
+    <meta property="og:image" content="{% build_absolute_image_uri request 'images/default_logo.png' %}" />
+    <meta property="og:image:alt" content="Knights Logo" />
+    <meta property="og:site_name" content="Squire" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{{ request.get_full_path }}" />
+    <meta property="og:locale" content="en_GB" />
+    <meta property="og:locale:alternate" content="nl_NL" />
+</head>
+
+<body>
+<script type="text/javascript">
+    window.location = '{{ shortcut.reference_url }}';
+</script>
+</body>

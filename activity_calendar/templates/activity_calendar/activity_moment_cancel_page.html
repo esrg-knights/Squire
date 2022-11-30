@@ -2,6 +2,7 @@
 
 {% load render_form %}
 {% load static %}
+{% load bootstrap4 %}
 
 {% block title %}
     Squire - Edit {{ activity_moment.title }} occurence
@@ -19,25 +20,19 @@
 {% endblock %}
 
 {% block bootstrap_js %}
-    {# We need to prevent bootstrap's JS from loading, as Martor's MarkdownWidget #}
+    {# We need to prevent bootstrap's jQuery JS from loading, as Martor's MarkdownWidget #}
     {#    also includes it. We cannot remove it from that widget and rely on our version #}
     {#    as it seems to require a specific version. #}
     {#    This is ugly... #}
+    {# TODO: Unify bootstrap and jQuery versions of Martor and Squire #}
+    {% bootstrap_javascript jquery=False %}
 {% endblock %}
 
 {% block content %}
     <h1>{{ activity_moment.title }}</h1>
     <div class="d-flex">
-        <!-- Calendar Icon -->
-        <div class="">
-            <img
-                src="{% static 'octicons/info.svg' %}"
-                alt="Info-icon"
-                class="icon"
-                height="16"
-                width="16"
-            />
-        </div>
+        <!-- Info Icon -->
+        <div><i class="fas fa-info-circle fa-fw"></i></div>
         <!-- Event Date & Recurrence Information -->
         <div class="col align-self-center">
             <div class='nospace'>
@@ -56,15 +51,7 @@
     </div>
     <div class="d-flex">
         <!-- Calendar Icon -->
-        <div class="">
-            <img
-                src="{% static 'octicons/calendar.svg' %}"
-                alt="Calendar-icon"
-                class="icon"
-                height="16"
-                width="16"
-            />
-        </div>
+        <div><i class="far fa-calendar fa-fw"></i></div>
         <!-- Event Date -->
         <div class="col align-self-center">
             <div class='nospace'>

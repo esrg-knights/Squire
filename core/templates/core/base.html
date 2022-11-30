@@ -68,9 +68,6 @@
 			</button>
 			<div class="collapse navbar-collapse" id="navbarSupportedContent">
 				<ul class="navbar-nav mr-auto">
-					<li class="nav-item">
-						<a class="nav-link" href="{% url 'achievements/all' %}">Achievements</a>
-					</li>
 					<li>
 						<a class="nav-link" href="{% url 'activity_calendar:activity_upcoming' %}">Activities</a>
 					</li>
@@ -80,9 +77,9 @@
 					<li>
 						<a class="nav-link" href="{% url 'roleplaying:home' %}">Roleplay</a>
 					</li>
-					{% if perms.committees.view_associationgroup %} {# Temporary criteria while we create all commission data #}
+					{% if global_preferences.newsletter__share_link and member is not None %}
 						<li>
-							<a class="nav-link" href="{% url 'committees:home' %}">Committees</a>
+							<a class="nav-link" href="{% url 'core:newsletters' %}">Newsletter</a>
 						</li>
 					{% endif %}
                     <li>
@@ -90,9 +87,12 @@
                     </li>
 					{% if global_preferences.newsletter__share_link and user.is_authenticated %}
 						<li>
-							<a class="nav-link" href="{% url 'core:newsletters' %}">Newsletter</a>
+							<a class="nav-link" href="{% url 'core:downloads' %}">Newsletter</a>
 						</li>
 					{% endif %}
+					<li class="nav-item">
+						<a class="nav-link" href="{% url 'achievements/all' %}">Achievements</a>
+					</li>
 				</ul>
 				<ul class="navbar-nav navbar-right">
 					{% if user.is_authenticated %}

@@ -31,7 +31,7 @@
                                 {% for content_type in content_types %}
                                     <a href="{% url "inventory:catalogue" type_id=content_type %}"
                                        class="dropdown-item">
-                                        <span class="{{ content_type|get_item_icon_classes }}"></span> {{ content_type }}
+                                        <span class="{{ content_type|get_item_icon_classes }}"></span> {{ content_type.name }}
                                     </a>
                                 {% endfor %}
                             </div>
@@ -67,7 +67,7 @@
                         </td>
                         <td class="col-auto">
                             <span class="{{ ownership.content_type|get_item_icon_classes }}"></span>
-                            {{ ownership.content_type }}
+                            {{ ownership.content_type.name }}
                         </td>
                         <td class="col-auto">
                             {{ ownership.added_since }}

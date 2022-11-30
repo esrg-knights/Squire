@@ -1,0 +1,134 @@
+[
+    {
+        "model": "membership_file.member",
+        "pk": 25,
+        "fields": {
+            "first_name": "Jan",
+            "last_name": "Jansen",
+            "email": "janjansen@example.com",
+            "date_of_birth": "1995-05-12",
+            "last_updated_date": "1970-01-01T12:00:00Z"
+        }
+    },
+    {
+        "model": "activity_calendar.membercalendarsettings",
+        "pk": 25,
+        "fields": {
+            "member": 25,
+            "last_updated": "1970-01-01T12:00:00Z",
+            "use_birthday": true
+        }
+    },
+    {
+        "model": "membership_file.member",
+        "pk": 26,
+        "fields": {
+            "first_name": "Samantha",
+            "last_name": "Hansen",
+            "email": "samhansen@example.com",
+            "date_of_birth": "2001-10-10",
+            "last_updated_date": "1970-01-01T12:00:00Z"
+        }
+    },
+    {
+        "model": "activity_calendar.membercalendarsettings",
+        "pk": 26,
+        "fields": {
+            "member": 26,
+            "last_updated": "1970-01-01T12:00:00Z",
+            "use_birthday": false
+        }
+    },
+    {
+        "model": "membership_file.member",
+        "pk": 27,
+        "fields": {
+            "first_name": "Laura",
+            "last_name": "Nieuwehuizen",
+            "email": "nieuwelaura@example.com",
+            "date_of_birth": "1998-12-27",
+            "last_updated_date": "1970-01-01T12:00:00Z"
+        }
+    },
+    {
+        "model": "activity_calendar.membercalendarsettings",
+        "pk": 27,
+        "fields": {
+            "member": 27,
+            "last_updated": "1970-01-01T12:00:00Z",
+            "use_birthday": true
+        }
+    },
+    {
+        "model": "membership_file.member",
+        "pk": 28,
+        "fields": {
+            "first_name": "John",
+            "last_name": "Vox",
+            "email": "johnvox@example.com",
+            "date_of_birth": "1980-01-01",
+            "last_updated_date": "1970-01-01T12:00:00Z"
+        }
+    },
+    {
+        "model": "activity_calendar.membercalendarsettings",
+        "pk": 28,
+        "fields": {
+            "member": 28,
+            "last_updated": "1970-01-01T12:00:00Z",
+            "use_birthday": true
+        }
+    },
+    {
+        "model": "membership_file.memberyear",
+        "pk": 20,
+        "fields": {
+            "name": "Currentyear",
+            "is_active": true
+        }
+    },
+    {
+        "model": "membership_file.memberyear",
+        "pk": 21,
+        "fields": {
+            "name": "Pastyear",
+            "is_active": false
+        }
+    },
+    {
+        "model": "membership_file.membership",
+        "pk": 20,
+        "fields": {
+            "member": 25,
+            "year": 20,
+            "created_on": "2021-12-21T12:00:00Z"
+        }
+    },
+    {
+        "model": "membership_file.membership",
+        "pk": 21,
+        "fields": {
+            "member": 26,
+            "year": 20,
+            "created_on": "2021-12-21T12:00:00Z"
+        }
+    },
+    {
+        "model": "membership_file.membership",
+        "pk": 22,
+        "fields": {
+            "member": 27,
+            "year": 20,
+            "created_on": "2021-12-21T12:00:00Z"
+        }
+    },
+    {
+        "model": "membership_file.membership",
+        "pk": 23,
+        "fields": {
+            "member": 28,
+            "year": 21,
+            "created_on": "2021-12-21T12:00:00Z"
+        }
+    }
+]

@@ -35,8 +35,7 @@
             </div>
             {% endif %}
             <p>
-                <a href='{% url "activity_calendar:calendar" %}'
-                class="btn btn-info">
+                <a class="btn btn-info" href='{% url "activity_calendar:calendar" %}'>
                     <i class="fas fa-calendar-alt"></i> View entire Calendar
                 </a>
             </p>
@@ -44,7 +43,7 @@
         <div class="row px-2">
             {% for activity_moment in activities %}
                 <div class="col-12 col-md-6 col-xl-4 p-1">
-                    {% include "activity_calendar/snippet_activity_moment.html" %}
+                    {% render_activity_block activity_moment %}
                 </div>
             {% endfor %}
         </div>

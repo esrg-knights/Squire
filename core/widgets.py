@@ -37,7 +37,7 @@ class ImageUploadMartorWidget(AdminMartorWidget):
 
         return template.render({
             'widget': widget,
-            'content_type': self.content_type.id,
+            'content_type_id': self.content_type.id,
             'object_id': self.object_id,
             'placeholder': self.placeholder,
             'placeholder_detail_title': self.placeholder_detail_title,

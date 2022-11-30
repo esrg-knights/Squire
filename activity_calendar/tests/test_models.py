@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
+from django.db import models
 from django.contrib.auth.models import AnonymousUser
 from django.core.validators import ValidationError
 from django.conf import settings
@@ -9,27 +10,51 @@ from django.utils import timezone
 from unittest.mock import patch
 from recurrence import deserialize as deserialize_recurrence_test
 
+from core.models import PresetImage
+
 from . import mock_now
 
-from activity_calendar.models import Activity, ActivitySlot, Participant, ActivityMoment
+from activity_calendar.models import Activity, ActivitySlot, Participant, ActivityMoment, MemberCalendarSettings
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
 # Tests model properties related to fetching participants, slots, etc.
-class ModelMethodsTest(TestCase):
+class SlotImageTest(TestCase):
     fixtures = ['test_users.json', 'test_activity_methods']
 
     def setUp(self):
-        self.activity = Activity.objects.get(id=2)
+        self.preset_image = PresetImage.objects.get(id=2)
 
-    # Should provide the correct url if the activity has an image, or the default image if no image is given
-    def test_image_url(self):
-        self.assertEqual(self.activity.image_url, f"{settings.MEDIA_URL}images/presets/rpg.jpg")
+    def test_activity_image_url(self):
+        """ Slot images for Activities have a default, but can be overridden """
+        activity = Activity.objects.all().first()
+        activity.slots_image = self.preset_image
+        self.assertEqual(activity.slots_image_url, f"{settings.MEDIA_URL}images/presets/rpg.jpg")
 
-        self.activity.slots_image = None
-        self.assertEqual(self.activity.image_url, f"{settings.STATIC_URL}images/default_logo.png")
+        # Default image
+        activity.slots_image = None
+        self.assertEqual(activity.slots_image_url, f"{settings.STATIC_URL}images/default_logo.png")
 
+    def test_activitymoment_image_url(self):
+        """ ActivityMoments inherit their slot image from their parent activity """
+        activitymoment = ActivityMoment.objects.all().first()
+        self.assertEqual(activitymoment.slots_image_url, activitymoment.parent_activity.slots_image_url)
+
+    def test_activityslot_image_url(self):
+        """ ActivitySlots inherit their slot image from their parent activitymoment, unless they've set their own """
+        activityslot = ActivitySlot.objects.all().first()
+        # Use own image when set, regardless of parent value
+        activityslot.image = self.preset_image
+        activityslot.parent_activitymoment.parent_activity.slots_image = None
+        self.assertEqual(activityslot.image_url, f"{settings.MEDIA_URL}images/presets/rpg.jpg")
+
+        activityslot.parent_activitymoment.parent_activity.slots_image = PresetImage.objects.get(id=1)
+        self.assertEqual(activityslot.image_url, f"{settings.MEDIA_URL}images/presets/rpg.jpg")
+
+        # Default to parent's image if none is set
+        activityslot.image = None
+        self.assertEqual(activityslot.image_url, activityslot.parent_activitymoment.parent_activity.slots_image_url)
 
 class ModelMethodsDSTDependentTests(TestCase):
     """
@@ -320,6 +345,35 @@ class ActivityTestCase(TestCase):
     def setUp(self):
         self.activity = Activity.objects.get(id=2)
 
+    def test_model_cleaning_subscription_values(self):
+        """ Tests model validation for subscriptions_open and subscriptions_close values """
+        activity = Activity(
+            title='test_subscription_open_times',
+            description='test description',
+            start_date=datetime(year=2021, month=1, day=1, hour=14),
+            end_date=datetime(year=2021, month=1, day=1, hour=18),
+            location='home'
+        )
+        try:
+            activity.clean_fields()
+        except ValidationError as v:
+            print(v)
+            raise AssertionError("Activity was not valid")
+
+        # Subscription deadline may not be before subscription open time
+        activity.subscriptions_open = timedelta(days=1)
+        activity.subscriptions_close = timedelta(days=7)
+        self.assertRaises(ValidationError, activity.clean_fields)
+
+        activity.subscriptions_open = timedelta(days=-1)
+        activity.subscriptions_close = timedelta(days=-7)
+        try:
+            activity.clean_fields()
+        except ValidationError as v:
+            self.assertEqual(len(v.messages), 2, msg="Both subscription_open and subscription_close should fail")
+        else:
+            raise AssertionError("Negative subscription values should not be allowed")
+
     def test_get_activitymoments_between(self):
         """ Tests the Activity get_activitymoments_between method"""
         after = timezone.datetime(2020, 10, 2, 0, 0, 0, tzinfo=timezone.utc)
@@ -352,7 +406,6 @@ class ActivityTestCase(TestCase):
                     break
         else:
             raise AssertionError("ActivityMoments from rrule overwritten database instances or were not obtained")
-
 
     def test_get_occurrences_starting_between(self):
         """ Tests the get_occurrences_starting_between method, returning all activities according to the recurring rules """
@@ -825,7 +878,7 @@ class ActivityMomentTestCase(TestCase):
 
         self.assertEqual(moment.title, moment.parent_activity.title)
         self.assertEqual(moment.description, moment.parent_activity.description)
-        self.assertEqual(moment.slots_image, moment.parent_activity.slots_image)
+        self.assertEqual(moment.slots_image_url, moment.parent_activity.slots_image_url)
         self.assertEqual(moment.location, moment.parent_activity.location)
         self.assertEqual(moment.max_participants, moment.parent_activity.max_participants)
 
@@ -932,7 +985,7 @@ class ActivityMomentTestCase(TestCase):
         participations = ActivityMoment.objects.get(id=3).get_user_subscriptions(User.objects.get(id=1))
         self.assertEqual(participations.count(), 2)
         self.assertIsInstance(participations.first(), Participant)
-        self.assertEqual(participations.first().activity_slot.parent_activity_id, 2)
+        self.assertEqual(participations.first().activity_slot.parent_activitymoment_id, 3)
         self.assertEqual(participations.last().user_id, 1)
 
         # AnonymousUsers return empty querysets
@@ -942,7 +995,7 @@ class ActivityMomentTestCase(TestCase):
         participants = ActivityMoment.objects.get(id=3).get_guest_subscriptions()
         self.assertEqual(participants.count(), 3)
         self.assertIsInstance(participants.first(), Participant)
-        self.assertEqual(participants.first().activity_slot.parent_activity_id, 2)
+        self.assertEqual(participants.first().activity_slot.parent_activitymoment_id, 3)
 
     def test_get_slots(self):
         slots = ActivityMoment.objects.get(id=3).get_slots()
@@ -1002,35 +1055,6 @@ class ActivitySlotTestCase(TestCase):
             0
         )
 
-    def test_clean_recurrence_id_omitted(self):
-        slot = ActivitySlot(
-            title='test_recurrentce_clean',
-            parent_activity_id=1,
-        )
-
-        with self.assertRaises(ValidationError) as error:
-            slot.clean_fields()
-        self.assertIn('recurrence_id', error.exception.error_dict.keys())
-
-    def test_clean_recurrence_id_invalid(self):
-        slot = ActivitySlot(
-            title='test_recurrentce_clean',
-            parent_activity_id=1,
-            recurrence_id="2020-08-15T19:00:00Z"
-        )   # There is no activity_moment on this recurrence moment
-
-        with self.assertRaises(ValidationError) as error:
-            slot.clean_fields()
-        self.assertIn('recurrence_id', error.exception.error_dict.keys())
-
-        slot = ActivitySlot(
-            title='test_recurrentce_clean',
-            parent_activity_id=1,
-            recurrence_id="2020-08-14T19:00:00Z"
-        )
-        # Recurrence_id is valid, so it does not raise an error
-        slot.clean_fields()
-
 
 class ActivityParticipantTestCase(TestCase):
     fixtures = ['test_users.json', 'test_members', 'test_activity_slots']
@@ -1060,5 +1084,11 @@ class ActivityParticipantTestCase(TestCase):
         )
 
 
+class MemberCalendarSettingsTestCase(TestCase):
 
-
+    def test_fields(self):
+        # Test image field
+        field = MemberCalendarSettings._meta.get_field("use_birthday")
+        self.assertIsInstance(field, models.BooleanField)
+        self.assertEqual(field.default, False,
+                         msg="Use of birthday should default to False for privacy reasons")

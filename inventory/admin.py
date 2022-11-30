@@ -4,7 +4,6 @@ from import_export.admin import ExportActionMixin
 from import_export.fields import Field
 from import_export.resources import ModelResource
 
-from core.admin import EmptyFieldListFilter
 from inventory.models import *
 
 
@@ -24,7 +23,7 @@ class OwnershipAdmin(admin.ModelAdmin):
     list_filter = (
         'content_type',
         ('group', admin.RelatedOnlyFieldListFilter),
-        ('member', EmptyFieldListFilter),
+        ('member', admin.EmptyFieldListFilter),
     )
 
 admin.site.register(Ownership, OwnershipAdmin)
@@ -72,7 +71,7 @@ class ItemAdmin(admin.ModelAdmin):
     inlines = [OwnershipInline]
     list_filter = (
         ('ownerships__group', admin.RelatedOnlyFieldListFilter),
-        ('ownerships__member', EmptyFieldListFilter),
+        ('ownerships__member', admin.EmptyFieldListFilter),
     )
 
     @staticmethod

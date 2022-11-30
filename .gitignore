@@ -124,8 +124,13 @@ local_settings.py
 /squire/local_settings.py
 htdocs/media/local_only/*
 htdocs/media/images/*
+htdocs/static
 /output/
 /test/output/
+
+#Disables tracking of membership Card file, need to be added manually
+/membership_file/static/images/MembershipCard.jpg
+
 
 # Visual Studio Code
 .vscode

@@ -58,10 +58,16 @@ class MembershipRequiredMixin(LoginRequiredMixin):
     requires_active_membership = True  # Boolean defining whether user should be active, or just linked as an (old) member
 
     def dispatch(self, request, *args, **kwargs):
-        if request.member is None:
+        if self.check_member_access(request.member):
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return HttpResponseRedirect(resolve_url(self.fail_url))
+
+    def check_member_access(self, member):
+        if member is None:
             # Current session has no member connected
-            return HttpResponseRedirect(resolve_url(self.fail_url))
-        if not request.member.is_considered_member() and self.requires_active_membership:
+            return False
+        if not member.is_considered_member() and self.requires_active_membership:
             # Current session has a disabled member connected
-            return HttpResponseRedirect(resolve_url(self.fail_url))
-        return super().dispatch(request, *args, **kwargs)
+            return False
+        return True

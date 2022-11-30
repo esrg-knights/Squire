@@ -16,6 +16,7 @@ import activity_calendar.util as util
 from core.models import PresetImage
 from core.fields import MarkdownTextField
 from committees.utils import user_in_association_group
+from membership_file.models import Member
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -79,10 +80,13 @@ class Activity(models.Model):
 
     # The date at which the activity will become visible for all users
     published_date = models.DateTimeField(default=now_rounded)
+    is_public = models.BooleanField(default=True, help_text="If activity should be on public calendar")
 
     # Start and end times
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
+    full_day = models.BooleanField(default=False, help_text="Whether this event marks the entire day")
+    display_end_time = models.BooleanField(default=False, help_text="Whether the end time is displayed on the site")
 
     # Recurrence information (e.g. a weekly event)
     # This means we do not need to store (nor create!) recurring activities separately
@@ -110,15 +114,17 @@ class Activity(models.Model):
     # - Auto: Slots are created automatically. They are only actually created in the DB once a participant joins.
     #                                          Until that time they do look like real slots though (in the UI)
     # - Users: Slots can be created by users. Users can be the owner of at most max_slots_join_per_participant slots
-    SLOT_CREATION_STAFF = "CREATION_NONE"
+    SLOT_CREATION_STAFF = "CREATION_STAFF"
     SLOT_CREATION_AUTO = "CREATION_AUTO"
     SLOT_CREATION_USER = "CREATION_USER"
+    SLOT_CREATION_NONE = "CREATION_NONE"
     slot_creation = models.CharField(
         max_length=15,
         choices=[
-            (SLOT_CREATION_STAFF,   "Never/By Administrators"),
+            (SLOT_CREATION_STAFF,   "By Organisers"),
             (SLOT_CREATION_AUTO,   "Automatically"),
             (SLOT_CREATION_USER,   "By Users"),
+            (SLOT_CREATION_NONE,   "No signup"),
         ],
         default='CREATION_AUTO',
     )
@@ -128,7 +134,7 @@ class Activity(models.Model):
     subscriptions_close = models.DurationField(default=timezone.timedelta(hours=2))
 
     @property
-    def image_url(self):
+    def slots_image_url(self):
         if self.slots_image is None:
             return f'{settings.STATIC_URL}images/default_logo.png'
         return self.slots_image.image.url
@@ -531,6 +537,11 @@ class Activity(models.Model):
                 return True
         return False
 
+    @property
+    def feed_id(self):
+        """ Get a unique identifier to distinguish this activity in the feed """
+        return f'local_activity-name-{self.id}'
+
 
 class ActivityDuplicate(ModelBase):
     """
@@ -599,11 +610,11 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         # Define the fields that can be locally be overwritten
         copy_fields = [
             'title', 'description', 'promotion_image', 'location', 'max_participants', 'subscriptions_required',
-            'slot_creation', 'private_slot_locations']
+            'slot_creation', 'private_slot_locations', 'full_day']
         # Define fields that are instantly looked for in the parent_activity
         # If at any point in the future these must become customisable, one only has to move the field name to the
         # copy_fields attribute
-        link_fields = ['slots_image', 'subscriptions_required']
+        link_fields = ['slots_image_url', 'subscriptions_required', 'display_end_time']
 
     # Alternative start/end date of the activity. If left empty, matches the start/end time
     #   of this OCCURRENCE.
@@ -690,8 +701,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
 
     def get_guest_subscriptions(self):
         return Participant.objects.filter_guests_only().filter(
-            activity_slot__parent_activity_id=self.parent_activity.id,
-            activity_slot__recurrence_id=self.recurrence_id,
+            activity_slot__parent_activitymoment_id=self.id,
         )
 
     def get_user_subscriptions(self, user=None):
@@ -701,8 +711,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         :return: Queryset of all participant entries
         """
         participants = Participant.objects.filter_users_only().filter(
-            activity_slot__parent_activity_id=self.parent_activity_id,
-            activity_slot__recurrence_id=self.recurrence_id,
+            activity_slot__parent_activitymoment_id=self.id,
         )
         if user:
             if user.is_anonymous:
@@ -717,10 +726,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         Gets all slots for this activity moment
         :return: Queryset of all slots associated with this activity at this moment
         """
-        return ActivitySlot.objects.filter(
-            parent_activity__id=self.parent_activity_id,
-            recurrence_id=self.recurrence_id,
-        )
+        return self.activity_slot_set.all()
 
     def is_open_for_subscriptions(self):
         """
@@ -767,14 +773,8 @@ class ActivitySlot(models.Model):
     # User that created the slot (or one that's in the slot if the original owner is no longer in the slot)
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
 
-    # The activity that this slot belongs to
-    # NB: The slot belongs to just a single _occurence_ of a (recurring) activity.
-    #   Hence, we need to store both the foreign key and a date representing one if its occurences
-    # TODO: Create a widget for the parent_activity_recurrence so editing is a bit more user-friendly
-    parent_activity = models.ForeignKey(Activity, related_name="activity_slot_set", on_delete=models.CASCADE)
-    recurrence_id = models.DateTimeField(blank=True, null=True,
-        help_text="If the activity is recurring, set this to the date/time of one of its occurences. Leave this field empty if the parent activity is non-recurring.",
-        verbose_name="parent activity date/time")
+    # The activitymoment that this slot belongs to
+    parent_activitymoment = models.ForeignKey(ActivityMoment, related_name="activity_slot_set", on_delete=models.CASCADE)
 
     max_participants = models.IntegerField(default=-1, validators=[MinValueValidator(-1)],
         help_text="-1 denotes unlimited participants", verbose_name="maximum number of participants")
@@ -782,13 +782,10 @@ class ActivitySlot(models.Model):
     image = models.ForeignKey(PresetImage, blank=True, null=True, related_name="slot_image", on_delete=models.SET_NULL,
         help_text="If left empty, matches the image of the activity.")
 
-    def __str__(self):
-        return f"{self.id}"
-
     @property
     def image_url(self):
         if self.image is None:
-            return self.parent_activity.image_url
+            return self.parent_activitymoment.slots_image_url
         return self.image.image.url
 
     def get_subscribed_users(self):
@@ -811,19 +808,12 @@ class ActivitySlot(models.Model):
             if self.start_date and self.end_date and self.start_date >= self.end_date:
                 errors.update({'start_date': 'Start date must be before the end date'})
 
-        if 'parent_activity' not in exclude:
-            if self.recurrence_id is None:
-                errors.update({'recurrence_id': 'Must set a date/time when this activity takes place'})
-            else:
-                if not self.parent_activity.get_occurrence_at(self.recurrence_id):
-                    # Bounce activities if it is not fitting with the recurrence scheme
-                    errors.update({'recurrence_id': 'Parent activity has no occurence at the given date/time'})
-
+        if 'parent_activitymoment' not in exclude:
             if not exclude_start_or_end:
                 # Start/end times must be within start/end times of parent activity
-                if self.start_date and self.start_date < self.parent_activity.start_date:
+                if self.start_date and self.start_date < self.parent_activitymoment.start_date:
                     errors.update({'start_date': 'Start date cannot be before the start date of the parent activity'})
-                if self.start_date and self.end_date > self.parent_activity.end_date:
+                if self.start_date and self.end_date > self.parent_activitymoment.end_date:
                     errors.update({'end_date': 'End date cannot be after the end date of the parent activity'})
 
         if errors:
@@ -834,8 +824,8 @@ class ActivitySlot(models.Model):
 
     def get_absolute_url(self):
         return reverse('activity_calendar:activity_slots_on_day', kwargs={
-            'activity_id': self.parent_activity.id,
-            'recurrence_id': self.recurrence_id,
+            'activity_id': self.parent_activitymoment.parent_activity_id,
+            'recurrence_id': self.parent_activitymoment.recurrence_id,
         })
 
 
@@ -872,3 +862,33 @@ class OrganiserLink(models.Model):
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
     association_group = models.ForeignKey('committees.AssociationGroup', on_delete=models.CASCADE)
     archived = models.BooleanField(default=False)
+
+
+class Calendar(models.Model):
+    """ Symbolises a calendar with certain activities """
+    name = models.CharField(max_length=128, unique=True)
+    slug = models.SlugField(verbose_name='url string', help_text="The local url string", unique=True)
+    description = models.CharField(max_length=256)
+
+    activities = models.ManyToManyField(Activity, through="CalendarActivityLink")
+
+    def __str__(self):
+        return self.name
+
+
+class CalendarActivityLink(models.Model):
+    calendar = models.ForeignKey(Calendar, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.calendar} - {self.activity}'
+
+
+class MemberCalendarSettings(models.Model):
+    member = models.OneToOneField(Member, on_delete=models.CASCADE)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    use_birthday = models.BooleanField(default=False, verbose_name="Display my birthday in Knights birthday calendar")
+
+    def __str__(self):
+        return f'calendar settings for {self.member}: {self.use_birthday}'
