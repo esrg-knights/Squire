@@ -74,20 +74,6 @@ class FileBrowserView(NextcloudConnectionViewMixin, ListView):
         return construct_client().ls(remote_path=self.kwargs.get('path', ''))
 
 
-class FolderView(NextcloudConnectionViewMixin, TemplateView):
-    template_name = "nextcloud_integration/folder_list.html"
-
-    def get_context_data(self, **kwargs):
-        context = super(FolderView, self).get_context_data(**kwargs)
-        if self.kwargs.get('path', None):
-            context['folders'] = get_object_or_404(NCFolder, path=self.kwargs['path'])
-            context['files'] = context['folder'].ncfile_set.all()
-        else:
-            context['folders'] = NCFolder.objects.all()
-
-        return context
-
-
 class SiteDownloadView(ListView):
     template_name = "nextcloud_integration/site_downloads.html"
     model = NCFolder
@@ -133,18 +119,31 @@ class FolderMixin:
         context["folder"] = self.folder
         return context
 
-class FolderContentView(NextcloudConnectionViewMixin, FolderMixin, TemplateView):
-    template_name = "nextcloud_integration/folder_contents.html"
-
 
 class FolderCreateView(NextcloudConnectionViewMixin, FormView):
     template_name = "nextcloud_integration/folder_add.html"
     form_class = FolderCreateForm
-    success_url = reverse_lazy("nextcloud:folder_view")
+    success_url = reverse_lazy("nextcloud:site_downloads")
 
     def form_valid(self, form):
         form.save()
         return super(FolderCreateView, self).form_valid(form)
+
+
+class FolderEditView(NextcloudConnectionViewMixin, FolderMixin, FormView):
+    template_name = "nextcloud_integration/folder_edit.html"
+    form_class = FolderEditFormGroup
+    success_url = reverse_lazy("nextcloud:site_downloads")
+
+    def form_valid(self, form):
+        form.save()
+        return super(FolderEditView, self).form_valid(form)
+
+    def get_form_kwargs(self):
+        kwargs = super(FolderEditView, self).get_form_kwargs()
+        kwargs['folder'] = self.folder
+        return kwargs
+
 
 class SynchFileToFolderView(NextcloudConnectionViewMixin, FolderMixin, FormView):
     template_name = "nextcloud_integration/synch_file_to_folder.html"

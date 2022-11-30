@@ -59,9 +59,15 @@
                 </a>
             {% endif %}
             {% if user|has_synch_access %}
-                <a class="btn btn-primary" href="{% url "nextcloud:synch_file" folder_slug=folder.slug %}">
-                    <i class="fas fa-cloud-download-alt"></i> Sync file
-                </a>
+                {% if folder.is_missing %}
+                    <a class="btn btn-secondary text-dark">
+                        <i class="fas fa-cloud-download-alt"></i> Sync file
+                    </a>
+                {% else %}
+                    <a class="btn btn-primary" href="{% url "nextcloud:synch_file" folder_slug=folder.slug %}">
+                        <i class="fas fa-cloud-download-alt"></i> Sync file
+                    </a>
+                {% endif %}
             {% endif %}
         </li>
     </ul>

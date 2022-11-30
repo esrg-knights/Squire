@@ -1,6 +1,10 @@
 from django.forms import Form, ValidationError, ModelForm
-from django.forms.fields import CharField, ChoiceField
+from django.forms.formsets import BaseFormSet
+from django.forms.fields import CharField, ChoiceField, HiddenInput
+from django.forms.renderers import get_default_renderer
 from django.utils.text import slugify
+
+from utils.forms import FormGroup
 
 from nextcloud_integration.nextcloud_client import construct_client, OperationFailed
 from nextcloud_integration.nextcloud_resources import NextCloudFile, NextCloudFolder
@@ -101,3 +105,79 @@ class SynchFileToFolderForm(ModelForm):
     def clean(self):
         self.instance.slug = slugify(self.cleaned_data['display_name'])
         return super(SynchFileToFolderForm, self).clean()
+
+
+class FolderEditForm(ModelForm):
+    class Meta:
+        model = NCFolder
+        fields = ["display_name", "description", "requires_membership"]
+
+
+class FileEditForm(ModelForm):
+    id = HiddenInput()
+
+    class Meta:
+        model = NCFile
+        fields = ["display_name", "description"]
+
+    def __init__(self, *args, **kwargs):
+        super(FileEditForm, self).__init__(*args, **kwargs)
+        self.id = self.instance.id
+
+    def clean_id(self):
+        if self.instance.id != self.cleaned_data["id"]:
+            raise ValidationError("File id is invalid", code="invalid_id")
+
+
+class FileEditFormset(BaseFormSet):
+    form = FileEditForm
+
+    def __init__(self, *args, nc_files=None, **kwargs):
+        assert nc_files is not None
+        self.nc_files = nc_files
+        # Initialising the form directly skips the factory, so set some base values requeired
+        self.renderer = get_default_renderer()
+        self.min_num = 0
+        self.max_num = len(nc_files)
+        self.absolute_max = self.max_num
+        self.validate_min = self.max_num
+        self.validate_max = self.max_num
+        self.can_delete = False
+        self.can_order = False
+
+        super(FileEditFormset, self).__init__(*args, **kwargs)
+
+    def get_form_kwargs(self, index):
+        kwargs = super(FileEditFormset, self).get_form_kwargs(index)
+        kwargs["instance"] = self.nc_files[index]
+        return kwargs
+
+    def total_form_count(self):
+        return len(self.nc_files)
+
+    def save(self):
+        for form in self.forms:
+            form.save()
+
+class FolderEditFormGroup(FormGroup):
+    form_class = FolderEditForm
+    formset_class = FileEditFormset
+
+    def __init__(self, folder=None, **kwargs):
+        self.folder = folder
+        self.form_kwargs = {'instance': self.folder}
+        self.formset_kwargs = {'FileEditFormset': {'nc_files': self.folder.files.all()}}
+        super(FolderEditFormGroup, self).__init__(**kwargs)
+
+    # def get_form_kwargs(self, form_class):
+    #     kwargs = super(FolderEditFormGroup, self).get_form_kwargs(form_class)
+    #     kwargs['instance'] = self.folder
+    #     return kwargs
+
+    # def get_formset_kwargs(self, formset_class):
+    #     kwargs = super(FolderEditFormGroup, self).get_formset_kwargs(formset_class)
+    #     kwargs['nc_files'] = self.folder.files.all()
+    #     return kwargs
+
+
+
