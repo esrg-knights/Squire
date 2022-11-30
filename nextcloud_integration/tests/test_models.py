@@ -68,10 +68,3 @@ class NCFolderTestcase(TestCase):
             path="/A fake path/",
         )
         self.assertEqual(folder.slug, "test-slug")
-
-    def test_get_absolute_url(self):
-        folder = NCFolder.objects.get(id=1)
-        self.assertEqual(
-            folder.get_absolute_url(),
-            reverse("nextcloud:folder_view", kwargs={'folder_slug': folder.slug})
-        )

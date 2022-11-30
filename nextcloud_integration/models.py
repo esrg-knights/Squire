@@ -50,9 +50,6 @@ class NCFolder(models.Model):
     def __str__(self):
         return f"Folder: {self.display_name}"
 
-    def get_absolute_url(self):
-        return reverse("nextcloud:folder_view", kwargs={'folder_slug': self.slug})
-
 
 class NCFile(models.Model):
     """ Represents a file on the nextcloud storage """

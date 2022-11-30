@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from requests.exceptions import ConnectionError
 from easywebdav import OperationFailed
 
-from membership_file.util import user_is_current_member
+from membership_file.util import user_is_current_member, MembershipRequiredMixin
 
 from nextcloud_integration.nextcloud_client import construct_client, OperationFailed
 from nextcloud_integration.forms import *
@@ -170,12 +170,18 @@ class SynchFileToFolderView(NextcloudConnectionViewMixin, FolderMixin, FormView)
         )
 
 
-class DownloadFileview(NextcloudConnectionViewMixin, SingleObjectMixin, View):
+class DownloadFileview(MembershipRequiredMixin, NextcloudConnectionViewMixin, SingleObjectMixin, View):
     template_name = "nextcloud_integration/file_download_test.html"
     model = NCFile
     slug_url_kwarg = "file_slug"
     slug_field = "slug"
     context_object_name = "file"
+
+    def check_member_access(self, member):
+        if self.file.folder.requires_membership:
+            return super(DownloadFileview, self).check_member_access(member)
+        else:
+            return True
 
     def get(self, request, *args, **kwargs):
         self.file = get_object_or_404(
