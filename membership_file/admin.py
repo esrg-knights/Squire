@@ -9,7 +9,7 @@ from import_export.formats.base_formats import CSV
 
 from .forms import AdminMemberForm
 from .models import Member, MemberLog, MemberLogField, Room, MemberYear, Membership
-from core.admin import DisableModificationsAdminMixin, EmptyFieldListFilter, URLLinkInlineAdminMixin
+from core.admin import DisableModificationsAdminMixin, URLLinkInlineAdminMixin
 from membership_file.export import MemberResource
 from utils.forms import RequestUserToFormModelAdminMixin
 
@@ -76,8 +76,8 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
         'is_deregistered', 'marked_for_deletion',
         'is_honorary_member',
         'educational_institution',
-        ('tue_card_number', EmptyFieldListFilter), ('external_card_number', EmptyFieldListFilter),
-        ('key_id', EmptyFieldListFilter), ('phone_number', EmptyFieldListFilter),
+        ('tue_card_number', admin.EmptyFieldListFilter), ('external_card_number', admin.EmptyFieldListFilter),
+        ('key_id', admin.EmptyFieldListFilter), ('phone_number', admin.EmptyFieldListFilter),
     ]
     list_display_links = ('id', 'user', 'first_name')
     search_fields = ['first_name', 'last_name', 'email', 'phone_number', 'tue_card_number', 'external_card_number', 'key_id']

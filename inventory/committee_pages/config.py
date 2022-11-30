@@ -25,7 +25,7 @@ class InventoryConfig(CommitteeBaseConfig):
         for permission in association_group.site_group.permissions.all():
             if permission.codename.startswith('maintain_ownerships_for'):
                 quicklinks.append({
-                    'name': f'{permission.content_type} catalogue',
+                    'name': f'{permission.content_type.name} catalogue',
                     'url': reverse('inventory:catalogue', kwargs={'type_id': permission.content_type})
                 })
         return quicklinks

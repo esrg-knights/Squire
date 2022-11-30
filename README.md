@@ -1,6 +1,6 @@
 # Squire
 
-A re-introduction of the web application for ESRG Knights of the Kitchen Table.
+A re-introduction of the web application for ESRG Knights of the Kitchen Table using Django 3.2.
 
 ## Getting started with development
 
@@ -33,7 +33,7 @@ In order to keep things clear and to make it easier to use, these requirements a
 
 Django automatically recognizes test files of the format _<python_app>/tests.py_. Each test case is described using Django's TestCase class, which can be imported using `from django.test import TestCase`.
 
-More information on Django Testcases can be accessed online at the [Django Documentation](https://docs.djangoproject.com/en/2.2/topics/testing/).
+More information on Django Testcases can be accessed online at the [Django Documentation](https://docs.djangoproject.com/en/3.2/topics/testing/).
 
 NB: It is important to **not** use the _unittest.TestCase_ class!
 <br/><br/>
