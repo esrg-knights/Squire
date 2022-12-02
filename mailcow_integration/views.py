@@ -94,7 +94,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             for assoc_group in assoc_groups
         }
 
-        print(mailcow_aliases)
+        # print(mailcow_aliases)
 
         # Verify that each of our aliases actually exists in Mailcow
         for alias in mailcow_aliases:
