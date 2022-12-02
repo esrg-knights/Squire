@@ -6,7 +6,9 @@
                 <span data-toggle="tooltip" data-placement="top" title="{{ data.description }}">{{ address }}</span>
                 <div>
                     <!-- Status -->
-                    {% if data.alias is None %}
+                    {% if data.status == "RESERVED" %}
+                        <span class="badge badge-danger badge-pill"><i class="fas fa-exclamation-triangle"></i> Invalid Address</span>
+                    {% elif data.alias is None %}
                         <span class="badge badge-danger badge-pill"><i class="fas fa-question-circle"></i> Missing</span>
                     {% elif data.status == "NOT_MANAGED_BY_SQUIRE" %}
                         <span class="badge badge-secondary badge-pill"><i class="fas fa-unlink"></i> Not managed by Squire</span>
@@ -31,7 +33,9 @@
 
                     <!-- Subscribers -->
                     <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#subsModal-{{ data.id }}">
-                        {% if data.status != "NOT_MANAGED_BY_SQUIRE" %}
+                        {% if data.status == "RESERVED" %}
+                            <i class="fas fa-user-friends"></i> No Subscribers
+                        {% elif data.status != "NOT_MANAGED_BY_SQUIRE" %}
                             <i class="fas fa-user-friends"></i> {{ data.squire_subscribers|length }} Subscriber{{ data.squire_subscribers|length|pluralize }}
                         {% else %}
                             <i class="fas fa-user-friends"></i> {{ data.alias.goto|length }} Subscriber{{ data.alias.goto|length|pluralize }}
@@ -49,7 +53,11 @@
                                 </div>
                                 <div class="modal-body">
                                     <p>{{ data.description }}</p>
-                                    {% if data.status != "NOT_MANAGED_BY_SQUIRE" %}
+                                    {% if data.status == "RESERVED" %}
+                                        <div class="alert alert-danger" role="alert">
+                                            <i class="fas fa-exclamation-triangle"></i> Alias is identical to a member alias.
+                                        </div>
+                                    {% elif data.status != "NOT_MANAGED_BY_SQUIRE" %}
                                         <h4><i class="fas fa-user-friends"></i> Subscribers ({{ data.squire_subscribers|length }})</h4>
                                         <ul>
                                             {% for member in data.squire_subscribers %}

@@ -53,9 +53,12 @@ class SquireMailcowManager:
     def __str__(self) -> str:
         return f"SquireMailcowManager[{self._client.host}]"
 
-    def clean_member_emails(self, members) -> list[str]:
+    def clean_alias_emails(self, queryset, email_field="email", flatten=True) -> list[str]:
         """ TODO """
-        return list(members.exclude(email__in=self._member_alias_addresses).order_by('email').values_list('email', flat=True))
+        queryset = queryset.exclude(**{f"{email_field}__in": self._member_alias_addresses}).order_by(email_field)
+        if flatten:
+            return list(queryset.values_list(email_field, flat=True))
+        return queryset
 
     def _get_rspamd_internal_alias_setting(self) -> Optional[RspamdSettings]:
         """ Gets the Rspamd setting (if it exists) that is used by Squire
@@ -161,7 +164,7 @@ class SquireMailcowManager:
 
         alias.goto = goto_addresses
         alias.sogo_visible = False
-        res = self._client.update_alias(alias)
+        self._client.update_alias(alias)
 
     def get_active_members(self) -> QuerySet:
         """ Helper method to obtain a queryset of active members. That is, those that have active membership. """
@@ -197,7 +200,7 @@ class SquireMailcowManager:
 
         for alias_id, alias_data in settings.MEMBER_ALIASES.items():
             logger.info(f"Forced updating {alias_id} ({alias_data['address']})")
-            emails = self.clean_member_emails(
+            emails = self.clean_alias_emails(
                 self.get_subscribed_members(active_members, alias_id, default=alias_data['default_opt'])
             )
             logger.info(emails)
@@ -219,8 +222,8 @@ class SquireMailcowManager:
         existing_aliases = self._map_alias_by_name()
         existing_mailboxes = None
 
-        for assoc_group in self.get_alias_committees():
-            emails = self.clean_member_emails(assoc_group.members.filter_active())
+        for assoc_group in self.clean_alias_emails(self.get_alias_committees(), email_field="contact_email", flatten=False):
+            emails = self.clean_alias_emails(assoc_group.members.filter_active())
             logger.info(f"Forced updating {assoc_group} ({len(emails)} subscribers)")
 
             self._set_alias_by_name(assoc_group.contact_email, emails, public_comment=self.ALIAS_COMMITTEE_PUBLIC_COMMENT,

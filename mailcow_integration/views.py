@@ -24,6 +24,7 @@ class AliasStatus(Enum):
     MISSING = 1 # Alias is not in Mailcow, but should exist
     NOT_MANAGED_BY_SQUIRE = 2 # Alias is in Mailcow, but does not have a public comment indicating it is managed by Squire
     OUTDATED = 3 # Alias goto-addresses do not match up with Squire
+    RESERVED = 4 # Alias already reserved for a member-alias, but a committee has it as their contact info
 
 class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
     """ An overview of aliases managed by Squire. Connects to the Mailcow API to determine whether
@@ -69,7 +70,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
                 if alias.public_comment != public_comment:
                     # Public comment of the alias does not indicate it is managed by Squire
                     results[alias.address].update({'alias': alias, 'status': AliasStatus.NOT_MANAGED_BY_SQUIRE.name})
-                elif alias.goto != self.mailcow_manager.clean_member_emails(results[alias.address]['squire_subscribers']):
+                elif alias.goto != self.mailcow_manager.clean_alias_emails(results[alias.address]['squire_subscribers']):
                     # Subscribers are out of date
                     #   Note: Lists are sorted
                     # TODO: verify internal-status
@@ -83,23 +84,31 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
         results = {
             assoc_group.contact_email: {
                 'alias': None,
-                'status': AliasStatus.MISSING.name,
-                'squire_subscribers': assoc_group.members.filter_active().order_by('email'),
+                'status': AliasStatus.MISSING.name if not assoc_group.has_invalid_email else AliasStatus.RESERVED.name,
+                'squire_subscribers': assoc_group.members.filter_active().order_by('email')\
+                    .annotate(
+                        # Indicate that emails are ignored
+                        has_invalid_email=ExpressionWrapper(Q(email__in=self.mailcow_manager._member_alias_addresses), output_field=BooleanField())
+                ),
                 'id': assoc_group.id,
                 'description': assoc_group.site_group.name,
                 'internal': False,
-                'allow_opt_out': False,
+                'allow_opt_out': True, # Cannot actually opt out; tricking the template here
             }
-            for assoc_group in self.mailcow_manager.get_alias_committees()
+            for assoc_group in self.mailcow_manager.get_alias_committees().annotate(
+                has_invalid_email=ExpressionWrapper(Q(contact_email__in=self.mailcow_manager._member_alias_addresses), output_field=BooleanField())
+            )
         }
 
         # Verify that each of our aliases actually exists in Mailcow
         for alias in mailcow_aliases:
             if alias.address in results.keys():
-                if alias.public_comment != public_comment:
+                if results[alias.address]['status'] == AliasStatus.RESERVED.name:
+                    results[alias.address].update({'alias': alias})
+                elif alias.public_comment != public_comment:
                     # Public comment of the alias does not indicate it is managed by Squire
                     results[alias.address].update({'alias': alias, 'status': AliasStatus.NOT_MANAGED_BY_SQUIRE.name})
-                elif alias.goto != self.mailcow_manager.clean_member_emails(results[alias.address]['squire_subscribers']):
+                elif alias.goto != self.mailcow_manager.clean_alias_emails(results[alias.address]['squire_subscribers']):
                     # Subscribers are out of date
                     #   Note: Lists are sorted
                     results[alias.address].update({'alias': alias, 'status': AliasStatus.OUTDATED.name})
