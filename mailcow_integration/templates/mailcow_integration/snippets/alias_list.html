@@ -53,7 +53,11 @@
                                         <h4><i class="fas fa-user-friends"></i> Subscribers ({{ data.squire_subscribers|length }})</h4>
                                         <ul>
                                             {% for member in data.squire_subscribers %}
-                                                <li>{{member.get_full_name}} &mdash; {{member.email}}</li>
+                                                {% if member.has_invalid_email %}
+                                                    <li class="text-muted">{{member.get_full_name}} &mdash; {{member.email}} <span class="badge badge-secondary badge-pill"><i class="fas fa-ban"></i> Ignored</span></li>
+                                                {% else %}
+                                                    <li>{{member.get_full_name}} &mdash; {{member.email}}</li>
+                                                {% endif %}
                                             {% empty %}
                                                 <li><i>No subscribers</i></li>
                                             {% endfor %}

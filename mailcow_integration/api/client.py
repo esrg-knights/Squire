@@ -1,11 +1,16 @@
 from enum import Enum
+from functools import cache, lru_cache
 import json
 from typing import Generator, List
 import requests
 
 from mailcow_integration.api.exceptions import *
 from mailcow_integration.api.interface.alias import AliasType, MailcowAlias
+from mailcow_integration.api.interface.mailbox import MailcowMailbox
 from mailcow_integration.api.interface.rspamd import RspamdSettings
+
+import logging
+logger = logging.getLogger(__name__)
 
 class RequestType(Enum):
     """ Different types of requests that can be made to the Mailcow API """
@@ -25,6 +30,8 @@ class MailcowAPIClient:
         can be disabled entirely).
     """
     API_FORMAT = "%(host)s/api/v1/"
+    _alias_cache = None
+    _mailbox_cache = None
 
     def __init__(self, host: str, api_key: str):
         self.host = host
@@ -66,7 +73,7 @@ class MailcowAPIClient:
         """ Makes a request to the endpoint specified by `url`, with some parameters `params` and some `data`.
         """
         url = self.API_FORMAT % {'host': self.host} + url
-        print(url)
+        logger.info(f"Request made to: {url}")
         res = requests.request(request_type.value, url, params=params, data=data, headers=self._get_headers())
         content = json.loads(res.content)
 
@@ -85,10 +92,13 @@ class MailcowAPIClient:
     ################
     # ALIASES
     ################
-    def get_alias_all(self) -> Generator[MailcowAlias, None, None]:
+    def get_alias_all(self, use_cache=True) -> Generator[MailcowAlias, None, None]:
         """ Gets a list of all email aliases """
-        res = self._make_request(f"get/alias/all")
-        return map(lambda alias: MailcowAlias.from_json(alias), json.loads(res.content))
+        if not use_cache or self._alias_cache is None:
+            # Cache is empty or we don't want to use it
+            res = self._make_request(f"get/alias/all")
+            self._alias_cache = res.content
+        return map(lambda alias: MailcowAlias.from_json(alias), json.loads(self._alias_cache))
 
     def get_alias(self, id: int) -> MailcowAlias:
         """ Gets an email alias with a specific id """
@@ -98,6 +108,7 @@ class MailcowAPIClient:
 
     def update_alias(self, alias: MailcowAlias) -> requests.Response:
         """ Updates an alias """
+        self._alias_cache = None
         data = {
             'items': [alias.id],
             'attr': {
@@ -121,10 +132,11 @@ class MailcowAPIClient:
             data['attr']['goto_null'] = 1
 
         data = json.dumps(data)
-        return self._make_request(f"edit/alias/{id}", request_type=RequestType.POST, data=data)
+        return self._make_request(f"edit/alias/{alias.id}", request_type=RequestType.POST, data=data)
 
     def create_alias(self, alias: MailcowAlias) -> requests.Response:
         """ Creates a new alias """
+        self._alias_cache = None
         data = {
             'address': alias.address,
             'active': int(alias.active),
@@ -145,6 +157,17 @@ class MailcowAPIClient:
 
         data = json.dumps(data)
         return self._make_request(f"add/alias", request_type=RequestType.POST, data=data)
+
+    ################
+    # MAILBOXES
+    ################
+    def get_mailbox_all(self, use_cache=True) -> Generator[MailcowMailbox, None, None]:
+        """ Gets a list of all mailboxes """
+        if not use_cache or self._mailbox_cache is None:
+            # Cache is empty or we don't want to use it
+            res = self._make_request(f"get/mailbox/all")
+            self._mailbox_cache = res.content
+        return map(lambda mailbox: MailcowMailbox.from_json(mailbox), json.loads(self._mailbox_cache))
 
     ################
     # RSPAMD SETTINGS (undocumented API)

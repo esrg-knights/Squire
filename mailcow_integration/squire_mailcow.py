@@ -1,5 +1,5 @@
 import re
-from typing import Optional, List
+from typing import Dict, Optional, List
 
 from django.apps import apps
 from django.conf import settings
@@ -8,6 +8,7 @@ from django.template.loader import get_template
 
 from mailcow_integration.api.client import MailcowAPIClient
 from mailcow_integration.api.interface.alias import MailcowAlias
+from mailcow_integration.api.interface.mailbox import MailcowMailbox
 from mailcow_integration.api.interface.rspamd import RspamdSettings
 
 import logging
@@ -42,8 +43,19 @@ class SquireMailcowManager:
             alias_data['address'] for alias_data in settings.MEMBER_ALIASES.values() if alias_data['internal']
         ]
 
+        # List of all member alias addresses; these should never be included in an alias's goto addresses
+        self._member_alias_addresses: List[str] = [alias_data['address'] for alias_data in settings.MEMBER_ALIASES.values()]
+
+    @property
+    def mailcow_host(self):
+        return self._client.host
+
     def __str__(self) -> str:
         return f"SquireMailcowManager[{self._client.host}]"
+
+    def clean_member_emails(self, members) -> list[str]:
+        """ TODO """
+        return list(members.exclude(email__in=self._member_alias_addresses).order_by('email').values_list('email', flat=True))
 
     def _get_rspamd_internal_alias_setting(self) -> Optional[RspamdSettings]:
         """ Gets the Rspamd setting (if it exists) that is used by Squire
@@ -100,30 +112,38 @@ class SquireMailcowManager:
             setting.content = setting_content
             self._client.update_rspamd_setting(setting)
 
-    def get_all_aliases(self) -> List[MailcowAlias]:
+    def get_alias_all(self, use_cache=True) -> List[MailcowAlias]:
         """ Gets all email aliases """
-        return list(self._client.get_alias_all())
+        return list(self._client.get_alias_all(use_cache=use_cache))
 
-    def _get_alias_by_name(self, alias_address: str) -> Optional[MailcowAlias]:
-        """ Gets the corresponding data of some alias address. E.g. foo@example.com """
+    def _map_alias_by_name(self) -> Dict[str, MailcowAlias]:
+        """ TODO """
         aliases = self._client.get_alias_all()
-        for alias in aliases:
-            if alias.address == alias_address:
-                return alias
+        return { alias.address: alias for alias in aliases }
 
-    def _set_alias_by_name(self, alias_address: str, goto_addresses: List[str], public_comment: str, sogo_visible: bool) -> None:
+
+    # def _get_alias_by_name(self, alias_address: str) -> Optional[MailcowAlias]:
+    #     """ Gets the corresponding data of some alias address. E.g. foo@example.com """
+    #     aliases = self._client.get_alias_all()
+    #     for alias in aliases:
+    #         if alias.address == alias_address:
+    #             return alias
+
+
+    def _set_alias_by_name(self, alias_address: str, goto_addresses: List[str], public_comment: str,
+            alias_map: Dict[str, MailcowAlias], mailbox_map: Dict[str, MailcowMailbox]) -> None:
         """ Sets an alias's goto addresses, and optionally sets its visible in SOGo. If the corresponding
             Mailcow alias's public comment does not match `public_comment`, modifications are aborted.
             If the alias indicated by `alias_address` does not yet exist, it is created.
+            `alias_map` and `mailbox_map` are mappings of existing email aliases and mailboxes.
         """
-        alias = self._get_alias_by_name(alias_address)
-        # TODO: if updating multiple aliases, we don't need to do this every time
+        alias = alias_map.get(alias_address, None)
 
         # There is a race condition here when an alias is created in the Mailcow admin before Squire does so,
         #   but there is no way around that. The Mailcow API does not have a "create-if-not-exists" endpoint
         # TODO: Check mailboxes; this breaks if the alias is already a mailbox
         if alias is None:
-            alias = MailcowAlias(alias_address, goto_addresses, active=True, public_comment=public_comment, sogo_visible=sogo_visible)
+            alias = MailcowAlias(alias_address, goto_addresses, active=True, public_comment=public_comment, sogo_visible=False)
             self._client.create_alias(alias)
             return
 
@@ -133,9 +153,15 @@ class SquireMailcowManager:
             logging.error(f"Cannot update alias for {alias_address}. It already exists and is not managed by Squire! <{alias.public_comment}>")
             return
 
+        if not alias.goto:
+            # If the alias is emtpy, Mailcow will accept the response and act as if things were properly changed.
+            #   In practise, all changes are ignored!
+            # TODO:
+            pass
+
         alias.goto = goto_addresses
-        alias.sogo_visible = sogo_visible
-        self._client.update_alias(alias)
+        alias.sogo_visible = False
+        res = self._client.update_alias(alias)
 
     def get_active_members(self) -> QuerySet:
         """ Helper method to obtain a queryset of active members. That is, those that have active membership. """
@@ -166,29 +192,36 @@ class SquireMailcowManager:
         """ Updates all member aliases """
         # Fetch active members here so the results can be cached
         active_members = self.get_active_members()
+        existing_aliases = self._map_alias_by_name()
+        existing_mailboxes = None
 
         for alias_id, alias_data in settings.MEMBER_ALIASES.items():
-            print(f"updating {alias_id} ({alias_data['address']})")
-            emails = list(
-                self.get_subscribed_members(active_members, alias_id, default=alias_data['default_opt'])\
-                    .values_list('email', flat=True))
-            print(emails)
-            self._set_alias_by_name(alias_data['address'], emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT, sogo_visible=False)
+            logger.info(f"Forced updating {alias_id} ({alias_data['address']})")
+            emails = self.clean_member_emails(
+                self.get_subscribed_members(active_members, alias_id, default=alias_data['default_opt'])
+            )
+            logger.info(emails)
+
+            self._set_alias_by_name(alias_data['address'], emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT,
+                alias_map=existing_aliases, mailbox_map=existing_mailboxes)
+
+    def get_alias_committees(self):
+        """ Gets a queryset containing all associationGroups that should have an alias setup """
+        AssociationGroup = self._committee_model
+        return AssociationGroup.objects.filter(
+            type__in=[AssociationGroup.COMMITTEE, AssociationGroup.GUILD, AssociationGroup.WORKGROUP],
+            contact_email__isnull=False
+        )
 
     def update_committee_aliases(self) -> None:
         """ TODO
         """
-        AssociationGroup = self._committee_model
-        assoc_groups = AssociationGroup.objects.filter(
-            type__in=[AssociationGroup.COMMITTEE, AssociationGroup.GUILD, AssociationGroup.WORKGROUP],
-            contact_email__isnull=False
-        ) # TODO: Remove this duplication
+        existing_aliases = self._map_alias_by_name()
+        existing_mailboxes = None
 
-        for assoc_group in assoc_groups:
-            emails = list(assoc_group.members.filter_active().order_by('email').values_list('email', flat=True))
-            print(assoc_group)
-            print(emails)
+        for assoc_group in self.get_alias_committees():
+            emails = self.clean_member_emails(assoc_group.members.filter_active())
+            logger.info(f"Forced updating {assoc_group} ({len(emails)} subscribers)")
 
-            self._set_alias_by_name(assoc_group.contact_email, emails, public_comment=self.ALIAS_COMMITTEE_PUBLIC_COMMENT, sogo_visible=False)
-
-
+            self._set_alias_by_name(assoc_group.contact_email, emails, public_comment=self.ALIAS_COMMITTEE_PUBLIC_COMMENT,
+                alias_map=existing_aliases, mailbox_map=existing_mailboxes)
