@@ -60,7 +60,6 @@ urlpatterns = [
     path('register', views.register, name='user_accounts/register'),
     path('register/success', views.registerSuccess, name='user_accounts/register/success'),
     path('newsletters/', views.NewsletterView.as_view(), name='newsletters'),
-    path('downloads/', views.DownloadsView.as_view(), name='downloads'),
     # Mock 403 and 404 views for display testing in development
     path('mock/', include([
         path('500/', views.show_error_500),

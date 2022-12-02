@@ -85,7 +85,6 @@ class SynchFileToFolderForm(ModelForm):
 
     def clean_selected_file(self):
         self.instance.file_name = self.cleaned_data["selected_file"]
-        print(self.instance.file_name)
         return self.cleaned_data["selected_file"]
 
 

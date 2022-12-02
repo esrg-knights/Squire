@@ -85,11 +85,6 @@
                     <li>
                         <a class="nav-link" href="{% url 'nextcloud:site_downloads' %}">Downloads</a>
                     </li>
-					{% if global_preferences.newsletter__share_link and user.is_authenticated %}
-						<li>
-							<a class="nav-link" href="{% url 'core:downloads' %}">Newsletter</a>
-						</li>
-					{% endif %}
 					<li class="nav-item">
 						<a class="nav-link" href="{% url 'achievements/all' %}">Achievements</a>
 					</li>
