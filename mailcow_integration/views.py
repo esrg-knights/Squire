@@ -6,10 +6,13 @@ from django.conf import settings
 from django.db.models import F, Q, Value, ExpressionWrapper, BooleanField
 from django.contrib import messages
 from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.utils.html import format_html
 from django.views.generic import TemplateView
 
 from mailcow_integration.api.exceptions import MailcowAPIAccessDenied, MailcowAPIReadWriteAccessDenied, MailcowAuthException, MailcowException
 from mailcow_integration.api.interface.alias import MailcowAlias
+from mailcow_integration.api.interface.mailbox import MailcowMailbox
 from mailcow_integration.squire_mailcow import SquireMailcowManager
 
 from utils.views import SuperUserRequiredMixin
@@ -25,6 +28,7 @@ class AliasStatus(Enum):
     NOT_MANAGED_BY_SQUIRE = 2 # Alias is in Mailcow, but does not have a public comment indicating it is managed by Squire
     OUTDATED = 3 # Alias goto-addresses do not match up with Squire
     RESERVED = 4 # Alias already reserved for a member-alias, but a committee has it as their contact info
+    MAILBOX = 5 # Mailbox with the same name already exists; not managed by Squire
 
 class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
     """ An overview of aliases managed by Squire. Connects to the Mailcow API to determine whether
@@ -36,7 +40,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
         config = apps.get_app_config("mailcow_integration")
         self.mailcow_manager: Optional[SquireMailcowManager] = config.mailcow_client
 
-    def _verify_aliasses_exist(self, alias_configs: Dict[str, Dict], mailcow_aliases: List[MailcowAlias], public_comment: str) -> Dict[str, Dict]:
+    def _verify_aliasses_exist(self, alias_configs: Dict[str, Dict], mailcow_aliases: List[MailcowAlias], mailcow_mailboxes: List[MailcowMailbox], public_comment: str) -> Dict[str, Dict]:
         """ Verifies the status of a list of alias configs (as per mailcowconfig.json) and
             their corresponding aliases in Mailcow. Each alias should match `public_comment`
             in order for Squire to know that it should manage it.
@@ -60,6 +64,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
                 'description': alias_config['description'],
                 'internal': alias_config['internal'],
                 'allow_opt_out': alias_config['allow_opt_out'],
+                'squire_edit_url': None,
             }
             for alias_id, alias_config in alias_configs.items()
         }
@@ -77,9 +82,15 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
                     results[alias.address].update({'alias': alias, 'status': AliasStatus.OUTDATED.name})
                 else:
                     results[alias.address].update({'alias': alias, 'status': AliasStatus.VALID.name})
+
+        # Find mailboxes with the same name
+        for mailbox in mailcow_mailboxes:
+            if mailbox.username in results:
+                results[mailbox.username].update({'mailbox': mailbox, 'status': AliasStatus.MAILBOX.name})
+
         return results
 
-    def _verify_committee_aliases(self, mailcow_aliases: List[MailcowAlias], public_comment: str) -> Dict:
+    def _verify_committee_aliases(self, mailcow_aliases: List[MailcowAlias], mailcow_mailboxes: List[MailcowMailbox], public_comment: str) -> Dict:
         """ TODO """
         results = {
             assoc_group.contact_email: {
@@ -91,9 +102,10 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
                         has_invalid_email=ExpressionWrapper(Q(email__in=self.mailcow_manager._member_alias_addresses), output_field=BooleanField())
                 ),
                 'id': assoc_group.id,
-                'description': assoc_group.site_group.name,
+                'description': format_html("Used by <b>{}</b> ({}): {}", assoc_group.site_group.name, assoc_group.get_type_display(), assoc_group.short_description),
                 'internal': False,
                 'allow_opt_out': True, # Cannot actually opt out; tricking the template here
+                'squire_edit_url': reverse("admin:committees_associationgroup_change", args=[assoc_group.id]),
             }
             for assoc_group in self.mailcow_manager.get_alias_committees().annotate(
                 has_invalid_email=ExpressionWrapper(Q(contact_email__in=self.mailcow_manager._member_alias_addresses), output_field=BooleanField())
@@ -114,6 +126,11 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
                     results[alias.address].update({'alias': alias, 'status': AliasStatus.OUTDATED.name})
                 else:
                     results[alias.address].update({'alias': alias, 'status': AliasStatus.VALID.name})
+
+        for mailbox in mailcow_mailboxes:
+            if mailbox.username in results:
+                results[mailbox.username].update({'mailbox': mailbox, 'status': AliasStatus.MAILBOX.name})
+
         return results
 
 
@@ -125,6 +142,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
 
             try:
                 aliases = list(self.mailcow_manager.get_alias_all(use_cache=False))
+                mailboxes = list(self.mailcow_manager.get_mailbox_all(use_cache=False))
                 # TODO: Fetch internal status
             except MailcowAuthException as e:
                 context['error'] = "No valid API key set."
@@ -135,8 +153,8 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             except MailcowException as e:
                 context['error'] = print(", ".join(e.args))
             else:
-                context['member_aliases'] = self._verify_aliasses_exist(settings.MEMBER_ALIASES, aliases, self.mailcow_manager.ALIAS_MEMBERS_PUBLIC_COMMENT)
-                context['committee_aliases'] = self._verify_committee_aliases(aliases, self.mailcow_manager.ALIAS_COMMITTEE_PUBLIC_COMMENT)
+                context['member_aliases'] = self._verify_aliasses_exist(settings.MEMBER_ALIASES, aliases, mailboxes, self.mailcow_manager.ALIAS_MEMBERS_PUBLIC_COMMENT)
+                context['committee_aliases'] = self._verify_committee_aliases(aliases, mailboxes, self.mailcow_manager.ALIAS_COMMITTEE_PUBLIC_COMMENT)
 
                 # TODO: committee-aliases
 

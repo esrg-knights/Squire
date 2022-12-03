@@ -36,7 +36,7 @@
             A member alias is an alias that can be used to send mails to specific groups of members registered in Squire, depending on their <a href="{% url 'account:site_account' %}">personal preferences</a>.
             The alias can be 'internal' in the sense that only mailboxes in the domain can send emails to this alias. Note that this also includes <b>public</b> aliases set up on the domain, meaning that internal aliases can still be emailed from external domains this way.
         </p>
-        {% include "mailcow_integration/snippets/alias_list.html" with alias_dict=member_aliases only %}
+        {% include "mailcow_integration/snippets/alias_list.html" with alias_dict=member_aliases host=mailcow_host only %}
 
         <div class="d-flex justify-content-between align-items-center">
             <h2>Committee Aliases</h2>
@@ -52,9 +52,9 @@
         </div>
         <p>
             A committee alias is a <b>public</b> alias that can be used to send mails to specific members of a committee, order, or workgroup set up in Squire.
-            These aliases are public, allowing external domains to also send emails to members of such committees. Automatic creation of such aliases can be disabled manually for specific commitees in the admin panel. For example, if a committee already has a mailbox, then an alias is not needed.
+            These aliases are public, allowing external domains to also send emails to members of such committees.
         </p>
-        {% include "mailcow_integration/snippets/alias_list.html" with alias_dict=committee_aliases only %}
+        {% include "mailcow_integration/snippets/alias_list.html" with alias_dict=committee_aliases host=mailcow_host only %}
 
         {% endif %}
 {% endblock content %}

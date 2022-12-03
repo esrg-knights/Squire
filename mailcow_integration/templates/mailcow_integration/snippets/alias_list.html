@@ -8,6 +8,9 @@
                     <!-- Status -->
                     {% if data.status == "RESERVED" %}
                         <span class="badge badge-danger badge-pill"><i class="fas fa-exclamation-triangle"></i> Invalid Address</span>
+                    {% elif data.status == "MAILBOX" %}
+                        <span class="badge badge-success badge-pill"><i class="fas fa-envelope"></i> Mailbox</span>
+                        <span class="badge badge-secondary badge-pill"><i class="fas fa-unlink"></i> Not managed by Squire</span>
                     {% elif data.alias is None %}
                         <span class="badge badge-danger badge-pill"><i class="fas fa-question-circle"></i> Missing</span>
                     {% elif data.status == "NOT_MANAGED_BY_SQUIRE" %}
@@ -21,7 +24,9 @@
 
                     <!-- Internal/opt-out status -->
                     <!-- TODO: Verify that internal addresses do not occur in other (non-internal) aliases -->
-                    {% if data.internal %}
+                    {% if data.status == "RESERVED" %}
+                        {# Do nothing #}
+                    {% elif data.internal %}
                         <span class="badge badge-success badge-pill"><i class="fas fa-home"></i> Internal</span>
                     {% else %}
                         <span class="badge badge-primary badge-pill"><i class="fas fas fa-globe"></i> Public</span>
@@ -35,10 +40,13 @@
                     <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#subsModal-{{ data.id }}">
                         {% if data.status == "RESERVED" %}
                             <i class="fas fa-user-friends"></i> No Subscribers
-                        {% elif data.status != "NOT_MANAGED_BY_SQUIRE" %}
-                            <i class="fas fa-user-friends"></i> {{ data.squire_subscribers|length }} Subscriber{{ data.squire_subscribers|length|pluralize }}
-                        {% else %}
+                        {% elif data.status == "MAILBOX" %}
+                            <!-- TODO: Fetch SOGo forwards? -->
+                            <i class="fas fa-user-friends"></i> No Subscribers
+                        {% elif data.status == "NOT_MANAGED_BY_SQUIRE" %}
                             <i class="fas fa-user-friends"></i> {{ data.alias.goto|length }} Subscriber{{ data.alias.goto|length|pluralize }}
+                        {% else %}
+                            <i class="fas fa-user-friends"></i> {{ data.squire_subscribers|length }} Subscriber{{ data.squire_subscribers|length|pluralize }}
                         {% endif %}
                     </button>
 
@@ -53,11 +61,59 @@
                                 </div>
                                 <div class="modal-body">
                                     <p>{{ data.description }}</p>
+
+                                    {% if data.status == "RESERVED" %}
+                                        {# Do nothing #}
+                                    {% elif data.internal %}
+                                        <div class="alert alert-success" role="alert">
+                                            <i class="fas fa-home"></i> Alias can only be emailed from addressses within the domain.
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-primary" role="alert">
+                                            <i class="fas fa-globe"></i> Alias can be emailed by anyone.
+                                        </div>
+                                    {% endif %}
+
                                     {% if data.status == "RESERVED" %}
                                         <div class="alert alert-danger" role="alert">
                                             <i class="fas fa-exclamation-triangle"></i> Alias is identical to a member alias.
                                         </div>
-                                    {% elif data.status != "NOT_MANAGED_BY_SQUIRE" %}
+                                    {% elif data.status == "MAILBOX" %}
+                                        <div class="alert alert-success" role="alert">
+                                            <i class="fas fa-envelope"></i> Alias is a mailbox, allowing the address to send emails as well as receive them.
+                                        </div>
+                                        <div class="alert alert-secondary" role="alert">
+                                            <i class="fas fa-unlink"></i> Mailboxes are never modified by Squire.
+                                        </div>
+                                        <p>
+                                            {% if data.mailbox.active.name == "ACTIVE" %}
+                                                Mailbox is active.
+                                            {% elif data.mailbox.active.name == "INACTIVE" %}
+                                                Mailbox is disabled.
+                                            {% else %}
+                                                Logins are disallowed. Incoming mail is still accepted.
+                                            {% endif %}
+                                        </p>
+                                        <h4><i class="fas fa-user-friends"></i> Access</h4>
+                                        <ul>
+                                            {% if data.mailbox.attributes.sogo_access %}<li>Logins to <a href="{{ host }}/SOGo">SOGo</a></li>{% endif %}
+                                            {% if data.mailbox.attributes.imap_access %}<li>IMAP (allow receiving from server)</li>{% endif %}
+                                            {% if data.mailbox.attributes.smtp_access %}<li>SMTP (allow send to server)</li>{% endif %}
+                                            {% if data.mailbox.attributes.pop3_access %}<li>POP3 (allow downloading from server)</li>{% endif %}
+                                        </ul>
+                                    {% elif data.status == "NOT_MANAGED_BY_SQUIRE" %}
+                                        <div class="alert alert-secondary" role="alert">
+                                            <i class="fas fa-unlink"></i> This alias was likely manually overridden by a Mailcow admin. Squire can only modify aliases with a specific public comment. This prevents Squire from accidentally overwriting pre-existing data.
+                                        </div>
+                                        <h4><i class="fas fa-user-friends"></i> Subscribers ({{ data.alias.goto|length }})</h4>
+                                        <ul>
+                                            {% for email in data.alias.goto %}
+                                                <li>{{email}}</li>
+                                            {% empty %}
+                                                <li><i>No subscribers</i></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
                                         <h4><i class="fas fa-user-friends"></i> Subscribers ({{ data.squire_subscribers|length }})</h4>
                                         <ul>
                                             {% for member in data.squire_subscribers %}
@@ -70,17 +126,18 @@
                                                 <li><i>No subscribers</i></li>
                                             {% endfor %}
                                         </ul>
-                                    {% else %}
-                                        <p><span class="badge badge-secondary badge-pill"><i class="fas fa-unlink"></i> Not managed by Squire</span></p>
-                                        <h4><i class="fas fa-user-friends"></i> Subscribers ({{ data.alias.goto|length }})</h4>
-                                        <ul>
-                                            {% for email in data.alias.goto %}
-                                                <li>{{email}}</li>
-                                            {% empty %}
-                                                <li><i>No subscribers</i></li>
-                                            {% endfor %}
-                                        </ul>
                                     {% endif %}
+                                </div>
+                                <div class="modal-footer">
+                                    <div class="d-flex justify-content-end" style="gap: 4px;">
+                                        {% if data.status != "RESERVED" and data.status != "MISSING" %}
+                                            <a class="btn btn-primary btn-sm" href="{{ host }}/edit/{% if data.mailbox %}mailbox/{{ data.mailbox.username }}{% else %}alias/{{ data.alias.id }}{% endif %}"
+                                                role="button"><i class="fas fa-pen"></i> Edit in Mailcow</a>
+                                        {% endif %}
+                                        {% if data.squire_edit_url %}
+                                            <a class="btn btn-primary btn-sm" href="{{ data.squire_edit_url }}" role="button"><i class="fas fa-pen"></i> Edit in Squire</a>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>

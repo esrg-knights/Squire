@@ -96,7 +96,7 @@ class MailcowMailbox(MailcowAPIResponse):
     def from_json(cls, json: dict) -> 'MailcowMailbox':
         json.update({
             'active': MailboxStatus(json['active']),
-            'percent_in_use': int(json['percent_in_use']) if json['percent_in_use'] != "-" else None,
+            'percent_in_use': int(json['percent_in_use']) if json['percent_in_use'] != "- " else None,
             'rl': bool(json['rl']),
             'is_relayed': bool(json['is_relayed']),
             'last_imap_login': datetime.fromtimestamp(int(json['last_imap_login'])) if json['last_imap_login'] != "0" else None,

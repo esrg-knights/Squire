@@ -119,11 +119,18 @@ class SquireMailcowManager:
         """ Gets all email aliases """
         return list(self._client.get_alias_all(use_cache=use_cache))
 
+    def get_mailbox_all(self, use_cache=True) -> List[MailcowMailbox]:
+        """ Gets all mailboxes """
+        return list(self._client.get_mailbox_all(use_cache=use_cache))
+
     def _map_alias_by_name(self) -> Dict[str, MailcowAlias]:
         """ TODO """
         aliases = self._client.get_alias_all()
         return { alias.address: alias for alias in aliases }
 
+    def _map_mailbox_by_name(self) -> Dict[str, MailcowMailbox]:
+        mailboxes = self._client.get_mailbox_all()
+        return { mailbox.username: mailbox for mailbox in mailboxes}
 
     # def _get_alias_by_name(self, alias_address: str) -> Optional[MailcowAlias]:
     #     """ Gets the corresponding data of some alias address. E.g. foo@example.com """
@@ -196,9 +203,13 @@ class SquireMailcowManager:
         # Fetch active members here so the results can be cached
         active_members = self.get_active_members()
         existing_aliases = self._map_alias_by_name()
-        existing_mailboxes = None
+        existing_mailboxes = self._map_mailbox_by_name()
 
         for alias_id, alias_data in settings.MEMBER_ALIASES.items():
+            if alias_data['address'] in existing_mailboxes:
+                logger.warning(f"Skipping over {alias_id} ({alias_data['address']}): Mailbox with the same name already exists")
+                continue
+
             logger.info(f"Forced updating {alias_id} ({alias_data['address']})")
             emails = self.clean_alias_emails(
                 self.get_subscribed_members(active_members, alias_id, default=alias_data['default_opt'])
@@ -220,9 +231,13 @@ class SquireMailcowManager:
         """ TODO
         """
         existing_aliases = self._map_alias_by_name()
-        existing_mailboxes = None
+        existing_mailboxes = self._map_mailbox_by_name()
 
         for assoc_group in self.clean_alias_emails(self.get_alias_committees(), email_field="contact_email", flatten=False):
+            if assoc_group.contact_email in existing_mailboxes:
+                logger.warning(f"Skipping over {assoc_group} ({assoc_group.contact_email}): Mailbox with the same name already exists")
+                continue
+
             emails = self.clean_alias_emails(assoc_group.members.filter_active())
             logger.info(f"Forced updating {assoc_group} ({len(emails)} subscribers)")
 
