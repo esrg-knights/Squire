@@ -1,6 +1,8 @@
 {
     "host": "https://example.com/mailcow",
     "api_key": "AAAAAA-AAAAAA-AAAAAA-AAAAAA-AAAAAA",
+    "member_alias_archive_address": "bestuur@example.com",
+    "committee_alias_archive_address": "archief@example.com",
     "member_aliases": {
         "id_leden": {
             "address": "leden@example.com",

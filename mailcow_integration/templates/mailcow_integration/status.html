@@ -56,7 +56,22 @@
         </p>
         {% include "mailcow_integration/snippets/alias_list.html" with alias_dict=committee_aliases host=mailcow_host only %}
 
-        {% endif %}
+
+        <h2>Orphan Data</h2>
+        <p>
+            Squire leaves behind a specific message on aliases it creates. It may happen that some of this data is left behind when Squire no longer needs it.
+        </p>
+        <ul class="list-group">
+            {% for alias in unused_squire_comments %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ alias.address }}
+                    <span>{{ alias.goto|join:", " }}</span>
+                </li>
+            {% empty %}
+                <p><i>No orphan data found.</i></p>
+            {% endfor %}
+        </ul>
+    {% endif %}
 {% endblock content %}
 
 {% block js_bottom %}

@@ -27,9 +27,10 @@ class SquireMailcowManager:
         accidentally overwriting information that a Mailcow admin may have added. Furthermore,
         it also allows manual overrides by Mailcow admins.
     """
-    INTERNAL_ALIAS_SETTING_NAME = "[MANAGED BY SQUIRE] Internal Alias"
-    ALIAS_COMMITTEE_PUBLIC_COMMENT = "[MANAGED BY SQUIRE] Committee Alias"
-    ALIAS_MEMBERS_PUBLIC_COMMENT = "[MANAGED BY SQUIRE] Members Alias"
+    SQUIRE_MANAGE_INDICATOR = "[MANAGED BY SQUIRE]"
+    INTERNAL_ALIAS_SETTING_NAME = SQUIRE_MANAGE_INDICATOR + " Internal Alias"
+    ALIAS_COMMITTEE_PUBLIC_COMMENT = SQUIRE_MANAGE_INDICATOR + " Committee Alias"
+    ALIAS_MEMBERS_PUBLIC_COMMENT = SQUIRE_MANAGE_INDICATOR + " Members Alias"
 
     def __init__(self, mailcow_host: str, mailcow_api_key: str):
         self._client = MailcowAPIClient(mailcow_host, mailcow_api_key)
@@ -214,6 +215,7 @@ class SquireMailcowManager:
             emails = self.clean_alias_emails(
                 self.get_subscribed_members(active_members, alias_id, default=alias_data['default_opt'])
             )
+            emails.append(settings.MEMBER_ALIAS_ARCHIVE_ADDRESS)
             logger.info(emails)
 
             self._set_alias_by_name(alias_data['address'], emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT,
@@ -239,6 +241,7 @@ class SquireMailcowManager:
                 continue
 
             emails = self.clean_alias_emails(assoc_group.members.filter_active())
+            emails.append(settings.COMMITTEE_ALIAS_ARCHIVE_ADDRESS)
             logger.info(f"Forced updating {assoc_group} ({len(emails)} subscribers)")
 
             self._set_alias_by_name(assoc_group.contact_email, emails, public_comment=self.ALIAS_COMMITTEE_PUBLIC_COMMENT,

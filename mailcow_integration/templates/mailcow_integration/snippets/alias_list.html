@@ -9,7 +9,13 @@
                     {% if data.status == "RESERVED" %}
                         <span class="badge badge-danger badge-pill"><i class="fas fa-exclamation-triangle"></i> Invalid Address</span>
                     {% elif data.status == "MAILBOX" %}
-                        <span class="badge badge-success badge-pill"><i class="fas fa-envelope"></i> Mailbox</span>
+                        {% if data.mailbox.active.name == "INACTIVE" %}
+                            <span class="badge badge-danger badge-pill"><i class="fas fa-envelope"></i> Mailbox Disabled</span>
+                        {% elif data.mailbox.active.name == "DISALLOW_LOGIN" %}
+                            <span class="badge badge-warning badge-pill"><i class="fas fa-envelope"></i> Mailbox Inactive</span>
+                        {% else %}
+                            <span class="badge badge-success badge-pill"><i class="fas fa-envelope"></i> Mailbox</span>
+                        {% endif %}
                         <span class="badge badge-secondary badge-pill"><i class="fas fa-unlink"></i> Not managed by Squire</span>
                     {% elif data.alias is None %}
                         <span class="badge badge-danger badge-pill"><i class="fas fa-question-circle"></i> Missing</span>
@@ -20,10 +26,8 @@
                     {% else %}
                         <span class="badge badge-success badge-pill"><i class="fas fa-check-circle"></i> Up-to-date</span>
                     {% endif %}
-                    <!-- TODO: Status "Mailbox"? -->
 
                     <!-- Internal/opt-out status -->
-                    <!-- TODO: Verify that internal addresses do not occur in other (non-internal) aliases -->
                     {% if data.status == "RESERVED" %}
                         {# Do nothing #}
                     {% elif data.internal %}
@@ -94,18 +98,19 @@
                                         <div class="alert alert-success" role="alert">
                                             <i class="fas fa-envelope"></i> Alias is a mailbox, allowing the address to send emails as well as receive them.
                                         </div>
+                                        {% if data.mailbox.active.name == "INACTIVE" %}
+                                            <div class="alert alert-danger" role="alert">
+                                                <i class="fas fa-times-circle"></i> Mailbox is disabled
+                                            </div>
+                                        {% elif data.mailbox.active.name == "DISALLOW_LOGIN" %}
+                                            <div class="alert alert-warning" role="alert">
+                                                <i class="fas fa-times-circle"></i> Mailbox logins are disallowed. Incoming mail is still accepted.
+                                            </div>
+                                        {% endif %}
                                         <div class="alert alert-secondary" role="alert">
                                             <i class="fas fa-unlink"></i> Mailboxes are never modified by Squire.
                                         </div>
-                                        <p>
-                                            {% if data.mailbox.active.name == "ACTIVE" %}
-                                                Mailbox is active.
-                                            {% elif data.mailbox.active.name == "INACTIVE" %}
-                                                Mailbox is disabled.
-                                            {% else %}
-                                                Logins are disallowed. Incoming mail is still accepted.
-                                            {% endif %}
-                                        </p>
+
                                         <h4><i class="fas fa-user-friends"></i> Access</h4>
                                         <ul>
                                             {% if data.mailbox.attributes.sogo_access %}<li>Logins to <a href="{{ host }}/SOGo">SOGo</a></li>{% endif %}

@@ -389,6 +389,9 @@ with open(os.path.join(BASE_DIR, "squire", "mailcowconfig.json"), "r") as mailco
     MAILCOW_HOST = _mailcow_config['host']
     MAILCOW_API_KEY = _mailcow_config['api_key']
 
+    MEMBER_ALIAS_ARCHIVE_ADDRESS = _mailcow_config['member_alias_archive_address']
+    COMMITTEE_ALIAS_ARCHIVE_ADDRESS = _mailcow_config['committee_alias_archive_address']
+
     MEMBER_ALIASES = _mailcow_config['member_aliases']
 
     MAILCOW_HOST = "https://beta.kotkt.nl"

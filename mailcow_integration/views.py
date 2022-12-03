@@ -96,7 +96,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
                 if alias.public_comment != public_comment:
                     # Public comment of the alias does not indicate it is managed by Squire
                     results[alias.address].update({'alias': alias, 'status': AliasStatus.NOT_MANAGED_BY_SQUIRE.name})
-                elif alias.goto != self.mailcow_manager.clean_alias_emails(results[alias.address]['squire_subscribers']):
+                elif alias.goto != self.mailcow_manager.clean_alias_emails(results[alias.address]['squire_subscribers']) + [settings.MEMBER_ALIAS_ARCHIVE_ADDRESS]:
                     # Subscribers are out of date
                     #   Note: Lists are sorted
                     # TODO: verify internal-status
@@ -123,7 +123,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
                         has_invalid_email=ExpressionWrapper(Q(email__in=self.mailcow_manager._member_alias_addresses), output_field=BooleanField())
                 ),
                 'id': assoc_group.id,
-                'description': format_html("Used by <b>{}</b> ({}): {}", assoc_group.site_group.name, assoc_group.get_type_display(), assoc_group.short_description),
+                'description': format_html("{} ({}): {}", assoc_group.site_group.name, assoc_group.get_type_display(), assoc_group.short_description),
                 'internal': False,
                 'allow_opt_out': True, # Cannot actually opt out; tricking the template here
                 'squire_edit_url': reverse("admin:committees_associationgroup_change", args=[assoc_group.id]),
@@ -141,7 +141,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
                 elif alias.public_comment != public_comment:
                     # Public comment of the alias does not indicate it is managed by Squire
                     results[alias.address].update({'alias': alias, 'status': AliasStatus.NOT_MANAGED_BY_SQUIRE.name})
-                elif alias.goto != self.mailcow_manager.clean_alias_emails(results[alias.address]['squire_subscribers']):
+                elif alias.goto != self.mailcow_manager.clean_alias_emails(results[alias.address]['squire_subscribers']) + [settings.COMMITTEE_ALIAS_ARCHIVE_ADDRESS]:
                     # Subscribers are out of date
                     #   Note: Lists are sorted
                     results[alias.address].update({'alias': alias, 'status': AliasStatus.OUTDATED.name})
@@ -154,6 +154,18 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
 
         return results
 
+    def _find_unused_squire_comments(self, mailcow_aliases: List[MailcowAlias], member_aliases, committee_aliases):
+        """ TODO """
+        used_addresses = list(member_aliases.keys()) + list(committee_aliases.keys())
+        return list(
+            # Ignore addresses that we still need
+            filter(lambda alias: alias.address not in used_addresses,
+                # Only include addresses starting with the "[MANAGED BY SQUIRE]" indicator
+                filter(lambda alias:
+                    (alias.public_comment or "").startswith(self.mailcow_manager.SQUIRE_MANAGE_INDICATOR),
+                    mailcow_aliases
+                )
+        ))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -176,11 +188,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             else:
                 context['member_aliases'] = self._verify_aliasses_exist(settings.MEMBER_ALIASES, aliases, mailboxes, self.mailcow_manager.ALIAS_MEMBERS_PUBLIC_COMMENT)
                 context['committee_aliases'] = self._verify_committee_aliases(aliases, mailboxes, self.mailcow_manager.ALIAS_COMMITTEE_PUBLIC_COMMENT)
-
-                # TODO: committee-aliases
-
-                # TODO: List "[Managed by Squire]" aliases that are no longer in use (to allow cleanup)
-
+                context['unused_squire_comments'] = self._find_unused_squire_comments(aliases, context['member_aliases'], context['committee_aliases'])
         return context
 
     def post(self, request, *args, **kwargs):
