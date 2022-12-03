@@ -40,6 +40,22 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
         config = apps.get_app_config("mailcow_integration")
         self.mailcow_manager: Optional[SquireMailcowManager] = config.mailcow_client
 
+    def _get_alias_exposure_routes(self, alias: str, aliases: List[MailcowAlias], mailboxes: List[MailcowMailbox],
+            alias_configs: Dict[str, Dict]) -> List[List[str]]:
+        """ TODO """
+        routes: List[List[str]] = []
+        for mc_alias in aliases:
+            if alias in mc_alias.goto:
+                if not next((config['internal'] for config in alias_configs.values() if config['address'] == mc_alias.address), False):
+                    # Exposed
+                    routes.append([mc_alias.address])
+                else:
+                    # Other internal address might be exposed
+                    for route in self._get_alias_exposure_routes(mc_alias.address, aliases, mailboxes, alias_configs):
+                        route.append(mc_alias.address)
+                        routes.append(route)
+        return routes
+
     def _verify_aliasses_exist(self, alias_configs: Dict[str, Dict], mailcow_aliases: List[MailcowAlias], mailcow_mailboxes: List[MailcowMailbox], public_comment: str) -> Dict[str, Dict]:
         """ Verifies the status of a list of alias configs (as per mailcowconfig.json) and
             their corresponding aliases in Mailcow. Each alias should match `public_comment`
@@ -65,6 +81,11 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
                 'internal': alias_config['internal'],
                 'allow_opt_out': alias_config['allow_opt_out'],
                 'squire_edit_url': None,
+                'exposure_routes': (
+                    self._get_alias_exposure_routes(alias_config['address'], mailcow_aliases, mailcow_mailboxes, alias_configs)
+                    if alias_config['internal']
+                    else []
+                )
             }
             for alias_id, alias_config in alias_configs.items()
         }

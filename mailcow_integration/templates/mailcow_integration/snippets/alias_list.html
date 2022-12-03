@@ -28,6 +28,9 @@
                         {# Do nothing #}
                     {% elif data.internal %}
                         <span class="badge badge-success badge-pill"><i class="fas fa-home"></i> Internal</span>
+                        {% if data.exposure_routes %}
+                            <span class="badge badge-danger badge-pill"><i class="fas fa-globe"></i> Exposed</span>
+                        {% endif %}
                     {% else %}
                         <span class="badge badge-primary badge-pill"><i class="fas fas fa-globe"></i> Public</span>
                     {% endif %}
@@ -64,6 +67,15 @@
 
                                     {% if data.status == "RESERVED" %}
                                         {# Do nothing #}
+                                    {% elif data.exposure_routes %}
+                                        <div class="alert alert-danger" role="alert">
+                                            <i class="fas fa-globe"></i> Alias should only be mailable from within the domain, but can still be mailed from external domains through the following (public) aliases:
+                                                <ul class="text-monospace">
+                                                    {% for route in data.exposure_routes %}
+                                                        <li><code>{{ route|join:" -> " }}</code></li>
+                                                    {% endfor %}
+                                                </ul>
+                                        </div>
                                     {% elif data.internal %}
                                         <div class="alert alert-success" role="alert">
                                             <i class="fas fa-home"></i> Alias can only be emailed from addressses within the domain.
