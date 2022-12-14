@@ -22,3 +22,18 @@ def mock_ls():
         return entries
 
     return fake_ls
+
+
+class MockClient:
+    """ Fake Nextcloud client used for testing purposes """
+
+    def __init__(self, files_exist=False, **kwargs):
+        self.kwargs = kwargs
+        self.ls = mock_ls()
+        self.exists = mock_exists(files_exist)
+
+
+def construct_fake_client(files_exist=False):
+    def construct_client():
+        return MockClient(files_exist=files_exist)
+    return construct_client
