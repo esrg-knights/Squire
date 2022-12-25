@@ -46,14 +46,14 @@ class FileMoveForm(Form):
     def execute(self):
         client = construct_client()
         folder_path = self.local_path + '/' + self.cleaned_data['directory_name']
-        folder = NextCloudFolder(folder_path)
+        to_folder = NextCloudFolder(folder_path)
 
-        if not client.exists(resource=folder):
-            folder = client.mkdir(folder)
+        if not client.exists(resource=to_folder):
+            to_folder = client.mkdir(to_folder)
 
         file = next(file for file in self.availlable_files if file.name == self.cleaned_data['file_name'])
 
-        client.mv(file, to_folder=folder)
+        client.mv(file, to_folder)
 
 
 class FolderCreateForm(ModelForm):
@@ -109,23 +109,13 @@ class SynchFileToFolderForm(ModelForm):
 class FolderEditForm(ModelForm):
     class Meta:
         model = NCFolder
-        fields = ["display_name", "description", "requires_membership"]
+        fields = ["display_name", "description", "requires_membership", 'on_overview_page']
 
 
 class FileEditForm(ModelForm):
-    id = HiddenInput()
-
     class Meta:
         model = NCFile
         fields = ["display_name", "description"]
-
-    def __init__(self, *args, **kwargs):
-        super(FileEditForm, self).__init__(*args, **kwargs)
-        self.id = self.instance.id
-
-    def clean_id(self):
-        if self.instance.id != self.cleaned_data["id"]:
-            raise ValidationError("File id is invalid", code="invalid_id")
 
 
 class FileEditFormset(BaseFormSet):
@@ -137,7 +127,7 @@ class FileEditFormset(BaseFormSet):
         # Initialising the form directly skips the factory, so set some base values requeired
         self.renderer = get_default_renderer()
         self.min_num = 0
-        self.max_num = len(nc_files)
+        self.max_num = self.total_form_count()
         self.absolute_max = self.max_num
         self.validate_min = self.max_num
         self.validate_max = self.max_num
@@ -167,16 +157,6 @@ class FolderEditFormGroup(FormGroup):
         self.form_kwargs = {'instance': self.folder}
         self.formset_kwargs = {'FileEditFormset': {'nc_files': self.folder.files.all()}}
         super(FolderEditFormGroup, self).__init__(**kwargs)
-
-    # def get_form_kwargs(self, form_class):
-    #     kwargs = super(FolderEditFormGroup, self).get_form_kwargs(form_class)
-    #     kwargs['instance'] = self.folder
-    #     return kwargs
-
-    # def get_formset_kwargs(self, formset_class):
-    #     kwargs = super(FolderEditFormGroup, self).get_formset_kwargs(formset_class)
-    #     kwargs['nc_files'] = self.folder.files.all()
-    #     return kwargs
 
 
 

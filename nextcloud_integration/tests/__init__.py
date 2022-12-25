@@ -1,4 +1,6 @@
+from unittest.mock import Mock
 from nextcloud_integration.nextcloud_resources import NextCloudFolder, NextCloudFile
+from unittest.mock import patch
 
 
 def mock_exists(exists=True):
@@ -14,6 +16,7 @@ def mock_ls():
     def fake_ls(*args, **kwargs):
         entries = [
             NextCloudFolder(path="First%20Folder/"),
+            NextCloudFolder(path="TestFolder/"),
             NextCloudFolder(path="documentation/"),
             NextCloudFile(path="new_file.txt"),
             NextCloudFile(path="icon_large.png"),
@@ -23,17 +26,22 @@ def mock_ls():
 
     return fake_ls
 
-
-class MockClient:
-    """ Fake Nextcloud client used for testing purposes """
-
-    def __init__(self, files_exist=False, **kwargs):
-        self.kwargs = kwargs
-        self.ls = mock_ls()
-        self.exists = mock_exists(files_exist)
+def mock_mkdir():
+    """ Mock mkdir method. It should return the folder it is given """
+    def fake_mkdir(nextcloud_folder, *args, **kwargs):
+        return nextcloud_folder
+    return fake_mkdir
 
 
-def construct_fake_client(files_exist=False):
-    def construct_client():
-        return MockClient(files_exist=files_exist)
-    return construct_client
+
+def patch_construction(exists=False):
+    """ Extends the patch decorator to intercept client related functionality with base testing functions
+    :param exists Whether the exists function should return True
+    """
+    patch_output = patch(**{
+        'target': 'nextcloud_integration.forms.construct_client',
+        'return_value.ls.return_value': mock_ls()(),
+        'return_value.exists.return_value': mock_exists(exists)(),
+        'return_value.mkdir.side_effect': mock_mkdir()
+    })
+    return patch_output

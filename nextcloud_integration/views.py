@@ -137,6 +137,7 @@ class FolderEditView(NextcloudConnectionViewMixin, FolderMixin, FormView):
 
     def form_valid(self, form):
         form.save()
+        print(self.request.POST)
         return super(FolderEditView, self).form_valid(form)
 
     def get_form_kwargs(self):
