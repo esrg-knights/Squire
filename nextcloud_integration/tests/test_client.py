@@ -2,7 +2,10 @@ from django.test import TestCase
 from os.path import exists as file_exists
 from requests.models import Response
 
+from unittest.mock import patch
+
 from nextcloud_integration.nextcloud_client import NextCloudClient as Client
+from nextcloud_integration.nextcloud_client import construct_client
 from nextcloud_integration.nextcloud_resources import NextCloudFolder, NextCloudFile
 
 
@@ -73,6 +76,10 @@ class NextCloudClientTestCase(TestCase):
         self.assertIn("test_file.md", nc_files.keys())
         self.assertIn("proof_of_shadowboard.png", nc_files.keys())
 
+    def test_ls_redirect(self):
+        # Todo: adjust testing logic so that url is intercepted for testing
+        pass
+
     def test_exists(self):
         self.assertRaises(AssertionError, self.client.exists)
         self.set_send_response("exam.ple", status_code=200)
@@ -118,3 +125,45 @@ class NextCloudClientTestCase(TestCase):
         self.assertEqual(self.client._send_data["args"][0], "MKCOL")
         self.assertEqual(self.client._send_data["args"][1], "Testnewfolder/New%20Folder")
         self.assertEqual(self.client._send_data["args"][2], 201)
+
+    def test_mkdir_from_folder(self):
+        self.set_send_response(status_code=201)
+        folder = NextCloudFolder("TestNewFolder/FolderInstance")
+        self.client.mkdir(folder)
+
+        self.assertEqual(self.client._send_data["args"][0], "MKCOL")
+        self.assertEqual(self.client._send_data["args"][1], "TestNewFolder/FolderInstance")
+        self.assertEqual(self.client._send_data["args"][2], 201)
+
+    def test_download_stream(self):
+        self.set_send_response(status_code=201)
+        file = NextCloudFolder("files/testfile.txt")
+        self.client.download(file)
+
+        self.assertEqual(self.client._send_data["args"][0], "GET")
+        self.assertEqual(self.client._send_data["args"][1], "files/testfile.txt")
+        self.assertEqual(self.client._send_data["args"][2], 200)
+        self.assertEqual(self.client._send_data["kwargs"].get('stream', None), True)
+
+    @patch('nextcloud_integration.nextcloud_client.NextCloudClient')
+    def test_constructor(self, mock_client):
+        with self.settings(
+            NEXTCLOUD_HOST="test.nl",
+            NEXTCLOUD_USERNAME="user_account",
+            NEXTCLOUD_PASSWORD="user_password",
+        ):
+            construct_client()
+            self.assertEqual(mock_client.call_args.kwargs['host'], "test.nl")
+            self.assertEqual(mock_client.call_args.kwargs['username'], "user_account")
+            self.assertEqual(mock_client.call_args.kwargs['password'], "user_password")
+            self.assertEqual(mock_client.call_args.kwargs['protocol'], "https")
+            self.assertEqual(mock_client.call_args.kwargs['path'], "")
+
+        with self.settings(
+            NEXTCLOUD_HOST="test.nl",
+            NEXTCLOUD_USERNAME="user_account",
+            NEXTCLOUD_PASSWORD="user_password",
+            NEXTCLOUD_URL="local_url/"
+        ):
+            construct_client()
+            self.assertEqual(mock_client.call_args.kwargs['path'], "local_url/")

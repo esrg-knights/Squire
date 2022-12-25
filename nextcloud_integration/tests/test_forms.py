@@ -14,7 +14,7 @@ from . import *
 # method is adjusted. As such the forms.construct_client remains the old method instead of the new one.
 
 
-@patch_construction()
+@patch_construction('forms')
 class FileMoveFormTestCase(FormValidityMixin, TestCase):
     fixtures = ["nextcloud_integration/nextcloud_fixtures"]
     form_class = FileMoveForm
@@ -75,7 +75,7 @@ class FileMoveFormTestCase(FormValidityMixin, TestCase):
         )
 
 
-@patch_construction()
+@patch_construction('forms')
 class FileSynchFormTestCase(FormValidityMixin, TestCase):
     fixtures = ["nextcloud_integration/nextcloud_fixtures"]
     form_class = SynchFileToFolderForm

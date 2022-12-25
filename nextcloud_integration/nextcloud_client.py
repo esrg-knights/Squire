@@ -39,23 +39,13 @@ class NextCloudClient(Client):
 
         super(NextCloudClient, self).__init__(*args, path=path, **kwargs)
 
-    def download(self, file: NextCloudFile, store_locally=False):
+    def download(self, file: NextCloudFile):
         """
         Downloads the indicated file from Nextcloud
         :param file: The NextCloudFile to be downloaded
-        :param store_locally: Whether the file should be stored on local disk (True) or not (False)
         :return:
         """
-        if store_locally:
-            local_file_path = '{0}\\{1}\\{2}'.format(
-                settings.MEDIA_ROOT,
-                'NextCloud',
-                file.name,
-            )
-            super.download(file.path, local_file_path)
-            return local_file_path
-        else:
-            return self._send('GET', file.path, 200, stream=True)
+        return self._send('GET', file.path, 200, stream=True)
 
     def mkdir(self, folder):
         if isinstance(folder, NextCloudFolder):

@@ -10,8 +10,8 @@ from nextcloud_integration.nextcloud_client import construct_client
 class NCFolder(models.Model):
     """ Represents a folder on the nextcloud storage """
     display_name = models.CharField(help_text="Name displayed in Squire", max_length=32)
-    slug = models.SlugField()
-    description = models.CharField(max_length=256)
+    slug = models.SlugField(blank=True)
+    description = models.CharField(max_length=256, blank=True)
     path = models.CharField(help_text="The path to the folder (including the folder itself)",
                             max_length=64, blank=True, default=None)
     folder: NextCloudFolder = None  # Used to translate Nextcloud folder contents
@@ -34,7 +34,7 @@ class NCFolder(models.Model):
             raise ValidationError("Either path or folder should be defined")
 
     def save(self, **kwargs):
-        if self.folder and self.path == "":
+        if self.folder and (self.path is None or self.path == ""):
             self.path = self.folder.path
 
         if self.slug is None or self.slug == "":
@@ -77,7 +77,7 @@ class NCFile(models.Model):
             self.file = NextCloudFile(path=self.path)
 
     def save(self, **kwargs):
-        if self.file and self.file_name == "":
+        if self.file and (self.file_name == "" or self.file_name is None):
             self.file_name = self.file.name
 
         if self.slug is None or self.slug == "":
