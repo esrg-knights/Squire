@@ -136,6 +136,24 @@ class FileSynchFormTestCase(FormValidityMixin, TestCase):
         )
 
 
+class FolderCreateFormTestCase(FormValidityMixin, TestCase):
+    fixtures = ["nextcloud_integration/nextcloud_fixtures"]
+    form_class = FolderCreateForm
+
+    def test_form_valid(self):
+        self.assertFormValid(data={
+            'display_name': 'New Folder',
+            'description': "Test folder description",
+        })
+
+    def test_clean_instance_path(self):
+        """ Tests that the instance.path is cleaned to a path-format """
+        form = self.assertFormValid(data={
+            'display_name': 'Test name',
+            'description': "Test folder description",
+        })
+        self.assertEqual(form.instance.path, "/test-name/")
+
 class FolderEditFormTestCase(FormValidityMixin, TestCase):
     fixtures = ["nextcloud_integration/nextcloud_fixtures"]
     form_class = FolderEditForm

@@ -57,12 +57,7 @@ class NextCloudClient(Client):
 
     def ls(self, remote_path=''):
         headers = {'Depth': '1'}
-        response = self._send('PROPFIND', remote_path, expected_code=(207, 301), headers=headers)
-
-        # Redirect
-        if response.status_code == 301:
-            url = urlparse(response.headers['location'])
-            return self.ls(url.path)
+        response = self._send('PROPFIND', remote_path, expected_code=207, headers=headers)
 
         tree = xml.fromstring(response.content)
         # The bit below is adjusted to take the new constructs into account
