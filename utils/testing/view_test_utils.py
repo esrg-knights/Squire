@@ -99,12 +99,20 @@ class TestMixinMixin:
     pre_inherit_classes = []
     view = None
 
-    def _build_get_response(self, url=None, url_kwargs=None, save_view = True):
+    def _build_get_response(self, url=None, url_kwargs=None, save_view = True, user=None):
+        """
+        Constructs a get response through a temporary view that inheirts the Testcases mixin class
+        :param url: The url path
+        :param url_kwargs: Keyword arguments in the path as normally defined in the url path (e.g. object_id)
+        :param save_view: Whether the view should be saved as self.view
+        :param user: The user instace requesting the page. Defaults to user with id defined in self.base_user_id
+        :return: The response instance
+        """
         url = url or self.get_base_url()
         url_kwargs = url_kwargs or self.get_base_url_kwargs()
 
         request = RequestFactory().get(url)
-        self._imitiate_request_middleware(request)
+        self._imitiate_request_middleware(request, user=user)
 
         view = self.get_as_full_view_class()()
         view.setup(request, **url_kwargs)
@@ -115,8 +123,10 @@ class TestMixinMixin:
 
         return response
 
-    def _imitiate_request_middleware(self, request):
-        if self.base_user_id:
+    def _imitiate_request_middleware(self, request, user=None):
+        if user is not None:
+            request.user = user
+        elif self.base_user_id:
             request.user = User.objects.get(id=self.base_user_id)
 
 
@@ -150,3 +160,7 @@ class TestMixinMixin:
             pass
         else:
             raise AssertionError("No '403: Permission Denied' error was raised")
+
+    def assertResponseSuccesful(self, response):
+        if response.status_code != 200:
+            raise AssertionError(f"Response was not succesful. It returned code {response.status_code} instead.")

@@ -49,7 +49,7 @@ def membership_required(function=None, fail_url=None, redirect_field_name=REDIRE
         return decorator(function)
     return decorator
 
-class MembershipRequiredMixin(LoginRequiredMixin):
+class BaseMembershipRequiredMixin:
     """
         Verifies that the current user is a member, redirecting to a special page if needed.
         Mixin-equivalent of the @membership_required decorator.
@@ -71,3 +71,6 @@ class MembershipRequiredMixin(LoginRequiredMixin):
             # Current session has a disabled member connected
             return False
         return True
+
+class MembershipRequiredMixin(LoginRequiredMixin, BaseMembershipRequiredMixin):
+    pass
