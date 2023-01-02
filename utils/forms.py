@@ -90,12 +90,14 @@ class FormGroup:
     def get_form_kwargs(self, form_class):
         """ Get the form initial keyword arguments for the form """
         kwargs = {}
+        # Carry over the basic init kwargs over to the form, but no more as any unexpected kwarg throws an exception
+        # in the form itself
         _form_base_init_kwargs = ['data', 'files', 'auto_id', 'error_class', 'label_suffix', 'renderer']
         for kwarg_key in _form_base_init_kwargs:
             if kwarg_key in self.init_kwargs:
                 kwargs[kwarg_key] = self.init_kwargs[kwarg_key]
 
-        if kwargs.get('prefix', ''):
+        if self.init_kwargs.get('prefix', None):
             kwargs['prefix'] = self.init_kwargs['prefix'] + "-"
         kwargs['prefix'] = kwargs.get('prefix', '') + "main"
         kwargs.update(self.form_kwargs)
@@ -104,12 +106,14 @@ class FormGroup:
     def get_formset_kwargs(self, formset_class):
         """ Get the form initial keyword arguments for the formset """
         kwargs = {}
+        # Carry over the basic init kwargs over to the formset, but no more as any unexpected kwarg throws an exception
+        # in the formset itself
         _formset_base_init_kwargs = ['data', 'files', 'auto_id', 'error_class']
         for kwarg_key in _formset_base_init_kwargs:
             if kwarg_key in self.init_kwargs:
                 kwargs[kwarg_key] = self.init_kwargs[kwarg_key]
 
-        if kwargs.get('prefix', ''):
+        if self.init_kwargs.get('prefix', None):
             kwargs['prefix'] = self.init_kwargs['prefix'] + "-"
         kwargs['prefix'] = kwargs.get('prefix', '') + "formset"
 
