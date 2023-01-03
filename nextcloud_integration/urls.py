@@ -3,8 +3,8 @@ from django.urls import path, include
 from . import views as views
 
 urlpatterns = [
-    path('browse/', views.FileBrowserView.as_view(), name=''),
-    path('browse/<path:path>/', views.FileBrowserView.as_view(), name=''),
+    path('browse/', views.FileBrowserView.as_view(), name='browse_nextcloud'),
+    path('browse/<path:path>/', views.FileBrowserView.as_view(), name='browse_nextcloud'),
     path('folders/', include([
         path('add', views.FolderCreateView.as_view(), name='add_folder'),
         path('<slug:folder_slug>/', include([

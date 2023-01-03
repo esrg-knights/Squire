@@ -12,6 +12,8 @@ from nextcloud_integration.models import NCFolder, NCFile
 from nextcloud_integration.widgets import NextcloudFileSelectWidget
 
 
+__all__ = ["FileMoveForm", "FolderCreateForm", "SynchFileToFolderForm", "FolderEditFormGroup"]
+
 class FileMoveForm(Form):
     directory_name = CharField(required=True, min_length=3, max_length=16)
     file_name = ChoiceField()

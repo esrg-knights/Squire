@@ -1,11 +1,11 @@
 from django.http.response import HttpResponse, HttpResponseRedirect
 from django.contrib.messages import error as error_msg
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.template.response import TemplateResponse
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic.detail import SingleObjectMixin
-from django.views.generic import ListView, FormView, TemplateView, DetailView
-from django.views.generic.edit import CreateView
+from django.views.generic import ListView, FormView
 from django.shortcuts import get_object_or_404
 
 from requests.exceptions import ConnectionError
@@ -13,12 +13,12 @@ from easywebdav import OperationFailed
 
 from membership_file.util import user_is_current_member, MembershipRequiredMixin
 
-from nextcloud_integration.nextcloud_client import construct_client, OperationFailed
+from nextcloud_integration.nextcloud_client import construct_client
 from nextcloud_integration.forms import *
 from nextcloud_integration.models import NCFolder, NCFile
 
 
-__all__ = ["FolderContentView", "FileBrowserView", "FolderCreateView", "SynchFileToFolderView", "DownloadFileview"]
+__all__ = ["SiteDownloadView", "FileBrowserView", "FolderCreateView", "SynchFileToFolderView", "DownloadFileview"]
 
 
 class NextcloudConnectionViewMixin:
@@ -45,7 +45,7 @@ class NextcloudConnectionViewMixin:
 
     def nextcloud_operation_failed(self, error):
         """ Runs code to handle a fail in the nextcloud connection. Should return a HttpResponse """
-        return self.nextcloud_connection_failed(None)
+        return self.nextcloud_connection_failed(error)
 
     @property
     def client(self):
@@ -54,24 +54,28 @@ class NextcloudConnectionViewMixin:
         return self._client
 
 
-class FileBrowserView(NextcloudConnectionViewMixin, ListView):
+class FileBrowserView(NextcloudConnectionViewMixin, PermissionRequiredMixin, ListView):
     template_name = "nextcloud_integration/browser.html"
+    permission_required = 'nextcloud_integration.view_ncfolder'
     context_object_name = 'nextcloud_resources'
 
-    def dispatch(self, request, *args, **kwargs):
-        try:
-            return super(FileBrowserView, self).dispatch(request, *args, **kwargs)
-        except OperationFailed as e:
-            if e.actual_code == 404:
-                return TemplateResponse(
-                    request,
-                    "nextcloud_integration/browser_not_exist.html",
-                    {'folder': kwargs.get('path', '')}
-                )
-
+    def nextcloud_connection_failed(self, error):
+        if error.actual_code == 404:
+            return TemplateResponse(
+                self.request,
+                "nextcloud_integration/browser_not_exist.html",
+                {'folder': self.kwargs.get('path', '')}
+            )
+        return super(FileBrowserView, self).nextcloud_connection_failed(error)
 
     def get_queryset(self):
         return construct_client().ls(remote_path=self.kwargs.get('path', ''))
+
+    def get_context_data(self, **kwargs):
+        return super(FileBrowserView, self).get_context_data(
+            path=self.kwargs.get('path', ''),
+            **kwargs
+        )
 
 
 class SiteDownloadView(ListView):

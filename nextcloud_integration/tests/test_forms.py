@@ -1,8 +1,6 @@
 from django.test import TestCase, override_settings
 from django.forms import ModelForm
 
-from unittest.mock import patch, MagicMock
-
 from utils.testing import FormValidityMixin
 from nextcloud_integration.forms import FileMoveForm, FolderCreateForm, SynchFileToFolderForm, \
     FolderEditForm, FileEditForm, FileEditFormset, FolderEditFormGroup

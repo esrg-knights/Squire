@@ -1,7 +1,6 @@
-
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import Group, User
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.template.response import TemplateResponse
 from django.test import Client, RequestFactory
 from django.views.generic.base import TemplateView
@@ -99,7 +98,7 @@ class TestMixinMixin:
     pre_inherit_classes = []
     view = None
 
-    def _build_get_response(self, url=None, url_kwargs=None, save_view = True, user=None):
+    def _build_get_response(self, url=None, url_kwargs=None, save_view = True, user=None, post_inherit_class=None):
         """
         Constructs a get response through a temporary view that inheirts the Testcases mixin class
         :param url: The url path
@@ -114,7 +113,7 @@ class TestMixinMixin:
         request = RequestFactory().get(url)
         self._imitiate_request_middleware(request, user=user)
 
-        view = self.get_as_full_view_class()()
+        view = self.get_as_full_view_class(post_inherit_class=post_inherit_class)()
         view.setup(request, **url_kwargs)
         response = view.dispatch(request, **url_kwargs)
 
@@ -129,7 +128,6 @@ class TestMixinMixin:
         elif self.base_user_id:
             request.user = User.objects.get(id=self.base_user_id)
 
-
     def get_base_url(self):
         return ""
 
@@ -137,11 +135,26 @@ class TestMixinMixin:
         """ Constructs the url kwargs default values for each check """
         return {}
 
-    def get_as_full_view_class(self):
+    def get_as_full_view_class(self, post_inherit_class=None):
+        """
+        Returns a class implementing the mixin class that needs to be tested
+        :param post_inherit_class: Class added after the list of required classes.
+        This can be used to imitate any super logic that the mixin might need to be able to catch
+        :return: A view class implementing the mixin for testing along with the pre_inherited classes
+        """
         classes = self.pre_inherit_classes + [self.mixin_class]
 
-        class MixinTestView(*classes, TemplateView):
-            template_name = "utils/testing/test_mixin_template.html"
+        if post_inherit_class is not None:
+            classes.append(post_inherit_class)
+
+        class BaseMixinTestView:
+            """ This class returns a default response indicating the mixin has been handled """
+            def dispatch(self, request, *args, **kwargs):
+                return HttpResponse("test successful")
+
+        class MixinTestView(*classes, BaseMixinTestView, TemplateView):
+            #
+            pass
 
         return MixinTestView
 
@@ -161,6 +174,9 @@ class TestMixinMixin:
         else:
             raise AssertionError("No '403: Permission Denied' error was raised")
 
-    def assertResponseSuccesful(self, response):
+    def assertResponseSuccessful(self, response):
         if response.status_code != 200:
-            raise AssertionError(f"Response was not succesful. It returned code {response.status_code} instead.")
+            raise AssertionError(f"Response was not successful. It returned code {response.status_code} instead.")
+        if response.content != b'test successful':
+            # HttpResponse content property is in byte form
+            raise AssertionError(f"Response was not successful. It returned unexpected html content")

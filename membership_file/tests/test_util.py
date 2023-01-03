@@ -31,8 +31,8 @@ class MembershipRequiredMixinTestCase(TestMixinMixin, TestCase):
         super(MembershipRequiredMixinTestCase, self)._imitiate_request_middleware(request, **kwargs)
         request.member = get_member_from_user(request.user)
 
-    def get_as_full_view_class(self):
-        klass = super(MembershipRequiredMixinTestCase, self).get_as_full_view_class()
+    def get_as_full_view_class(self, **kwargs):
+        klass = super(MembershipRequiredMixinTestCase, self).get_as_full_view_class(**kwargs)
         if self.requires_active_membership is not None:
             klass.requires_active_membership = self.requires_active_membership
         return klass
@@ -51,7 +51,7 @@ class MembershipRequiredMixinTestCase(TestMixinMixin, TestCase):
 
     def test_active_member_granted(self):
         response = self._build_get_response("member_area/", user=User.objects.get(id=100))
-        self.assertResponseSuccesful(response)
+        self.assertResponseSuccessful(response)
 
     def test_inactive_member_denied(self):
         """ Test that non-members are lead to an access denied page """
@@ -62,4 +62,4 @@ class MembershipRequiredMixinTestCase(TestMixinMixin, TestCase):
     def test_inactive_member_granted(self):
         self.requires_active_membership = False
         response = self._build_get_response("member_area/", user=User.objects.get(id=3))
-        self.assertResponseSuccesful(response)
+        self.assertResponseSuccessful(response)

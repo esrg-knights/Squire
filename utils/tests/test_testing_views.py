@@ -114,16 +114,16 @@ class TestViewValidityMixin(ViewValidityMixin, TestCase):
 
 class TestableMixin:
 
-    def get(self, request, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs):
         if 'deny' in kwargs.keys():
             raise PermissionDenied()
         if 'lost' in kwargs.keys():
             raise Http404()
         else:
-            return super(TestableMixin, self).get(request, *args, **kwargs)
+            return super(TestableMixin, self).dispatch(request, *args, **kwargs)
 
 
-class TestTestMixinMin(TestMixinMixin, TestCase):
+class TestMixinMixinTestCase(TestMixinMixin, TestCase):
     mixin_class = TestableMixin
 
     def setUp(self):
@@ -147,3 +147,18 @@ class TestTestMixinMin(TestMixinMixin, TestCase):
 
         error = raisesAssertionError(self.assertRaises403)
         self.assertEqual(error.__str__(), "No '403: Permission Denied' error was raised")
+
+    def test_is_successful_for_status_code(self):
+        response = HttpResponse("test successful")
+        response.status_code = 200
+        self.assertResponseSuccessful(response)
+        response.status_code = 201
+        error = raisesAssertionError(self.assertResponseSuccessful, response)
+        self.assertEqual(error.__str__(), "Response was not successful. It returned code 201 instead.")
+
+    def test_is_successful_content(self):
+        response = HttpResponse("test successful", status=200)
+        self.assertResponseSuccessful(response)
+        response.content = "test failed"
+        error = raisesAssertionError(self.assertResponseSuccessful, response)
+        self.assertEqual(error.__str__(), "Response was not successful. It returned unexpected html content")
