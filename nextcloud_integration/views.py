@@ -169,10 +169,19 @@ class SynchFileToFolderView(NextcloudConnectionViewMixin, PermissionRequiredMixi
 
 class DownloadFileview(MembershipRequiredMixin, NextcloudConnectionViewMixin, SingleObjectMixin, View):
     template_name = "nextcloud_integration/file_download_test.html"
+    http_method_names = ["get"]
     model = NCFile
     slug_url_kwarg = "file_slug"
     slug_field = "slug"
     context_object_name = "file"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.file = get_object_or_404(
+            NCFile,
+            folder__slug = self.kwargs.get('folder_slug'),
+            slug = self.kwargs.get('file_slug'),
+        )
+        return super(DownloadFileview, self).dispatch(request, *args, **kwargs)
 
     def check_member_access(self, member):
         if self.file.folder.requires_membership:
@@ -181,14 +190,12 @@ class DownloadFileview(MembershipRequiredMixin, NextcloudConnectionViewMixin, Si
             return True
 
     def get(self, request, *args, **kwargs):
-        self.file = get_object_or_404(
-            NCFile,
-            folder__slug = self.kwargs.get('folder_slug'),
-            slug = self.kwargs.get('file_slug'),
-        )
-        file_data = self.get_file(self.file)
+        if self.file.is_missing or self.file.folder.is_missing:
+            error_msg(self.request, "File could not be retrieved as it missing on the cloud.")
+            return HttpResponseRedirect(reverse_lazy("nextcloud:site_downloads"))
 
-        response = HttpResponse(file_data, content_type='application/vnd.ms-excel')
+        file_data = self.get_file(self.file)
+        response = HttpResponse(file_data.content, content_type='application/vnd.ms-excel')
         response['Content-Disposition'] = f'attachment; filename="{self.file.file_name}"'
 
         return response
@@ -203,7 +210,7 @@ class DownloadFileview(MembershipRequiredMixin, NextcloudConnectionViewMixin, Si
                 # Set folder
                 self.file.folder.is_missing = True
                 self.file.folder.save(update_fields=["is_missing"])
-                msg = "The folder could not be retrieved as it has been moved or renamed. " \
+                msg = "The file could not be retrieved as its folder has been moved or renamed. " \
                       "It is unknown when it will be fixed as it needs to be addressed manually."
             elif not self.client.exists(self.file.file):
                 self.file.is_missing = True
@@ -214,10 +221,5 @@ class DownloadFileview(MembershipRequiredMixin, NextcloudConnectionViewMixin, Si
             msg = "Something unexpected occurred. Please inform the UUPS is this keeps occuring."
         error_msg(self.request, msg)
 
-        return HttpResponseRedirect(redirect_to=reverse_lazy(
-            "nextcloud:folder_view",
-            kwargs={
-                'folder_slug': self.file.folder.slug,
-            }
-        ))
+        return HttpResponseRedirect(reverse_lazy("nextcloud:site_downloads"))
 

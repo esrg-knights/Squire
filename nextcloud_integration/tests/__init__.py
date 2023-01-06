@@ -2,6 +2,8 @@ from unittest.mock import Mock
 from nextcloud_integration.nextcloud_resources import NextCloudFolder, NextCloudFile
 from unittest.mock import patch
 
+from requests.models import Response
+
 
 def mock_exists(exists=True):
     """ Script that changes the default now time to a preset value """
@@ -33,7 +35,6 @@ def mock_mkdir():
     return fake_mkdir
 
 
-
 def patch_construction(source_name, exists=False):
     """ Extends the patch decorator to intercept client related functionality with base testing functions
     :param source_name Name of the source that needs interjecting. Ie forms, models or whatever. Because the local reference
@@ -44,6 +45,6 @@ def patch_construction(source_name, exists=False):
         'target': f'nextcloud_integration.{source_name}.construct_client',
         'return_value.ls.return_value': mock_ls()(),
         'return_value.exists.return_value': mock_exists(exists)(),
-        'return_value.mkdir.side_effect': mock_mkdir()
+        'return_value.mkdir.side_effect': mock_mkdir(),
     })
     return patch_output

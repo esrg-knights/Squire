@@ -1,5 +1,6 @@
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import Group, User, Permission
+from django.contrib.messages import constants as msg_constants
 from django.http import Http404, HttpResponse
 from django.template.response import TemplateResponse
 from django.test import Client, RequestFactory
@@ -33,14 +34,11 @@ class ViewValidityMixin:
     def _set_user_perm(self, user:User, perm):
         if user.has_perm(perm):
             return
-        permission = self._get_perm_by_name(perm)
-        user.user_permissions.add(permission)
+        user.user_permissions.add(self._get_perm_by_name(perm))
 
         # Delete the user permission cache
-        if hasattr(user, '_user_perm_cache'):
-            del user._user_perm_cache
-        if hasattr(user, '_perm_cache'):
-            del user._perm_cache
+        del user._user_perm_cache
+        del user._perm_cache
 
     def _get_perm_by_name(self, perm):
         app_label, perm_name = perm.split('.')
@@ -51,14 +49,14 @@ class ViewValidityMixin:
         )
 
     def _remove_user_perm(self, user: User, perm):
+        if not user.has_perm(perm):
+            return
         user.user_permissions.remove(
             self._get_perm_by_name(perm)
         )
         # Delete the user permission cache
-        if hasattr(user, '_user_perm_cache'):
-            del user._user_perm_cache
-        if hasattr(user, '_perm_cache'):
-            del user._perm_cache
+        del user._user_perm_cache
+        del user._perm_cache
 
     def get_base_url(self):
         return self.base_url
@@ -135,6 +133,9 @@ class ViewValidityMixin:
         :param print_all: prints all messages encountered useful to trace errors if present
         :return: Raises AssertionError if not asserted
         """
+        # Update the level with the constant if the name of such a constant is given
+        level = getattr(msg_constants, str(level), level)
+
         for message in response.context['messages']:
             # if print_all:
             #     print(message)
@@ -148,6 +149,9 @@ class ViewValidityMixin:
                 msg += f"level: '{level}' "
             if text:
                 msg += f"text: '{text}' "
+            msg += "The following messages were found: "
+            for message in response.context['messages']:
+                msg += f"{message.level}: {message.message}, "
         else:
             msg = "There was no message"
 

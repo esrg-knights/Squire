@@ -1,18 +1,24 @@
 from django.contrib.auth.models import User, Permission
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.messages import constants as msg_constants
 from django.test import TestCase
 from django.urls import reverse
 from django.views.generic import ListView, FormView
 from easywebdav.client import OperationFailed
 from requests.exceptions import ConnectionError
+from requests.models import Response
+from requests.cookies import RequestsCookieJar
 from unittest.mock import Mock, patch
 
+from core.tests.util import suppress_warnings
 from utils.testing.view_test_utils import ViewValidityMixin, TestMixinMixin
+from membership_file.util import user_is_current_member
 
-from nextcloud_integration.models import NCFolder
+from nextcloud_integration.forms import *
+from nextcloud_integration.models import NCFolder, NCFile
+from nextcloud_integration.nextcloud_resources import NextCloudFolder, NextCloudFile
 from nextcloud_integration.views import NextcloudConnectionViewMixin, FolderMixin, FileBrowserView, SiteDownloadView, \
     FolderCreateView, FolderEditView, SynchFileToFolderView, DownloadFileview
-from nextcloud_integration.forms import *
 
 from . import patch_construction
 
@@ -279,3 +285,133 @@ class SynchFileToFolderViewTestCase(ViewValidityMixin, TestCase):
             redirect_url=reverse("nextcloud:site_downloads")
         )
         mock_save.assert_called()
+
+
+@patch_construction('views')
+class DownloadFileViewTestCase(ViewValidityMixin, TestCase):
+    fixtures = ['test_users', 'test_members', 'nextcloud_integration/nextcloud_fixtures']
+    base_user_id = 100
+
+    def setUp(self):
+        self.file = NCFile.objects.get(id=1)
+        super(DownloadFileViewTestCase, self).setUp()
+
+    def mock_download(self, mock):
+        file_path = f"nextcloud_integration/tests/files/test_download_file.txt"
+        def fake_download(nc_file=None):
+            resp = Response()
+            with open(file_path, "r") as file:
+                resp._content = file.read()
+            resp.status_code = 200
+            resp.cookies = {'fake_cookie': "this_should_not_be_shared"}
+
+            return resp
+        mock.return_value.download.side_effect = fake_download
+
+    def get_base_url(self, file=None):
+        if file is None:
+            file = self.file
+        return reverse('nextcloud:file_dl', kwargs={'folder_slug': file.folder.slug, 'file_slug': file.slug})
+
+    def test_fixed_values(self, mock):
+        self.assertTrue(issubclass(DownloadFileview, NextcloudConnectionViewMixin))
+        self.assertTrue(DownloadFileview.template_name, "nextcloud_integration/file_download_test.html")
+        self.assertTrue(DownloadFileview.http_method_names, ['get'])
+
+    def test_successful_get(self, mock):
+        self.mock_download(mock)
+        self.assertValidGetResponse()
+
+    @suppress_warnings()
+    def test_file_not_found(self, mock):
+        response = self.client.get(reverse(
+            'nextcloud:file_dl',
+            kwargs={'folder_slug': 'initial_folder', 'file_slug': 'fake_file'})
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_members_only_access(self, mock):
+        self.mock_download(mock)
+
+        nc_file = NCFile.objects.filter(folder__requires_membership=True).first()
+
+        self.assertTrue(user_is_current_member(self.user))
+        self.assertValidGetResponse(url=self.get_base_url(nc_file))
+
+        self.user = User.objects.get(id=1)
+        self.assertFalse(user_is_current_member(self.user))
+        self.client.force_login(self.user)
+        response = self.client.get(path=self.get_base_url(nc_file))
+        # MembershipRequiredMixin redirects instead of throws a 403 response
+        self.assertEqual(response.status_code, 302)
+
+    @staticmethod
+    def fail_download(*args, actual_code=404, **kwargs):
+        raise OperationFailed(
+            method="GET",
+            path="/",
+            expected_code=200,
+            actual_code=actual_code
+        )
+
+    def test_disconnected_file(self, mock):
+        """ Test that a download failing due to a disconnected file adjusts database state """
+        self.assertEqual(self.file.is_missing, False)
+        # Ensure that an exception is created
+        mock.return_value.download.side_effect = self.fail_download
+
+        # Adjust the exist method
+        def exists(resource=None):
+            if isinstance(resource, NextCloudFile):
+                return False
+            return True
+        mock.return_value.exists.side_effect = exists
+
+        response = self.client.get(self.get_base_url(), follow=True)
+        self.file.refresh_from_db()
+        self.assertEqual(self.file.is_missing, True)
+        self.assertHasMessage(response, 40, "The file could not be retrieved")
+        self.assertEqual(response.request['PATH_INFO'], reverse("nextcloud:site_downloads"))
+
+    def test_disconnected_folder(self, mock):
+        """ Test that a download failing due to disconnected folder adjusts database state """
+        self.assertEqual(self.file.folder.is_missing, False)
+        # Ensure that an exception is created
+        mock.return_value.download.side_effect = self.fail_download
+
+        # Adjust the exist method
+        def exists(resource=None):
+            if isinstance(resource, NextCloudFolder):
+                return False
+            return True
+        mock.return_value.exists.side_effect = exists
+
+        response = self.client.get(self.get_base_url(), follow=True)
+        self.file.folder.refresh_from_db()
+        self.assertEqual(self.file.folder.is_missing, True)
+        self.assertHasMessage(response, 40, "The file could not be retrieved as its folder has been moved or renamed")
+        self.assertEqual(response.request['PATH_INFO'], reverse("nextcloud:site_downloads"))
+
+    def test_nextcloud_error(self, mock):
+        """ Test that a download failing due to connection error raises an error """
+        # Ensure that an exception is created
+        mock.return_value.download.side_effect = self.fail_download
+        response = self.client.get(self.get_base_url(), follow=True)
+        self.assertHasMessage(response, 40)
+        self.assertEqual(response.request['PATH_INFO'], reverse("nextcloud:site_downloads"))
+
+    def test_missing_file(self, mock):
+        """ Test that a download on a missing file is not initiated """
+        self.file.is_missing = True
+        self.file.save()
+        response = self.client.get(self.get_base_url(), follow=True)
+        self.assertHasMessage(response, "ERROR", "File could not be retrieved")
+        self.assertEqual(response.request['PATH_INFO'], reverse("nextcloud:site_downloads"))
+
+    def test_missing_folder(self, mock):
+        """ Test that a download on a missing file is not initiated """
+        self.file.folder.is_missing = True
+        self.file.folder.save()
+        response = self.client.get(self.get_base_url(), follow=True)
+        self.assertHasMessage(response, "ERROR", "File could not be retrieved")
+        self.assertEqual(response.request['PATH_INFO'], reverse("nextcloud:site_downloads"))
