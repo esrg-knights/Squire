@@ -1,6 +1,6 @@
 
 from django.contrib.auth import get_user, PermissionDenied
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
 from django.contrib.messages import add_message, DEBUG, ERROR, SUCCESS
 from django.contrib.messages.storage.base import Message
 from django.http import HttpResponse, Http404, HttpResponseForbidden, HttpResponseRedirect
@@ -35,9 +35,14 @@ class TestViewValidityMixin(ViewValidityMixin, TestCase):
     base_url = "test/something-else/"
 
     def setUp(self):
-        user = User.objects.create()
+        user = User.objects.create(username="test")
         self.base_user_id = user.id
         super(TestViewValidityMixin, self).setUp()
+
+    def assertRedirects(self, response, *args, **kwargs):
+        # Overwrite to serve as checkpoint
+        if not isinstance(response, HttpResponseRedirect):
+            raise AssertionError("RedirectCheck")
 
     def test_setup(self):
         user = User.objects.last()
@@ -49,9 +54,6 @@ class TestViewValidityMixin(ViewValidityMixin, TestCase):
     def test_get_base_url(self):
         self.assertEqual(self.get_base_url(), self.base_url)
 
-    def get_fake_client_instance(self, http_response_class, **http_init_kwargs):
-        return FakeClient(http_response_class, **http_init_kwargs)
-
     def test_valid_get_response(self):
         self.client = FakeClient(HttpResponse)
         self.assertValidGetResponse()
@@ -62,11 +64,6 @@ class TestViewValidityMixin(ViewValidityMixin, TestCase):
             self.assertValidGetResponse
         )
         self.assertEqual(error.__str__(), "403 != 200 : Response was not a valid Http200 response")
-
-    def assertRedirects(self, response, *args, **kwargs):
-        # Overwrite to serve as checkpoint
-        if not isinstance(response, HttpResponseRedirect):
-            raise AssertionError("RedirectCheck")
 
     def test_valid_post_response(self):
         self.client = FakeClient(HttpResponse)
@@ -83,7 +80,6 @@ class TestViewValidityMixin(ViewValidityMixin, TestCase):
         self.client = FakeClient(HttpResponseForbidden)
         error = raisesAssertionError(self.assertValidPostResponse)
         self.assertEqual(error.__str__(), "403 != 200 : Response was not a valid Http200 response")
-
 
     def test_has_message(self):
         # Messages are read through the response.context property.
@@ -110,6 +106,40 @@ class TestViewValidityMixin(ViewValidityMixin, TestCase):
         error = raisesAssertionError(self.assertHasMessage, response, SUCCESS)
         self.assertEqual(error.__str__(), "There was no message for the given criteria: level: '{level}' ".
                          format(level=SUCCESS))
+
+    def test_assert_permission_denied(self):
+        self.client = FakeClient(HttpResponseForbidden)
+        self.assertPermissionDenied()
+
+    def test_changing_user_perm(self):
+        self._set_user_perm(self.user, 'auth.change_user')
+        # These two caches need to be cleared in order for the cache to be updated
+        self.assertFalse(hasattr(self.user, '_perm_cache'))
+        self.assertFalse(hasattr(self.user, '_user_perm_cache'))
+
+        self.assertTrue(self.user.has_perm('auth.change_user'))
+
+    def test_remove_user_perm(self):
+        self._set_user_perm(self.user, 'auth.change_user')
+        self._remove_user_perm(self.user, 'auth.change_user')
+        # These two caches need to be cleared in order for the cache to be updated
+        self.assertFalse(hasattr(self.user, '_perm_cache'))
+        self.assertFalse(hasattr(self.user, '_user_perm_cache'))
+
+        self.assertFalse(self.user.has_perm('auth.change_user'))
+
+    def test_assert_requires_permission(self):
+        class FakePermClient(View):
+            def get(fake_self, request, *args, **kwargs):
+                if fake_self.user.has_perm('auth.change_user'):
+                    return HttpResponse()
+                else:
+                    return HttpResponseForbidden
+
+        self.client = FakePermClient()
+        self.client.user = self.user
+        self.assertRequiresPermission(perm='auth.change_user')
+
 
 
 class TestableMixin:

@@ -64,7 +64,7 @@ class FileBrowserView(NextcloudConnectionViewMixin, PermissionRequiredMixin, Lis
             return TemplateResponse(
                 self.request,
                 "nextcloud_integration/browser_not_exist.html",
-                {'folder': self.kwargs.get('path', '')}
+                {'path': self.kwargs.get('path', '')}
             )
         return super(FileBrowserView, self).nextcloud_connection_failed(error)
 
@@ -124,20 +124,22 @@ class FolderMixin:
         return context
 
 
-class FolderCreateView(NextcloudConnectionViewMixin, FormView):
+class FolderCreateView(NextcloudConnectionViewMixin, PermissionRequiredMixin, FormView):
     template_name = "nextcloud_integration/folder_add.html"
     form_class = FolderCreateForm
     success_url = reverse_lazy("nextcloud:site_downloads")
+    permission_required = 'nextcloud_integration.add_ncfolder'
 
     def form_valid(self, form):
         form.save()
         return super(FolderCreateView, self).form_valid(form)
 
 
-class FolderEditView(NextcloudConnectionViewMixin, FolderMixin, FormView):
+class FolderEditView(NextcloudConnectionViewMixin, PermissionRequiredMixin, FolderMixin, FormView):
     template_name = "nextcloud_integration/folder_edit.html"
     form_class = FolderEditFormGroup
     success_url = reverse_lazy("nextcloud:site_downloads")
+    permission_required = 'nextcloud_integration.change_ncfolder'
 
     def form_valid(self, form):
         form.save()
@@ -149,8 +151,10 @@ class FolderEditView(NextcloudConnectionViewMixin, FolderMixin, FormView):
         return kwargs
 
 
-class SynchFileToFolderView(NextcloudConnectionViewMixin, FolderMixin, FormView):
+class SynchFileToFolderView(NextcloudConnectionViewMixin, PermissionRequiredMixin, FolderMixin, FormView):
     template_name = "nextcloud_integration/synch_file_to_folder.html"
+    permission_required = 'nextcloud_integration.synch_ncfile'
+    success_url = reverse_lazy("nextcloud:site_downloads")
     form_class = SynchFileToFolderForm
 
     def get_form_kwargs(self):
@@ -161,17 +165,6 @@ class SynchFileToFolderView(NextcloudConnectionViewMixin, FolderMixin, FormView)
     def form_valid(self, form):
         form.save()
         return super(SynchFileToFolderView, self).form_valid(form)
-
-    def form_invalid(self, form):
-        return super(SynchFileToFolderView, self).form_invalid(form)
-
-    def get_success_url(self):
-        return reverse_lazy(
-            "nextcloud:folder_view",
-            kwargs={
-                'folder_slug': self.folder.slug,
-            }
-        )
 
 
 class DownloadFileview(MembershipRequiredMixin, NextcloudConnectionViewMixin, SingleObjectMixin, View):

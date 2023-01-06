@@ -1,9 +1,11 @@
 from django.core.exceptions import PermissionDenied
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import Group, User, Permission
 from django.http import Http404, HttpResponse
 from django.template.response import TemplateResponse
 from django.test import Client, RequestFactory
 from django.views.generic.base import TemplateView
+
+from core.tests.util import suppress_warnings
 
 
 class ViewValidityMixin:
@@ -16,6 +18,7 @@ class ViewValidityMixin:
     user = None
     base_user_id = None
     base_url = None
+    permission_required = None
 
     def setUp(self):
         self.client = Client()
@@ -23,6 +26,39 @@ class ViewValidityMixin:
         if self.base_user_id:
             self.user = User.objects.get(id=self.base_user_id)
             self.client.force_login(self.user)
+
+        if self.user and self.permission_required:
+            self._set_user_perm(self.user, self.permission_required)
+
+    def _set_user_perm(self, user:User, perm):
+        if user.has_perm(perm):
+            return
+        permission = self._get_perm_by_name(perm)
+        user.user_permissions.add(permission)
+
+        # Delete the user permission cache
+        if hasattr(user, '_user_perm_cache'):
+            del user._user_perm_cache
+        if hasattr(user, '_perm_cache'):
+            del user._perm_cache
+
+    def _get_perm_by_name(self, perm):
+        app_label, perm_name = perm.split('.')
+
+        return Permission.objects.get(
+            codename=perm_name,
+            content_type__app_label=app_label,
+        )
+
+    def _remove_user_perm(self, user: User, perm):
+        user.user_permissions.remove(
+            self._get_perm_by_name(perm)
+        )
+        # Delete the user permission cache
+        if hasattr(user, '_user_perm_cache'):
+            del user._user_perm_cache
+        if hasattr(user, '_perm_cache'):
+            del user._perm_cache
 
     def get_base_url(self):
         return self.base_url
@@ -62,6 +98,32 @@ class ViewValidityMixin:
             self.assertEqual(response.status_code, 200, "Response was not a valid Http200 response")
 
         return response
+
+    @suppress_warnings
+    def assertPermissionDenied(self, data=None, url=None):
+        """
+        Assert that the view returns a permission denied
+        :param data: Get data, defaults to an empty dict
+        :param url: The url, defaults to self.get_base_url
+        :return: Raises an AssertionError or does nothing
+        """
+        url = url or self.get_base_url()
+        data = data or {}
+        response = self.client.get(url, data=data)
+        self.assertEqual(response.status_code, 403, "Access was not forbidden")
+
+    def assertRequiresPermission(self, perm=None, data=None, url=None):
+        """ Asserts that the given permission name is required for this view
+        :param data: URL data
+        :param url: The url to be visited
+        :param perm: The perm that needs to be validated
+        """
+        perm = perm or self.permission_required
+        self._remove_user_perm(self.user, perm)
+        self.assertPermissionDenied(data=data, url=url)
+
+        self._set_user_perm(self.user, perm)
+        self.assertValidGetResponse(data=data, url=url)
 
     @staticmethod
     def assertHasMessage(response, level=None, text=None):
