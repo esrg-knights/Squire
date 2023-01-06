@@ -144,12 +144,12 @@ class ViewValidityMixin:
                     return
 
         if level or text:
-            msg = "There was no message for the given criteria: "
+            msg = "There was no message for the given criteria:"
             if level:
-                msg += f"level: '{level}' "
+                msg += f" level: '{level}'"
             if text:
-                msg += f"text: '{text}' "
-            msg += "The following messages were found: "
+                msg += f" text: '{text}'"
+            msg += ". The following messages were found instead: "
             for message in response.context['messages']:
                 msg += f"{message.level}: {message.message}, "
         else:

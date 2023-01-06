@@ -97,15 +97,18 @@ class TestViewValidityMixin(ViewValidityMixin, TestCase):
 
         # Incorrect text
         error = raisesAssertionError(self.assertHasMessage, response, ERROR, "test_message")
-        self.assertEqual(error.__str__(),
-            "There was no message for the given criteria: level: '{level}' text: '{text}' ".format(
+        self.assertLess(-1, error.__str__().find(
+            "There was no message for the given criteria: level: '{level}' text: '{text}'. "
+            "The following messages were found instead:".format(
                 level=ERROR,
-                text="test_message"
-        ))
+                text="test_message",
+        )))
 
         error = raisesAssertionError(self.assertHasMessage, response, SUCCESS)
-        self.assertEqual(error.__str__(), "There was no message for the given criteria: level: '{level}' ".
-                         format(level=SUCCESS))
+        self.assertLess(-1, error.__str__().find(
+            "There was no message for the given criteria: level: '{level}'.".format(
+                level=SUCCESS
+        )))
 
     def test_assert_permission_denied(self):
         self.client = FakeClient(HttpResponseForbidden)
