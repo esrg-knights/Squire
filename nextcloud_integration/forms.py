@@ -67,6 +67,10 @@ class FolderCreateForm(ModelForm):
         self.instance.path = f"/{slugify(self.cleaned_data['display_name'])}/"
         return super(FolderCreateForm, self).clean()
 
+    def save(self, commit=True):
+        construct_client().mkdir(self.instance.path)
+        super(FolderCreateForm, self).save()
+
 
 class SynchFileToFolderForm(ModelForm):
     selected_file = ChoiceField(widget=NextcloudFileSelectWidget())
@@ -149,6 +153,7 @@ class FileEditFormset(BaseFormSet):
     def save(self):
         for form in self.forms:
             form.save()
+
 
 class FolderEditFormGroup(FormGroup):
     form_class = FolderEditForm

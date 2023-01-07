@@ -2,6 +2,7 @@ from django.test import TestCase, override_settings
 from django.forms import ModelForm
 
 from utils.testing import FormValidityMixin
+
 from nextcloud_integration.forms import FileMoveForm, FolderCreateForm, SynchFileToFolderForm, \
     FolderEditForm, FileEditForm, FileEditFormset, FolderEditFormGroup
 from nextcloud_integration.models import NCFolder, NCFile
@@ -134,23 +135,46 @@ class FileSynchFormTestCase(FormValidityMixin, TestCase):
         )
 
 
+@patch_construction('forms')
 class FolderCreateFormTestCase(FormValidityMixin, TestCase):
     fixtures = ["nextcloud_integration/nextcloud_fixtures"]
     form_class = FolderCreateForm
 
-    def test_form_valid(self):
+    def test_form_valid(self, mock):
         self.assertFormValid(data={
             'display_name': 'New Folder',
             'description': "Test folder description",
         })
 
-    def test_clean_instance_path(self):
+    def test_clean_instance_path(self, mock):
         """ Tests that the instance.path is cleaned to a path-format """
         form = self.assertFormValid(data={
             'display_name': 'Test name',
             'description': "Test folder description",
         })
         self.assertEqual(form.instance.path, "/test-name/")
+
+    def test_save_creates_folder(self, mock):
+        form = self.assertFormValid(data={
+            'display_name': 'testfolder',
+            'description': "Test folder description",
+        })
+        form.save()
+        mock.return_value.mkdir.assert_called_with("/testfolder/")
+        self.assertTrue(NCFolder.objects.filter(display_name='testfolder').exists())
+
+    def test_do_not_save_instance_on_connection_faillure(self, mock):
+        def throw_error(*args, **kwargs):
+            raise RuntimeError()
+        mock.return_value.mkdir.side_effect = throw_error
+        with self.assertRaises(RuntimeError):
+            form = self.assertFormValid(data={
+                'display_name': 'testfolder',
+                'description': "Test folder description",
+            })
+            form.save()
+        self.assertFalse(NCFolder.objects.filter(display_name='testfolder').exists())
+
 
 class FolderEditFormTestCase(FormValidityMixin, TestCase):
     fixtures = ["nextcloud_integration/nextcloud_fixtures"]

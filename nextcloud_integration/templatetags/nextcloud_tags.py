@@ -6,7 +6,7 @@ register = template.Library()
 
 
 @register.filter
-def has_edit_access(user, folder):
+def has_edit_access(user, folder=None):
     return user.has_perm('nextcloud_integration.change_ncfolder')
 
 
