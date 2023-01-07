@@ -179,6 +179,7 @@ class FolderMixinTestCase(TestMixinMixin, TestCase):
         self.assertEqual(self.view.get_context_data()['folder'], folder)
 
 
+@patch_construction('forms')
 class FolderCreateViewTestCase(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'nextcloud_integration/nextcloud_fixtures']
     permission_required = 'nextcloud_integration.add_ncfolder'
@@ -187,16 +188,16 @@ class FolderCreateViewTestCase(ViewValidityMixin, TestCase):
     def get_base_url(self):
         return reverse('nextcloud:add_folder')
 
-    def test_fixed_values(self):
+    def test_fixed_values(self, mock):
         self.assertTrue(issubclass(FolderCreateView, NextcloudConnectionViewMixin))
         self.assertTrue(issubclass(FolderCreateView, FormView))
         self.assertTrue(FolderCreateView.form_class, FolderCreateForm)
         self.assertTrue(FolderCreateView.template_name, "nextcloud_integration/folder_add.html")
 
-    def test_successful_get(self):
+    def test_successful_get(self, mock):
         self.assertValidGetResponse()
 
-    def test_succesful_post(self):
+    def test_succesful_post(self, mock):
         self.assertValidPostResponse(
             data={
                 'display_name': 'FolderCreateView TestFolder',
@@ -207,7 +208,7 @@ class FolderCreateViewTestCase(ViewValidityMixin, TestCase):
         # Ensure folder creation
         self.assertTrue(NCFolder.objects.filter(display_name='FolderCreateView TestFolder').exists())
 
-    def test_requires_permission(self):
+    def test_requires_permission(self, mock):
         self.assertRequiresPermission()
 
 
