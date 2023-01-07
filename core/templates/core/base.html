@@ -74,14 +74,12 @@
 					<li>
 						<a class="nav-link" href="{% url 'boardgames:home' %}">Boardgames</a>
 					</li>
+                    <li>
+                        <a class="nav-link" href="{% url 'committees:home' %}">Committees</a>
+                    </li>
 					<li>
 						<a class="nav-link" href="{% url 'roleplaying:home' %}">Roleplay</a>
 					</li>
-					{% if global_preferences.newsletter__share_link and member is not None %}
-						<li>
-							<a class="nav-link" href="{% url 'core:newsletters' %}">Newsletter</a>
-						</li>
-					{% endif %}
                     <li>
                         <a class="nav-link" href="{% url 'nextcloud:site_downloads' %}">Downloads</a>
                     </li>
