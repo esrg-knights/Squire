@@ -6,6 +6,8 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import resolve_url
 from functools import wraps
 
+from .exceptions import UserIsNotCurrentMember
+
 
 def get_member_from_user(user):
     """
@@ -58,5 +60,5 @@ class MembershipRequiredMixin(LoginRequiredMixin):
             return HttpResponseRedirect(resolve_url(self.fail_url))
         if not request.member.is_considered_member() and self.requires_active_membership:
             # Current session has a disabled member connected
-            return HttpResponseRedirect(resolve_url(self.fail_url))
+            raise UserIsNotCurrentMember()
         return super().dispatch(request, *args, **kwargs)
