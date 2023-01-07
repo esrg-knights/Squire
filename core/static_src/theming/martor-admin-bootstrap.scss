@@ -1,0 +1,9 @@
+@use 'sass:meta';
+
+.bootstrap-css {
+    // We only wish to use Bootstrap styling in specific HTML elements.
+    //  This is specifically needed for Django's admin panel, which uses its own CSS and would
+    //  thus be broken by bootstrap's CSS.
+    // Doing this is easier than manually reverting all changes made by Bootstrap
+    @include meta.load-css("_bootstrap.min.css");
+}

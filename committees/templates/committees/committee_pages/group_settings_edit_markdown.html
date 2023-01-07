@@ -1,16 +1,19 @@
 {% extends 'committees/committee_pages/group_detail_base.html' %}
 {% load static %}
 {% load render_form %}
+{% load bootstrap4 %}
 
 {% block content-frame-class %}
     container
 {% endblock %}
 
 {% block bootstrap_js %}
-    {# We need to prevent bootstrap's JS from loading, as Martor's MarkdownWidget #}
+    {# We need to prevent bootstrap's jQuery JS from loading, as Martor's MarkdownWidget #}
     {#    also includes it. We cannot remove it from that widget and rely on our version #}
     {#    as it seems to require a specific version. #}
     {#    This is ugly... #}
+    {# TODO: Unify bootstrap and jQuery versions of Martor and Squire #}
+    {% bootstrap_javascript jquery=False %}
 {% endblock %}
 
 

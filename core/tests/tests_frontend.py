@@ -4,7 +4,8 @@ from django.urls.base import reverse
 from dynamic_preferences.registries import global_preferences_registry
 
 from core.forms import LoginForm, RegisterForm
-from core.tests.util import check_http_response, TestPublicUser, TestAccountUser, suppress_warnings
+from core.tests.util import check_http_response, TestSquireUser, TestPublicUser, TestAccountUser, suppress_warnings
+from membership_file.tests.util import TestMemberUser
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -44,34 +45,6 @@ class FrontEndTest(TestCase):
     def test_register_success(self):
         check_http_response(self, '/register/success', 'get', TestPublicUser)
 
-    # Tests if the newsletter URL is being rendered properly
-    @suppress_warnings
-    def test_newsletter(self):
-        global_preferences = global_preferences_registry.manager()
-
-        # Disable share URL
-        global_preferences['newsletter__share_link'] = ""
-        check_http_response(self, reverse('core:newsletters'), 'get', TestAccountUser, response_status=404)
-
-        # Enable share URL
-        global_preferences['newsletter__share_link'] = "https://www.example.com"
-        res = check_http_response(self, reverse('core:newsletters'), 'get', TestAccountUser)
-        self.assertContains(res, "https://www.example.com")
-
-    # The "Newsletters" tab should not be present in the base template if there is no share url
-    def test_newsletter_link_in_base_template(self):
-        global_preferences = global_preferences_registry.manager()
-
-        # Disable share URL
-        global_preferences['newsletter__share_link'] = ""
-        res = check_http_response(self, '/', 'get', TestAccountUser)
-        self.assertNotContains(res, reverse('core:newsletters'))
-
-        # Enable share URL
-        global_preferences['newsletter__share_link'] = "https://www.example.com"
-        res = check_http_response(self, '/', 'get', TestAccountUser)
-        self.assertContains(res, reverse('core:newsletters'))
-
     def test_homepage_message(self):
         """ Tests if the homepage message is rendered properly """
         global_preferences = global_preferences_registry.manager()
@@ -85,6 +58,53 @@ class FrontEndTest(TestCase):
         global_preferences['homepage__home_page_message'] = "Test Homepage Message"
         res = check_http_response(self, '/', 'get', TestAccountUser)
         self.assertContains(res, "Test Homepage Message")
+
+class NavGlobalPreferenceTest(TestCase):
+    """ Tests for pages that are only accessible if a specific global preference is set """
+    fixtures = TestMemberUser.get_fixtures()
+
+    def setUp(self):
+        super().setUp()
+        self.global_preferences = global_preferences_registry.manager()
+
+    @suppress_warnings
+    def _test_global_preference_page_404(self, preference_name: str, page_url: str, user: TestSquireUser):
+        """ A global preference page should raise a http 404 if its corresponding global preference is not set """
+        # Disable share URL
+        self.global_preferences[preference_name] = ""
+        check_http_response(self, page_url, 'get', user, response_status=404)
+
+        # Enable share URL
+        #   The share URL should logically be somewhere on the preference page
+        self.global_preferences[preference_name] = "https://www.example.com"
+        res = check_http_response(self, page_url, 'get', user)
+        self.assertContains(res, "https://www.example.com")
+
+    @suppress_warnings
+    def _test_global_preference_base_template_nav(self, preference_name: str, page_url: str, user: TestSquireUser):
+        """ A global preference tab should not be present in the base template nav if there is no share url """
+        # Disable share URL
+        self.global_preferences[preference_name] = ""
+        res = check_http_response(self, '/', 'get', user)
+        self.assertNotContains(res, page_url)
+
+        # Enable share URL
+        #   We don't care what the share URL actually is here, as long as something is there;
+        #   we just want to see that our preference page is located in the navigation bar.
+        self.global_preferences[preference_name] = "https://www.example.com"
+        res = check_http_response(self, '/', 'get', user)
+        self.assertContains(res, page_url) # Note: Actually checks the entire page rather than just the nav
+
+    def test_newsletter(self):
+        """ Tests if the newsletter global preference is working """
+        self._test_global_preference_page_404('newsletter__share_link', reverse('core:newsletters'), TestMemberUser)
+        self._test_global_preference_base_template_nav('newsletter__share_link', reverse('core:newsletters'), TestMemberUser)
+
+    def test_downloads(self):
+        """ Tests if the downloads global preference is working """
+        self._test_global_preference_page_404('downloads__share_link', reverse('core:downloads'), TestMemberUser)
+        self._test_global_preference_base_template_nav('downloads__share_link', reverse('core:downloads'), TestMemberUser)
+
 
 # Tests the login form
 class LoginFormTest(TestCase):

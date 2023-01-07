@@ -3,6 +3,7 @@
 {% load static %}
 {% load get_login_url %}
 {% load calendar_tags %}
+{% load activity_tags %}
 {% load martortags %}
 {% load martor_render %}
 {% load build_absolute_uri %}
@@ -18,7 +19,7 @@
 {% block og-description %}
     [{{ activity_moment.start_date|date:"l j E H:i" }}] {{ activity_moment.description.as_plaintext|truncatewords:20 }}
 {% endblock og-description %}
-{% block og-image %}{% build_absolute_uri request activity.image_url %}{% endblock og-image %}
+{% block og-image %}{% build_absolute_uri request activity.slots_image_url %}{% endblock og-image %}
 {% block og-image-alt %}{{ activity_moment.title }} Icon{% endblock og-image-alt %}
 
 {% block css %}
@@ -56,13 +57,7 @@
                     <div class="col align-self-center">
                         <div class='nospace'>
                             <p id="event-date">
-                                {% if activity_moment.start_date.date == activity_moment.end_date.date %}
-                                    <!-- Activity starts and ends on the same day -->
-                                    {{ activity_moment.start_date|date:"l j E H:i" }} - {{ activity_moment.end_date|date:"H:i" }}
-                                {% else %}
-                                    <!-- Activity starts and ends on a different day -->
-                                    {{ activity_moment.start_date|date:"j E H:i" }} - {{ activity_moment.end_date|date:"j E H:i" }}
-                                {% endif %}
+                                {{ activity_moment|readable_activity_datetime }}
                             </p>
                             {% if activity_moment.is_part_of_recurrence %}
                                 <p class="text-muted">
@@ -132,7 +127,7 @@
                 {% if activity_moment.slot_creation != activity.SLOT_CREATION_NONE %}
                     <div class="d-flex">
                         <!-- Event Participants Icon -->
-                        <div class="col-xs-2"><i class="fas fa-user-friends fa-fw"></i>
+                        <div class="col-xs-2"><i class="fas fa-user-friends fa-fw"></i></div>
                         <!-- Patricipants -->
                         <div class="col nospace align-self-center">
                             <p id="event-participants">

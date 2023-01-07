@@ -4,9 +4,9 @@
 {% block content %}
     {{ block.super }}
 
-    <h3>Create new {{ item_type }}</h3>
+    <h3>Create new {{ item_type.name }}</h3>
     <p>
-        Below you can create a new {{ item_type }}.
+        Below you can create a new {{ item_type.name }}.
     </p>
 
     {% render_form method="post" id="submit_form"  has_submit_button=False uses_file_field=True %}

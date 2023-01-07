@@ -6,8 +6,13 @@
  *
  * @copyright https://stackoverflow.com/a/50537862/4633439
  */
- function replaceInText(element, pattern, replacement) {
+function replaceInText(element, pattern, replacement) {
     for (let node of Array.from(element.childNodes)) { //Array.from cause complicated browser issues
+        if (node.isContentEditable) {
+            console.debug("node is contentEditable, skipping");
+            console.debug(node);
+            continue;
+        }
         switch (node.nodeType) {
             case Node.ELEMENT_NODE:
                 replaceInText(node, pattern, replacement);
@@ -21,7 +26,7 @@
             case Node.COMMENT_NODE:
                 break;
             default:
-                console.debug(`node type not handled (${node.nodeType})`)
+                console.log(`node type not handled (${node.nodeType})`)
         }
     }
 }

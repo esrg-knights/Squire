@@ -5,7 +5,7 @@ from .forms import ActivityAdminForm, ActivityMomentAdminForm
 from .models import Activity, ActivitySlot, Participant, ActivityMoment, OrganiserLink, CoreActivityGrouping, \
     Calendar, CalendarActivityLink
 
-from core.admin import MarkdownImageInline
+from core.admin import DisableModificationsAdminMixin, MarkdownImageInline, URLLinkInlineAdminMixin
 from utils.forms import RequestUserToFormModelAdminMixin
 
 class MarkdownImageInlineAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmin):
@@ -15,18 +15,34 @@ class MarkdownImageInlineAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmi
         }
 
     # Add MarkdownImages to the Admin's Inline models
-    # TODO: Remove in Django 3.0
+    #   Note: Appending classes to get_inlines(..) makes them load additional times upon a page reload
     def get_inline_instances(self, request, obj=None):
         instances = super().get_inline_instances(request, obj=obj)
         instances.append(MarkdownImageInline(self.model, self.admin_site))
         return instances
 
-    # Add MarkdownImages to the Admin's Inline models
-    # TODO: Django 3.0
-    # def get_inlines(self, request, obj):
-    #     inlines = super().get_inlines(request, obj=obj)
-    #     inlines.append(MarkdownImageInline)
-    #     return inlines
+
+########################################################
+# INLINES WITH LINK
+########################################################
+class ActivityMomentInline(URLLinkInlineAdminMixin, DisableModificationsAdminMixin, admin.TabularInline):
+    model = ActivityMoment
+    extra = 0
+    readonly_fields = ['last_updated', 'get_url']
+    fields = ['recurrence_id', 'status', 'local_title', 'get_url']
+    ordering = ("-recurrence_id",)
+
+class ActivitySlotInline(URLLinkInlineAdminMixin, DisableModificationsAdminMixin, admin.TabularInline):
+    model = ActivitySlot
+    extra = 0
+    readonly_fields = ['get_url']
+    fields = ['title', 'location', 'owner', 'max_participants', 'get_url']
+    ordering = ("title",)
+
+
+########################################################
+# OTHER
+########################################################
 
 
 class OrganiserInline(admin.TabularInline):
@@ -53,7 +69,7 @@ class ActivityAdmin(MarkdownImageInlineAdmin):
     search_fields = ['title']
     autocomplete_fields = ['author',]
 
-    inlines = [OrganiserInline]
+    inlines = [OrganiserInline, ActivityMomentInline]
 
     def get_view_on_site_url(self, obj=None):
         if hasattr(obj, 'get_absolute_url') and obj.get_absolute_url() is None:
@@ -69,6 +85,8 @@ class ActivityMomentAdmin(MarkdownImageInlineAdmin):
     date_hierarchy = 'recurrence_id'
     search_fields = ['local_title', 'parent_activity__title']
     autocomplete_fields = ['parent_activity',]
+
+    inlines=[ActivitySlotInline]
 
     def activity_moment_has_changes(obj):
         """ Check if this ActivityModel has any data it overwrites """
@@ -109,19 +127,12 @@ class ParticipantInline(admin.TabularInline):
 
 
 class ActivitySlotAdmin(admin.ModelAdmin):
-    def recurrence_id_with_day(self, obj):
-        if obj.recurrence_id is not None:
-            return localtime(obj.recurrence_id).strftime("%a, %d %b %Y, %H:%M")
-        return None
-    recurrence_id_with_day.admin_order_field = 'recurrence_id'
-    recurrence_id_with_day.short_description = 'Activity Start Date'
-
-    list_display = ('id', 'title', 'parent_activity', 'recurrence_id_with_day', 'owner')
-    list_filter = ['recurrence_id']
+    list_display = ('id', 'title', 'parent_activitymoment', 'owner')
+    list_filter = ['parent_activitymoment__recurrence_id']
     list_display_links = ('id', 'title')
-    date_hierarchy = 'recurrence_id'
-    search_fields = ['parent_activity__title', 'title']
-    autocomplete_fields = ['parent_activity',]
+    date_hierarchy = 'parent_activitymoment__recurrence_id'
+    search_fields = ['parent_activitymoment__parent_activity__title', 'parent_activitymoment__local_title', 'title']
+    autocomplete_fields = ['parent_activitymoment',]
 
     # Not supported yet
     exclude = ('start_date', 'end_date')

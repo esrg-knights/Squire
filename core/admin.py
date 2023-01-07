@@ -1,15 +1,13 @@
 from django.conf import settings
 from django.contrib import admin
-from django.contrib.admin.options import IncorrectLookupParameters
 from django.contrib.auth.models import Group, User
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ImproperlyConfigured
 from django.db.models import CharField, Q, Value
 from django.db.models.functions import Concat
 from django.urls import reverse
-from django.utils.html import escape
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from dynamic_preferences.admin import GlobalPreferenceAdmin
@@ -20,64 +18,38 @@ from .models import MarkdownImage, PresetImage, Shortcut
 from core.forms import MarkdownImageAdminForm
 from utils.forms import RequestUserToFormModelAdminMixin
 
-###################################################
-# Backport of Django 3.1
-class EmptyFieldListFilter(admin.FieldListFilter): # pragma: no cover
-    def __init__(self, field, request, params, model, model_admin, field_path):
-        # https://code.djangoproject.com/ticket/31952
-        # This bug is fixed in future versions of Django, though this is done in
-        #   another place than this filter. We'll make our own "fix" here instead
-        #   until we upgrade
-        if not getattr(field, 'empty_strings_allowed', False) and not field.null:
-            raise ImproperlyConfigured(
-                "The list filter '%s' cannot be used with field '%s' which "
-                "doesn't allow empty strings and nulls." % (
-                    self.__class__.__name__,
-                    field.name,
-                )
-            )
-        self.lookup_kwarg = '%s__isempty' % field_path
-        self.lookup_val = params.get(self.lookup_kwarg)
-        super().__init__(field, request, params, model, model_admin, field_path)
 
-    def queryset(self, request, queryset):
-        if self.lookup_kwarg not in self.used_parameters:
-            return queryset
-        if self.lookup_val not in ('0', '1'):
-            raise IncorrectLookupParameters
+class DisableModificationsAdminMixin:
+    """ Mixin that disables modifications for an (Inline) admin """
+    # Disable creation
+    def has_add_permission(self, request, obj=None):
+        return False
 
-        lookup_condition = Q()
-        # Same as above
-        if getattr(self.field, 'empty_strings_allowed', False):
-            lookup_condition |= Q(**{self.field_path: ''})
-        if self.field.null:
-            lookup_condition |= Q(**{'%s__isnull' % self.field_path: True})
-        if self.lookup_val == '1':
-            return queryset.filter(lookup_condition)
-        return queryset.exclude(lookup_condition)
+    # Disable editing
+    def has_change_permission(self, request, obj=None):
+        return False
 
-    def expected_parameters(self):
-        return [self.lookup_kwarg]
+    # Disable deletion
+    def has_delete_permission(self, request, obj=None):
+        return False
 
-    def choices(self, changelist):
-        for lookup, title in (
-            (None, _('All')),
-            ('1', _('Empty')),
-            ('0', _('Not empty')),
-        ):
-            yield {
-                'selected': self.lookup_val == lookup,
-                'query_string': changelist.get_query_string({self.lookup_kwarg: lookup}),
-                'display': title,
-            }
+class URLLinkInlineAdminMixin:
+    """
+    Mixin that adds a url to the admin change page of an Inline object.
+    To use, add `"get_url"` to the Inline's `fields` and `readonly_fields`
+    """
+    def get_url(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        url = reverse(f"admin:{content_type.app_label}_{content_type.model}_change", args=[obj.id])
+        return format_html("<a href='{0}'>View Details</a>", url)
+    get_url.short_description = 'Details'
 
 ###################################################
-
 
 class SquireUserAdmin(UserAdmin):
     list_filter = (
         'is_staff', 'is_superuser', 'is_active',
-        ('member', EmptyFieldListFilter),
+        ('member', admin.EmptyFieldListFilter),
         ('groups', admin.RelatedOnlyFieldListFilter),
         'date_joined', 'last_login'
     )
@@ -101,7 +73,7 @@ admin.site.register(User, SquireUserAdmin)
 
 class SquireGroupAdmin(GroupAdmin):
     list_filter = (
-        ('associationgroup', EmptyFieldListFilter),
+        ('associationgroup', admin.EmptyFieldListFilter),
     )
     search_fields = ('name', 'associationgroup__shorthand')
     list_display = ('id', 'name', 'has_assoc_group')
@@ -155,7 +127,7 @@ class MarkdownImageAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmin):
     list_filter = (
         ('uploader',        admin.RelatedOnlyFieldListFilter),
         ('content_type',    admin.RelatedOnlyFieldListFilter),
-        ('object_id',       EmptyFieldListFilter),
+        ('object_id',       admin.EmptyFieldListFilter),
     )
     search_fields = ('uploader__username',)
     readonly_fields = ('upload_date', 'content_object', 'id', 'uploader')

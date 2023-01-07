@@ -83,7 +83,7 @@ class MarkdownImage(models.Model):
             raise ValidationError({'object_id': 'The selected ContentType does not have an object with this id'})
 
     def __str__(self):
-        return f"{self.content_type}-MarkdownImage ({self.id})"
+        return f"{self.content_type.name}-MarkdownImage ({self.id})"
 
 
 class Shortcut(models.Model):

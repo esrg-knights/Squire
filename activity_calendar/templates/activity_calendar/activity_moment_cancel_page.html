@@ -2,6 +2,7 @@
 
 {% load render_form %}
 {% load static %}
+{% load bootstrap4 %}
 
 {% block title %}
     Squire - Edit {{ activity_moment.title }} occurence
@@ -19,10 +20,12 @@
 {% endblock %}
 
 {% block bootstrap_js %}
-    {# We need to prevent bootstrap's JS from loading, as Martor's MarkdownWidget #}
+    {# We need to prevent bootstrap's jQuery JS from loading, as Martor's MarkdownWidget #}
     {#    also includes it. We cannot remove it from that widget and rely on our version #}
     {#    as it seems to require a specific version. #}
     {#    This is ugly... #}
+    {# TODO: Unify bootstrap and jQuery versions of Martor and Squire #}
+    {% bootstrap_javascript jquery=False %}
 {% endblock %}
 
 {% block content %}

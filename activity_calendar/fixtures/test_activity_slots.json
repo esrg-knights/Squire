@@ -213,8 +213,7 @@
     "start_date": null,
     "end_date": null,
     "owner": null,
-    "parent_activity": 1,
-    "recurrence_id": "2020-08-14T19:00:00Z",
+    "parent_activitymoment": 1,
     "max_participants": -1,
     "image": null
   }
@@ -229,8 +228,7 @@
     "start_date": null,
     "end_date": null,
     "owner": null,
-    "parent_activity": 2,
-    "recurrence_id": "2020-08-19T14:00:00Z",
+    "parent_activitymoment": 3,
     "max_participants": -1,
     "image": null
   }
@@ -245,8 +243,7 @@
     "start_date": null,
     "end_date": null,
     "owner": null,
-    "parent_activity": 2,
-    "recurrence_id": "2020-08-19T14:00:00Z",
+    "parent_activitymoment": 3,
     "max_participants": -1,
     "image": null
   }
@@ -261,8 +258,7 @@
     "start_date": null,
     "end_date": null,
     "owner": null,
-    "parent_activity": 2,
-    "recurrence_id": "2020-08-19T14:00:00Z",
+    "parent_activitymoment": 3,
     "max_participants": -1,
     "image": null
   }
@@ -277,8 +273,7 @@
     "start_date": null,
     "end_date": null,
     "owner": null,
-    "parent_activity": 2,
-    "recurrence_id": "2020-08-19T14:00:00Z",
+    "parent_activitymoment": 3,
     "max_participants": -1,
     "image": null
   }
@@ -293,8 +288,7 @@
     "start_date": null,
     "end_date": null,
     "owner": null,
-    "parent_activity": 2,
-    "recurrence_id": "2020-08-19T14:00:00Z",
+    "parent_activitymoment": 3,
     "max_participants": 1,
     "image": null
   }
@@ -309,8 +303,7 @@
     "start_date": null,
     "end_date": null,
     "owner": null,
-    "parent_activity": 2,
-    "recurrence_id": "2020-08-12T14:00:00Z",
+    "parent_activitymoment": 2,
     "max_participants": -1,
     "image": null
   }
@@ -325,14 +318,11 @@
     "start_date": null,
     "end_date": null,
     "owner": null,
-    "parent_activity": 2,
-    "recurrence_id": "2020-08-12T14:00:00Z",
+    "parent_activitymoment": 2,
     "max_participants": 2,
     "image": null
   }
 },
-
-
 {
   "model": "activity_calendar.participant",
   "pk": 1,

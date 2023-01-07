@@ -23,7 +23,7 @@ __all__ = ['RegisterNewSlotForm', 'RegisterForActivitySlotForm', 'RegisterForAct
     'ActivityAdminForm', 'ActivityMomentAdminForm', 'CancelActivityForm']
 
 
-class RegisterAcitivityMixin:
+class RegisterActivityMixin:
     """ A mixin that defines default behaviour for any activity registration
     Activity or slot registration has several invalidation codes:
     'invalid': general catch all for non-specified errors
@@ -48,7 +48,7 @@ class RegisterAcitivityMixin:
         self.user = user
         self.activity_moment = activity_moment
 
-        super(RegisterAcitivityMixin, self).__init__(*args, **kwargs)
+        super(RegisterActivityMixin, self).__init__(*args, **kwargs)
 
         # Manually add sign_up field to fields as this is not done here automatically.
         self.fields['sign_up'] = self.sign_up
@@ -59,7 +59,7 @@ class RegisterAcitivityMixin:
         return self.cleaned_data['sign_up']
 
     def clean(self):
-        super(RegisterAcitivityMixin, self).clean()
+        super(RegisterActivityMixin, self).clean()
 
         # Check the validity
         self.check_validity(self.cleaned_data)
@@ -120,7 +120,7 @@ class RegisterAcitivityMixin:
             return None
 
 
-class RegisterForActivityForm(RegisterAcitivityMixin, Form):
+class RegisterForActivityForm(RegisterActivityMixin, Form):
     """
     Form for registering for normal activities that do not use multiple slots
     """
@@ -129,7 +129,7 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
         super(RegisterForActivityForm, self).check_validity(data)
 
         # Subscribing directly on activities can only happen if we don't use the multiple-slots feature
-        if not self.activity_moment.slot_creation == Activity.SLOT_CREATION_AUTO:
+        if self.activity_moment.slot_creation != Activity.SLOT_CREATION_AUTO:
             raise ValidationError(
                 _("Activity mode is incorrect. Please refresh the page."), code='invalid_slot_mode')
 
@@ -149,16 +149,20 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
     def save(self):
         """ Saves the form. Returns whether the user was added (True) or removed (False) """
         if self.cleaned_data['sign_up']:
-            kwargs = {
-                'parent_activity': self.activity,
-                'recurrence_id':self.recurrence_id,
-            }
-            activity_slot = ActivitySlot.objects.filter(**kwargs).first()
-            if activity_slot is None:
-                activity_slot = ActivitySlot.objects.create(**kwargs)
+            if self.activity_moment.id is None:
+                # Activitymoment did not yet exist in the database, but we need it for the slot
+                self.activity_moment, _ = ActivityMoment.objects.get_or_create(parent_activity=self.activity, recurrence_id=self.recurrence_id)
+
+            # Create a new Slot if one doesn't exist yet. A race condition is prevented by select_for_update(),
+            #   which locks the selected objects (i.e., all slots) in the db
+            #   Note: We cannot use _just_ get_or_create() as parent_activitymoment is not a unique field
+            slot, _ = ActivitySlot.objects.select_for_update().get_or_create(
+                parent_activitymoment=self.activity_moment,
+                defaults={'title': 'Standard Slot'}
+            )
 
             Participant.objects.create(
-                activity_slot=activity_slot,
+                activity_slot=slot,
                 user=self.user,
             )
             return True
@@ -167,7 +171,7 @@ class RegisterForActivityForm(RegisterAcitivityMixin, Form):
             return False
 
 
-class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
+class RegisterForActivitySlotForm(RegisterActivityMixin, Form):
     """ Form that handles registering for a specific slot """
     slot_id = forms.IntegerField(initial=-1, widget=HiddenInput)
 
@@ -233,8 +237,7 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
 
     def save(self):
         """ Saves the form. Returns whether the user was added (True) or removed (False) """
-        slot_obj = self.activity.activity_slot_set.filter(
-            recurrence_id=self.recurrence_id,
+        slot_obj = self.activity_moment.activity_slot_set.filter(
             id=self.cleaned_data.get('slot_id', -1)
         ).first()
 
@@ -253,7 +256,8 @@ class RegisterForActivitySlotForm(RegisterAcitivityMixin, Form):
             return False
 
 
-class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
+class RegisterNewSlotForm(RegisterActivityMixin, ModelForm):
+    """ Form for creating a new slot """
 
     class Meta:
         model = ActivitySlot
@@ -309,8 +313,10 @@ class RegisterNewSlotForm(RegisterAcitivityMixin, ModelForm):
 
     def save(self, commit=True):
         # Set fixed attributes
-        self.instance.parent_activity = self.activity
-        self.instance.recurrence_id = self.recurrence_id
+        if self.activity_moment.id is None:
+            self.activity_moment, _ = ActivityMoment.objects.get_or_create(parent_activity=self.activity, recurrence_id=self.recurrence_id)
+
+        self.instance.parent_activitymoment = self.activity_moment
         self.instance.owner = self.user
 
         slot_obj = super(RegisterNewSlotForm, self).save(commit=commit)

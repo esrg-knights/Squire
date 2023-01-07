@@ -1,20 +1,20 @@
 import os
 
 from django.conf import settings
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse, HttpRequest
 from django.http.response import Http404
 from django.shortcuts import redirect, render
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
 from django.views import View
 from django.views.generic import TemplateView
 from django.views.decorators.http import require_safe
+
+from membership_file.util import MembershipRequiredMixin
 
 from .forms import RegisterForm
 from .models import MarkdownImage, Shortcut
@@ -35,16 +35,27 @@ def logoutSuccess(request):
         return redirect(reverse('core:user_accounts/logout'))
     return render(request, 'core/user_accounts/logout-success.html', {})
 
-@require_safe
-@login_required
-def viewNewsletters(request):
-    share_link = global_preferences['newsletter__share_link']
-    if not share_link:
-        raise Http404("Newsletters are unavailable.")
 
-    return render(request, 'core/newsletters.html', {
-        'NEWSLETTER_ARCHIVE_URL': global_preferences['newsletter__share_link'],
-    })
+class GlobalPreferenceRequiredMixin:
+    """ Mixin that requires a specific global_preference to be non-empty or True. Throws a HTTP 404 otherwise. """
+    global_preference = None
+
+    def setup(self, request: HttpRequest, *args, **kwargs) -> None:
+        super().setup(request, *args, **kwargs)
+
+        preference = global_preferences[self.global_preference]
+        if not preference:
+            raise Http404()
+
+class NewsletterView(GlobalPreferenceRequiredMixin, MembershipRequiredMixin, TemplateView):
+    """ Page for viewing newsletters """
+    global_preference = "newsletter__share_link"
+    template_name = "core/newsletters.html"
+
+class DownloadsView(GlobalPreferenceRequiredMixin, MembershipRequiredMixin, TemplateView):
+    """ Page for viewing site downloads """
+    global_preference = "downloads__share_link"
+    template_name = "core/downloads.html"
 
 
 @require_safe

@@ -1,11 +1,10 @@
-import datetime
-
 from django import template
 from django.utils import timezone
-from django.utils.formats import date_format
+from django.template.defaultfilters import date as format_date
 
 from activity_calendar.models import Activity, ActivityMoment
-from membership_file.models import Member
+
+
 
 register = template.Library()
 
@@ -42,3 +41,34 @@ def render_activity_block(context, activity_moment: ActivityMoment):
 
 
     return context
+
+
+@register.filter
+def readable_activity_datetime(activity_moment):
+    """
+    Converts the start and possible end time for a given activity_moment to a human readable form
+    :param activity_moment: The activity_moment for which the occurrence time needs to be displayed
+    :return:
+    """
+    # Database entries are stored in non-timezone format. Make sure it is in the right timezone format
+    # This is normally done by the template engine date filter, but calling it in code circumvents that
+    start_date = timezone.template_localtime(activity_moment.start_date)
+    end_date = timezone.template_localtime(activity_moment.end_date)
+
+    format_str = "l j E"
+    if not activity_moment.full_day:
+        format_str += " H:i"
+    formatted_result = format_date(start_date, format_str)
+
+    if activity_moment.display_end_time:
+        if activity_moment.start_date.date() == activity_moment.end_date.date():
+            format_str = ""
+        else:
+            format_str = "l j E"
+        if not activity_moment.full_day:
+            format_str += " H:i"
+
+        if format_str != "":
+            formatted_result += f" - {format_date(end_date, format_str).strip()}"
+
+    return formatted_result

@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.conf import settings
 
-from activity_calendar.models import ActivitySlot, Activity
+from activity_calendar.models import Activity, ActivityMoment, ActivitySlot
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -18,7 +18,8 @@ class ActivityAdminTest(TestCase):
     @classmethod
     def setUpTestData(self):
         activity = Activity.objects.all().first()
-        slot = ActivitySlot(title="slot title", parent_activity=activity, recurrence_id=activity.start_date)
+        activity_moment = ActivityMoment.objects.get(parent_activity=activity, recurrence_id=activity.start_date)
+        slot = ActivitySlot(title="slot title", parent_activitymoment=activity_moment)
         slot.save()
 
     def setUp(self):

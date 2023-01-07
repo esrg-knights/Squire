@@ -13,7 +13,7 @@
         <a href="{% url "inventory:catalogue_add_new_item" type_id=item_type %}"
            class="btn btn-sm btn-primary mb-3">
             <i class="fas fa-plus"></i> <span class="{{ item_type|get_item_icon_classes }}"></span>
-            New {{ item_type|capfirst }}
+            New {{ item_type.name|capfirst }}
         </a>
     {% endif %}
     {% include "utils/snippets/filter_form_snippet.html" with form=filter_form %}
