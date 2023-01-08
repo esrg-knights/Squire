@@ -51,13 +51,12 @@ class MembershipRequiredMixin(LoginRequiredMixin):
         Verifies that the current user is a member, redirecting to a special page if needed.
         Mixin-equivalent of the @membership_required decorator.
     """
-    fail_url = settings.MEMBERSHIP_FAIL_URL
     requires_active_membership = True  # Boolean defining whether user should be active, or just linked as an (old) member
 
     def dispatch(self, request, *args, **kwargs):
         if request.member is None:
             # Current session has no member connected
-            return HttpResponseRedirect(resolve_url(self.fail_url))
+            raise UserIsNotCurrentMember()
         if not request.member.is_considered_member() and self.requires_active_membership:
             # Current session has a disabled member connected
             raise UserIsNotCurrentMember()
