@@ -3,9 +3,9 @@ from django.forms import ModelForm
 
 from utils.testing import FormValidityMixin
 
-from nextcloud_integration.forms import FileMoveForm, FolderCreateForm, SynchFileToFolderForm, \
+from nextcloud_integration.forms import FileMoveForm, FolderCreateForm, SyncFileToFolderForm, \
     FolderEditForm, FileEditForm, FileEditFormset, FolderEditFormGroup
-from nextcloud_integration.models import NCFolder, NCFile
+from nextcloud_integration.models import SquireNextCloudFolder, SquireNextCloudFile
 from . import *
 
 
@@ -75,17 +75,17 @@ class FileMoveFormTestCase(FormValidityMixin, TestCase):
 
 
 @patch_construction('forms')
-class FileSynchFormTestCase(FormValidityMixin, TestCase):
+class FileSyncFormTestCase(FormValidityMixin, TestCase):
     fixtures = ["nextcloud_integration/nextcloud_fixtures"]
-    form_class = SynchFileToFolderForm
+    form_class = SyncFileToFolderForm
 
     def setUp(self):
-        self.folder = NCFolder.objects.first()
-        super(FileSynchFormTestCase, self).setUp()
+        self.folder = SquireNextCloudFolder.objects.first()
+        super(FileSyncFormTestCase, self).setUp()
 
     def get_form_kwargs(self, **kwargs):
         kwargs.setdefault('folder', self.folder)
-        return super(FileSynchFormTestCase, self).get_form_kwargs(**kwargs)
+        return super(FileSyncFormTestCase, self).get_form_kwargs(**kwargs)
 
     def test_has_fields(self, mock_client):
         """ Test that the fields contain the minimally defined fields """
@@ -113,9 +113,9 @@ class FileSynchFormTestCase(FormValidityMixin, TestCase):
         self.assertEqual(form.instance.folder, self.folder)
         self.assertEqual(form.instance.slug, "new-folder")
 
-        self.assertFalse(NCFile.objects.filter(file_name="new_file.txt"))
+        self.assertFalse(SquireNextCloudFile.objects.filter(file_name="new_file.txt"))
         form.save()
-        self.assertTrue(NCFile.objects.filter(file_name="new_file.txt"))
+        self.assertTrue(SquireNextCloudFile.objects.filter(file_name="new_file.txt"))
 
     def test_client_calling(self, mock_client):
         form = self.assertFormValid(data={
@@ -154,6 +154,12 @@ class FolderCreateFormTestCase(FormValidityMixin, TestCase):
         })
         self.assertEqual(form.instance.path, "/test-name/")
 
+    def test_fail_empty_display_names(self, mock):
+        self.assertFormHasError(data={
+            'display_name': '    ',
+            'description': "valid description"
+        }, code="required")
+
     def test_save_creates_folder(self, mock):
         form = self.assertFormValid(data={
             'display_name': 'testfolder',
@@ -161,7 +167,7 @@ class FolderCreateFormTestCase(FormValidityMixin, TestCase):
         })
         form.save()
         mock.return_value.mkdir.assert_called_with("/testfolder/")
-        self.assertTrue(NCFolder.objects.filter(display_name='testfolder').exists())
+        self.assertTrue(SquireNextCloudFolder.objects.filter(display_name='testfolder').exists())
 
     def test_do_not_save_instance_on_connection_faillure(self, mock):
         def throw_error(*args, **kwargs):
@@ -173,7 +179,7 @@ class FolderCreateFormTestCase(FormValidityMixin, TestCase):
                 'description': "Test folder description",
             })
             form.save()
-        self.assertFalse(NCFolder.objects.filter(display_name='testfolder').exists())
+        self.assertFalse(SquireNextCloudFolder.objects.filter(display_name='testfolder').exists())
 
 
 class FolderEditFormTestCase(FormValidityMixin, TestCase):
@@ -182,7 +188,7 @@ class FolderEditFormTestCase(FormValidityMixin, TestCase):
 
     def get_form_kwargs(self, **kwargs):
         kwargs = super(FolderEditFormTestCase, self).get_form_kwargs(**kwargs)
-        kwargs['instance'] = NCFolder.objects.first()
+        kwargs['instance'] = SquireNextCloudFolder.objects.first()
         return kwargs
 
     def test_fields(self):
@@ -207,7 +213,7 @@ class FileEditFormTestCase(FormValidityMixin, TestCase):
 
     def get_form_kwargs(self, **kwargs):
         kwargs = super(FileEditFormTestCase, self).get_form_kwargs(**kwargs)
-        kwargs['instance'] = NCFile.objects.first()
+        kwargs['instance'] = SquireNextCloudFile.objects.first()
         return kwargs
 
     def test_fields(self):
@@ -231,7 +237,7 @@ class FileEditFormSetTestCase(FormValidityMixin, TestCase):
 
     def setUp(self):
         super(FileEditFormSetTestCase, self).setUp()
-        self.files = NCFile.objects.all()
+        self.files = SquireNextCloudFile.objects.all()
 
     def get_form_kwargs(self, **kwargs):
         kwargs.setdefault('nc_files', self.files)
@@ -293,5 +299,5 @@ class FolderEditFormGroupTestCase(FormValidityMixin, TestCase):
         self.assertEqual(self.form_class.formset_class, FileEditFormset)
 
     def test_form_build(self):
-        self.build_form(data=None, folder=NCFolder.objects.first())
+        self.build_form(data=None, folder=SquireNextCloudFolder.objects.first())
 

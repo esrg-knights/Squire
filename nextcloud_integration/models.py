@@ -7,10 +7,10 @@ from nextcloud_integration.nextcloud_resources import NextCloudFolder, NextCloud
 from nextcloud_integration.nextcloud_client import construct_client
 
 
-class NCFolder(models.Model):
+class SquireNextCloudFolder(models.Model):
     """ Represents a folder on the nextcloud storage """
-    display_name = models.CharField(help_text="Name displayed in Squire", max_length=32)
-    slug = models.SlugField(blank=True)
+    display_name = models.CharField(help_text="Name displayed in Squire", max_length=64)
+    slug = models.SlugField(blank=True, unique=True)
     description = models.CharField(max_length=256, blank=True)
     path = models.CharField(help_text="The path to the folder (including the folder itself)",
                             max_length=64, blank=True, default=None)
@@ -21,11 +21,11 @@ class NCFolder(models.Model):
 
     # Access settings
     requires_membership = models.BooleanField(default=True)
-    on_overview_page = models.BooleanField(default=True, help_text="Whether this folder is displayed on the"
+    on_overview_page = models.BooleanField(default=True, help_text="Whether this folder is displayed on the "
                                                                    "association download page")
 
     def __init__(self, *args, **kwargs):
-        super(NCFolder, self).__init__(*args, **kwargs)
+        super(SquireNextCloudFolder, self).__init__(*args, **kwargs)
         if self.id:
             self.folder = NextCloudFolder(path=self.path)
 
@@ -40,7 +40,7 @@ class NCFolder(models.Model):
         if self.slug is None or self.slug == "":
             self.slug = slugify(self.display_name)
 
-        return super(NCFolder, self).save(**kwargs)
+        return super(SquireNextCloudFolder, self).save(**kwargs)
 
     def exists_on_nextcloud(self):
         """ Checks whether the folder exists on the nextcloud """
@@ -51,28 +51,30 @@ class NCFolder(models.Model):
         return f"Folder: {self.display_name}"
 
 
-class NCFile(models.Model):
+class SquireNextCloudFile(models.Model):
     """ Represents a file on the nextcloud storage """
-    display_name = models.CharField(help_text="Name displayed in Squire", max_length=32)
+    display_name = models.CharField(help_text="Name displayed in Squire", max_length=64)
     description = models.CharField(max_length=256, blank=True)
     file_name = models.CharField(help_text="The file name", max_length=64, blank=True, default=None)
-    folder = models.ForeignKey(NCFolder, on_delete=models.CASCADE, related_name="files")
+    folder = models.ForeignKey(SquireNextCloudFolder, on_delete=models.CASCADE, related_name="files")
     slug = models.SlugField(blank=True)
     file: NextCloudFolder = None  # Used to translate Nextcloud folder contents
 
     is_missing = models.BooleanField(default=False) # Whether the file is non-existant on nextcloud
+    CONNECTION_NEXTCLOUD_SYNC = "NcS"
+    CONNECTION_SQUIRE_UPLOAD = "SqU"
     connection = models.CharField(max_length=3, choices=[
-        ("NcS", "Synched through file on Nextcloud"),
-        ("SqU", "Uploaded through Squire")
+        (CONNECTION_NEXTCLOUD_SYNC, "Synched through file on Nextcloud"),
+        (CONNECTION_SQUIRE_UPLOAD, "Uploaded through Squire")
     ]) # Defines how the connection occured
 
     class Meta:
-        # Set the default permissions. Each item has a couple of addiotional default permissions
+        # Set the default permissions. Each item has a couple of additional default permissions
         default_permissions = ('add', 'change', 'delete', 'view',
-                               'synch',)
+                               'sync',)
 
     def __init__(self, *args, **kwargs):
-        super(NCFile, self).__init__(*args, **kwargs)
+        super(SquireNextCloudFile, self).__init__(*args, **kwargs)
         if self.id:
             self.file = NextCloudFile(path=self.path)
 
@@ -80,14 +82,22 @@ class NCFile(models.Model):
         if self.file and (self.file_name == "" or self.file_name is None):
             self.file_name = self.file.name
 
-        if self.slug is None or self.slug == "":
-            self.slug = slugify(self.file_name.replace('.', '_'))
+        # Cleaning is not guaranteed when saving
+        self._set_slug()
 
-        return super(NCFile, self).save(**kwargs)
+        return super(SquireNextCloudFile, self).save(**kwargs)
 
     def clean(self):
+        self._set_slug()
         if self.file is None and (self.file_name is None or self.file_name == ""):
-            raise ValidationError("Either file or filename should be defined")
+            raise ValidationError("Either file or filename should be defined", code="no_file_name_linked")
+
+        if SquireNextCloudFile.objects.filter(folder=self.folder, slug=self.slug).exclude(id=self.id).exists():
+            raise ValidationError("A file with this name already exists in this folder.",code='duplicate_slug')
+
+    def _set_slug(self):
+        if self.slug is None or self.slug == "":
+            self.slug = slugify(self.display_name)
 
     def exists_on_nextcloud(self):
         """ Checks whether the folder exists on the nextcloud """

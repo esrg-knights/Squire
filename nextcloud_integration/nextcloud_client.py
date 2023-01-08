@@ -7,7 +7,7 @@ from django.utils.text import slugify
 from easywebdav import Client, OperationFailed
 
 
-
+from nextcloud_integration.exceptions import ClientNotImplemented
 from nextcloud_integration.nextcloud_resources import NextCloudFile, NextCloudFolder, NextCloudResource
 
 
@@ -108,13 +108,6 @@ class NextCloudClient(Client):
                 last_modified=self._get_dav_prop(dav_node, 'getlastmodified', ''),
                 content_type=self._get_dav_prop(dav_node, 'getcontenttype', ''),
             )
-
-
-class ClientNotImplemented(Exception):
-    def __str__(self):
-        return "Client is not active, as not all neccessary attributes are set correctly. Make sure that " \
-               "the following settings are defined in your settings or local_settings file: " \
-               "NEXTCLOUD_HOST, NEXTCLOUD_USERNAME, and NEXTCLOUD_PASSWORD"
 
 
 def construct_client():

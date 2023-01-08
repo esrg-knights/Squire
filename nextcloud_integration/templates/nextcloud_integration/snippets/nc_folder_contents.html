@@ -11,7 +11,7 @@
         {% if folder.is_missing %}
             <div class="text-danger">
                     <i class="fas fa-exclamation-triangle"></i>
-                    Folder missing on disk
+                    Folder missing
                 </div>
         {% endif %}
     </div>
@@ -41,7 +41,7 @@
                     </div>
                     <div class="col-2">
                         {% if file.is_missing or folder.is_missing %}
-                            <a class="btn btn-secondary text-dark">
+                            <a class="btn btn-secondary disabled">
                                 <i class="fas fa-download"></i> Missing
                             </a>
                         {% else %}
@@ -58,13 +58,13 @@
                     <i class="fas fa-pen"></i> Edit
                 </a>
             {% endif %}
-            {% if user|has_synch_access %}
+            {% if user|has_sync_access %}
                 {% if folder.is_missing %}
-                    <a class="btn btn-secondary text-dark">
+                    <a class="btn btn-secondary disabled">
                         <i class="fas fa-cloud-download-alt"></i> Sync file
                     </a>
                 {% else %}
-                    <a class="btn btn-primary" href="{% url "nextcloud:synch_file" folder_slug=folder.slug %}">
+                    <a class="btn btn-primary" href="{% url "nextcloud:sync_file" folder_slug=folder.slug %}">
                         <i class="fas fa-cloud-download-alt"></i> Sync file
                     </a>
                 {% endif %}

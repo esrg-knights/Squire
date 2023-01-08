@@ -9,7 +9,7 @@ urlpatterns = [
         path('add', views.FolderCreateView.as_view(), name='add_folder'),
         path('<slug:folder_slug>/', include([
             path('edit/', views.FolderEditView.as_view(), name='folder_edit'),
-            path('synch/', views.SynchFileToFolderView.as_view(), name='synch_file'),
+            path('sync/', views.SyncFileToFolderView.as_view(), name='sync_file'),
             path('file/<slug:file_slug>', views.DownloadFileview.as_view(), name='file_dl'),
         ])),
     ])),

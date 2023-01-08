@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.core.exceptions import ValidationError
 
-from nextcloud_integration.models import NCFile, NCFolder
+from nextcloud_integration.models import SquireNextCloudFile, SquireNextCloudFolder
 from nextcloud_integration.nextcloud_resources import NextCloudFolder, NextCloudFile
 
 from . import patch_construction
@@ -12,15 +12,32 @@ class NCFileTestCase(TestCase):
     fixtures = ["nextcloud_integration/nextcloud_fixtures"]
 
     def test_slugify(self):
-        file = NCFile.objects.create(
+        file = SquireNextCloudFile.objects.create(
             display_name="Test slug",
             file_name="Arbitrary file name.test",
             folder_id=1
         )
-        self.assertEqual(file.slug, "arbitrary-file-name_test")
+        self.assertEqual(file.slug, "test-slug")
+
+    def test_clean_duplicate_slugs(self):
+        with self.assertRaises(ValidationError) as e:
+            file = SquireNextCloudFile.objects.create(
+                display_name="Display name",
+                file_name="Arbitrary file name.test",
+                folder_id=1,
+                slug="initial_file",
+            )
+            file.full_clean()
+        self.assertEqual(e.exception.error_dict['__all__'][0].code, 'duplicate_slug')
+
+    def test_duplicate_slug_not_triggered_on_self(self):
+        try:
+            SquireNextCloudFile.objects.get(id=1).full_clean()
+        except ValidationError as e:
+            raise AssertionError(f"Object 1 was not clean: {e}")
 
     def test_get_absolute_url(self):
-        file = NCFile.objects.get(id=1)
+        file = SquireNextCloudFile.objects.get(id=1)
         self.assertEqual(
             file.get_absolute_url(),
             reverse("nextcloud:file_dl", kwargs={
@@ -30,16 +47,17 @@ class NCFileTestCase(TestCase):
         )
 
     def test_path_or_file_validation_on_new_instance(self):
-        with self.assertRaises(ValidationError):
-            file = NCFile(
+        with self.assertRaises(ValidationError) as e:
+            file = SquireNextCloudFile(
                 display_name="Test slug",
                 folder_id=1,
                 connection="SqU",
             )
             file.full_clean()
+        self.assertEqual(e.exception.error_dict['__all__'][0].code, 'no_file_name_linked')
 
         # Supplying a nextcloud file should suppress the issue
-        file = NCFile(
+        file = SquireNextCloudFile(
             display_name="Test slug",
             folder_id=1,
             connection="SqU",
@@ -48,7 +66,7 @@ class NCFileTestCase(TestCase):
         file.full_clean()
 
         # Supplying a filename should suppress the issue
-        file = NCFile(
+        file = SquireNextCloudFile(
             display_name="Test slug",
             folder_id=1,
             connection="SqU",
@@ -57,11 +75,11 @@ class NCFileTestCase(TestCase):
         file.full_clean()
 
     def test_path(self):
-        file = NCFile.objects.get(id=1)
+        file = SquireNextCloudFile.objects.get(id=1)
         self.assertEqual(file.path, "/TestFolder/testfile.md")
 
     def test_file_name_from_nextcloud_file_instance(self):
-        file = NCFile(folder=NCFolder.objects.first())
+        file = SquireNextCloudFile(folder=SquireNextCloudFolder.objects.first())
         file.file = NextCloudFile("testfile.txt")
         file.save()
         self.assertEqual(file.file_name, "testfile.txt")
@@ -69,19 +87,19 @@ class NCFileTestCase(TestCase):
     @patch_construction('models')
     def test_exists_on_nextcloud(self, mock_client):
         mock_client.return_value.exists.return_value = False
-        self.assertEqual(NCFile.objects.first().exists_on_nextcloud(), False)
+        self.assertEqual(SquireNextCloudFile.objects.first().exists_on_nextcloud(), False)
         mock_client.return_value.exists.return_value = True
-        self.assertEqual(NCFile.objects.first().exists_on_nextcloud(), True)
+        self.assertEqual(SquireNextCloudFile.objects.first().exists_on_nextcloud(), True)
 
     def test_str(self):
-        self.assertEqual(str(NCFile.objects.first()), "File: Initial file")
+        self.assertEqual(str(SquireNextCloudFile.objects.first()), "File: Initial file")
 
 
 class NCFolderTestcase(TestCase):
     fixtures = ["nextcloud_integration/nextcloud_fixtures"]
 
     def test_slugify(self):
-        folder = NCFolder.objects.create(
+        folder = SquireNextCloudFolder.objects.create(
             display_name="Test slug",
             path="/A fake path/",
         )
@@ -89,14 +107,14 @@ class NCFolderTestcase(TestCase):
 
     def test_path_or_file_validation_on_new_instance(self):
         with self.assertRaises(ValidationError):
-            folder = NCFolder(
+            folder = SquireNextCloudFolder(
                 display_name="Test folder",
                 description="",
             )
             folder.full_clean()
 
         # Supplying a nextcloud file should suppress the issue
-        folder = NCFolder(
+        folder = SquireNextCloudFolder(
             display_name="Test folder",
             description="",
         )
@@ -104,7 +122,7 @@ class NCFolderTestcase(TestCase):
         folder.full_clean()
 
         # Supplying a filename should suppress the issue
-        folder = NCFolder(
+        folder = SquireNextCloudFolder(
             display_name="Test folder",
             description="",
             path="Test folder"
@@ -112,7 +130,7 @@ class NCFolderTestcase(TestCase):
         folder.full_clean()
 
     def test_file_name_from_nextcloud_file_instance(self):
-        folder = NCFolder()
+        folder = SquireNextCloudFolder()
         folder.folder = NextCloudFolder("Test Folder")
         folder.save()
         self.assertEqual(folder.path, "Test Folder")
@@ -120,9 +138,9 @@ class NCFolderTestcase(TestCase):
     @patch_construction('models')
     def test_exists_on_nextcloud(self, mock_client):
         mock_client.return_value.exists.return_value = False
-        self.assertEqual(NCFolder.objects.first().exists_on_nextcloud(), False)
+        self.assertEqual(SquireNextCloudFolder.objects.first().exists_on_nextcloud(), False)
         mock_client.return_value.exists.return_value = True
-        self.assertEqual(NCFolder.objects.first().exists_on_nextcloud(), True)
+        self.assertEqual(SquireNextCloudFolder.objects.first().exists_on_nextcloud(), True)
 
     def test_str(self):
-        self.assertEqual(str(NCFolder.objects.first()), "Folder: Initial folder")
+        self.assertEqual(str(SquireNextCloudFolder.objects.first()), "Folder: Initial folder")

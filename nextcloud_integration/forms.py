@@ -8,13 +8,16 @@ from utils.forms import FormGroup
 
 from nextcloud_integration.nextcloud_client import construct_client, OperationFailed
 from nextcloud_integration.nextcloud_resources import NextCloudFile, NextCloudFolder
-from nextcloud_integration.models import NCFolder, NCFile
+from nextcloud_integration.models import SquireNextCloudFolder, SquireNextCloudFile
 from nextcloud_integration.widgets import NextcloudFileSelectWidget
 
 
-__all__ = ["FileMoveForm", "FolderCreateForm", "SynchFileToFolderForm", "FolderEditFormGroup"]
+__all__ = ["FileMoveForm", "FolderCreateForm", "SyncFileToFolderForm", "FolderEditFormGroup"]
+
 
 class FileMoveForm(Form):
+    # This class has initially been written to allow file moving from one place to another. However it is
+    # currently not used. We can use the logic later to move files from one folder to another.
     directory_name = CharField(required=True, min_length=3, max_length=16)
     file_name = ChoiceField()
 
@@ -60,11 +63,11 @@ class FileMoveForm(Form):
 
 class FolderCreateForm(ModelForm):
     class Meta:
-        model = NCFolder
+        model = SquireNextCloudFolder
         fields = ["display_name", "description"]
 
     def clean(self):
-        self.instance.path = f"/{slugify(self.cleaned_data['display_name'])}/"
+        self.instance.path = f"/{slugify(self.cleaned_data.get('display_name', ''))}/"
         return super(FolderCreateForm, self).clean()
 
     def save(self, commit=True):
@@ -72,19 +75,19 @@ class FolderCreateForm(ModelForm):
         super(FolderCreateForm, self).save()
 
 
-class SynchFileToFolderForm(ModelForm):
+class SyncFileToFolderForm(ModelForm):
     selected_file = ChoiceField(widget=NextcloudFileSelectWidget())
 
     class Meta:
-        model = NCFile
+        model = SquireNextCloudFile
         fields = ["display_name", "description", "selected_file"]
 
-    def __init__(self, *args, folder: NCFolder=None, **kwargs):
+    def __init__(self, *args, folder: SquireNextCloudFolder=None, **kwargs):
         assert folder is not None
         self.folder = folder
-        self.file_list = self.get_unsynched_files()
+        self.file_list = self.get_unsynced_files()
 
-        super(SynchFileToFolderForm, self).__init__(*args, **kwargs)
+        super(SyncFileToFolderForm, self).__init__(*args, **kwargs)
         self.instance.folder = self.folder
         self.instance.connection = "NcS"
         self.fields["selected_file"].choices = [(file.name, file) for file in self.file_list]
@@ -100,27 +103,27 @@ class SynchFileToFolderForm(ModelForm):
         folder = self.folder.folder
         client.mv(file, folder)
         self.instance.file = file
-        super(SynchFileToFolderForm, self).save(commit=commit)
+        super(SyncFileToFolderForm, self).save(commit=commit)
 
 
-    def get_unsynched_files(self):
+    def get_unsynced_files(self):
         client = construct_client()
         return [x for x in client.ls() if isinstance(x, NextCloudFile)]
 
     def clean(self):
         self.instance.slug = slugify(self.cleaned_data['display_name'])
-        return super(SynchFileToFolderForm, self).clean()
+        return super(SyncFileToFolderForm, self).clean()
 
 
 class FolderEditForm(ModelForm):
     class Meta:
-        model = NCFolder
+        model = SquireNextCloudFolder
         fields = ["display_name", "description", "requires_membership", 'on_overview_page']
 
 
 class FileEditForm(ModelForm):
     class Meta:
-        model = NCFile
+        model = SquireNextCloudFile
         fields = ["display_name", "description"]
 
 

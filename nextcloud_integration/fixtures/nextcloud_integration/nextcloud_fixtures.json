@@ -1,6 +1,6 @@
 [
     {
-        "model": "nextcloud_integration.ncfolder",
+        "model": "nextcloud_integration.squirenextcloudfolder",
         "pk": 1,
         "fields": {
             "display_name": "Initial folder",
@@ -12,7 +12,7 @@
         }
     },
     {
-        "model": "nextcloud_integration.ncfolder",
+        "model": "nextcloud_integration.squirenextcloudfolder",
         "pk": 2,
         "fields": {
             "display_name": "Member-only-folder",
@@ -24,7 +24,7 @@
         }
     },
     {
-        "model": "nextcloud_integration.ncfolder",
+        "model": "nextcloud_integration.squirenextcloudfolder",
         "pk": 3,
         "fields": {
             "display_name": "Non overview folder",
@@ -36,7 +36,7 @@
         }
     },
     {
-        "model": "nextcloud_integration.ncfile",
+        "model": "nextcloud_integration.squirenextcloudfile",
         "pk": 1,
         "fields": {
             "display_name": "Initial file",
@@ -48,7 +48,7 @@
         }
     },
     {
-        "model": "nextcloud_integration.ncfile",
+        "model": "nextcloud_integration.squirenextcloudfile",
         "pk": 2,
         "fields": {
             "display_name": "Secondary file",
@@ -60,7 +60,7 @@
         }
     },
     {
-        "model": "nextcloud_integration.ncfile",
+        "model": "nextcloud_integration.squirenextcloudfile",
         "pk": 3,
         "fields": {
             "display_name": "Private file",
@@ -72,7 +72,7 @@
         }
     },
     {
-        "model": "nextcloud_integration.ncfile",
+        "model": "nextcloud_integration.squirenextcloudfile",
         "pk": 4,
         "fields": {
             "display_name": "Not openly shared file",

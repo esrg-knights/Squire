@@ -42,13 +42,13 @@ class AbstractFileType:
 
 class TextFileType:
     extension = ['txt', 'md']
-    name = "Textfile"
+    name = "Text file"
     icon_class = "fas fa-file-alt"
 
 
 class WordFileType:
     extension = ['doc', 'docx', 'odt']
-    name = "Word file"
+    name = "Word document"
     icon_class = "fas fa-file-word"
 
 
@@ -66,7 +66,7 @@ class ImageFileType:
 
 class CompressedFileType:
     extension = ['zip', '7zip', 'rar']
-    name = "Compressed files"
+    name = "Compressed archive"
     icon_class = "fas fa-file-archive"
 
 
@@ -78,12 +78,12 @@ class PowerpointFileType:
 
 class ExcelFileType:
     extension = ['odx', 'xls', 'xlsx', 'csv']
-    name = "Excel file"
+    name = "Spreadsheet"
     icon_class = "fas fa-file-excel"
 
 
 class CreativeFileType:
-    extension = ['psd', 'indd', 'psb', 'ai', 'svg', 'eps']
+    extension = ['psd', 'indd', 'psb', 'ai', 'svg', 'eps', 'xcf']
     name = "Creative file"
     icon_class = "fas fa-file-image"
 

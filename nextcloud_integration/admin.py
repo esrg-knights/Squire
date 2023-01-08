@@ -1,9 +1,9 @@
 from django.contrib import admin
 
-from nextcloud_integration.models import NCFolder, NCFile
+from nextcloud_integration.models import SquireNextCloudFolder, SquireNextCloudFile
 
 
-@admin.register(NCFolder)
+@admin.register(SquireNextCloudFolder)
 class NCFolderAdmin(admin.ModelAdmin):
     list_display = ('id', 'display_name', 'description', 'is_missing')
     list_display_links = ('id', 'display_name')
@@ -15,9 +15,10 @@ class NCFolderAdmin(admin.ModelAdmin):
         'on_overview_page'
     )
 
-@admin.register(NCFile)
+@admin.register(SquireNextCloudFile)
 class NCFileAdmin(admin.ModelAdmin):
     list_display = ('id', 'display_name', 'description', 'folder_name')
+    list_display_links = ('id', 'display_name')
     list_filter = (
         'folder__display_name',
         'is_missing',

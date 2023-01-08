@@ -15,10 +15,10 @@ from utils.testing.view_test_utils import ViewValidityMixin, TestMixinMixin
 from membership_file.util import user_is_current_member
 
 from nextcloud_integration.forms import *
-from nextcloud_integration.models import NCFolder, NCFile
+from nextcloud_integration.models import SquireNextCloudFolder, SquireNextCloudFile
 from nextcloud_integration.nextcloud_resources import NextCloudFolder, NextCloudFile
 from nextcloud_integration.views import NextcloudConnectionViewMixin, FolderMixin, FileBrowserView, SiteDownloadView, \
-    FolderCreateView, FolderEditView, SynchFileToFolderView, DownloadFileview
+    FolderCreateView, FolderEditView, SyncFileToFolderView, DownloadFileview
 
 from . import patch_construction
 
@@ -64,12 +64,12 @@ class NextCloudConnectionMixinTestCase(TestMixinMixin, TestCase):
 @patch_construction('views')
 class FileBrowserViewTestCase(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'nextcloud_integration/nextcloud_fixtures']
-    permission_required = 'nextcloud_integration.view_ncfolder'
+    permission_required = 'nextcloud_integration.view_squirenextcloudfolder'
     base_user_id = 100
 
     def setUp(self):
         super(FileBrowserViewTestCase, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='view_ncfolder'))
+        self.user.user_permissions.add(Permission.objects.get(codename='view_squirenextcloudfolder'))
 
     def get_base_url(self, **url_kwargs):
         return reverse('nextcloud:browse_nextcloud', kwargs=url_kwargs)
@@ -85,7 +85,7 @@ class FileBrowserViewTestCase(ViewValidityMixin, TestCase):
 
         self.assertTrue(issubclass(FileBrowserView, NextcloudConnectionViewMixin))
         self.assertTrue(issubclass(FileBrowserView, PermissionRequiredMixin))
-        self.assertEqual(FileBrowserView.permission_required, 'nextcloud_integration.view_ncfolder')
+        self.assertEqual(FileBrowserView.permission_required, 'nextcloud_integration.view_squirenextcloudfolder')
 
     def test_path_not_existent(self, mock: Mock):
         # When the path is not existent, a different layout is returned
@@ -120,20 +120,20 @@ class SiteDownloadViewTestCase(ViewValidityMixin, TestCase):
         response  = self.client.get(self.get_base_url(), data={})
         context = response.context
 
-        self.assertIn(NCFolder.objects.get(id=1), context["folders"])
+        self.assertIn(SquireNextCloudFolder.objects.get(id=1), context["folders"])
 
     def test_not_on_overview_page(self):
         response  = self.client.get(self.get_base_url(), data={})
         context = response.context
 
-        self.assertNotIn(NCFolder.objects.get(id=3), context["folders"])
+        self.assertNotIn(SquireNextCloudFolder.objects.get(id=3), context["folders"])
 
     def test_member_access(self):
         response  = self.client.get(self.get_base_url(), data={})
         context = response.context
 
-        self.assertIn(NCFolder.objects.get(id=2), context["folders"])
-        self.assertIn(NCFolder.objects.get(id=1), context["folders"])
+        self.assertIn(SquireNextCloudFolder.objects.get(id=2), context["folders"])
+        self.assertIn(SquireNextCloudFolder.objects.get(id=1), context["folders"])
 
     def test_non_member_access(self):
         self.user = User.objects.get(id=2)
@@ -142,8 +142,8 @@ class SiteDownloadViewTestCase(ViewValidityMixin, TestCase):
         response  = self.client.get(self.get_base_url(), data={})
         context = response.context
 
-        self.assertNotIn(NCFolder.objects.get(id=2), context["folders"])  # Id 2 has no required membership
-        self.assertIn(NCFolder.objects.get(id=1), context["folders"])
+        self.assertNotIn(SquireNextCloudFolder.objects.get(id=2), context["folders"])  # Id 2 has no required membership
+        self.assertIn(SquireNextCloudFolder.objects.get(id=1), context["folders"])
 
     def test_user_not_logged_in_message(self):
         self.client.logout()
@@ -174,7 +174,7 @@ class FolderMixinTestCase(TestMixinMixin, TestCase):
 
     def test_folder_storage(self):
         self._build_get_response(url_kwargs={'folder_slug': "initial_folder"}, save_view=True)
-        folder = NCFolder.objects.get(id=1)
+        folder = SquireNextCloudFolder.objects.get(id=1)
         self.assertEqual(self.view.folder, folder)
         self.assertEqual(self.view.get_context_data()['folder'], folder)
 
@@ -182,7 +182,7 @@ class FolderMixinTestCase(TestMixinMixin, TestCase):
 @patch_construction('forms')
 class FolderCreateViewTestCase(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'nextcloud_integration/nextcloud_fixtures']
-    permission_required = 'nextcloud_integration.add_ncfolder'
+    permission_required = 'nextcloud_integration.add_squirenextcloudfolder'
     base_user_id = 100
 
     def get_base_url(self):
@@ -206,7 +206,7 @@ class FolderCreateViewTestCase(ViewValidityMixin, TestCase):
             redirect_url=reverse("nextcloud:site_downloads")
         )
         # Ensure folder creation
-        self.assertTrue(NCFolder.objects.filter(display_name='FolderCreateView TestFolder').exists())
+        self.assertTrue(SquireNextCloudFolder.objects.filter(display_name='FolderCreateView TestFolder').exists())
 
     def test_requires_permission(self, mock):
         self.assertRequiresPermission()
@@ -214,7 +214,7 @@ class FolderCreateViewTestCase(ViewValidityMixin, TestCase):
 
 class FolderEditViewTestCase(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'nextcloud_integration/nextcloud_fixtures']
-    permission_required = 'nextcloud_integration.change_ncfolder'
+    permission_required = 'nextcloud_integration.change_squirenextcloudfolder'
     base_user_id = 100
 
     def get_base_url(self):
@@ -254,20 +254,20 @@ class FolderEditViewTestCase(ViewValidityMixin, TestCase):
 
 
 @patch_construction('forms')
-class SynchFileToFolderViewTestCase(ViewValidityMixin, TestCase):
+class SyncFileToFolderViewTestCase(ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'nextcloud_integration/nextcloud_fixtures']
-    permission_required = 'nextcloud_integration.synch_ncfile'
+    permission_required = 'nextcloud_integration.sync_squirenextcloudfile'
     base_user_id = 100
 
     def get_base_url(self):
-        return reverse('nextcloud:synch_file', kwargs={'folder_slug': 'initial_folder'})
+        return reverse('nextcloud:sync_file', kwargs={'folder_slug': 'initial_folder'})
 
     def test_fixed_values(self, mock):
-        self.assertTrue(issubclass(SynchFileToFolderView, NextcloudConnectionViewMixin))
-        self.assertTrue(issubclass(SynchFileToFolderView, FolderMixin))
-        self.assertTrue(issubclass(SynchFileToFolderView, FormView))
-        self.assertTrue(SynchFileToFolderView.form_class, SynchFileToFolderForm)
-        self.assertTrue(SynchFileToFolderView.template_name, "nextcloud_integration/synch_file_to_folder.html")
+        self.assertTrue(issubclass(SyncFileToFolderView, NextcloudConnectionViewMixin))
+        self.assertTrue(issubclass(SyncFileToFolderView, FolderMixin))
+        self.assertTrue(issubclass(SyncFileToFolderView, FormView))
+        self.assertTrue(SyncFileToFolderView.form_class, SyncFileToFolderForm)
+        self.assertTrue(SyncFileToFolderView.template_name, "nextcloud_integration/sync_file_to_folder.html")
 
     def test_successful_get(self, mock):
         self.assertValidGetResponse()
@@ -275,11 +275,11 @@ class SynchFileToFolderViewTestCase(ViewValidityMixin, TestCase):
     def test_requires_permission(self, mock):
         self.assertRequiresPermission()
 
-    @patch('nextcloud_integration.forms.SynchFileToFolderForm.save')
+    @patch('nextcloud_integration.forms.SyncFileToFolderForm.save')
     def test_succesful_post(self, mock_save, mock_construct_client):
         self.assertValidPostResponse(
             data={
-                'display_name': 'New Synched File',
+                'display_name': 'New Synced File',
                 'description': "Test file that does not actually exist",
                 'selected_file': 'new_file.txt',
             },
@@ -294,7 +294,7 @@ class DownloadFileViewTestCase(ViewValidityMixin, TestCase):
     base_user_id = 100
 
     def setUp(self):
-        self.file = NCFile.objects.get(id=1)
+        self.file = SquireNextCloudFile.objects.get(id=1)
         super(DownloadFileViewTestCase, self).setUp()
 
     def mock_download(self, mock):
@@ -334,7 +334,7 @@ class DownloadFileViewTestCase(ViewValidityMixin, TestCase):
     def test_members_only_access(self, mock):
         self.mock_download(mock)
 
-        nc_file = NCFile.objects.filter(folder__requires_membership=True).first()
+        nc_file = SquireNextCloudFile.objects.filter(folder__requires_membership=True).first()
 
         self.assertTrue(user_is_current_member(self.user))
         self.assertValidGetResponse(url=self.get_base_url(nc_file))
