@@ -35,7 +35,7 @@ class MembershipMiddlewareTestCase(TestCase):
 
     def test_process_exception(self):
         request = self._create_request(1)
-        self.assertIsNone(self.middleware.process_exception(request, Exception()))  # Ignore irrelevant errors
+        self.assertIsNone(self.middleware.process_exception(request, Exception()))  # Check if irrelevant errors are ignored
 
         response = self.middleware.process_exception(request, UserIsNotCurrentMember())
         self.assertIsNotNone(response)
