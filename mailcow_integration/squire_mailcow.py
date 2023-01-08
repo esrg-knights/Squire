@@ -45,7 +45,9 @@ class SquireMailcowManager:
         ]
 
         # List of all member alias addresses; these should never be included in an alias's goto addresses
-        self._member_alias_addresses: List[str] = [alias_data['address'] for alias_data in settings.MEMBER_ALIASES.values()]
+        self._member_alias_addresses: List[str] = [
+            alias_data['address'] for alias_data in settings.MEMBER_ALIASES.values()
+        ]
 
     @property
     def mailcow_host(self):

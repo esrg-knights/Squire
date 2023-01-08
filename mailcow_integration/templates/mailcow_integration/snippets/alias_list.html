@@ -165,5 +165,5 @@
         </ul>
     </p>
 {% else %}
-    <p><i>No member aliases set up{{ empty_message }}</i></p>
+    <p><i>{{ empty_message|default:"No such aliases are set up." }}</i></p>
 {% endif %}

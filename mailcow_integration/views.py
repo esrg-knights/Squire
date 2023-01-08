@@ -154,6 +154,49 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
 
         return results
 
+    def _verify_committee_aliases(self, mailcow_aliases: List[MailcowAlias], mailcow_mailboxes: List[MailcowMailbox], public_comment: str) -> Dict:
+        """ TODO """
+        results = {
+            assoc_group.contact_email: {
+                'alias': None,
+                'status': AliasStatus.MISSING.name if not assoc_group.has_invalid_email else AliasStatus.RESERVED.name,
+                'squire_subscribers': assoc_group.members.filter_active().order_by('email')\
+                    .annotate(
+                        # Indicate that emails are ignored
+                        has_invalid_email=ExpressionWrapper(Q(email__in=self.mailcow_manager._member_alias_addresses), output_field=BooleanField())
+                ),
+                'id': assoc_group.id,
+                'description': format_html("{} ({}): {}", assoc_group.site_group.name, assoc_group.get_type_display(), assoc_group.short_description),
+                'internal': False,
+                'allow_opt_out': True, # Cannot actually opt out; tricking the template here
+                'squire_edit_url': reverse("admin:committees_associationgroup_change", args=[assoc_group.id]),
+            }
+            for assoc_group in self.mailcow_manager.get_alias_committees().annotate(
+                has_invalid_email=ExpressionWrapper(Q(contact_email__in=self.mailcow_manager._member_alias_addresses), output_field=BooleanField())
+            )
+        }
+
+        # Verify that each of our aliases actually exists in Mailcow
+        for alias in mailcow_aliases:
+            if alias.address in results.keys():
+                if results[alias.address]['status'] == AliasStatus.RESERVED.name:
+                    results[alias.address].update({'alias': alias})
+                elif alias.public_comment != public_comment:
+                    # Public comment of the alias does not indicate it is managed by Squire
+                    results[alias.address].update({'alias': alias, 'status': AliasStatus.NOT_MANAGED_BY_SQUIRE.name})
+                elif alias.goto != self.mailcow_manager.clean_alias_emails(results[alias.address]['squire_subscribers']) + [settings.COMMITTEE_ALIAS_ARCHIVE_ADDRESS]:
+                    # Subscribers are out of date
+                    #   Note: Lists are sorted
+                    results[alias.address].update({'alias': alias, 'status': AliasStatus.OUTDATED.name})
+                else:
+                    results[alias.address].update({'alias': alias, 'status': AliasStatus.VALID.name})
+
+        for mailbox in mailcow_mailboxes:
+            if mailbox.username in results:
+                results[mailbox.username].update({'mailbox': mailbox, 'status': AliasStatus.MAILBOX.name})
+
+        return results
+
     def _find_unused_squire_comments(self, mailcow_aliases: List[MailcowAlias], member_aliases, committee_aliases):
         """ TODO """
         used_addresses = list(member_aliases.keys()) + list(committee_aliases.keys())

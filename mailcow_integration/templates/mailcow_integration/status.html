@@ -38,6 +38,11 @@
         </p>
         {% include "mailcow_integration/snippets/alias_list.html" with alias_dict=member_aliases host=mailcow_host only %}
 
+        <p>
+            Likewise, all committees can be emailed through the following aliases.
+        </p>
+        {% include "mailcow_integration/snippets/alias_list.html" with alias_dict=global_committee_aliases host=mailcow_host only %}
+
         <div class="d-flex justify-content-between align-items-center">
             <h2>Committee Aliases</h2>
             {% if error %}
