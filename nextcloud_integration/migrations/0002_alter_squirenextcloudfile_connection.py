@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('nextcloud_integration', '0001_squashed_0010_auto_20230108_1642'),
+        ('nextcloud_integration', '0001_initial_squashed'),
     ]
 
     operations = [

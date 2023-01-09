@@ -282,11 +282,6 @@ LOGOUT_URL = '/logout'
 # logout if LogoutView doesn’t have a next_page attribute.
 LOGOUT_REDIRECT_URL = '/logout/success'
 
-
-# Not a native Django setting, but used to specify the url to redirect to
-# when the membership_required-decorator does not receive a fail_url parameter
-MEMBERSHIP_FAIL_URL = '/no_member'
-
 ####################################################################
 # Martor settings (Markdown Editor)
 # https://github.com/agusmakmun/django-markdown-editor
