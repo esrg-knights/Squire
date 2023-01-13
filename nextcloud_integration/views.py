@@ -18,7 +18,8 @@ from nextcloud_integration.forms import *
 from nextcloud_integration.models import SquireNextCloudFolder, SquireNextCloudFile
 
 
-__all__ = ["SiteDownloadView", "FileBrowserView", "FolderCreateView", "SyncFileToFolderView", "DownloadFileview"]
+__all__ = ["SiteDownloadView", "FileBrowserView", "FolderCreateView", "SyncFileToFolderView", "DownloadFileview",
+           "FolderEditView", "SyncFileToFolderView", "NextcloudConnectionViewMixin"]
 
 
 class NextcloudConnectionViewMixin:

@@ -1,7 +1,5 @@
 from django import template
 
-from nextcloud_integration.models import SquireNextCloudFile
-
 register = template.Library()
 
 

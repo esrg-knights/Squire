@@ -1,13 +1,11 @@
 from django.contrib.auth.models import User, Permission
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.messages import constants as msg_constants
 from django.test import TestCase
 from django.urls import reverse
 from django.views.generic import ListView, FormView
 from easywebdav.client import OperationFailed
 from requests.exceptions import ConnectionError
 from requests.models import Response
-from requests.cookies import RequestsCookieJar
 from unittest.mock import Mock, patch
 
 from core.tests.util import suppress_warnings
@@ -191,8 +189,8 @@ class FolderCreateViewTestCase(ViewValidityMixin, TestCase):
     def test_fixed_values(self, mock):
         self.assertTrue(issubclass(FolderCreateView, NextcloudConnectionViewMixin))
         self.assertTrue(issubclass(FolderCreateView, FormView))
-        self.assertTrue(FolderCreateView.form_class, FolderCreateForm)
-        self.assertTrue(FolderCreateView.template_name, "nextcloud_integration/folder_add.html")
+        self.assertEqual(FolderCreateView.form_class, FolderCreateForm)
+        self.assertEqual(FolderCreateView.template_name, "nextcloud_integration/folder_add.html")
 
     def test_successful_get(self, mock):
         self.assertValidGetResponse()
@@ -224,8 +222,8 @@ class FolderEditViewTestCase(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(FolderEditView, NextcloudConnectionViewMixin))
         self.assertTrue(issubclass(FolderEditView, FolderMixin))
         self.assertTrue(issubclass(FolderEditView, FormView))
-        self.assertTrue(FolderEditView.form_class, FolderEditFormGroup)
-        self.assertTrue(FolderEditView.template_name, "nextcloud_integration/folder_edit.html")
+        self.assertEqual(FolderEditView.form_class, FolderEditFormGroup)
+        self.assertEqual(FolderEditView.template_name, "nextcloud_integration/folder_edit.html")
 
     def test_successful_get(self):
         self.assertValidGetResponse()
@@ -266,8 +264,8 @@ class SyncFileToFolderViewTestCase(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(SyncFileToFolderView, NextcloudConnectionViewMixin))
         self.assertTrue(issubclass(SyncFileToFolderView, FolderMixin))
         self.assertTrue(issubclass(SyncFileToFolderView, FormView))
-        self.assertTrue(SyncFileToFolderView.form_class, SyncFileToFolderForm)
-        self.assertTrue(SyncFileToFolderView.template_name, "nextcloud_integration/sync_file_to_folder.html")
+        self.assertEqual(SyncFileToFolderView.form_class, SyncFileToFolderForm)
+        self.assertEqual(SyncFileToFolderView.template_name, "nextcloud_integration/sync_file_to_folder.html")
 
     def test_successful_get(self, mock):
         self.assertValidGetResponse()
@@ -316,8 +314,8 @@ class DownloadFileViewTestCase(ViewValidityMixin, TestCase):
 
     def test_fixed_values(self, mock):
         self.assertTrue(issubclass(DownloadFileview, NextcloudConnectionViewMixin))
-        self.assertTrue(DownloadFileview.template_name, "nextcloud_integration/file_download_test.html")
-        self.assertTrue(DownloadFileview.http_method_names, ['get'])
+        self.assertEqual(DownloadFileview.template_name, "nextcloud_integration/file_download_test.html")
+        self.assertEqual(DownloadFileview.http_method_names, ['get'])
 
     def test_successful_get(self, mock):
         self.mock_download(mock)
@@ -342,9 +340,7 @@ class DownloadFileViewTestCase(ViewValidityMixin, TestCase):
         self.user = User.objects.get(id=1)
         self.assertFalse(user_is_current_member(self.user))
         self.client.force_login(self.user)
-        response = self.client.get(path=self.get_base_url(nc_file))
-        # MembershipRequiredMixin redirects instead of throws a 403 response
-        self.assertEqual(response.status_code, 302)
+        self.assertPermissionDenied(url=self.get_base_url(nc_file))
 
     @staticmethod
     def fail_download(*args, actual_code=404, **kwargs):
