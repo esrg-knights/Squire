@@ -1,0 +1,11 @@
+{% extends "admin/change_form.html" %}
+
+{% block field_sets %}
+    <p>
+        Each group may have access to different availlable tabs. Below you can set the accessable panels for {{ original }}
+    </p>
+
+    {% for fieldset in adminform %}
+        {% include "admin/includes/fieldset.html" %}
+    {% endfor %}
+{% endblock %}

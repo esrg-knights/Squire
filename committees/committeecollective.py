@@ -3,6 +3,7 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 
 from utils.viewcollectives import *
+from utils.auth_utils import get_perm_from_name
 
 from committees.utils import user_in_association_group
 from committees.models import AssociationGroup
@@ -27,16 +28,37 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
         if not user_in_association_group(request.user, association_group):
             raise PermissionDenied()
 
-        # Check group permission
-        if self.group_requires_permission is not None:
-            app_label, codename = self.group_requires_permission.split('.', maxsplit=1)
-            if not Permission.objects.filter(
-                content_type__app_label=app_label,
-                codename=codename,
-                group__associationgroup=association_group
-            ):  return False
+        return self.check_group_access(self.check_group_access(association_group))
 
+    def check_group_access(self, association_group):
+        """ Checks whether the group has access """
+        if self.group_requires_permission is not None:
+            try:
+                perm = get_perm_from_name(self.group_requires_permission)
+            except Permission.DoesNotExist:
+                raise KeyError(f"{self.__class__} is configured incorrectly. "
+                               f"{self.group_requires_permission} is not a valid permission. ")
+            else:
+                if not perm.group_set.filter(associationgroup=association_group).exists():
+                    return False
         return True
+
+    def enable_access(self, association_group: AssociationGroup):
+        """ Adjusts the association_group so that it can access this collective """
+        association_group.site_group.permissions.add(
+            get_perm_from_name(self.group_requires_permission)
+        )
+
+    def disable_access(self, association_group: AssociationGroup):
+        """ Adjusts the association_group so that it can no longer access this collective """
+        association_group.site_group.permissions.remove(
+            get_perm_from_name(self.group_requires_permission)
+        )
+
+    def is_default_for_group(self, association_group: AssociationGroup):
+        """ Whether this collective is a default """
+        # Later PR will replace this to default for certain types of groups
+        return self.group_requires_permission is None
 
     def get_local_quicklinks(self, association_group):
         """ Returns a list of dicts with local shortcut instances
