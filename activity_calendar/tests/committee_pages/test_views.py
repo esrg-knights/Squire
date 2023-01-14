@@ -10,9 +10,11 @@ from committees.committeecollective import AssociationGroupMixin
 from core.tests.util import suppress_warnings
 from utils.testing.view_test_utils import ViewValidityMixin
 
+from committees.committeecollective import registry
+
 from activity_calendar.committee_pages.forms import CreateActivityMomentForm
 from activity_calendar.committee_pages.views import ActivityCalendarView, AddActivityMomentCalendarView
-
+from activity_calendar.committee_pages.config import ActivityConfig
 
 
 class AssocationGroupTestingMixin:
@@ -25,6 +27,7 @@ class AssocationGroupTestingMixin:
         if self.association_group_id is None:
             raise ImproperlyConfigured(f"'association_group_id' was not defined on {self.__class__.__name__}")
         self.association_group = AssociationGroup.objects.get(id=self.association_group_id)
+        ActivityConfig(registry).enable_access(self.association_group)
 
     def get_base_url(self):
         if self.url_name is None:

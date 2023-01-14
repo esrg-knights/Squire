@@ -1,5 +1,4 @@
 from django.contrib.auth.models import Permission
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 
 from utils.viewcollectives import *
@@ -26,9 +25,9 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
             return False
 
         if not user_in_association_group(request.user, association_group):
-            raise PermissionDenied()
+            return False
 
-        return self.check_group_access(self.check_group_access(association_group))
+        return self.check_group_access(association_group)
 
     def check_group_access(self, association_group):
         """ Checks whether the group has access """
