@@ -144,12 +144,14 @@
 
 		<main class="mb-5 px-3">
 			<div id='mainContent'>
+                {% block content_raw %}
                 <div class="{% block content-frame-class %}contentFrame{% endblock %}">
                     {% bootstrap_messages %}
                     {% block content %}
                         <!-- Other templates can add extra content here -->
                     {% endblock %}
                 </div>
+                {% endblock %}
 			</div>
 		</main>
 
