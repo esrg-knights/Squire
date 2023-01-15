@@ -3,7 +3,7 @@ from django.urls import path, include, reverse
 from committees.committeecollective import CommitteeBaseConfig
 from committees.committee_pages.views import *
 
-from committees.committee_pages.settings import settings
+from committees.committee_pages.options import settings
 
 
 class AssociationGroupHomeConfig(CommitteeBaseConfig):
@@ -14,21 +14,21 @@ class AssociationGroupHomeConfig(CommitteeBaseConfig):
 
     _home_page_filters = {}
 
+    def get_home_view(self, request, *args, group_id=None, **kwargs):
+        """ Select which view class needs to be used. Defaults to AssociationGroupDetailView """
+        display_view_class = None
+        for filter, view_class in self._home_page_filters.values():
+            if filter(group_id):
+                display_view_class = view_class
+                break
+        display_view_class = display_view_class or AssociationGroupDetailView
+
+        return display_view_class.as_view(config=self)(request, *args, group_id=group_id, **kwargs)
+
     def get_urls(self):
         """ Builds a list of urls """
-        def get_home_view(request, *args, group_id=None, **kwargs):
-            """ Select which view class needs to be used. Defaults to AssociationGroupDetailView """
-            display_view_class = None
-            for filter, view_class in self._home_page_filters.values():
-                if filter(group_id):
-                    display_view_class = view_class
-                    break
-            display_view_class = display_view_class or AssociationGroupDetailView
-
-            return display_view_class.as_view(config=self)(request, *args, group_id=group_id, **kwargs)
-
         return [
-            path('', get_home_view, name='group_general'),
+            path('', self.get_home_view, name='group_general'),
         ]
 
     @classmethod

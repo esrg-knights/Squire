@@ -1,6 +1,6 @@
 from django import template
 
-from committees.committee_pages.settings import SettingsOptionBase
+from committees.committee_pages.options import SettingsOptionBase
 
 
 register = template.Library()
