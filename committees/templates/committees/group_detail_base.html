@@ -31,17 +31,14 @@
 {% endblock %}
 
 {% block content %}
-    <div class="d-flex flex-wrap">
-        <div style="width: 5em">
-            {% if association_group.icon %}
-                <img style="height: 5em;" src={{ association_group.icon.url }}>
-            {% endif %}
+        <div style="" class="d-flex flex-wrap">
+            {% include "committees/snippets/snippet_assoc_group_icon.html" %}
+
+            <div class="">
+                <h1>{{ association_group }}</h1>
+                <p>{{ association_group.short_description }}</p>
+            </div>
         </div>
-        <div class="">
-            <h1>{{ association_group }}</h1>
-            <p>{{ association_group.short_description }}</p>
-        </div>
-    </div>
 
     {% bootstrap_tabs tabs %}
 {% endblock %}

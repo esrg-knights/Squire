@@ -49,6 +49,19 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
         return []
 
 
+def _wrap_association_group_for_context(association_group: AssociationGroup):
+    """ Update the association_group with template optimised attributes """
+    for group_type in AssociationGroup.GROUPTYPES:
+        # Allow the type to be retrieved by selecting the type constant (e.g. association_group.GUILD)
+        setattr(
+            association_group,
+            group_type[1].upper(),
+            association_group.type == group_type[0]
+        )
+    return association_group
+
+
+
 class AssociationGroupMixin(ViewCollectiveViewMixin):
     """ Mixin that stores the retrieved group from the url group_id keyword. Also verifies user is part of that group """
     association_group = None
@@ -69,7 +82,7 @@ class AssociationGroupMixin(ViewCollectiveViewMixin):
 
     def get_context_data(self, **kwargs):
         context = super(AssociationGroupMixin, self).get_context_data(**kwargs)
-        context['association_group'] = self.association_group
+        context['association_group'] = _wrap_association_group_for_context(self.association_group)
         return context
 
     def _get_tab_url(self, url_name, **url_kwargs):

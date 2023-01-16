@@ -1,0 +1,13 @@
+{% if association_group.icon %}
+    {% if association_group.CAMPAIGN %}
+        <div style="height: 6em; width: 4.5em; border: 2px solid;
+            border-radius: 50% / 10% 10% 90% 90%;
+            background-position: center; background-size: cover;
+            background-image: url('{{ association_group.icon.url }}');"
+             class="border-dark border-4 mr-2"
+        >
+        </div>
+    {% else %}
+        <div class="d-flex"><img style="height: 5em;" src={{ association_group.icon.url }}></div>
+    {% endif %}
+{% endif %}
