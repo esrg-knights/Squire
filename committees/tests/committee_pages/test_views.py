@@ -71,7 +71,7 @@ class TestAssociationGroupDetailView(ViewValidityMixin, TestCase):
     def test_class(self):
         self.assertTrue(issubclass(AssociationGroupDetailView, AssociationGroupMixin))
         self.assertTrue(issubclass(AssociationGroupDetailView, TemplateView))
-        self.assertEqual(AssociationGroupDetailView.template_name, "committees/group_detail_info.html")
+        self.assertEqual(AssociationGroupDetailView.template_name, "committees/committee_pages/group_detail_info.html")
 
     def test_successful_get(self):
         response = self.client.get(self.get_base_url(), data={})
@@ -103,7 +103,7 @@ class TestAssociationGroupQuickLinksView(ViewValidityMixin, TestCase):
     def test_class(self):
         self.assertTrue(issubclass(AssociationGroupQuickLinksView, AssociationGroupMixin))
         self.assertTrue(issubclass(AssociationGroupQuickLinksView, TemplateView))
-        self.assertEqual(AssociationGroupQuickLinksView.template_name, "committees/group_detail_quicklinks.html")
+        self.assertEqual(AssociationGroupQuickLinksView.template_name, "committees/committee_pages/group_detail_quicklinks.html")
 
     def test_successful_get(self):
         response = self.client.get(self.get_base_url(), data={})
@@ -209,7 +209,7 @@ class TestAssociationGroupUpdateView(ViewValidityMixin, TestCase):
     def test_class(self):
         self.assertTrue(issubclass(AssociationGroupUpdateView, AssociationGroupMixin))
         self.assertTrue(issubclass(AssociationGroupUpdateView, FormView))
-        self.assertEqual(AssociationGroupUpdateView.template_name, "committees/group_detail_info_edit.html")
+        self.assertEqual(AssociationGroupUpdateView.template_name, "committees/committee_pages/group_settings_edit_markdown.html")
         self.assertEqual(AssociationGroupUpdateView.form_class, AssociationGroupUpdateForm)
 
     def test_successful_get(self):
@@ -220,7 +220,7 @@ class TestAssociationGroupUpdateView(ViewValidityMixin, TestCase):
         data = {'instructions': "new_instructions"}
         self.assertValidPostResponse(
             data=data,
-            redirect_url=reverse('committees:group_general', kwargs={'group_id': self.associationgroup.id})
+            redirect_url=reverse('committees:settings_home', kwargs={'group_id': self.associationgroup.id})
         )
         self.associationgroup.refresh_from_db()
         self.assertEqual(self.associationgroup.instructions.as_raw(), data['instructions'])
@@ -241,7 +241,7 @@ class TestAssociationGroupMembersView(ViewValidityMixin, TestCase):
     def test_class(self):
         self.assertTrue(issubclass(AssociationGroupMembersView, AssociationGroupMixin))
         self.assertTrue(issubclass(AssociationGroupMembersView, TemplateView))
-        self.assertEqual(AssociationGroupMembersView.template_name, "committees/group_detail_members.html")
+        self.assertEqual(AssociationGroupMembersView.template_name, "committees/committee_pages/group_detail_members.html")
 
     def test_successful_get(self):
         response = self.client.get(self.get_base_url(), data={})

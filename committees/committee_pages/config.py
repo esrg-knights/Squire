@@ -7,8 +7,8 @@ from committees.committee_pages.options import settings
 
 
 class AssociationGroupHomeConfig(CommitteeBaseConfig):
-    name = 'Overview'
-    icon_class = 'fas fa-users'
+    name = 'Home'
+    icon_class = 'fas fa-home'
     url_name = 'group_general'
     order_value = 1
 
@@ -46,7 +46,7 @@ class AssociationGroupSettingsConfig(CommitteeBaseConfig):
     name = 'Settings'
     icon_class = 'fas fa-cog'
     url_name = 'settings_home'
-    order_value = 10
+    order_value = 999
 
     def get_urls(self):
         """ Builds a list of urls """
