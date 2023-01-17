@@ -25,6 +25,8 @@ class TestAssociationGroupInventoryView(ViewValidityMixin, TestCase):
     def setUp(self):
         self.group = AssociationGroup.objects.get(id=2)
         super(TestAssociationGroupInventoryView, self).setUp()
+        self.group.permissions.add(
+            Permission.objects.get(codename='view_ownership'))
 
     def get_base_url(self, group_id=None):
         group_id = group_id or self.group.id
@@ -82,10 +84,14 @@ class TestAssociationGroupItemLinkUpdateView(ViewValidityMixin, TestCase):
         self.assertEqual(AssociationGroupItemLinkUpdateView.fields, ['note', 'added_since', 'value'])
 
     def test_successful_get(self):
+        self.group.permissions.add(
+            Permission.objects.get(codename='view_ownership'))
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 200)
 
     def test_post_successful(self):
+        self.group.permissions.add(
+            Permission.objects.get(codename='view_ownership'))
         response = self.client.post(self.get_base_url(), data={'added_since': '2021-07-29'}, follow=True)
         self.assertRedirects(response, reverse('committees:group_inventory', kwargs={'group_id': self.group.id}))
         msg = "Link data has been updated".format()
