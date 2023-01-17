@@ -14,7 +14,7 @@ class MemberResource(resources.ModelResource):
             'educational_institution', 'student_number',
             'key_id', 'tue_card_number', 'full_external_card', 'external_card_deposit', 'accessible_rooms',
             'street', 'house_number', 'house_number_addition', 'postal_code', 'city', 'country',
-            'date_of_birth', 'has_paid_membership_fee', 'is_honorary_member', 'member_since',
+            'date_of_birth', 'is_honorary_member', 'member_since',
             'is_deregistered', 'email_deregistered_member',
             'notes_single_line',
         )

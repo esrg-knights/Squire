@@ -2,8 +2,6 @@
 from datetime import datetime
 
 from django.contrib import admin, messages
-from django.utils.html import format_html
-from django.utils.translation import gettext_lazy as _
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
 
