@@ -1,7 +1,7 @@
 from import_export import resources
 from import_export.fields import Field
 
-from .models import Member
+from .models import Member, Membership
 
 
 class MemberResource(resources.ModelResource):
@@ -48,3 +48,19 @@ class MemberResource(resources.ModelResource):
     def dehydrate_email_deregistered_member(self, member):
         return member.email if member.is_deregistered else None
 
+
+class MembersFinancialResource(resources.ModelResource):
+    class Meta:
+        model = Membership
+        fields = (
+            'member', 'email', 'year__name', 'created_on', 'has_paid', 'payment_date',
+        )
+        export_order = fields
+
+    email = Field()
+
+    def dehydrate_email(self, membership):
+        return membership.member.email
+
+    def dehydrate_member(self, membership):
+        return membership.member.get_full_name()

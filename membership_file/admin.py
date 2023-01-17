@@ -8,7 +8,7 @@ from import_export.formats.base_formats import CSV
 from .forms import AdminMemberForm
 from .models import Member, MemberLog, MemberLogField, Room, MemberYear, Membership
 from core.admin import DisableModificationsAdminMixin, URLLinkInlineAdminMixin
-from membership_file.export import MemberResource
+from membership_file.export import MemberResource, MembersFinancialResource
 from utils.forms import RequestUserToFormModelAdminMixin
 
 
@@ -212,7 +212,26 @@ class RoomAdmin(admin.ModelAdmin):
 
 
 @admin.register(MemberYear)
-class MemberYearAdmin(admin.ModelAdmin):
+class MemberYearAdmin(ExportActionMixin, admin.ModelAdmin):
+    ##############################
+    #  Export functionality
+    resource_class = MembersFinancialResource
+    formats = (CSV,)
+
+    def has_export_permission(self, request):
+        return request.user.has_perm('membership_file.can_export_membership_file')
+
+    def get_export_filename(self, request, queryset, file_format):
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        filename = "YearSubscriptions-%s.%s" % (date_str, file_format.get_extension())
+        return filename
+
+    def get_data_for_export(self, request, queryset, *args, **kwargs):
+        queryset = Membership.objects.filter(year__in=super(MemberYearAdmin, self).get_export_queryset(request))
+        return super(MemberYearAdmin, self).get_data_for_export(request, queryset, *args, **kwargs)
+
+    ##############################
+
     list_display = ['name', 'is_active', 'member_count']
     list_filter = ['is_active',]
 
@@ -224,5 +243,3 @@ class MemberYearAdmin(admin.ModelAdmin):
 class MembershipAdmin(admin.ModelAdmin):
     list_display = ['member', 'year', 'has_paid', 'payment_date']
     list_filter = ['year', 'has_paid']
-
-
