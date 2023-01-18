@@ -35,7 +35,18 @@ class OptionsRegistry:
 
 settings = OptionsRegistry()
 
+
 class SettingsOptionBase:
+    """
+    Forms the base configuration options for a settings module that can hook into the options registry
+    This is used by the settings config
+    name: The name of the config
+    title: The title presented to the user
+    url_keyword: keyword used in the url to differentiate this setting from others
+    template_name: Name of the template used in the settings view
+    group_type_required: list of group types that should adhere to this tab.
+    group_permission_required: required permission for this option to show up.
+    """
     name = None
     title = None
     url_keyword  = ''
@@ -51,13 +62,16 @@ class SettingsOptionBase:
         context = self.get_context_data(association_group)
         template = get_template(self.template_name)
         rendered_result = template.render(context)
-        return mark_safe(rendered_result)
+        return rendered_result
 
     def get_context_data(self, association_group):
         return {'association_group': association_group}
 
     def check_group_access(self, association_group):
+        if isinstance(self.group_type_required, str):
+            self.group_type_required = [self.group_type_required]
         if self.group_type_required and association_group.type not in self.group_type_required:
+
             return False
         if self.group_permission_required:
             # Todo Implement permission check from utils in pull #291

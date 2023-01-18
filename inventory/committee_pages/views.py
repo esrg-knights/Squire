@@ -9,7 +9,7 @@ from inventory.views import OwnershipMixin
 from utils.views import SearchFormMixin
 
 
-from committees.committeecollective import AssociationGroupMixin
+from committees.mixins import AssociationGroupMixin
 
 
 class AssociationGroupInventoryView(AssociationGroupMixin, SearchFormMixin, ListView):

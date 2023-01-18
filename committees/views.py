@@ -40,7 +40,7 @@ class CommitteeOverview(AssocGroupOverview):
 
 class GuildOverview(AssocGroupOverview):
     template_name = "committees/overview_guilds.html"
-    group_type = AssociationGroup.GUILD
+    group_type = AssociationGroup.ORDER
     tab_name = 'tab_guild'
 
 

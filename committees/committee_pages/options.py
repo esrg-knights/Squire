@@ -7,7 +7,7 @@ from committees.options import SettingsOptionBase, settings
 
 
 class InfoOptions(SettingsOptionBase):
-    group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.GUILD]
+    group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.ORDER]
     name = 'home_info_text'
     title = "Home screen"
     template_name = "committees/committee_pages/setting_blocks/info.html"
@@ -17,7 +17,7 @@ class InfoOptions(SettingsOptionBase):
 
 
 class MemberOptions(SettingsOptionBase):
-    group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.GUILD]
+    group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.ORDER]
     name = 'member_basic'
     title = "Members"
     template_name = "committees/committee_pages/setting_blocks/members.html"
@@ -30,7 +30,7 @@ class MemberOptions(SettingsOptionBase):
 
 
 class QuicklinkOptions(SettingsOptionBase):
-    group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.GUILD]
+    group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.ORDER]
     name = 'quicklinks'
     title = "External sources"
     template_name = "committees/committee_pages/setting_blocks/quicklinks.html"

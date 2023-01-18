@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 from activity_calendar.models import Activity, ActivityMoment
 from activity_calendar.committee_pages.forms import CreateActivityMomentForm
 
-from committees.committeecollective import AssociationGroupMixin
+from committees.mixins import AssociationGroupMixin
 
 
 class ActivityCalendarView(AssociationGroupMixin, ListView):

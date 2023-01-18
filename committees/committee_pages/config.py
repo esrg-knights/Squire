@@ -14,10 +14,15 @@ class AssociationGroupHomeConfig(CommitteeBaseConfig):
 
     _home_page_filters = {}
 
+    def _get_filters(self):
+        """ Returns an iterable of tuples (filter, view_class) for the various possible views """
+        return self._home_page_filters.values()
+
     def get_home_view(self, request, *args, group_id=None, **kwargs):
         """ Select which view class needs to be used. Defaults to AssociationGroupDetailView """
+        # Note: group_id is an association_group instance, the id in the name is due to a previous code state
         display_view_class = None
-        for filter, view_class in self._home_page_filters.values():
+        for filter, view_class in self._get_filters():
             if filter(group_id):
                 display_view_class = view_class
                 break

@@ -19,13 +19,13 @@ class AssociationGroup(models.Model):
     )
 
     COMMITTEE = 'C'
-    GUILD = 'O'
+    ORDER = 'O'
     WORKGROUP = 'WG'
     BOARD = 'B'
     CAMPAIGN = 'GC'
     GROUPTYPES = [
         (COMMITTEE, 'Committee'),
-        (GUILD, 'Order'),
+        (ORDER, 'Order'),
         (WORKGROUP, 'Workgroup'),
         (BOARD, 'Board'),
         (CAMPAIGN, 'Campaign')

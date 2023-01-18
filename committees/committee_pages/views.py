@@ -1,11 +1,10 @@
-from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView,  FormView
 
 from utils.views import PostOnlyFormViewMixin
 
-from committees.committeecollective import AssociationGroupMixin
+from committees.mixins import AssociationGroupMixin, GroupSettingsMixin
 from committees.forms import AssociationGroupUpdateForm, AddOrUpdateExternalUrlForm, \
     DeleteGroupExternalUrlForm, AssociationGroupMembershipForm
 
@@ -46,15 +45,6 @@ class AssociationGroupSettingsView(AssociationGroupMixin, TemplateView):
         context = super(AssociationGroupSettingsView, self).get_context_data(**kwargs)
         context['options'] = options
         return context
-
-
-class GroupSettingsMixin(AssociationGroupMixin):
-    settings_option = None
-
-    def setup(self, request, *args, **kwargs):
-        super(GroupSettingsMixin, self).setup(request, *args, **kwargs)
-        if not self.config.settings.can_access(self.association_group, self.settings_option):
-            raise PermissionDenied
 
 
 class BaseSettingsUpdateView(GroupSettingsMixin, FormView):

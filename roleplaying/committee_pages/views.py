@@ -1,7 +1,7 @@
 from django.views.generic import TemplateView
 
 
-from committees.committeecollective import AssociationGroupMixin
+from committees.mixins import AssociationGroupMixin
 
 
 class CampaignDetailView(AssociationGroupMixin, TemplateView):
