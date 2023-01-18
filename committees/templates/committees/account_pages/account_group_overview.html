@@ -12,10 +12,8 @@
     {% for group in member.associationgroup_set.all %}
         <div class="my-2 p-2">
                 <div class="d-flex">
-                    <div style="width: 3em">
-                        {% if group.icon %}
-                            <img style="height: 3em;" src={{ group.icon.url }}>
-                        {% endif %}
+                    <div style="font-size: x-small;">
+                        {% include "committees/snippets/snippet_assoc_group_icon.html" with association_group=group%}
                     </div>
                     <h3>
                         {{ group }}

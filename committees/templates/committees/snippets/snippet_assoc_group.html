@@ -4,17 +4,8 @@
 <div class="card mb-2">
     <div class="card-header">
         <div class="d-flex">
-            <div style="width: 4em">
-                {% if group.icon %}
-                    <a class="enlargable_image" data-imgurl="{{ group.icon.url }}">
-                        <div class=""
-                             style="background-size: contain; background-position: center;
-                                 background-image: url('{{ group.icon.url }}');
-                                 background-repeat: no-repeat; width: 4em; height: 4em;"></div>
-                    </a>
-
-
-                {% endif %}
+            <div>
+                {% include "committees/snippets/snippet_assoc_group_icon.html" with association_group=group%}
             </div>
 
             <div>
