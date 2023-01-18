@@ -91,7 +91,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
             'marked_for_deletion',
             ('last_updated_date', 'last_updated_by'),]}),
         ('Membership Status', {'fields':
-            ['is_deregistered', 'has_paid_membership_fee', 'is_honorary_member', 'member_since']}),
+            ['is_deregistered', 'is_honorary_member', 'member_since']}),
         ('Contact Details', {'fields':
             ['email', 'phone_number',
             ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
@@ -117,8 +117,6 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
     list_per_page = 150
     list_max_show_all = 999
 
-    # Allow bulk updating has_paid_membership_fee = False
-    # TODO: This isn't a clean solution but it'll work for now
     actions = ['mark_as_current_member', ExportActionMixin.export_admin_action]
 
     # Disable bulk delete

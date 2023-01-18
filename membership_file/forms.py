@@ -51,7 +51,7 @@ class MemberForm(UpdatingUserFormMixin, MemberRoomForm):
     class Meta:
         model = Member
         exclude = ('last_updated_by', 'last_updated_date', 'marked_for_deletion', 'user', 'notes', 'is_deregistered')
-        readonly_fields = ['accessible_rooms', 'member_since', 'has_paid_membership_fee', 'is_honorary_member', 'external_card_deposit', 'key_id']
+        readonly_fields = ['accessible_rooms', 'member_since', 'is_honorary_member', 'external_card_deposit', 'key_id']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
