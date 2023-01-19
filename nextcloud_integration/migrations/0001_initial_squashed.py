@@ -6,8 +6,6 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    replaces = [('nextcloud_integration', '0001_initial'), ('nextcloud_integration', '0002_auto_20220925_1758'), ('nextcloud_integration', '0003_ncfolder_slug'), ('nextcloud_integration', '0004_auto_20221001_1612'), ('nextcloud_integration', '0005_auto_20221012_1618'), ('nextcloud_integration', '0006_auto_20221016_1845'), ('nextcloud_integration', '0007_auto_20221107_2228'), ('nextcloud_integration', '0008_auto_20230108_1558'), ('nextcloud_integration', '0009_auto_20230108_1559'), ('nextcloud_integration', '0010_auto_20230108_1642')]
-
     initial = True
 
     dependencies = [

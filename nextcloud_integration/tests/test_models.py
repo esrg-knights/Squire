@@ -19,22 +19,27 @@ class NCFileTestCase(TestCase):
         )
         self.assertEqual(file.slug, "test-slug")
 
-    def test_clean_duplicate_slugs(self):
+    def test_slug_unique_together(self):
         with self.assertRaises(ValidationError) as e:
-            file = SquireNextCloudFile.objects.create(
+            file = SquireNextCloudFile(
                 display_name="Display name",
                 file_name="Arbitrary file name.test",
                 folder_id=1,
                 slug="initial_file",
             )
             file.full_clean()
-        self.assertEqual(e.exception.error_dict['__all__'][0].code, 'duplicate_slug')
+        self.assertEqual(e.exception.error_dict['__all__'][0].code, 'unique_together')
 
-    def test_duplicate_slug_not_triggered_on_self(self):
-        try:
-            SquireNextCloudFile.objects.get(id=1).full_clean()
-        except ValidationError as e:
-            raise AssertionError(f"Object 1 was not clean: {e}")
+    def test_file_name_unique_together(self):
+        with self.assertRaises(ValidationError) as e:
+            file = SquireNextCloudFile(
+                display_name="Display name",
+                file_name="testfile.md",
+                folder_id=1,
+                slug="some_slug",
+            )
+            file.full_clean()
+        self.assertEqual(e.exception.error_dict['__all__'][0].code, 'unique_together')
 
     def test_get_absolute_url(self):
         file = SquireNextCloudFile.objects.get(id=1)

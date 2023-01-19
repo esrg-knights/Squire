@@ -63,15 +63,18 @@ class SquireNextCloudFile(models.Model):
     is_missing = models.BooleanField(default=False) # Whether the file is non-existant on nextcloud
     CONNECTION_NEXTCLOUD_SYNC = "NcS"
     CONNECTION_SQUIRE_UPLOAD = "SqU"
-    connection = models.CharField(max_length=3, choices=[
+    CONNECTION_MANUAL = "Mnl"
+    connection = models.CharField(max_length=3, default=CONNECTION_MANUAL, choices=[
         (CONNECTION_NEXTCLOUD_SYNC, "Synched through file on Nextcloud"),
-        (CONNECTION_SQUIRE_UPLOAD, "Uploaded through Squire")
+        (CONNECTION_SQUIRE_UPLOAD, "Uploaded through Squire"),
+        (CONNECTION_MANUAL, "Added manually in backend"),
     ]) # Defines how the connection occured
 
     class Meta:
         # Set the default permissions. Each item has a couple of additional default permissions
         default_permissions = ('add', 'change', 'delete', 'view',
                                'sync',)
+        unique_together = [["slug", "folder"], ["file_name", "folder"]]
 
     def __init__(self, *args, **kwargs):
         super(SquireNextCloudFile, self).__init__(*args, **kwargs)
@@ -92,8 +95,8 @@ class SquireNextCloudFile(models.Model):
         if self.file is None and (self.file_name is None or self.file_name == ""):
             raise ValidationError("Either file or filename should be defined", code="no_file_name_linked")
 
-        if SquireNextCloudFile.objects.filter(folder=self.folder, slug=self.slug).exclude(id=self.id).exists():
-            raise ValidationError("A file with this name already exists in this folder.",code='duplicate_slug')
+        # if SquireNextCloudFile.objects.filter(folder=self.folder, slug=self.slug).exclude(id=self.id).exists():
+        #     raise ValidationError("A file with this name already exists in this folder.",code='duplicate_slug')
 
     def _set_slug(self):
         if self.slug is None or self.slug == "":

@@ -89,7 +89,7 @@ class SyncFileToFolderForm(ModelForm):
 
         super(SyncFileToFolderForm, self).__init__(*args, **kwargs)
         self.instance.folder = self.folder
-        self.instance.connection = "NcS"
+        self.instance.connection = SquireNextCloudFile.CONNECTION_NEXTCLOUD_SYNC
         self.fields["selected_file"].choices = [(file.name, file) for file in self.file_list]
 
     def clean_selected_file(self):

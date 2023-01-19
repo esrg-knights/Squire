@@ -109,13 +109,21 @@ class FileSyncFormTestCase(FormValidityMixin, TestCase):
             'description': "Test file that does not actually exist",
             'selected_file': 'new_file.txt',
         })
-        self.assertEqual(form.instance.connection, "NcS")
         self.assertEqual(form.instance.folder, self.folder)
         self.assertEqual(form.instance.slug, "new-folder")
 
         self.assertFalse(SquireNextCloudFile.objects.filter(file_name="new_file.txt"))
         form.save()
         self.assertTrue(SquireNextCloudFile.objects.filter(file_name="new_file.txt"))
+
+    def test_form_connection_default(self, mock_client):
+        form = self.assertFormValid(data={
+            'display_name': 'New Folder',
+            'description': "Test file that does not actually exist",
+            'selected_file': 'new_file.txt',
+        })
+        self.assertEqual(form.instance.connection, "NcS")
+        self.assertNotIn('connection', form.fields.keys())
 
     def test_client_calling(self, mock_client):
         form = self.assertFormValid(data={

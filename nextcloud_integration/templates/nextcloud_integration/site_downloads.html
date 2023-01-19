@@ -35,5 +35,10 @@
             <i class="fas fa-plus"></i> Add folder
         </a>
     {% endif %}
+    {% if user.is_superuser %}
+        <a class="btn btn-info" href="{% url "nextcloud:browse_nextcloud" %}">
+            <i class="fas fa-search"></i> Browse cloud
+        </a>
+    {% endif %}
 
 {% endblock %}
