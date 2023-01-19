@@ -8,6 +8,19 @@
 {% endblock %}
 
 
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url "committees:nextcloud:cloud_overview" group_id=association_group.id %}">
+        Folders
+    </a></li>
+    <li class="breadcrumb-item"><a href="{% url "committees:nextcloud:cloud_overview" group_id=association_group.id %}">
+        {{ folder.display_name }}
+    </a></li>
+    <li class="breadcrumb-item"><a>
+        Sync File
+    </a></li>
+{% endblock %}
+
+
 {% block content %}
     {{ block.super }}
 
