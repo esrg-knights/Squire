@@ -37,10 +37,12 @@ class MailcowAlias(MailcowAPIResponse):
     modified: Optional[datetime] = None
 
     def get_type(self) -> AliasType:
-        try:
-            return AliasType(self.goto)
-        except ValueError:
-            return AliasType.NORMAL
+        if len(self.goto) == 1:
+            try:
+                return AliasType(self.goto[0])
+            except ValueError:
+                pass
+        return AliasType.NORMAL
 
     @classmethod
     def from_json(cls, json: dict) -> 'MailcowAlias':

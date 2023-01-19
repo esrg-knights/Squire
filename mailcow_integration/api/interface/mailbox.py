@@ -43,15 +43,15 @@ class MailboxAttributes(MailcowAPIResponse):
   @classmethod
   def from_json(cls, json: dict) -> 'MailboxAttributes':
       json.update({
-          'force_pw_update': bool(json['force_pw_update']),
-          'tls_enforce_in': bool(json['tls_enforce_in']),
-          'tls_enforce_out': bool(json['tls_enforce_out']),
-          'sogo_access': bool(json['sogo_access']),
-          'imap_access': bool(json['imap_access']),
-          'pop3_access': bool(json['pop3_access']),
-          'smtp_access': bool(json['smtp_access']),
-          'xmpp_access': bool(json['xmpp_access']),
-          'xmpp_admin': bool(json['xmpp_admin']),
+          'force_pw_update': json['force_pw_update'] != "0",
+          'tls_enforce_in': json['tls_enforce_in'] != "0",
+          'tls_enforce_out': json['tls_enforce_out'] != "0",
+          'sogo_access': json['sogo_access'] != "0",
+          'imap_access': json['imap_access'] != "0",
+          'pop3_access': json['pop3_access'] != "0",
+          'smtp_access': json['smtp_access'] != "0",
+          'xmpp_access': json['xmpp_access'] != "0",
+          'xmpp_admin': json['xmpp_admin'] != "0",
           'quarantine_notification': QuarantineNotification(json['quarantine_notification']),
           'quarantine_category': QuarantaineNotificationCategory(json['quarantine_category']),
       })

@@ -129,3 +129,4 @@ class MailcowClientTest(TestCase):
             }, 'my_url')
         except MailcowException as e:
             self.fail(f"Exception should not be raised: {e}")
+

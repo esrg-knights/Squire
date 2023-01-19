@@ -1,7 +1,6 @@
 from enum import Enum
-from functools import cache, lru_cache
 import json
-from typing import Generator, List
+from typing import Generator
 import requests
 
 from mailcow_integration.api.exceptions import *
@@ -25,9 +24,9 @@ class MailcowAPIClient:
         For an incomplete overview of the Mailcow API, see: https://mailcow.docs.apiary.io
 
         In order to connect to a `host`'s API, an `api_key` needs to be generated in the
-        Mailcow admin. Additionally, the API needs to be activated, and the ipv4 address
-        of the client needs to be added to an IP whitelist (alternatively, the IP whitelist
-        can be disabled entirely).
+        Mailcow admin. Additionally, the API needs to be activated, and the ipv4 and/or ipv6
+        addresses of the client needs to be added to an IP whitelist (alternatively, the
+        IP whitelist can be disabled entirely).
     """
     API_FORMAT = "%(host)s/api/v1/"
     _alias_cache = None
