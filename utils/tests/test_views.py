@@ -23,6 +23,7 @@ class TestForm(Form):
     def save(self):
         pass
 
+
 class TestRedirectMixin(TestCase):
     class TestView(RedirectMixin, FormView):
         success_url = "/success/"
@@ -129,11 +130,6 @@ class TestPostOnlyFormViewMixin(TestCase):
         for message in request._messages:
             # This is weird, but searching with [0] provides an error. So I do this instead
             return message
-
-
-
-
-
 
 
 class TestSearchFormMixin(TestCase):

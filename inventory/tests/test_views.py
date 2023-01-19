@@ -29,8 +29,8 @@ class TestOwnershipMixin(TestMixinWithMemberMiddleware, TestMixinMixin, TestCase
         self.ownership = Ownership.objects.get(id=2)
         super(TestOwnershipMixin, self).setUp()
 
-    def _imitiate_request_middleware(self, request):
-        super(TestOwnershipMixin, self)._imitiate_request_middleware(request)
+    def _imitiate_request_middleware(self, request, **kwargs):
+        super(TestOwnershipMixin, self)._imitiate_request_middleware(request, **kwargs)
         if hasattr(request.user, 'member'):
             request.member = request.user.member
 

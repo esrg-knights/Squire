@@ -1,0 +1,31 @@
+{% load generic_field %}
+<div class="row">
+    <div class="col-4">
+        <span class="h5">{{ form.instance.display_name }}</span>
+        <br>
+        <div style="margin-top: -0.5em;" class="font-weight-lighter small">
+            {% if file.is_missing %}
+                <div class="text-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    File missing
+                </div>
+            {% else %}
+                <i class="{{ form.instance.get_file_type.icon_class }}"></i>
+                {{ form.instance.file_name }}
+                - {{ form.instance.get_file_type.name }}
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-8">
+        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+        {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">{{ error }}</div>
+            {% endfor %}
+        {% endif %}
+
+        {% for field in form.visible_fields %}
+            {% generic_field field -1 %}
+        {% endfor %}
+    </div>
+</div>

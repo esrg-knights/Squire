@@ -1,0 +1,13 @@
+<div id="{{ message.msg_id }}" class="w-100 alert alert-{{ message.msg_type }}">
+    <div class="row">
+        <div class="col"
+             style="display: flex; justify-content: center;align-items: center;"
+        >{{ message.msg_text }}</div>
+        {% if message.btn_text %}
+            <a class="btn btn-{{ message.msg_type }} mr-2"
+               href="{{ message.btn_url }}">
+                {{ message.btn_text }}
+            </a>
+        {% endif %}
+    </div>
+</div>

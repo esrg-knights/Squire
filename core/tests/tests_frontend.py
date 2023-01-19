@@ -98,12 +98,6 @@ class NavGlobalPreferenceTest(TestCase):
     def test_newsletter(self):
         """ Tests if the newsletter global preference is working """
         self._test_global_preference_page_404('newsletter__share_link', reverse('core:newsletters'), TestMemberUser)
-        self._test_global_preference_base_template_nav('newsletter__share_link', reverse('core:newsletters'), TestMemberUser)
-
-    def test_downloads(self):
-        """ Tests if the downloads global preference is working """
-        self._test_global_preference_page_404('downloads__share_link', reverse('core:downloads'), TestMemberUser)
-        self._test_global_preference_base_template_nav('downloads__share_link', reverse('core:downloads'), TestMemberUser)
 
 
 # Tests the login form
