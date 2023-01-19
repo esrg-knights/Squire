@@ -225,7 +225,8 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             except MailcowAPIReadWriteAccessDenied as e:
                 context['error'] = "API key only allows access to read operations, not write."
             except MailcowAPIAccessDenied as e:
-                context['error'] = "IP address is not whitelisted in the Mailcow admin."
+                ip = str(e).rpartition(" ")[2]
+                context['error'] = f"IP address is not whitelisted in the Mailcow admin: {ip}"
             except MailcowException as e:
                 context['error'] = print(", ".join(e.args))
             else:

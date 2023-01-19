@@ -15,6 +15,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def get_mailcow_manager() -> Optional['SquireMailcowManager']:
+    """ Access the AppConfig to obtain Squire's Mailcow Manager that connects to the Mailcow API. """
+    return apps.get_app_config("mailcow_integration").mailcow_client
+
 class SquireMailcowManager:
     """ All interactions Squire makes with the Mailcow API are handled through this class.
         It is responsible for adding members' emails to a group of member aliases (depending

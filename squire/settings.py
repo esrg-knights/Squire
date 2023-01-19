@@ -382,25 +382,11 @@ MARTOR_ALTERNATIVE_JQUERY_JS_FILE = None
 ####################################################################
 # Mailcow API
 #   If MAILCOW_HOST is None, no API connection is established
-
-with open(os.path.join(BASE_DIR, "squire", "mailcowconfig.json"), "r") as mailcow_config_fp:
-    _mailcow_config = json.load(mailcow_config_fp)
-
-    MAILCOW_HOST = _mailcow_config['host']
-    MAILCOW_API_KEY = _mailcow_config['api_key']
-
-    MEMBER_ALIAS_ARCHIVE_ADDRESS = _mailcow_config['member_alias_archive_address']
-    COMMITTEE_ALIAS_ARCHIVE_ADDRESS = _mailcow_config['committee_alias_archive_address']
-
-    MEMBER_ALIASES = _mailcow_config['member_aliases']
-
-    MAILCOW_HOST = "https://beta.kotkt.nl"
-    MAILCOW_API_KEY = "1CB942-8E92D4-D751D4-0585CA-A65232"
-
-# Mailcow API cannot handle ipv6. This hack forces usage of ipv4
-# TODO: DO NOT USE IN PRODUCTION
-import requests
-requests.packages.urllib3.util.connection.HAS_IPV6 = False
+MAILCOW_HOST = None
+MAILCOW_API_KEY = None
+MEMBER_ALIAS_ARCHIVE_ADDRESS = None
+COMMITTEE_ALIAS_ARCHIVE_ADDRESS = None
+MEMBER_ALIASES = {}
 
 ####################################################################
 # Other Settings

@@ -20,10 +20,10 @@ class MailcowIntegrationConfig(AppConfig):
     def ready(self):
         # Setup Mailcow API client
         if settings.MAILCOW_HOST is not None:
-            logger.info("Mailcow client set up")
+            logger.info(f"Mailcow client set up: {settings.MAILCOW_HOST}")
             self.mailcow_client = SquireMailcowManager(settings.MAILCOW_HOST, settings.MAILCOW_API_KEY)
 
             # Set up signals
             register_mailcow_signals()
         else:
-            logger.warning("Mailcow connection disabled. No mailcow configuration was found in the project's settings.")
+            logger.warning("Mailcow connection disabled. No mailcow configuration was found in the project's settings, or configuration was malformed.")
