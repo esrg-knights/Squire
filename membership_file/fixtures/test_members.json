@@ -34,7 +34,7 @@
       "model": "membership_file.member",
       "pk": 2,
       "fields": {
-         "user": null,
+         "user": 3,
          "legal_name": "Z.Y.",
          "first_name": "Xena",
          "tussenvoegsel": "",

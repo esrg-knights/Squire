@@ -1,0 +1,40 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load render_form %}
+
+{% block title %}
+    Squire - Nextcloud
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+
+    <h3>Nextcloud Browser</h3>
+    <p>
+        This page allows navigation of the position of files on nextcloud. Used for validation purposes.
+    </p>
+
+    <p>
+        Current path: {{ path }}
+    </p>
+    <hr>
+
+    <ul>
+        {% for resource in nextcloud_resources %}
+            <li>
+                <a href="{% url "nextcloud:browse_nextcloud" path=resource.path %}">
+                    {{ resource }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+
+
+
+{% endblock %}
+
+

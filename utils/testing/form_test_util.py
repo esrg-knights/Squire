@@ -28,7 +28,7 @@ class FormValidityMixin:
         :param data: The form data
         :param form_class: The form class, defaults to self.form_class
         :param kwargs: Any form init kwargs not defined in self.build_form()
-        :return:
+        :return: returns the created valid form
         """
         form = self.build_form(data, form_class=form_class, **kwargs)
 

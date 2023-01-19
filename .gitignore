@@ -121,6 +121,7 @@ local_settings.py
 
 # Squire-specific gitignore (Secret Keys, etc.)
 /squire/secret_key.txt
+/squire/local_settings.py
 htdocs/media/local_only/*
 htdocs/media/images/*
 htdocs/static

@@ -1,0 +1,22 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load render_form %}
+
+{% block title %}
+    Squire - Nextcloud
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+
+    <h3>Create new folder</h3>
+
+    {% render_form method="post" submit_class="btn-success btn" submit_text="Create new folder"%}
+
+
+
+{% endblock %}
