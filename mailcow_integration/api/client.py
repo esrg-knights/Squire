@@ -75,7 +75,12 @@ class MailcowAPIClient:
         url = self.API_FORMAT % {'host': self.host} + url
         logger.info(f"Request made to: {url}")
         res = requests.request(request_type.value, url, params=params, data=data, headers=self._get_headers())
-        content = json.loads(res.content)
+
+        try:
+            content = json.loads(res.content)
+        except json.JSONDecodeError:
+            # Content did not have valid formatting
+            content = None
 
         if isinstance(content, list):
             # Responses are sometimes packed in a list (e.g., when updating multiple entries at the same time)
