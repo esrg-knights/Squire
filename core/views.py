@@ -52,11 +52,6 @@ class NewsletterView(GlobalPreferenceRequiredMixin, MembershipRequiredMixin, Tem
     global_preference = "newsletter__share_link"
     template_name = "core/newsletters.html"
 
-class DownloadsView(GlobalPreferenceRequiredMixin, MembershipRequiredMixin, TemplateView):
-    """ Page for viewing site downloads """
-    global_preference = "downloads__share_link"
-    template_name = "core/downloads.html"
-
 
 @require_safe
 def registerSuccess(request):

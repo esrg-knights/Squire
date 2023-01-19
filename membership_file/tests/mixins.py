@@ -10,7 +10,7 @@ class TestMixinWithMemberMiddleware:
                             f"TestMixinMixin. Ensure that TestMixinMixin is in the inheritencelist to make this work")
         super(TestMixinWithMemberMiddleware, self).__init__(*args, **kwargs)
 
-    def _imitiate_request_middleware(self, request):
-        super(TestMixinWithMemberMiddleware, self)._imitiate_request_middleware(request)
+    def _imitiate_request_middleware(self, request, **kwargs):
+        super(TestMixinWithMemberMiddleware, self)._imitiate_request_middleware(request, **kwargs)
         if hasattr(request.user, 'member'):
             request.member = request.user.member

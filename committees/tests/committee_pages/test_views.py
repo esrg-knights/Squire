@@ -33,8 +33,8 @@ class TestGroupMixin(TestMixinWithMemberMiddleware, TestMixinMixin, TestCase):
         self.associationgroup = AssociationGroup.objects.get(id=1)
         super(TestGroupMixin, self).setUp()
 
-    def get_as_full_view_class(self):
-        cls = super(TestGroupMixin, self).get_as_full_view_class()
+    def get_as_full_view_class(self, **kwargs):
+        cls = super(TestGroupMixin, self).get_as_full_view_class(**kwargs)
         # Set the config instance. Normally done in urls creation as base value
         cls.config = FakeConfig(registry)
         return cls
