@@ -1,6 +1,7 @@
 from django.template.loader import get_template
 from django.urls import path, include
-from django.utils.safestring import mark_safe
+
+from committees.models import AssociationGroup
 
 
 class OptionsRegistry:
@@ -50,17 +51,17 @@ class SettingsOptionBase:
     name = None
     title = None
     url_keyword  = ''
-    template_name = None
+    option_template_name = None
     group_type_required = []
     group_permission_required = None
 
     def render(self, association_group):
         """ Renders a block displayed in the settings page """
-        if self.template_name is None:
+        if self.option_template_name is None:
             return ''
 
         context = self.get_context_data(association_group)
-        template = get_template(self.template_name)
+        template = get_template(self.option_template_name)
         rendered_result = template.render(context)
         return rendered_result
 
@@ -85,3 +86,21 @@ class SettingsOptionBase:
     def build_url_pattern(self, config):
         """ Builds a list of urls """
         raise NotImplementedError(f"Urls not implemented on {self.__class__.__name__}")
+
+
+class SimpleFormSettingsOption(SettingsOptionBase):
+    option_template_name = "committees/snippets/simple_settings_snippet.html"
+    option_form_class = None
+    resolver_name = None
+
+    def get_form_class(self):
+        return self.option_form_class
+
+    def build_form_view(self, ):
+        def render_form(request, *args, group_id: AssociationGroup, **kwargs):
+            pass
+
+    def build_url_pattern(self, config):
+        return [
+            path('', self.build_form_view(), name=self.resolver_name),
+        ]

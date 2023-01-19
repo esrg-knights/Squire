@@ -15,7 +15,7 @@ class SettingOptionsTestCase(TestCase):
 
     def setUp(self):
         self.options = SettingsOptionBase()
-        self.options.template_name = "committees/test/test_setting_option_layout.html"
+        self.options.option_template_name = "committees/test/test_setting_option_layout.html"
 
         self.association_group = AssociationGroup.objects.create(
             name="test_group",
@@ -26,7 +26,7 @@ class SettingOptionsTestCase(TestCase):
     def test_render(self,  mock: Mock):
         return_value = self.options.render(self.association_group)
         self.assertEqual(return_value._extract_mock_name(), 'get_template().render()')
-        mock.assert_called_with(self.options.template_name)
+        mock.assert_called_with(self.options.option_template_name)
         context = mock.return_value.render.call_args[0][0]
         self.assertIn('association_group', context.keys())
         self.assertEqual(context['association_group'], self.association_group)

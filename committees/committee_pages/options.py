@@ -10,7 +10,7 @@ class InfoOptions(SettingsOptionBase):
     group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.ORDER]
     name = 'home_info_text'
     title = "Home screen"
-    template_name = "committees/committee_pages/setting_blocks/info.html"
+    option_template_name = "committees/committee_pages/setting_blocks/info.html"
 
     def build_url_pattern(self, config):
         return [path('update/', AssociationGroupUpdateView.as_view(config=config, settings_option=self), name='group_update')]
@@ -20,7 +20,7 @@ class MemberOptions(SettingsOptionBase):
     group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.ORDER]
     name = 'member_basic'
     title = "Members"
-    template_name = "committees/committee_pages/setting_blocks/members.html"
+    option_template_name = "committees/committee_pages/setting_blocks/members.html"
 
     def build_url_pattern(self, config):
         return [
@@ -33,7 +33,7 @@ class QuicklinkOptions(SettingsOptionBase):
     group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.ORDER]
     name = 'quicklinks'
     title = "External sources"
-    template_name = "committees/committee_pages/setting_blocks/quicklinks.html"
+    option_template_name = "committees/committee_pages/setting_blocks/quicklinks.html"
     def build_url_pattern(self, config):
         return [
             path('quicklinks/', include([
