@@ -4,6 +4,7 @@ from django.contrib.admin.filters import RelatedOnlyFieldListFilter
 from activity_calendar.admin import MarkdownImageInlineAdmin
 from committees.forms import AssociationGroupAdminForm
 from committees.models import *
+from .forms import AssociationGroupsTabAccessForm
 
 
 class MembershipInline(admin.TabularInline):
@@ -11,7 +12,7 @@ class MembershipInline(admin.TabularInline):
     extra = 0
     autocomplete_fields = ['member',]
 
-@admin.register(AssociationGroup)
+
 class AssociationGroupAdmin(MarkdownImageInlineAdmin):
     form = AssociationGroupAdminForm
 
@@ -26,7 +27,6 @@ class AssociationGroupAdmin(MarkdownImageInlineAdmin):
     autocomplete_fields = ['site_group',]
 
 
-@admin.register(GroupExternalUrl)
 class GroupExternalURLAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'association_group')
     list_filter = [
@@ -36,3 +36,18 @@ class GroupExternalURLAdmin(admin.ModelAdmin):
     search_fields = ('asssociation_group__site_group__name', 'name')
 
     autocomplete_fields = ['association_group',]
+
+
+class GroupPanelAccessAdmin(admin.ModelAdmin):
+    change_form_template = "committees/admin/change_group_tab_access.html"
+    list_display = ('id', 'name')
+    list_display_links = ('id', 'name')
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        return AssociationGroupsTabAccessForm
