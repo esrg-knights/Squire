@@ -27,7 +27,6 @@
           {% generic_field form.first_name form.tussenvoegsel form.last_name -1 110 -1 %}
 
           <h3>Membership Status</h3>
-          {% generic_field form.has_paid_membership_fee -1 %}
           {% if form.is_honorary_member.value %}
             <!-- Only show the option for honorary members if they actually are a honorary member -->
             {% generic_field form.is_honorary_member -1 %}

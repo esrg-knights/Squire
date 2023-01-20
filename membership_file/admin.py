@@ -2,15 +2,13 @@
 from datetime import datetime
 
 from django.contrib import admin, messages
-from django.utils.html import format_html
-from django.utils.translation import gettext_lazy as _
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
 
 from .forms import AdminMemberForm
 from .models import Member, MemberLog, MemberLogField, Room, MemberYear, Membership
 from core.admin import DisableModificationsAdminMixin, URLLinkInlineAdminMixin
-from membership_file.export import MemberResource
+from membership_file.export import MemberResource, MembersFinancialResource
 from utils.forms import RequestUserToFormModelAdminMixin
 
 
@@ -93,7 +91,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
             'marked_for_deletion',
             ('last_updated_date', 'last_updated_by'),]}),
         ('Membership Status', {'fields':
-            ['is_deregistered', 'has_paid_membership_fee', 'is_honorary_member', 'member_since']}),
+            ['is_deregistered', 'is_honorary_member', 'member_since']}),
         ('Contact Details', {'fields':
             ['email', 'phone_number',
             ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
@@ -119,8 +117,6 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
     list_per_page = 150
     list_max_show_all = 999
 
-    # Allow bulk updating has_paid_membership_fee = False
-    # TODO: This isn't a clean solution but it'll work for now
     actions = ['mark_as_current_member', ExportActionMixin.export_admin_action]
 
     # Disable bulk delete
@@ -214,7 +210,26 @@ class RoomAdmin(admin.ModelAdmin):
 
 
 @admin.register(MemberYear)
-class MemberYearAdmin(admin.ModelAdmin):
+class MemberYearAdmin(ExportActionMixin, admin.ModelAdmin):
+    ##############################
+    #  Export functionality
+    resource_class = MembersFinancialResource
+    formats = (CSV,)
+
+    def has_export_permission(self, request):
+        return request.user.has_perm('membership_file.can_export_membership_file')
+
+    def get_export_filename(self, request, queryset, file_format):
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        filename = "YearSubscriptions-%s.%s" % (date_str, file_format.get_extension())
+        return filename
+
+    def get_data_for_export(self, request, queryset, *args, **kwargs):
+        queryset = Membership.objects.filter(year__in=super(MemberYearAdmin, self).get_export_queryset(request))
+        return super(MemberYearAdmin, self).get_data_for_export(request, queryset, *args, **kwargs)
+
+    ##############################
+
     list_display = ['name', 'is_active', 'member_count']
     list_filter = ['is_active',]
 
@@ -226,5 +241,3 @@ class MemberYearAdmin(admin.ModelAdmin):
 class MembershipAdmin(admin.ModelAdmin):
     list_display = ['member', 'year', 'has_paid', 'payment_date']
     list_filter = ['year', 'has_paid']
-
-
