@@ -225,7 +225,7 @@ class MemberYearAdmin(ExportActionMixin, admin.ModelAdmin):
         return filename
 
     def get_data_for_export(self, request, queryset, *args, **kwargs):
-        queryset = Membership.objects.filter(year__in=super(MemberYearAdmin, self).get_export_queryset(request))
+        queryset = Membership.objects.filter(year__in=queryset)
         return super(MemberYearAdmin, self).get_data_for_export(request, queryset, *args, **kwargs)
 
     ##############################

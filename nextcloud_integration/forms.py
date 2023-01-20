@@ -64,7 +64,7 @@ class FileMoveForm(Form):
 class FolderCreateForm(ModelForm):
     class Meta:
         model = SquireNextCloudFolder
-        fields = ["display_name", "description"]
+        fields = ["display_name", "description", "requires_membership", "on_overview_page"]
 
     def clean(self):
         self.instance.path = f"/{slugify(self.cleaned_data.get('display_name', ''))}/"
