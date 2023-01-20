@@ -537,11 +537,6 @@ class Activity(models.Model):
                 return True
         return False
 
-    @property
-    def feed_id(self):
-        """ Get a unique identifier to distinguish this activity in the feed """
-        return f'local_activity-name-{self.id}'
-
 
 class ActivityDuplicate(ModelBase):
     """
