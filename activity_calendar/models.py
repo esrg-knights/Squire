@@ -57,6 +57,7 @@ class Activity(models.Model):
             ('can_ignore_slot_creation_limits',             "[F] Can create more slots even if the maximum amount of slots is reached."),
             ('can_select_slot_image',                       "[F] Can choose an alternative slot image when creating a slot."),
             ('can_view_private_slot_locations',             "[F] Can view a slot's location even if they are marked as 'private' by the activity."),
+            ('can_host_meetings',                           "[F] Can host meetings")
         ]
 
     markdown_images = GenericRelation('core.MarkdownImage')
@@ -80,6 +81,7 @@ class Activity(models.Model):
 
     # The date at which the activity will become visible for all users
     published_date = models.DateTimeField(default=now_rounded)
+    # TODO: Redact is_public
     is_public = models.BooleanField(default=True, help_text="If activity should be on public calendar")
 
     # Start and end times
@@ -126,8 +128,18 @@ class Activity(models.Model):
             (SLOT_CREATION_USER,   "By Users"),
             (SLOT_CREATION_NONE,   "No signup"),
         ],
-        default='CREATION_AUTO',
+        default=SLOT_CREATION_AUTO,
     )
+
+    # Possible activity types:
+    # - Public: A normal activity of the association
+    # - Meeting: Represents an internal meeting
+    ACTIVITY_PUBLIC = "PUBLIC"
+    ACTIVITY_MEETING = "MEETING"
+    type = models.CharField(max_length=8, default=ACTIVITY_PUBLIC, choices=[
+        (ACTIVITY_PUBLIC, "Public activity"),
+        (ACTIVITY_MEETING, "Meeting"),
+    ])
 
     # When people can start/no longer subscribe to slots
     subscriptions_open = models.DurationField(default=timezone.timedelta(days=7))

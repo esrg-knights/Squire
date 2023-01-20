@@ -1,0 +1,26 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% load activity_tags %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    {{ block.super }}
+
+    <p>
+        Below is a list of the upcoming meetings
+    </p>
+    <hr>
+
+    {% for meeting in meeting_list %}
+        <div class="mb-4">
+            <h4>
+                {{ meeting.title }}
+            </h4>
+        </div>
+    {% endfor %}
+
+{% endblock %}

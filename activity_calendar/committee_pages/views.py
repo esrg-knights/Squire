@@ -64,3 +64,14 @@ class AddActivityMomentCalendarView(AssociationGroupMixin, FormView):
         return self.form.instance.get_absolute_url()
 
 
+class MeetingOverview(AssociationGroupMixin, ListView):
+    template_name = "activity_calendar/committee_pages/meetings_home.html"
+    context_object_name = "meeting_list"
+
+    def get_queryset(self):
+        return Activity.objects.filter(
+            organiserlink__archived=False,
+            organiserlink__association_group=self.association_group,
+            type=Activity.ACTIVITY_MEETING
+        )
+
