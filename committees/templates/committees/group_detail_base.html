@@ -1,5 +1,6 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load bootstrap4 %}
 {% load association_group_tags %}
 {% load bootstrap_tabs %}
 
@@ -25,25 +26,40 @@
 
 {% endblock %}
 
-
-{% block content-frame-class %}
-    container
-{% endblock %}
-
-{% block content %}
-    <div class="d-flex flex-wrap">
-        <div style="width: 5em">
-            {% if association_group.icon %}
-                <img style="height: 5em;" src={{ association_group.icon.url }}>
-            {% endif %}
+{% block content_raw %}
+    <div class="{% block content-frame-class %}container{% endblock %}">
+        <div class="d-flex flex-wrap">
+            <div style="width: 5em">
+                {% if association_group.icon %}
+                    <img style="height: 5em;" src={{ association_group.icon.url }}>
+                {% endif %}
+            </div>
+            <div class="">
+                <h1>{{ association_group }}</h1>
+                <p>{{ association_group.short_description }}</p>
+            </div>
         </div>
-        <div class="">
-            <h1>{{ association_group }}</h1>
-            <p>{{ association_group.short_description }}</p>
+
+        {% bootstrap_tabs tabs %}
+        <div class="border-bottom my-2 border-dark">
+            {% block breadcrumbs %}
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb py-0 mb-2 bg-transparent">
+                        {% block breadcrumb_items %}
+                            <li class="breadcrumb-item"><a>
+                                Home
+                            </a></li>
+                        {% endblock %}
+                    </ol>
+                </nav>
+            {% endblock %}
         </div>
+
+        {% bootstrap_messages %}
+        {% block content %}
+
+        {% endblock %}
     </div>
-
-    {% bootstrap_tabs tabs %}
 {% endblock %}
 
 
