@@ -1,0 +1,74 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% load generic_field %}
+
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url "committees:nextcloud:cloud_overview" group_id=association_group.id %}">
+        Folders
+    </a></li>
+    <li class="breadcrumb-item"><a href="{% url "committees:nextcloud:cloud_overview" group_id=association_group.id %}">
+        {{ folder.display_name }}
+    </a></li>
+    <li class="breadcrumb-item"><a>
+        Sync File
+    </a></li>
+{% endblock %}
+
+
+{% block content %}
+    {{ block.super }}
+
+
+
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2>Sync file to {{ folder.display_name }}</h2>
+        </div>
+        <p>
+            <a href="{% url "committees:nextcloud:folder_sync_help" group_id=association_group.id folder_slug=folder.slug %}"
+               class="btn btn-info">
+                <i class="fas fa-info"></i> How to sync files
+            </a>
+        </p>
+    </div>
+
+
+    {% if form.file_list %}
+        <form method="post" id="synch_file_form">
+            {% csrf_token %}
+            <p>
+                Select any of the availlable non-synched files
+            </p>
+            {{ form.selected_file }}
+
+            <p>
+                Define the file as displayed on Squire
+            </p>
+            {% generic_field form.display_name -1 %}
+            {% generic_field form.description -1 %}
+        </form>
+        <button class="btn btn-primary" type="submit" form="synch_file_form">
+            <i class="fas fa-cloud"></i> Sync file
+        </button>
+    {% else %}
+        <p>
+            There are currently no unsynched files on the Nextcloud. Go into the nextcloud and make sure the file you
+            want to share is shared with Squire on Nextcloud.
+
+            <a href="{% url "committees:nextcloud:folder_sync_help" group_id=association_group.id folder_slug=folder.slug %}"
+                class="btn btn-info">
+                Learn more about syncing
+            </a>
+        </p>
+        <button class="btn btn-primary" disabled type="submit">
+            <i class="fas fa-cloud"></i> Sync file
+        </button>
+    {% endif %}
+
+{% endblock %}

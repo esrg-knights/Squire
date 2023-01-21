@@ -1,0 +1,44 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load nextcloud_tags %}
+
+{% block title %}
+    Squire - Nextcloud - {{ folder.display_name }}
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    <h2>Downloads</h2>
+    <p>
+        Below are all files availlable for download.
+    </p>
+    {% for alert in unique_messages %}
+        {% include "snippets/unique_alerts.html" with message=alert %}
+    {% endfor %}
+
+    {% for folder in folders %}
+        <div class="mb-4">
+            {% include "nextcloud_integration/snippets/nc_folder_contents.html" with folder=folder %}
+        </div>
+    {% empty %}
+        <hr>
+        <div>
+            There are currently no availlable downloads for you
+        </div>
+    {% endfor %}
+    {% if user|has_edit_access %}
+        <a class="btn btn-primary" href="{% url "nextcloud:add_folder" %}">
+            <i class="fas fa-plus"></i> Add folder
+        </a>
+    {% endif %}
+    {% if user.is_superuser %}
+        <a class="btn btn-info" href="{% url "nextcloud:browse_nextcloud" %}">
+            <i class="fas fa-search"></i> Browse cloud
+        </a>
+    {% endif %}
+
+{% endblock %}

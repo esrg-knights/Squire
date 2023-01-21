@@ -119,7 +119,7 @@ class FeedTestMixin:
         :param recurrence_id: The recurrence id. Returns the first valid component if None.
         :return: The subcomponent from the calendar with the given data.
         """
-        guid = get_feed_id(activity_item)
+        guid = self.feed.item_guid(activity_item)
 
         for subcomponent in self.calendar.subcomponents:
             start_dt = activity_item.start_date.date() if activity_item.full_day else activity_item.start_date
@@ -127,6 +127,7 @@ class FeedTestMixin:
             if subcomponent.get('UID', None) == guid and subcomponent.get('DTSTART').dt == start_dt:
                 return subcomponent
         return None
+
 
 class ICalFeedTestCase(FeedTestMixin, TestCase):
     fixtures = ['test_users', 'test_activity_slots']
@@ -147,6 +148,29 @@ class ICalFeedTestCase(FeedTestMixin, TestCase):
 
         self.assertIn('URL', component.keys())
         self.assertEqual('/'+component['URL'].split('/', 3)[3], '/activities/')
+
+    def test_guid(self):
+        """ Tests that instances of an activity share uid """
+        activitymoment = ActivityMoment.objects.get(id=4)
+        self.assertEqual(activitymoment.is_part_of_recurrence, True)
+
+        activity_component = self._get_component(activitymoment.parent_activity)
+        activity_moment_component = self._get_component(activitymoment)
+        self.assertEqual(
+            str(activity_component['UID']),
+            str(activity_moment_component['UID'])
+        )
+
+        # Non-recurring activities should have a different uid
+        activitymoment = ActivityMoment.objects.get(id=5)
+        self.assertEqual(activitymoment.is_part_of_recurrence, False)
+
+        activity_component = self._get_component(activitymoment.parent_activity)
+        activity_moment_component = self._get_component(activitymoment)
+        self.assertNotEqual(
+            str(activity_component['UID']),
+            str(activity_moment_component['UID'])
+        )
 
     def test_extra_nonrecurrent_activitymoment(self):
         """ Tests that an activity outside the recurrence is in the feed """

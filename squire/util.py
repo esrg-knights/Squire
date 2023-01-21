@@ -27,6 +27,15 @@ def get_secret_key(filePath: str, enableMessages: bool = False) -> str:
     return secret
 
 
+def create_local_settings(local_settings_path):
+    with open(local_settings_path, 'x') as f:
+        f.write(
+            "# This file contains local attributes of the settings file you wish to define or override\n"
+            "# This file is not synched with git and thus can contain personal attributes to destinguish your\n"
+            "# local version from the default version, e.g. because you use a different database."
+        )
+
+
 def create_coverage_directory(directory: str, enableMessages: bool = False) -> None:
     '''
     Creates a folder and outputs a message if that folder did not exist before.

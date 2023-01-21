@@ -1,0 +1,43 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load generic_field %}
+
+{% block title %}
+    Squire - Nextcloud - {{ folder.display_name }}
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    <h1>Add file to {{ folder.display_name }}</h1>
+
+    {% if form.file_list %}
+        <form method="post" id="synch_file_form">
+            {% csrf_token %}
+            <p>
+                Select any of the availlable non-synched files
+            </p>
+            {{ form.selected_file }}
+
+            <p>
+                Define the file as displayed on Squire
+            </p>
+            {% generic_field form.display_name -1 %}
+            {% generic_field form.description -1 %}
+        </form>
+        <button class="btn btn-primary" type="submit" form="synch_file_form">
+            Add file
+        </button>
+    {% else %}
+        <p>
+            There are currently no unsynched files on the Nextcloud. Go into the nextcloud and make sure the file you
+            want to share is shared with Squire on Nextcloud.
+        </p>
+        <button class="btn btn-primary" disabled type="submit">
+            Add file
+        </button>
+    {% endif %}
+{% endblock %}

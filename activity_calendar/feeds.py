@@ -37,13 +37,13 @@ def only_for(class_type, default=None):
 def get_feed_id(item):
     # ID should be _globally_ unique
     if isinstance(item, Activity):
-        # Sometimes a specific feed_name is given along with the object. Prioritise that.
-        return f"{item.feed_id}@kotkt.nl"
+        return f"local_activity-name-{item.id}@kotkt.nl"
     elif isinstance(item, ActivityMoment):
         if item.is_part_of_recurrence:
-            return f"local_activity-id-{item.parent_activity_id}@kotkt.nl"
+            # To override an recurrence, the UID needs to be the same as the activity
+            return f"local_activity-name-{item.parent_activity.id}@kotkt.nl"
         else:
-            return f"local_activity-id-{item.parent_activity_id}-special-{item.id}@kotkt.nl"
+            return f"local_activity-name-{item.parent_activity.id}-special-{item.id}@kotkt.nl"
 
     raise RuntimeError(f'An incorrect object instance has entered the calendar feed: {item.__class__.__name__}')
 
@@ -345,7 +345,7 @@ class BirthdayCalendarFeed(CESTEventFeed):
             recurrences=recurrence_pattern,
         )
         # Declare a feed name
-        activity.feed_name = f"bday-{slugify(member.get_full_name())}"
+        activity.feed_id = f"bday-{slugify(member.get_full_name())}"
         return activity
 
     def items(self):
@@ -359,6 +359,9 @@ class BirthdayCalendarFeed(CESTEventFeed):
                 date_of_birth__isnull=False,
             )
         )
+
+    def item_guid(self, item):
+        return item.feed_id
 
     def item_link(self, item):
         return "" # There is no page for a birthday

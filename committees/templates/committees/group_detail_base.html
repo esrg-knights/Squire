@@ -1,5 +1,6 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load bootstrap4 %}
 {% load association_group_tags %}
 {% load bootstrap_tabs %}
 
@@ -25,13 +26,9 @@
 
 {% endblock %}
 
-
-{% block content-frame-class %}
-    container
-{% endblock %}
-
-{% block content %}
-        <div style="" class="d-flex flex-wrap">
+{% block content_raw %}
+    <div class="{% block content-frame-class %}container{% endblock %}">
+        <div class="d-flex flex-wrap">
             {% include "committees/snippets/snippet_assoc_group_icon.html" %}
 
             <div class="">
@@ -40,7 +37,26 @@
             </div>
         </div>
 
-    {% bootstrap_tabs tabs %}
+        {% bootstrap_tabs tabs %}
+        <div class="border-bottom my-2 border-dark">
+            {% block breadcrumbs %}
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb py-0 mb-2 bg-transparent">
+                        {% block breadcrumb_items %}
+                            <li class="breadcrumb-item"><a>
+                                Home
+                            </a></li>
+                        {% endblock %}
+                    </ol>
+                </nav>
+            {% endblock %}
+        </div>
+
+        {% bootstrap_messages %}
+        {% block content %}
+
+        {% endblock %}
+    </div>
 {% endblock %}
 
 

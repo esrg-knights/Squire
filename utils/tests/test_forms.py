@@ -6,7 +6,10 @@ from django.contrib.auth.models import Group
 from django.forms.models import model_to_dict
 from django.test import TestCase, RequestFactory
 
-from utils.forms import RequestUserToFormModelAdminMixin, UpdatingUserFormMixin, get_basic_filter_by_field_form
+from unittest.mock import MagicMock
+
+from utils.forms import RequestUserToFormModelAdminMixin, UpdatingUserFormMixin, get_basic_filter_by_field_form, \
+    FormGroup
 from utils.testing import FormValidityMixin
 
 User = get_user_model()
@@ -48,6 +51,7 @@ class DummyForm(UpdatingUserFormMixin, forms.ModelForm):
         fields = "__all__"
     updating_user_field_name = "user"
 
+
 class UpdatingUserFormMixinTest(TestCase):
     """ Tests for UpdatingUserFormMixin """
     def setUp(self):
@@ -79,9 +83,11 @@ class UpdatingUserFormMixinTest(TestCase):
                 "<class 'django.contrib.admin.models.LogEntry'> has no field foo"):
             DummyForm2(model_to_dict(self.obj), instance=self.obj, user=self.new_user)
 
+
 class DummyModelAdmin(RequestUserToFormModelAdminMixin, ModelAdmin):
     """ Dummy Modeladmin for testing RequestUserToFormModelAdminMixin """
     form = DummyForm
+
 
 class RequestUserToFormMixinTest(TestCase):
     """ Tests for RequestUserToFormModelAdminMixin """
@@ -102,3 +108,85 @@ class RequestUserToFormMixinTest(TestCase):
         model_admin = DummyModelAdmin(model=LogEntry, admin_site=AdminSite())
         form = model_admin.get_form(self.request)()
         self.assertEqual(form.user, self.user)
+
+
+class FormGroupTestCase(TestCase):
+
+    def setUp(self):
+        self.form_group = self._construct_form_group(data={})
+
+    def _construct_form_group(self, **kwargs):
+        class FakeFormGroup(FormGroup):
+            form_class = MagicMock()
+            formset_class = MagicMock()
+
+        FakeFormGroup.form_class.__name__ = "FakeForm"
+        FakeFormGroup.formset_class.__name__ = "FakeFormSet"
+
+        return FakeFormGroup(**kwargs)
+
+    def test_is_valid(self):
+        self.form_group.form.is_valid.return_value = False
+        self.form_group.formsets[0].is_valid.return_value = True
+        self.assertEqual(self.form_group.is_valid(), False)
+
+        self.form_group.form.is_valid.return_value = True
+        self.form_group.formsets[0].is_valid.return_value = False
+        self.assertEqual(self.form_group.is_valid(), False)
+
+        self.form_group.form.is_valid.return_value = True
+        self.form_group.formsets[0].is_valid.return_value = True
+        self.assertEqual(self.form_group.is_valid(), True)
+
+    def test_save(self):
+        self.form_group.save()
+        self.form_group.form.save.assert_called_once()
+        self.form_group.formsets[0].save.assert_called_once()
+
+    def test_init_kwargs_form(self):
+        """ Test form init kwargs being passed correctly """
+        form_group = self._construct_form_group(
+            data={"name": "attr"},
+            files="files",
+            auto_id=False,
+            error_class='none',
+            renderer='base_renderer',
+            fake_kwarg="Not-auto-transfered",
+        )
+        call_args = form_group.form_class.call_args
+        self.assertEqual(call_args.kwargs['data'], {'name': "attr"})
+        self.assertEqual(call_args.kwargs['files'], "files")
+        self.assertEqual(call_args.kwargs['auto_id'], False)
+        self.assertEqual(call_args.kwargs['error_class'], "none")
+        self.assertEqual(call_args.kwargs['renderer'], 'base_renderer')
+        self.assertNotIn('fake_kwarg', call_args.kwargs.keys())
+
+    def test_init_kwargs_formset(self):
+        """ Test form init kwargs being passed correctly """
+        form_group = self._construct_form_group(
+            data={"name": "attr"},
+            files="files",
+            auto_id=False,
+            error_class='none',
+            renderer='base_renderer',
+            fake_kwarg="Not-auto-transfered",
+        )
+        call_args = form_group.formset_class.call_args
+        self.assertEqual(call_args.kwargs['data'], {'name': "attr"})
+        self.assertEqual(call_args.kwargs['files'], "files")
+        self.assertEqual(call_args.kwargs['auto_id'], False)
+        self.assertEqual(call_args.kwargs['error_class'], "none")
+        self.assertNotIn('renderer', call_args.kwargs.keys())  # Formsets do not accept a renderer
+        self.assertNotIn('fake_kwarg', call_args.kwargs.keys())
+
+    def test_form_prefix(self):
+        form_group = self._construct_form_group()
+        self.assertEqual(form_group.form_class.call_args.kwargs['prefix'], "main")
+        form_group = self._construct_form_group(prefix="Group")
+        self.assertEqual(form_group.form_class.call_args.kwargs['prefix'], "Group-main")
+
+    def test_formset_prefix(self):
+        form_group = self._construct_form_group()
+        self.assertEqual(form_group.formset_class.call_args.kwargs['prefix'], "formset")
+        form_group = self._construct_form_group(prefix="Group")
+        self.assertEqual(form_group.formset_class.call_args.kwargs['prefix'], "Group-formset")

@@ -1,0 +1,17 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}
+    Squire - Nextcloud - {{ folder.display_name }}
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    <h1>{{ folder.display_name }}</h1>
+
+    {% include "nextcloud_integration/snippets/nc_folder_contents.html" with folder=folder %}
+{% endblock %}

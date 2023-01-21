@@ -188,7 +188,6 @@ class MemberLogTest(TestCase):
             "member_since": "1970-01-01",
             "is_deregistered": True,
             "is_honorary_member": False,
-            "has_paid_membership_fee": False,
             "notes": "",
         }
         self.numNonEmptyFields = len(self.data)

@@ -7,15 +7,15 @@
 {% endblock %}
 
 
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url "committees:group_general" group_id=association_group.id %}">Home</a></li>
+    <li class="breadcrumb-item"><a>Edit links</a></li>
+{% endblock %}
+
+
 {% block content %}
     {{ block.super }}
 
-    <div class="mb-2">
-        <a href="{% url "committees:settings_home" group_id=association_group.id %}"
-           class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-arrow-left"></i> Back to settings
-        </a>
-    </div>
     <h2>
         Useful links
     </h2>

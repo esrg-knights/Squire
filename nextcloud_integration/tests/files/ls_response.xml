@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:oc="http://owncloud.org/ns"
+               xmlns:nc="http://nextcloud.org/ns">
+    <d:response>
+        <d:href>/remote.php/dav/files/example_user/</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:getlastmodified>Wed, 12 Oct 2022 11:57:48 GMT</d:getlastmodified>
+                <d:resourcetype>
+                    <d:collection/>
+                </d:resourcetype>
+                <d:quota-used-bytes>63</d:quota-used-bytes>
+                <d:quota-available-bytes>-3</d:quota-available-bytes>
+                <d:getetag>&quot;6346abbcf2f99&quot;</d:getetag>
+                <d:comment>Current folder is returned automatically on ls</d:comment>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+    <d:response>
+        <d:href>/remote.php/dav/files/example_user/Some%20Folder/</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:getlastmodified>Thu, 22 Sep 2022 12:29:39 GMT</d:getlastmodified>
+                <d:resourcetype>
+                    <d:collection/>
+                </d:resourcetype>
+                <d:quota-used-bytes>20</d:quota-used-bytes>
+                <d:quota-available-bytes>-3</d:quota-available-bytes>
+                <d:getetag>&quot;632c5533c4d04&quot;</d:getetag>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+        <d:propstat>
+            <d:prop>
+                <d:getcontentlength/>
+                <d:getcontenttype/>
+            </d:prop>
+            <d:status>HTTP/1.1 404 Not Found</d:status>
+        </d:propstat>
+    </d:response>
+    <d:response>
+        <d:href>/remote.php/dav/files/example_user/Testnewfolder/</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:getlastmodified>Thu, 22 Sep 2022 10:55:57 GMT</d:getlastmodified>
+                <d:resourcetype>
+                    <d:collection/>
+                </d:resourcetype>
+                <d:quota-used-bytes>1</d:quota-used-bytes>
+                <d:quota-available-bytes>-3</d:quota-available-bytes>
+                <d:getetag>&quot;632c3f3de186a&quot;</d:getetag>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+        <d:propstat>
+            <d:prop>
+                <d:getcontentlength/>
+                <d:getcontenttype/>
+            </d:prop>
+            <d:status>HTTP/1.1 404 Not Found</d:status>
+        </d:propstat>
+    </d:response>
+    <d:response>
+        <d:href>/remote.php/dav/files/example_user/test_file.md</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:getlastmodified>Wed, 05 Oct 2022 14:09:20 GMT</d:getlastmodified>
+                <d:getcontentlength>15</d:getcontentlength>
+                <d:resourcetype/>
+                <d:getetag>&quot;4e6bd4b9d6c597862537ccc8ae75c4e8&quot;</d:getetag>
+                <d:getcontenttype>text/markdown</d:getcontenttype>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+        <d:propstat>
+            <d:prop>
+                <d:quota-used-bytes/>
+                <d:quota-available-bytes/>
+            </d:prop>
+            <d:status>HTTP/1.1 404 Not Found</d:status>
+        </d:propstat>
+    </d:response>
+    <d:response>
+        <d:href>/remote.php/dav/files/example_user/proof_of_shadowboard.png</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:getlastmodified>Fri, 07 Oct 2022 18:47:20 GMT</d:getlastmodified>
+                <d:getcontentlength>15</d:getcontentlength>
+                <d:resourcetype/>
+                <d:getetag>&quot;4e6bd4b9d6c597862537ccc8ae75c4e8&quot;</d:getetag>
+                <d:getcontenttype>text/markdown</d:getcontenttype>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+        <d:propstat>
+            <d:prop>
+                <d:quota-used-bytes/>
+                <d:quota-available-bytes/>
+            </d:prop>
+            <d:status>HTTP/1.1 404 Not Found</d:status>
+        </d:propstat>
+    </d:response>
+</d:multistatus>

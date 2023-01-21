@@ -13,6 +13,50 @@ from committees.models import AssociationGroup, AssociationGroupMembership, Grou
 from committees.committee_pages.views import AssociationGroupMixin, AssociationGroupDetailView, AssociationGroupQuickLinksView, \
     AssociationGroupQuickLinksAddOrUpdateView, AssociationGroupQuickLinksDeleteView, \
     AssociationGroupUpdateView, AssociationGroupMembersView, AssociationGroupMemberUpdateView
+from committees.committeecollective import CommitteeBaseConfig, registry
+
+
+class FakeConfig(CommitteeBaseConfig):
+    url_keyword = 'main'
+    name = 'Overview'
+    url_name = 'group_general'
+    order_value = 10
+
+
+class TestGroupMixin(TestMixinWithMemberMiddleware, TestMixinMixin, TestCase):
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'committees/associationgroups']
+    mixin_class = AssociationGroupMixin
+    base_user_id = 100
+
+    def setUp(self):
+        self.associationgroup = AssociationGroup.objects.get(id=1)
+        super(TestGroupMixin, self).setUp()
+
+    def get_as_full_view_class(self, **kwargs):
+        cls = super(TestGroupMixin, self).get_as_full_view_class(**kwargs)
+        # Set the config instance. Normally done in urls creation as base value
+        cls.config = FakeConfig(registry)
+        return cls
+
+    def get_base_url_kwargs(self):
+        return {'group_id': self.associationgroup.id}
+
+    def test_get_successful(self):
+        response = self._build_get_response()
+        self.assertEqual(response.status_code, 200)
+
+    def test_context_data(self):
+        self._build_get_response(save_view=True)
+        context = self.view.get_context_data()
+        self.assertEqual(context['association_group'], self.associationgroup)
+
+    def test_get_no_access(self):
+        # Nobody is part of group 3, so this should faulter
+        self.assertRaises403(url_kwargs={'group_id': 3})
+
+    def test_get_non_existent(self):
+        # This group does not exist
+        self.assertRaises404(url_kwargs={'group_id': 99})
 
 
 class TestAssociationGroupDetailView(ViewValidityMixin, TestCase):
