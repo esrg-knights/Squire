@@ -1,3 +1,4 @@
+from enum import Enum
 import re
 from typing import Dict, Optional, List
 
@@ -21,6 +22,12 @@ def get_mailcow_manager() -> Optional['SquireMailcowManager']:
     """ Access the AppConfig to obtain Squire's Mailcow Manager that connects to the Mailcow API. """
     return apps.get_app_config("mailcow_integration").mailcow_client
 
+class AliasCategory(Enum):
+    """ TODO """
+    MEMBER = 0 # Addresses for emailing all* members
+    GLOBAL_COMMITTEE = 1 # Addresses for emailing all* committees
+    COMMITTEE = 2 # Addresses for emailing specific committees and its members
+
 class SquireMailcowManager:
     """ All interactions Squire makes with the Mailcow API are handled through this class.
         It is responsible for adding members' emails to a group of member aliases (depending
@@ -37,6 +44,7 @@ class SquireMailcowManager:
     INTERNAL_ALIAS_SETTING_NAME = SQUIRE_MANAGE_INDICATOR + " Internal Alias"
     ALIAS_COMMITTEE_PUBLIC_COMMENT = SQUIRE_MANAGE_INDICATOR + " Committee Alias"
     ALIAS_MEMBERS_PUBLIC_COMMENT = SQUIRE_MANAGE_INDICATOR + " Members Alias"
+    ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT = SQUIRE_MANAGE_INDICATOR + " Global Committee Alias"
 
     def __init__(self, mailcow_host: str, mailcow_api_key: str):
         self._client = MailcowAPIClient(mailcow_host, mailcow_api_key)
@@ -211,6 +219,14 @@ class SquireMailcowManager:
 
         return active_members.filter(opts)
 
+    def get_archive_adresses_for_type(self, alias_type: AliasCategory, address: str) -> List[str]:
+        """ TODO """
+        if alias_type == AliasCategory.MEMBER:
+            return settings.MEMBER_ALIASES[address]["archive_addresses"]
+        elif alias_type == AliasCategory.GLOBAL_COMMITTEE:
+            return settings.COMMITTEE_CONFIGS["global_archive_addresses"]
+        return settings.COMMITTEE_CONFIGS["archive_addresses"]
+
     def update_member_aliases(self) -> None:
         """ Updates all member aliases """
         # Fetch active members here so the results can be cached
@@ -227,7 +243,7 @@ class SquireMailcowManager:
             emails = self.clean_alias_emails(
                 self.get_subscribed_members(active_members, alias_id, default=alias_data['default_opt'])
             )
-            emails.append(settings.MEMBER_ALIAS_ARCHIVE_ADDRESS)
+            # emails.append(settings.MEMBER_ALIAS_ARCHIVE_ADDRESS)
             logger.info(emails)
 
             self._set_alias_by_name(alias_data['address'], emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT,
@@ -253,7 +269,7 @@ class SquireMailcowManager:
                 continue
 
             emails = self.clean_alias_emails(assoc_group.members.filter_active())
-            emails.append(settings.COMMITTEE_ALIAS_ARCHIVE_ADDRESS)
+            # emails.append(settings.COMMITTEE_ALIAS_ARCHIVE_ADDRESS)
             logger.info(f"Forced updating {assoc_group} ({len(emails)} subscribers)")
 
             self._set_alias_by_name(assoc_group.contact_email, emails, public_comment=self.ALIAS_COMMITTEE_PUBLIC_COMMENT,

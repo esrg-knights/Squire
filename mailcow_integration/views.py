@@ -2,9 +2,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Tuple, TypedDict
 
-from django.apps import apps
 from django.conf import settings
-from django.db.models import F, Q, Value, ExpressionWrapper, BooleanField, QuerySet
+from django.db.models import Q, ExpressionWrapper, BooleanField, QuerySet
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -14,21 +13,11 @@ from django.views.generic import TemplateView
 from mailcow_integration.api.exceptions import MailcowAPIAccessDenied, MailcowAPIReadWriteAccessDenied, MailcowAuthException, MailcowException
 from mailcow_integration.api.interface.alias import MailcowAlias
 from mailcow_integration.api.interface.base import MailcowAPIResponse
-from mailcow_integration.api.interface.mailbox import MailboxStatus, MailcowMailbox
+from mailcow_integration.api.interface.mailbox import MailcowMailbox
 from mailcow_integration.dynamic_preferences_registry import alias_address_to_id
-from mailcow_integration.squire_mailcow import SquireMailcowManager, get_mailcow_manager
+from mailcow_integration.squire_mailcow import AliasCategory, SquireMailcowManager, get_mailcow_manager
 
 from utils.views import SuperUserRequiredMixin
-
-from committees.models import AssociationGroup
-
-class AliasType(Enum):
-    """ TODO """
-    MEMBER = 0 # Addresses for emailing all* members
-    COMMITTEE = 1 # Addresses for emailing all* committees
-    OTHER = 2 # Addresses for emailing specific committees and its members
-
-
 
 class AliasStatus(Enum):
     """ Aliases that should exist according to Squire may not be in sync with those in Mailcow.
@@ -72,11 +61,11 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
         super().__init__(*args, **kwargs)
         self.mailcow_manager: SquireMailcowManager = get_mailcow_manager()
 
-    def _get_alias_status(self, address: str, subscribers: QuerySet, alias_type: AliasType,
+    def _get_alias_status(self, address: str, subscribers: QuerySet, alias_type: AliasCategory,
             aliases: List[MailcowAlias], mailboxes: List[MailcowMailbox], squire_comment: str) -> Tuple[AliasStatus, Optional[MailcowAlias], Optional[MailcowMailbox]]:
         """ TODO """
-        if (alias_type != AliasType.MEMBER and address in settings.MEMBER_ALIASES
-                or alias_type == AliasType.OTHER and address == "TODO   settings.GLOBAL_COMMITTEE_ALIASES"):
+        if (alias_type != AliasCategory.MEMBER and address in settings.MEMBER_ALIASES
+                or alias_type == AliasCategory.COMMITTEE and address in settings.COMMITTEE_CONFIGS['global_addresses']):
             # Address is reserved
             return AliasStatus.RESERVED, None, None
 
@@ -89,7 +78,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             if alias.public_comment != squire_comment:
                 # Public comment does not indicate it's managed by squire
                 return AliasStatus.NOT_MANAGED_BY_SQUIRE, alias, None
-            elif alias.goto != self.mailcow_manager.clean_alias_emails(subscribers):
+            elif alias.goto != self.mailcow_manager.get_archive_adresses_for_type(alias_type, address) + self.mailcow_manager.clean_alias_emails(subscribers):
                 # Alias is outdated
                 return AliasStatus.OUTDATED, alias, None
             else:
@@ -115,19 +104,25 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
                         routes.append(route)
         return routes
 
-    def _get_subscriberinfos_by_status(self, status: AliasStatus,
-            subscribers: QuerySet, alias: Optional[MailcowAlias]) -> List[SubscriberInfos]:
+    def _get_subscriberinfos_by_status(self, status: AliasStatus, subscribers: QuerySet,
+            alias: Optional[MailcowAlias], alias_type: AliasCategory = AliasCategory.MEMBER) -> List[SubscriberInfos]:
         """ Determines how subscribers should be displayed, based on the status of the alias """
         if status == AliasStatus.NOT_MANAGED_BY_SQUIRE:
             return [{'name': addr, 'invalid': False} for addr in alias.goto]
         elif status == AliasStatus.MAILBOX or status == AliasStatus.RESERVED:
             return []
         else:
+            email_field = "email"
+            get_name = lambda sub: sub.get_full_name()
+            if alias_type == AliasCategory.GLOBAL_COMMITTEE:
+                email_field = "contact_email"
+                get_name = lambda sub: f"{sub.site_group.name} ({sub.get_type_display()})"
+
             subscribers = subscribers.annotate(has_invalid_email=ExpressionWrapper(
-                Q(email__in=self.mailcow_manager._member_alias_addresses), output_field=BooleanField()
+                Q(**{f"{email_field}__in": self.mailcow_manager._member_alias_addresses}), output_field=BooleanField()
             ))
             return [{
-                'name': format_html("{} &mdash; {}", sub.get_full_name(), sub.email),
+                'name': format_html("{} &mdash; {}", get_name(sub), getattr(sub, email_field)),
                 'invalid': sub.has_invalid_email
             } for sub in subscribers]
 
@@ -142,7 +137,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
                 address,
                 default=config['default_opt']
             )
-            status, alias, mailbox = self._get_alias_status(address, subscribers, AliasType.MEMBER,
+            status, alias, mailbox = self._get_alias_status(address, subscribers, AliasCategory.MEMBER,
                 aliases, mailboxes, self.mailcow_manager.ALIAS_MEMBERS_PUBLIC_COMMENT)
 
             exposure_routes = []
@@ -156,6 +151,24 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             infos.append(info)
         return infos
 
+    def _init_global_committee_alias_list(self, aliases: List[MailcowAlias], mailboxes: List[MailcowMailbox]) -> List[AliasInfos]:
+        """ TODO """
+        infos: List[AliasInfos] = []
+
+        for address in settings.COMMITTEE_CONFIGS["global_addresses"]:
+            subscribers = self.mailcow_manager.get_alias_committees()
+
+            status, alias, mailbox = self._get_alias_status(address, subscribers, AliasCategory.GLOBAL_COMMITTEE,
+                aliases, mailboxes, self.mailcow_manager.ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT)
+
+            subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias, alias_type=AliasCategory.GLOBAL_COMMITTEE)
+            info = AliasInfos(status.name, subscribers, address, "gc_" + alias_address_to_id(address), address,
+                "Allows mailing all committees at the same time.",
+                alias or mailbox, False, allow_opt_out=False
+            )
+            infos.append(info)
+        return infos
+
     def _init_committee_alias_list(self, aliases: List[MailcowAlias], mailboxes: List[MailcowMailbox]) -> List[AliasInfos]:
         """ TODO """
         infos: List[AliasInfos] = []
@@ -164,7 +177,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             address = assoc_group.contact_email
             subscribers = assoc_group.members.filter_active().order_by('email')
 
-            status, alias, mailbox = self._get_alias_status(address, subscribers, AliasType.OTHER,
+            status, alias, mailbox = self._get_alias_status(address, subscribers, AliasCategory.COMMITTEE,
                 aliases, mailboxes, self.mailcow_manager.ALIAS_COMMITTEE_PUBLIC_COMMENT)
 
             subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias)
@@ -213,9 +226,8 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             context['error'] = print(", ".join(e.args))
         else:
             context['member_aliases'] = self._init_member_alias_list(aliases, mailboxes)
+            context['global_committee_aliases'] = self._init_global_committee_alias_list(aliases, mailboxes)
             context['committee_aliases'] = self._init_committee_alias_list(aliases, mailboxes)
-
-            # # TODO: global committee alias
             context['unused_aliases'] = self._init_unused_squire_addresses_list(aliases, context['member_aliases'], context['committee_aliases'])
         return context
 

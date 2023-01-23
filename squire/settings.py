@@ -384,9 +384,12 @@ MARTOR_ALTERNATIVE_JQUERY_JS_FILE = None
 #   If MAILCOW_HOST is None, no API connection is established
 MAILCOW_HOST = None
 MAILCOW_API_KEY = None
-MEMBER_ALIAS_ARCHIVE_ADDRESS = None
-COMMITTEE_ALIAS_ARCHIVE_ADDRESS = None
 MEMBER_ALIASES = {}
+COMMITTEE_CONFIGS = {
+    "archive_addresses": [],
+    "global_addresses": [],
+    "global_archive_addresses": []
+}
 
 ####################################################################
 # Other Settings

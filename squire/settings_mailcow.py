@@ -30,14 +30,15 @@ try:
         MAILCOW_HOST = _mailcow_config['host']
         MAILCOW_API_KEY = _mailcow_config['api_key']
 
-        MEMBER_ALIAS_ARCHIVE_ADDRESS = _mailcow_config['member_alias_archive_address']
-        COMMITTEE_ALIAS_ARCHIVE_ADDRESS = _mailcow_config['committee_alias_archive_address']
-
         MEMBER_ALIASES = _mailcow_config['member_aliases']
+        COMMITTEE_CONFIGS = _mailcow_config['committee_aliases']
 except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
     # Something went wrong in parsing the config file
     MAILCOW_HOST = None
     MAILCOW_API_KEY = None
-    MEMBER_ALIAS_ARCHIVE_ADDRESS = None
-    COMMITTEE_ALIAS_ARCHIVE_ADDRESS = None
     MEMBER_ALIASES = {}
+    COMMITTEE_CONFIGS = {
+        "archive_addresses": [],
+        "global_addresses": [],
+        "global_archive_addresses": []
+    }
