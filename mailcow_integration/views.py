@@ -40,6 +40,7 @@ class AliasStatus(Enum):
     OUTDATED = 3 # Alias goto-addresses do not match up with Squire
     RESERVED = 4 # Alias already reserved for a member-alias, but a committee has it as their contact info
     MAILBOX = 5 # Mailbox with the same name already exists; not managed by Squire
+    ORPHAN = 6 # Alias is not needed by Squire, but existed in Mailcow
 
 class SubscriberInfos(TypedDict):
     """ Representation of a subscriber """
@@ -174,44 +175,48 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             infos.append(info)
         return infos
 
-    def _find_unused_squire_comments(self, mailcow_aliases: List[MailcowAlias], member_aliases, committee_aliases):
+    def _init_unused_squire_addresses_list(self, aliases: List[MailcowAlias],
+            member_aliases: List[AliasInfos], committee_aliases: List[AliasInfos]) -> List[AliasInfos]:
         """ TODO """
-        used_addresses = list(member_aliases.keys()) + list(committee_aliases.keys())
-        return list(
-            # Ignore addresses that we still need
-            filter(lambda alias: alias.address not in used_addresses,
-                # Only include addresses starting with the "[MANAGED BY SQUIRE]" indicator
-                filter(lambda alias:
-                    (alias.public_comment or "").startswith(self.mailcow_manager.SQUIRE_MANAGE_INDICATOR),
-                    mailcow_aliases
-                )
-        ))
+        # Only include aliases starting with [MANAGED BY SQUIRE]
+        aliases = filter(lambda alias: alias.public_comment.startswith(self.mailcow_manager.SQUIRE_MANAGE_INDICATOR), aliases)
+        # Ignore addresses that are member aliases
+        aliases = filter(lambda alias: not any(1 for member_alias in member_aliases if member_alias.address == alias.address), aliases)
+        # Ignore addresses that are committee aliases
+        aliases = filter(lambda alias: not any(1 for comm_alias in committee_aliases if comm_alias.address == alias.address), aliases)
+        # TODO: ignore global committee aliases
+
+        return [
+            AliasInfos(AliasStatus.ORPHAN.name, [{'name': addr, 'invalid': False} for addr in alias.goto],
+                alias.address, alias_address_to_id(alias.address), alias.address, alias.private_comment, alias, False)
+            for alias in aliases
+        ]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        if self.mailcow_manager is None:
+            return context
 
-        if self.mailcow_manager is not None:
-            context['mailcow_host'] = self.mailcow_manager.mailcow_host
+        context['mailcow_host'] = self.mailcow_manager.mailcow_host
+        try:
+            aliases = list(self.mailcow_manager.get_alias_all(use_cache=False))
+            mailboxes = list(self.mailcow_manager.get_mailbox_all(use_cache=False))
+            # TODO: Fetch internal status
+        except MailcowAuthException as e:
+            context['error'] = "No valid API key set."
+        except MailcowAPIReadWriteAccessDenied as e:
+            context['error'] = "API key only allows access to read operations, not write."
+        except MailcowAPIAccessDenied as e:
+            ip = str(e).rpartition(" ")[2]
+            context['error'] = f"IP address is not whitelisted in the Mailcow admin: {ip}"
+        except MailcowException as e:
+            context['error'] = print(", ".join(e.args))
+        else:
+            context['member_aliases'] = self._init_member_alias_list(aliases, mailboxes)
+            context['committee_aliases'] = self._init_committee_alias_list(aliases, mailboxes)
 
-            try:
-                aliases = list(self.mailcow_manager.get_alias_all(use_cache=False))
-                mailboxes = list(self.mailcow_manager.get_mailbox_all(use_cache=False))
-                # TODO: Fetch internal status
-            except MailcowAuthException as e:
-                context['error'] = "No valid API key set."
-            except MailcowAPIReadWriteAccessDenied as e:
-                context['error'] = "API key only allows access to read operations, not write."
-            except MailcowAPIAccessDenied as e:
-                ip = str(e).rpartition(" ")[2]
-                context['error'] = f"IP address is not whitelisted in the Mailcow admin: {ip}"
-            except MailcowException as e:
-                context['error'] = print(", ".join(e.args))
-            else:
-                context['member_aliases'] = self._init_member_alias_list(aliases, mailboxes)
-                context['committee_aliases'] = self._init_committee_alias_list(aliases, mailboxes)
-
-                # # TODO: global committee alias
-                # context['unused_squire_comments'] = self._find_unused_squire_comments(aliases, context['member_aliases'], context['committee_aliases'])
+            # # TODO: global committee alias
+            context['unused_aliases'] = self._init_unused_squire_addresses_list(aliases, context['member_aliases'], context['committee_aliases'])
         return context
 
     def post(self, request, *args, **kwargs):

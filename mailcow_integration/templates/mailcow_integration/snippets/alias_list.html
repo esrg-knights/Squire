@@ -23,7 +23,7 @@
                     <span class="badge badge-secondary badge-pill"><i class="fas fa-unlink"></i> Not managed by Squire</span>
                 {% elif alias.status == "OUTDATED" %}
                     <span class="badge badge-danger badge-pill"><i class="fas fa-exclamation-triangle"></i> Outdated</span>
-                {% else %}
+                {% elif alias.status != "ORPHAN" %}
                     <span class="badge badge-success badge-pill"><i class="fas fa-check-circle"></i> Up-to-date</span>
                 {% endif %}
 
@@ -39,7 +39,7 @@
                     <span class="badge badge-primary badge-pill"><i class="fas fas fa-globe"></i> Public</span>
                 {% endif %}
 
-                {% if not alias.allow_opt_out and alias.allow_opt_out is not None %}
+                {% if alias.allow_opt_out == False %}
                     <span class="badge badge-warning badge-pill"><i class="fas fa-lock"></i> Cannot opt-out</span>
                 {% endif %}
 
@@ -65,7 +65,9 @@
                                 </button>
                             </div>
                             <div class="modal-body">
-                                <p>{{ alias.description }}</p>
+                                {% if alias.description %}
+                                    <p>{{ alias.description }}</p>
+                                {% endif %}
 
                                 {% if alias.status == "RESERVED" %}
                                     {# Do nothing #}
@@ -90,9 +92,19 @@
                                     </div>
                                 {% endif %}
 
+                                {% if alias.allow_opt_out == False %}
+                                    <div class="alert alert-warning d-flex align-items-center" role="alert">
+                                        <i class="fas fa-lock mr-3"></i> All members will receive emails through this address. They cannot opt-out for this.
+                                    </div>
+                                {% endif %}
+
                                 {% if alias.status == "NOT_MANAGED_BY_SQUIRE" %}
                                     <div class="alert alert-secondary d-flex align-items-center" role="alert">
                                         <i class="fas fa-unlink mr-3"></i> This alias was likely manually overridden by a Mailcow admin. Squire can only modify aliases with a specific public comment. This prevents Squire from accidentally overwriting pre-existing data.
+                                    </div>
+                                {% elif alias.status == "ORPHAN" %}
+                                    <div class="alert alert-info d-flex align-items-center" role="alert">
+                                        <i class="fas fa-wrench mr-3"></i> Squire no longer needs this alias to operate. It can be removed.
                                     </div>
                                 {% endif %}
 

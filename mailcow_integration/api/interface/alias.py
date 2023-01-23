@@ -50,6 +50,8 @@ class MailcowAlias(MailcowAPIResponse):
             'goto': json['goto'].split(","),
             'active': bool(json['active']),
             'is_catch_all': bool(json['is_catch_all']),
+            'public_comment': json['public_comment'] or "",
+            'private_comment': json['private_comment'] or "",
             'sogo_visible': bool(json['sogo_visible']),
             'created': datetime.fromisoformat(json['created']),
             'modified': datetime.fromisoformat(json['modified']) if json['modified'] is not None else None,

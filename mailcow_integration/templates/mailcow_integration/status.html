@@ -66,16 +66,7 @@
         <p>
             Squire leaves behind a specific message on aliases it creates. It may happen that some of this data is left behind when Squire no longer needs it.
         </p>
-        <ul class="list-group">
-            {% for alias in unused_squire_comments %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ alias.address }}
-                    <span>{{ alias.goto|join:", " }}</span>
-                </li>
-            {% empty %}
-                <p><i>No orphan data found.</i></p>
-            {% endfor %}
-        </ul>
+        {% include "mailcow_integration/snippets/alias_list.html" with aliases=unused_aliases host=mailcow_host empty_message="No orphan data found." only %}
     {% endif %}
 {% endblock content %}
 

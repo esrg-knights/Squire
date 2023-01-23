@@ -24,7 +24,7 @@ class MailcowInterfacesTest(TestCase):
             "id": 42,
             "domain": "example.com",
             "public_comment": "[MANAGED BY SQUIRE] Members Alias",
-            "private_comment": "",
+            "private_comment": None,
             "goto": "bar@example.com,baz@example.com",
             "address": "foo@example.com",
             "is_catch_all": 0,
@@ -38,6 +38,7 @@ class MailcowInterfacesTest(TestCase):
         self.assertListEqual(alias.goto, ['bar@example.com', 'baz@example.com'])
         self.assertEqual(alias.active, True)
         self.assertEqual(alias.is_catch_all, False)
+        self.assertEqual(alias.private_comment, "")
         self.assertEqual(alias.created, datetime.fromisoformat("2022-11-21 14:15:24"))
         self.assertEqual(alias.modified, datetime.fromisoformat("2022-12-03 17:09:42"))
 
