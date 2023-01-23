@@ -3,15 +3,17 @@ from typing import Dict, Optional, List
 
 from django.apps import apps
 from django.conf import settings
-from django.db.models import Q, QuerySet
+from django.db.models import Q, QuerySet, Exists, OuterRef
 from django.template.loader import get_template
 
 from mailcow_integration.api.client import MailcowAPIClient
 from mailcow_integration.api.interface.alias import MailcowAlias
 from mailcow_integration.api.interface.mailbox import MailcowMailbox
 from mailcow_integration.api.interface.rspamd import RspamdSettings
+from mailcow_integration.dynamic_preferences_registry import alias_address_to_id
 
 import logging
+
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +44,7 @@ class SquireMailcowManager:
         # Cannot import directly because this file is imported before the app registry is set up
         self._member_model = apps.get_model("membership_file", "Member")
         self._committee_model = apps.get_model("committees", "AssociationGroup")
+        self._user_preferences_model = apps.get_model("dynamic_preferences_users", "UserPreferenceModel")
 
         # List of internal addresses (sorted in order of appearance in the config)
         self._internal_aliases: List[str] = [
@@ -60,7 +63,7 @@ class SquireMailcowManager:
     def __str__(self) -> str:
         return f"SquireMailcowManager[{self._client.host}]"
 
-    def clean_alias_emails(self, queryset, email_field="email", flatten=True) -> list[str]:
+    def clean_alias_emails(self, queryset, email_field="email", flatten=True) -> List[str]:
         """ TODO """
         queryset = queryset.exclude(**{f"{email_field}__in": self._member_alias_addresses}).order_by(email_field)
         if flatten:
@@ -184,26 +187,29 @@ class SquireMailcowManager:
         """ Helper method to obtain a queryset of active members. That is, those that have active membership. """
         return self._member_model.objects.filter_active().order_by('email')
 
-    def get_subscribed_members(self, active_members, alias_id: str, default: bool=True) -> QuerySet:
+    def get_subscribed_members(self, active_members: QuerySet, alias_address: str, default: bool=True) -> QuerySet:
         """ Gets a Queryset of members subscribed to a specific member alias, based on their
             associated user's preferences. If users are opted-in by default for the given alias,
-            then members without an associated user are included in this Queryset as well.
+            then members without an explicit preference are included in this Queryset as well.
             If the default is opted-out, then such members are excluded.
         """
-        # Member must have their preference set
-        query = Q(
-            user__userpreferencemodel__section="mail",
-            user__userpreferencemodel__name=alias_id,
-            # Convert value to string (dynamic preferences serializes everything to a string)
-            user__userpreferencemodel__raw_value=str(True),
-        )
+        alias_id = alias_address_to_id(alias_address)
 
-        # If the default is opt-in, members that do not have a corresponding user should also be included
+        # Find members who have a specific opt-in/opt-out status
+        #   If the default is opt-out, only keep those with an explicit opt-out preference
+        opts = Exists(self._user_preferences_model.objects.filter(
+            instance_id=OuterRef('user_id'),
+            section="mail",
+            name=alias_id,
+            raw_value=str(not default) # dynamic preferences stores everything as a string
+        ))
+
         if default:
-            query |= Q(user__isnull=True)
+            # If the default is opt-in, exclude users that have not
+            #   explicitly opted-out. Keep those without explicit preferences.
+            opts = ~opts
 
-        # Filter members
-        return active_members.filter(query)
+        return active_members.filter(opts)
 
     def update_member_aliases(self) -> None:
         """ Updates all member aliases """
