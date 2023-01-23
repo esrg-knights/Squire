@@ -20,8 +20,8 @@ class TestAssociationGroupMixin(TestMixinWithMemberMiddleware, TestMixinMixin, T
         self.associationgroup = AssociationGroup.objects.get(id=1)
         super(TestAssociationGroupMixin, self).setUp()
 
-    def get_as_full_view_class(self):
-        cls = super(TestAssociationGroupMixin, self).get_as_full_view_class()
+    def get_as_full_view_class(self, **kwargs):
+        cls = super(TestAssociationGroupMixin, self).get_as_full_view_class(**kwargs)
         # Set the config instance. Normally done in urls creation as base value
         cls.config = get_fake_registry()
         return cls
@@ -36,6 +36,8 @@ class TestAssociationGroupMixin(TestMixinWithMemberMiddleware, TestMixinMixin, T
     def test_context_data(self):
         self._build_get_response(save_view=True)
         context = self.view.get_context_data()
+        self.assertEqual(context['association_group'], self.associationgroup)
+
         self.assertEqual(context['association_group'].COMMITTEE, True)
         self.assertEqual(context['association_group'].ORDER, False)
         self.view.association_group.type = AssociationGroup.ORDER
@@ -69,17 +71,16 @@ class TestGroupSettingsMixin(TestMixinWithMemberMiddleware, TestMixinMixin, Test
     def get_base_url_kwargs(self):
         return {'group_id': self.associationgroup}
 
-    def get_as_full_view_class(self):
-        cls = super(TestGroupSettingsMixin, self).get_as_full_view_class()
+    def get_as_full_view_class(self, **kwargs):
+        cls = super(TestGroupSettingsMixin, self).get_as_full_view_class(**kwargs)
         # Set the config instance. Normally done in urls creation as base value
         cls.config = get_fake_registry()
-        cls.config.settings = self.settings_mock
+        cls.settings_option = self.settings_mock
         return cls
 
     def test_access(self):
-        self.settings_mock.can_access.return_value = False
+        self.settings_mock.check_option_access.return_value = False
         with self.assertRaises(PermissionDenied):
             self._build_get_response()
-        self.settings_mock.return_value.can_access.return_value = True
-        with self.assertRaises(PermissionDenied):
-            self._build_get_response()
+        self.settings_mock.check_option_access.return_value = True
+        self.assertResponseSuccessful(self._build_get_response())

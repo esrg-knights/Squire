@@ -3,7 +3,7 @@
 {% load render_form %}
 
 {% block breadcrumb_items %}
-    <li class="breadcrumb-item"><a href="{% url "committees:group_general" group_id=association_group.id %}">Home</a></li>
+    <li class="breadcrumb-item"><a href="{% url "committees:settings:settings_home" group_id=association_group.id %}">Settings</a></li>
     <li class="breadcrumb-item"><a>Members</a></li>
 {% endblock %}
 
@@ -72,7 +72,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    {% url "committees:group_members_edit" group_id=association_group.id as post_url %}
+                    {% url "committees:settings:group_members_edit" group_id=association_group.id as post_url %}
                     {% render_form method="post" has_submit_button=False id="submit_form" action=post_url %}
                 </div>
                 <div class="modal-footer">

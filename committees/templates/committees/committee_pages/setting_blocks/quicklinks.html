@@ -1,3 +1,7 @@
+<p>
+    Store references to other sites that are useful for this group
+</p>
+
 {% for quicklink in association_group.shortcut_set.all %}
     <div class="row">
         <div class="col">
@@ -14,7 +18,7 @@
     </div>
 {% endfor %}
 
-<a href="{% url "committees:group_quicklinks" group_id=association_group.id %}"
+<a href="{% url "committees:settings:group_quicklinks" group_id=association_group.id %}"
    class="btn btn-primary btn-sm">
     <i class="fas fa-pen"></i> Edit shortcut urls
 </a>

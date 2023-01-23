@@ -3,17 +3,17 @@ from django.urls import path, include
 
 from committees.models import AssociationGroup
 from committees.committee_pages.views import *
-from committees.options import SettingsOptionBase, settings
+from committees.options import SettingsOptionBase, settings_options, SimpleFormSettingsOption
+from committees.forms import AssociationGroupUpdateForm
 
 
-class InfoOptions(SettingsOptionBase):
-    group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.ORDER]
-    name = 'home_info_text'
-    title = "Home screen"
-    option_template_name = "committees/committee_pages/setting_blocks/info.html"
-
-    def build_url_pattern(self, config):
-        return [path('update/', AssociationGroupUpdateView.as_view(config=config, settings_option=self), name='group_update')]
+class HomeScreenTextOptions(SimpleFormSettingsOption):
+    group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.BOARD, AssociationGroup.ORDER]
+    name = 'Screen text'
+    option_form_class = AssociationGroupUpdateForm
+    option_button_text = "Edit home text"
+    title = "Adjust Home screen"
+    url_keyword = "group_update"
 
 
 class MemberOptions(SettingsOptionBase):
@@ -34,6 +34,7 @@ class QuicklinkOptions(SettingsOptionBase):
     name = 'quicklinks'
     title = "External sources"
     option_template_name = "committees/committee_pages/setting_blocks/quicklinks.html"
+
     def build_url_pattern(self, config):
         return [
             path('quicklinks/', include([
@@ -44,6 +45,6 @@ class QuicklinkOptions(SettingsOptionBase):
         ]
 
 
-settings.add_setting_option(MemberOptions)
-settings.add_setting_option(QuicklinkOptions)
-settings.add_setting_option(InfoOptions)
+settings_options.add_setting_option(HomeScreenTextOptions)
+settings_options.add_setting_option(MemberOptions)
+settings_options.add_setting_option(QuicklinkOptions)

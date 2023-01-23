@@ -1,4 +1,7 @@
 from django.core.exceptions import PermissionDenied
+from django.views.generic import FormView
+from django.urls import reverse
+from django.shortcuts import get_object_or_404
 
 from utils.viewcollectives import *
 
@@ -22,7 +25,7 @@ class AssociationGroupMixin(ViewCollectiveViewMixin):
     association_group = None
     selected_tab_name = None
 
-    def setup(self, request, *args, group_id: AssociationGroup, **kwargs):
+    def setup(self, request, *args, group_id, **kwargs):
         self.association_group = group_id
         return super(AssociationGroupMixin, self).setup(request, *args, **kwargs)
 
@@ -38,6 +41,7 @@ class AssociationGroupMixin(ViewCollectiveViewMixin):
     def get_context_data(self, **kwargs):
         context = super(AssociationGroupMixin, self).get_context_data(**kwargs)
         context['association_group'] = _wrap_association_group_for_context(self.association_group)
+        context['config'] = self.config
         return context
 
     def _get_tab_url(self, url_name, **url_kwargs):
@@ -51,5 +55,26 @@ class GroupSettingsMixin(AssociationGroupMixin):
 
     def setup(self, request, *args, **kwargs):
         super(GroupSettingsMixin, self).setup(request, *args, **kwargs)
-        if not self.config.settings.can_access(self.association_group, self.settings_option):
+        if not self.settings_option.check_option_access(self.association_group):
             raise PermissionDenied
+
+    def get_context_data(self, **kwargs):
+        context = super(GroupSettingsMixin, self).get_context_data(**kwargs)
+        context['settings_option'] = self.settings_option
+        return context
+
+
+class BaseSettingsUpdateView(GroupSettingsMixin, FormView):
+    template_name = "committees/committee_pages/group_settings_edit.html"
+
+    def get_form_kwargs(self):
+        form_kwargs = super(BaseSettingsUpdateView, self).get_form_kwargs()
+        form_kwargs['instance'] = self.association_group
+        return form_kwargs
+
+    def form_valid(self, form):
+        form.save()
+        return super(BaseSettingsUpdateView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse('committees:settings:settings_home', kwargs={'group_id': self.association_group})

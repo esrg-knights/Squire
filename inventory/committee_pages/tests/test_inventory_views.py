@@ -3,6 +3,7 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from django.urls import reverse
+from committees.tests.committee_pages.utils import AssocationGroupTestingMixin
 from django.views.generic import UpdateView, ListView
 
 from committees.models import AssociationGroup
@@ -18,19 +19,12 @@ from inventory.models import Ownership
 from inventory.committee_pages.views import AssociationGroupInventoryView, AssociationGroupItemLinkUpdateView
 
 
-class TestAssociationGroupInventoryView(ViewValidityMixin, TestCase):
+class TestAssociationGroupInventoryView(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership', 'committees/associationgroups']
+    group_permissions_required = 'inventory.view_ownership'
     base_user_id = 100
-
-    def setUp(self):
-        self.group = AssociationGroup.objects.get(id=2)
-        super(TestAssociationGroupInventoryView, self).setUp()
-        self.group.permissions.add(
-            Permission.objects.get(codename='view_ownership'))
-
-    def get_base_url(self, group_id=None):
-        group_id = group_id or self.group.id
-        return reverse('committees:group_inventory', kwargs={'group_id':group_id,})
+    url_name = 'group_inventory'
+    association_group_id = 2
 
     def test_class(self):
         self.assertTrue(issubclass(AssociationGroupInventoryView, AssociationGroupMixin))
@@ -46,7 +40,7 @@ class TestAssociationGroupInventoryView(ViewValidityMixin, TestCase):
 
     def test_context_data(self):
         # Add the permission to the group to make it appear in the content_type list
-        self.group.site_group.permissions.add(
+        self.association_group.site_group.permissions.add(
             Permission.objects.get(codename='add_group_ownership_for_miscellaneousitem'))
 
         response  = self.client.get(self.get_base_url(), data={})

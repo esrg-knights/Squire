@@ -4,7 +4,7 @@ from django.views.generic import TemplateView,  FormView
 
 from utils.views import PostOnlyFormViewMixin
 
-from committees.mixins import AssociationGroupMixin, GroupSettingsMixin
+from committees.mixins import AssociationGroupMixin, GroupSettingsMixin, BaseSettingsUpdateView
 from committees.forms import AssociationGroupUpdateForm, AddOrUpdateExternalUrlForm, \
     DeleteGroupExternalUrlForm, AssociationGroupMembershipForm
 
@@ -39,28 +39,12 @@ class AssociationGroupSettingsView(AssociationGroupMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         options = sorted(
-            self.config.settings.get_options(self.association_group),
+            self.config.get_options(self.association_group),
             key= lambda option: option.title)
 
         context = super(AssociationGroupSettingsView, self).get_context_data(**kwargs)
         context['options'] = options
         return context
-
-
-class BaseSettingsUpdateView(GroupSettingsMixin, FormView):
-    template_name = "committees/committee_pages/group_settings_edit.html"
-
-    def get_form_kwargs(self):
-        form_kwargs = super(BaseSettingsUpdateView, self).get_form_kwargs()
-        form_kwargs['instance'] = self.association_group
-        return form_kwargs
-
-    def form_valid(self, form):
-        form.save()
-        return super(BaseSettingsUpdateView, self).form_valid(form)
-
-    def get_success_url(self):
-        return reverse_lazy('committees:settings_home', kwargs={'group_id': self.association_group})
 
 
 class AssociationGroupQuickLinksView(GroupSettingsMixin, TemplateView):
@@ -88,7 +72,7 @@ class AssociationGroupQuickLinksAddOrUpdateView(GroupSettingsMixin, PostOnlyForm
             return f'{form.instance.name} has been updated'
 
     def get_success_url(self):
-        return reverse_lazy("committees:group_quicklinks", kwargs={'group_id': self.association_group.id})
+        return reverse_lazy("committees:settings:group_quicklinks", kwargs={'group_id': self.association_group.id})
 
 
 class AssociationGroupQuickLinksDeleteView(GroupSettingsMixin, PostOnlyFormViewMixin, FormView):
@@ -105,7 +89,7 @@ class AssociationGroupQuickLinksDeleteView(GroupSettingsMixin, PostOnlyFormViewM
         return form_kwargs
 
     def get_success_url(self):
-        return reverse_lazy("committees:group_quicklinks", kwargs={'group_id': self.association_group.id})
+        return reverse_lazy("committees:settings:group_quicklinks", kwargs={'group_id': self.association_group.id})
 
     def get_success_message(self, form):
         return f'{form.instance.name} has been removed'
@@ -139,4 +123,4 @@ class AssociationGroupMemberUpdateView(GroupSettingsMixin, PostOnlyFormViewMixin
         return f'{form.instance.member} has been updated'
 
     def get_success_url(self):
-        return reverse_lazy("committees:group_members", kwargs={'group_id': self.association_group.id})
+        return reverse_lazy("committees:settings:group_members", kwargs={'group_id': self.association_group.id})

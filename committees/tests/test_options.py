@@ -44,11 +44,11 @@ class SettingOptionsTestCase(TestCase):
         self.assertEqual(self.options.get_urls(None).pattern._route, 'test_pattern/')
 
     def test_check_group_access_group_type(self):
-        self.assertEqual(self.options.check_group_access(self.association_group), True)
+        self.assertEqual(self.options.check_option_access(self.association_group), True)
         self.options.group_type_required = AssociationGroup.ORDER
-        self.assertEqual(self.options.check_group_access(self.association_group), False)
+        self.assertEqual(self.options.check_option_access(self.association_group), False)
         self.association_group.type = AssociationGroup.ORDER
-        self.assertEqual(self.options.check_group_access(self.association_group), True)
+        self.assertEqual(self.options.check_option_access(self.association_group), True)
 
     def test_check_group_access_group_type_multiple(self):
         self.options.group_type_required = [
@@ -56,4 +56,4 @@ class SettingOptionsTestCase(TestCase):
             AssociationGroup.COMMITTEE,
             AssociationGroup.BOARD
         ]
-        self.assertEqual(self.options.check_group_access(self.association_group), True)
+        self.assertEqual(self.options.check_option_access(self.association_group), True)

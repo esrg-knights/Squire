@@ -5,15 +5,14 @@ from django.views.generic import TemplateView, ListView, View
 
 from unittest.mock import patch
 
-from committees.committeecollective import AssociationGroupMixin
+from committees.mixins import AssociationGroupMixin
 from committees.tests.committee_pages.utils import AssocationGroupTestingMixin
 from utils.testing.view_test_utils import ViewValidityMixin, TestMixinMixin
 
-from nextcloud_integration.forms import *
 from nextcloud_integration.models import SquireNextCloudFolder
 from nextcloud_integration.tests import patch_construction
-from nextcloud_integration.views import NextcloudConnectionViewMixin, FolderMixin, FileBrowserView, SiteDownloadView, \
-    FolderCreateView, FolderEditView, SyncFileToFolderView, DownloadFileview
+from nextcloud_integration.views import NextcloudConnectionViewMixin, FolderMixin, \
+    FolderCreateView, FolderEditView, SyncFileToFolderView
 
 from nextcloud_integration.committee_pages.views import *
 

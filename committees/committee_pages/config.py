@@ -3,7 +3,7 @@ from django.urls import path, include, reverse
 from committees.committeecollective import CommitteeBaseConfig
 from committees.committee_pages.views import *
 
-from committees.committee_pages.options import settings
+from committees.committee_pages.options import settings_options
 
 
 class AssociationGroupHomeConfig(CommitteeBaseConfig):
@@ -50,18 +50,23 @@ class AssociationGroupSettingsConfig(CommitteeBaseConfig):
     url_keyword = 'settings'
     name = 'Settings'
     icon_class = 'fas fa-cog'
-    url_name = 'settings_home'
+    url_name = 'settings:settings_home'
     order_value = 999
+    namespace = "settings"
 
     def get_urls(self):
         """ Builds a list of urls """
         urls = [
             path('', AssociationGroupSettingsView.as_view(config=self), name='settings_home'),
-            *settings.urls(self)
+            *settings_options.urls(self)
         ]
         return urls
 
-    @property
-    def settings(self):
-        return settings
+    def get_options(self, association_group):
+        return settings_options.get_options(association_group)
+
+    def check_group_access(self, association_group):
+        if not super(AssociationGroupSettingsConfig, self).check_group_access(association_group):
+            return False
+        return bool(self.get_options(association_group))
 

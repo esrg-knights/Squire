@@ -17,8 +17,8 @@
 {% endblock %}
 
 {% block breadcrumb_items %}
-    <li class="breadcrumb-item"><a href="{% url "committees:group_general" group_id=association_group.id %}">Home</a></li>
-    <li class="breadcrumb-item"><a>Edit</a></li>
+    <li class="breadcrumb-item"><a href="{% url "committees:settings:settings_home" group_id=association_group.id %}">Settings</a></li>
+    <li class="breadcrumb-item"><a>{{ settings_option.name }}</a></li>
 {% endblock %}
 
 
@@ -31,7 +31,7 @@
         <button type="submit" form="submit_form" class="btn btn-success">
             <i class="fas fa-edit"></i> Save changes
         </button>
-        <a href="{% url "committees:settings_home" group_id=association_group %}"
+        <a href="{% url "committees:settings:settings_home" group_id=association_group %}"
            class="btn btn-secondary">
             <i class="fas fa-times"></i> Cancel changes
         </a>
