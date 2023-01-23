@@ -48,12 +48,12 @@ class SquireMailcowManager:
 
         # List of internal addresses (sorted in order of appearance in the config)
         self._internal_aliases: List[str] = [
-            alias_data['address'] for alias_data in settings.MEMBER_ALIASES.values() if alias_data['internal']
+            address for address, alias_data in settings.MEMBER_ALIASES.items() if alias_data['internal']
         ]
 
         # List of all member alias addresses; these should never be included in an alias's goto addresses
         self._member_alias_addresses: List[str] = [
-            alias_data['address'] for alias_data in settings.MEMBER_ALIASES.values()
+            address for address, alias_data in settings.MEMBER_ALIASES.items()
         ]
 
     @property
@@ -185,7 +185,7 @@ class SquireMailcowManager:
 
     def get_active_members(self) -> QuerySet:
         """ Helper method to obtain a queryset of active members. That is, those that have active membership. """
-        return self._member_model.objects.filter_active().order_by('email')
+        return self._member_model.objects.filter_active()
 
     def get_subscribed_members(self, active_members: QuerySet, alias_address: str, default: bool=True) -> QuerySet:
         """ Gets a Queryset of members subscribed to a specific member alias, based on their

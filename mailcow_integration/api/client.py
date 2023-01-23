@@ -29,12 +29,12 @@ class MailcowAPIClient:
         IP whitelist can be disabled entirely).
     """
     API_FORMAT = "%(host)s/api/v1/"
-    _alias_cache = None
-    _mailbox_cache = None
 
     def __init__(self, host: str, api_key: str):
         self.host = host
         self.api_key = api_key
+        self._alias_cache = None
+        self._mailbox_cache = None
 
     def _get_headers(self) -> dict:
         """ Retrieves the headers required to fetch info from the Mailcow API. """

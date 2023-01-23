@@ -15,8 +15,8 @@
         <p>Mailcow Host: <a href="{{ mailcow_host }}">{{ mailcow_host }}</a></p>
 
         {% if error %}
-        <div class="alert alert-danger" role="alert">
-            <i class="fas fa-exclamation-triangle"></i> {{ error }}
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <i class="fas fa-exclamation-triangle mr-3"></i> {{ error }}
         </div>
         {% endif %}
 
@@ -36,12 +36,12 @@
             A member alias is an alias that can be used to send mails to specific groups of members registered in Squire, depending on their <a href="{% url 'account:site_account' %}">personal preferences</a>.
             The alias can be 'internal' in the sense that only mailboxes in the domain can send emails to this alias. Note that this also includes <b>public</b> aliases set up on the domain, meaning that internal aliases can still be emailed from external domains this way.
         </p>
-        {% include "mailcow_integration/snippets/alias_list.html" with alias_dict=member_aliases host=mailcow_host only %}
+        {% include "mailcow_integration/snippets/alias_list.html" with aliases=member_aliases host=mailcow_host only %}
 
         <p>
             Likewise, all committees can be emailed through the following aliases.
         </p>
-        {% include "mailcow_integration/snippets/alias_list.html" with alias_dict=global_committee_aliases host=mailcow_host only %}
+        {% include "mailcow_integration/snippets/alias_list.html" with aliases=global_committee_aliases host=mailcow_host only %}
 
         <div class="d-flex justify-content-between align-items-center">
             <h2>Committee Aliases</h2>
@@ -59,7 +59,7 @@
             A committee alias is a <b>public</b> alias that can be used to send mails to specific members of a committee, order, or workgroup set up in Squire.
             These aliases are public, allowing external domains to also send emails to members of such committees.
         </p>
-        {% include "mailcow_integration/snippets/alias_list.html" with alias_dict=committee_aliases host=mailcow_host only %}
+        {% include "mailcow_integration/snippets/alias_list.html" with aliases=committee_aliases host=mailcow_host only %}
 
 
         <h2>Orphan Data</h2>
