@@ -139,6 +139,16 @@
                     </div>
                 {% endif %}
 
+                {% if activity_moment.file_folder %}
+                    <div class="d-flex">
+                        <!-- Folder icon -->
+                        <div class="col-xs-2"><i class="fas fa-folder-open"></i></div>
+                        <div class="col nospace align-self-center" id="event-files">
+                            {% include "nextcloud_integration/snippets/snippet_small_file_list.html" with folder=activity_moment.file_folder %}
+                        </div>
+                    </div>
+                {% endif %}
+
                 <div class="d-flex">
                     <!-- Text Icon -->
                     <div class="col-xs-2"><i class="fas fa-bars fa-fw"></i></div>
