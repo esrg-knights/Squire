@@ -1,74 +1,44 @@
 {% load nextcloud_tags %}
 
-<div class="card">
-    <div class="card-header">
+<div>
+    <div class="">
         <h4 class="mb-0">
-            {{ folder.display_name }}
+            <i class="fas fa-folder-open"></i> {{ folder.display_name }}
         </h4>
+        {% if folder.is_missing %}
+            <div class="text-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                Folder missing
+            </div>
+        {% endif %}
         <p class="mb-0">
             {{ folder.description }}
         </p>
-        {% if folder.is_missing %}
-            <div class="text-danger">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Folder missing
-                </div>
-        {% endif %}
     </div>
-
-    <ul class="list-group list-group-flush {% if folder.is_missing %}text-muted{% endif %}">
-        {% for file in folder.files.all %}
-            <li class="list-group-item">
-                <div class="row">
-                    <div class="col-4">
-                        <span class="h5">{{ file.display_name }}</span>
-                        <br>
-                        <div style="margin-top: -0.5em;" class="font-weight-lighter small">
-                            {% if file.is_missing %}
-                                <div class="text-danger">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    File missing
-                                </div>
-                            {% else %}
-                                <i class="{{ file.get_file_type.icon_class }}"></i>
-                                {{ file.file_name }}
-                                - {{ file.get_file_type.name }}
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="col-6">
+    <table class="table table-sm">
+        <tbody class="{% if folder.is_missing %}text-muted{% endif %}">
+            {% for file in folder.files.all %}
+                <tr id="folder-{{ folder.slug }}">
+                    <td class="">
+                        <i class="{{ file.get_file_type.icon_class }}"></i>
+                        <span class="">{{ file.display_name }}</span>
+                    </td>
+                    <td class="small d-none d-md-table-cell">
                         {{ file.description }}
-                    </div>
-                    <div class="col-2">
+                    </td>
+                    <td style="width: 1px; white-space: nowrap">
                         {% if file.is_missing or folder.is_missing %}
-                            <a class="btn btn-secondary disabled">
+                            <a class="btn btn-secondary disabled btn-sm">
                                 <i class="fas fa-download"></i> Missing
                             </a>
                         {% else %}
-                        <a class="btn btn-primary"
-                           href="{{ file.get_absolute_url }}"><i class="fas fa-download"></i> Download</a>
+                            <a class="btn btn-primary btn-sm"
+                               href="{{ file.get_absolute_url }}"><i class="fas fa-download"></i> Download</a>
                         {% endif %}
-                    </div>
-                </div>
-            </li>
-        {% endfor %}
-        <li class="list-group-item">
-            {% if user|has_edit_access:folder %}
-                <a class="btn btn-primary" href="{% url "nextcloud:folder_edit" folder_slug=folder.slug %}">
-                    <i class="fas fa-pen"></i> Edit
-                </a>
-            {% endif %}
-            {% if user|has_sync_access %}
-                {% if folder.is_missing %}
-                    <a class="btn btn-secondary disabled">
-                        <i class="fas fa-cloud-download-alt"></i> Sync file
-                    </a>
-                {% else %}
-                    <a class="btn btn-primary" href="{% url "nextcloud:sync_file" folder_slug=folder.slug %}">
-                        <i class="fas fa-cloud-download-alt"></i> Sync file
-                    </a>
-                {% endif %}
-            {% endif %}
-        </li>
-    </ul>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
+

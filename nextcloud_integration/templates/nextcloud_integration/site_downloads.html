@@ -20,25 +20,56 @@
         {% include "snippets/unique_alerts.html" with message=alert %}
     {% endfor %}
 
-    {% for folder in folders %}
-        <div class="mb-4">
-            {% include "nextcloud_integration/snippets/nc_folder_contents.html" with folder=folder %}
+    <div class="row">
+        <div class="col-lg-9 col-12">
+            {% for folder in folders %}
+                <div class="mb-4">
+                    {% include "nextcloud_integration/snippets/nc_folder_contents.html" with folder=folder %}
+                </div>
+            {% empty %}
+                <hr>
+                <div>
+                    There are currently no availlable downloads for you
+                </div>
+            {% endfor %}
         </div>
-    {% empty %}
-        <hr>
-        <div>
-            There are currently no availlable downloads for you
+        <div class="col-3 d-none d-lg-inline-flex" style="flex-direction: column">
+            <div class="row">
+                <div class="col-12">
+                    <h3>
+                        Folders
+                    </h3>
+                </div>
+            </div>
+            <ul class="">
+                {% for folder in folders %}
+                    <li class="">
+                        <a href="#folder-{{ folder.slug }}">
+                            {{ folder.display_name }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <div class="row">
+                <div class="col-12 mb-2">
+                    {% if user|has_edit_access %}
+                        <a class="btn btn-primary btn-sm" href="{% url "nextcloud:add_folder" %}">
+                            <i class="fas fa-plus"></i> Add folder
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    {% if user.is_superuser %}
+                        <a class="btn btn-info btn-sm" href="{% url "nextcloud:browse_nextcloud" %}">
+                            <i class="fas fa-search"></i> Browse cloud
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-    {% endfor %}
-    {% if user|has_edit_access %}
-        <a class="btn btn-primary" href="{% url "nextcloud:add_folder" %}">
-            <i class="fas fa-plus"></i> Add folder
-        </a>
-    {% endif %}
-    {% if user.is_superuser %}
-        <a class="btn btn-info" href="{% url "nextcloud:browse_nextcloud" %}">
-            <i class="fas fa-search"></i> Browse cloud
-        </a>
-    {% endif %}
+    </div>
 
 {% endblock %}
