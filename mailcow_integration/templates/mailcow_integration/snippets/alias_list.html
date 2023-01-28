@@ -136,7 +136,20 @@
                                         {% if alias.data.attributes.smtp_access %}<li>SMTP (allow send to server)</li>{% endif %}
                                         {% if alias.data.attributes.pop3_access %}<li>POP3 (allow downloading from server)</li>{% endif %}
                                     </ul>
+                                    <p></p>
+                                    <h4><i class="fas fa-history"></i> Last Syncs</h4>
+                                    <ul>
+                                        {% if alias.data.attributes.imap_access %}<li>IMAP: {{ alias.data.last_imap_login|default:"<i>Never</i>" }}</li>{% endif %}
+                                        {% if alias.data.attributes.smtp_access %}<li>SMTP: {{ alias.data.last_smtp_login|default:"<i>Never</i>" }}</li>{% endif %}
+                                        {% if alias.data.attributes.pop3_access %}<li>POP3: {{ alias.data.last_pop3_login|default:"<i>Never</i>" }}</li>{% endif %}
+                                    </ul>
                                 {% else %}
+                                    {% if alias.archive_addresses %}
+                                        <div class="alert alert-info d-flex align-items-center" role="alert">
+                                            <i class="fas fa-archive mr-3"></i> Archives into: {{ alias.archive_addresses|join:", " }}
+                                        </div>
+                                    {% endif %}
+
                                     <h4><i class="fas fa-user-friends"></i> Subscribers ({{ alias.subscribers|length }})</h4>
                                     <ul>
                                         {% for sub in alias.subscribers %}

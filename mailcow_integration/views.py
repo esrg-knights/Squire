@@ -50,6 +50,7 @@ class AliasInfos:
     exposure_routes: List[List[str]] = field(default_factory=list)
     allow_opt_out: Optional[bool] = None
     squire_edit_url: Optional[str] = None
+    archive_addresses: List[str] = field(default_factory=list)
 
 class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
     """ An overview of aliases managed by Squire. Connects to the Mailcow API to determine whether
@@ -146,7 +147,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
 
             subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias)
             info = AliasInfos(status.name, subscribers, address, alias_address_to_id(address), config['title'], config['description'],
-                alias or mailbox, config['internal'], exposure_routes, config['allow_opt_out']
+                alias or mailbox, config['internal'], exposure_routes, config['allow_opt_out'], archive_addresses=config['archive_addresses']
             )
             infos.append(info)
         return infos
@@ -164,7 +165,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias, alias_type=AliasCategory.GLOBAL_COMMITTEE)
             info = AliasInfos(status.name, subscribers, address, "gc_" + alias_address_to_id(address), address,
                 "Allows mailing all committees at the same time.",
-                alias or mailbox, False, allow_opt_out=False
+                alias or mailbox, False, allow_opt_out=False, archive_addresses=settings.COMMITTEE_CONFIGS['global_archive_addresses']
             )
             infos.append(info)
         return infos
@@ -183,13 +184,15 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias)
             info = AliasInfos(status.name, subscribers, address, assoc_group.id, assoc_group.site_group.name,
                 format_html("{} ({}): {}", assoc_group.site_group.name, assoc_group.get_type_display(), assoc_group.short_description),
-                alias or mailbox, False, squire_edit_url=reverse("admin:committees_associationgroup_change", args=[assoc_group.id])
+                alias or mailbox, False, squire_edit_url=reverse("admin:committees_associationgroup_change", args=[assoc_group.id]),
+                archive_addresses=settings.COMMITTEE_CONFIGS['archive_addresses']
             )
             infos.append(info)
         return infos
 
     def _init_unused_squire_addresses_list(self, aliases: List[MailcowAlias],
-            member_aliases: List[AliasInfos], committee_aliases: List[AliasInfos]) -> List[AliasInfos]:
+            member_aliases: List[AliasInfos], committee_aliases: List[AliasInfos],
+            global_committee_aliases: List[AliasInfos]) -> List[AliasInfos]:
         """ TODO """
         # Only include aliases starting with [MANAGED BY SQUIRE]
         aliases = filter(lambda alias: alias.public_comment.startswith(self.mailcow_manager.SQUIRE_MANAGE_INDICATOR), aliases)
@@ -197,7 +200,8 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
         aliases = filter(lambda alias: not any(1 for member_alias in member_aliases if member_alias.address == alias.address), aliases)
         # Ignore addresses that are committee aliases
         aliases = filter(lambda alias: not any(1 for comm_alias in committee_aliases if comm_alias.address == alias.address), aliases)
-        # TODO: ignore global committee aliases
+        # Ignore global committee aliases
+        aliases = filter(lambda alias: not any(1 for comm_alias in global_committee_aliases if comm_alias.address == alias.address), aliases)
 
         return [
             AliasInfos(AliasStatus.ORPHAN.name, [{'name': addr, 'invalid': False} for addr in alias.goto],
@@ -228,7 +232,9 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             context['member_aliases'] = self._init_member_alias_list(aliases, mailboxes)
             context['global_committee_aliases'] = self._init_global_committee_alias_list(aliases, mailboxes)
             context['committee_aliases'] = self._init_committee_alias_list(aliases, mailboxes)
-            context['unused_aliases'] = self._init_unused_squire_addresses_list(aliases, context['member_aliases'], context['committee_aliases'])
+            context['unused_aliases'] = self._init_unused_squire_addresses_list(aliases,
+                context['member_aliases'], context['committee_aliases'], context['global_committee_aliases']
+            )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -237,10 +243,18 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             # Update all member aliases
             self.mailcow_manager.update_member_aliases()
             messages.success(self.request, "Member aliases updated.")
-        else:
+        elif self.request.POST.get("alias_type", None) == "global_committee":
+            # Update all global committee aliases
+            # TODO: self.mailcow_manager.update_member_aliases()
+            messages.success(self.request, "Global committee aliases updated.")
+        elif self.request.POST.get("alias_type", None) == "committees":
             # Update all committee aliases
             # TODO: Update user aliases
             self.mailcow_manager.update_committee_aliases()
             messages.success(self.request, "Committee aliases updated.")
+        else:
+            # Delete orphan data
+            # TODO: self.mailcow_manager.update_member_aliases()
+            messages.success(self.request, "Orphan data deleted.")
 
         return HttpResponseRedirect(self.request.get_full_path())
