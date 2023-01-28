@@ -13,6 +13,4 @@ def is_in_group(user, group):
 
 @register.filter
 def is_type(association_group: AssociationGroup, type_name: str):
-    # print(getattr(AssociationGroup, type_name))
-    # print(association_group.type)
     return association_group.type == getattr(AssociationGroup, type_name)

@@ -9,39 +9,37 @@ from committees.forms import AssociationGroupUpdateForm
 
 class HomeScreenTextOptions(SimpleFormSettingsOption):
     group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.BOARD, AssociationGroup.ORDER]
-    name = 'Screen text'
+    name = 'Home screen'
     option_form_class = AssociationGroupUpdateForm
-    option_button_text = "Edit home text"
-    title = "Adjust Home screen"
     url_keyword = "group_update"
 
 
 class MemberOptions(SettingsOptionBase):
     group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.ORDER]
-    name = 'member_basic'
-    title = "Members"
+    name = 'Members'
     option_template_name = "committees/committee_pages/setting_blocks/members.html"
+    url_keyword = "members"
+    url_name = "group_members"
 
     def build_url_pattern(self, config):
         return [
-            path('members/', AssociationGroupMembersView.as_view(config=config, settings_option=self), name='group_members'),
-            path('members/edit/', AssociationGroupMemberUpdateView.as_view(config=config, settings_option=self), name='group_members_edit'),
+            path('', AssociationGroupMembersView.as_view(config=config, settings_option=self), name='group_members'),
+            path('edit/', AssociationGroupMemberUpdateView.as_view(config=config, settings_option=self), name='group_members_edit'),
         ]
 
 
 class QuicklinkOptions(SettingsOptionBase):
     group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.ORDER]
-    name = 'quicklinks'
-    title = "External sources"
+    name = 'External sources'
     option_template_name = "committees/committee_pages/setting_blocks/quicklinks.html"
+    url_keyword = "hyperlinks"
+    url_name = "group_quicklinks"
 
     def build_url_pattern(self, config):
         return [
-            path('quicklinks/', include([
-                path('', AssociationGroupQuickLinksView.as_view(config=config, settings_option=self), name='group_quicklinks'),
-                path('edit/', AssociationGroupQuickLinksAddOrUpdateView.as_view(config=config, settings_option=self), name='group_quicklinks_edit'),
-                path('<int:quicklink_id>/delete/', AssociationGroupQuickLinksDeleteView.as_view(config=config, settings_option=self), name='group_quicklink_delete'),
-            ])),
+            path('', AssociationGroupQuickLinksView.as_view(config=config, settings_option=self), name='group_quicklinks'),
+            path('edit/', AssociationGroupQuickLinksAddOrUpdateView.as_view(config=config, settings_option=self), name='group_quicklinks_edit'),
+            path('<int:quicklink_id>/delete/', AssociationGroupQuickLinksDeleteView.as_view(config=config, settings_option=self), name='group_quicklink_delete'),
         ]
 
 

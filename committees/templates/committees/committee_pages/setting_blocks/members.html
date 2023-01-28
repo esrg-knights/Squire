@@ -1,3 +1,4 @@
+<h4>Members</h4>
 {% for membership in association_group.associationgroupmembership_set.all %}
     <div class="row">
         <div class="col">
@@ -11,9 +12,3 @@
         </div>
     </div>
 {% endfor %}
-
-
-<a href="{% url "committees:settings:group_members" group_id=association_group.id %}"
-   class="btn btn-primary btn-sm mt-2">
-    <i class="fas fa-pen"></i> Edit member information
-</a>

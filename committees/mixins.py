@@ -55,12 +55,20 @@ class GroupSettingsMixin(AssociationGroupMixin):
 
     def setup(self, request, *args, **kwargs):
         super(GroupSettingsMixin, self).setup(request, *args, **kwargs)
-        if not self.settings_option.check_option_access(self.association_group):
+        if not self.check_setting_access():
             raise PermissionDenied
 
+    def check_setting_access(self):
+        return self.settings_option.check_option_access(self.association_group)
+
     def get_context_data(self, **kwargs):
+        options = sorted(
+            self.config.get_options(self.association_group),
+            key= lambda option: option.name)
+
         context = super(GroupSettingsMixin, self).get_context_data(**kwargs)
         context['settings_option'] = self.settings_option
+        context['options_list'] = options
         return context
 
 

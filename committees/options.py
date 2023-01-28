@@ -49,6 +49,7 @@ class SettingsOptionBase:
     name: The name of the config
     title: The title presented to the user
     url_keyword: keyword used in the url to differentiate this setting from others
+    url_name: Name of the url path to link to
     template_name: Name of the template used in the settings view
     group_type_required: list of group types that should adhere to this tab.
     group_permission_required: required permission for this option to show up.
@@ -58,9 +59,15 @@ class SettingsOptionBase:
     name = None
     title = None
     url_keyword  = ''
+    url_name = None
     option_template_name = None
     group_type_required = []
     group_requires_permission = None
+
+    @property
+    def home_url_name(self):
+        """ Returns the full url name to be used in the Django reverse funciton """
+        return f"committees:settings:{self.url_name}"
 
     def render(self, association_group):
         """ Renders a block displayed in the settings page """
@@ -106,18 +113,15 @@ class SimpleFormSettingsOption(SettingsOptionBase):
     option_template_name: The template name for the option
     form_template_name: The template name for the option
     option_form_class: The form class that this settings option resolves
-    option_button_text: Text displayed in the button that redirects to the form
     """
-    option_template_name = "committees/snippets/simple_settings_snippet.html"
     form_template_name = "committees/committee_pages/group_settings_edit.html"
     option_form_class = None
-    option_button_text = None
-    resolver_name = None
+    url_name = None
 
     def __init__(self):
         super(SimpleFormSettingsOption, self).__init__()
-        if self.resolver_name is None:
-            self.resolver_name = self.__class__.__name__
+        if self.url_name is None:
+            self.url_name = self.__class__.__name__
 
     def get_form_class(self):
         return self.option_form_class
@@ -125,7 +129,7 @@ class SimpleFormSettingsOption(SettingsOptionBase):
     def get_context_data(self, association_group):
         context = super(SimpleFormSettingsOption, self).get_context_data(association_group=association_group)
         context.update({
-            'settings_url': reverse(f"committees:settings:{self.resolver_name}", kwargs={"group_id": association_group}),
+            'settings_url': reverse(f"committees:settings:{self.url_name}", kwargs={"group_id": association_group}),
             'url_text': self.option_button_text
         })
         return context
@@ -141,5 +145,5 @@ class SimpleFormSettingsOption(SettingsOptionBase):
 
     def build_url_pattern(self, config):
         return [
-            path('', self.build_form_view().as_view(config=config, settings_option=self), name=self.resolver_name),
+            path('', self.build_form_view().as_view(config=config, settings_option=self), name=self.url_name),
         ]

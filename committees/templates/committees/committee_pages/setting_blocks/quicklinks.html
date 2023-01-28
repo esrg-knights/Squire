@@ -1,24 +1,22 @@
-<p>
-    Store references to other sites that are useful for this group
-</p>
-
-{% for quicklink in association_group.shortcut_set.all %}
-    <div class="row">
-        <div class="col">
-            {{ quicklink.name }}
+<h4>
+    External sources
+</h4>
+<div class="my-2">
+    {% for quicklink in association_group.shortcut_set.all %}
+        <div class="row">
+            <div class="col">
+                {{ quicklink.name }}
+            </div>
+            <div class="col">
+                <a href="{{ quicklink.url }}" target="_blank" rel="noopener noreferrer">
+                    {{ quicklink.url }}
+                </a>
+            </div>
+            <div class="col">
+                {{ quicklink.description|default:'' }}
+            </div>
         </div>
-        <div class="col">
-            <a href="{{ quicklink.url }}" target="_blank" rel="noopener noreferrer">
-                {{ quicklink.url }}
-            </a>
-        </div>
-        <div class="col">
-            {{ quicklink.description|default:'' }}
-        </div>
-    </div>
-{% endfor %}
-
-<a href="{% url "committees:settings:group_quicklinks" group_id=association_group.id %}"
-   class="btn btn-primary btn-sm">
-    <i class="fas fa-pen"></i> Edit shortcut urls
-</a>
+    {% empty %}
+        There are no external sources stored
+    {% endfor %}
+</div>

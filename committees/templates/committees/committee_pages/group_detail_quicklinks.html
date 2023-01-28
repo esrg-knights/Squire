@@ -1,4 +1,4 @@
-{% extends 'committees/group_detail_base.html' %}
+{% extends 'committees/committee_pages/group_settings_base.html' %}
 {% load static %}
 {% load render_form %}
 
@@ -13,9 +13,7 @@
 {% endblock %}
 
 
-{% block content %}
-    {{ block.super }}
-
+{% block setting_option %}
     <h2>
         Useful links
     </h2>

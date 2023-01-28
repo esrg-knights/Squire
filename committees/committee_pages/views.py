@@ -33,18 +33,12 @@ class AssociationGroupDetailView(AssociationGroupMixin, TemplateView):
         return quicklinks
 
 
-class AssociationGroupSettingsView(AssociationGroupMixin, TemplateView):
-    template_name = "committees/committee_pages/group_settings.html"
+class AssociationGroupSettingsView(GroupSettingsMixin, TemplateView):
+    template_name = "committees/committee_pages/group_settings_home.html"
     settings = None
 
-    def get_context_data(self, **kwargs):
-        options = sorted(
-            self.config.get_options(self.association_group),
-            key= lambda option: option.title)
-
-        context = super(AssociationGroupSettingsView, self).get_context_data(**kwargs)
-        context['options'] = options
-        return context
+    def check_setting_access(self):
+        return True
 
 
 class AssociationGroupQuickLinksView(GroupSettingsMixin, TemplateView):
