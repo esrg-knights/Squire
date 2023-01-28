@@ -1,7 +1,7 @@
 {% load nextcloud_tags %}
 
 <div>
-    <div class="">
+    <div class="" id="folder-{{ folder.slug }}">
         <h4 class="mb-0">
             <i class="fas fa-folder-open"></i> {{ folder.display_name }}
         </h4>
@@ -18,7 +18,7 @@
     <table class="table table-sm">
         <tbody class="{% if folder.is_missing %}text-muted{% endif %}">
             {% for file in folder.files.all %}
-                <tr id="folder-{{ folder.slug }}">
+                <tr>
                     <td class="">
                         <i class="{{ file.get_file_type.icon_class }}"></i>
                         <span class="">{{ file.display_name }}</span>

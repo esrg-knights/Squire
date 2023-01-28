@@ -3,9 +3,13 @@
         <i class="fas fa-exclamation-triangle"></i>
         Folder missing
     </div>
+{% elif folder.requires_membership and not member.is_considered_member %}
+    <div>
+        {{ folder.files.count }} files availlable to members
+    </div>
 {% else %}
     {% for file in folder.files.all %}
-        {% if not file.is_missing %}
+        {% if file.is_missing %}
             <div class="row">
                 <div class="col-auto">
                     <div class="row align-content-center" style="height: 100%;">
@@ -44,6 +48,7 @@
                         {{ file.display_name }}
                     </p>
                     <p class="small">
+                        <i class="{{ file.get_file_type.icon_class }}"></i>
                         <span class="small">{{ file.file_name }}</span>
                     </p>
                 </div>
