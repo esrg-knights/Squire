@@ -20,8 +20,8 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
     """
     namespace = None
 
-    def check_access_validity(self, request, association_group=None):
-        if not super(CommitteeBaseConfig, self).check_access_validity(request):
+    def is_accessible(self, request, association_group=None):
+        if not super(CommitteeBaseConfig, self).is_accessible(request):
             return False
 
         if not user_in_association_group(request.user, association_group):
