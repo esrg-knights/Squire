@@ -8,8 +8,15 @@ from committees.models import AssociationGroup
 
 
 class AssocationGroupTestingMixin(ViewValidityMixin):
-    """ Mixin for testing AssociationGroup Views """
+    """ Mixin for testing AssociationGroup Views
+    Use 'association_group_id' to set the association_group for testing with a group on the database. Otherwise a
+    new instance will be made with type defined in 'association_group_type'
+    url_name is url name excluding the committees namespace
+    Group will automatically be given permissions defined in group_permissions_required
+
+    """
     association_group_id = None
+    association_group_type = None
     url_name = None
     group_permissions_required = None
 
@@ -21,7 +28,10 @@ class AssocationGroupTestingMixin(ViewValidityMixin):
         super(AssocationGroupTestingMixin, self).setUp()
         if self.association_group_id is None:
             group = Group.objects.create(name=f"{self.__class__.__name__}_group")
-            self.association_group = AssociationGroup.objects.create(site_group=group)
+            self.association_group = AssociationGroup.objects.create(
+                site_group=group,
+                type=self.association_group_type
+            )
             self.association_group.members.add(self.user.member)
         else:
             self.association_group = AssociationGroup.objects.get(id=self.association_group_id)
@@ -42,14 +52,11 @@ class AssocationGroupTestingMixin(ViewValidityMixin):
         except AttributeError:
             pass
 
-    def get_base_url(self):
+    def get_base_url(self, **url_kwargs):
         if self.url_name is None:
             raise ImproperlyConfigured(f"'url_name' was not defined on {self.__class__.__name__}")
-        return reverse('committees:'+self.url_name, kwargs=self.get_url_kwargs())
+        return reverse('committees:'+self.url_name, kwargs=self.get_url_kwargs(**url_kwargs))
 
     def get_url_kwargs(self, **kwargs):
-        url_kwargs = {
-            'group_id': self.association_group.id,
-        }
-        url_kwargs.update(kwargs)
-        return url_kwargs
+        kwargs.setdefault('group_id', self.association_group)
+        return kwargs
