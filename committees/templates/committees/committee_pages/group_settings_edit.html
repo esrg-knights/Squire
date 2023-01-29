@@ -12,6 +12,11 @@
 {% endblock %}
 
 {% block setting_option %}
+    <h2>{{ settings_option.display_title }}</h2>
+    <p>
+        {{ settings_option.display_text }}
+    </p>
+
     {% render_form method="post" id="submit_form"  has_submit_button=False uses_file_field=True %}
 
     <div class="btn-group">

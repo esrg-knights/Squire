@@ -1,7 +1,6 @@
+from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.views.generic import FormView
-from django.urls import reverse
-from django.shortcuts import get_object_or_404
 
 from utils.viewcollectives import *
 
@@ -82,7 +81,11 @@ class BaseSettingsUpdateView(GroupSettingsMixin, FormView):
 
     def form_valid(self, form):
         form.save()
+        messages.success(
+            self.request,
+            message="Settings have been saved"
+        )
         return super(BaseSettingsUpdateView, self).form_valid(form)
 
     def get_success_url(self):
-        return reverse('committees:settings:settings_home', kwargs={'group_id': self.association_group})
+        return self.request.path

@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path
 
 
 from committees.models import AssociationGroup
@@ -8,6 +8,8 @@ from committees.forms import AssociationGroupUpdateForm
 
 
 class HomeScreenTextOptions(SimpleFormSettingsOption):
+    display_title = 'Adjust home screen layout'
+    display_text = 'Use the form below to adjust what is displayed on the home page of this group'
     group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.BOARD, AssociationGroup.ORDER]
     name = 'Home screen'
     option_form_class = AssociationGroupUpdateForm

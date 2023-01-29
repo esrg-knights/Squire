@@ -1,6 +1,5 @@
 from django.contrib.auth.models import Permission
 from django.template.loader import get_template
-from django.views.generic.edit import FormView
 from django.urls import path, include, reverse
 
 from utils.auth_utils import get_perm_from_name
@@ -110,10 +109,14 @@ class SettingsOptionBase:
 class SimpleFormSettingsOption(SettingsOptionBase):
     """
     A simple option resolving just one form
+    display_title: The title displayed on the top the form page
+    display_text: The text displayed on
     option_template_name: The template name for the option
     form_template_name: The template name for the option
     option_form_class: The form class that this settings option resolves
     """
+    display_title = ''
+    display_text = ''
     form_template_name = "committees/committee_pages/group_settings_edit.html"
     option_form_class = None
     url_name = None
