@@ -10,10 +10,9 @@ from utils.views import PostOnlyFormViewMixin
 
 from committees.forms import AssociationGroupMembershipForm, DeleteGroupExternalUrlForm, \
     AddOrUpdateExternalUrlForm, AssociationGroupUpdateForm
+from committees.mixins import AssociationGroupMixin, GroupSettingsMixin, BaseSettingsUpdateView
 from committees.models import AssociationGroup, AssociationGroupMembership, GroupExternalUrl
-from committees.committee_pages.views import AssociationGroupMixin, AssociationGroupDetailView, AssociationGroupQuickLinksView, \
-    AssociationGroupQuickLinksAddOrUpdateView, AssociationGroupQuickLinksDeleteView, \
-    AssociationGroupUpdateView, AssociationGroupMembersView, AssociationGroupMemberUpdateView
+from committees.committee_pages.views import *
 from committees.committeecollective import CommitteeBaseConfig, registry
 from committees.tests.committee_pages.utils import AssocationGroupTestingMixin
 
@@ -87,11 +86,27 @@ class TestAssociationGroupDetailView(ViewValidityMixin, TestCase):
 class TestAssociationGroupQuickLinksView(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
     association_group_type = AssociationGroup.COMMITTEE
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'committees/associationgroups']
+    url_name = 'settings:settings_home'
+    base_user_id = 100
+
+    def test_class(self):
+        self.assertTrue(issubclass(AssociationGroupSettingsView, GroupSettingsMixin))
+        self.assertTrue(issubclass(AssociationGroupSettingsView, TemplateView))
+        self.assertEqual(AssociationGroupSettingsView.template_name, "committees/committee_pages/group_detail_quicklinks.html")
+
+    def test_successful_get(self):
+        response = self.client.get(self.get_base_url(), data={})
+        self.assertEqual(response.status_code, 200)
+
+
+class TestAssociationGroupQuickLinksView(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
+    association_group_type = AssociationGroup.COMMITTEE
+    fixtures = ['test_users', 'test_groups', 'test_members.json', 'committees/associationgroups']
     url_name = 'settings:group_quicklinks'
     base_user_id = 100
 
     def test_class(self):
-        self.assertTrue(issubclass(AssociationGroupQuickLinksView, AssociationGroupMixin))
+        self.assertTrue(issubclass(AssociationGroupQuickLinksView, GroupSettingsMixin))
         self.assertTrue(issubclass(AssociationGroupQuickLinksView, TemplateView))
         self.assertEqual(AssociationGroupQuickLinksView.template_name, "committees/committee_pages/group_detail_quicklinks.html")
 
@@ -109,7 +124,7 @@ class TestAssociationGroupQuickLinksAddOrUpdateView(AssocationGroupTestingMixin,
     base_user_id = 100
 
     def test_class(self):
-        self.assertTrue(issubclass(AssociationGroupQuickLinksAddOrUpdateView, AssociationGroupMixin))
+        self.assertTrue(issubclass(AssociationGroupQuickLinksAddOrUpdateView, GroupSettingsMixin))
         self.assertTrue(issubclass(AssociationGroupQuickLinksAddOrUpdateView, PostOnlyFormViewMixin))
         self.assertTrue(issubclass(AssociationGroupQuickLinksAddOrUpdateView, FormView))
         self.assertEqual(AssociationGroupQuickLinksAddOrUpdateView.form_class, AddOrUpdateExternalUrlForm)
@@ -145,7 +160,7 @@ class TestAssociationGroupQuickLinksDeleteView(AssocationGroupTestingMixin, View
         return super(TestAssociationGroupQuickLinksDeleteView, self).get_url_kwargs(**url_kwargs)
 
     def test_class(self):
-        self.assertTrue(issubclass(AssociationGroupQuickLinksDeleteView, AssociationGroupMixin))
+        self.assertTrue(issubclass(AssociationGroupQuickLinksDeleteView, GroupSettingsMixin))
         self.assertTrue(issubclass(AssociationGroupQuickLinksDeleteView, PostOnlyFormViewMixin))
         self.assertTrue(issubclass(AssociationGroupQuickLinksDeleteView, FormView))
         self.assertEqual(AssociationGroupQuickLinksDeleteView.form_class, DeleteGroupExternalUrlForm)
@@ -182,7 +197,7 @@ class TestAssociationGroupMembersView(AssocationGroupTestingMixin, ViewValidityM
     base_user_id = 100
 
     def test_class(self):
-        self.assertTrue(issubclass(AssociationGroupMembersView, AssociationGroupMixin))
+        self.assertTrue(issubclass(AssociationGroupMembersView, GroupSettingsMixin))
         self.assertTrue(issubclass(AssociationGroupMembersView, TemplateView))
         self.assertEqual(AssociationGroupMembersView.template_name, "committees/committee_pages/group_detail_members.html")
 
@@ -203,7 +218,7 @@ class TestAssociationGroupMemberUpdateView(AssocationGroupTestingMixin, ViewVali
     url_name = 'settings:group_members_edit'
 
     def test_class(self):
-        self.assertTrue(issubclass(AssociationGroupMemberUpdateView, AssociationGroupMixin))
+        self.assertTrue(issubclass(AssociationGroupMemberUpdateView, GroupSettingsMixin))
         self.assertTrue(issubclass(AssociationGroupMemberUpdateView, PostOnlyFormViewMixin))
         self.assertTrue(issubclass(AssociationGroupMemberUpdateView, FormView))
         self.assertEqual(AssociationGroupMemberUpdateView.form_class, AssociationGroupMembershipForm)

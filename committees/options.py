@@ -1,6 +1,6 @@
 from django.contrib.auth.models import Permission
 from django.template.loader import get_template
-from django.urls import path, include, reverse
+from django.urls import path, include, reverse_lazy
 
 from utils.auth_utils import get_perm_from_name
 
@@ -90,10 +90,11 @@ class SettingsOptionBase:
             try:
                 perm = get_perm_from_name(self.group_requires_permission)
             except Permission.DoesNotExist:
-                raise KeyError(f"{self.__class__} is configured incorrectly. "
+                raise KeyError(f"{self.__class__.__name__} is configured incorrectly. "
                                f"{self.group_requires_permission} is not a valid permission. ")
             else:
-                if not perm.group_set.filter(associationgroup=association_group).exists():
+                if not perm.group_set.filter(associationgroup=association_group).exists() and \
+                    not perm.associationgroup_set.filter(id=association_group.id).exists():
                     return False
         return True
 
@@ -126,18 +127,14 @@ class SimpleFormSettingsOption(SettingsOptionBase):
         if self.url_name is None:
             self.url_name = self.__class__.__name__
 
-    def get_form_class(self):
-        return self.option_form_class
-
     def get_context_data(self, association_group):
         context = super(SimpleFormSettingsOption, self).get_context_data(association_group=association_group)
         context.update({
-            'settings_url': reverse(f"committees:settings:{self.url_name}", kwargs={"group_id": association_group}),
-            'url_text': self.option_button_text
+            'settings_url': reverse_lazy(f"committees:settings:{self.url_name}", kwargs={"group_id": association_group}),
         })
         return context
 
-    def build_form_view(self):
+    def get_view_class(self):
         return type(
             f"{self.option_form_class.__name__}OptionView",
             (BaseSettingsUpdateView,), {
@@ -148,5 +145,5 @@ class SimpleFormSettingsOption(SettingsOptionBase):
 
     def build_url_pattern(self, config):
         return [
-            path('', self.build_form_view().as_view(config=config, settings_option=self), name=self.url_name),
+            path('', self.get_view_class().as_view(config=config, settings_option=self), name=self.url_name),
         ]

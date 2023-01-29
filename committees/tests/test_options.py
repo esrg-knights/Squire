@@ -1,14 +1,12 @@
+from django.contrib.auth.models import Permission, Group
+from django.forms import Form
 from django.test import TestCase
-from django.template import Template
 
 from unittest.mock import patch, Mock
 
-from utils.testing.view_test_utils import TestMixinMixin
-
-from membership_file.tests.mixins import TestMixinWithMemberMiddleware
-
+from committees.mixins import BaseSettingsUpdateView
 from committees.models import AssociationGroup
-from committees.options import SettingsOptionBase
+from committees.options import SettingsOptionBase, SimpleFormSettingsOption
 
 
 class SettingOptionsTestCase(TestCase):
@@ -30,6 +28,10 @@ class SettingOptionsTestCase(TestCase):
         context = mock.return_value.render.call_args[0][0]
         self.assertIn('association_group', context.keys())
         self.assertEqual(context['association_group'], self.association_group)
+
+    def test_render_empty(self):
+        self.options.option_template_name = None
+        self.assertEqual(self.options.render(self.association_group), '')
 
     def test_configure_urls(self):
         with self.assertRaises(NotImplementedError):
@@ -57,3 +59,57 @@ class SettingOptionsTestCase(TestCase):
             AssociationGroup.BOARD
         ]
         self.assertEqual(self.options.check_option_access(self.association_group), True)
+
+    def test_check_group_access_group_permission_configure_error(self):
+        self.options.group_requires_permission = 'auth.does_not_exist'
+        with self.assertRaises(KeyError) as exc:
+            self.options.check_option_access(self.association_group)
+        self.assertTrue(str(exc.exception).find('configured incorrectly') >= 0)
+
+    def test_check_group_access_group_permission_denied(self):
+        self.options.group_requires_permission = 'auth.add_user'
+        self.assertEqual(self.options.check_option_access(self.association_group), False)
+
+    def test_check_group_access_group_permission_valid_on_association_group(self):
+        perm = Permission.objects.get(
+            codename='add_user',
+            content_type__app_label='auth',
+        )
+        self.association_group.permissions.add(perm)
+        self.options.group_requires_permission = 'auth.add_user'
+        self.assertEqual(self.options.check_option_access(self.association_group), True)
+
+    def test_check_group_access_group_permission_valid_on_site_group(self):
+        self.association_group.site_group = Group.objects.create()
+        self.association_group.save()
+        perm = Permission.objects.get(
+            codename='add_user',
+            content_type__app_label='auth',
+        )
+        self.association_group.site_group.permissions.add(perm)
+        self.options.group_requires_permission = 'auth.add_user'
+        self.assertEqual(self.options.check_option_access(self.association_group), True)
+
+
+class SimpleFormSettingsOptionTestCase(TestCase):
+    def setUp(self):
+        self.options = SimpleFormSettingsOption()
+
+        self.association_group = AssociationGroup.objects.create(
+            name="test_group",
+            type=AssociationGroup.COMMITTEE,
+        )
+
+    def test_get_context_data(self):
+        context_data = self.options.get_context_data(self.association_group)
+        self.assertIn('settings_url', context_data.keys())
+
+    def test_get_view_class(self):
+        test_form = Form
+        self.options.option_form_class = test_form
+
+        form_view_class = self.options.get_view_class()
+        self.assertTrue(issubclass(form_view_class, BaseSettingsUpdateView))
+        self.assertEqual(form_view_class.template_name, "committees/committee_pages/group_settings_edit.html")
+        self.assertEqual(form_view_class.form_class, test_form)
+
