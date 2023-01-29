@@ -45,6 +45,7 @@ class GroupPanelAccessAdmin(admin.ModelAdmin):
     change_form_template = "committees/admin/change_group_tab_access.html"
     list_display = ('id', 'name')
     list_display_links = ('id', 'name')
+    list_filter = ('type',)
 
     def has_delete_permission(self, request, obj=None):
         return False
