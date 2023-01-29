@@ -34,14 +34,28 @@
         </div>
         <p>
             A member alias is an alias that can be used to send mails to specific groups of members registered in Squire, depending on their <a href="{% url 'account:site_account' %}">personal preferences</a>.
-            The alias can be 'internal' in the sense that only mailboxes in the domain can send emails to this alias. Note that this also includes <b>public</b> aliases set up on the domain, meaning that internal aliases can still be emailed from external domains this way.
+            The alias can be 'internal' in the sense that only mailboxes in the domain can send emails to this alias. Note that <b>public</b> aliases on the domain can also allow external emails to reach these 'internal' addresses, which is undesired.
         </p>
         {% include "mailcow_integration/snippets/alias_list.html" with aliases=member_aliases host=mailcow_host only %}
 
-        <p>
-            Likewise, all committees can be emailed through the following aliases.
-        </p>
+        <hr>
+
+        <div class="d-flex justify-content-between align-items-center">
+            <span>Likewise, all committees can be emailed through the following aliases.</span>
+            {% if error %}
+                <button type="button" class="btn btn-primary" disabled><i class="fas fa-redo-alt"></i> Update</button>
+            {% else %}
+                <form id="update_global_committee_aliases" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="alias_type" value="global_committee"/>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-redo-alt"></i> Update</button>
+                </form>
+            {% endif %}
+        </div>
+
         {% include "mailcow_integration/snippets/alias_list.html" with aliases=global_committee_aliases host=mailcow_host only %}
+
+        <hr>
 
         <div class="d-flex justify-content-between align-items-center">
             <h2>Committee Aliases</h2>
@@ -61,8 +75,20 @@
         </p>
         {% include "mailcow_integration/snippets/alias_list.html" with aliases=committee_aliases host=mailcow_host only %}
 
+        <hr>
 
-        <h2>Orphan Data</h2>
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>Orphan Data</h2>
+            {% if error %}
+                <button type="button" class="btn btn-primary" disabled><i class="fas fa-trash"></i> Remove</button>
+            {% else %}
+                <form id="remove_orphan_data" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="alias_type" value="orphan"/>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-trash"></i> Remove</button>
+                </form>
+            {% endif %}
+        </div>
         <p>
             Squire leaves behind a specific message on aliases it creates. It may happen that some of this data is left behind when Squire no longer needs it.
         </p>

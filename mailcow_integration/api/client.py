@@ -1,6 +1,6 @@
 from enum import Enum
 import json
-from typing import Generator
+from typing import Generator, Union
 import requests
 
 from mailcow_integration.api.exceptions import *
@@ -33,8 +33,6 @@ class MailcowAPIClient:
     def __init__(self, host: str, api_key: str):
         self.host = host
         self.api_key = api_key
-        self._alias_cache = None
-        self._mailbox_cache = None
 
     def _get_headers(self) -> dict:
         """ Retrieves the headers required to fetch info from the Mailcow API. """
@@ -68,7 +66,7 @@ class MailcowAPIClient:
             # API returned an empty response
             raise MailcowIDNotFoundException(f'{request_url} returned an empty response.')
 
-    def _make_request(self, url: str, request_type: RequestType=RequestType.GET, params: dict = None, data: dict = None) -> requests.Response:
+    def _make_request(self, url: str, request_type: RequestType=RequestType.GET, params: dict = None, data: dict = None) -> Union[dict, list]:
         """ Makes a request to the endpoint specified by `url`, with some parameters `params` and some `data`.
         """
         url = self.API_FORMAT % {'host': self.host} + url
@@ -76,10 +74,10 @@ class MailcowAPIClient:
         res = requests.request(request_type.value, url, params=params, data=data, headers=self._get_headers())
 
         try:
-            content = json.loads(res.content)
+            content = res.json()
         except json.JSONDecodeError:
             # Content did not have valid formatting
-            content = None
+            raise MailcowException(f"Unexpected response for {url}: {res.content}")
 
         if isinstance(content, list):
             # Responses are sometimes packed in a list (e.g., when updating multiple entries at the same time)
@@ -87,32 +85,26 @@ class MailcowAPIClient:
                 self._verify_response_content(c, url)
         elif isinstance(content, dict):
             self._verify_response_content(content, url)
-        else:
-            # This should never happen
-            raise MailcowException(f"Unexpected response for {url}: {content}")
 
-        return res
+        return content
 
     ################
     # ALIASES
     ################
-    def get_alias_all(self, use_cache=True) -> Generator[MailcowAlias, None, None]:
+    def get_alias_all(self) -> Generator[MailcowAlias, None, None]:
         """ Gets a list of all email aliases """
-        if not use_cache or self._alias_cache is None:
-            # Cache is empty or we don't want to use it
-            res = self._make_request(f"get/alias/all")
-            self._alias_cache = res.content
-        return map(lambda alias: MailcowAlias.from_json(alias), json.loads(self._alias_cache))
+        content = self._make_request(f"get/alias/all")
+        return map(lambda alias: MailcowAlias.from_json(alias), content)
 
     def get_alias(self, id: int) -> MailcowAlias:
         """ Gets an email alias with a specific id """
-        res = self._make_request(f"get/alias/{id}")
-        content: dict = json.loads(res.content)
+        content = self._make_request(f"get/alias/{id}")
         return MailcowAlias.from_json(content)
 
-    def update_alias(self, alias: MailcowAlias) -> requests.Response:
+    def update_alias(self, alias: MailcowAlias) -> dict:
         """ Updates an alias """
-        self._alias_cache = None
+        assert alias.id is not None
+
         data = {
             'items': [alias.id],
             'attr': {
@@ -138,9 +130,9 @@ class MailcowAPIClient:
         data = json.dumps(data)
         return self._make_request(f"edit/alias/{alias.id}", request_type=RequestType.POST, data=data)
 
-    def create_alias(self, alias: MailcowAlias) -> requests.Response:
+    def create_alias(self, alias: MailcowAlias) -> dict:
         """ Creates a new alias """
-        self._alias_cache = None
+        assert alias.id is None
         data = {
             'address': alias.address,
             'active': int(alias.active),
@@ -165,29 +157,27 @@ class MailcowAPIClient:
     ################
     # MAILBOXES
     ################
-    def get_mailbox_all(self, use_cache=True) -> Generator[MailcowMailbox, None, None]:
+    def get_mailbox_all(self) -> Generator[MailcowMailbox, None, None]:
         """ Gets a list of all mailboxes """
-        if not use_cache or self._mailbox_cache is None:
-            # Cache is empty or we don't want to use it
-            res = self._make_request(f"get/mailbox/all")
-            self._mailbox_cache = res.content
-        return map(lambda mailbox: MailcowMailbox.from_json(mailbox), json.loads(self._mailbox_cache))
+        content = self._make_request(f"get/mailbox/all")
+        return map(lambda mailbox: MailcowMailbox.from_json(mailbox), content)
 
     ################
     # RSPAMD SETTINGS (undocumented API)
     ################
     def get_rspamd_setting_all(self) -> Generator[RspamdSettings, None, None]:
         """ Gets all Rspamd settings maps """
-        res = self._make_request("get/rsetting/all")
-        return map(lambda rspamdsetting: RspamdSettings.from_json(rspamdsetting), json.loads(res.content))
+        content = self._make_request("get/rsetting/all")
+        return map(lambda rspamdsetting: RspamdSettings.from_json(rspamdsetting), content)
 
     def get_rspamd_setting(self, id: int) -> RspamdSettings:
         """ Gets an Rspamd settings map with a specific id """
-        res = self._make_request(f"get/rsetting/{id}")
-        return RspamdSettings.from_json(json.loads(res.content))
+        content = self._make_request(f"get/rsetting/{id}")
+        return RspamdSettings.from_json(content)
 
-    def update_rspamd_setting(self, setting: RspamdSettings) -> requests.Response:
+    def update_rspamd_setting(self, setting: RspamdSettings) -> dict:
         """ Updates the RspamdSetting associated to the given ID with the given data """
+        assert setting.id is not None
         data = json.dumps({
             'items': [setting.id],
             'attr': {
@@ -196,10 +186,12 @@ class MailcowAPIClient:
                 'content': setting.content,
             }
         })
+        # NOTE: API endpoint omits rsetting id
         return self._make_request(f"edit/rsetting", request_type=RequestType.POST, data=data)
 
-    def create_rspamd_setting(self, setting: RspamdSettings) -> requests.Response:
+    def create_rspamd_setting(self, setting: RspamdSettings) -> dict:
         """ Creates a new Rspamd setting """
+        assert setting.id is None
         data = json.dumps({
             'desc': setting.desc,
             'content': setting.content,

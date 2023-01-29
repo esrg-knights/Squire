@@ -135,11 +135,13 @@ class SquireMailcowManager:
 
     def get_alias_all(self, use_cache=True) -> List[MailcowAlias]:
         """ Gets all email aliases """
-        return list(self._client.get_alias_all(use_cache=use_cache))
+        # TODO: cache
+        return list(self._client.get_alias_all())
 
     def get_mailbox_all(self, use_cache=True) -> List[MailcowMailbox]:
         """ Gets all mailboxes """
-        return list(self._client.get_mailbox_all(use_cache=use_cache))
+        # TODO: cache
+        return list(self._client.get_mailbox_all())
 
     def _map_alias_by_name(self) -> Dict[str, MailcowAlias]:
         """ TODO """
@@ -158,27 +160,28 @@ class SquireMailcowManager:
     #             return alias
 
 
-    def _set_alias_by_name(self, alias_address: str, goto_addresses: List[str], public_comment: str,
+    def _set_alias_by_name(self, address: str, goto_addresses: List[str], public_comment: str,
             alias_map: Dict[str, MailcowAlias], mailbox_map: Dict[str, MailcowMailbox]) -> None:
         """ Sets an alias's goto addresses, and optionally sets its visible in SOGo. If the corresponding
             Mailcow alias's public comment does not match `public_comment`, modifications are aborted.
             If the alias indicated by `alias_address` does not yet exist, it is created.
             `alias_map` and `mailbox_map` are mappings of existing email aliases and mailboxes.
         """
-        alias = alias_map.get(alias_address, None)
+        mailbox = mailbox_map.get(address, None)
+        alias = alias_map.get(address, None)
 
         # There is a race condition here when an alias is created in the Mailcow admin before Squire does so,
         #   but there is no way around that. The Mailcow API does not have a "create-if-not-exists" endpoint
         # TODO: Check mailboxes; this breaks if the alias is already a mailbox
         if alias is None:
-            alias = MailcowAlias(alias_address, goto_addresses, active=True, public_comment=public_comment, sogo_visible=False)
+            alias = MailcowAlias(address, goto_addresses, active=True, public_comment=public_comment, sogo_visible=False)
             self._client.create_alias(alias)
             return
 
         # Failsafe in case we attempt to overwrite an alias that is not managed by Squire.
         #   This should only happen if such an alias is modified in the Mailcow admin after its creation.
         if alias.public_comment != public_comment:
-            logging.error(f"Cannot update alias for {alias_address}. It already exists and is not managed by Squire! <{alias.public_comment}>")
+            logging.error(f"Cannot update alias for {address}. It already exists and is not managed by Squire! <{alias.public_comment}>")
             return
 
         if not alias.goto:

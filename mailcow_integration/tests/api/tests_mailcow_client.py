@@ -6,16 +6,19 @@ from django.urls import reverse
 from django.utils import timezone
 from requests import Response
 from unittest.mock import patch, Mock, call
+from core.tests.util import suppress_infos
 
 from mailcow_integration.api.client import MailcowAPIClient, RequestType
 from mailcow_integration.api.exceptions import *
+from mailcow_integration.api.interface.alias import MailcowAlias
+from mailcow_integration.api.interface.rspamd import RspamdSettings
 from mailcow_integration.squire_mailcow import SquireMailcowManager, get_mailcow_manager
+from mailcow_integration.tests.api.test_interfaces import get_alias_json, get_mailbox_json, get_rspamd_json
 
 ##################################################################################
 # Test cases for the mailcow client
 # @since 19 JAN 2023
 ##################################################################################
-
 
 class MailcowClientTest(TestCase):
     """ Tests the Mailcow API Client """
@@ -25,20 +28,31 @@ class MailcowClientTest(TestCase):
         self.mailcow_client = MailcowAPIClient(host="example.com", api_key="fake_key")
 
     def _patch_mailcow_response(self, content: str, status_code=200):
+        """ Creates a fake response with some content """
         res = Response()
         res.status_code = status_code
         res._content = bytes(content, 'utf-8')
         return [res]
 
+    def _get_success_response(self, msg="xxx_modified", obj="foo@example.com") -> dict:
+        """ Gets success json as returned by the Mailcow API """
+        return {
+            "type": "success",
+            "log": [],
+            "msg": [msg, obj]
+        }
+
+    @suppress_infos(logger_name="mailcow_integration")
     @patch('mailcow_integration.api.client.MailcowAPIClient._verify_response_content')
     def test_request(self, mock_verification: Mock):
         """ Tests if requests are made with the correct parameters """
         # Dictionary response
-        with patch('requests.request', side_effect=self._patch_mailcow_response(json.dumps({}))) as mock_request:
+        with patch('requests.request', side_effect=self._patch_mailcow_response(json.dumps({ 'k': 'v' }))) as mock_request:
             self.mailcow_client._make_request("my_url", RequestType.GET, params={'foo': 'bar'}, data={'hello': 'there'})
+            # Only a single request is made
             mock_request.assert_called_once()
             # Verification should be called on dict
-            mock_verification.assert_called_once_with({}, 'example.com/api/v1/my_url')
+            mock_verification.assert_called_once_with({ 'k': 'v' }, 'example.com/api/v1/my_url')
 
             # Basic data
             self.assertEqual(len(mock_request.call_args.args), 2)
@@ -60,6 +74,7 @@ class MailcowClientTest(TestCase):
         # List response
         with patch('requests.request', side_effect=self._patch_mailcow_response(json.dumps([{'a': 1}, {'b': 2}, {'c': 3}]))) as mock_request:
             self.mailcow_client._make_request("my_url", RequestType.GET, params={'foo': 'bar'}, data={'hello': 'there'})
+            # Only one request is made
             mock_request.assert_called_once()
             # Verification should be called on dict
             mock_verification.assert_has_calls([
@@ -130,3 +145,286 @@ class MailcowClientTest(TestCase):
         except MailcowException as e:
             self.fail(f"Exception should not be raised: {e}")
 
+    ################
+    # ALIASES
+    ################
+    @patch('mailcow_integration.api.client.MailcowAPIClient._make_request', side_effect=[[
+        { **get_alias_json(), 'address': "foo@example.com" },
+        { **get_alias_json(), 'address': "bar@example.com" }
+    ]])
+    def test_get_alias_all(self, mock_request: Mock):
+        """ Tests fetching all aliases """
+        res = self.mailcow_client.get_alias_all()
+        res = list(res)
+
+        # JSON is converted to aliases
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0].address, "foo@example.com")
+        self.assertEqual(res[1].address, "bar@example.com")
+
+        # Correct route is used
+        mock_request.assert_called_once_with("get/alias/all")
+
+    @patch('mailcow_integration.api.client.MailcowAPIClient._make_request', side_effect=[
+        { **get_alias_json(), 'address': "foo@example.com" },
+    ])
+    def test_get_alias_id(self, mock_request: Mock):
+        """ Tests fetching a specific alias """
+        res = self.mailcow_client.get_alias(999)
+
+        # JSON is converted to alias
+        self.assertEqual(res.address, "foo@example.com")
+
+        # Correct route is used
+        mock_request.assert_called_once_with("get/alias/999")
+
+    def test_update_alias(self):
+        """ Tests updating a specific alias """
+        alias = MailcowAlias("foo@example.com", [], 999, active=True, sogo_visible=False, public_comment="comment")
+
+        # goto-addresses
+        alias.goto = ["bar@example.com", "baz@example.com"]
+        with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
+                side_effect=[self._get_success_response("alias_modified", "foo@example.com")]) as mock_request:
+            self.mailcow_client.update_alias(alias)
+
+            # Correct endpoint
+            self.assertEqual(len(mock_request.call_args.args), 1)
+            self.assertEqual(mock_request.call_args.args[0], "edit/alias/999")
+
+            # data is JSON-encoded
+            kwargs: dict = mock_request.call_args.kwargs
+            data = kwargs.get("data", None)
+            self.assertIsInstance(data, str)
+            self.assertDictEqual(json.loads(data), {
+                'items': [999],
+                'attr': {
+                    'address': "foo@example.com",
+                    'active': 1,
+                    'public_comment': "comment",
+                    'private_comment': "",
+                    'sogo_visible': 0,
+                    'goto': "bar@example.com,baz@example.com"
+                }
+            })
+
+        # ham
+        alias.goto = ['ham@localhost']
+        with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
+                side_effect=[self._get_success_response("alias_modified", "foo@example.com")]) as mock_request:
+            self.mailcow_client.update_alias(alias)
+
+            # data is JSON-encoded
+            kwargs: dict = mock_request.call_args.kwargs
+            data = kwargs.get("data", None)
+            self.assertIsInstance(data, str)
+            self.assertDictEqual(json.loads(data), {
+                'items': [999],
+                'attr': {
+                    'address': "foo@example.com",
+                    'active': 1,
+                    'public_comment': "comment",
+                    'private_comment': "",
+                    'sogo_visible': 0,
+                    'goto_ham': 1
+                }
+            })
+
+        # spam
+        alias.goto = ['spam@localhost']
+        with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
+                side_effect=[self._get_success_response("alias_modified", "foo@example.com")]) as mock_request:
+            self.mailcow_client.update_alias(alias)
+
+            # spam attr present, goto missing (assumes correct structure is verified earlier in this test)
+            attr: dict = json.loads(mock_request.call_args.kwargs['data'])['attr']
+            self.assertEqual(attr.get("goto_spam", None), 1)
+            self.assertNotIn('goto', attr)
+            self.assertNotIn('goto_ham', attr)
+            self.assertNotIn('goto_null', attr)
+
+        # silent discard
+        alias.goto = ['null@localhost']
+        with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
+                side_effect=[self._get_success_response("alias_modified", "foo@example.com")]) as mock_request:
+            self.mailcow_client.update_alias(alias)
+
+            # null attr present, goto missing (assumes correct structure is verified earlier in this test)
+            attr: dict = json.loads(mock_request.call_args.kwargs['data'])['attr']
+            self.assertEqual(attr.get("goto_null", None), 1)
+            self.assertNotIn('goto', attr)
+            self.assertNotIn('goto_ham', attr)
+            self.assertNotIn('goto_spam', attr)
+
+    def test_add_alias(self):
+        """ Tests creating a specific alias """
+        alias = MailcowAlias("foo@example.com", [], active=True, sogo_visible=False, public_comment="comment")
+
+        # goto-addresses
+        alias.goto = ["bar@example.com", "baz@example.com"]
+        with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
+                side_effect=[self._get_success_response("alias_created", "foo@example.com")]) as mock_request:
+            self.mailcow_client.create_alias(alias)
+
+            # Correct endpoint
+            self.assertEqual(len(mock_request.call_args.args), 1)
+            self.assertEqual(mock_request.call_args.args[0], "add/alias")
+
+            # data is JSON-encoded
+            kwargs: dict = mock_request.call_args.kwargs
+            data = kwargs.get("data", None)
+            self.assertIsInstance(data, str)
+            self.assertDictEqual(json.loads(data), {
+                'address': "foo@example.com",
+                'active': 1,
+                'public_comment': "comment",
+                'private_comment': "",
+                'sogo_visible': 0,
+                'goto': "bar@example.com,baz@example.com"
+            })
+
+        # ham
+        alias.goto = ['ham@localhost']
+        with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
+                side_effect=[self._get_success_response("alias_created", "foo@example.com")]) as mock_request:
+            self.mailcow_client.create_alias(alias)
+
+            # data is JSON-encoded
+            kwargs: dict = mock_request.call_args.kwargs
+            data = kwargs.get("data", None)
+            self.assertIsInstance(data, str)
+            self.assertDictEqual(json.loads(data), {
+                'address': "foo@example.com",
+                'active': 1,
+                'public_comment': "comment",
+                'private_comment': "",
+                'sogo_visible': 0,
+                'goto_ham': 1
+            })
+
+        # spam
+        alias.goto = ['spam@localhost']
+        with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
+                side_effect=[self._get_success_response("alias_created", "foo@example.com")]) as mock_request:
+            self.mailcow_client.create_alias(alias)
+
+            # spam attr present, goto missing (assumes correct structure is verified earlier in this test)
+            attr: dict = json.loads(mock_request.call_args.kwargs['data'])
+            self.assertEqual(attr.get("goto_spam", None), 1)
+            self.assertNotIn('goto', attr)
+            self.assertNotIn('goto_ham', attr)
+            self.assertNotIn('goto_null', attr)
+
+        # silent discard
+        alias.goto = ['null@localhost']
+        with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
+                side_effect=[self._get_success_response("alias_created", "foo@example.com")]) as mock_request:
+            self.mailcow_client.create_alias(alias)
+
+            # null attr present, goto missing (assumes correct structure is verified earlier in this test)
+            attr: dict = json.loads(mock_request.call_args.kwargs['data'])
+            self.assertEqual(attr.get("goto_null", None), 1)
+            self.assertNotIn('goto', attr)
+            self.assertNotIn('goto_ham', attr)
+            self.assertNotIn('goto_spam', attr)
+
+    ################
+    # MAILBOXES
+    ################
+    @patch('mailcow_integration.api.client.MailcowAPIClient._make_request', side_effect=[[
+        { **get_mailbox_json(), 'username': "foo@example.com" },
+        { **get_mailbox_json(), 'username': "bar@example.com" }
+    ]])
+    def test_get_mailbox_all(self, mock_request: Mock):
+        """ Tests fetching all mailboxes """
+        res = self.mailcow_client.get_mailbox_all()
+        res = list(res)
+
+        # JSON is converted to mailboxes
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0].username, "foo@example.com")
+        self.assertEqual(res[1].username, "bar@example.com")
+
+        # Correct route is used
+        mock_request.assert_called_once_with("get/mailbox/all")
+
+
+    ################
+    # RSPAMD SETTINGS
+    ################
+    @patch('mailcow_integration.api.client.MailcowAPIClient._make_request', side_effect=[[
+        { **get_rspamd_json(), 'id': 999 },
+        { **get_rspamd_json(), 'id': 1234 }
+    ]])
+    def test_get_rspamd_all(self, mock_request: Mock):
+        """ Tests fetching all rspamd settings """
+        res = self.mailcow_client.get_rspamd_setting_all()
+        res = list(res)
+
+        # JSON is converted to rspamd settings
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0].id, 999)
+        self.assertEqual(res[1].id, 1234)
+
+        # Correct route is used
+        mock_request.assert_called_once_with("get/rsetting/all")
+
+    @patch('mailcow_integration.api.client.MailcowAPIClient._make_request', side_effect=[
+        { **get_rspamd_json(), 'id': 999, 'desc': "COOL RULE" },
+    ])
+    def test_get_rspamd_id(self, mock_request: Mock):
+        """ Tests fetching a specific rspamd setting """
+        res = self.mailcow_client.get_rspamd_setting(999)
+
+        # JSON is converted to alias
+        self.assertEqual(res.desc, "COOL RULE")
+
+        # Correct route is used
+        mock_request.assert_called_once_with("get/rsetting/999")
+
+    def test_update_rspamd(self):
+        """ Tests updating an rspamd setting """
+        rsetting = RspamdSettings(999, "description", "RULE", active=True)
+
+        with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
+                side_effect=[self._get_success_response("rsetting_modified", "999")]) as mock_request:
+            self.mailcow_client.update_rspamd_setting(rsetting)
+
+            # Correct endpoint
+            self.assertEqual(len(mock_request.call_args.args), 1)
+            self.assertEqual(mock_request.call_args.args[0], "edit/rsetting")
+
+            # data is JSON-encoded
+            kwargs: dict = mock_request.call_args.kwargs
+            data = kwargs.get("data", None)
+            self.assertIsInstance(data, str)
+            self.assertDictEqual(json.loads(data), {
+                'items': [999],
+                'attr': {
+                    'active': 1,
+                    'desc': "description",
+                    'content': "RULE",
+                }
+            })
+
+    def test_add_rspamd(self):
+        """ Tests creating an rspamd setting """
+        rsetting = RspamdSettings(None, "description", "RULE", active=False)
+
+        with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
+                side_effect=[self._get_success_response("rsetting_created", "999")]) as mock_request:
+            self.mailcow_client.create_rspamd_setting(rsetting)
+
+            # Correct endpoint
+            self.assertEqual(len(mock_request.call_args.args), 1)
+            self.assertEqual(mock_request.call_args.args[0], "add/rsetting")
+
+            # data is JSON-encoded
+            kwargs: dict = mock_request.call_args.kwargs
+            data = kwargs.get("data", None)
+            self.assertIsInstance(data, str)
+            self.assertDictEqual(json.loads(data), {
+                'desc': "description",
+                'content': "RULE",
+                'active': 0,
+            })

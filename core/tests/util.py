@@ -136,6 +136,27 @@ def suppress_warnings(function=None, logger_name='django.request'):
         return decorator(function)
     return decorator
 
+def suppress_infos(function=None, logger_name="django"):
+    """ Decorator that surpresses INFO logs when calling a function. """
+    def decorator(original_func):
+        @wraps(original_func)
+        def _wrapped_view(*args, **kwargs):
+            # raise logging level to WARNING
+            logger = logging.getLogger(logger_name)
+            previous_logging_level = logger.getEffectiveLevel()
+            logger.setLevel(logging.WARNING)
+
+            # trigger original function
+            original_func(*args, **kwargs)
+
+            # lower logging level back to previous
+            logger.setLevel(previous_logging_level)
+        return _wrapped_view
+
+    if function:
+        return decorator(function)
+    return decorator
+
 
 class DynamicRegistryUsageMixin:
     """
