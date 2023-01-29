@@ -145,12 +145,19 @@ class Member(models.Model):
     # Any additional information that cannot be stored in other fields (e.g., preferred pronouns)
     notes = models.TextField(blank=True, help_text="Notes are invisible to members.")
 
-    def is_considered_member(self):
+    @property
+    def is_active(self):
+        """ A member is active if it has membership in one of the active years, and if
+            it is otherwise not explicitly marked as inactive (i.e., deregistered or a pending deletion).
+            Behaviour is consistent with Member.objects.filter_active()
+        """
+        if self.is_deregistered or self.marked_for_deletion:
+            return False
+
         # Do not block membership if no year is active
         if MemberYear.objects.filter(is_active=True):
-            return not self.is_deregistered and self.memberyear_set.filter(is_active=True).exists()
-        else:
-            return not self.is_deregistered
+            return self.memberyear_set.filter(is_active=True).exists()
+        return True
 
     ##################################
     # STRING REPRESENTATION METHODS

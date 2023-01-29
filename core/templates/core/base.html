@@ -107,7 +107,7 @@
                                     <i class="fas fa-id-card"></i> My Account</a>
 								<a class="dropdown-item" href="{% url 'account:achievements' %}">
                                     <i class="fas fa-trophy"></i> My  Achievements</a>
-                                {% if member.is_considered_member %}
+                                {% if member.is_active %}
                                     <a class="dropdown-item" href="{% url 'account:inventory:member_items' %}">
                                         <i class="fas fa-archive"></i> My items</a>
                                     {% if member.associationgroup_set.all %}

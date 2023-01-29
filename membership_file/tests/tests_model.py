@@ -25,21 +25,21 @@ class MemberModelTest(TestCase):
         memberlogfield = MemberLogField(id=2, field="name", old_value="Bob", new_value="Charlie")
         self.assertEqual(str(memberlogfield), f"name was updated: <Bob> -> <Charlie> (2)")
 
-    def test_is_considered_member_active_years(self):
-        """ Tests member.is_considered_member when active years are present """
-        self.assertTrue(Member.objects.get(id=1).is_considered_member())
-        self.assertFalse(Member.objects.get(id=2).is_considered_member())
+    def test_is_active_active_years(self):
+        """ Tests member.is_active when active years are present """
+        self.assertTrue(Member.objects.get(id=1).is_active)
+        self.assertFalse(Member.objects.get(id=2).is_active)
         # Member is deregistered so should not be member, even though there is an active membership connected
         # (why this scenario would occur in real life I don't know, but let's set consistent behavior)
-        self.assertFalse(Member.objects.get(id=3).is_considered_member())
+        self.assertFalse(Member.objects.get(id=3).is_active)
 
-    def test_is_considered_member_no_active_years(self):
+    def test_is_active_no_active_years(self):
         MemberYear.objects.update(is_active=False)
-        self.assertTrue(Member.objects.get(id=1).is_considered_member())
-        self.assertTrue(Member.objects.get(id=2).is_considered_member())
+        self.assertTrue(Member.objects.get(id=1).is_active)
+        self.assertTrue(Member.objects.get(id=2).is_active)
         # Member is deregistered so should not be member, even though there is an active membership connected
         # (why this scenario would occur in real life I don't know, but let's set consistent behavior)
-        self.assertFalse(Member.objects.get(id=3).is_considered_member())
+        self.assertFalse(Member.objects.get(id=3).is_active)
 
 
 # Tests methods related to the Room model

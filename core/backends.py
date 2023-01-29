@@ -32,7 +32,7 @@ class BaseUserBackend(ModelBackend):
 
         # Permissions for members
         member = get_member_from_user(user)
-        if member is not None and member.is_considered_member() \
+        if member is not None and member.is_active \
                 and self._in_perm_group(app_label, codename, self.global_preferences['permissions__member_permissions']):
             return True
 
