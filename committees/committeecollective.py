@@ -47,19 +47,23 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
                 raise KeyError(f"{self.__class__} is configured incorrectly. "
                                f"{self.group_requires_permission} is not a valid permission. ")
             else:
-                if not perm.group_set.filter(associationgroup=association_group).exists():
+                if not perm.group_set.filter(associationgroup=association_group).exists() and \
+                    not perm.associationgroup_set.filter(id=association_group.id).exists():
                     return False
         return True
 
     def enable_access(self, association_group: AssociationGroup):
         """ Adjusts the association_group so that it can access this collective """
-        association_group.site_group.permissions.add(
+        association_group.permissions.add(
             get_perm_from_name(self.group_requires_permission)
         )
 
     def disable_access(self, association_group: AssociationGroup):
         """ Adjusts the association_group so that it can no longer access this collective """
         association_group.site_group.permissions.remove(
+            get_perm_from_name(self.group_requires_permission)
+        )
+        association_group.permissions.remove(
             get_perm_from_name(self.group_requires_permission)
         )
 
