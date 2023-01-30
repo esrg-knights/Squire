@@ -1,12 +1,11 @@
 from django.contrib.auth.models import Permission
-from django.shortcuts import get_object_or_404
 
 from utils.viewcollectives import *
 from utils.auth_utils import get_perm_from_name
 
 from committees.models import AssociationGroup
 from committees.utils import user_in_association_group
-from committees.options import settings_options
+from committees.options import settings_options_registry
 
 
 class CommitteeBaseConfig(ViewCollectiveConfig):
@@ -28,7 +27,7 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
             # Duplicate the permissions to the options
             if cls.group_requires_permission:
                 option.group_requires_permission = cls.group_requires_permission
-            settings_options.add_setting_option(option)
+            settings_options_registry.register(option)
 
     def check_access_validity(self, request, association_group=None):
         if not super(CommitteeBaseConfig, self).check_access_validity(request):

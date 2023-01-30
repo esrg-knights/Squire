@@ -2,13 +2,7 @@ from django.contrib.auth.models import User, Permission
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from utils.testing.view_test_utils import TestMixinMixin
-
-from membership_file.tests.mixins import TestMixinWithMemberMiddleware
-
-from committees.committee_pages.views import AssociationGroupMixin
 from committees.models import AssociationGroup
-from committees.tests import get_fake_registry
 
 
 class TestAssociationGroupOverviews(TestCase):

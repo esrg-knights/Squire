@@ -1,9 +1,8 @@
 from django.urls import path
 
-
 from committees.models import AssociationGroup
 from committees.committee_pages.views import *
-from committees.options import SettingsOptionBase, settings_options, SimpleFormSettingsOption
+from committees.options import SettingsOptionBase, settings_options_registry, SimpleFormSettingsOption
 from committees.forms import AssociationGroupUpdateForm
 
 
@@ -45,6 +44,6 @@ class QuicklinkOptions(SettingsOptionBase):
         ]
 
 
-settings_options.add_setting_option(HomeScreenTextOptions)
-settings_options.add_setting_option(MemberOptions)
-settings_options.add_setting_option(QuicklinkOptions)
+settings_options_registry.register(HomeScreenTextOptions)
+settings_options_registry.register(MemberOptions)
+settings_options_registry.register(QuicklinkOptions)

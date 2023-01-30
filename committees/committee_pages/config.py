@@ -1,9 +1,9 @@
-from django.urls import path, include, reverse
+from django.urls import path
 
 from committees.committeecollective import CommitteeBaseConfig
 from committees.committee_pages.views import *
 
-from committees.committee_pages.options import settings_options
+from committees.committee_pages.options import settings_options_registry
 
 
 class AssociationGroupHomeConfig(CommitteeBaseConfig):
@@ -58,12 +58,12 @@ class AssociationGroupSettingsConfig(CommitteeBaseConfig):
         """ Builds a list of urls """
         urls = [
             path('', AssociationGroupSettingsView.as_view(config=self), name='settings_home'),
-            *settings_options.urls(self)
+            *settings_options_registry.urls(self)
         ]
         return urls
 
     def get_options(self, association_group):
-        return settings_options.get_options(association_group)
+        return settings_options_registry.get_options(association_group)
 
     def check_group_access(self, association_group):
         if not super(AssociationGroupSettingsConfig, self).check_group_access(association_group):

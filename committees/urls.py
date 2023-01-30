@@ -1,4 +1,4 @@
-from django.urls import path, include, reverse_lazy, register_converter
+from django.urls import path, reverse_lazy, register_converter
 from django.views.generic.base import RedirectView
 
 from committees.views import *

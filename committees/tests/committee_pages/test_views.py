@@ -8,13 +8,13 @@ from membership_file.tests.mixins import TestMixinWithMemberMiddleware
 from utils.testing.view_test_utils import ViewValidityMixin, TestMixinMixin
 from utils.views import PostOnlyFormViewMixin
 
-from committees.forms import AssociationGroupMembershipForm, DeleteGroupExternalUrlForm, \
-    AddOrUpdateExternalUrlForm, AssociationGroupUpdateForm
-from committees.mixins import AssociationGroupMixin, GroupSettingsMixin, BaseSettingsUpdateView
-from committees.models import AssociationGroup, AssociationGroupMembership, GroupExternalUrl
+from committees.forms import AssociationGroupMembershipForm, DeleteGroupExternalUrlForm, AddOrUpdateExternalUrlForm
+from committees.mixins import AssociationGroupMixin, GroupSettingsMixin
+from committees.models import AssociationGroup, GroupExternalUrl
 from committees.committee_pages.views import *
 from committees.committeecollective import CommitteeBaseConfig, registry
 from committees.tests.committee_pages.utils import AssocationGroupTestingMixin
+
 
 class FakeConfig(CommitteeBaseConfig):
     url_keyword = 'main'

@@ -1,7 +1,7 @@
 
 from .form_test_util import FormValidityMixin
 
-__all__ = ['FormValidityMixin']
+__all__ = ['FormValidityMixin', 'return_boolean']
 
 
 def return_boolean(boolean=False):

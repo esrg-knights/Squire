@@ -6,7 +6,7 @@ from utils.testing.view_test_utils import TestMixinMixin
 
 from membership_file.tests.mixins import TestMixinWithMemberMiddleware
 
-from committees.committee_pages.views import AssociationGroupMixin, GroupSettingsMixin
+from committees.mixins import AssociationGroupMixin, GroupSettingsMixin
 from committees.models import AssociationGroup
 from committees.tests import get_fake_registry
 

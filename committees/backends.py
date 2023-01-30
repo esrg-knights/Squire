@@ -21,6 +21,10 @@ class AssociationGroupAuthBackend:
             content_type__app_label=app_label,
             codename=codename,
             group__associationgroup__members__in=[member],
+        ).exists() or Permission.objects.filter(
+            content_type__app_label=app_label,
+            codename=codename,
+            associationgroup__members__in=[member],
         ).exists()
 
     def authenticate(self, *args, **kwargs):

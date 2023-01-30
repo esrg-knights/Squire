@@ -4,7 +4,6 @@ from django.urls import path, include, reverse_lazy
 
 from utils.auth_utils import get_perm_from_name
 
-from committees.models import AssociationGroup
 from committees.mixins import BaseSettingsUpdateView
 
 
@@ -13,8 +12,8 @@ class OptionsRegistry:
 
     _setting_options = []
 
-    def add_setting_option(cls, options_class):
-        """ Adds an options block to the config """
+    def register(cls, options_class):
+        """ Registers an option to the settings config """
         assert issubclass(options_class, SettingsOptionBase)
         if options_class not in cls._setting_options:
             cls._setting_options.append(options_class())
@@ -34,11 +33,8 @@ class OptionsRegistry:
                 options.append(settings_option)
         return options
 
-    def can_access(self, association_group, option):
-        return option in self.get_options(association_group)
 
-
-settings_options = OptionsRegistry()
+settings_options_registry = OptionsRegistry()
 
 
 class SettingsOptionBase:

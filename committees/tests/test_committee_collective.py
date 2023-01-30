@@ -1,8 +1,9 @@
 from django.contrib.auth.models import User, AnonymousUser
 from django.test import TestCase, Client, RequestFactory
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from committees.committeecollective import CommitteeBaseConfig, registry
+from committees.options import settings_options_registry, SettingsOptionBase
 from committees.models import AssociationGroup
 
 
@@ -68,3 +69,14 @@ class CommitteeConfigTestCase(TestCase):
         self.config.enable_access(self.association_group)  # Assumes that enable_access works
         self.config.disable_access(self.association_group)
         self.assertEqual(self.user.has_perm(perm_name), False)
+
+    @patch("committees.committeecollective.settings_options_registry")
+    def test_setting_option_registry(self, mock_registry: Mock):
+        """ Test that the option classes defined by the config as registered in the setting options registry """
+        mock_option = Mock()
+        class ChildConfig(CommitteeBaseConfig):
+            setting_option_classes = [mock_option]
+            group_requires_permission = 'auth.add_user'
+
+        mock_registry.register.assert_called_with(mock_option)
+        self.assertEqual(mock_option.group_requires_permission, 'auth.add_user')
