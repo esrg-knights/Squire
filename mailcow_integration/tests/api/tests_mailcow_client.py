@@ -32,7 +32,7 @@ class MailcowClientTest(TestCase):
         res = Response()
         res.status_code = status_code
         res._content = bytes(content, 'utf-8')
-        return [res]
+        return res
 
     def _get_success_response(self, msg="xxx_modified", obj="foo@example.com") -> dict:
         """ Gets success json as returned by the Mailcow API """
@@ -47,7 +47,7 @@ class MailcowClientTest(TestCase):
     def test_request(self, mock_verification: Mock):
         """ Tests if requests are made with the correct parameters """
         # Dictionary response
-        with patch('requests.request', side_effect=self._patch_mailcow_response(json.dumps({ 'k': 'v' }))) as mock_request:
+        with patch('requests.request', return_value=self._patch_mailcow_response(json.dumps({ 'k': 'v' }))) as mock_request:
             self.mailcow_client._make_request("my_url", RequestType.GET, params={'foo': 'bar'}, data={'hello': 'there'})
             # Only a single request is made
             mock_request.assert_called_once()
@@ -72,7 +72,7 @@ class MailcowClientTest(TestCase):
         mock_verification.reset_mock()
 
         # List response
-        with patch('requests.request', side_effect=self._patch_mailcow_response(json.dumps([{'a': 1}, {'b': 2}, {'c': 3}]))) as mock_request:
+        with patch('requests.request', return_value=self._patch_mailcow_response(json.dumps([{'a': 1}, {'b': 2}, {'c': 3}]))) as mock_request:
             self.mailcow_client._make_request("my_url", RequestType.GET, params={'foo': 'bar'}, data={'hello': 'there'})
             # Only one request is made
             mock_request.assert_called_once()
@@ -84,7 +84,7 @@ class MailcowClientTest(TestCase):
             ])
 
         # Exception response (cannot JSON decode)
-        with patch('requests.request', side_effect=self._patch_mailcow_response('foo')) as mock_request:
+        with patch('requests.request', return_value=self._patch_mailcow_response('foo')) as mock_request:
             with self.assertRaisesMessage(MailcowException, "Unexpected response"):
                 self.mailcow_client._make_request("my_url", RequestType.GET, params={'foo': 'bar'}, data={'hello': 'there'})
 
@@ -148,10 +148,10 @@ class MailcowClientTest(TestCase):
     ################
     # ALIASES
     ################
-    @patch('mailcow_integration.api.client.MailcowAPIClient._make_request', side_effect=[[
+    @patch('mailcow_integration.api.client.MailcowAPIClient._make_request', return_value=[
         { **get_alias_json(), 'address': "foo@example.com" },
         { **get_alias_json(), 'address': "bar@example.com" }
-    ]])
+    ])
     def test_get_alias_all(self, mock_request: Mock):
         """ Tests fetching all aliases """
         res = self.mailcow_client.get_alias_all()
@@ -165,9 +165,9 @@ class MailcowClientTest(TestCase):
         # Correct route is used
         mock_request.assert_called_once_with("get/alias/all")
 
-    @patch('mailcow_integration.api.client.MailcowAPIClient._make_request', side_effect=[
+    @patch('mailcow_integration.api.client.MailcowAPIClient._make_request', return_value=
         { **get_alias_json(), 'address': "foo@example.com" },
-    ])
+    )
     def test_get_alias_id(self, mock_request: Mock):
         """ Tests fetching a specific alias """
         res = self.mailcow_client.get_alias(999)
@@ -185,7 +185,7 @@ class MailcowClientTest(TestCase):
         # goto-addresses
         alias.goto = ["bar@example.com", "baz@example.com"]
         with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
-                side_effect=[self._get_success_response("alias_modified", "foo@example.com")]) as mock_request:
+                return_value=self._get_success_response("alias_modified", "foo@example.com")) as mock_request:
             self.mailcow_client.update_alias(alias)
 
             # Correct endpoint
@@ -211,7 +211,7 @@ class MailcowClientTest(TestCase):
         # ham
         alias.goto = ['ham@localhost']
         with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
-                side_effect=[self._get_success_response("alias_modified", "foo@example.com")]) as mock_request:
+                return_value=self._get_success_response("alias_modified", "foo@example.com")) as mock_request:
             self.mailcow_client.update_alias(alias)
 
             # data is JSON-encoded
@@ -233,7 +233,7 @@ class MailcowClientTest(TestCase):
         # spam
         alias.goto = ['spam@localhost']
         with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
-                side_effect=[self._get_success_response("alias_modified", "foo@example.com")]) as mock_request:
+                return_value=self._get_success_response("alias_modified", "foo@example.com")) as mock_request:
             self.mailcow_client.update_alias(alias)
 
             # spam attr present, goto missing (assumes correct structure is verified earlier in this test)
@@ -246,7 +246,7 @@ class MailcowClientTest(TestCase):
         # silent discard
         alias.goto = ['null@localhost']
         with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
-                side_effect=[self._get_success_response("alias_modified", "foo@example.com")]) as mock_request:
+                return_value=self._get_success_response("alias_modified", "foo@example.com")) as mock_request:
             self.mailcow_client.update_alias(alias)
 
             # null attr present, goto missing (assumes correct structure is verified earlier in this test)
@@ -263,7 +263,7 @@ class MailcowClientTest(TestCase):
         # goto-addresses
         alias.goto = ["bar@example.com", "baz@example.com"]
         with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
-                side_effect=[self._get_success_response("alias_created", "foo@example.com")]) as mock_request:
+                return_value=self._get_success_response("alias_created", "foo@example.com")) as mock_request:
             self.mailcow_client.create_alias(alias)
 
             # Correct endpoint
@@ -286,7 +286,7 @@ class MailcowClientTest(TestCase):
         # ham
         alias.goto = ['ham@localhost']
         with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
-                side_effect=[self._get_success_response("alias_created", "foo@example.com")]) as mock_request:
+                return_value=self._get_success_response("alias_created", "foo@example.com")) as mock_request:
             self.mailcow_client.create_alias(alias)
 
             # data is JSON-encoded
@@ -305,7 +305,7 @@ class MailcowClientTest(TestCase):
         # spam
         alias.goto = ['spam@localhost']
         with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
-                side_effect=[self._get_success_response("alias_created", "foo@example.com")]) as mock_request:
+                return_value=self._get_success_response("alias_created", "foo@example.com")) as mock_request:
             self.mailcow_client.create_alias(alias)
 
             # spam attr present, goto missing (assumes correct structure is verified earlier in this test)
@@ -318,7 +318,7 @@ class MailcowClientTest(TestCase):
         # silent discard
         alias.goto = ['null@localhost']
         with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
-                side_effect=[self._get_success_response("alias_created", "foo@example.com")]) as mock_request:
+                return_value=self._get_success_response("alias_created", "foo@example.com")) as mock_request:
             self.mailcow_client.create_alias(alias)
 
             # null attr present, goto missing (assumes correct structure is verified earlier in this test)
@@ -331,10 +331,10 @@ class MailcowClientTest(TestCase):
     ################
     # MAILBOXES
     ################
-    @patch('mailcow_integration.api.client.MailcowAPIClient._make_request', side_effect=[[
+    @patch('mailcow_integration.api.client.MailcowAPIClient._make_request', return_value=[
         { **get_mailbox_json(), 'username': "foo@example.com" },
         { **get_mailbox_json(), 'username': "bar@example.com" }
-    ]])
+    ])
     def test_get_mailbox_all(self, mock_request: Mock):
         """ Tests fetching all mailboxes """
         res = self.mailcow_client.get_mailbox_all()
@@ -352,10 +352,10 @@ class MailcowClientTest(TestCase):
     ################
     # RSPAMD SETTINGS
     ################
-    @patch('mailcow_integration.api.client.MailcowAPIClient._make_request', side_effect=[[
+    @patch('mailcow_integration.api.client.MailcowAPIClient._make_request', return_value=[
         { **get_rspamd_json(), 'id': 999 },
         { **get_rspamd_json(), 'id': 1234 }
-    ]])
+    ])
     def test_get_rspamd_all(self, mock_request: Mock):
         """ Tests fetching all rspamd settings """
         res = self.mailcow_client.get_rspamd_setting_all()
@@ -369,9 +369,9 @@ class MailcowClientTest(TestCase):
         # Correct route is used
         mock_request.assert_called_once_with("get/rsetting/all")
 
-    @patch('mailcow_integration.api.client.MailcowAPIClient._make_request', side_effect=[
+    @patch('mailcow_integration.api.client.MailcowAPIClient._make_request', return_value=
         { **get_rspamd_json(), 'id': 999, 'desc': "COOL RULE" },
-    ])
+    )
     def test_get_rspamd_id(self, mock_request: Mock):
         """ Tests fetching a specific rspamd setting """
         res = self.mailcow_client.get_rspamd_setting(999)
@@ -387,7 +387,7 @@ class MailcowClientTest(TestCase):
         rsetting = RspamdSettings(999, "description", "RULE", active=True)
 
         with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
-                side_effect=[self._get_success_response("rsetting_modified", "999")]) as mock_request:
+                return_value=self._get_success_response("rsetting_modified", "999")) as mock_request:
             self.mailcow_client.update_rspamd_setting(rsetting)
 
             # Correct endpoint
@@ -412,7 +412,7 @@ class MailcowClientTest(TestCase):
         rsetting = RspamdSettings(None, "description", "RULE", active=False)
 
         with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
-                side_effect=[self._get_success_response("rsetting_created", "999")]) as mock_request:
+                return_value=self._get_success_response("rsetting_created", "999")) as mock_request:
             self.mailcow_client.create_rspamd_setting(rsetting)
 
             # Correct endpoint

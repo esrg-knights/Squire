@@ -61,7 +61,7 @@ class SquireMailcowManager:
 
         # List of all member alias addresses; these should never be included in an alias's goto addresses
         self._member_alias_addresses: List[str] = [
-            address for address, alias_data in settings.MEMBER_ALIASES.items()
+            address for address in settings.MEMBER_ALIASES.keys()
         ]
 
     @property
@@ -69,7 +69,7 @@ class SquireMailcowManager:
         return self._client.host
 
     def __str__(self) -> str:
-        return f"SquireMailcowManager[{self._client.host}]"
+        return f"SquireMailcowManager[{self.mailcow_host}]"
 
     def clean_alias_emails(self, queryset, email_field="email", flatten=True) -> List[str]:
         """ TODO """
@@ -92,7 +92,6 @@ class SquireMailcowManager:
                 return setting
         return None
 
-    # TODO: What happens if I set one of the internal-addresses as my own address, and then email a committee's address that "my address" is also
     def set_internal_addresses(self) -> None:
         """ Makes a list of member aliases 'internal'. That is, these aliases can only
             be emailed from within one of the domains set up in Mailcow.
@@ -130,7 +129,6 @@ class SquireMailcowManager:
             self._client.create_rspamd_setting(setting)
         else:
             # Setting exists but should be updated
-            setting.content = setting_content
             self._client.update_rspamd_setting(setting)
 
     def get_alias_all(self, use_cache=True) -> List[MailcowAlias]:
