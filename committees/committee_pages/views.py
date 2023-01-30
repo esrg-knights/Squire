@@ -7,12 +7,11 @@ from utils.views import PostOnlyFormViewMixin
 from committees.mixins import AssociationGroupMixin, GroupSettingsMixin
 from committees.forms import AssociationGroupUpdateForm, AddOrUpdateExternalUrlForm, \
     DeleteGroupExternalUrlForm, AssociationGroupMembershipForm
-from committees.views import BaseSettingsUpdateView
 
 
 __all__ = ['AssociationGroupDetailView', 'AssociationGroupSettingsView',  'AssociationGroupQuickLinksView',
            'AssociationGroupQuickLinksAddOrUpdateView', 'AssociationGroupQuickLinksDeleteView',
-           'AssociationGroupUpdateView','AssociationGroupMembersView', 'AssociationGroupMemberUpdateView']
+           'AssociationGroupMembersView', 'AssociationGroupMemberUpdateView']
 
 
 class AssociationGroupDetailView(AssociationGroupMixin, TemplateView):
@@ -88,11 +87,6 @@ class AssociationGroupQuickLinksDeleteView(GroupSettingsMixin, PostOnlyFormViewM
 
     def get_success_message(self, form):
         return f'{form.instance.name} has been removed'
-
-
-class AssociationGroupUpdateView(BaseSettingsUpdateView):
-    form_class = AssociationGroupUpdateForm
-    template_name = "committees/committee_pages/group_settings_edit_markdown.html"
 
 
 class AssociationGroupMembersView(GroupSettingsMixin, TemplateView):

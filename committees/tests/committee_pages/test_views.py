@@ -83,7 +83,7 @@ class TestAssociationGroupDetailView(ViewValidityMixin, TestCase):
         self.assertEqual(set(context['quicklinks_external']), set(self.associationgroup.shortcut_set.all()))
 
 
-class TestAssociationGroupQuickLinksView(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
+class TestAssociationSettingsView(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
     association_group_type = AssociationGroup.COMMITTEE
     fixtures = ['test_users', 'test_groups', 'test_members.json', 'committees/associationgroups']
     url_name = 'settings:settings_home'
@@ -92,7 +92,7 @@ class TestAssociationGroupQuickLinksView(AssocationGroupTestingMixin, ViewValidi
     def test_class(self):
         self.assertTrue(issubclass(AssociationGroupSettingsView, GroupSettingsMixin))
         self.assertTrue(issubclass(AssociationGroupSettingsView, TemplateView))
-        self.assertEqual(AssociationGroupSettingsView.template_name, "committees/committee_pages/group_detail_quicklinks.html")
+        self.assertEqual(AssociationGroupSettingsView.template_name, "committees/committee_pages/group_settings_home.html")
 
     def test_successful_get(self):
         response = self.client.get(self.get_base_url(), data={})

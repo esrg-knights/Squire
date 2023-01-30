@@ -8,7 +8,7 @@ from membership_file.tests.mixins import TestMixinWithMemberMiddleware
 
 from committees.mixins import AssociationGroupMixin, GroupSettingsMixin
 from committees.models import AssociationGroup
-from committees.tests import get_fake_registry
+from committees.tests import get_fake_config
 
 
 class TestAssociationGroupMixin(TestMixinWithMemberMiddleware, TestMixinMixin, TestCase):
@@ -23,7 +23,7 @@ class TestAssociationGroupMixin(TestMixinWithMemberMiddleware, TestMixinMixin, T
     def get_as_full_view_class(self, **kwargs):
         cls = super(TestAssociationGroupMixin, self).get_as_full_view_class(**kwargs)
         # Set the config instance. Normally done in urls creation as base value
-        cls.config = get_fake_registry()
+        cls.config = get_fake_config()
         return cls
 
     def get_base_url_kwargs(self):
@@ -60,7 +60,7 @@ class TestGroupSettingsMixin(TestMixinWithMemberMiddleware, TestMixinMixin, Test
     def get_as_full_view_class(self, **kwargs):
         cls = super(TestGroupSettingsMixin, self).get_as_full_view_class(**kwargs)
         # Set the config instance. Normally done in urls creation as base value
-        cls.config = get_fake_registry()
+        cls.config = get_fake_config()
         cls.settings_option = self.settings_mock
         return cls
 
