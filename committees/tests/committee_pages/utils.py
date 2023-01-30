@@ -30,7 +30,7 @@ class AssocationGroupTestingMixin(ViewValidityMixin):
             group = Group.objects.create(name=f"{self.__class__.__name__}_group")
             self.association_group = AssociationGroup.objects.create(
                 site_group=group,
-                type=self.association_group_type
+                type=self.association_group_type or AssociationGroup.COMMITTEE
             )
             self.association_group.members.add(self.user.member)
         else:

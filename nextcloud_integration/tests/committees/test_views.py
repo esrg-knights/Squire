@@ -59,7 +59,7 @@ class CloudFolderCreateViewTestCase(AssocationGroupTestingMixin, ViewValidityMix
                 'display_name': 'FolderCreateView TestFolder',
                 'description': "random description",
             },
-            redirect_url = reverse("committees:nextcloud:cloud_overview", kwargs={'group_id': self.association_group.id})
+            redirect_url = reverse("committees:nextcloud:cloud_overview", kwargs={'group_id': self.association_group})
         )
 
 
@@ -107,7 +107,7 @@ class CloudFolderEditViewTestCase(TestFolderMixin, TestCase):
                 'formset-1-display_name': 'Item 2',
                 'formset-1-description': 'description 2',
             },
-            redirect_url = reverse("committees:nextcloud:cloud_overview", kwargs={'group_id': self.association_group.id})
+            redirect_url = reverse("committees:nextcloud:cloud_overview", kwargs={'group_id': self.association_group})
         )
 
 
@@ -137,7 +137,7 @@ class CloudFileSyncViewTestCase(TestFolderMixin, TestCase):
                 'description': "Test file that does not actually exist",
                 'selected_file': 'new_file.txt',
             },
-            redirect_url = reverse("committees:nextcloud:cloud_overview", kwargs={'group_id': self.association_group.id})
+            redirect_url = reverse("committees:nextcloud:cloud_overview", kwargs={'group_id': self.association_group})
         )
 
 
@@ -171,7 +171,7 @@ class CloudFolderRefreshViewTestCase(TestFolderMixin, TestCase):
     def test_succesful_post(self, mock):
         self.assertValidPostResponse(
             data={},
-            redirect_url = reverse("committees:nextcloud:cloud_overview", kwargs={'group_id': self.association_group.id}),
+            redirect_url = reverse("committees:nextcloud:cloud_overview", kwargs={'group_id': self.association_group}),
         )
 
     def test_succesful_post_message(self, mock):
