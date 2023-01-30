@@ -1,4 +1,5 @@
 {% extends 'core/user_accounts/account_base.html' %}
+{% load association_group_config_tags %}
 
 {% block title %}
     Squire - My Groups
@@ -15,31 +16,36 @@
                     <div style="font-size: x-small;">
                         {% include "committees/snippets/snippet_assoc_group_icon.html" with association_group=group%}
                     </div>
-                    <h3>
-                        {{ group }}
-                    </h3>
+                    <div>
+                        <h3 class="mb-0">
+                            {{ group }}
+                        </h3>
+                        <div>
+                            {{ group.short_description }}
+                        </div>
+                    </div>
                 </div>
                 <div class="mt-2">
                     <div class="row">
-                    <div class="col btn-group " role="group" aria-label="{{ group }} pages">
-                        <a class="btn btn-info" href="{% url "committees:group_general" group_id=group.id %}">
-                            <i class="fas fa-info-circle"></i> Details
-                        </a>
-                        <a class="btn btn-outline-info" href="{% url "committees:group_inventory" group_id=group.id %}">
-                            <i class="fas fa-archive"></i> Inventory
-                        </a>
-                    </div>
-
-                    <div class="col">
-                        <div class="btn-group " role="group" aria-label="{{ group }} pages">
-                            {% for quicklink in group.shortcut_set.all %}
-                                <a class="btn btn-outline-info" href="{{ quicklink.url }}"
-                                    target="_blank" rel="noopener noreferrer">
-                                    <i class="fas fa-external-link-alt"></i> {{ quicklink.name }}
+                        <div class="col-auto btn-group mb-2" role="group" aria-label="{{ group }} pages">
+                            {% for config in group|get_accessible_configs %}
+                                <a class="btn {% if forloop.first %}btn-info px-5{% else %}btn-outline-info d-none d-md-block{% endif %}"
+                                   href="{{ config|get_absolute_url:group }}">
+                                    <i class="{{ config.icon_class }}"></i> {{ config.name }}
                                 </a>
                             {% endfor %}
                         </div>
-                    </div>
+
+                        <div class="col">
+                            <div class="btn-group " role="group" aria-label="{{ group }} pages">
+                                {% for quicklink in group.shortcut_set.all %}
+                                    <a class="btn btn-outline-info" href="{{ quicklink.url }}"
+                                        target="_blank" rel="noopener noreferrer">
+                                        <i class="fas fa-external-link-alt"></i> {{ quicklink.name }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </div>
 
                     </div>
                 </div>

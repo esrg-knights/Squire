@@ -37,21 +37,7 @@ class TestAssociationGroupMixin(TestMixinWithMemberMiddleware, TestMixinMixin, T
         self._build_get_response(save_view=True)
         context = self.view.get_context_data()
         self.assertEqual(context['association_group'], self.associationgroup)
-
-        self.assertEqual(context['association_group'].COMMITTEE, True)
-        self.assertEqual(context['association_group'].ORDER, False)
-        self.view.association_group.type = AssociationGroup.ORDER
-        context = self.view.get_context_data()
-        self.assertEqual(context['association_group'].ORDER, True)
-        self.assertEqual(context['association_group'].CAMPAIGN, False)
-        self.view.association_group.type = AssociationGroup.CAMPAIGN
-        context = self.view.get_context_data()
-        self.assertEqual(context['association_group'].CAMPAIGN, True)
-        self.assertEqual(context['association_group'].BOARD, False)
-        self.view.association_group.type = AssociationGroup.BOARD
-        context = self.view.get_context_data()
-        self.assertEqual(context['association_group'].BOARD, True)
-        self.assertEqual(context['association_group'].COMMITTEE, False)
+        self.assertTrue(context['config'].__class__.__name__, 'FakeConfig')
 
     def test_get_no_access(self):
         # Nobody is part of group 3, so this should faulter

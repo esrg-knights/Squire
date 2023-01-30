@@ -78,5 +78,12 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
         """
         return []
 
+    def get_urls(self):
+        raise NotImplementedError
+
+    def get_absolute_url(self, association_group, **url_kwargs):
+        url_kwargs.setdefault('group_id', association_group)
+        return super(CommitteeBaseConfig, self).get_absolute_url(**url_kwargs)
+
 
 registry = ViewCollectiveRegistry('committees', 'committee_pages', config_class=CommitteeBaseConfig)

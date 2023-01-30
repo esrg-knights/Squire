@@ -1,22 +1,6 @@
-from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.views.generic import FormView
 
 from utils.viewcollectives import *
-
-from committees.models import AssociationGroup
-
-
-def _wrap_association_group_for_context(association_group: AssociationGroup):
-    """ Update the association_group with template optimised attributes """
-    for group_type in AssociationGroup.GROUPTYPES:
-        # Allow the type to be retrieved by selecting the type constant (e.g. association_group.GUILD)
-        setattr(
-            association_group,
-            group_type[1].upper(),
-            association_group.type == group_type[0]
-        )
-    return association_group
 
 
 class AssociationGroupMixin(ViewCollectiveViewMixin):
@@ -39,7 +23,7 @@ class AssociationGroupMixin(ViewCollectiveViewMixin):
 
     def get_context_data(self, **kwargs):
         context = super(AssociationGroupMixin, self).get_context_data(**kwargs)
-        context['association_group'] = _wrap_association_group_for_context(self.association_group)
+        context['association_group'] = self.association_group
         context['config'] = self.config
         return context
 
@@ -69,23 +53,3 @@ class GroupSettingsMixin(AssociationGroupMixin):
         context['settings_option'] = self.settings_option
         context['options_list'] = options
         return context
-
-
-class BaseSettingsUpdateView(GroupSettingsMixin, FormView):
-    template_name = "committees/committee_pages/group_settings_edit.html"
-
-    def get_form_kwargs(self):
-        form_kwargs = super(BaseSettingsUpdateView, self).get_form_kwargs()
-        form_kwargs['instance'] = self.association_group
-        return form_kwargs
-
-    def form_valid(self, form):
-        form.save()
-        messages.success(
-            self.request,
-            message="Settings have been saved"
-        )
-        return super(BaseSettingsUpdateView, self).form_valid(form)
-
-    def get_success_url(self):
-        return self.request.path

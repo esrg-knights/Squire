@@ -1,6 +1,8 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.views.generic import ListView
+from django.views.generic import ListView, FormView
 
+from committees.mixins import GroupSettingsMixin
 from committees.models import AssociationGroup
 
 
@@ -54,6 +56,23 @@ class BoardOverview(AssocGroupOverview):
         return super(BoardOverview, self).get_queryset().order_by('-shorthand')
 
 
+class BaseSettingsUpdateView(GroupSettingsMixin, FormView):
+    template_name = "committees/committee_pages/group_settings_edit.html"
 
+    def get_form_kwargs(self):
+        form_kwargs = super(BaseSettingsUpdateView, self).get_form_kwargs()
+        form_kwargs['instance'] = self.association_group
+        return form_kwargs
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(
+            self.request,
+            message="Settings have been saved"
+        )
+        return super(BaseSettingsUpdateView, self).form_valid(form)
+
+    def get_success_url(self):
+        return self.request.path
 
 

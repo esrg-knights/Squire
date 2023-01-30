@@ -4,7 +4,7 @@ from django.urls import path, include, reverse_lazy
 
 from utils.auth_utils import get_perm_from_name
 
-from committees.mixins import BaseSettingsUpdateView
+from committees.views import BaseSettingsUpdateView
 
 
 class OptionsRegistry:
@@ -42,7 +42,6 @@ class SettingsOptionBase:
     Forms the base configuration options for a settings module that can hook into the options registry
     This is used by the settings config
     name: The name of the config
-    title: The title presented to the user
     url_keyword: keyword used in the url to differentiate this setting from others
     url_name: Name of the url path to link to
     template_name: Name of the template used in the settings view
@@ -52,7 +51,6 @@ class SettingsOptionBase:
     Note: To reverse an url, use committees:settings:_your_url_name_
     """
     name = None
-    title = None
     url_keyword  = ''
     url_name = None
     option_template_name = None
@@ -107,7 +105,7 @@ class SimpleFormSettingsOption(SettingsOptionBase):
     """
     A simple option resolving just one form
     display_title: The title displayed on the top the form page
-    display_text: The text displayed on
+    display_text: The text displayed on the form page
     option_template_name: The template name for the option
     form_template_name: The template name for the option
     option_form_class: The form class that this settings option resolves

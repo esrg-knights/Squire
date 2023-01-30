@@ -80,3 +80,9 @@ class CommitteeConfigTestCase(TestCase):
 
         mock_registry.register.assert_called_with(mock_option)
         self.assertEqual(mock_option.group_requires_permission, 'auth.add_user')
+
+    @patch("utils.viewcollectives.ViewCollectiveConfig.get_absolute_url")
+    def test_get_absolute_url(self, mock_reverse: Mock):
+        self.config.url_name = 'test_name'
+        self.config.get_absolute_url(self.association_group)
+        mock_reverse.assert_called_with(group_id=self.association_group)

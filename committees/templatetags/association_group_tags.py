@@ -3,6 +3,10 @@ from django import template
 from committees.utils import user_in_association_group
 from committees.models import AssociationGroup
 
+
+__all__ = ["is_in_group", "is_type"]
+
+
 register = template.Library()
 
 

@@ -4,9 +4,10 @@ from django.views.generic import TemplateView,  FormView
 
 from utils.views import PostOnlyFormViewMixin
 
-from committees.mixins import AssociationGroupMixin, GroupSettingsMixin, BaseSettingsUpdateView
+from committees.mixins import AssociationGroupMixin, GroupSettingsMixin
 from committees.forms import AssociationGroupUpdateForm, AddOrUpdateExternalUrlForm, \
     DeleteGroupExternalUrlForm, AssociationGroupMembershipForm
+from committees.views import BaseSettingsUpdateView
 
 
 __all__ = ['AssociationGroupDetailView', 'AssociationGroupSettingsView',  'AssociationGroupQuickLinksView',

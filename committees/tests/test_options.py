@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from unittest.mock import patch, Mock
 
-from committees.mixins import BaseSettingsUpdateView
+from committees.views import BaseSettingsUpdateView
 from committees.models import AssociationGroup
 from committees.options import SettingsOptionBase, SimpleFormSettingsOption
 

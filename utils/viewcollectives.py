@@ -76,6 +76,14 @@ class ViewCollectiveConfig:
         url_key = f'{self.url_keyword}/' if self.url_keyword else ''
         return path(url_key, (self.get_urls(), self.namespace, self.namespace))
 
+    def get_absolute_url(self, **url_kwargs):
+        url_name = ""
+        if self.registry.namespace:
+            url_name += f"{self.registry.namespace}:"
+        url_name += self.url_name
+
+        return reverse(url_name, kwargs=url_kwargs)
+
 
 class ViewCollectiveViewMixin:
     """
