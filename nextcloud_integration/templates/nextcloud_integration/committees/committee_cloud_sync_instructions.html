@@ -7,6 +7,22 @@
 {% endblock %}
 
 
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url "committees:nextcloud:cloud_overview" group_id=association_group.id %}">
+        Folders
+    </a></li>
+    <li class="breadcrumb-item"><a href="{% url "committees:nextcloud:cloud_overview" group_id=association_group.id %}">
+        {{ folder.display_name }}
+    </a></li>
+    <li class="breadcrumb-item"><a href="{% url "committees:nextcloud:folder_sync_file" group_id=association_group.id folder_slug=folder.slug %}">
+        Sync File
+    </a></li>
+    <li class="breadcrumb-item"><a>
+        Instructions
+    </a></li>
+{% endblock %}
+
+
 {% block content %}
 {{ block.super }}
     <h2>How to sync a file from Nextcloud</h2>

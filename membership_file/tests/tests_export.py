@@ -6,7 +6,7 @@ from django.test import TestCase
 from import_export.formats.base_formats import YAML
 
 from membership_file.admin import MemberWithLog
-from membership_file.export import MemberResource
+from membership_file.export import MemberResource, MembersFinancialResource
 from membership_file.models import Member, Room
 
 
@@ -34,6 +34,35 @@ class MembershipFileExportTest(TestCase):
                 self.assertIn(str(Room.objects.get(id=1)), row["accessible_rooms"])
                 self.assertIn(str(Room.objects.get(id=2)), row["accessible_rooms"])
                 break
+
+
+class MembershipFinanceFileExportTest(TestCase):
+    """ Tests the structure of the exported membership file """
+    fixtures = ['test_users', 'test_members',]
+
+    def setUp(self):
+        csv_export = MembersFinancialResource().export().csv
+        f = StringIO(csv_export)
+        self.reader = csv.DictReader(f, delimiter=',')
+
+    def test_member_name(self):
+        """ Tests if the email addresses for registered and deregistered members are in different columns """
+        for row in self.reader:
+            if self.reader.line_num == 2:
+                self.assertEqual(row.get('member'), "Charlie van der Dommel")
+
+    def test_fields(self):
+        self.assertIn("member", self.reader.fieldnames)
+        self.assertIn("email", self.reader.fieldnames)
+        self.assertIn("year__name", self.reader.fieldnames)
+        self.assertIn("has_paid", self.reader.fieldnames)
+
+    def test_email(self):
+        """ Tests if the email addresses for registered and deregistered members are in different columns """
+        for row in self.reader:
+            if self.reader.line_num == 2:
+                self.assertEqual(row.get('email'), "linked_member@example.com")
+
 
 class ModelAdminExportTest(TestCase):
     """

@@ -74,6 +74,7 @@ class Activity(models.Model):
     location = models.CharField(max_length=255)
     slots_image = models.ForeignKey(PresetImage, blank=True, null=True, related_name="activity_image", on_delete=models.SET_NULL)
     promotion_image = models.ImageField(blank=True, null=True, upload_to='images/activity/%Y/%m/')
+    file_folder = models.ForeignKey('nextcloud_integration.SquireNextCloudFolder', blank=True, null=True, on_delete=models.SET_NULL)
 
     # Creation and last update dates (handled automatically)
     created_date = models.DateTimeField(auto_now_add=True)
@@ -549,11 +550,6 @@ class Activity(models.Model):
                 return True
         return False
 
-    @property
-    def feed_id(self):
-        """ Get a unique identifier to distinguish this activity in the feed """
-        return f'local_activity-name-{self.id}'
-
 
 class ActivityDuplicate(ModelBase):
     """
@@ -621,7 +617,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         unique_together = ['parent_activity', 'recurrence_id']
         # Define the fields that can be locally be overwritten
         copy_fields = [
-            'title', 'description', 'promotion_image', 'location', 'max_participants', 'subscriptions_required',
+            'title', 'description', 'promotion_image', 'file_folder', 'location', 'max_participants', 'subscriptions_required',
             'slot_creation', 'private_slot_locations', 'full_day']
         # Define fields that are instantly looked for in the parent_activity
         # If at any point in the future these must become customisable, one only has to move the field name to the
