@@ -1,9 +1,11 @@
-from django.urls import path, include, reverse
+from django.urls import path, include, reverse, register_converter
 
 from committees.committeecollective import CommitteeBaseConfig
 
-from activity_calendar.committee_pages.views import ActivityCalendarView, AddActivityMomentCalendarView
+from activity_calendar.committee_pages import views
+from activity_calendar.url_converters import DateTimeIsoConverter
 
+register_converter(DateTimeIsoConverter, 'dt')
 
 
 class ActivityConfig(CommitteeBaseConfig):
@@ -16,8 +18,8 @@ class ActivityConfig(CommitteeBaseConfig):
     def get_urls(self):
         """ Builds a list of urls """
         return [
-            path('', ActivityCalendarView.as_view(config=self), name='group_activities'),
-            path('<int:activity_id>/add/', AddActivityMomentCalendarView.as_view(config=self), name='add_activity_moment'),
+            path('', views.ActivityCalendarView.as_view(config=self), name='group_activities'),
+            path('<int:activity_id>/add/', views.AddActivityMomentCalendarView.as_view(config=self), name='add_activity_moment'),
         ]
 
 
@@ -32,6 +34,9 @@ class MeetingConfig(CommitteeBaseConfig):
     def get_urls(self):
         """ Builds a list of urls """
         return [
-            path('', ActivityCalendarView.as_view(config=self), name='home'),
-            # path('<int:activity_id>/add/', AddActivityMomentCalendarView.as_view(config=self), name='add_activity_moment'),
+            path('', views.MeetingOverview.as_view(config=self), name='home'),
+            path('add/', views.AddMeetingView.as_view(config=self), name='add'),
+            path('<dt:recurrence_id>/', include([
+                path('edit', views.EditMeetingView.as_view(config=self), name='edit'),
+            ])),
         ]

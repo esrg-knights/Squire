@@ -9,10 +9,11 @@ from django.utils.translation import gettext_lazy as _
 
 from core.forms import MarkdownForm
 from core.widgets import ImageUploadMartorWidget
+from committees.models import AssociationGroup
 
-from activity_calendar.models import ActivityMoment
+from activity_calendar.models import Activity, ActivityMoment
 from activity_calendar.forms import ActivityMomentFormMixin
-
+from activity_calendar.committee_pages.utils import get_meeting_activity, create_meeting_activity
 
 class CreateActivityMomentForm(ActivityMomentFormMixin, MarkdownForm):
     class Meta:
@@ -40,3 +41,41 @@ class CreateActivityMomentForm(ActivityMomentFormMixin, MarkdownForm):
         self.instance.recurrence_id = timezone.now() + datetime.timedelta(days=7)
         self.fields['recurrence_id'].initial = self.instance.recurrence_id
 
+
+class AddMeetingForm(ModelForm):
+
+    class Meta:
+        model = ActivityMoment
+        fields = [
+            'local_start_date',
+        ]
+
+    def __init__(self, *args, association_group: AssociationGroup=None, **kwargs):
+        if association_group is None:
+            raise KeyError("Association group was not given")
+        self.association_group = association_group
+        super(AddMeetingForm, self).__init__(*args, **kwargs)
+
+        self.instance.parent_activity = self.get_parent_activity()
+
+    def get_parent_activity(self):
+        activity = get_meeting_activity(association_group=self.association_group)
+        if activity is None:
+            activity = create_meeting_activity(self.association_group)
+        return activity
+
+    def save(self, commit=True):
+        self.set_default_values()
+        return super(AddMeetingForm, self).save(commit=commit)
+
+    def set_default_values(self):
+        self.instance.recurrence_id = self.cleaned_data['local_start_date']
+
+
+class EditMeetingForm(ModelForm):
+    class Meta:
+        model = ActivityMoment
+        fields = [
+            'local_description',
+            'local_location',
+        ]

@@ -10,17 +10,54 @@
 {% block content %}
     {{ block.super }}
 
-    <p>
-        Below is a list of the upcoming meetings
-    </p>
-    <hr>
-
-    {% for meeting in meeting_list %}
-        <div class="mb-4">
-            <h4>
-                {{ meeting.title }}
-            </h4>
-        </div>
-    {% endfor %}
+    <h3>
+        Meetings
+    </h3>
+    {% if meeting_activity.is_recurring %}
+        <p class="">
+            Repeats:
+            {% for rule in meeting_activity.recurrences.rrules %}
+                {{ rule.to_text }}
+            {% endfor %}
+        </p>
+    {% endif %}
+    <div class="row mb-3">
+        {% for meeting in meeting_list %}
+            <div class="col col-md-6">
+                <h5>
+                    <i class="fas fa-calendar-day"></i>
+                    {{ meeting.start_date|date:"l j F, H:i"|capfirst }}
+                </h5>
+                <table class="table table-sm">
+                    <tbody>
+                    <tr>
+                        <td>
+                            Location:
+                        </td>
+                        <td>
+                            {{ meeting.location|default:"undetermined" }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Description:
+                        </td>
+                        <td>
+                            {{ meeting.description|default:"-" }}
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <a href="{% url "committees:meetings:edit" group_id=association_group.id recurrence_id=meeting.recurrence_id %}"
+                   class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-pen"></i> Edit
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+    <a class="btn btn-primary btn-sm"
+       href="{% url "committees:meetings:add" group_id=association_group.id %}">
+        <i class="fas fa-plus"></i> Add new meeting
+    </a>
 
 {% endblock %}

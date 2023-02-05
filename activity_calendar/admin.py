@@ -81,7 +81,7 @@ class ActivityAdmin(MarkdownImageInlineAdmin):
 class ActivityMomentAdmin(MarkdownImageInlineAdmin):
     form = ActivityMomentAdminForm
 
-    list_filter = ['recurrence_id', 'local_start_date']
+    list_filter = ['recurrence_id', 'local_start_date', 'parent_activity__type']
     date_hierarchy = 'recurrence_id'
     search_fields = ['local_title', 'parent_activity__title']
     autocomplete_fields = ['parent_activity',]
