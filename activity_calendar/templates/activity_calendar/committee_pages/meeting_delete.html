@@ -16,27 +16,22 @@
 {% block content %}
     {{ block.super }}
 
-    <h4>Change meeting details</h4>
-    <h5>
-        <i class="fas fa-calendar-day"></i>
-        {{ meeting.start_date|date:"l j F, H:i"|capfirst }}
-    </h5>
+    <h4>Cancel meeting
 
+        {{ meeting.start_date|date:"l j F, H:i"|capfirst }}
+    </h4>
+    Are you sure you want to cancel this meeting?
     <hr>
 
     {% render_form method="post" id="submit_form"  has_submit_button=False uses_file_field=True %}
 
     <div class="btn-group" role="group" aria-label="Form changing">
-        <button form="submit_form" type="submit" class="btn btn-success">
-            <i class="fas fa-pen"></i> Save changes
+        <button form="submit_form" type="submit" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Yes, delete this meeting
         </button>
         <a href="{% url "committees:meetings:home" group_id=association_group.id %}"
            class="btn btn-secondary">
-            <i class="fas fa-times"></i> Ignore changes
-        </a>
-        <a href="{% url "committees:meetings:delete" group_id=association_group.id recurrence_id=meeting.recurrence_id %}"
-           class="btn btn-outline-danger">
-            <i class="fas fa-trash"></i> Delete meeting
+            <i class="fas fa-times"></i> No, keep this meeting
         </a>
     </div>
 

@@ -24,34 +24,46 @@
     <div class="row mb-3">
         {% for meeting in meeting_list %}
             <div class="col col-md-6">
-                <h5>
+                <h5 class="{% if meeting.is_cancelled %}text-muted{% endif %}">
                     <i class="fas fa-calendar-day"></i>
                     {{ meeting.start_date|date:"l j F, H:i"|capfirst }}
                 </h5>
                 <table class="table table-sm">
                     <tbody>
-                    <tr>
-                        <td>
-                            Location:
-                        </td>
-                        <td>
-                            {{ meeting.location|default:"undetermined" }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            Description:
-                        </td>
-                        <td>
-                            {{ meeting.description|default:"-" }}
-                        </td>
-                    </tr>
+                        {% if meeting.is_cancelled %}
+                            <tr>
+                                <td colspan="2">
+                                    <span class="text-muted">
+                                        This meeting is cancelled
+                                    </span>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td>
+                                    Location:
+                                </td>
+                                <td>
+                                    {{ meeting.location|default:"undetermined" }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Description:
+                                </td>
+                                <td>
+                                    {{ meeting.description|default:"-" }}
+                                </td>
+                            </tr>
+                        {% endif %}
                     </tbody>
                 </table>
+                {% if not meeting.is_cancelled %}
                 <a href="{% url "committees:meetings:edit" group_id=association_group.id recurrence_id=meeting.recurrence_id %}"
                    class="btn btn-sm btn-outline-primary">
                     <i class="fas fa-pen"></i> Edit
                 </a>
+                {% endif %}
             </div>
         {% endfor %}
     </div>

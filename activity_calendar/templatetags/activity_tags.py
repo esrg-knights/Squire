@@ -16,6 +16,13 @@ def get_next_activity_instances(activity: Activity, max=3):
         next_activity = activity.get_next_activitymoment(dtstart=start_date)
         if next_activity is None:
             break
+        try:
+            if next_activity.start_date == next_activity_moments[-1].start_date:
+                # Object returned is the same as last one, so break the sequence
+                # This can occur on recurring events with an end date set or a max number of instances
+                break
+        except IndexError:
+            pass
         start_date = next_activity.start_date
         next_activity_moments.append(next_activity)
 

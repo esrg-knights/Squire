@@ -11,6 +11,7 @@ from core.forms import MarkdownForm
 from core.widgets import ImageUploadMartorWidget
 from committees.models import AssociationGroup
 
+from activity_calendar.constants import *
 from activity_calendar.models import Activity, ActivityMoment
 from activity_calendar.forms import ActivityMomentFormMixin
 from activity_calendar.committee_pages.utils import get_meeting_activity, create_meeting_activity
@@ -79,3 +80,13 @@ class EditMeetingForm(ModelForm):
             'local_description',
             'local_location',
         ]
+
+class DeleteMeetingForm(ModelForm):
+    class Meta:
+        model = ActivityMoment
+        fields = []
+
+    def save(self, commit=True):
+        # self.instance = ActivityMoment.objects.get()
+        self.instance.status = STATUS_CANCELLED
+        self.instance.save()

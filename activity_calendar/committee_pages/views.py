@@ -8,7 +8,8 @@ from django.shortcuts import get_object_or_404
 from committees.committeecollective import AssociationGroupMixin
 
 from activity_calendar.models import Activity, ActivityMoment
-from activity_calendar.committee_pages.forms import CreateActivityMomentForm, AddMeetingForm, EditMeetingForm
+from activity_calendar.committee_pages.forms import CreateActivityMomentForm, AddMeetingForm, \
+    EditMeetingForm, DeleteMeetingForm
 from activity_calendar.templatetags.activity_tags import get_next_activity_instances
 from activity_calendar.committee_pages.utils import get_meeting_activity
 
@@ -75,7 +76,7 @@ class MeetingOverview(AssociationGroupMixin, ListView):
 
     def get_queryset(self):
         activity = get_meeting_activity(association_group=self.association_group)
-        return get_next_activity_instances(activity, max=2)
+        return get_next_activity_instances(activity, max=8)
 
     def get_context_data(self, **kwargs):
         return super(MeetingOverview, self).get_context_data(
@@ -101,32 +102,60 @@ class AddMeetingView(AssociationGroupMixin, FormView):
         return reverse("committees:meetings:home", kwargs={'group_id': self.association_group.id})
 
 
-class EditMeetingView(AssociationGroupMixin, FormView):
-    form_class = EditMeetingForm
-    template_name = "activity_calendar/committee_pages/meeting_edit.html"
-
+class MeetingMixin:
+    """ Mixin for meeting views """
     def setup(self, request, *args, **kwargs):
-        super(EditMeetingView, self).setup(request, *args, **kwargs)
+        super(MeetingMixin, self).setup(request, *args, **kwargs)
 
         activity = get_meeting_activity(self.association_group)
         self.activity_moment = activity.get_occurrence_at(self.kwargs['recurrence_id'])
         if self.activity_moment is None:
             raise Http404("There is no meeting at this occurence")
 
+    def get_context_data(self, **kwargs):
+        return super(MeetingMixin, self).get_context_data(
+            meeting=self.activity_moment,
+            **kwargs
+        )
+
+
+class EditMeetingView(AssociationGroupMixin, MeetingMixin, FormView):
+    form_class = EditMeetingForm
+    template_name = "activity_calendar/committee_pages/meeting_edit.html"
+
     def get_form_kwargs(self):
         kwargs = super(EditMeetingView, self).get_form_kwargs()
         kwargs['instance'] = self.activity_moment
         return kwargs
 
-    def get_context_data(self, **kwargs):
-        return super(EditMeetingView, self).get_context_data(
-            meeting=self.activity_moment,
-            **kwargs
+    def form_valid(self, form):
+        form.save()
+        messages.success(
+            self.request,
+            "Meeting has succesfully been adjusted"
         )
+        return super(EditMeetingView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse("committees:meetings:home", kwargs={'group_id': self.association_group.id})
+
+
+class DeleteMeetingView(AssociationGroupMixin, MeetingMixin, FormView):
+    form_class = DeleteMeetingForm
+    template_name = "activity_calendar/committee_pages/meeting_delete.html"
+
+    def get_form_kwargs(self):
+        kwargs = super(DeleteMeetingView, self).get_form_kwargs()
+        kwargs['instance'] = self.activity_moment
+        return kwargs
 
     def form_valid(self, form):
         form.save()
-        return super(EditMeetingView, self).form_valid(form)
+        messages.success(
+            self.request,
+            "Meeting has is now marked as cancelled"
+        )
+        return super(DeleteMeetingView, self).form_valid(form)
 
     def get_success_url(self):
         return reverse("committees:meetings:home", kwargs={'group_id': self.association_group.id})
