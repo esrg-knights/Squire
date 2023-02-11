@@ -13,10 +13,12 @@ from django_ical.feedgenerator import ICal20Feed
 from django_ical.utils import build_rrule_from_recurrences_rrule
 from django_ical.views import ICalFeed
 
+from membership_file.models import Member
 
 from .models import Activity, ActivityMoment, Calendar
+from .constants import *
 import activity_calendar.util as util
-from membership_file.models import Member
+
 
 # Monkey-patch; Why is this not open for extension in the first place?
 feedgenerator.ITEM_EVENT_FIELD_MAP = (
@@ -238,7 +240,7 @@ class CESTEventFeed(ICalFeed):
             exclude_dates += list(util.set_time_for_RDATE_EXDATE(item.recurrences.exdates, item.start_date))
 
         cancelled_moments = item.activitymoment_set.\
-            filter(status=ActivityMoment.STATUS_REMOVED).\
+            filter(status=STATUS_REMOVED).\
             values_list('recurrence_id', flat=True)
 
         # Correct timezone to the default timezone settings
@@ -294,7 +296,7 @@ class PublicCalendarFeed(CESTEventFeed):
             filter(is_public=True)
         exceptions = ActivityMoment.objects. \
             filter(parent_activity__in=activities). \
-            exclude(status=ActivityMoment.STATUS_REMOVED)
+            exclude(status=STATUS_REMOVED)
 
         return [*recurring_activities(activities), *exceptions]
 
@@ -318,7 +320,7 @@ class CustomCalendarFeed(CESTEventFeed):
             filter(published_date__lte=timezone.now()).order_by('-published_date')
         exceptions = ActivityMoment.objects. \
             filter(parent_activity__in=activities). \
-            exclude(status=ActivityMoment.STATUS_REMOVED)
+            exclude(status=STATUS_REMOVED)
 
         return [*recurring_activities(activities), *exceptions]
 

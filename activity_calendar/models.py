@@ -1,6 +1,7 @@
 import copy
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MinValueValidator, ValidationError
 from django.db import models
@@ -17,8 +18,10 @@ from core.models import PresetImage
 from core.fields import MarkdownTextField
 from committees.utils import user_in_association_group
 from membership_file.models import Member
+from activity_calendar.constants import *
+from activity_calendar.managers import MeetingManager
 
-from django.contrib.auth import get_user_model
+
 User = get_user_model()
 
 #############################################################################
@@ -117,10 +120,6 @@ class Activity(models.Model):
     # - Auto: Slots are created automatically. They are only actually created in the DB once a participant joins.
     #                                          Until that time they do look like real slots though (in the UI)
     # - Users: Slots can be created by users. Users can be the owner of at most max_slots_join_per_participant slots
-    SLOT_CREATION_STAFF = "CREATION_STAFF"
-    SLOT_CREATION_AUTO = "CREATION_AUTO"
-    SLOT_CREATION_USER = "CREATION_USER"
-    SLOT_CREATION_NONE = "CREATION_NONE"
     slot_creation = models.CharField(
         max_length=15,
         choices=[
@@ -135,8 +134,6 @@ class Activity(models.Model):
     # Possible activity types:
     # - Public: A normal activity of the association
     # - Meeting: Represents an internal meeting
-    ACTIVITY_PUBLIC = "PUBLIC"
-    ACTIVITY_MEETING = "MEETING"
     type = models.CharField(max_length=8, default=ACTIVITY_PUBLIC, choices=[
         (ACTIVITY_PUBLIC, "Public activity"),
         (ACTIVITY_MEETING, "Meeting"),
@@ -186,7 +183,7 @@ class Activity(models.Model):
         recurrency_occurences = filter(lambda occ: occ not in surplus_moments_queryset, recurrency_occurences)
 
         # Filter out removed activities
-        removed_moments_queryset = self.activitymoment_set.filter(status=ActivityMoment.STATUS_REMOVED).values_list('recurrence_id', flat=True)
+        removed_moments_queryset = self.activitymoment_set.filter(status=STATUS_REMOVED).values_list('recurrence_id', flat=True)
         recurrency_occurences = filter(lambda occ: occ not in removed_moments_queryset, recurrency_occurences)
 
         # Fetch existing activitymoments
@@ -195,7 +192,7 @@ class Activity(models.Model):
         query_filter = (activity_moments_between_query | extra_moments) & ~surplus_moments
         existing_moments = self.activitymoment_set
         if exclude_removed:
-            existing_moments = existing_moments.exclude(status=ActivityMoment.STATUS_REMOVED)
+            existing_moments = existing_moments.exclude(status=STATUS_REMOVED)
         existing_moments = list(existing_moments.filter(query_filter))
 
         # Get occurrences for which we have no ActivityMoment
@@ -217,8 +214,8 @@ class Activity(models.Model):
 
     def _get_cancelled_activity_moments(self, include_cancelled=False, include_removed=True):
         """ Returns all activitymoments queryset for this activity that are cancelled and/or removed """
-        query_cancelled = Q(status=ActivityMoment.STATUS_CANCELLED)
-        query_removed = Q(status=ActivityMoment.STATUS_REMOVED)
+        query_cancelled = Q(status=STATUS_CANCELLED)
+        query_removed = Q(status=STATUS_REMOVED)
         if include_cancelled and include_removed:
             return self.activitymoment_set.filter(query_cancelled | query_removed)
         elif not include_cancelled and include_removed:
@@ -242,10 +239,10 @@ class Activity(models.Model):
 
         activity_moments = self.activitymoment_set
         if exclude_removed:
-            activity_moments = activity_moments.exclude(status=ActivityMoment.STATUS_REMOVED)
+            activity_moments = activity_moments.exclude(status=STATUS_REMOVED)
 
         if exclude_cancelled:
-            activity_moments = activity_moments.exclude(status=ActivityMoment.STATUS_CANCELLED)
+            activity_moments = activity_moments.exclude(status=STATUS_CANCELLED)
 
         ### Check for activitymoments stored in the database ###
         # Check activity_moment by recurrence id
@@ -605,6 +602,9 @@ class ActivityDuplicate(ModelBase):
 
 
 class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
+    objects = models.Manager()
+    meetings = MeetingManager()
+
     parent_activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
     recurrence_id = models.DateTimeField(verbose_name="parent activity date/time")
 
@@ -632,9 +632,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     local_end_date = models.DateTimeField(blank=True, null=True)
 
     # Define status
-    STATUS_NORMAL = "GO"
-    STATUS_CANCELLED = "STOP"
-    STATUS_REMOVED = "RMV"
+
     status = models.CharField(
         max_length=5,
         choices=[
@@ -686,7 +684,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
 
     @property
     def is_cancelled(self):
-        return self.status != self.STATUS_NORMAL
+        return self.status != STATUS_NORMAL
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
