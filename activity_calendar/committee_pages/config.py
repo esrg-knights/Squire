@@ -36,6 +36,7 @@ class MeetingConfig(CommitteeBaseConfig):
         return [
             path('', views.MeetingOverview.as_view(config=self), name='home'),
             path('add/', views.AddMeetingView.as_view(config=self), name='add'),
+            path('edit-recurrence/', views.MeetingRecurrenceFormView.as_view(config=self), name='edit_recurrence'),
             path('<dt:recurrence_id>/', include([
                 path('edit/', views.EditMeetingView.as_view(config=self), name='edit'),
                 path('delete/', views.DeleteMeetingView.as_view(config=self), name='delete'),

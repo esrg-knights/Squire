@@ -60,7 +60,8 @@ class Activity(models.Model):
             ('can_ignore_slot_creation_limits',             "[F] Can create more slots even if the maximum amount of slots is reached."),
             ('can_select_slot_image',                       "[F] Can choose an alternative slot image when creating a slot."),
             ('can_view_private_slot_locations',             "[F] Can view a slot's location even if they are marked as 'private' by the activity."),
-            ('can_host_meetings',                           "[F] Can host meetings")
+            ('can_host_meetings',                           "[F] Can host meetings"),
+            ('change_meeting_recurrences',                  "[F] Can adjust meeting recurrence rules"),
         ]
 
     markdown_images = GenericRelation('core.MarkdownImage')

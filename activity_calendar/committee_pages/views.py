@@ -6,10 +6,11 @@ from django.views.generic import ListView, FormView
 from django.shortcuts import get_object_or_404
 
 from committees.committeecollective import AssociationGroupMixin
+from utils.auth_utils import get_perm_from_name
 
 from activity_calendar.models import Activity, ActivityMoment
 from activity_calendar.committee_pages.forms import CreateActivityMomentForm, AddMeetingForm, \
-    EditMeetingForm, DeleteMeetingForm
+    EditMeetingForm, MeetingRecurrenceForm, DeleteMeetingForm
 from activity_calendar.templatetags.activity_tags import get_next_activity_instances
 from activity_calendar.committee_pages.utils import get_meeting_activity
 
@@ -79,15 +80,43 @@ class MeetingOverview(AssociationGroupMixin, ListView):
         return get_next_activity_instances(activity, max=8)
 
     def get_context_data(self, **kwargs):
+        can_change_recurrences = get_perm_from_name('activity_calendar.change_meeting_recurrences').\
+            group_set.filter(associationgroup=self.association_group).exists()
+
         return super(MeetingOverview, self).get_context_data(
             meeting_activity=get_meeting_activity(self.association_group),
+            can_change_recurrences = can_change_recurrences,
             **kwargs
         )
 
 
+class MeetingRecurrenceFormView(AssociationGroupMixin, FormView):
+    # Todo, filter association_permission = 'change_meeting_recurrences'
+    form_class = MeetingRecurrenceForm
+    template_name = "activity_calendar/committee_pages/meeting_recurrences.html"
+
+    def setup(self, request, *args, **kwargs):
+        super(MeetingRecurrenceFormView, self).setup(request, *args, **kwargs)
+        self.meeting_activity = get_meeting_activity(self.association_group)
+
+    def get_form_kwargs(self):
+        kwargs = super(MeetingRecurrenceFormView, self).get_form_kwargs()
+        kwargs['instance'] = self.meeting_activity
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+        msg = f"Recurrences have been adjusted"
+        messages.success(self.request, msg)
+        return super(MeetingRecurrenceFormView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse("committees:meetings:home", kwargs={'group_id': self.association_group.id})
+
+
 class AddMeetingView(AssociationGroupMixin, FormView):
     form_class = AddMeetingForm
-    template_name = "activity_calendar/committee_pages/committee_add_moment_page.html"
+    template_name = "activity_calendar/committee_pages/meeting_add.html"
 
     def get_form_kwargs(self):
         kwargs = super(AddMeetingView, self).get_form_kwargs()
@@ -96,6 +125,8 @@ class AddMeetingView(AssociationGroupMixin, FormView):
 
     def form_valid(self, form):
         form.save()
+        msg = f"A new meeting has been added on {form.instance.local_start_date}"
+        messages.success(self.request, msg)
         return super(AddMeetingView, self).form_valid(form)
 
     def get_success_url(self):

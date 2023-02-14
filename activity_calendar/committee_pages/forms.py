@@ -81,6 +81,14 @@ class EditMeetingForm(ModelForm):
             'local_location',
         ]
 
+class MeetingRecurrenceForm(ModelForm):
+    class Meta:
+        model = Activity
+        fields = [
+            'recurrences', 'start_date'
+        ]
+
+
 class DeleteMeetingForm(ModelForm):
     class Meta:
         model = ActivityMoment
