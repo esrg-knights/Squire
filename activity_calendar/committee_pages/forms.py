@@ -1,14 +1,10 @@
 import datetime
 
 from django import forms
-from django.forms import ModelForm, Form
-from django.forms.widgets import HiddenInput
+from django.forms import ModelForm, ValidationError
 from django.utils import timezone
-from django.utils.timesince import timeuntil
-from django.utils.translation import gettext_lazy as _
 
 from core.forms import MarkdownForm
-from core.widgets import ImageUploadMartorWidget
 from committees.models import AssociationGroup
 
 from activity_calendar.constants import *
@@ -58,6 +54,23 @@ class AddMeetingForm(ModelForm):
         super(AddMeetingForm, self).__init__(*args, **kwargs)
 
         self.instance.parent_activity = self.get_parent_activity()
+
+        self.fields['local_start_date'].required = True
+
+    def clean_local_start_date(self):
+        if self.instance.id is None:
+            if ActivityMoment.meetings.filter_group(self.association_group).\
+                filter(local_start_date=self.cleaned_data['local_start_date']).exists():
+                raise ValidationError(
+                    message="A meeting on this moment already exists",
+                    code='already-exists'
+                )
+            if self.get_parent_activity().get_occurrence_at(self.cleaned_data['local_start_date']):
+                raise ValidationError(
+                    message="An auto-generated meeting already exists for the given moment",
+                    code='already-exists'
+                )
+        return self.cleaned_data['local_start_date']
 
     def get_parent_activity(self):
         activity = get_meeting_activity(association_group=self.association_group)
