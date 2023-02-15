@@ -17,11 +17,8 @@ class TSVUnicodeBOM(TSV):
     '''..tsv that starts with a `ZERO WIDTH NO-BREAK SPACE`, which is a Byte Order Marker, which forces Excel to recognise it as Unicode.
     More info: https://en.wikipedia.org/w/index.php?title=Byte_order_mark&oldid=1135118973#Usage'''
 
-    def get_title(self):
-        return "tsv with Unicode BOM marker"
-
     def export_data(self, *args, **kwargs):
-        return unicodedata.lookup('ZERO WIDTH NO-BREAK SPACE') + super().export_data(*args, **kwargs)
+        return '\N{ZERO WIDTH NO-BREAK SPACE}' + super().export_data(*args, **kwargs)
 
 
 class HideRelatedNameAdmin(admin.ModelAdmin):
