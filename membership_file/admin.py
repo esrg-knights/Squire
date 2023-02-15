@@ -12,13 +12,17 @@ from core.admin import DisableModificationsAdminMixin, URLLinkInlineAdminMixin
 from membership_file.export import MemberResource, MembersFinancialResource
 from utils.forms import RequestUserToFormModelAdminMixin
 
+
 class TSVUnicodeBOM(TSV):
     '''..tsv that starts with a `ZERO WIDTH NO-BREAK SPACE`, which is a Byte Order Marker, which forces Excel to recognise it as Unicode.
     More info: https://en.wikipedia.org/w/index.php?title=Byte_order_mark&oldid=1135118973#Usage'''
+
     def get_title(self):
         return "tsv with Unicode BOM marker"
+
     def export_data(self, *args, **kwargs):
         return unicodedata.lookup('ZERO WIDTH NO-BREAK SPACE') + super().export_data(*args, **kwargs)
+
 
 class HideRelatedNameAdmin(admin.ModelAdmin):
     class Media:
@@ -52,12 +56,13 @@ class MemberLogReadOnlyInline(DisableModificationsAdminMixin, URLLinkInlineAdmin
     # Whether the object can be deleted inline
     can_delete = False
 
+
 @admin.register(Member)
 class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRelatedNameAdmin):
     ##############################
     #  Export functionality
     resource_class = MemberResource
-    formats = (CSV,XLSX,TSVUnicodeBOM,ODS,)
+    formats = (CSV, XLSX, TSVUnicodeBOM, ODS,)
 
     def has_export_permission(self, request):
         return request.user.has_perm('membership_file.can_export_membership_file')
@@ -68,7 +73,8 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
             filename_prefix = "HAS_DEREGISTERED_MEMBERS-"
 
         date_str = datetime.now().strftime('%Y-%m-%d')
-        filename = "%sMembershipFile-%s.%s" % (filename_prefix, date_str, file_format.get_extension())
+        filename = "%sMembershipFile-%s.%s" % (
+            filename_prefix, date_str, file_format.get_extension())
 
         return filename
 
@@ -76,17 +82,21 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
     form = AdminMemberForm
     save_on_top = True
 
-    list_display = ('id', 'user', 'first_name', 'tussenvoegsel', 'last_name', 'educational_institution', 'is_deregistered', 'marked_for_deletion')
+    list_display = ('id', 'user', 'first_name', 'tussenvoegsel', 'last_name',
+                    'educational_institution', 'is_deregistered', 'marked_for_deletion')
     list_filter = [
         'memberyear',
         'is_deregistered', 'marked_for_deletion',
         'is_honorary_member',
         'educational_institution',
-        ('tue_card_number', admin.EmptyFieldListFilter), ('external_card_number', admin.EmptyFieldListFilter),
-        ('key_id', admin.EmptyFieldListFilter), ('phone_number', admin.EmptyFieldListFilter),
+        ('tue_card_number', admin.EmptyFieldListFilter), ('external_card_number',
+                                                          admin.EmptyFieldListFilter),
+        ('key_id', admin.EmptyFieldListFilter), ('phone_number',
+                                                 admin.EmptyFieldListFilter),
     ]
     list_display_links = ('id', 'user', 'first_name')
-    search_fields = ['first_name', 'last_name', 'email', 'phone_number', 'tue_card_number', 'external_card_number', 'key_id']
+    search_fields = ['first_name', 'last_name', 'email', 'phone_number',
+                     'tue_card_number', 'external_card_number', 'key_id']
 
     readonly_fields = ['last_updated_by', 'last_updated_date']
 
@@ -95,23 +105,24 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
 
     fieldsets = [
         (None, {'fields':
-            ['user', ('first_name', 'tussenvoegsel', 'last_name'),
-            'marked_for_deletion',
-            ('last_updated_date', 'last_updated_by'),]}),
+                ['user', ('first_name', 'tussenvoegsel', 'last_name'),
+                 'marked_for_deletion',
+                 ('last_updated_date', 'last_updated_by'), ]}),
         ('Membership Status', {'fields':
-            ['is_deregistered', 'is_honorary_member', 'member_since']}),
+                               ['is_deregistered', 'is_honorary_member', 'member_since']}),
         ('Contact Details', {'fields':
-            ['email', 'phone_number',
-            ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
+                             ['email', 'phone_number',
+                              ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
         ('Room Access', {'fields':
-            ['key_id', 'tue_card_number',
-            ('external_card_number', 'external_card_digits', 'external_card_cluster'),
-            'external_card_deposit', 'accessible_rooms']}),
+                         ['key_id', 'tue_card_number',
+                          ('external_card_number', 'external_card_digits',
+                           'external_card_cluster'),
+                             'external_card_deposit', 'accessible_rooms']}),
         ('Legal Information', {'fields':
-            ['educational_institution', 'student_number',
-            'date_of_birth', 'legal_name']}),
+                               ['educational_institution', 'student_number',
+                                'date_of_birth', 'legal_name']}),
         ('Notes', {'fields':
-            ['notes']}),
+                   ['notes']}),
     ]
 
     inlines = [MemberLogReadOnlyInline, MemberYearInline]
@@ -222,14 +233,15 @@ class MemberYearAdmin(ExportActionMixin, admin.ModelAdmin):
     ##############################
     #  Export functionality
     resource_class = MembersFinancialResource
-    formats = (CSV,XLSX,TSVUnicodeBOM,ODS,)
+    formats = (CSV, XLSX, TSVUnicodeBOM, ODS,)
 
     def has_export_permission(self, request):
         return request.user.has_perm('membership_file.can_export_membership_file')
 
     def get_export_filename(self, request, queryset, file_format):
         date_str = datetime.now().strftime('%Y-%m-%d')
-        filename = "YearSubscriptions-%s.%s" % (date_str, file_format.get_extension())
+        filename = "YearSubscriptions-%s.%s" % (
+            date_str, file_format.get_extension())
         return filename
 
     def get_data_for_export(self, request, queryset, *args, **kwargs):
@@ -239,7 +251,7 @@ class MemberYearAdmin(ExportActionMixin, admin.ModelAdmin):
     ##############################
 
     list_display = ['name', 'is_active', 'member_count']
-    list_filter = ['is_active',]
+    list_filter = ['is_active', ]
 
     def member_count(self, obj):
         return obj.members.count()
@@ -249,4 +261,3 @@ class MemberYearAdmin(ExportActionMixin, admin.ModelAdmin):
 class MembershipAdmin(admin.ModelAdmin):
     list_display = ['member', 'year', 'has_paid', 'payment_date']
     list_filter = ['year', 'has_paid']
-
