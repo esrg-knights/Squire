@@ -13,6 +13,8 @@ from membership_file.export import MemberResource, MembersFinancialResource
 from utils.forms import RequestUserToFormModelAdminMixin
 
 class TSVUnicodeBOM(TSV):
+    '''..tsv that starts with a `ZERO WIDTH NO-BREAK SPACE`, which is a Byte Order Marker, which forces Excel to recognise it as Unicode.
+    More info: https://en.wikipedia.org/w/index.php?title=Byte_order_mark&oldid=1135118973#Usage'''
     def get_title(self):
         return "tsv with Unicode BOM marker"
     def export_data(self, *args, **kwargs):
@@ -220,7 +222,7 @@ class MemberYearAdmin(ExportActionMixin, admin.ModelAdmin):
     ##############################
     #  Export functionality
     resource_class = MembersFinancialResource
-    formats = (CSV,TSVUnicodeBOM,ODS,XLSX,)
+    formats = (CSV,XLSX,TSVUnicodeBOM,ODS,)
 
     def has_export_permission(self, request):
         return request.user.has_perm('membership_file.can_export_membership_file')
