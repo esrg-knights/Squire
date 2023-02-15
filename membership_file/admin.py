@@ -1,6 +1,5 @@
 
 from datetime import datetime
-import unicodedata
 
 from django.contrib import admin, messages
 from import_export.admin import ExportActionMixin
