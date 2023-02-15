@@ -1,9 +1,10 @@
 
 from datetime import datetime
+import unicodedata
 
 from django.contrib import admin, messages
 from import_export.admin import ExportActionMixin
-from import_export.formats.base_formats import CSV
+from import_export.formats.base_formats import CSV, TSV, ODS, XLSX
 
 from .forms import AdminMemberForm
 from .models import Member, MemberLog, MemberLogField, Room, MemberYear, Membership
@@ -11,6 +12,11 @@ from core.admin import DisableModificationsAdminMixin, URLLinkInlineAdminMixin
 from membership_file.export import MemberResource, MembersFinancialResource
 from utils.forms import RequestUserToFormModelAdminMixin
 
+class TSVUnicodeBOM(TSV):
+    def get_title(self):
+        return "tsv with Unicode BOM marker"
+    def export_data(self, *args, **kwargs):
+        return unicodedata.lookup('ZERO WIDTH NO-BREAK SPACE') + super().export_data(*args, **kwargs)
 
 class HideRelatedNameAdmin(admin.ModelAdmin):
     class Media:
@@ -49,7 +55,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
     ##############################
     #  Export functionality
     resource_class = MemberResource
-    formats = (CSV,)
+    formats = (CSV,XLSX,TSVUnicodeBOM,ODS,)
 
     def has_export_permission(self, request):
         return request.user.has_perm('membership_file.can_export_membership_file')
@@ -214,7 +220,7 @@ class MemberYearAdmin(ExportActionMixin, admin.ModelAdmin):
     ##############################
     #  Export functionality
     resource_class = MembersFinancialResource
-    formats = (CSV,)
+    formats = (CSV,TSVUnicodeBOM,ODS,XLSX,)
 
     def has_export_permission(self, request):
         return request.user.has_perm('membership_file.can_export_membership_file')
@@ -241,3 +247,4 @@ class MemberYearAdmin(ExportActionMixin, admin.ModelAdmin):
 class MembershipAdmin(admin.ModelAdmin):
     list_display = ['member', 'year', 'has_paid', 'payment_date']
     list_filter = ['year', 'has_paid']
+
