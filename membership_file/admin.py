@@ -13,7 +13,7 @@ from utils.forms import RequestUserToFormModelAdminMixin
 
 
 class TSVUnicodeBOM(TSV):
-    '''..tsv that starts with a `ZERO WIDTH NO-BREAK SPACE`, which is a Byte Order Marker, which forces Excel to recognise it as Unicode.
+    '''.tsv that starts with a `ZERO WIDTH NO-BREAK SPACE`, which is a Byte Order Marker, which forces Excel to recognise it as Unicode.
     More info: https://en.wikipedia.org/w/index.php?title=Byte_order_mark&oldid=1135118973#Usage'''
 
     def export_data(self, *args, **kwargs):
