@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic import ListView, FormView
 from django.shortcuts import get_object_or_404
@@ -10,7 +10,7 @@ from utils.auth_utils import get_perm_from_name
 
 from activity_calendar.models import Activity, ActivityMoment
 from activity_calendar.committee_pages.forms import CreateActivityMomentForm, AddMeetingForm, \
-    EditMeetingForm, MeetingRecurrenceForm, DeleteMeetingForm
+    EditMeetingForm, MeetingRecurrenceForm, CancelMeetingForm, EditCancelledMeetingForm
 from activity_calendar.templatetags.activity_tags import get_next_activity_instances
 from activity_calendar.committee_pages.utils import get_meeting_activity
 
@@ -77,7 +77,7 @@ class MeetingOverview(AssociationGroupMixin, ListView):
 
     def get_queryset(self):
         activity = get_meeting_activity(association_group=self.association_group)
-        return get_next_activity_instances(activity, max=8)
+        return get_next_activity_instances(activity, max=5)
 
     def get_context_data(self, **kwargs):
         can_change_recurrences = get_perm_from_name('activity_calendar.change_meeting_recurrences').\
@@ -154,6 +154,16 @@ class EditMeetingView(AssociationGroupMixin, MeetingMixin, FormView):
     form_class = EditMeetingForm
     template_name = "activity_calendar/committee_pages/meeting_edit.html"
 
+    def dispatch(self, request, *args, **kwargs):
+        if self.activity_moment.is_cancelled:
+            return HttpResponseRedirect(
+                redirect_to=reverse("committees:meetings:un-cancel", kwargs={
+                    'group_id': self.association_group.id,
+                    'recurrence_id': self.activity_moment.recurrence_id,
+                })
+            )
+        return super(EditMeetingView, self).dispatch(request, *args, **kwargs)
+
     def get_form_kwargs(self):
         kwargs = super(EditMeetingView, self).get_form_kwargs()
         kwargs['instance'] = self.activity_moment
@@ -171,9 +181,38 @@ class EditMeetingView(AssociationGroupMixin, MeetingMixin, FormView):
         return reverse("committees:meetings:home", kwargs={'group_id': self.association_group.id})
 
 
+class EditCancelledMeetingView(AssociationGroupMixin, MeetingMixin, FormView):
+    form_class = EditCancelledMeetingForm
+    template_name = "activity_calendar/committee_pages/meeting_edit_cancelled.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.activity_moment.is_cancelled:
+            return HttpResponseRedirect(redirect_to=self.get_success_url())
+        return super(EditCancelledMeetingView, self).dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super(EditCancelledMeetingView, self).get_form_kwargs()
+        kwargs['instance'] = self.activity_moment
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(
+            self.request,
+            "Meeting has been un-cancelled and can now be edited"
+        )
+        return super(EditCancelledMeetingView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse("committees:meetings:edit", kwargs={
+            'group_id': self.association_group.id,
+            'recurrence_id': self.activity_moment.recurrence_id,
+        })
+
+
 class DeleteMeetingView(AssociationGroupMixin, MeetingMixin, FormView):
-    form_class = DeleteMeetingForm
-    template_name = "activity_calendar/committee_pages/meeting_delete.html"
+    form_class = CancelMeetingForm
+    template_name = "activity_calendar/committee_pages/meeting_cancel.html"
 
     def get_form_kwargs(self):
         kwargs = super(DeleteMeetingView, self).get_form_kwargs()

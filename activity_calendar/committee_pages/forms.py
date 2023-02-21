@@ -87,12 +87,28 @@ class AddMeetingForm(ModelForm):
 
 
 class EditMeetingForm(ModelForm):
+
     class Meta:
         model = ActivityMoment
         fields = [
             'local_description',
             'local_location',
         ]
+
+class EditCancelledMeetingForm(ModelForm):
+    class Meta:
+        model = ActivityMoment
+        fields = []
+
+    def __init__(self, *args, instance=None, **kwargs):
+        if not instance.is_cancelled:
+            raise KeyError("The meeting was not cancelled")
+        super(EditCancelledMeetingForm, self).__init__(*args, instance=instance, **kwargs)
+
+    def save(self, commit=True):
+        self.instance.status = STATUS_NORMAL
+        self.instance.save()
+
 
 class MeetingRecurrenceForm(ModelForm):
     class Meta:
@@ -102,12 +118,25 @@ class MeetingRecurrenceForm(ModelForm):
         ]
 
 
-class DeleteMeetingForm(ModelForm):
+class CancelMeetingForm(ModelForm):
+    full_delete = forms.BooleanField(label="Delete entirely", help_text="Checking this will delete the meeting entirely.",
+                                     required=False)
     class Meta:
         model = ActivityMoment
-        fields = []
+        fields = ['full_delete']
+
+    def __init__(self, *args, instance=None, **kwargs):
+        if instance.is_cancelled:
+            raise KeyError("The meeting was already cancelled")
+        super(CancelMeetingForm, self).__init__(*args, instance=instance, **kwargs)
+
+        if self.instance.is_part_of_recurrence:
+            self.fields['full_delete'].disabled = True
+            self.fields['full_delete'].help_text = "option disabled. Recurrent meetings can not be deleted"
 
     def save(self, commit=True):
-        # self.instance = ActivityMoment.objects.get()
-        self.instance.status = STATUS_CANCELLED
+        if self.cleaned_data['full_delete']:
+            self.instance.status = STATUS_REMOVED
+        else:
+            self.instance.status = STATUS_CANCELLED
         self.instance.save()

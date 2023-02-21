@@ -14,18 +14,29 @@
         Meetings
     </h3>
     <div class="row">
-        <div class="col col-md-8">
+        <div class="col-12 col-md-8">
             {% for meeting in meeting_list %}
                 <div class="">
                     <div class="justify-content-between d-flex">
                         <div>
-                        <h5 class="{% if meeting.is_cancelled %}text-muted{% endif %}">
-                            <i class="fas fa-calendar-day"></i>
-                            {{ meeting.start_date|date:"l j F, H:i"|capfirst }}
-                        </h5>
+                            <span class="h5 {% if meeting.is_cancelled %}text-muted{% endif %}">
+                                <i class="fas fa-calendar-day"></i>
+                                {{ meeting.start_date|date:"l j F, H:i"|capfirst }}
+
+                            </span>
+                            {% if meeting.parent_activity.is_recurring and not meeting.is_part_of_recurrence %}
+                                <small class="{% if meeting.is_cancelled %}text-muted{% endif %}">
+                                    <i class="fas fa-exclamation-circle"></i> non-recurring
+                                </small>
+                            {% endif %}
                         </div>
                         <div>
-                            {% if not meeting.is_cancelled %}
+                            {% if meeting.is_cancelled %}
+                                <a href="{% url "committees:meetings:un-cancel" group_id=association_group.id recurrence_id=meeting.recurrence_id %}"
+                                   class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-pen"></i> Edit
+                                </a>
+                            {% else %}
                                 <a href="{% url "committees:meetings:edit" group_id=association_group.id recurrence_id=meeting.recurrence_id %}"
                                    class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-pen"></i> Edit
@@ -45,21 +56,23 @@
                             </tr>
                         {% else %}
                             <tr>
-                                <td>
+                                <td class="col-auto">
                                     Location:
                                 </td>
-                                <td>
+                                <td class="col">
                                     {{ meeting.location|default:"undetermined" }}
                                 </td>
                             </tr>
-                            <tr>
-                                <td>
-                                    Description:
-                                </td>
-                                <td>
-                                    {{ meeting.description|default:"-" }}
-                                </td>
-                            </tr>
+                            {% if meeting.description %}
+                                <tr>
+                                    <td>
+                                        Info:
+                                    </td>
+                                    <td>
+                                        {{ meeting.description.as_rendered }}
+                                    </td>
+                                </tr>
+                            {% endif %}
                         {% endif %}
                         </tbody>
                     </table>
@@ -67,7 +80,7 @@
                 </div>
             {% endfor %}
         </div>
-        <div class="col col-md-4">
+        <div class="col-12 col-md-4">
             {% if meeting_activity.is_recurring %}
                 <p class="">
                     Repeats:
