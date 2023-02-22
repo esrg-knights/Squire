@@ -11,6 +11,8 @@ from activity_calendar.constants import *
 from activity_calendar.models import Activity, ActivityMoment
 from activity_calendar.forms import ActivityMomentFormMixin
 from activity_calendar.committee_pages.utils import get_meeting_activity, create_meeting_activity
+from activity_calendar.widgets import BootstrapDateTimePickerInput
+
 
 class CreateActivityMomentForm(ActivityMomentFormMixin, MarkdownForm):
     class Meta:
@@ -46,6 +48,12 @@ class AddMeetingForm(ModelForm):
         fields = [
             'local_start_date',
         ]
+        widgets = {
+            'local_start_date': BootstrapDateTimePickerInput(),
+        }
+        labels = {
+            'local_start_date': 'Start date and time',
+        }
 
     def __init__(self, *args, association_group: AssociationGroup=None, **kwargs):
         if association_group is None:
@@ -55,6 +63,7 @@ class AddMeetingForm(ModelForm):
 
         self.instance.parent_activity = self.get_parent_activity()
 
+        self.fields['local_start_date'].required = True
         self.fields['local_start_date'].required = True
 
     def clean_local_start_date(self):

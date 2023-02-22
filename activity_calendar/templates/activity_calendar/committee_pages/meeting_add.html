@@ -8,13 +8,18 @@
 
 
 {% block breadcrumb_items %}
-    <li class="breadcrumb-item"><a href="{% url "committees:group_activities" group_id=association_group.id %}">Home</a></li>
+    <li class="breadcrumb-item"><a href="{% url "committees:meetings:home" group_id=association_group.id %}">Home</a></li>
     <li class="breadcrumb-item"><a>Add meeting</a></li>
+{% endblock %}
+
+{% block form_media %}
+    {#  Keep this empty and load form media later as JQuery is not loaded here yet. #}
 {% endblock %}
 
 
 {% block content %}
     {{ block.super }}
+    {{ form.media }}
 
     <h2>
         Add new meeting
