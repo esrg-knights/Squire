@@ -72,7 +72,7 @@ class AddActivityMomentCalendarView(AssociationGroupMixin, FormView):
 
 
 class MeetingOverview(AssociationGroupMixin, ListView):
-    template_name = "activity_calendar/committee_pages/meetings_home.html"
+    template_name = "activity_calendar/committee_pages/meeting_home.html"
     context_object_name = "meeting_list"
 
     def get_queryset(self):
@@ -86,6 +86,7 @@ class MeetingOverview(AssociationGroupMixin, ListView):
         return super(MeetingOverview, self).get_context_data(
             meeting_activity=get_meeting_activity(self.association_group),
             can_change_recurrences = can_change_recurrences,
+            feed_url = reverse("activity_calendar:meetings_feed", kwargs={'group_id': self.association_group.id}),
             **kwargs
         )
 

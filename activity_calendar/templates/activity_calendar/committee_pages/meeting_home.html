@@ -1,6 +1,7 @@
 {% extends 'committees/group_detail_base.html' %}
 {% load static %}
 {% load activity_tags %}
+{% load build_absolute_uri %}
 
 {% block content-frame-class %}
     container
@@ -76,14 +77,21 @@
                         {% endif %}
                         </tbody>
                     </table>
-
                 </div>
             {% endfor %}
         </div>
         <div class="col-12 col-md-4">
+            <div class="btn btn-info btn-block mb-4" onclick="display_import_info()">
+                <i class="fas fa-calendar-plus"></i> Import meetings in your calendar
+            </div>
+            <script>
+                function display_import_info() {
+                    $('#importModal').modal('show');
+                }
+            </script>
             {% if meeting_activity.is_recurring %}
                 <p class="">
-                    Repeats:
+                    This meeting is recurring:
                     {% for rule in meeting_activity.recurrences.rrules %}
                         <p>
                             {{ rule.to_text }}
@@ -118,8 +126,49 @@
 
     </div>
 
-    <div class="row mb-3">
-
+    <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">Import this Calendar</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        You can import the meetings as a feed into your agenda. To do so, follow the instructions on adding an agenda from URL and use the URL below.
+                        <br>
+                        <span class="text-danger small">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Do not import the file you get if you navigate to this URL directly
+                        </span>
+                    </p>
+                    <div class="mb-3 text-center">
+                        <p class="mb-2">
+                            <a id="calendar-url" data-copy="{{ full_calendar_url }}" tabindex="0" data-content="Url has been copied to the clipboard">
+                                {% build_absolute_uri request feed_url as full_calendar_url %}
+                                {{ full_calendar_url }}
+                            </a>
+                        </p>
+                        <a id="copy-calendar-url-to-clipboard" type="button" class="btn btn-info btn-sm"
+                           tabindex="1" data-content="Url has been copied to the clipboard"
+                                data-copy="{{ full_calendar_url }}">
+                            <i class="fas fa-copy"></i> Copy URL to clipboard
+                        </a>
+                    </div>
+                    <p><small class="text-muted">
+                        For instance, in Google Calendar, go to <i>Add Calendar</i> > <i>From URL</i> and enter URL listed above.
+                    </small></p>
+                </div>
+            </div>
+        </div>
     </div>
+
+{% endblock %}
+
+{% block js_bottom %}
+    {{ block.super }}
+    <script src="{% static "js/copy_data.js" %}"></script>
 
 {% endblock %}

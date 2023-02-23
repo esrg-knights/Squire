@@ -6,6 +6,7 @@ from . import views, api
 from .feeds import PublicCalendarFeed, CustomCalendarFeed, BirthdayCalendarFeed
 
 from activity_calendar.url_converters import DateTimeIsoConverter
+from activity_calendar.committee_pages.feeds import MeetingCalendarFeed
 
 register_converter(DateTimeIsoConverter, 'dt')
 
@@ -22,11 +23,14 @@ urlpatterns = [
         ])),
     ])),
 
-    path('api/calendar/ical', PublicCalendarFeed(), name='icalendar'),
-    path('api/calendar/birthdays/', BirthdayCalendarFeed(), name='ical_birthdays'),
-    path('api/calendar/<slug:calendar_slug>/', CustomCalendarFeed(), name='icalendar'),
-    path('api/calendar/fullcalendar', api.fullcalendar_feed, name='fullcalendar_feed'),
-    path('api/activities/upcoming/', api.upcoming_core_feed, name='upcoming_core_feed'),
+    path('api/calendar/', include([
+        path('ical', PublicCalendarFeed(), name='icalendar'),
+        path('birthdays/', BirthdayCalendarFeed(), name='ical_birthdays'),
+        path('<slug:calendar_slug>/', CustomCalendarFeed(), name='icalendar'),
+        path('meetings/<int:group_id>/', MeetingCalendarFeed(), name='meetings_feed'),
+        path('fullcalendar', api.fullcalendar_feed, name='fullcalendar_feed'),
+        path('upcoming/', api.upcoming_core_feed, name='upcoming_core_feed'),
+    ])),
 
     # Some mails contained the old calendar url, redirect them to the new activity page
     path('calendar/', RedirectView.as_view(url=reverse_lazy('activity_calendar:activity_upcoming'))),
