@@ -36,9 +36,6 @@ class MeetingCalendarFeed(CESTEventFeed):
         return super(MeetingCalendarFeed, self).__call__(*args, **kwargs)
 
     def items(self):
-        activity = get_meeting_activity(self.association_group)
-        exceptions = ActivityMoment.objects. \
-            filter(parent_activity=activity). \
-            exclude(status=STATUS_REMOVED)
-
-        return [*[activity], *exceptions]
+        activity = recurring_activities(get_meeting_activity(self.association_group))
+        unique_meetings = ActivityMoment.meetings.filter_group(self.association_group).exclude(status=STATUS_REMOVED)
+        return [activity, *unique_meetings]

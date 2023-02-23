@@ -20,7 +20,7 @@
             "slot_creation": "CREATION_NONE",
             "subscriptions_open": "7 00:00:00",
             "subscriptions_close": "02:00:00",
-            "is_public": false
+            "type": "MEETING"
         }
     },
     {

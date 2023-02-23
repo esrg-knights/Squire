@@ -26,10 +26,10 @@ urlpatterns = [
     path('api/calendar/', include([
         path('ical', PublicCalendarFeed(), name='icalendar'),
         path('birthdays/', BirthdayCalendarFeed(), name='ical_birthdays'),
-        path('<slug:calendar_slug>/', CustomCalendarFeed(), name='icalendar'),
         path('meetings/<int:group_id>/', MeetingCalendarFeed(), name='meetings_feed'),
         path('fullcalendar', api.fullcalendar_feed, name='fullcalendar_feed'),
         path('upcoming/', api.upcoming_core_feed, name='upcoming_core_feed'),
+        path('<slug:calendar_slug>/', CustomCalendarFeed(), name='icalendar'),
     ])),
 
     # Some mails contained the old calendar url, redirect them to the new activity page

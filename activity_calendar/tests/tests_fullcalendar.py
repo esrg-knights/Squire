@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
-import json
-
 from django.test import TestCase, Client
 from django.utils import timezone
+import json
 
-from activity_calendar.models import Activity
 from core.tests.util import suppress_warnings
+
+from activity_calendar.constants import *
+from activity_calendar.models import Activity
 
 
 def compare_iso_datetimes(dt_1, dt_2):
@@ -95,6 +96,17 @@ class TestCaseFullCalendar(TestCase):
 
         self.assertEqualDateTime(activity.get('start'), '2020-10-24T10:00:00+00:00')
         self.assertEqualDateTime(activity.get('end'), '2020-10-24T15:30:00+00:00')
+
+    @suppress_warnings
+    def test_only_public(self):
+        Activity.objects.update(type=ACTIVITY_MEETING)
+        response = self.client.get('/api/calendar/fullcalendar', data={
+            'start': "2020-10-01T00:00:00+02:00",
+            'end': "2020-10-28T00:00:00+01:00",
+        })
+        content = json.loads(response.content)
+        self.assertEqual(len(content.get('activities')), 0)
+
 
     @suppress_warnings
     def test_missing_start_or_end(self):

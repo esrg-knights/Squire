@@ -306,7 +306,7 @@ class CustomCalendarFeedTestCase(FeedTestMixin, TestCase):
     feed_class = CustomCalendarFeed
     url_kwargs = {'calendar_slug': 'test_calendar'}
 
-    def test_included_public_non_recurrent(self):
+    def test_included_non_recurrent(self):
         """ Test that a single activity with custom activitymoment settings does not present double """
         # Assert link existence
         self.assertTrue(CalendarActivityLink.objects.filter(activity_id=1, calendar_id=1).exists())
@@ -318,9 +318,8 @@ class CustomCalendarFeedTestCase(FeedTestMixin, TestCase):
         component = self._get_component(activity.activitymoment_set.first())
         self.assertIsNotNone(component)
 
-    def test_included_public_recurrent(self):
+    def test_included_recurrent(self):
         activity = Activity.objects.get(id=2)
-        self.assertEqual(activity.is_public, True)
         component = self._get_component(activity)
         self.assertIsNotNone(component)
 
@@ -328,21 +327,8 @@ class CustomCalendarFeedTestCase(FeedTestMixin, TestCase):
         component = self._get_component(activity.activitymoment_set.first())
         self.assertIsNotNone(component)
 
-    def test_included_non_public(self):
-        activity = Activity.objects.get(id=4)
-        self.assertEqual(activity.is_public, False)
-        component = self._get_component(activity)
-        self.assertIsNotNone(component)
-
-    def test_excluded_public(self):
+    def test_excluded(self):
         activity = Activity.objects.get(id=3)
-        self.assertEqual(activity.is_public, True)
-        component = self._get_component(activity)
-        self.assertIsNone(component)
-
-    def test_excluded_non_public(self):
-        activity = Activity.objects.get(id=5)
-        self.assertEqual(activity.is_public, False)
         component = self._get_component(activity)
         self.assertIsNone(component)
 

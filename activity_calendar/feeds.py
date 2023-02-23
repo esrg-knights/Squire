@@ -293,7 +293,7 @@ class PublicCalendarFeed(CESTEventFeed):
         # Only consider published activities
         activities = Activity.objects.\
             filter(published_date__lte=timezone.now()).order_by('-published_date'). \
-            filter(type=True)
+            filter(type=ACTIVITY_PUBLIC)
         exceptions = ActivityMoment.objects. \
             filter(parent_activity__in=activities). \
             exclude(status=STATUS_REMOVED)

@@ -38,8 +38,8 @@
     "subscriptions_required": true,
     "slot_creation": "CREATION_AUTO",
     "subscriptions_open": "7 00:00:00",
-    "subscriptions_close": "00:30:00",
-      "is_public": true
+      "subscriptions_close": "00:30:00",
+      "type": "PUBLIC"
   }
 },
 {
@@ -64,7 +64,7 @@
     "slot_creation": "CREATION_USER",
     "subscriptions_open": "7 00:00:00",
     "subscriptions_close": "02:00:00",
-      "is_public": true
+      "type": "PUBLIC"
   }
 },
 {
@@ -88,8 +88,8 @@
     "subscriptions_required": true,
     "slot_creation": "CREATION_STAFF",
     "subscriptions_open": "7 00:00:00",
-    "subscriptions_close": "00:30:00",
-    "is_public": true
+      "subscriptions_close": "00:30:00",
+      "type": "PUBLIC"
   }
 },
 {
@@ -114,7 +114,7 @@
         "slot_creation": "CREATION_NONE",
         "subscriptions_open": "7 00:00:00",
         "subscriptions_close": "02:00:00",
-        "is_public": false
+        "type": "MEETING"
     }
 },
 {

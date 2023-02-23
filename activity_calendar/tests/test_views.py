@@ -170,7 +170,7 @@ class TestActivityOverview(ViewValidityMixin, TestCase):
     fixtures = ['test_users.json', 'test_activity_slots.json']
     base_user_id = 2
 
-    def get_base_url(self, content_type=None, item_id=None):
+    def get_base_url(self, content_type=None):
         return reverse('activity_calendar:activity_upcoming')
 
     def test_class(self):
@@ -184,11 +184,21 @@ class TestActivityOverview(ViewValidityMixin, TestCase):
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_template_context(self, mock_tz):
-        response  = self.client.get(self.get_base_url(item_id=1), data={})
+        response  = self.client.get(self.get_base_url(), data={})
         context = response.context
 
         self.assertEqual(len(context['activities']), 2)
         self.assertIsInstance(context['activities'][0], ActivityMoment)
+
+    @patch('django.utils.timezone.now', side_effect=mock_now())
+    def test_filter_public(self, mock_tz):
+        response  = self.client.get(self.get_base_url(), data={})
+        self.assertNotEqual(len(response.context['activities']), 0)
+
+        Activity.objects.update(type=ACTIVITY_MEETING)
+        response  = self.client.get(self.get_base_url(), data={})
+        self.assertEqual(len(response.context['activities']), 0)
+
 
 
 class ActivityMixinTest(TestMixinMixin, TestCase):
