@@ -27,7 +27,8 @@ class BootstrapDateTimePickerInput(DateTimePicker):
                 "today": 'fas fa-calendar-check-o',
                 "clear": 'fas fa-trash',
                 "close": 'fas fa-times'
-            }
+            },
+            "format": "YYYY-MM-DD HH:mm"
         })
 
         kwargs.setdefault('attrs', {})
@@ -40,5 +41,5 @@ class BootstrapDateTimePickerInput(DateTimePicker):
 
     def render(self, name, value, attrs=None, renderer=None):
         if self.set_min_date_to_now:
-            self.js_options['minDate'] = now().today().strftime("%Y-%m-%d 00:00:00")
+            self.js_options['minDate'] = now().today().strftime("%Y-%m-%d 00:00")
         return super(BootstrapDateTimePickerInput, self).render(name, value, attrs=attrs, renderer=renderer)

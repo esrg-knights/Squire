@@ -9,9 +9,16 @@ from activity_calendar.constants import *
 register = template.Library()
 
 @register.filter
-def get_next_activity_instances(activity: Activity, max=3):
+def get_next_activity_instances(activity: Activity, start_dt=None, max=3):
+    """
+    Reutrns the next x activities for a given activity instances based on the start_time
+    :param activity:
+    :param start_dt: The start datetime, uses current time if None
+    :param max:
+    :return:
+    """
     next_activity_moments = []
-    start_date = timezone.now()
+    start_date = start_dt or timezone.now()
     for i in range(max):
         next_activity = activity.get_next_activitymoment(dtstart=start_date)
         if next_activity is None:

@@ -89,14 +89,20 @@
                     $('#importModal').modal('show');
                 }
             </script>
+            <p>
+                Use this page to organise your meetings. At most the next 5 meetings are displayed on this page.
+            </p>
+
             {% if meeting_activity.is_recurring %}
-                <p class="">
+                <div class="">
                     This meeting is recurring:
+                    <ul>
                     {% for rule in meeting_activity.recurrences.rrules %}
-                        <p>
+                        <li>
                             {{ rule.to_text }}
-                        </p>
+                        </li>
                     {% endfor %}
+                    </ul>
                 </p>
                 {% if can_change_recurrences %}
                     <div>

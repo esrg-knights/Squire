@@ -1,18 +1,22 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic import ListView, FormView
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 from committees.committeecollective import AssociationGroupMixin
 from utils.auth_utils import get_perm_from_name
 
-from activity_calendar.models import Activity, ActivityMoment
 from activity_calendar.committee_pages.forms import CreateActivityMomentForm, AddMeetingForm, \
     EditMeetingForm, MeetingRecurrenceForm, CancelMeetingForm, EditCancelledMeetingForm
-from activity_calendar.templatetags.activity_tags import get_next_activity_instances
 from activity_calendar.committee_pages.utils import get_meeting_activity
+from activity_calendar.constants import *
+from activity_calendar.models import Activity, ActivityMoment
+from activity_calendar.templatetags.activity_tags import get_next_activity_instances
 
 __all__ = ["ActivityCalendarView", "AddActivityMomentCalendarView", "MeetingOverview"]
 
@@ -23,7 +27,9 @@ class ActivityCalendarView(AssociationGroupMixin, ListView):
     def get_queryset(self):
         return Activity.objects.filter(
             organiserlink__archived=False,
-            organiserlink__association_group=self.association_group
+            organiserlink__association_group=self.association_group,
+        ).exclude(
+            type=ACTIVITY_MEETING
         )
 
     def get_context_data(self, **kwargs):
@@ -76,8 +82,9 @@ class MeetingOverview(AssociationGroupMixin, ListView):
     context_object_name = "meeting_list"
 
     def get_queryset(self):
+        start_dt = timezone.now() - timedelta(hours=2)
         activity = get_meeting_activity(association_group=self.association_group)
-        return get_next_activity_instances(activity, max=5)
+        return get_next_activity_instances(activity, start_dt=start_dt, max=5)
 
     def get_context_data(self, **kwargs):
         can_change_recurrences = get_perm_from_name('activity_calendar.change_meeting_recurrences').\
@@ -126,7 +133,8 @@ class AddMeetingView(AssociationGroupMixin, FormView):
 
     def form_valid(self, form):
         form.save()
-        msg = f"A new meeting has been added on {form.instance.local_start_date}"
+        meeting_time = form.instance.local_start_date
+        msg = f"A new meeting has been added on {meeting_time.strftime('%B %d')} at {meeting_time.strftime('%H:%M')}"
         messages.success(self.request, msg)
         return super(AddMeetingView, self).form_valid(form)
 
