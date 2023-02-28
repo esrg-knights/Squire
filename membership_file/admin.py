@@ -101,24 +101,23 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
 
     fieldsets = [
         (None, {'fields':
-                ['user', ('first_name', 'tussenvoegsel', 'last_name'),
-                 'marked_for_deletion',
-                 ('last_updated_date', 'last_updated_by'), ]}),
+            ['user', ('first_name', 'tussenvoegsel', 'last_name'),
+            'marked_for_deletion',
+            ('last_updated_date', 'last_updated_by'),]}),
         ('Membership Status', {'fields':
-                               ['is_deregistered', 'is_honorary_member', 'member_since']}),
+            ['is_deregistered', 'is_honorary_member', 'member_since']}),
         ('Contact Details', {'fields':
-                             ['email', 'phone_number',
-                              ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
+            ['email', 'phone_number',
+            ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
         ('Room Access', {'fields':
-                         ['key_id', 'tue_card_number',
-                          ('external_card_number', 'external_card_digits',
-                           'external_card_cluster'),
-                             'external_card_deposit', 'accessible_rooms']}),
+            ['key_id', 'tue_card_number',
+            ('external_card_number', 'external_card_digits', 'external_card_cluster'),
+            'external_card_deposit', 'accessible_rooms']}),
         ('Legal Information', {'fields':
-                               ['educational_institution', 'student_number',
-                                'date_of_birth', 'legal_name']}),
+            ['educational_institution', 'student_number',
+            'date_of_birth', 'legal_name']}),
         ('Notes', {'fields':
-                   ['notes']}),
+            ['notes']}),
     ]
 
     inlines = [MemberLogReadOnlyInline, MemberYearInline]
