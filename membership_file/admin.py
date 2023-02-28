@@ -85,10 +85,10 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
         'is_deregistered', 'marked_for_deletion',
         'is_honorary_member',
         'educational_institution',
-        ('tue_card_number', admin.EmptyFieldListFilter), ('external_card_number',
-                                                          admin.EmptyFieldListFilter),
-        ('key_id', admin.EmptyFieldListFilter), ('phone_number',
-                                                 admin.EmptyFieldListFilter),
+        ('tue_card_number', admin.EmptyFieldListFilter),
+        ('external_card_number', admin.EmptyFieldListFilter),
+        ('key_id', admin.EmptyFieldListFilter),
+        ('phone_number', admin.EmptyFieldListFilter),
     ]
     list_display_links = ('id', 'user', 'first_name')
     search_fields = ['first_name', 'last_name', 'email', 'phone_number',
