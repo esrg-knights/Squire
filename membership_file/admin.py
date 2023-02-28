@@ -99,6 +99,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
     # Display a search box instead of a dropdown menu
     autocomplete_fields = ['user']
 
+    #fmt: off
     fieldsets = [
         (None, {'fields':
             ['user', ('first_name', 'tussenvoegsel', 'last_name'),
@@ -119,6 +120,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
         ('Notes', {'fields':
             ['notes']}),
     ]
+    #fmt: on
 
     inlines = [MemberLogReadOnlyInline, MemberYearInline]
 
