@@ -58,18 +58,18 @@ class FormValidityMixin:
                         value,
                         msg=fail_message
                     )
-            except KeyError:
+            except AttributeError:
                 fail_message = f"Field name {field_name} did not contain the property {key}"
                 raise AssertionError(fail_message)
 
-    def assertFormValid(self, data, form_class=None, **kwargs):
+    def assertFormValid(self, data, form_class=None, **form_kwargs):
         """ Asserts that the form is valid otherwise raises AssertionError mentioning the form error
         :param data: The form data
         :param form_class: The form class, defaults to self.form_class
-        :param kwargs: Any form init kwargs not defined in self.build_form()
+        :param form_kwargs: Any form init kwargs not defined in self.build_form()
         :return: returns the created valid form
         """
-        form = self.build_form(data, form_class=form_class, **kwargs)
+        form = self.build_form(data, form_class=form_class, **form_kwargs)
 
         if not form.is_valid():
             fail_message = "The form was not valid. At least one error was encountered: "
@@ -81,36 +81,36 @@ class FormValidityMixin:
             raise AssertionError(fail_message)
         return form
 
-    def assertFormHasError(self, data, code, form_class=None, field=None, **kwargs):
+    def assertFormHasError(self, data, code, form_class=None, field_name=None, **form_kwargs):
         """ Asserts that a form with the given data invalidates on a certain error
         :param data: The form data
         :param code: the 'code' of the ValidationError
         :param form_class: The form class, defaults to self.form_class
-        :param field: The field on which the validationerror needs to be, set to '__all__' if it's not form specefic
+        :param field_name: The field on which the validationerror needs to be, set to '__all__' if it's not form specefic
         leave empty if not relevant.
-        :param kwargs: Any form init kwargs not defined in self.build_form()
+        :param form_kwargs: Any form init kwargs not defined in self.build_form()
         :return:
         """
-        form = self.build_form(data, form_class=form_class, **kwargs)
+        form = self.build_form(data, form_class=form_class, **form_kwargs)
 
         if form.is_valid():
             raise AssertionError("The form contained no errors")
 
         for key, value in form.errors.as_data().items():
-            if field:
-                if field != key:
+            if field_name:
+                if field_name != key:
                     continue
                 for error in value:
                     if error.code == code:
                         return
-                raise AssertionError(f"Form did not contain an error with code '{code}' in field '{field}'")
+                raise AssertionError(f"Form did not contain an error with code '{code}' in field '{field_name}'")
             else:
                 for error in value:
                     if error.code == code:
                         return
 
-        if field:
-            raise AssertionError(f"Form did not encounter an error in '{field}'.")
+        if field_name:
+            raise AssertionError(f"Form did not encounter an error in '{field_name}'.")
 
         error_message = f"Form did not contain an error with code '{code}'."
         if form.errors:

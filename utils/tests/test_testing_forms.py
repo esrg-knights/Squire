@@ -48,6 +48,9 @@ class TestFormValidityMixin(FormValidityMixin, TestCase):
             )
         )
 
+    def test_assertHasField_contains_property(self):
+        self.raisesAssertionError(self.assertHasField, 'main_field', fake_prop=True)
+
     def test_assertHasField_equal_property(self):
         """ Tests that properties of the field can be tested """
         # This should not raise an error
@@ -95,7 +98,7 @@ class TestFormValidityMixin(FormValidityMixin, TestCase):
 
     def test_assertFormHasError_in_field(self):
         self.assertFormHasError({'main_field': 'break_field'}, 'invalid_field')
-        self.assertFormHasError({'main_field': 'break_field'}, 'invalid_field', field='main_field')
+        self.assertFormHasError({'main_field': 'break_field'}, 'invalid_field', field_name='main_field')
 
         # Error is in main_field not fake_field
         self.raisesAssertionError(self.assertFormHasError, {'main_field': 'break_field'}, 'invalid_form', field='fake_field')
