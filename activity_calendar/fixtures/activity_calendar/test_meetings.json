@@ -1,0 +1,126 @@
+[
+    {
+        "model": "activity_calendar.activity",
+        "pk": 40,
+        "fields": {
+            "author": null,
+            "title": "Meeting for Group X",
+            "description": "Weekly meeting on thursday",
+            "location": "",
+            "slots_image": null,
+            "created_date": "2023-02-23T17:00:00Z",
+            "last_updated_date": "2023-02-23T19:00:00Z",
+            "published_date": "2023-02-20T19:00:00Z",
+            "start_date": "2023-02-23T19:00:00Z",
+            "end_date": "2020-02-23T21:00:00Z",
+            "recurrences": "RRULE:FREQ=WEEKLY;",
+            "type": "MEETING"
+        }
+    },
+    {
+        "model": "activity_calendar.activitymoment",
+        "pk": 41,
+        "fields": {
+            "parent_activity": 40,
+            "recurrence_id": "2023-02-23T19:00:00Z",
+            "created_date": "2023-02-23T17:00:00Z",
+            "last_updated": "2023-02-23T17:00:00Z"
+        }
+    },
+    {
+        "model": "activity_calendar.activitymoment",
+        "pk": 42,
+        "fields": {
+            "parent_activity": 40,
+            "recurrence_id": "2023-03-09T19:00:00Z",
+            "created_date": "2023-02-23T17:00:00Z",
+            "last_updated": "2023-02-23T17:00:00Z"
+        }
+    },
+    {
+        "model": "activity_calendar.activitymoment",
+        "pk": 43,
+        "fields": {
+            "parent_activity": 40,
+            "recurrence_id": "2023-02-24T12:00:00Z",
+            "created_date": "2023-02-23T17:00:00Z",
+            "last_updated": "2023-02-23T17:00:00Z",
+            "local_title": "Extra meeting"
+        }
+    },
+    {
+        "model": "activity_calendar.activitymoment",
+        "pk": 44,
+        "fields": {
+            "parent_activity": 40,
+            "recurrence_id": "2023-03-25T19:00:00Z",
+            "created_date": "2023-03-03T17:00:00Z",
+            "last_updated": "2023-03-03T17:00:00Z",
+            "status": "STOP"
+        }
+    },
+    {
+        "model": "activity_calendar.activity",
+        "pk": 45,
+        "fields": {
+            "author": null,
+            "title": "Meeting for Group Y",
+            "description": "Weekly meeting on monday",
+            "location": "",
+            "slots_image": null,
+            "created_date": "2023-02-23T17:00:00Z",
+            "last_updated_date": "2023-02-23T19:00:00Z",
+            "published_date": "2023-02-20T19:00:00Z",
+            "start_date": "2023-02-20T13:00:00Z",
+            "end_date": "2020-02-20T14:00:00Z",
+            "recurrences": "RRULE:FREQ=WEEKLY;",
+            "type": "MEETING"
+        }
+    },
+    {
+        "model": "activity_calendar.activitymoment",
+        "pk": 46,
+        "fields": {
+            "parent_activity": 45,
+            "recurrence_id": "2023-02-27T13:00:00Z",
+            "created_date": "2023-02-23T17:00:00Z",
+            "last_updated": "2023-02-23T17:00:00Z"
+        }
+    },
+    {
+        "model": "activity_calendar.activitymoment",
+        "pk": 47,
+        "fields": {
+            "parent_activity": 45,
+            "recurrence_id": "2023-03-06T13:00:00Z",
+            "created_date": "2023-02-23T17:00:00Z",
+            "last_updated": "2023-02-23T17:00:00Z"
+        }
+    },
+
+    {
+        "model": "auth.group",
+        "pk": 40,
+        "fields": {
+            "name": "Meeting included group"
+        }
+    },
+    {
+        "model": "committees.associationgroup",
+        "pk": 40,
+        "fields": {
+            "site_group": 40,
+            "shorthand": "meeting_test",
+            "type": "W"
+        }
+    },
+    {
+        "model": "activity_calendar.organiserlink",
+        "pk": 40,
+        "fields": {
+            "activity": 40,
+            "association_group": 40,
+            "archived": false
+        }
+    }
+]

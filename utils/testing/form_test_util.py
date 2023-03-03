@@ -13,15 +13,54 @@ class FormValidityMixin:
             form_class = self.form_class
         return form_class(data=data, **self.get_form_kwargs(**kwargs))
 
-    def assertHasField(self, field_name):
+    def assertHasField(self, field_name, form_kwargs=None, **field_properties):
         """
         Asserts that the form has a field with the given name
+        :param form_kwargs: Keyword arguments for the form creation
         :param field_name: name of the field
+        :param field_properties: Keywords that check parameters of the field. Use '__class' to check class type instead
         :return: raises AssertionError if not asserted, otherwise returns empty
         """
-        form = self.build_form({})
-        message = f"{field_name} was not a field in {form.__class__.__name__}"
-        self.assertIn(field_name, form.fields, msg=message)
+        form_kwargs = form_kwargs or {}
+        form = self.build_form({}, **form_kwargs)
+        fail_message = f"{field_name} was not a field in {form.__class__.__name__}"
+        self.assertIn(field_name, form.fields, msg=fail_message)
+
+        field = form.fields[field_name]
+        for key, value in field_properties.items():
+            try:
+                if key.endswith("__class"):
+                    key = key[:-len("__class")]
+                    field_property = getattr(field, key)
+                    fail_message =\
+                        "{field_name}.{key} was not of type '{expected_type}', but '{actual_type}' instead".format(
+                        field_name=field_name,
+                        key=key,
+                        expected_type=value.__name__,
+                        actual_type=field_property.__class__.__name__
+                    )
+                    self.assertIsInstance(
+                        field_property,
+                        value,
+                        msg=fail_message
+                    )
+                else:
+                    field_property = getattr(field, key)
+                    fail_message = \
+                        "{field_name}.{key} was not '{expected_value}', but '{actual_value}' instead".format(
+                        field_name=field_name,
+                        key=key,
+                        expected_value=value,
+                        actual_value=field_property
+                    )
+                    self.assertEqual(
+                        field_property,
+                        value,
+                        msg=fail_message
+                    )
+            except KeyError:
+                fail_message = f"Field name {field_name} did not contain the property {key}"
+                raise AssertionError(fail_message)
 
     def assertFormValid(self, data, form_class=None, **kwargs):
         """ Asserts that the form is valid otherwise raises AssertionError mentioning the form error

@@ -8,7 +8,8 @@ from committees.models import AssociationGroup
 
 def get_meeting_activity(association_group:AssociationGroup):
     """ Returns the meeting activity for the given group instance """
-    return association_group.activity_set.filter(type=ACTIVITY_MEETING).last()
+    return association_group.activity_set.filter(type=ACTIVITY_MEETING).first()
+
 
 def create_meeting_activity(association_group:AssociationGroup):
     activity = Activity.objects.create(

@@ -14,6 +14,9 @@ from activity_calendar.committee_pages.utils import get_meeting_activity, create
 from activity_calendar.widgets import BootstrapDateTimePickerInput
 
 
+__all__=["CreateActivityMomentForm", "AddMeetingForm", "EditMeetingForm", "MeetingRecurrenceForm",
+         "CancelMeetingForm", "EditCancelledMeetingForm"]
+
 class CreateActivityMomentForm(ActivityMomentFormMixin, MarkdownForm):
     class Meta:
         model = ActivityMoment
@@ -64,7 +67,6 @@ class AddMeetingForm(ModelForm):
         self.instance.parent_activity = self.get_parent_activity()
 
         self.fields['local_start_date'].required = True
-        self.fields['local_start_date'].required = True
 
     def clean_local_start_date(self):
         if self.instance.id is None:
@@ -103,6 +105,11 @@ class EditMeetingForm(ModelForm):
             'local_description',
             'local_location',
         ]
+        labels = {
+            'local_description': 'Information',
+            'local_location': "Location",
+
+        }
 
 class EditCancelledMeetingForm(ModelForm):
     class Meta:
@@ -128,7 +135,7 @@ class MeetingRecurrenceForm(ModelForm):
 
 
 class CancelMeetingForm(ModelForm):
-    full_delete = forms.BooleanField(label="Delete entirely", help_text="Checking this will delete the meeting entirely.",
+    full_delete = forms.BooleanField(label="Delete entirely", help_text="Checking this will delete the meeting entirely",
                                      required=False)
     class Meta:
         model = ActivityMoment

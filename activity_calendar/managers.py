@@ -6,7 +6,6 @@ from .constants import ACTIVITY_MEETING
 
 
 class MeetingManager(models.Manager):
-
     def get_queryset(self):
         return super(MeetingManager, self).get_queryset().filter(parent_activity__type=ACTIVITY_MEETING)
 

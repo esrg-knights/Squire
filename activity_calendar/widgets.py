@@ -32,14 +32,12 @@ class BootstrapDateTimePickerInput(DateTimePicker):
         })
 
         kwargs.setdefault('attrs', {})
-        kwargs['attrs'].update({
-            'input_group': False,
-        })
-        self.set_min_date_to_now = True
+        kwargs['attrs'].setdefault('input_group', False)
 
+        self.set_min_date_to_now = set_min_date_to_now
         super(BootstrapDateTimePickerInput, self).__init__(*args, **kwargs)
 
     def render(self, name, value, attrs=None, renderer=None):
         if self.set_min_date_to_now:
-            self.js_options['minDate'] = now().today().strftime("%Y-%m-%d 00:00")
+            self.js_options['minDate'] = now().date().strftime("%Y-%m-%d 00:00")
         return super(BootstrapDateTimePickerInput, self).render(name, value, attrs=attrs, renderer=renderer)

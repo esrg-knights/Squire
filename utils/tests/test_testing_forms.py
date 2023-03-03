@@ -9,7 +9,7 @@ from utils.testing.form_test_util import FormValidityMixin
 class TestFormValidityMixin(FormValidityMixin, TestCase):
     class TestForm(forms.Form):
         """ Fictive form for Form testing used in TestFormValidityMixin"""
-        main_field = forms.CharField(required=False)
+        main_field = forms.CharField(required=True)
         fake_field = forms.CharField(required=False)
 
         def clean_main_field(self):
@@ -45,6 +45,38 @@ class TestFormValidityMixin(FormValidityMixin, TestCase):
             "{field_name} was not a field in {form_class_name}".format(
                 field_name = 'missing_field',
                 form_class_name='TestForm',
+            )
+        )
+
+    def test_assertHasField_equal_property(self):
+        """ Tests that properties of the field can be tested """
+        # This should not raise an error
+        self.assertHasField('main_field', required=True)
+        # This should
+        error = self.raisesAssertionError(self.assertHasField, 'main_field', required=False)
+        self.assertEqual(
+            error.__str__(),
+            "{field_name}.{key} was not '{expected_value}', but '{actual_value}' instead".format(
+                field_name = 'main_field',
+                key='required',
+                expected_value=False,
+                actual_value=True
+            )
+        )
+
+    def test_assertHasField_equal_instance(self):
+        """ Tests that properties of the field can be tested """
+        # This should not raise an error
+        self.assertHasField('main_field', widget__class=forms.TextInput)
+        # This should
+        error = self.raisesAssertionError(self.assertHasField, 'main_field', widget__class=forms.EmailInput)
+        self.assertEqual(
+            error.__str__(),
+            "{field_name}.{key} was not of type '{expected_type}', but '{actual_type}' instead".format(
+                field_name = 'main_field',
+                key='widget',
+                expected_type=forms.EmailInput.__name__,
+                actual_type=forms.TextInput.__name__
             )
         )
 
