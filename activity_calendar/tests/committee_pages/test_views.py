@@ -1,5 +1,8 @@
 from django.contrib.auth.models import Permission
+from django.contrib.messages import SUCCESS
 from django.test import TestCase
+from django.urls import reverse
+from django.utils import dateparse
 from django.views.generic import ListView, FormView
 
 from activity_calendar.models import Activity, OrganiserLink
@@ -8,11 +11,9 @@ from committees.committeecollective import AssociationGroupMixin
 from core.tests.util import suppress_warnings
 from utils.testing.view_test_utils import ViewValidityMixin
 
-from committees.committeecollective import registry
+from activity_calendar.committee_pages.forms import *
+from activity_calendar.committee_pages.views import *
 
-from activity_calendar.committee_pages.forms import CreateActivityMomentForm
-from activity_calendar.committee_pages.views import ActivityCalendarView, AddActivityMomentCalendarView
-from activity_calendar.committee_pages.config import ActivityConfig
 
 class TestCommitteeActivityOverview(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
     fixtures = ['test_users',  'test_groups', 'test_members', 'committees/associationgroups',
@@ -52,11 +53,11 @@ class TestCommitteeActivityAddActivityMomentView(AssocationGroupTestingMixin, Vi
     base_user_id = 40
     association_group_id = 41
     url_name = 'add_activity_moment'
+    group_permissions_required = 'activity_calendar.add_activitymoment'
 
     def setUp(self):
         super(TestCommitteeActivityAddActivityMomentView, self).setUp()
         self.activity = Activity.objects.get(id=2)
-        self.association_group.site_group.permissions.add(Permission.objects.get(codename='add_activitymoment'))
 
     def get_url_kwargs(self, **kwargs):
         return super(TestCommitteeActivityAddActivityMomentView, self).get_url_kwargs(
@@ -81,3 +82,212 @@ class TestCommitteeActivityAddActivityMomentView(AssocationGroupTestingMixin, Vi
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 200)
 
+
+class MeetingOverviewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
+    fixtures = ['activity_calendar/test_meetings']
+    base_user_id = 47
+    association_group_id = 40
+    url_name = 'meetings:home'
+    group_permissions_required = ['activity_calendar.can_host_meetings']
+
+    def test_class(self):
+        self.assertTrue(issubclass(MeetingOverview, AssociationGroupMixin))
+        self.assertTrue(issubclass(MeetingOverview, ListView))
+        self.assertEqual(MeetingOverview.template_name, "activity_calendar/committee_pages/meeting_home.html")
+
+    def test_successful_get(self):
+        self.assertValidGetResponse()
+
+
+class MeetingRecurrenceFormViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
+    fixtures = ['activity_calendar/test_meetings']
+    base_user_id = 47
+    association_group_id = 40
+    url_name = 'meetings:edit_recurrence'
+    group_permissions_required = ['activity_calendar.can_host_meetings']
+    recurrence_id = '2023-03-25T19:00:00Z'
+
+    def test_class(self):
+        self.assertTrue(issubclass(MeetingRecurrenceFormView, AssociationGroupMixin))
+        self.assertTrue(issubclass(MeetingRecurrenceFormView, FormView))
+        self.assertEqual(MeetingRecurrenceFormView.template_name, "activity_calendar/committee_pages/meeting_recurrences.html")
+        self.assertEqual(MeetingRecurrenceFormView.form_class, MeetingRecurrenceForm)
+
+    def test_successful_get(self):
+        self.assertValidGetResponse()
+
+    def test_succesful_post(self):
+        data = {
+            'start_date': "2023-03-01T12:30:00Z",
+            'recurrences': 'RRULE:FREQ=WEEKLY;UNTIL=20230330T220000Z'
+        }
+        redirect_url = reverse("committees:meetings:home", kwargs={'group_id': self.association_group.id})
+        self.assertValidPostResponse(
+            data=data,
+            redirect_url=redirect_url,
+            fetch_redirect_response=False
+        )
+        response = self.assertValidGetResponse(url=redirect_url)
+
+        self.assertHasMessage(
+            response,
+            level=SUCCESS
+        )
+
+
+class AddMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
+    fixtures = ['activity_calendar/test_meetings']
+    base_user_id = 47
+    association_group_id = 40
+    url_name = 'meetings:add'
+    group_permissions_required = ['activity_calendar.can_host_meetings']
+
+    def test_class(self):
+        self.assertTrue(issubclass(AddMeetingView, AssociationGroupMixin))
+        self.assertTrue(issubclass(AddMeetingView, FormView))
+        self.assertEqual(AddMeetingView.template_name, "activity_calendar/committee_pages/meeting_add.html")
+        self.assertEqual(AddMeetingView.form_class, AddMeetingForm)
+
+    def test_successful_get(self):
+        self.assertValidGetResponse()
+
+    def test_succesful_post(self):
+        data = {'local_start_date': "2023-03-01T12:00:00Z"}
+        redirect_url = reverse("committees:meetings:home", kwargs={'group_id': self.association_group.id})
+        self.assertValidPostResponse(
+            data=data,
+            redirect_url=redirect_url,
+            fetch_redirect_response=False
+        )
+        response = self.assertValidGetResponse(url=redirect_url)
+
+        self.assertHasMessage(
+            response,
+            level=SUCCESS
+        )
+
+
+class EditMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
+    fixtures = ['activity_calendar/test_meetings']
+    base_user_id = 47
+    association_group_id = 40
+    url_name = 'meetings:edit'
+    group_permissions_required = ['activity_calendar.can_host_meetings']
+
+    def get_url_kwargs(self, **kwargs):
+        return super(EditMeetingViewTestCase, self).get_url_kwargs(
+            recurrence_id=dateparse.parse_datetime('2023-03-09T19:00:00Z'),
+            **kwargs
+        )
+
+    def test_class(self):
+        self.assertTrue(issubclass(EditMeetingView, AssociationGroupMixin))
+        self.assertTrue(issubclass(EditMeetingView, FormView))
+        self.assertEqual(EditMeetingView.template_name, "activity_calendar/committee_pages/meeting_edit.html")
+        self.assertEqual(EditMeetingView.form_class, EditMeetingForm)
+
+    def test_successful_get(self):
+        self.assertValidGetResponse()
+
+    def test_succesful_post(self):
+        data = {}
+        redirect_url = reverse("committees:meetings:home", kwargs={'group_id': self.association_group.id})
+        self.assertValidPostResponse(
+            data=data,
+            redirect_url=redirect_url,
+            fetch_redirect_response=False
+        )
+        response = self.assertValidGetResponse(url=redirect_url)
+
+        self.assertHasMessage(
+            response,
+            level=SUCCESS
+        )
+
+
+class EditCancelledMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
+    fixtures = ['activity_calendar/test_meetings']
+    base_user_id = 47
+    association_group_id = 40
+    url_name = 'meetings:un-cancel'
+    group_permissions_required = ['activity_calendar.can_host_meetings']
+    recurrence_id = '2023-03-25T19:00:00Z'
+
+    def get_url_kwargs(self, recurrence_id=None, **kwargs):
+        recurrence_id = recurrence_id or self.recurrence_id
+
+        return super(EditCancelledMeetingViewTestCase, self).get_url_kwargs(
+            recurrence_id=dateparse.parse_datetime(recurrence_id),
+            **kwargs
+        )
+
+    def test_class(self):
+        self.assertTrue(issubclass(EditCancelledMeetingView, AssociationGroupMixin))
+        self.assertTrue(issubclass(EditCancelledMeetingView, FormView))
+        self.assertEqual(EditCancelledMeetingView.template_name, "activity_calendar/committee_pages/meeting_edit_cancelled.html")
+        self.assertEqual(EditCancelledMeetingView.form_class, EditCancelledMeetingForm)
+
+    def test_successful_get(self):
+        self.assertValidGetResponse()
+
+    def test_succesful_post(self):
+        data = {}
+        redirect_url = reverse("committees:meetings:edit", kwargs={
+            'group_id': self.association_group.id,
+            'recurrence_id': dateparse.parse_datetime(self.recurrence_id),
+        })
+        self.assertValidPostResponse(
+            data=data,
+            redirect_url=redirect_url,
+            fetch_redirect_response=False
+        )
+        response = self.assertValidGetResponse(url=redirect_url)
+
+        self.assertHasMessage(
+            response,
+            level=SUCCESS
+        )
+
+
+class DeleteMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
+    fixtures = ['activity_calendar/test_meetings']
+    base_user_id = 47
+    association_group_id = 40
+    url_name = 'meetings:un-cancel'
+    group_permissions_required = ['activity_calendar.can_host_meetings']
+    recurrence_id = '2023-03-25T19:00:00Z'
+
+    def get_url_kwargs(self, recurrence_id=None, **kwargs):
+        recurrence_id = recurrence_id or self.recurrence_id
+
+        return super(DeleteMeetingViewTestCase, self).get_url_kwargs(
+            recurrence_id=dateparse.parse_datetime(recurrence_id),
+            **kwargs
+        )
+
+    def test_class(self):
+        self.assertTrue(issubclass(DeleteMeetingView, AssociationGroupMixin))
+        self.assertTrue(issubclass(DeleteMeetingView, FormView))
+        self.assertEqual(DeleteMeetingView.template_name, "activity_calendar/committee_pages/meeting_cancel.html")
+        self.assertEqual(DeleteMeetingView.form_class, CancelMeetingForm)
+
+    def test_successful_get(self):
+        self.assertValidGetResponse()
+
+    def test_succesful_post(self):
+        data = {}
+        redirect_url = reverse("committees:meetings:edit", kwargs={
+            'group_id': self.association_group.id,
+            'recurrence_id': dateparse.parse_datetime(self.recurrence_id),
+        })
+        self.assertValidPostResponse(
+            data=data,
+            redirect_url=redirect_url,
+            fetch_redirect_response=False
+        )
+        response = self.assertValidGetResponse(url=redirect_url)
+
+        self.assertHasMessage(
+            response,
+            level=SUCCESS
+        )

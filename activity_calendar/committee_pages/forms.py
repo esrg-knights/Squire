@@ -70,15 +70,9 @@ class AddMeetingForm(ModelForm):
 
     def clean_local_start_date(self):
         if self.instance.id is None:
-            if ActivityMoment.meetings.filter_group(self.association_group).\
-                filter(local_start_date=self.cleaned_data['local_start_date']).exists():
-                raise ValidationError(
-                    message="A meeting on this moment already exists",
-                    code='already-exists'
-                )
             if self.get_parent_activity().get_occurrence_at(self.cleaned_data['local_start_date']):
                 raise ValidationError(
-                    message="An auto-generated meeting already exists for the given moment",
+                    message="A meeting already exists for the given moment",
                     code='already-exists'
                 )
         return self.cleaned_data['local_start_date']

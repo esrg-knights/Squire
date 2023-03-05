@@ -18,7 +18,8 @@ from activity_calendar.constants import *
 from activity_calendar.models import Activity, ActivityMoment
 from activity_calendar.templatetags.activity_tags import get_next_activity_instances
 
-__all__ = ["ActivityCalendarView", "AddActivityMomentCalendarView", "MeetingOverview"]
+__all__ = ["ActivityCalendarView", "AddActivityMomentCalendarView", "MeetingOverview", "MeetingRecurrenceFormView",
+           "AddMeetingView", "EditMeetingView", "EditCancelledMeetingView", "DeleteMeetingView"]
 
 class ActivityCalendarView(AssociationGroupMixin, ListView):
     template_name = "activity_calendar/committee_pages/committee_activities.html"

@@ -122,5 +122,43 @@
             "association_group": 40,
             "archived": false
         }
+    },
+    {
+        "model": "auth.user",
+        "pk": 47,
+        "fields": {
+            "username": "test_admin",
+            "first_name": "",
+            "last_name": "",
+            "email": "",
+            "is_active": true,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "membership_file.member",
+        "pk": 47,
+        "fields": {
+            "user": 47,
+            "is_deregistered": true,
+            "legal_name": "M.E.",
+            "first_name": "Mathias",
+            "tussenvoegsel": "",
+            "last_name": "Ating",
+            "email": "m.e.ating@example.com",
+            "member_since": "2020-01-01",
+            "last_updated_date": "1970-01-01T12:00:00Z",
+            "last_updated_by": null,
+            "marked_for_deletion": false
+        }
+    },
+    {
+        "model": "committees.associationgroupmembership",
+        "pk": 47,
+        "fields": {
+            "member": 47,
+            "group": 40
+        }
     }
 ]
