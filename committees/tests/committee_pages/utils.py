@@ -42,10 +42,10 @@ class AssocationGroupTestingMixin(ViewValidityMixin):
         except AttributeError:
             pass
 
-    def get_base_url(self):
+    def get_base_url(self, **url_kwargs):
         if self.url_name is None:
             raise ImproperlyConfigured(f"'url_name' was not defined on {self.__class__.__name__}")
-        return reverse('committees:'+self.url_name, kwargs=self.get_url_kwargs())
+        return reverse('committees:'+self.url_name, kwargs=self.get_url_kwargs(**url_kwargs))
 
     def get_url_kwargs(self, **kwargs):
         url_kwargs = {

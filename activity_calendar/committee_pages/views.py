@@ -224,6 +224,13 @@ class DeleteMeetingView(AssociationGroupMixin, MeetingMixin, FormView):
     form_class = CancelMeetingForm
     template_name = "activity_calendar/committee_pages/meeting_cancel.html"
 
+    def dispatch(self, request, *args, **kwargs):
+        if self.activity_moment.is_cancelled:
+            message = "This meeting was already cancelled"
+            messages.error(request, message)
+            return HttpResponseRedirect(redirect_to=self.get_success_url())
+        return super(DeleteMeetingView, self).dispatch(request, *args, **kwargs)
+
     def get_form_kwargs(self):
         kwargs = super(DeleteMeetingView, self).get_form_kwargs()
         kwargs['instance'] = self.activity_moment
