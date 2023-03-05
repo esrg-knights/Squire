@@ -85,8 +85,8 @@ class TestCommitteeActivityAddActivityMomentView(AssocationGroupTestingMixin, Vi
 
 class MeetingOverviewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
     fixtures = ['activity_calendar/test_meetings']
-    base_user_id = 47
-    association_group_id = 40
+    base_user_id = 67
+    association_group_id = 60
     url_name = 'meetings:home'
     group_permissions_required = ['activity_calendar.can_host_meetings']
 
@@ -101,8 +101,8 @@ class MeetingOverviewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, Te
 
 class MeetingRecurrenceFormViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
     fixtures = ['activity_calendar/test_meetings']
-    base_user_id = 47
-    association_group_id = 40
+    base_user_id = 67
+    association_group_id = 60
     url_name = 'meetings:edit_recurrence'
     group_permissions_required = ['activity_calendar.can_host_meetings']
     recurrence_id = '2023-03-25T19:00:00Z'
@@ -137,8 +137,8 @@ class MeetingRecurrenceFormViewTestCase(AssocationGroupTestingMixin, ViewValidit
 
 class AddMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
     fixtures = ['activity_calendar/test_meetings']
-    base_user_id = 47
-    association_group_id = 40
+    base_user_id = 67
+    association_group_id = 60
     url_name = 'meetings:add'
     group_permissions_required = ['activity_calendar.can_host_meetings']
 
@@ -169,8 +169,8 @@ class AddMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, Tes
 
 class EditMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
     fixtures = ['activity_calendar/test_meetings']
-    base_user_id = 47
-    association_group_id = 40
+    base_user_id = 67
+    association_group_id = 60
     url_name = 'meetings:edit'
     group_permissions_required = ['activity_calendar.can_host_meetings']
 
@@ -207,8 +207,8 @@ class EditMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, Te
 
 class EditCancelledMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
     fixtures = ['activity_calendar/test_meetings']
-    base_user_id = 47
-    association_group_id = 40
+    base_user_id = 67
+    association_group_id = 60
     url_name = 'meetings:un-cancel'
     group_permissions_required = ['activity_calendar.can_host_meetings']
     recurrence_id = '2023-03-25T19:00:00Z'
@@ -251,8 +251,8 @@ class EditCancelledMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidity
 
 class DeleteMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
     fixtures = ['activity_calendar/test_meetings']
-    base_user_id = 47
-    association_group_id = 40
+    base_user_id = 67
+    association_group_id = 60
     url_name = 'meetings:un-cancel'
     group_permissions_required = ['activity_calendar.can_host_meetings']
     recurrence_id = '2023-03-25T19:00:00Z'

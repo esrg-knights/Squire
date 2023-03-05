@@ -15,7 +15,7 @@ class AddMeetingFormTestCase(FormValidityMixin, TestCase):
     form_class = AddMeetingForm
 
     def setUp(self):
-        self.association_group = AssociationGroup.objects.get(id=40)
+        self.association_group = AssociationGroup.objects.get(id=60)
         super(AddMeetingFormTestCase, self).setUp()
 
     def get_form_kwargs(self, **kwargs):
@@ -65,7 +65,7 @@ class AddMeetingFormTestCase(FormValidityMixin, TestCase):
         form = self.assertFormValid({'local_start_date': "2023-02-27T12:00:00Z"})
         form.save()
         self.assertTrue(ActivityMoment.objects.filter(
-            parent_activity__id=40,
+            parent_activity__id=60,
             recurrence_id="2023-02-27T12:00:00Z"
         ).exists())
 
@@ -75,7 +75,7 @@ class EditMeetingFormTestCase(FormValidityMixin, TestCase):
     form_class = EditMeetingForm
 
     def setUp(self):
-        self.activity_moment = ActivityMoment.objects.get(id=41)
+        self.activity_moment = ActivityMoment.objects.get(id=61)
         super(EditMeetingFormTestCase, self).setUp()
 
     def get_form_kwargs(self, **kwargs):
@@ -123,7 +123,7 @@ class EditCancelledMeetingFormTestCase(FormValidityMixin, TestCase):
     form_class = EditCancelledMeetingForm
 
     def setUp(self):
-        self.activity_moment = ActivityMoment.objects.get(id=44)
+        self.activity_moment = ActivityMoment.objects.get(id=64)
         super(EditCancelledMeetingFormTestCase, self).setUp()
 
     def get_form_kwargs(self, **kwargs):
@@ -136,7 +136,7 @@ class EditCancelledMeetingFormTestCase(FormValidityMixin, TestCase):
 
     def test_requires_cancelled(self):
         with self.assertRaises(KeyError):
-            self.build_form({}, instance=ActivityMoment.objects.get(id=41))
+            self.build_form({}, instance=ActivityMoment.objects.get(id=61))
 
     def test_save(self):
         self.assertFormValid({}).save()
@@ -149,7 +149,7 @@ class MeetingRecurrenceFormTestCase(FormValidityMixin, TestCase):
     form_class = MeetingRecurrenceForm
 
     def setUp(self):
-        self.activity = Activity.objects.get(id=40)
+        self.activity = Activity.objects.get(id=60)
         super(MeetingRecurrenceFormTestCase, self).setUp()
 
     def get_form_kwargs(self, **kwargs):
@@ -178,7 +178,7 @@ class CancelMeetingFormTestCase(FormValidityMixin, TestCase):
     form_class = CancelMeetingForm
 
     def setUp(self):
-        self.activity_moment = ActivityMoment.objects.get(id=41)
+        self.activity_moment = ActivityMoment.objects.get(id=61)
         super(CancelMeetingFormTestCase, self).setUp()
 
     def get_form_kwargs(self, activity_moment_id=None, **kwargs):
@@ -191,7 +191,7 @@ class CancelMeetingFormTestCase(FormValidityMixin, TestCase):
     def test_enable_full_delete_on_additional(self):
         self.assertHasField(
             'full_delete',
-            form_kwargs={'activity_moment_id': 43},
+            form_kwargs={'activity_moment_id': 63},
             disabled=False,
             help_text="Checking this will delete the meeting entirely",
         )
@@ -199,21 +199,21 @@ class CancelMeetingFormTestCase(FormValidityMixin, TestCase):
     def test_disable_full_delete_on_recurrent(self):
         self.assertHasField(
             'full_delete',
-            form_kwargs={'activity_moment_id': 41},
+            form_kwargs={'activity_moment_id': 61},
             disabled=True,
             help_text='option disabled. Recurrent meetings can not be deleted',
         )
 
     def test_requires_non_cancelled(self):
         with self.assertRaises(KeyError):
-            self.build_form({}, activity_moment_id=44)
+            self.build_form({}, activity_moment_id=64)
 
     def test_save_cancelled(self):
-        form = self.assertFormValid({'full_delete': False}, activity_moment_id=43)
+        form = self.assertFormValid({'full_delete': False}, activity_moment_id=63)
         form.save()
         self.assertEqual(form.instance.status, STATUS_CANCELLED)
 
     def test_save_delete(self):
-        form = self.assertFormValid({'full_delete': True}, activity_moment_id=43)
+        form = self.assertFormValid({'full_delete': True}, activity_moment_id=63)
         form.save()
         self.assertEqual(form.instance.status, STATUS_REMOVED)

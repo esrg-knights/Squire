@@ -12,7 +12,7 @@ from activity_calendar.committee_pages.feeds import MeetingCalendarFeed
 class MeetingCalendarFeedTestCase(FeedTestMixin, TestCase):
     fixtures = ['test_users', 'test_activity_slots', 'activity_calendar/test_meetings']
     feed_class = MeetingCalendarFeed
-    url_kwargs = {'group_id': 40}
+    url_kwargs = {'group_id': 60}
 
     def test_general_properties(self):
         association_group = AssociationGroup.objects.get(id=self.url_kwargs['group_id'])
@@ -32,7 +32,7 @@ class MeetingCalendarFeedTestCase(FeedTestMixin, TestCase):
         # Assert link existence
         # self.assertTrue(CalendarActivityLink.objects.filter(activity_id=1, calendar_id=1).exists())
 
-        activity = Activity.objects.get(id=40)
+        activity = Activity.objects.get(id=60)
         component = self._get_component(activity)
         self.assertIsNotNone(component)
 
@@ -40,7 +40,7 @@ class MeetingCalendarFeedTestCase(FeedTestMixin, TestCase):
         self.assertIsNotNone(component)
 
     def test_exclude_meeting_from_other_groups(self):
-        activity = Activity.objects.get(id=45)
+        activity = Activity.objects.get(id=65)
         component = self._get_component(activity)
         self.assertIsNone(component)
 
@@ -49,7 +49,7 @@ class MeetingCalendarFeedTestCase(FeedTestMixin, TestCase):
 
     def test_cancelled_meetings(self):
         """ Tests that a meeting includes cancelled moments """
-        activitymoment = ActivityMoment.objects.get(id=42)
+        activitymoment = ActivityMoment.objects.get(id=62)
         activitymoment.status = STATUS_REMOVED
         component = self._get_component(activitymoment)
         self.assertIsNotNone(component)

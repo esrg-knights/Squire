@@ -101,9 +101,9 @@ class TestFormValidityMixin(FormValidityMixin, TestCase):
         self.assertFormHasError({'main_field': 'break_field'}, 'invalid_field', field_name='main_field')
 
         # Error is in main_field not fake_field
-        self.raisesAssertionError(self.assertFormHasError, {'main_field': 'break_field'}, 'invalid_form', field='fake_field')
+        self.raisesAssertionError(self.assertFormHasError, {'main_field': 'break_field'}, 'invalid_form', field_name='fake_field')
         # This next data raises an error, just not the one with this code
-        error = self.raisesAssertionError(self.assertFormHasError, {'main_field': 'break_field'}, 'invalid_data', field='main_field')
+        error = self.raisesAssertionError(self.assertFormHasError, {'main_field': 'break_field'}, 'invalid_data', field_name='main_field')
         self.assertEqual(
             error.__str__(),
             "Form did not contain an error with code '{code}' in field '{field}'".format(
@@ -120,7 +120,7 @@ class TestFormValidityMixin(FormValidityMixin, TestCase):
         error = self.raisesAssertionError(self.assertFormHasError, {'main_field': 'break_nothing'}, 'invalid_form')
         self.assertEqual(error.__str__(), "The form contained no errors")
         # Error is not in main_field, but elsewhere
-        error = self.raisesAssertionError(self.assertFormHasError, {'main_field': 'break_form'}, 'invalid_form', field='main_field')
+        error = self.raisesAssertionError(self.assertFormHasError, {'main_field': 'break_form'}, 'invalid_form', field_name='main_field')
         self.assertEqual(
             error.__str__(),
             "Form did not encounter an error in '{field_name}'.".format(

@@ -13,8 +13,8 @@ class ActivityCommmitteePageUtilsTestCase(TestCase):
     fixtures = ['activity_calendar/test_meetings']
 
     def test_get_meeting_activity(self):
-        meeting_activity = get_meeting_activity(AssociationGroup.objects.get(id=40))
-        self.assertEqual(meeting_activity.id, 40)
+        meeting_activity = get_meeting_activity(AssociationGroup.objects.get(id=60))
+        self.assertEqual(meeting_activity.id, 60)
         self.assertIsInstance(meeting_activity, Activity)
 
     def test_create_meeting_activity(self):

@@ -1,7 +1,7 @@
 [
     {
         "model": "activity_calendar.activity",
-        "pk": 40,
+        "pk": 60,
         "fields": {
             "author": null,
             "title": "Meeting for Group X",
@@ -19,9 +19,9 @@
     },
     {
         "model": "activity_calendar.activitymoment",
-        "pk": 41,
+        "pk": 61,
         "fields": {
-            "parent_activity": 40,
+            "parent_activity": 60,
             "recurrence_id": "2023-02-23T19:00:00Z",
             "created_date": "2023-02-23T17:00:00Z",
             "last_updated": "2023-02-23T17:00:00Z"
@@ -29,9 +29,9 @@
     },
     {
         "model": "activity_calendar.activitymoment",
-        "pk": 42,
+        "pk": 62,
         "fields": {
-            "parent_activity": 40,
+            "parent_activity": 60,
             "recurrence_id": "2023-03-09T19:00:00Z",
             "created_date": "2023-02-23T17:00:00Z",
             "last_updated": "2023-02-23T17:00:00Z"
@@ -39,9 +39,9 @@
     },
     {
         "model": "activity_calendar.activitymoment",
-        "pk": 43,
+        "pk": 63,
         "fields": {
-            "parent_activity": 40,
+            "parent_activity": 60,
             "recurrence_id": "2023-02-24T12:00:00Z",
             "created_date": "2023-02-23T17:00:00Z",
             "last_updated": "2023-02-23T17:00:00Z",
@@ -50,9 +50,9 @@
     },
     {
         "model": "activity_calendar.activitymoment",
-        "pk": 44,
+        "pk": 64,
         "fields": {
-            "parent_activity": 40,
+            "parent_activity": 60,
             "recurrence_id": "2023-03-25T19:00:00Z",
             "created_date": "2023-03-03T17:00:00Z",
             "last_updated": "2023-03-03T17:00:00Z",
@@ -61,7 +61,7 @@
     },
     {
         "model": "activity_calendar.activity",
-        "pk": 45,
+        "pk": 65,
         "fields": {
             "author": null,
             "title": "Meeting for Group Y",
@@ -79,9 +79,9 @@
     },
     {
         "model": "activity_calendar.activitymoment",
-        "pk": 46,
+        "pk": 66,
         "fields": {
-            "parent_activity": 45,
+            "parent_activity": 65,
             "recurrence_id": "2023-02-27T13:00:00Z",
             "created_date": "2023-02-23T17:00:00Z",
             "last_updated": "2023-02-23T17:00:00Z"
@@ -89,9 +89,9 @@
     },
     {
         "model": "activity_calendar.activitymoment",
-        "pk": 47,
+        "pk": 67,
         "fields": {
-            "parent_activity": 45,
+            "parent_activity": 65,
             "recurrence_id": "2023-03-06T13:00:00Z",
             "created_date": "2023-02-23T17:00:00Z",
             "last_updated": "2023-02-23T17:00:00Z"
@@ -100,34 +100,34 @@
 
     {
         "model": "auth.group",
-        "pk": 40,
+        "pk": 60,
         "fields": {
             "name": "Meeting included group"
         }
     },
     {
         "model": "committees.associationgroup",
-        "pk": 40,
+        "pk": 60,
         "fields": {
-            "site_group": 40,
+            "site_group": 60,
             "shorthand": "meeting_test",
             "type": "W"
         }
     },
     {
         "model": "activity_calendar.organiserlink",
-        "pk": 40,
+        "pk": 60,
         "fields": {
-            "activity": 40,
-            "association_group": 40,
+            "activity": 60,
+            "association_group": 60,
             "archived": false
         }
     },
     {
         "model": "auth.user",
-        "pk": 47,
+        "pk": 67,
         "fields": {
-            "username": "test_admin",
+            "username": "meeting_test_user",
             "first_name": "",
             "last_name": "",
             "email": "",
@@ -138,9 +138,9 @@
     },
     {
         "model": "membership_file.member",
-        "pk": 47,
+        "pk": 67,
         "fields": {
-            "user": 47,
+            "user": 67,
             "is_deregistered": true,
             "legal_name": "M.E.",
             "first_name": "Mathias",
@@ -155,10 +155,10 @@
     },
     {
         "model": "committees.associationgroupmembership",
-        "pk": 47,
+        "pk": 67,
         "fields": {
-            "member": 47,
-            "group": 40
+            "member": 67,
+            "group": 60
         }
     }
 ]

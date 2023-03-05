@@ -20,8 +20,8 @@ class TestActivityTags(TestCase):
         self.assertEqual(meeting.parent_activity.type, ACTIVITY_MEETING)
 
     def test_filter_group(self):
-        association_group = AssociationGroup.objects.get(id=40)
+        association_group = AssociationGroup.objects.get(id=60)
         meetings = self.manager.filter_group(association_group)
-        self.assertIn(42, meetings.values_list('id', flat=True))
-        self.assertNotIn(46, meetings.values_list('id', flat=True))
+        self.assertIn(62, meetings.values_list('id', flat=True))
+        self.assertNotIn(66, meetings.values_list('id', flat=True))
 
