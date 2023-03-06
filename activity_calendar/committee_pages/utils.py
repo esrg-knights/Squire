@@ -14,7 +14,6 @@ def get_meeting_activity(association_group:AssociationGroup):
 def create_meeting_activity(association_group:AssociationGroup):
     activity = Activity.objects.create(
         title = f"Meeting for group {association_group.name}",
-        is_public = False,
         type=ACTIVITY_MEETING,
         start_date=datetime.fromtimestamp(1, tz=get_current_timezone()),
         end_date=datetime.fromtimestamp(1, tz=get_current_timezone()) + timedelta(hours=1)

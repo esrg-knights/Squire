@@ -87,8 +87,6 @@ class Activity(models.Model):
 
     # The date at which the activity will become visible for all users
     published_date = models.DateTimeField(default=now_rounded)
-    # TODO: Redact is_public
-    is_public = models.BooleanField(default=True, help_text="If activity should be on public calendar")
 
     # Start and end times
     start_date = models.DateTimeField()

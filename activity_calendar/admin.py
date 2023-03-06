@@ -63,7 +63,7 @@ class ActivityAdmin(MarkdownImageInlineAdmin):
     is_recurring.boolean = True
 
     list_display = ('id', 'title', 'start_date', 'is_recurring', 'subscriptions_required', )
-    list_filter = ['subscriptions_required', 'start_date', 'is_public']
+    list_filter = ['subscriptions_required', 'start_date',]
     list_display_links = ('id', 'title')
     date_hierarchy = 'start_date'
     search_fields = ['title']
