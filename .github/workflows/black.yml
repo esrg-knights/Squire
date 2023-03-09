@@ -1,0 +1,30 @@
+name: Lint Black main
+
+# Without review-dog… maybe it’s a bit of waste to make them run twice, but anyway.
+on: [push, pull_request]
+
+jobs:
+  lint-check-full:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: psf/black@stable
+    continue-on-error: true
+  lint-changed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: tj-actions/changed-files@v35
+        id: changed-files
+        with:
+          files: "**/*.py"
+      - uses: actions/setup-python@v4
+        if: steps.changed-files.outputs.all_changed_files != ''
+      - uses: psf/black@stable
+        if: steps.changed-files.outputs.all_changed_files != ''
+        with:
+          # formatting all the files, since filtering didn’t work, and then filtering them manually
+          # src: "${{ steps.changed-files.outputs.all_changed_files }}"
+          options: ""
+      - run: git diff --exit-code -- ${{ steps.changed-files.outputs.all_changed_files }}
+        if: steps.changed-files.outputs.all_changed_files != ''

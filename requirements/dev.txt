@@ -8,3 +8,4 @@
 coverage~=6.4.4 # Code Coverage
 django-debug-toolbar~=3.6.0 # Debug Panel
 django-test-migrations==1.2.0 # Testing migrations
+black
