@@ -146,6 +146,7 @@ $(document).ready(function () {
 
     try {
         performance.mark("金人終わり")
+        performance.measure("金人", "金人初め", "金人終わり")
     } catch (e) {
         console.warn(e);
     }
