@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Permission, Group
+from django.core.exceptions import ImproperlyConfigured
 from django.forms import Form
 from django.test import TestCase
 
@@ -62,7 +63,7 @@ class SettingOptionsTestCase(TestCase):
 
     def test_check_group_access_group_permission_configure_error(self):
         self.options.group_requires_permission = 'auth.does_not_exist'
-        with self.assertRaises(KeyError) as exc:
+        with self.assertRaises(ImproperlyConfigured) as exc:
             self.options.check_option_access(self.association_group)
         self.assertTrue(str(exc.exception).find('configured incorrectly') >= 0)
 
