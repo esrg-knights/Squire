@@ -10,7 +10,7 @@ from membership_file.models import Member
 
 class AssociationGroup(models.Model):
     site_group = models.OneToOneField(Group, on_delete=models.CASCADE, blank=True, null=True)
-    name =  models.CharField(max_length=150)
+    name =  models.CharField(max_length=150, unique=True)
     shorthand = models.CharField(max_length=16, blank=True, null=True)
     icon = models.ImageField(upload_to='images/committees/', blank=True, null=True)
     permissions = models.ManyToManyField(

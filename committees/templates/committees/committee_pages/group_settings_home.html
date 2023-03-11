@@ -42,7 +42,12 @@
     </div>
     <div>
         {% for option in options_list %}
-            {% render_options option %}
+            {% render_options option as option %}
+            {% if option %}
+                <div class="mb-4">
+                    {{ option }}
+                </div>
+            {% endif %}
         {% endfor %}
     </div>
 

@@ -47,7 +47,7 @@ class GroupSettingsMixin(AssociationGroupMixin):
     def get_context_data(self, **kwargs):
         options = sorted(
             self.config.get_options(self.association_group),
-            key= lambda option: option.name)
+            key= lambda option: option.order)
 
         context = super(GroupSettingsMixin, self).get_context_data(**kwargs)
         context['settings_option'] = self.settings_option

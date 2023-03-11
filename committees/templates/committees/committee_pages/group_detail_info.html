@@ -1,11 +1,12 @@
-{% extends 'committees/committee_pages/group_settings_base.html' %}
+{% extends 'committees/group_detail_base.html' %}
 {% load static %}
 {% block content-frame-class %}
     container
 {% endblock %}
 
 
-{% block setting_option %}
+{% block content %}
+    {{ block.super }}
     <div class="row">
         <div class="col-12 col-md-8">
             <div class="d-flex d-md-none mb-3">

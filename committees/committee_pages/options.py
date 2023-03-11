@@ -7,6 +7,7 @@ from committees.forms import AssociationGroupUpdateForm
 
 
 class HomeScreenTextOptions(SimpleFormSettingsOption):
+    order = 2
     display_title = 'Adjust home screen layout'
     display_text = 'Use the form below to adjust what is displayed on the home page of this group'
     group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.BOARD, AssociationGroup.ORDER]
@@ -16,6 +17,7 @@ class HomeScreenTextOptions(SimpleFormSettingsOption):
 
 
 class MemberOptions(SettingsOptionBase):
+    order = 3
     group_type_required = [AssociationGroup.COMMITTEE, AssociationGroup.WORKGROUP, AssociationGroup.ORDER]
     name = 'Members'
     option_template_name = "committees/committee_pages/setting_blocks/members.html"

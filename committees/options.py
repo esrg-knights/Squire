@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Permission
+from django.core.exceptions import ImproperlyConfigured
 from django.template.loader import get_template
 from django.urls import path, include, reverse_lazy
 
@@ -10,13 +11,14 @@ from committees.views import BaseSettingsUpdateView
 class OptionsRegistry:
     """ Registry for all different settings and whether the current associationgroup has access """
 
-    _setting_options = []
+    def __init__(self):
+        self._setting_options = []
 
-    def register(cls, options_class):
+    def register(self, options_class):
         """ Registers an option to the settings config """
         assert issubclass(options_class, SettingsOptionBase)
-        if options_class not in cls._setting_options:
-            cls._setting_options.append(options_class())
+        if options_class not in self._setting_options:
+            self._setting_options.append(options_class())
 
     def urls(self, config):
         """ Return the entire list of urls """
@@ -51,6 +53,7 @@ class SettingsOptionBase:
     Note: To reverse an url, use committees:settings:_your_url_name_
     """
     name = None
+    order = 10
     url_keyword  = ''
     url_name = None
     option_template_name = None
@@ -84,8 +87,9 @@ class SettingsOptionBase:
             try:
                 perm = get_perm_from_name(self.group_requires_permission)
             except Permission.DoesNotExist:
-                raise KeyError(f"{self.__class__.__name__} is configured incorrectly. "
-                               f"{self.group_requires_permission} is not a valid permission. ")
+                raise ImproperlyConfigured(
+                    f"{self.__class__.__name__} is configured incorrectly. "
+                    f"{self.group_requires_permission} is not a valid permission.")
             else:
                 if not perm.group_set.filter(associationgroup=association_group).exists() and \
                     not perm.associationgroup_set.filter(id=association_group.id).exists():

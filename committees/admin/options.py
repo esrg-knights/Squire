@@ -29,6 +29,14 @@ class AssociationGroupAdmin(MarkdownImageInlineAdmin):
     autocomplete_fields = ['site_group',]
     filter_horizontal = ("permissions",)
 
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = list(super(AssociationGroupAdmin, self).get_readonly_fields(request, obj))
+        if not request.user.has_perm("auth.change_permission"):
+            # In theory this should set the field to disabled, in reality the widget does not have a disabled state
+            # So it removes the widget entirely. Not the cleanest solution in terms of UX, but it does its job
+            readonly_fields.append('permissions')
+        return readonly_fields
+
 
 class GroupExternalURLAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'association_group')

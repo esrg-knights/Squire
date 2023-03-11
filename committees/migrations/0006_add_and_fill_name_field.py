@@ -22,7 +22,7 @@ def reverse_func(apps, schema_editor):
     for association_group in AssociationGroup.objects.using(db_alias).all():
         if association_group.site_group is None:
             group = Group.objects.alias(db_alias).create(
-                nmae = association_group.name,
+                name = association_group.name,
             )
             association_group.site_group = group
             association_group.save()
@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='associationgroup',
             name='name',
-            field=models.CharField(default='fake_name', max_length=150),
+            field=models.CharField(default='fake_name', max_length=150, unique=True),
             preserve_default=False,
         ),
         migrations.AlterField(
