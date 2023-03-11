@@ -7,7 +7,7 @@
  * @copyright https://stackoverflow.com/a/50537862/4633439
  */
 function replaceInText(element, pattern, replacement) {
-    for (let node of Array.from(element.childNodes)) { //Array.from cause complicated browser issues
+    for (let node of Array.from(element.childNodes)) { //Array.from because of complicated browser issues
         if (node.isContentEditable) {
             console.debug("node is contentEditable, skipping");
             console.debug(node);
