@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('auth', '0011_update_proxy_permissions'),
-        ('committees', '0006_associationgrouppanelcontrol'),
+        ('committees', '0006_add_and_fill_name_field'),
     ]
 
     operations = [

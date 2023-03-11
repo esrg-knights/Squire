@@ -31,7 +31,7 @@ def reverse_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('committees', '0005_longer_group_member_titles'),
+        ('committees', '0006_associationgrouppanelcontrol'),
     ]
 
     operations = [

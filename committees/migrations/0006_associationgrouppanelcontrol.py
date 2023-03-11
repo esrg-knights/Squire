@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('committees', '0006_add_and_fill_name_field'),
+        ('committees', '0005_longer_group_member_titles'),
     ]
 
     operations = [
