@@ -50,8 +50,7 @@ class AddMeetingFormTestCase(FormValidityMixin, TestCase):
 
     def test_save_non_existing_parent_activity(self):
         """ Creates a new group and tests that it can still create activity_moments """
-        site_group = Group.objects.create()
-        group = AssociationGroup.objects.create(site_group=site_group)
+        group = AssociationGroup.objects.create(name="test_group")
         form = self.assertFormValid({'local_start_date': "2023-02-27T8:45:00Z"}, association_group=group)
         form.save()
         meeting = ActivityMoment.meetings.filter_group(group).get(

@@ -8,7 +8,7 @@ from django.views.generic import ListView, FormView
 
 from activity_calendar.models import Activity, OrganiserLink
 from committees.tests.committee_pages.utils import AssocationGroupTestingMixin
-from committees.committeecollective import AssociationGroupMixin
+from committees.mixins import AssociationGroupMixin
 from core.tests.util import suppress_warnings
 from utils.testing.view_test_utils import ViewValidityMixin
 
@@ -74,7 +74,7 @@ class TestCommitteeActivityAddActivityMomentView(AssocationGroupTestingMixin, Vi
 
     @suppress_warnings
     def test_add_activitymoment_access(self):
-        self.association_group.site_group.permissions.remove(Permission.objects.get(codename='add_activitymoment'))
+        self.association_group.permissions.remove(Permission.objects.get(codename='add_activitymoment'))
 
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 403)

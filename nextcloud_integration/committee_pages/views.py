@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect
 from django.views.generic import TemplateView, ListView, View
 from django.urls import reverse
 
-from committees.committeecollective import AssociationGroupMixin
+from committees.mixins import AssociationGroupMixin
 
 from nextcloud_integration.models import SquireNextCloudFolder
 from nextcloud_integration.utils import refresh_status

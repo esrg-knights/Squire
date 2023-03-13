@@ -99,17 +99,9 @@
     },
 
     {
-        "model": "auth.group",
-        "pk": 60,
-        "fields": {
-            "name": "Meeting included group"
-        }
-    },
-    {
         "model": "committees.associationgroup",
         "pk": 60,
         "fields": {
-            "site_group": 60,
             "shorthand": "meeting_test",
             "type": "W"
         }

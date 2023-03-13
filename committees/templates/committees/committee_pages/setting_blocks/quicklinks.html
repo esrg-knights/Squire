@@ -1,0 +1,22 @@
+<h4>
+    External sources
+</h4>
+<div class="my-2">
+    {% for quicklink in association_group.shortcut_set.all %}
+        <div class="row">
+            <div class="col">
+                {{ quicklink.name }}
+            </div>
+            <div class="col">
+                <a href="{{ quicklink.url }}" target="_blank" rel="noopener noreferrer">
+                    {{ quicklink.url }}
+                </a>
+            </div>
+            <div class="col">
+                {{ quicklink.description|default:'' }}
+            </div>
+        </div>
+    {% empty %}
+        There are no external sources stored
+    {% endfor %}
+</div>

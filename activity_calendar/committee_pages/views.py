@@ -8,7 +8,7 @@ from django.views.generic import ListView, FormView
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
-from committees.committeecollective import AssociationGroupMixin
+from committees.mixins import AssociationGroupMixin
 from utils.auth_utils import get_perm_from_name
 
 from activity_calendar.committee_pages.forms import CreateActivityMomentForm, AddMeetingForm, \
@@ -54,7 +54,7 @@ class AddActivityMomentCalendarView(AssociationGroupMixin, FormView):
         # Django calls the following line only in get(), which is too late
         self.activity = get_object_or_404(Activity, id=self.kwargs.get('activity_id'))
 
-        if not self.association_group.site_group.permissions.filter(codename="add_activitymoment").exists():
+        if not self.association_group.has_perm(codename="add_activitymoment"):
             raise PermissionDenied()
 
     def get_form_kwargs(self):

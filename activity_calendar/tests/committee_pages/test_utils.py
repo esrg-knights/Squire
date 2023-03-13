@@ -18,8 +18,7 @@ class ActivityCommmitteePageUtilsTestCase(TestCase):
         self.assertIsInstance(meeting_activity, Activity)
 
     def test_create_meeting_activity(self):
-        group = Group.objects.create(name='test_group')
-        assoc_group = AssociationGroup.objects.create(site_group=group)
+        assoc_group = AssociationGroup.objects.create(name="test_group")
 
         meeting_activity = create_meeting_activity(assoc_group)
         self.assertEqual(meeting_activity.type, ACTIVITY_MEETING)
