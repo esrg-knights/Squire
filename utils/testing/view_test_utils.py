@@ -13,6 +13,7 @@ class ViewValidityMixin:
     """ A mixin for testing views. Takes over a bit of behind the scenes overheasd
     base_user_id: the id for the user running the sessions normally
     base_url: The basic url to navigate to
+    permission_required: The name of the permission that is required to view the tested page
     """
 
     client = None

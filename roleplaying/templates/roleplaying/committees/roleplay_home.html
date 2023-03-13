@@ -1,0 +1,18 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    {{ block.super }}
+
+    <h1>Welcome {{ association_group.name }} players</h1>
+    <p>
+        This is the new page for campaigns. Soon we will enable more features to ease your scheduling.
+    </p>
+
+
+
+{% endblock%}

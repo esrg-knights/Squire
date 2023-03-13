@@ -4,15 +4,13 @@ from django.views.generic import ListView, FormView
 
 from activity_calendar.models import Activity, OrganiserLink
 from committees.tests.committee_pages.utils import AssocationGroupTestingMixin
-from committees.committeecollective import AssociationGroupMixin
+from committees.mixins import AssociationGroupMixin
 from core.tests.util import suppress_warnings
 from utils.testing.view_test_utils import ViewValidityMixin
 
-from committees.committeecollective import registry
-
 from activity_calendar.committee_pages.forms import CreateActivityMomentForm
 from activity_calendar.committee_pages.views import ActivityCalendarView, AddActivityMomentCalendarView
-from activity_calendar.committee_pages.config import ActivityConfig
+
 
 class TestCommitteeActivityOverview(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
     fixtures = ['test_users',  'test_groups', 'test_members', 'committees/associationgroups',

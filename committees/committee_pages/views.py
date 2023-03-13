@@ -4,13 +4,18 @@ from django.views.generic import TemplateView,  FormView
 
 from utils.views import PostOnlyFormViewMixin
 
-from committees.committeecollective import AssociationGroupMixin
+from committees.mixins import AssociationGroupMixin, GroupSettingsMixin
 from committees.forms import AssociationGroupUpdateForm, AddOrUpdateExternalUrlForm, \
     DeleteGroupExternalUrlForm, AssociationGroupMembershipForm
 
 
+__all__ = ['AssociationGroupDetailView', 'AssociationGroupSettingsView',  'AssociationGroupQuickLinksView',
+           'AssociationGroupQuickLinksAddOrUpdateView', 'AssociationGroupQuickLinksDeleteView',
+           'AssociationGroupMembersView', 'AssociationGroupMemberUpdateView']
+
+
 class AssociationGroupDetailView(AssociationGroupMixin, TemplateView):
-    template_name = "committees/group_detail_info.html"
+    template_name = "committees/committee_pages/group_detail_info.html"
 
     def get_context_data(self, **kwargs):
         context = super(AssociationGroupDetailView, self).get_context_data(**kwargs)
@@ -28,8 +33,16 @@ class AssociationGroupDetailView(AssociationGroupMixin, TemplateView):
         return quicklinks
 
 
-class AssociationGroupQuickLinksView(AssociationGroupMixin, TemplateView):
-    template_name = "committees/group_detail_quicklinks.html"
+class AssociationGroupSettingsView(GroupSettingsMixin, TemplateView):
+    template_name = "committees/committee_pages/group_settings_home.html"
+    settings = None
+
+    def check_setting_access(self):
+        return True
+
+
+class AssociationGroupQuickLinksView(GroupSettingsMixin, TemplateView):
+    template_name = "committees/committee_pages/group_detail_quicklinks.html"
 
     def get_context_data(self, **kwargs):
         return super(AssociationGroupQuickLinksView, self).get_context_data(
@@ -38,7 +51,7 @@ class AssociationGroupQuickLinksView(AssociationGroupMixin, TemplateView):
         )
 
 
-class AssociationGroupQuickLinksAddOrUpdateView(AssociationGroupMixin, PostOnlyFormViewMixin, FormView):
+class AssociationGroupQuickLinksAddOrUpdateView(GroupSettingsMixin, PostOnlyFormViewMixin, FormView):
     form_class = AddOrUpdateExternalUrlForm
 
     def get_form_kwargs(self):
@@ -53,10 +66,10 @@ class AssociationGroupQuickLinksAddOrUpdateView(AssociationGroupMixin, PostOnlyF
             return f'{form.instance.name} has been updated'
 
     def get_success_url(self):
-        return reverse_lazy("committees:group_quicklinks", kwargs={'group_id': self.association_group.id})
+        return reverse_lazy("committees:settings:group_quicklinks", kwargs={'group_id': self.association_group.id})
 
 
-class AssociationGroupQuickLinksDeleteView(AssociationGroupMixin, PostOnlyFormViewMixin, FormView):
+class AssociationGroupQuickLinksDeleteView(GroupSettingsMixin, PostOnlyFormViewMixin, FormView):
     form_class = DeleteGroupExternalUrlForm
     form_success_method_name = 'delete'
 
@@ -70,36 +83,14 @@ class AssociationGroupQuickLinksDeleteView(AssociationGroupMixin, PostOnlyFormVi
         return form_kwargs
 
     def get_success_url(self):
-        return reverse_lazy("committees:group_quicklinks", kwargs={'group_id': self.association_group.id})
+        return reverse_lazy("committees:settings:group_quicklinks", kwargs={'group_id': self.association_group.id})
 
     def get_success_message(self, form):
         return f'{form.instance.name} has been removed'
 
 
-class AssociationGroupUpdateView(AssociationGroupMixin, FormView):
-    form_class = AssociationGroupUpdateForm
-    template_name = "committees/group_detail_info_edit.html"
-
-    def get_form_kwargs(self):
-        form_kwargs = super(AssociationGroupUpdateView, self).get_form_kwargs()
-        form_kwargs['instance'] = self.association_group
-        return form_kwargs
-
-    def get_context_data(self, **kwargs):
-        return super(AssociationGroupUpdateView, self).get_context_data(
-            **kwargs
-        )
-
-    def form_valid(self, form):
-        form.save()
-        return super(AssociationGroupUpdateView, self).form_valid(form)
-
-    def get_success_url(self):
-        return reverse_lazy('committees:group_general', kwargs={'group_id': self.association_group.id})
-
-
-class AssociationGroupMembersView(AssociationGroupMixin, TemplateView):
-    template_name = "committees/group_detail_members.html"
+class AssociationGroupMembersView(GroupSettingsMixin, TemplateView):
+    template_name = "committees/committee_pages/group_detail_members.html"
     form_class = AssociationGroupMembershipForm  # An empty form is displayed on the page
 
     def get_context_data(self, **kwargs):
@@ -109,7 +100,7 @@ class AssociationGroupMembersView(AssociationGroupMixin, TemplateView):
             **kwargs)
 
 
-class AssociationGroupMemberUpdateView(AssociationGroupMixin, PostOnlyFormViewMixin, FormView):
+class AssociationGroupMemberUpdateView(GroupSettingsMixin, PostOnlyFormViewMixin, FormView):
     form_class = AssociationGroupMembershipForm
 
     def get_form_kwargs(self):
@@ -121,4 +112,4 @@ class AssociationGroupMemberUpdateView(AssociationGroupMixin, PostOnlyFormViewMi
         return f'{form.instance.member} has been updated'
 
     def get_success_url(self):
-        return reverse_lazy("committees:group_members", kwargs={'group_id': self.association_group.id})
+        return reverse_lazy("committees:settings:group_members", kwargs={'group_id': self.association_group.id})

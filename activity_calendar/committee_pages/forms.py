@@ -1,14 +1,8 @@
 import datetime
 
-from django import forms
-from django.forms import ModelForm, Form
-from django.forms.widgets import HiddenInput
 from django.utils import timezone
-from django.utils.timesince import timeuntil
-from django.utils.translation import gettext_lazy as _
 
 from core.forms import MarkdownForm
-from core.widgets import ImageUploadMartorWidget
 
 from activity_calendar.models import ActivityMoment
 from activity_calendar.forms import ActivityMomentFormMixin
