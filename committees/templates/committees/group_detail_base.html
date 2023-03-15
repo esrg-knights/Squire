@@ -29,11 +29,8 @@
 {% block content_raw %}
     <div class="{% block content-frame-class %}container{% endblock %}">
         <div class="d-flex flex-wrap">
-            <div style="width: 5em">
-                {% if association_group.icon %}
-                    <img style="height: 5em;" src={{ association_group.icon.url }}>
-                {% endif %}
-            </div>
+            {% include "committees/snippets/snippet_assoc_group_icon.html" %}
+
             <div class="">
                 <h1>{{ association_group }}</h1>
                 <p>{{ association_group.short_description }}</p>
@@ -47,7 +44,7 @@
                     <ol class="breadcrumb py-0 mb-2 bg-transparent">
                         {% block breadcrumb_items %}
                             <li class="breadcrumb-item"><a>
-                                Home
+                                {{ config.name }}
                             </a></li>
                         {% endblock %}
                     </ol>

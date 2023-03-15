@@ -1,0 +1,14 @@
+<h4>Members</h4>
+{% for membership in association_group.associationgroupmembership_set.all %}
+    <div class="row">
+        <div class="col">
+            {{ membership.member }}
+        </div>
+        <div class="col">
+            {{ membership.role }}
+        </div>
+        <div class="col">
+            {{ membership.title|default_if_none:"" }}
+        </div>
+    </div>
+{% endfor %}

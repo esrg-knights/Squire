@@ -1,6 +1,6 @@
 import datetime
 
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -9,19 +9,26 @@ from membership_file.models import Member
 
 
 class AssociationGroup(models.Model):
-    site_group = models.OneToOneField(Group, on_delete=models.CASCADE)
+    site_group = models.OneToOneField(Group, on_delete=models.CASCADE, blank=True, null=True)
+    name =  models.CharField(max_length=150, unique=True)
     shorthand = models.CharField(max_length=16, blank=True, null=True)
     icon = models.ImageField(upload_to='images/committees/', blank=True, null=True)
+    permissions = models.ManyToManyField(
+        Permission,
+        blank=True,
+    )
 
     COMMITTEE = 'C'
-    GUILD = 'O'
+    ORDER = 'O'
     WORKGROUP = 'WG'
     BOARD = 'B'
+    CAMPAIGN = 'GC'
     GROUPTYPES = [
         (COMMITTEE, 'Committee'),
-        (GUILD, 'Order'),
+        (ORDER, 'Order'),
         (WORKGROUP, 'Workgroup'),
         (BOARD, 'Board'),
+        (CAMPAIGN, 'Campaign')
     ]
     type = models.CharField(max_length=2, choices=GROUPTYPES)
     is_public = models.BooleanField(default=True)
@@ -47,12 +54,8 @@ class AssociationGroup(models.Model):
             ("can_view_board_members", "Can view board members"),
         ]
 
-    @property
-    def name(self):
-        return self.site_group.name
-
     def __str__(self):
-        return self.site_group.name
+        return self.name
 
 
 class GroupExternalUrl(models.Model):

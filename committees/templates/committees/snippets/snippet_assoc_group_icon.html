@@ -1,0 +1,20 @@
+{% load association_group_tags %}
+{% if association_group.icon %}
+    {% if association_group|is_type:"CAMPAIGN" %}
+        <div style="height: 6em; width: 4.5em; border: 2px solid;
+            border-radius: 50% / 10% 10% 90% 90%;
+            background-position: center; background-size: cover;
+            background-image: url('{{ association_group.icon.url }}');"
+             class="border-dark border-4 mr-2"
+        >
+        </div>
+    {% else %}
+        <a class="enlargable_image" data-imgurl="{{ association_group.icon.url }}">
+            <div class=""
+                 style="background-size: contain; background-position: center;
+                     background-image: url('{{ association_group.icon.url }}');
+                     background-repeat: no-repeat; width: 5em; height: 5em;"></div>
+        </a>
+
+    {% endif %}
+{% endif %}

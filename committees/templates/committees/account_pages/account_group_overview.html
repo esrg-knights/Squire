@@ -1,0 +1,55 @@
+{% extends 'core/user_accounts/account_base.html' %}
+{% load association_group_config_tags %}
+
+{% block title %}
+    Squire - My Groups
+{% endblock title %}
+
+{% block content %}
+    <h1> My groups </h1>
+    Below are the groups you are part of, be it committee, order or board.
+    Note: according to the system, system might not be complete.
+
+    {% for group in member.associationgroup_set.all %}
+        <div class="my-2 p-2">
+                <div class="d-flex">
+                    <div style="font-size: x-small;">
+                        {% include "committees/snippets/snippet_assoc_group_icon.html" with association_group=group%}
+                    </div>
+                    <div>
+                        <h3 class="mb-0">
+                            {{ group }}
+                        </h3>
+                        <div>
+                            {{ group.short_description }}
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <div class="row">
+                        <div class="col-auto btn-group mb-2" role="group" aria-label="{{ group }} pages">
+                            {% for config in group|get_accessible_configs %}
+                                <a class="btn {% if forloop.first %}btn-info px-5{% else %}btn-outline-info d-none d-md-block{% endif %}"
+                                   href="{{ config|get_absolute_url:group }}">
+                                    <i class="{{ config.icon_class }}"></i> {{ config.name }}
+                                </a>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col">
+                            <div class="btn-group " role="group" aria-label="{{ group }} pages">
+                                {% for quicklink in group.shortcut_set.all %}
+                                    <a class="btn btn-outline-info" href="{{ quicklink.url }}"
+                                        target="_blank" rel="noopener noreferrer">
+                                        <i class="fas fa-external-link-alt"></i> {{ quicklink.name }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+        </div>
+    {% endfor %}
+
+{% endblock %}
