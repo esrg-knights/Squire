@@ -8,17 +8,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: tj-actions/changed-files@v35
+      - name: Check for changed python files in commit or pull request
+        uses: tj-actions/changed-files@v35
         id: changed-files
         with:
           files: "**/*.py"
       - uses: actions/setup-python@v4
         if: steps.changed-files.outputs.all_changed_files != ''
-      - uses: psf/black@stable
+      - name: format files
+        uses: psf/black@stable
         if: steps.changed-files.outputs.all_changed_files != ''
         with:
           # formatting all the files, since filtering didn’t work, and then filtering them manually
           # src: "${{ steps.changed-files.outputs.all_changed_files }}"
           options: ""
-      - run: git diff --exit-code -- ${{ steps.changed-files.outputs.all_changed_files }}
+      - name: (Files that are incorrectly formatted) ∩ (Files that have been changed in this commit or pull request)
+        run: git diff --exit-code -- ${{ steps.changed-files.outputs.all_changed_files }}
         if: steps.changed-files.outputs.all_changed_files != ''
