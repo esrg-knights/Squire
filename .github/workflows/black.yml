@@ -4,12 +4,6 @@ name: Lint Black main
 on: [push, pull_request]
 
 jobs:
-  lint-check-full:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: psf/black@stable
-    continue-on-error: true
   lint-changed:
     runs-on: ubuntu-latest
     steps:
