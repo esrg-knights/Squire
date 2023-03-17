@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Permission
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -15,6 +16,22 @@ class TestAssociationGroup(TestCase):
         # Test name function
         assoc_group = AssociationGroup.objects.get(id=4)
         self.assertEqual(assoc_group.__str__(), "Inn drinkers")
+
+    def test_has_perm_on_model(self):
+        """ Tests that the has_perm succesfully functions with perms on the model """
+        assoc_group = AssociationGroup.objects.get(id=4)
+        perm = Permission.objects.get(codename='add_associationgroup')
+        self.assertEqual(assoc_group.has_perm('committees.add_associationgroup'), False)
+        assoc_group.permissions.add(perm)
+        self.assertEqual(assoc_group.has_perm('committees.add_associationgroup'), True)
+
+    def test_has_perm_on_site_group(self):
+        """ Tests that the has_perm succesfully functions with perms on the model """
+        assoc_group = AssociationGroup.objects.get(id=1)
+        perm = Permission.objects.get(codename='add_associationgroup')
+        self.assertEqual(assoc_group.has_perm('committees.add_associationgroup'), False)
+        assoc_group.site_group.permissions.add(perm)
+        self.assertEqual(assoc_group.has_perm('committees.add_associationgroup'), True)
 
 
 class TestGroupExternalUrl(TestCase):

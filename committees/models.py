@@ -58,14 +58,12 @@ class AssociationGroup(models.Model):
     def __str__(self):
         return self.name
 
-    def has_perm(self, codename, app_label=None):
-        filter_kwargs = {'codename': codename}
-        if app_label:
-            filter_kwargs['content_type__app_label'] = app_label
-
+    def has_perm(self, perm):
+        app_label, codename = perm.split('.', maxsplit=1)
         return Permission.objects.filter(
             Q(group__associationgroup=self) | Q(associationgroup=self),
-            **filter_kwargs
+            codename=codename,
+            content_type__app_label=app_label
         ).exists()
 
 

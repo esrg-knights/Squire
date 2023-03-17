@@ -42,17 +42,7 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
     def check_group_access(self, association_group):
         """ Checks whether the group has access """
         if self.group_requires_permission is not None:
-            try:
-                perm = get_perm_from_name(self.group_requires_permission)
-            except Permission.DoesNotExist:
-                raise KeyError(f"{self.__class__} is configured incorrectly. "
-                               f"{self.group_requires_permission} is not a valid permission. ")
-            else:
-                if not Permission.objects.filter(
-                    Q(group__associationgroup=association_group) | Q(associationgroup=association_group),
-                    id=perm.id,
-                ).exists():
-                    return False
+            return association_group.has_perm(self.group_requires_permission)
         return True
 
     def enable_access(self, association_group: AssociationGroup):

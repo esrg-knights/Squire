@@ -51,12 +51,6 @@ class CommitteeConfigTestCase(TestCase):
         self.config.enable_access(self.association_group)
         self.assertEqual(self.config.check_access_validity(self.request, self.association_group), True)
 
-    def test_check_inexisting_perm(self):
-        with self.assertRaises(KeyError) as error:
-            self.config.group_requires_permission = 'xxx.yyy'
-            self.config.check_access_validity(self.request, self.association_group)
-        self.assertGreater(str(error.exception).find('xxx.yyy'), -1)
-
     def test_enable_access(self):
         perm_name = 'auth.change_user'
         self.config.group_requires_permission = perm_name
