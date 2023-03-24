@@ -8,8 +8,7 @@ from django.views.generic import ListView, FormView
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
-from committees.mixins import AssociationGroupMixin
-from utils.auth_utils import get_perm_from_name
+from committees.mixins import AssociationGroupMixin, AssociationGroupPermissionRequiredMixin
 
 from activity_calendar.committee_pages.forms import CreateActivityMomentForm, AddMeetingForm, \
     EditMeetingForm, MeetingRecurrenceForm, CancelMeetingForm, EditCancelledMeetingForm
@@ -88,19 +87,16 @@ class MeetingOverview(AssociationGroupMixin, ListView):
         return get_next_activity_instances(activity, start_dt=start_dt, max=5)
 
     def get_context_data(self, **kwargs):
-        can_change_recurrences = get_perm_from_name('activity_calendar.change_meeting_recurrences').\
-            group_set.filter(associationgroup=self.association_group).exists()
-
         return super(MeetingOverview, self).get_context_data(
             meeting_activity=get_meeting_activity(self.association_group),
-            can_change_recurrences = can_change_recurrences,
+            can_change_recurrences = self.association_group.has_perm('activity_calendar.change_meeting_recurrences'),
             feed_url = reverse("activity_calendar:meetings_feed", kwargs={'group_id': self.association_group.id}),
             **kwargs
         )
 
 
-class MeetingRecurrenceFormView(AssociationGroupMixin, FormView):
-    # Todo, filter association_permission = 'change_meeting_recurrences'
+class MeetingRecurrenceFormView(AssociationGroupMixin, AssociationGroupPermissionRequiredMixin, FormView):
+    group_permissions_required = 'activity_calendar.change_meeting_recurrences'
     form_class = MeetingRecurrenceForm
     template_name = "activity_calendar/committee_pages/meeting_recurrences.html"
 

@@ -78,9 +78,11 @@
                         </tbody>
                     </table>
                 </div>
+            {% empty %}
+                <div>There are currently no upcoming meetings planned</div>
             {% endfor %}
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-4 border-left border-dark">
             <div class="btn btn-info btn-block mb-4" onclick="display_import_info()">
                 <i class="fas fa-calendar-plus"></i> Import meetings in your calendar
             </div>
