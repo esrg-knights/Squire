@@ -13,8 +13,6 @@ jobs:
         id: changed-files
         with:
           files: "**/*.py"
-      - uses: actions/setup-python@v4
-        if: steps.changed-files.outputs.all_changed_files != ''
       - name: format files
         uses: psf/black@stable
         if: steps.changed-files.outputs.all_changed_files != ''
@@ -25,3 +23,8 @@ jobs:
       - name: (Files that are incorrectly formatted) ∩ (Files that have been changed in this commit or pull request)
         run: git diff --exit-code -- ${{ steps.changed-files.outputs.all_changed_files }}
         if: steps.changed-files.outputs.all_changed_files != ''
+      - name: Comment the git pr
+        uses: reviewdog/action-suggester@v1
+        with:
+          tool_name: blackfmt
+          fail_on_error: false
