@@ -36,6 +36,9 @@ class HomeNonAuthenticatedView(TemplateView):
 ################
 class SquirePremiumView(TemplateView):
     template_name = "user_interaction/april_2022.html"
+
+class April2023LiveStreamView(TemplateView):
+    template_name = "user_interaction/april_2023.html"
 ################
 # END APRIL 2022
 ################
