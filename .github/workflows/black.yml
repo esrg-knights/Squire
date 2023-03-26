@@ -13,8 +13,7 @@ jobs:
         id: changed-files
         with:
           files: "**/*.py"
-      - &format-step
-        name: format files
+      - name: format files
         uses: psf/black@stable
         if: steps.changed-files.outputs.all_changed_files != ''
         with:
@@ -28,7 +27,13 @@ jobs:
           tool_name: blackfmt
           fail_on_error: false
         continue-on-error: true
-      - *format-step #format again
+      - name: format files again
+        uses: psf/black@stable
+        if: steps.changed-files.outputs.all_changed_files != ''
+        with:
+          # formatting all the files, since filtering didn’t work, and then filtering them manually
+          # src: "${{ steps.changed-files.outputs.all_changed_files }}"
+          options: ""
       - name: (Files that are incorrectly formatted) ∩ (Files that have been changed in this commit or pull request)
         run: git diff --exit-code -- ${{ steps.changed-files.outputs.all_changed_files }}
         if: steps.changed-files.outputs.all_changed_files != ''
