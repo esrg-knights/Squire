@@ -7,25 +7,25 @@ jobs:
     name: Test Code
     runs-on: ${{ matrix.ubuntu }}
     env:
-      DJANGO_ENV: 'TESTING'
+      DJANGO_ENV: "TESTING"
     strategy:
       matrix:
         python: ["3.8"]
         ubuntu: ["ubuntu-20.04"]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Cache dependencies # caching dependency will make our build faster.
-        uses: actions/cache@v2 # for more info checkout pip section documentation at https://github.com/actions/cache
+        uses: actions/cache@v3 # for more info checkout pip section documentation at https://github.com/actions/cache
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements/*.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
       - name: Setup Python Environment
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '${{ matrix.python }}'
+          python-version: "${{ matrix.python }}"
       - name: Install requirements
         run: pip install -r requirements/ci.txt
       - name: Run Tests
@@ -33,7 +33,7 @@ jobs:
       - name: Output Coverage
         run: coverage report && coverage xml
       - name: Upload coverage to CodeCov
-        uses: codecov/codecov-action@v2 # https://github.com/codecov/codecov-action
+        uses: codecov/codecov-action@v3 # https://github.com/codecov/codecov-action
         with:
           env_vars: OS,PYTHON
           fail_ci_if_error: true
