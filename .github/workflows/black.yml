@@ -1,0 +1,39 @@
+name: Lint Black main
+
+# Without review-dog… maybe it’s a bit of waste to make them run twice, but anyway.
+on: [push, pull_request]
+
+jobs:
+  lint-changed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check for changed python files in commit or pull request
+        uses: tj-actions/changed-files@v35
+        id: changed-files
+        with:
+          files: "**/*.py"
+      - name: format files
+        uses: psf/black@stable
+        if: steps.changed-files.outputs.all_changed_files != ''
+        with:
+          # formatting all the files, since filtering didn’t work, and then filtering them manually
+          # src: "${{ steps.changed-files.outputs.all_changed_files }}"
+          options: ""
+      - name: Comment the git pr
+        uses: reviewdog/action-suggester@v1
+        if: steps.changed-files.outputs.all_changed_files != ''
+        with:
+          tool_name: blackfmt
+          fail_on_error: false
+        continue-on-error: true
+      - name: format files again
+        uses: psf/black@stable
+        if: steps.changed-files.outputs.all_changed_files != ''
+        with:
+          # formatting all the files, since filtering didn’t work, and then filtering them manually
+          # src: "${{ steps.changed-files.outputs.all_changed_files }}"
+          options: ""
+      - name: (Files that are incorrectly formatted) ∩ (Files that have been changed in this commit or pull request)
+        run: git diff --exit-code -- ${{ steps.changed-files.outputs.all_changed_files }}
+        if: steps.changed-files.outputs.all_changed_files != ''

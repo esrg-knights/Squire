@@ -133,7 +133,8 @@ htdocs/static
 
 
 # Visual Studio Code
-.vscode
+.vscode/*
+!.vscode/extensions.json
 
 # IntelliJ
 /.idea/
