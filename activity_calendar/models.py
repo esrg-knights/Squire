@@ -296,6 +296,8 @@ class Activity(models.Model):
                     parent_activity=self,
                 )
 
+        # print(f"with {dtstart} found {next_activity_moment.recurrence_id}")
+
         return next_activity_moment
 
     def _get_next_recurring_occurence(self, dtstart, inc=False):
@@ -316,13 +318,21 @@ class Activity(models.Model):
         # recurrences.exdates = list(util.set_time_for_RDATE_EXDATE(recurrences.exdates, dtstart, make_dst_ignore=True))
         # recurrences.rdates = list(util.set_time_for_RDATE_EXDATE(recurrences.rdates, dtstart, make_dst_ignore=True))
 
+        # If dtstart is set in a different dst-period than the activities original start date recurrences might
+        # incorrectly be of by an hour thus finding matches at the dst included hour even though 'inc' is set to false
+        # For example. When retrieving the next N upcoming activities in summertime for an activity that starts in
+        # wintertime, the time set will be 1 hour earlier than recurrence has stored and thus always keep returning
+        # the first one, unless we correct for that.
+        dst_ignore_dtstart = util.dst_aware_to_dst_ignore(dtstart, timezone.localtime(self.start_date), reverse=True)
+
         # The after function does not know the initial start date of the recurrent activities
         # So dtstart should be set to the activity start date not search start date
         next_recurrence = recurrences.after(
-            dtstart,
+            dst_ignore_dtstart,
             inc=inc,
             dtstart=timezone.localtime(self.start_date)
         )
+        # print(f"C: {next_recurrence} - {self.start_date} - {timezone.localtime(self.start_date)}")
 
         # the recurrences package does not work with DST. Since we want our activities
         #   to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00

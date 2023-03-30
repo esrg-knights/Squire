@@ -663,6 +663,32 @@ class ActivityTestCase(TestCase):
             timezone.datetime(2021, 7, 14, 10, 00, 0, tzinfo=timezone.utc)
         )
 
+    def test_get_next_activity_moment_dst_shift_on_recurrences(self):
+        """
+            Check that get_next_activitymoment method shifts the received time for recurrency checks
+            this can otherwise intervene with the inc paramter
+        """
+        # Test for the shift from winter to summer
+        # We are testing from winter to summer because that shift causes activities to be an hour earlier
+        # Thus when using the start_date of the previously discovered activity it will find itself
+        # E.g. in the example below, the activity starts at 20:00 in winter, so 19:00 in summer. Inserting its
+        # time without this correction would yield the same activity_moment if inc is set to False
+        activity = Activity.objects.get(id=5)
+        self.assertEqual(
+            activity.get_next_activitymoment(
+                dtstart=timezone.datetime(2023, 4, 3, 19, 00, 0, tzinfo=timezone.utc),
+                inc=True
+            ).start_date,
+            timezone.datetime(2023, 4, 3, 19, 00, 0, tzinfo=timezone.utc)
+        )
+        self.assertEqual(
+            activity.get_next_activitymoment(
+                dtstart=timezone.datetime(2023, 4, 3, 19, 00, 0, tzinfo=timezone.utc),
+                inc=False
+            ).start_date,
+            timezone.datetime(2023, 4, 10, 19, 00, 0, tzinfo=timezone.utc)
+        )
+
     def test_get_next_activity_moment_inc_false(self):
         """ Tests that a get_next does not include the start date """
         # Test recurrence inclusion
