@@ -37,8 +37,7 @@ class ActivityCalendarView(AssociationGroupMixin, ListView):
         # Used for url creation to add-item pages
 
         context = super(ActivityCalendarView, self).get_context_data(
-            can_add_activitymoments=self.association_group.site_group.permissions.
-                                        filter(codename="add_activitymoment").exists(),
+            can_add_activitymoments=self.association_group.has_perm("activity_calendar.add_activitymoment"),
             **kwargs,
         )
 
@@ -53,7 +52,7 @@ class AddActivityMomentCalendarView(AssociationGroupMixin, FormView):
         # Django calls the following line only in get(), which is too late
         self.activity = get_object_or_404(Activity, id=self.kwargs.get('activity_id'))
 
-        if not self.association_group.has_perm(codename="add_activitymoment"):
+        if not self.association_group.has_perm("activity_calendar.add_activitymoment"):
             raise PermissionDenied()
 
     def get_form_kwargs(self):

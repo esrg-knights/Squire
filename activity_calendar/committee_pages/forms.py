@@ -50,6 +50,7 @@ class AddMeetingForm(ModelForm):
         model = ActivityMoment
         fields = [
             'local_start_date',
+            'local_location',
         ]
         widgets = {
             'local_start_date': BootstrapDateTimePickerInput(),
@@ -89,6 +90,8 @@ class AddMeetingForm(ModelForm):
 
     def set_default_values(self):
         self.instance.recurrence_id = self.cleaned_data['local_start_date']
+        if not self.instance.local_location:
+            self.instance.local_location = "-"
 
 
 class EditMeetingForm(ModelForm):
@@ -104,6 +107,13 @@ class EditMeetingForm(ModelForm):
             'local_location': "Location",
 
         }
+
+    def save(self, commit=True):
+        local_location = self.cleaned_data["local_location"]
+        if not self.instance.is_part_of_recurrence and not local_location:
+            self.instance.local_location = "-"
+
+        return super(EditMeetingForm, self).save(commit=commit)
 
 class EditCancelledMeetingForm(ModelForm):
     class Meta:

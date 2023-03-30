@@ -1,5 +1,5 @@
-from django.contrib.auth.models import Group
 from django.test import TestCase
+from django.utils import timezone
 
 from committees.models import AssociationGroup
 from utils.testing import FormValidityMixin
@@ -48,6 +48,26 @@ class AddMeetingFormTestCase(FormValidityMixin, TestCase):
             code='already-exists'
         )
 
+    def test_save_default_recurrence_id(self):
+        form = self.assertFormValid({'local_start_date': "2023-02-27T12:00:00Z"})
+        form.save()
+        self.assertEqual(
+            form.instance.recurrence_id,
+            timezone.datetime(2023, 2, 27, 12, 00, 0, tzinfo=timezone.utc)
+        )
+
+    def test_save_defualt_location(self):
+        form = self.assertFormValid({'local_start_date': "2023-02-27T12:00:00Z"})
+        form.save()
+        self.assertEqual(form.instance.local_location,"-")
+
+        form = self.assertFormValid({
+            'local_start_date': "2023-02-28T12:00:00Z",
+            'local_location': "my location"
+        })
+        form.save()
+        self.assertEqual(form.instance.local_location,"my location")
+
     def test_save_non_existing_parent_activity(self):
         """ Creates a new group and tests that it can still create activity_moments """
         group = AssociationGroup.objects.create(name="test_group")
@@ -57,7 +77,6 @@ class AddMeetingFormTestCase(FormValidityMixin, TestCase):
             recurrence_id="2023-02-27T8:45:00Z"
         )
         self.assertEqual(meeting.parent_activity.type, ACTIVITY_MEETING)
-
 
     def test_save_existing_parent_activity(self):
         """ Tests ActivityMomentCreation on groups with existing parent_activity objects for meetings"""
@@ -100,6 +119,20 @@ class EditMeetingFormTestCase(FormValidityMixin, TestCase):
         self.assertFormValid({
             'local_location': "a meeting room"
         })
+
+    def test_set_location_empty_for_non_recurring(self):
+        """ For non-recurrent activities, location should not copy the recurrent location """
+        self.assertEqual(self.activity_moment.is_part_of_recurrence, True)
+        self.assertFormValid({'local_location': None}).save()
+        self.activity_moment.refresh_from_db()
+        self.assertEqual(self.activity_moment.local_location, None)
+
+        activity_moment = ActivityMoment.objects.get(id=63)
+        self.assertEqual(activity_moment.is_part_of_recurrence, False)
+        self.assertFormValid({'local_location': None}, instance=activity_moment).save()
+        activity_moment.refresh_from_db()
+        self.assertEqual(activity_moment.local_location,"-")
+
 
     def test_save(self):
         self.assertFormValid({

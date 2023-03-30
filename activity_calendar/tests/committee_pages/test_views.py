@@ -105,7 +105,7 @@ class MeetingRecurrenceFormViewTestCase(AssocationGroupTestingMixin, ViewValidit
     base_user_id = 67
     association_group_id = 60
     url_name = 'meetings:edit_recurrence'
-    group_permissions_required = ['activity_calendar.can_host_meetings']
+    group_permissions_required = ['activity_calendar.can_host_meetings', 'activity_calendar.change_meeting_recurrences']
     recurrence_id = '2023-03-25T19:00:00Z'
 
     def test_class(self):
