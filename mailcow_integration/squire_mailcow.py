@@ -1,6 +1,6 @@
 from enum import Enum
 import re
-from typing import Dict, Optional, List
+from typing import Dict, Generator, Optional, List
 
 from django.apps import apps
 from django.conf import settings
@@ -69,6 +69,12 @@ class SquireMailcowManager:
             address for address in settings.MEMBER_ALIASES.keys()
         ]
 
+        # Caches
+        self._alias_cache: Optional[List[MailcowAlias]] = None
+        self._mailbox_cache: Optional[List[MailcowMailbox]] = None
+        self._alias_map_cache: Optional[Dict[str, MailcowAlias]] = None
+        self._mailbox_map_cache: Optional[Dict[str, MailcowMailbox]] = None
+
     @property
     def mailcow_host(self):
         return self._client.host
@@ -106,7 +112,8 @@ class SquireMailcowManager:
     def set_internal_addresses(self) -> None:
         """ Makes a list of member aliases 'internal'. That is, these aliases can only
             be emailed from within one of the domains set up in Mailcow.
-            See `internal_mailbox.conf` for the Rspamd configuration used to achieve this.
+            See `templates/internal_mailbox.conf` for the Rspamd configuration used to
+            achieve this.
 
             Example:
                 `@example.com` is a domain set up in Mailcow.
@@ -144,44 +151,50 @@ class SquireMailcowManager:
 
     def get_alias_all(self, use_cache=True) -> List[MailcowAlias]:
         """ Gets all email aliases """
-        # TODO: cache
-        return list(self._client.get_alias_all())
+        if use_cache and self._alias_cache is not None:
+            return self._alias_cache
+        self._alias_cache = list(self._client.get_alias_all())
+        self._alias_map_cache = None
+        return self._alias_cache
 
     def get_mailbox_all(self, use_cache=True) -> List[MailcowMailbox]:
         """ Gets all mailboxes """
-        # TODO: cache
-        return list(self._client.get_mailbox_all())
+        if use_cache and self._mailbox_cache is not None:
+            return self._mailbox_cache
+        self._mailbox_cache = list(self._client.get_mailbox_all())
+        self._mailbox_map_cache = None
+        return self._mailbox_cache
 
-    def _map_alias_by_name(self) -> Dict[str, MailcowAlias]:
-        """ TODO """
-        aliases = self._client.get_alias_all()
-        return { alias.address: alias for alias in aliases }
+    @property
+    def alias_map(self) -> Dict[str, MailcowAlias]:
+        """ A mapping from alias addresses to a MailcowAlias """
+        if self._alias_map_cache is not None and self._alias_cache is not None:
+            return self._alias_map_cache
+        aliases = self.get_alias_all()
+        self._alias_map_cache = { alias.address: alias for alias in aliases }
+        return self._alias_map_cache
 
-    def _map_mailbox_by_name(self) -> Dict[str, MailcowMailbox]:
-        mailboxes = self._client.get_mailbox_all()
-        return { mailbox.username: mailbox for mailbox in mailboxes}
+    @property
+    def mailbox_map(self) -> Dict[str, MailcowMailbox]:
+        """ A mapping from mailbox addresses to a MailcowMailbox """
+        if self._mailbox_map_cache is not None and self._mailbox_cache is not None:
+            return self._mailbox_map_cache
+        mailboxes = self.get_mailbox_all()
+        self._mailbox_map_cache = { mailbox.username: mailbox for mailbox in mailboxes}
+        return self._mailbox_map_cache
 
-    # def _get_alias_by_name(self, alias_address: str) -> Optional[MailcowAlias]:
-    #     """ Gets the corresponding data of some alias address. E.g. foo@example.com """
-    #     aliases = self._client.get_alias_all()
-    #     for alias in aliases:
-    #         if alias.address == alias_address:
-    #             return alias
-
-
-    def _set_alias_by_name(self, address: str, goto_addresses: List[str], public_comment: str,
-            alias_map: Dict[str, MailcowAlias], mailbox_map: Dict[str, MailcowMailbox]) -> None:
+    def _set_alias_by_name(self, address: str, goto_addresses: List[str], public_comment: str) -> None:
         """ Sets an alias's goto addresses, and optionally sets its visible in SOGo. If the corresponding
             Mailcow alias's public comment does not match `public_comment`, modifications are aborted.
             If the alias indicated by `alias_address` does not yet exist, it is created.
             `alias_map` and `mailbox_map` are mappings of existing email aliases and mailboxes.
         """
-        mailbox = mailbox_map.get(address, None)
-        alias = alias_map.get(address, None)
+        assert address not in self.mailbox_map
+
+        alias = self.alias_map.get(address, None)
 
         # There is a race condition here when an alias is created in the Mailcow admin before Squire does so,
         #   but there is no way around that. The Mailcow API does not have a "create-if-not-exists" endpoint
-        # TODO: Check mailboxes; this breaks if the alias is already a mailbox
         if alias is None:
             alias = MailcowAlias(address, goto_addresses, active=True, public_comment=public_comment, sogo_visible=False)
             self._client.create_alias(alias)
@@ -243,23 +256,21 @@ class SquireMailcowManager:
         """ Updates all member aliases """
         # Fetch active members here so the results can be cached
         active_members = self.get_active_members()
-        existing_aliases = self._map_alias_by_name()
-        existing_mailboxes = self._map_mailbox_by_name()
 
-        for alias_id, alias_data in settings.MEMBER_ALIASES.items():
-            if alias_data['address'] in existing_mailboxes:
-                logger.warning(f"Skipping over {alias_id} ({alias_data['address']}): Mailbox with the same name already exists")
+        for alias_address, alias_data in settings.MEMBER_ALIASES.items():
+            if alias_address in self.mailbox_map:
+                logger.warning(f"Skipping over {alias_address}: Mailbox with the same name already exists")
                 continue
 
-            logger.info(f"Forced updating {alias_id} ({alias_data['address']})")
+            logger.info(f"Forced updating {alias_address}")
             emails = self.clean_emails_flat(
-                self.get_subscribed_members(active_members, alias_id, default=alias_data['default_opt'])
+                self.get_subscribed_members(active_members, alias_address, default=alias_data['default_opt'])
             )
             # emails.append(settings.MEMBER_ALIAS_ARCHIVE_ADDRESS)
             logger.info(emails)
 
-            self._set_alias_by_name(alias_data['address'], emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT,
-                alias_map=existing_aliases, mailbox_map=existing_mailboxes)
+            self._set_alias_by_name(alias_address, emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT)
+        self._alias_cache = None
 
     def get_alias_committees(self):
         """ Gets a queryset containing all associationGroups that should have an alias setup """
@@ -272,11 +283,8 @@ class SquireMailcowManager:
     def update_committee_aliases(self) -> None:
         """ TODO
         """
-        existing_aliases = self._map_alias_by_name()
-        existing_mailboxes = self._map_mailbox_by_name()
-
         for assoc_group in self.clean_emails(self.get_alias_committees(), email_field="contact_email"):
-            if assoc_group.contact_email in existing_mailboxes:
+            if assoc_group.contact_email in self.mailbox_map:
                 logger.warning(f"Skipping over {assoc_group} ({assoc_group.contact_email}): Mailbox with the same name already exists")
                 continue
 
@@ -284,5 +292,5 @@ class SquireMailcowManager:
             # emails.append(settings.COMMITTEE_ALIAS_ARCHIVE_ADDRESS)
             logger.info(f"Forced updating {assoc_group} ({len(goto_emails)} subscribers)")
 
-            self._set_alias_by_name(assoc_group.contact_email, goto_emails, public_comment=self.ALIAS_COMMITTEE_PUBLIC_COMMENT,
-                alias_map=existing_aliases, mailbox_map=existing_mailboxes)
+            self._set_alias_by_name(assoc_group.contact_email, goto_emails, public_comment=self.ALIAS_COMMITTEE_PUBLIC_COMMENT)
+        self._alias_cache = None

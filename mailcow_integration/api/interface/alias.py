@@ -21,7 +21,7 @@ class MailcowAlias(MailcowAPIResponse):
 
     id: Optional[int] = None
     active: bool = True
-    active_int: int = 1 # ???
+    active_int: int = None # ???
 
     in_primary_domain: str = ""
     domain: str = ""
@@ -31,10 +31,17 @@ class MailcowAlias(MailcowAPIResponse):
     private_comment: str = ""
 
     sogo_visible: bool = True # Alias can be used as a selectable sender in SOGo
-    sogo_visible_int: int = 1 # ???
+    sogo_visible_int: int = None # ???
 
     created: Optional[datetime] = None
     modified: Optional[datetime] = None
+
+    def __post_init__(self):
+        if self.active_int is None:
+            self.active_int = int(self.active)
+
+        if self.sogo_visible_int is None:
+            self.sogo_visible_int = int(self.sogo_visible)
 
     def get_type(self) -> AliasType:
         if len(self.goto) == 1:

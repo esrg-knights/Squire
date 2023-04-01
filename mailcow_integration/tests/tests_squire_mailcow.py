@@ -1,9 +1,12 @@
-from unittest.mock import Mock, PropertyMock, patch
+from copy import deepcopy
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from dynamic_preferences.users.models import UserPreferenceModel
-from mailcow_integration.api.interface.rspamd import RspamdSettings
+from unittest.mock import Mock, PropertyMock, patch
 
+from mailcow_integration.api.interface.alias import MailcowAlias
+from mailcow_integration.api.interface.mailbox import MailcowMailbox
+from mailcow_integration.api.interface.rspamd import RspamdSettings
 from mailcow_integration.squire_mailcow import SquireMailcowManager
 from membership_file.models import Member
 
@@ -39,6 +42,9 @@ class SquireMailcowManagerTest(TestCase):
 
         return self.squire_mailcow_manager.get_subscribed_members(Member.objects.all(), "mycategoryexamplecom", default_opt)
 
+    ################
+    # HELPER METHODS
+    ################
     def test_subscribed_members_default_opt_in(self):
         """ Tests whether the correct members are returned based on their
             subscription preferences when the default is opt-in
@@ -87,8 +93,11 @@ class SquireMailcowManagerTest(TestCase):
         cleaned_flat = self.squire_mailcow_manager.clean_emails_flat(User.objects.all(), email_field="email")
         self.assertListEqual(cleaned_flat, ["baq@example.com", "baz@example.com"])
 
-
+    ################
+    # RSPAMD
+    ################
     @patch('mailcow_integration.api.client.MailcowAPIClient.get_rspamd_setting_all', return_value=iter([
+        # NOTE: Wrap list in iterable to match function signature (it returns a generator, not a list)
         RspamdSettings(999, "Other rule", "RULE 1", True),
         RspamdSettings(234, "[MANAGED BY SQUIRE] Other thing", "RULE 2", True),
         RspamdSettings(567, "[MANAGED BY SQUIRE] Internal Alias", "RULE 3", True),
@@ -156,3 +165,126 @@ class SquireMailcowManagerTest(TestCase):
             # Create/update methods should not be called
             mock_create.assert_called_once()
             mock_update.assert_not_called()
+
+    ################
+    # ALIASES/MAILBOX CACHING
+    ################
+    @patch('mailcow_integration.api.client.MailcowAPIClient.get_alias_all', return_value=iter([
+        MailcowAlias("foo@example.com", ["a@example.com", "b@example.com"], 99),
+        MailcowAlias("bar@example.com", ["x@example.com", "y@example.com"], 100),
+    ]))
+    def test_get_alias_all(self, mock_get: Mock):
+        """ Tests the caching behaviour of get_alias_all """
+        # Cache is empty, so should make a request. Caches should be set accordingly
+        self.squire_mailcow_manager._alias_cache = None
+        self.squire_mailcow_manager._alias_map_cache = {"foo": "bar"}
+        self.squire_mailcow_manager.get_alias_all(use_cache=True)
+        mock_get.assert_called_once()
+        self.assertIsNotNone(self.squire_mailcow_manager._alias_cache)
+        self.assertIsNotNone(any(1 for alias in self.squire_mailcow_manager._alias_cache if alias.id == 99), None)
+        self.assertIsNotNone(any(1 for alias in self.squire_mailcow_manager._alias_cache if alias.id == 100), None)
+        self.assertIsNone(self.squire_mailcow_manager._alias_map_cache)
+        alias_cache = deepcopy(self.squire_mailcow_manager._alias_cache)
+
+        # Cache is not empty, so should not make a request
+        mock_get.reset_mock()
+        aliases = self.squire_mailcow_manager.get_alias_all(use_cache=True)
+        mock_get.assert_not_called()
+        self.assertListEqual(aliases, alias_cache) # Cache wasn't modified
+
+        # Cache is not empty, but use_cache=False
+        mock_get.reset_mock()
+        alias_cache = self.squire_mailcow_manager._alias_cache
+        aliases = self.squire_mailcow_manager.get_alias_all(use_cache=False)
+        mock_get.assert_called_once()
+        # Cache should be regenerated (compare list identities)
+        self.assertNotEqual(aliases, alias_cache)
+
+    @patch('mailcow_integration.api.client.MailcowAPIClient.get_mailbox_all', return_value=iter([
+        MailcowMailbox("foo@example.com", "Mr. Foo"),
+        MailcowMailbox("bar@example.com", "Sir Bar"),
+    ]))
+    def test_get_mailbox_all(self, mock_get: Mock):
+        """ Tests the caching behaviour of get_mailbox_all """
+        # Cache is empty, so should make a request. Caches should be set accordingly
+        self.squire_mailcow_manager._mailbox_cache = None
+        self.squire_mailcow_manager._mailbox_map_cache = {"foo": "bar"}
+        self.squire_mailcow_manager.get_mailbox_all(use_cache=True)
+        mock_get.assert_called_once()
+        self.assertIsNotNone(self.squire_mailcow_manager._mailbox_cache)
+        self.assertIsNotNone(any(1 for mailbox in self.squire_mailcow_manager._mailbox_cache if mailbox.username == "foo@example.com"), None)
+        self.assertIsNotNone(any(1 for mailbox in self.squire_mailcow_manager._mailbox_cache if mailbox.username == "bar@example.com"), None)
+        self.assertIsNone(self.squire_mailcow_manager._mailbox_map_cache)
+        mailbox_cache = deepcopy(self.squire_mailcow_manager._mailbox_cache)
+
+        # Cache is not empty, so should not make a request
+        mock_get.reset_mock()
+        mailboxes = self.squire_mailcow_manager.get_mailbox_all(use_cache=True)
+        mock_get.assert_not_called()
+        self.assertListEqual(mailboxes, mailbox_cache) # Cache wasn't modified
+
+        # Cache is not empty, but use_cache=False
+        mock_get.reset_mock()
+        mailbox_cache = self.squire_mailcow_manager._mailbox_cache
+        mailboxes = self.squire_mailcow_manager.get_mailbox_all(use_cache=False)
+        mock_get.assert_called_once()
+        # Cache should be regenerated (compare list identities)
+        self.assertNotEqual(mailboxes, mailbox_cache)
+
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_alias_all', return_value=iter([
+        MailcowAlias("foo@example.com", ["a@example.com", "b@example.com"], 99),
+        MailcowAlias("bar@example.com", ["x@example.com", "y@example.com"], 100),
+    ]))
+    def test_alias_map_prop(self, mock_get: Mock):
+        """ Tests the caching behaviour of alias_map """
+        # Cache is empty, so should make a request. Caches should be set accordingly
+        self.squire_mailcow_manager.alias_map
+        mock_get.assert_called_once()
+        self.assertIsNotNone(self.squire_mailcow_manager._alias_map_cache)
+        self.assertEqual(len(self.squire_mailcow_manager._alias_map_cache), 2)
+        self.assertIsNotNone(self.squire_mailcow_manager._alias_map_cache["foo@example.com"])
+        self.assertIsNotNone(self.squire_mailcow_manager._alias_map_cache["bar@example.com"])
+        alias_cache = deepcopy(self.squire_mailcow_manager._alias_map_cache)
+
+        # Cache is not empty, so should not make a request
+        mock_get.reset_mock()
+        self.squire_mailcow_manager._alias_cache = "dummy"
+        aliases = self.squire_mailcow_manager.alias_map
+        mock_get.assert_not_called()
+        self.assertDictEqual(aliases, alias_cache) # Cache wasn't modified
+
+        # Alias cache was invalidated
+        mock_get.reset_mock()
+        self.squire_mailcow_manager._alias_cache = None
+        self.squire_mailcow_manager.alias_map
+        mock_get.assert_called_once()
+        self.assertIsNotNone(self.squire_mailcow_manager._alias_map_cache)
+
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_mailbox_all', return_value=iter([
+        MailcowMailbox("foo@example.com", "Mr. Foo"),
+        MailcowMailbox("bar@example.com", "Sir Bar"),
+    ]))
+    def test_mailbox_map_prop(self, mock_get: Mock):
+        """ Tests the caching behaviour of mailbox_map """
+        # Cache is empty, so should make a request. Caches should be set accordingly
+        self.squire_mailcow_manager.mailbox_map
+        mock_get.assert_called_once()
+        self.assertIsNotNone(self.squire_mailcow_manager._mailbox_map_cache)
+        self.assertEqual(len(self.squire_mailcow_manager._mailbox_map_cache), 2)
+        self.assertIsNotNone(self.squire_mailcow_manager._mailbox_map_cache["foo@example.com"])
+        self.assertIsNotNone(self.squire_mailcow_manager._mailbox_map_cache["bar@example.com"])
+        mailbox_cache = deepcopy(self.squire_mailcow_manager._mailbox_map_cache)
+
+        # Cache is not empty, so should not make a request
+        mock_get.reset_mock()
+        self.squire_mailcow_manager._mailbox_cache = "dummy"
+        mailboxes = self.squire_mailcow_manager.mailbox_map
+        mock_get.assert_not_called()
+        self.assertDictEqual(mailboxes, mailbox_cache) # Cache wasn't modified
+
+        # Mailbox cache was invalidated
+        mock_get.reset_mock()
+        self.squire_mailcow_manager._mailbox_cache = None
+        self.squire_mailcow_manager.mailbox_map
+        mock_get.assert_called_once()
+        self.assertIsNotNone(self.squire_mailcow_manager._mailbox_map_cache)

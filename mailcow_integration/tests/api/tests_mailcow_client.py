@@ -154,8 +154,7 @@ class MailcowClientTest(TestCase):
     ])
     def test_get_alias_all(self, mock_request: Mock):
         """ Tests fetching all aliases """
-        res = self.mailcow_client.get_alias_all()
-        res = list(res)
+        res = list(self.mailcow_client.get_alias_all())
 
         # JSON is converted to aliases
         self.assertEqual(len(res), 2)
@@ -337,8 +336,7 @@ class MailcowClientTest(TestCase):
     ])
     def test_get_mailbox_all(self, mock_request: Mock):
         """ Tests fetching all mailboxes """
-        res = self.mailcow_client.get_mailbox_all()
-        res = list(res)
+        res = list(self.mailcow_client.get_mailbox_all())
 
         # JSON is converted to mailboxes
         self.assertEqual(len(res), 2)
