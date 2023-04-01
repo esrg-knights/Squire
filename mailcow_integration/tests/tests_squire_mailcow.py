@@ -1,8 +1,10 @@
 from copy import deepcopy
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.test import TestCase
 from dynamic_preferences.users.models import UserPreferenceModel
 from unittest.mock import Mock, PropertyMock, patch
+from committees.models import AssociationGroup
 
 from mailcow_integration.api.interface.alias import MailcowAlias
 from mailcow_integration.api.interface.mailbox import MailcowMailbox
@@ -92,6 +94,32 @@ class SquireMailcowManagerTest(TestCase):
         # Flat variant only contains email addresses (and is also sorted)
         cleaned_flat = self.squire_mailcow_manager.clean_emails_flat(User.objects.all(), email_field="email")
         self.assertListEqual(cleaned_flat, ["baq@example.com", "baz@example.com"])
+
+    @patch("membership_file.models.Member.objects.filter_active")
+    def test_get_active_members(self, mock: Mock):
+        """ Tests if get_active_members directly invokes get_active of the MemberManager """
+        self.squire_mailcow_manager.get_active_members()
+        mock.assert_called_once()
+
+    def test_get_active_committees(self):
+        """ Tests whether only a specific group of committtees are considered for email aliases """
+        committee = AssociationGroup.objects.create(site_group=Group.objects.create(name="Dummy Group0"),
+            type=AssociationGroup.COMMITTEE, contact_email="c@example.com")
+        order = AssociationGroup.objects.create(site_group=Group.objects.create(name="Dummy Group1"),
+            type=AssociationGroup.GUILD, contact_email="o@example.com")
+        workgroup = AssociationGroup.objects.create(site_group=Group.objects.create(name="Dummy Group2"),
+            type=AssociationGroup.WORKGROUP, contact_email="w@example.com")
+        board = AssociationGroup.objects.create(site_group=Group.objects.create(name="Dummy Group3"),
+            type=AssociationGroup.BOARD, contact_email="b@example.com")
+        no_address = AssociationGroup.objects.create(site_group=Group.objects.create(name="Dummy Group4"),
+            type=AssociationGroup.COMMITTEE)
+
+        valid_assoc_groups = self.squire_mailcow_manager.get_active_committees()
+        self.assertIn(committee, valid_assoc_groups)
+        self.assertIn(order, valid_assoc_groups)
+        self.assertIn(workgroup, valid_assoc_groups)
+        self.assertNotIn(board, valid_assoc_groups)
+        self.assertNotIn(no_address, valid_assoc_groups)
 
     ################
     # RSPAMD

@@ -157,7 +157,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
         infos: List[AliasInfos] = []
 
         for address in settings.COMMITTEE_CONFIGS["global_addresses"]:
-            subscribers = self.mailcow_manager.get_alias_committees()
+            subscribers = self.mailcow_manager.get_active_committees()
 
             status, alias, mailbox = self._get_alias_status(address, subscribers, AliasCategory.GLOBAL_COMMITTEE,
                 aliases, mailboxes, self.mailcow_manager.ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT)
@@ -174,7 +174,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
         """ TODO """
         infos: List[AliasInfos] = []
 
-        for assoc_group in self.mailcow_manager.get_alias_committees():
+        for assoc_group in self.mailcow_manager.get_active_committees():
             address = assoc_group.contact_email
             subscribers = assoc_group.members.filter_active().order_by('email')
 

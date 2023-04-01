@@ -203,14 +203,15 @@ class SquireMailcowManager:
         # Failsafe in case we attempt to overwrite an alias that is not managed by Squire.
         #   This should only happen if such an alias is modified in the Mailcow admin after its creation.
         if alias.public_comment != public_comment:
-            logging.error(f"Cannot update alias for {address}. It already exists and is not managed by Squire! <{alias.public_comment}>")
+            logging.warning(f"Cannot update alias for {address}. It already exists and is not managed by Squire! <{alias.public_comment}>")
             return
 
+        alias.active = True
         if not alias.goto:
             # If the alias is emtpy, Mailcow will accept the response and act as if things were properly changed.
             #   In practise, all changes are ignored!
-            # TODO:
-            pass
+            # As a failsafe, this just disables the alias.
+            alias.active = False
 
         alias.goto = goto_addresses
         alias.sogo_visible = False
@@ -254,6 +255,7 @@ class SquireMailcowManager:
 
     def update_member_aliases(self) -> None:
         """ Updates all member aliases """
+        # TODO: Return a list of failures (i.e., API calls that returned an exception)
         # Fetch active members here so the results can be cached
         active_members = self.get_active_members()
 
@@ -272,7 +274,7 @@ class SquireMailcowManager:
             self._set_alias_by_name(alias_address, emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT)
         self._alias_cache = None
 
-    def get_alias_committees(self):
+    def get_active_committees(self):
         """ Gets a queryset containing all associationGroups that should have an alias setup """
         AssociationGroup = self._committee_model
         return AssociationGroup.objects.filter(
@@ -283,7 +285,7 @@ class SquireMailcowManager:
     def update_committee_aliases(self) -> None:
         """ TODO
         """
-        for assoc_group in self.clean_emails(self.get_alias_committees(), email_field="contact_email"):
+        for assoc_group in self.clean_emails(self.get_active_committees(), email_field="contact_email"):
             if assoc_group.contact_email in self.mailbox_map:
                 logger.warning(f"Skipping over {assoc_group} ({assoc_group.contact_email}): Mailbox with the same name already exists")
                 continue
