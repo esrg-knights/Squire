@@ -79,7 +79,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             if alias.public_comment != squire_comment:
                 # Public comment does not indicate it's managed by squire
                 return AliasStatus.NOT_MANAGED_BY_SQUIRE, alias, None
-            elif alias.goto != self.mailcow_manager.get_archive_adresses_for_type(alias_type, address) + self.mailcow_manager.clean_alias_emails(subscribers):
+            elif alias.goto != self.mailcow_manager.get_archive_adresses_for_type(alias_type, address) + self.mailcow_manager.clean_emails_flat(subscribers):
                 # Alias is outdated
                 return AliasStatus.OUTDATED, alias, None
             else:
@@ -120,7 +120,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
                 get_name = lambda sub: f"{sub.site_group.name} ({sub.get_type_display()})"
 
             subscribers = subscribers.annotate(has_invalid_email=ExpressionWrapper(
-                Q(**{f"{email_field}__in": self.mailcow_manager._member_alias_addresses}), output_field=BooleanField()
+                Q(**{f"{email_field}__in": self.mailcow_manager.BLOCKLISTED_EMAIL_ADDRESSES}), output_field=BooleanField()
             ))
             return [{
                 'name': format_html("{} &mdash; {}", get_name(sub), getattr(sub, email_field)),

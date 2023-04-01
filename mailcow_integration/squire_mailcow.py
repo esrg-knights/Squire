@@ -23,7 +23,12 @@ def get_mailcow_manager() -> Optional['SquireMailcowManager']:
     return apps.get_app_config("mailcow_integration").mailcow_client
 
 class AliasCategory(Enum):
-    """ TODO """
+    """ Squire's Mailcow Aliases can exist in different forms.
+        1. Member aliases are used to email all Squire Members active in the current year.
+        2. Global committee aliases are used to email all committees (Committtees and orders)
+            registered in Squire.
+        3. Committee aliases are used to email a specific committee (or order).
+    """
     MEMBER = 0 # Addresses for emailing all* members
     GLOBAL_COMMITTEE = 1 # Addresses for emailing all* committees
     COMMITTEE = 2 # Addresses for emailing specific committees and its members
@@ -41,26 +46,26 @@ class SquireMailcowManager:
         it also allows manual overrides by Mailcow admins.
     """
     SQUIRE_MANAGE_INDICATOR = "[MANAGED BY SQUIRE]"
-    INTERNAL_ALIAS_SETTING_NAME = SQUIRE_MANAGE_INDICATOR + " Internal Alias"
-    ALIAS_COMMITTEE_PUBLIC_COMMENT = SQUIRE_MANAGE_INDICATOR + " Committee Alias"
-    ALIAS_MEMBERS_PUBLIC_COMMENT = SQUIRE_MANAGE_INDICATOR + " Members Alias"
-    ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT = SQUIRE_MANAGE_INDICATOR + " Global Committee Alias"
+    INTERNAL_ALIAS_SETTING_NAME = "%s Internal Alias" % SQUIRE_MANAGE_INDICATOR
+    ALIAS_COMMITTEE_PUBLIC_COMMENT = "%s Committee Alias" % SQUIRE_MANAGE_INDICATOR
+    ALIAS_MEMBERS_PUBLIC_COMMENT = "%s Members Alias" % SQUIRE_MANAGE_INDICATOR
+    ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT = "%s Global Committee Alias" % SQUIRE_MANAGE_INDICATOR
 
     def __init__(self, mailcow_host: str, mailcow_api_key: str):
         self._client = MailcowAPIClient(mailcow_host, mailcow_api_key)
 
-        # Cannot import directly because this file is imported before the app registry is set up
+        # Cannot import directly because this class is initialized before the app registry is set up
         self._member_model = apps.get_model("membership_file", "Member")
         self._committee_model = apps.get_model("committees", "AssociationGroup")
         self._user_preferences_model = apps.get_model("dynamic_preferences_users", "UserPreferenceModel")
 
         # List of internal addresses (sorted in order of appearance in the config)
-        self._internal_aliases: List[str] = [
+        self.INTERNAL_ALIAS_ADDRESSES: List[str] = [
             address for address, alias_data in settings.MEMBER_ALIASES.items() if alias_data['internal']
         ]
 
         # List of all member alias addresses; these should never be included in an alias's goto addresses
-        self._member_alias_addresses: List[str] = [
+        self.BLOCKLISTED_EMAIL_ADDRESSES: List[str] = [
             address for address in settings.MEMBER_ALIASES.keys()
         ]
 
@@ -71,18 +76,24 @@ class SquireMailcowManager:
     def __str__(self) -> str:
         return f"SquireMailcowManager[{self.mailcow_host}]"
 
-    def clean_alias_emails(self, queryset, email_field="email", flatten=True) -> List[str]:
-        """ TODO """
-        queryset = queryset.exclude(**{f"{email_field}__in": self._member_alias_addresses}).order_by(email_field)
-        if flatten:
-            return list(queryset.values_list(email_field, flat=True))
+    def clean_emails(self, queryset: QuerySet, email_field="email") -> QuerySet:
+        """ Cleans a queryset of models with an email field (of any name),
+            by removing blocklisted email addresses.
+        """
+        queryset = queryset.exclude(**{f"{email_field}__in": self.BLOCKLISTED_EMAIL_ADDRESSES}).order_by(email_field)
         return queryset
 
-    def _get_rspamd_internal_alias_setting(self) -> Optional[RspamdSettings]:
-        """ Gets the Rspamd setting (if it exists) that is used by Squire
-            to mark email aliases as 'internal'. Squire recognises which
-            Rspamd setting to use based on the setting's name
-            (`self.INTERNAL_ALIAS_SETTING_NAME`).
+    def clean_emails_flat(self, queryset: QuerySet, email_field="email") -> List[str]:
+        """ Does the same as `clean_emails`, but also flattens the resulting queryset """
+        queryset = self.clean_emails(queryset, email_field)
+        return list(queryset.values_list(email_field, flat=True))
+
+    @property
+    def _internal_alias_rspamd_setting(self) -> Optional[RspamdSettings]:
+        """ Gets the Rspamd setting (if it exists) that disallows external domains
+            to send emails to a specific set of email addresses. Squire recognises
+            which Rspamd setting to find based on the setting's name.
+            See `self.INTERNAL_ALIAS_SETTING_NAME`
         """
         # Fetch all Rspamd settings
         settings = self._client.get_rspamd_setting_all()
@@ -106,13 +117,13 @@ class SquireMailcowManager:
                 as well.
         """
         # Escape addresses
-        addresses = self._internal_aliases
+        addresses = self.INTERNAL_ALIAS_ADDRESSES
         addresses = list(map(lambda addr: re.escape(addr), addresses))
 
         # Fetch existing rspamd settings
-        setting = self._get_rspamd_internal_alias_setting()
+        setting = self._internal_alias_rspamd_setting
         if setting is not None and setting.active and f'rcpt = "/^({"|".join(addresses)})$/"' in setting.content:
-            # Setting already exists and is active; no need to do anything
+            # Setting already exists, is active, and is up-to-date; no need to do anything
             return
 
         # Setting emails are different than from what we expect, or the setting
@@ -241,7 +252,7 @@ class SquireMailcowManager:
                 continue
 
             logger.info(f"Forced updating {alias_id} ({alias_data['address']})")
-            emails = self.clean_alias_emails(
+            emails = self.clean_emails_flat(
                 self.get_subscribed_members(active_members, alias_id, default=alias_data['default_opt'])
             )
             # emails.append(settings.MEMBER_ALIAS_ARCHIVE_ADDRESS)
@@ -264,14 +275,14 @@ class SquireMailcowManager:
         existing_aliases = self._map_alias_by_name()
         existing_mailboxes = self._map_mailbox_by_name()
 
-        for assoc_group in self.clean_alias_emails(self.get_alias_committees(), email_field="contact_email", flatten=False):
+        for assoc_group in self.clean_emails(self.get_alias_committees(), email_field="contact_email"):
             if assoc_group.contact_email in existing_mailboxes:
                 logger.warning(f"Skipping over {assoc_group} ({assoc_group.contact_email}): Mailbox with the same name already exists")
                 continue
 
-            emails = self.clean_alias_emails(assoc_group.members.filter_active())
+            goto_emails = self.clean_emails_flat(assoc_group.members.filter_active())
             # emails.append(settings.COMMITTEE_ALIAS_ARCHIVE_ADDRESS)
-            logger.info(f"Forced updating {assoc_group} ({len(emails)} subscribers)")
+            logger.info(f"Forced updating {assoc_group} ({len(goto_emails)} subscribers)")
 
-            self._set_alias_by_name(assoc_group.contact_email, emails, public_comment=self.ALIAS_COMMITTEE_PUBLIC_COMMENT,
+            self._set_alias_by_name(assoc_group.contact_email, goto_emails, public_comment=self.ALIAS_COMMITTEE_PUBLIC_COMMENT,
                 alias_map=existing_aliases, mailbox_map=existing_mailboxes)

@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, PropertyMock, patch
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from dynamic_preferences.users.models import UserPreferenceModel
@@ -67,6 +67,27 @@ class SquireMailcowManagerTest(TestCase):
         """ Tests the mailcow_host prop """
         self.assertEqual(self.squire_mailcow_manager.mailcow_host, "example.com")
 
+    def test_email_clean(self):
+        """ Tests the various clean_<foo> methods """
+        # Setup blocklist and model instances
+        self.squire_mailcow_manager.BLOCKLISTED_EMAIL_ADDRESSES = ["foo@example.com", "bar@example.com"]
+        User.objects.create(username="foo", email="foo@example.com")
+        User.objects.create(username="bar", email="bar@example.com")
+        baz = User.objects.create(username="baz", email="baz@example.com")
+        baq = User.objects.create(username="baq", email="baq@example.com")
+
+        cleaned = self.squire_mailcow_manager.clean_emails(User.objects.all(), email_field="email")
+        # Blocklisted email addresses are filtered out
+        self.assertQuerysetEqual(cleaned, User.objects.filter(email__in=[baz.email, baq.email]), ordered=False)
+
+        # Items in the queryset are sorted by email
+        self.assertEqual(cleaned[0].email, "baq@example.com")
+
+        # Flat variant only contains email addresses (and is also sorted)
+        cleaned_flat = self.squire_mailcow_manager.clean_emails_flat(User.objects.all(), email_field="email")
+        self.assertListEqual(cleaned_flat, ["baq@example.com", "baz@example.com"])
+
+
     @patch('mailcow_integration.api.client.MailcowAPIClient.get_rspamd_setting_all', return_value=iter([
         RspamdSettings(999, "Other rule", "RULE 1", True),
         RspamdSettings(234, "[MANAGED BY SQUIRE] Other thing", "RULE 2", True),
@@ -75,7 +96,7 @@ class SquireMailcowManagerTest(TestCase):
     ]))
     def test_get_rspamd_setting(self, mock_get: Mock):
         """ Tests whether the correct Rspamd setting can be found by Squire """
-        setting = self.squire_mailcow_manager._get_rspamd_internal_alias_setting()
+        setting = self.squire_mailcow_manager._internal_alias_rspamd_setting
         self.assertIsNotNone(setting)
         self.assertEqual(setting.id, 567)
 
@@ -83,29 +104,30 @@ class SquireMailcowManagerTest(TestCase):
 
         # Setting should not be found if no descriptions match
         with patch('mailcow_integration.squire_mailcow.SquireMailcowManager.INTERNAL_ALIAS_SETTING_NAME', '[MANAGED BY SQUIRE] fake name'):
-            self.assertIsNone(self.squire_mailcow_manager._get_rspamd_internal_alias_setting())
+            self.assertIsNone(self.squire_mailcow_manager._internal_alias_rspamd_setting)
 
     @patch('mailcow_integration.api.client.MailcowAPIClient.create_rspamd_setting')
     @patch('mailcow_integration.api.client.MailcowAPIClient.update_rspamd_setting')
     def test_set_internal_adresses(self, mock_update: Mock, mock_create: Mock):
         """ Tests whether the internal aliases are correctly updated """
-        self.squire_mailcow_manager._internal_aliases = ['foo@example.com', 'bar@example.com']
+        self.squire_mailcow_manager.INTERNAL_ALIAS_ADDRESSES = ['foo@example.com', 'bar@example.com']
         rule = "foobar\nrcpt = \"/^(foo@example\\.com|bar@example\\.com)$/\"fooadsfasdf"
         setting = RspamdSettings(999, "Other rule", rule, True)
 
         # Setting is active and rule addresses are up-to-date
-        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager._get_rspamd_internal_alias_setting',
-                return_value=setting) as get_alias_setting:
+        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager._internal_alias_rspamd_setting',
+                return_value=setting, new_callable=PropertyMock) as setting_prop:
+            # Verify return value, and that the property is only called once.
             self.assertIsNone(self.squire_mailcow_manager.set_internal_addresses())
-            get_alias_setting.assert_called_once()
+            setting_prop.assert_called_once()
             # Create/update methods should not be called
             mock_create.assert_not_called()
             mock_update.assert_not_called()
 
         # Setting is inactive
         setting.active = False
-        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager._get_rspamd_internal_alias_setting',
-                return_value=setting) as get_alias_setting:
+        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager._internal_alias_rspamd_setting',
+                return_value=setting, new_callable=PropertyMock):
             self.squire_mailcow_manager.set_internal_addresses()
             # Create/update methods should not be called
             mock_create.assert_not_called()
@@ -117,8 +139,8 @@ class SquireMailcowManagerTest(TestCase):
         mock_update.reset_mock()
         setting.active = True
         setting.content = "out of date"
-        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager._get_rspamd_internal_alias_setting',
-                return_value=setting) as get_alias_setting:
+        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager._internal_alias_rspamd_setting',
+                return_value=setting, new_callable=PropertyMock):
             self.squire_mailcow_manager.set_internal_addresses()
             # Create/update methods should not be called
             mock_create.assert_not_called()
@@ -128,8 +150,8 @@ class SquireMailcowManagerTest(TestCase):
 
         # Setting does not exist
         mock_update.reset_mock()
-        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager._get_rspamd_internal_alias_setting',
-                return_value=None) as get_alias_setting:
+        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager._internal_alias_rspamd_setting',
+                return_value=None, new_callable=PropertyMock):
             self.squire_mailcow_manager.set_internal_addresses()
             # Create/update methods should not be called
             mock_create.assert_called_once()
