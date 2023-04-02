@@ -13,7 +13,7 @@ from .utils import get_meeting_activity
 class MeetingCalendarFeed(CESTEventFeed):
     @property
     def file_name(self):
-        return "knights-calendar.ics"
+        return f"knights-{self.association_group.name}-calendar.ics"
 
     @property
     def product_id(self):

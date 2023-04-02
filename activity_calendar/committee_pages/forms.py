@@ -115,6 +115,7 @@ class EditMeetingForm(ModelForm):
 
         return super(EditMeetingForm, self).save(commit=commit)
 
+
 class EditCancelledMeetingForm(ModelForm):
     class Meta:
         model = ActivityMoment
@@ -160,3 +161,13 @@ class CancelMeetingForm(ModelForm):
         else:
             self.instance.status = STATUS_CANCELLED
         self.instance.save()
+
+
+class GroupMeetingSettingsForm(ModelForm):
+    class Meta:
+        model = Activity
+        fields = ['title', 'description']
+
+    def __init__(self, *args, instance=None, **kwargs):
+        instance = get_meeting_activity(instance)
+        super(GroupMeetingSettingsForm, self).__init__(*args, instance=instance, **kwargs)

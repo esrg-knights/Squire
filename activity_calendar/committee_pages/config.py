@@ -4,6 +4,7 @@ from committees.committeecollective import CommitteeBaseConfig
 
 from activity_calendar.committee_pages import views
 from activity_calendar.url_converters import DateTimeIsoConverter
+from activity_calendar.committee_pages.options import MessageOptions
 
 register_converter(DateTimeIsoConverter, 'dt')
 
@@ -30,6 +31,7 @@ class MeetingConfig(CommitteeBaseConfig):
     url_name = 'meetings:home'
     group_requires_permission = 'activity_calendar.can_host_meetings'
     namespace = "meetings"
+    setting_option_classes = [MessageOptions]
 
     def get_urls(self):
         """ Builds a list of urls """
