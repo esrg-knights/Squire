@@ -86,14 +86,6 @@
 					<li class="nav-item">
 						<a class="nav-link" href="{% url 'achievements/all' %}">Achievements</a>
 					</li>
-                    {% if user.is_authenticated %}
-                        <li>
-                            <a class="nav-link" href="{% url 'user_interaction:april_live' %}">
-                                <span class="badge badge-warning"><span class="fas fa-video"></span></span>
-                                Livestream
-                            </a>
-                        </li>
-                    {% endif %}
 				</ul>
 				<ul class="navbar-nav navbar-right">
 					{% if user.is_authenticated %}
