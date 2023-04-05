@@ -16,7 +16,7 @@ from django_ical.views import ICalFeed
 from membership_file.models import Member
 
 from .models import Activity, ActivityMoment, Calendar
-from .constants import *
+from .constants import ActivityStatus, ActivityType
 import activity_calendar.util as util
 
 
@@ -240,7 +240,7 @@ class CESTEventFeed(ICalFeed):
             exclude_dates += list(util.set_time_for_RDATE_EXDATE(item.recurrences.exdates, item.start_date))
 
         cancelled_moments = item.activitymoment_set.\
-            filter(status=STATUS_REMOVED).\
+            filter(status=ActivityStatus.STATUS_REMOVED).\
             values_list('recurrence_id', flat=True)
 
         # Correct timezone to the default timezone settings
@@ -293,10 +293,10 @@ class PublicCalendarFeed(CESTEventFeed):
         # Only consider published activities
         activities = Activity.objects.\
             filter(published_date__lte=timezone.now()).order_by('-published_date'). \
-            filter(type=ACTIVITY_PUBLIC)
+            filter(type=ActivityType.ACTIVITY_PUBLIC)
         exceptions = ActivityMoment.objects. \
             filter(parent_activity__in=activities). \
-            exclude(status=STATUS_REMOVED)
+            exclude(status=ActivityStatus.STATUS_REMOVED)
 
         return [*recurring_activities(activities), *exceptions]
 
@@ -320,7 +320,7 @@ class CustomCalendarFeed(CESTEventFeed):
             filter(published_date__lte=timezone.now()).order_by('-published_date')
         exceptions = ActivityMoment.objects. \
             filter(parent_activity__in=activities). \
-            exclude(status=STATUS_REMOVED)
+            exclude(status=ActivityStatus.STATUS_REMOVED)
 
         return [*recurring_activities(activities), *exceptions]
 

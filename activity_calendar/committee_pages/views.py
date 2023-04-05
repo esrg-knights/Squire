@@ -13,7 +13,7 @@ from committees.mixins import AssociationGroupMixin, AssociationGroupPermissionR
 from activity_calendar.committee_pages.forms import CreateActivityMomentForm, AddMeetingForm, \
     EditMeetingForm, MeetingRecurrenceForm, CancelMeetingForm, EditCancelledMeetingForm
 from activity_calendar.committee_pages.utils import get_meeting_activity
-from activity_calendar.constants import *
+from activity_calendar.constants import ActivityType
 from activity_calendar.models import Activity, ActivityMoment
 from activity_calendar.templatetags.activity_tags import get_next_activity_instances
 
@@ -29,7 +29,7 @@ class ActivityCalendarView(AssociationGroupMixin, ListView):
             organiserlink__archived=False,
             organiserlink__association_group=self.association_group,
         ).exclude(
-            type=ACTIVITY_MEETING
+            type=ActivityType.ACTIVITY_MEETING
         )
 
     def get_context_data(self, **kwargs):

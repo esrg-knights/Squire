@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 from . import mock_now
 
-from activity_calendar.constants import *
+from activity_calendar.constants import ActivityStatus
 from activity_calendar.models import Activity, ActivityMoment
 from activity_calendar.templatetags.activity_tags import readable_activity_datetime, get_next_activity_instances
 
@@ -135,7 +135,7 @@ class GetNextActivityInstancesTestCase(TestCase):
         )
 
     def test_exclude_removed_events(self):
-        removed_moment = self.activity.activitymoment_set.filter(status=STATUS_REMOVED).first()
+        removed_moment = self.activity.activitymoment_set.filter(status=ActivityStatus.STATUS_REMOVED).first()
         start_dt = removed_moment.recurrence_id - timedelta(hours=2)
 
         instances = get_next_activity_instances(self.activity,start_dt=start_dt)

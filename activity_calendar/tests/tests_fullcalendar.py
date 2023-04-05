@@ -5,7 +5,7 @@ import json
 
 from core.tests.util import suppress_warnings
 
-from activity_calendar.constants import *
+from activity_calendar.constants import ActivityType
 from activity_calendar.models import Activity
 
 
@@ -99,7 +99,7 @@ class TestCaseFullCalendar(TestCase):
 
     @suppress_warnings
     def test_only_public(self):
-        Activity.objects.update(type=ACTIVITY_MEETING)
+        Activity.objects.update(type=ActivityType.ACTIVITY_MEETING)
         response = self.client.get('/api/calendar/fullcalendar', data={
             'start': "2020-10-01T00:00:00+02:00",
             'end': "2020-10-28T00:00:00+01:00",

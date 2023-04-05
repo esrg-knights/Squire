@@ -17,7 +17,7 @@ from activity_calendar.views import CreateSlotView, ActivityMomentWithSlotsView,
     EditActivityMomentView, ActivityOverview, ActivityMixin, ActivityMomentCancelledView, CancelActivityMomentView,\
     ActivityMomentNoSignupView
 from activity_calendar.forms import *
-from activity_calendar.constants import *
+from activity_calendar.constants import ActivityType, SlotCreationType, ActivityStatus
 
 from core.tests.util import suppress_warnings
 from utils.testing.view_test_utils import ViewValidityMixin, TestMixinMixin
@@ -195,7 +195,7 @@ class TestActivityOverview(ViewValidityMixin, TestCase):
         response  = self.client.get(self.get_base_url(), data={})
         self.assertNotEqual(len(response.context['activities']), 0)
 
-        Activity.objects.update(type=ACTIVITY_MEETING)
+        Activity.objects.update(type=ActivityType.ACTIVITY_MEETING)
         response  = self.client.get(self.get_base_url(), data={})
         self.assertEqual(len(response.context['activities']), 0)
 
@@ -320,7 +320,7 @@ class ActivityNoSignupViewTestcase(TestActivityViewMixin, TestCase):
 
     def setUp(self):
         super(ActivityNoSignupViewTestcase, self).setUp()
-        self.activity.slot_creation = SLOT_CREATION_NONE
+        self.activity.slot_creation = SlotCreationType.SLOT_CREATION_NONE
         self.activity.save()
 
     def test_base_class_values(self):
@@ -567,7 +567,7 @@ class ActivitySlotViewTest(TestActivityViewMixin, TestCase):
         self.assertTrue(response.context['slot_creation_form'].initial.get('sign_up'))
 
         # User cannot create slots, as it does not have the relevant permissions
-        self.activity.slot_creation = SLOT_CREATION_STAFF
+        self.activity.slot_creation = SlotCreationType.SLOT_CREATION_STAFF
         self.activity.save()
         response = self.build_get_response()
         self.assertEqual(response.status_code, 200)
@@ -784,7 +784,7 @@ class CreateSlotViewTest(TestActivityViewMixin, TestCase):
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_creation_none_denied(self, mock_tz):
-        Activity.objects.filter(id=2).update(slot_creation=SLOT_CREATION_STAFF)
+        Activity.objects.filter(id=2).update(slot_creation=SlotCreationType.SLOT_CREATION_STAFF)
         response = self.client.get(self.base_url, follow=True)
 
         self.assertEqual(response.status_code, 200)
@@ -800,7 +800,7 @@ class CreateSlotViewTest(TestActivityViewMixin, TestCase):
         # Set current user is superuser
         self.client.force_login(User.objects.get(is_superuser=True))
 
-        Activity.objects.filter(id=2).update(slot_creation=SLOT_CREATION_STAFF)
+        Activity.objects.filter(id=2).update(slot_creation=SlotCreationType.SLOT_CREATION_STAFF)
         response = self.client.get(self.base_url, follow=False)
         self.assertEqual(response.status_code, 200)
 
@@ -893,7 +893,7 @@ class CancelActivityMomentViewTest(TestActivityViewMixin, TestCase):
         self.client.force_login(User.objects.get(is_superuser=True))
         local_datetime = datetime.datetime.fromisoformat(self.default_iso_dt)
 
-        response = self.build_post_response({'status': STATUS_CANCELLED,}, follow=True)
+        response = self.build_post_response({'status': ActivityStatus.STATUS_CANCELLED,}, follow=True)
 
         # Assert redirect after success
         self.assertRedirects(response, reverse('activity_calendar:activity_slots_on_day', kwargs={
@@ -912,4 +912,4 @@ class CancelActivityMomentViewTest(TestActivityViewMixin, TestCase):
             parent_activity_id=2,
             recurrence_id=local_datetime
         )
-        self.assertEqual(activitymoment.status, STATUS_CANCELLED)
+        self.assertEqual(activitymoment.status, ActivityStatus.STATUS_CANCELLED)

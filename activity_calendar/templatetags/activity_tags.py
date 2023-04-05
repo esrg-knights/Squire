@@ -2,8 +2,8 @@ from django import template
 from django.utils import timezone
 from django.template.defaultfilters import date as format_date
 
+from activity_calendar.constants import SlotCreationType
 from activity_calendar.models import Activity, ActivityMoment
-from activity_calendar.constants import *
 
 
 register = template.Library()
@@ -40,7 +40,7 @@ def get_next_activity_instances(activity: Activity, start_dt=None, max=3):
 def render_activity_block(context, activity_moment: ActivityMoment):
 
     show_signup_status = activity_moment.max_participants != 0 or activity_moment.subscriptions_required
-    show_signup_status = show_signup_status and activity_moment.slot_creation != SLOT_CREATION_NONE
+    show_signup_status = show_signup_status and activity_moment.slot_creation != SlotCreationType.SLOT_CREATION_NONE
 
     subscription_open_date = activity_moment.start_date - activity_moment.parent_activity.subscriptions_open
     if subscription_open_date < timezone.now():

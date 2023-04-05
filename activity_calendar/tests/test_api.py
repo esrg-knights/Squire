@@ -3,7 +3,6 @@ import json
 
 from django.test import TestCase
 from django.urls import reverse
-from django.utils import timezone
 from unittest.mock import patch
 
 from activity_calendar.models import Activity

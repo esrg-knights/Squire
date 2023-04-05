@@ -1,12 +1,10 @@
-import datetime
-
 from django import template
-from django.utils import timezone
-from django.utils.formats import date_format
 
 from activity_calendar.forms import RegisterForActivitySlotForm
 
+
 register = template.Library()
+
 
 @register.simple_tag(takes_context=True)
 def sign_up_slot_form(context, slot):

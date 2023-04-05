@@ -18,7 +18,7 @@ from urllib.parse import quote, unquote
 
 from .forms import *
 from .models import Activity, ActivityMoment
-from .constants import *
+from .constants import ActivityType, SlotCreationType
 
 __all__ = "CreateSlotView, get_activity_detail_view, activity_collection"
 
@@ -39,7 +39,7 @@ class ActivityOverview(ListView):
         start_date, end_date = self.get_time_range_data()
 
         activities = []
-        for activity in Activity.objects.filter(published_date__lte=timezone.now(), type=ACTIVITY_PUBLIC):
+        for activity in Activity.objects.filter(published_date__lte=timezone.now(), type=ActivityType.ACTIVITY_PUBLIC):
             for activity_moment in activity.get_activitymoments_between(start_date, end_date):
                 activities.append(activity_moment)
 
@@ -287,7 +287,7 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
         # Determine if the mode allows slot creation. If mode is None, staff users should be able to create slots
         # Note that actual validation always takes place in the form itself, this is merely whether, without any actual
         # input on the complex database status (i.e. relations), this button needs to be shown.
-        if self.activity_moment.slot_creation == SLOT_CREATION_USER:
+        if self.activity_moment.slot_creation == SlotCreationType.SLOT_CREATION_USER:
             new_slot_form = RegisterNewSlotForm(
                 initial={
                     'sign_up': True,
@@ -297,7 +297,7 @@ class ActivityMomentWithSlotsView(LoginRequiredForPostMixin, FormMixin, Activity
                 recurrence_id=self.recurrence_id,
                 activity_moment=self.activity_moment,
             )
-        elif self.activity_moment.slot_creation == SLOT_CREATION_STAFF and \
+        elif self.activity_moment.slot_creation == SlotCreationType.SLOT_CREATION_STAFF and \
             (self.request.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type') or\
             self.can_edit_activity()):
             # In a none based slot mode, don't automatically register the creator to the slot
@@ -350,9 +350,9 @@ def get_activity_detail_view(request, *args, **kwargs):
 
         if getattr(activity_moment, 'is_cancelled', False):
             view_class = ActivityMomentCancelledView
-        elif activity_moment.slot_creation == SLOT_CREATION_AUTO:
+        elif activity_moment.slot_creation == SlotCreationType.SLOT_CREATION_AUTO:
             view_class = ActivitySimpleMomentView
-        elif activity_moment.slot_creation == SLOT_CREATION_NONE:
+        elif activity_moment.slot_creation == SlotCreationType.SLOT_CREATION_NONE:
             view_class = ActivityMomentNoSignupView
         else:
             view_class = ActivityMomentWithSlotsView
@@ -393,7 +393,7 @@ class CreateSlotView(LoginRequiredMixin, ActivityMixin, FormView):
         return super(CreateSlotView, self).render_to_response(context, **response_kwargs)
 
     def get_form_kwargs(self):
-        if self.activity_moment.slot_creation == SLOT_CREATION_STAFF:
+        if self.activity_moment.slot_creation == SlotCreationType.SLOT_CREATION_STAFF:
             # In a none based slot mode, don't automatically register the creator to the slot
             initial = {'sign_up': False}
         else:

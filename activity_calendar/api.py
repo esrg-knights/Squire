@@ -6,7 +6,7 @@ from django.views.decorators.http import require_safe
 from django.http import HttpResponseBadRequest
 
 from .models import Activity
-from .constants import ACTIVITY_PUBLIC
+from .constants import ActivityType
 
 
 def get_json_from_activity_moment(activity_moment, user=None):
@@ -68,7 +68,7 @@ def fullcalendar_feed(request):
     # ######################################################### #
 
     activity_moment_jsons = []
-    for activity in Activity.objects.filter(published_date__lte=timezone.now(), type=ACTIVITY_PUBLIC):
+    for activity in Activity.objects.filter(published_date__lte=timezone.now(), type=ActivityType.ACTIVITY_PUBLIC):
         for activity_moment in activity.get_activitymoments_between(start_date, end_date):
             json_instance = get_json_from_activity_moment(activity_moment, user=request.user)
             activity_moment_jsons.append(json_instance)

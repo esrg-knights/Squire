@@ -7,7 +7,7 @@ from django.forms import ModelForm
 
 from unittest.mock import patch
 
-from activity_calendar.constants import *
+from activity_calendar.constants import ActivityStatus, SlotCreationType
 from activity_calendar.models import *
 from activity_calendar.forms import *
 
@@ -106,15 +106,15 @@ class RegisterForActivityFormTestCase(ActivityFormValidationMixin, TestCase):
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_slot_mode(self, mock_tz):
         """ Tests that form invalidates when slot creation mode is not CREATION_AUTO """
-        self.activity.slot_creation = SLOT_CREATION_STAFF
+        self.activity.slot_creation = SlotCreationType.SLOT_CREATION_STAFF
         self.activity.save()
         self.assertFormHasError({'sign_up': True}, code='invalid_slot_mode')
 
-        self.activity.slot_creation = SLOT_CREATION_USER
+        self.activity.slot_creation = SlotCreationType.SLOT_CREATION_USER
         self.activity.save()
         self.assertFormHasError({'sign_up': True}, code='invalid_slot_mode')
 
-        self.activity.slot_creation = SLOT_CREATION_AUTO
+        self.activity.slot_creation = SlotCreationType.SLOT_CREATION_AUTO
         self.activity.save()
         self.assertFormValid({'sign_up': True})
 
@@ -352,22 +352,22 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_slot_mode(self, mock_tz):
         """ Tests that form invalidates when slot creation mode is not CREATION_AUTO """
-        self.activity.slot_creation = SLOT_CREATION_STAFF
+        self.activity.slot_creation = SlotCreationType.SLOT_CREATION_STAFF
         self.activity.save()
         self.assertFormHasError({'sign_up': True, 'title': 'My slot', 'max_participants': -1}, code='user-slot-creation-denied')
 
-        self.activity.slot_creation = SLOT_CREATION_AUTO
+        self.activity.slot_creation = SlotCreationType.SLOT_CREATION_AUTO
         self.activity.save()
         self.assertFormHasError({'sign_up': True, 'title': 'My slot', 'max_participants': -1}, code='user-slot-creation-denied')
 
-        self.activity.slot_creation = SLOT_CREATION_USER
+        self.activity.slot_creation = SlotCreationType.SLOT_CREATION_USER
         self.activity.save()
         self.assertFormValid({'sign_up': True, 'title': 'My slot', 'max_participants': -1})
 
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_slot_mode_admin_override(self, mock_tz):
         """ Tests that form validates when admin creates a slot when slot mode is CREATION_NONE """
-        self.activity.slot_creation = SLOT_CREATION_STAFF
+        self.activity.slot_creation = SlotCreationType.SLOT_CREATION_STAFF
         self.activity.save()
         self.user.user_permissions.add(Permission.objects.get(codename='can_ignore_none_slot_creation_type'))
         self.user.save()
@@ -377,7 +377,7 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
     @patch('django.utils.timezone.now', side_effect=mock_now())
     def test_slot_mode_organiser_override(self, mock_organiser, mock_tz):
         """ Tests that form validates when an organiser creates a slot """
-        self.activity.slot_creation = SLOT_CREATION_STAFF
+        self.activity.slot_creation = SlotCreationType.SLOT_CREATION_STAFF
         self.activity.save()
         self.assertFormValid({'sign_up': True, 'title': 'My slot', 'max_participants': -1})
 
@@ -388,16 +388,16 @@ class RegisterNewSlotFormTestCase(ActivityFormValidationMixin, TestCase):
             it, while it is normally (dis)allowed
         """
         # Slot creation normally not allowed; it is allowed now
-        self.activity.slot_creation = SLOT_CREATION_STAFF
+        self.activity.slot_creation = SlotCreationType.SLOT_CREATION_STAFF
         self.activity.save()
-        self.activity_moment.local_slot_creation = SLOT_CREATION_USER
+        self.activity_moment.local_slot_creation = SlotCreationType.SLOT_CREATION_USER
         self.activity_moment.save()
         self.assertFormValid({'sign_up': True, 'title': 'My slot', 'max_participants': -1})
 
         # Slot creation normally allowed; it is disallowed now
-        self.activity.slot_creation = SLOT_CREATION_USER
+        self.activity.slot_creation = SlotCreationType.SLOT_CREATION_USER
         self.activity.save()
-        self.activity_moment.local_slot_creation = SLOT_CREATION_STAFF
+        self.activity_moment.local_slot_creation = SlotCreationType.SLOT_CREATION_STAFF
         self.activity_moment.save()
         self.assertFormHasError({'sign_up': True, 'title': 'My slot', 'max_participants': -1}, code='user-slot-creation-denied')
 
@@ -558,22 +558,22 @@ class CancelActivityFormTestCase(FormValidityMixin, TestCase):
         self.assertEqual(CancelActivityForm.Meta.model, ActivityMoment)
 
     def test_status_invalid(self):
-        self.assertFormHasError({'status': STATUS_NORMAL}, code='not-cancelled')
+        self.assertFormHasError({'status': ActivityStatus.STATUS_NORMAL}, code='not-cancelled')
 
     def test_status_cancelled(self):
         form = self.assertFormValid({
-            'status': STATUS_CANCELLED,
+            'status': ActivityStatus.STATUS_CANCELLED,
         }, instance=self.activity_moment)
         form.save()
         self.activity_moment.refresh_from_db()
-        self.assertEqual(self.activity_moment.status, STATUS_CANCELLED)
+        self.assertEqual(self.activity_moment.status, ActivityStatus.STATUS_CANCELLED)
 
     def test_status_removed(self):
         form = self.assertFormValid({
-            'status': STATUS_REMOVED,
+            'status': ActivityStatus.STATUS_REMOVED,
         }, instance=self.activity_moment)
         form.save()
         self.activity_moment.refresh_from_db()
-        self.assertEqual(self.activity_moment.status, STATUS_REMOVED)
+        self.assertEqual(self.activity_moment.status, ActivityStatus.STATUS_REMOVED)
 
 

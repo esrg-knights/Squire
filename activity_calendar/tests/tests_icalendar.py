@@ -7,7 +7,7 @@ from django.utils import timezone, dateparse
 
 from membership_file.models import Member
 
-from activity_calendar.constants import *
+from activity_calendar.constants import ActivityStatus
 from activity_calendar.models import Activity, ActivityMoment, CalendarActivityLink
 from activity_calendar.feeds import PublicCalendarFeed, get_feed_id, BirthdayCalendarFeed, CustomCalendarFeed
 
@@ -245,7 +245,7 @@ class ICalFeedTestCase(FeedTestMixin, TestCase):
         self.assertIn('STATUS', component.keys())
         self.assertEqual(component['STATUS'], 'CONFIRMED')
 
-        activitymoment.status = STATUS_CANCELLED
+        activitymoment.status = ActivityStatus.STATUS_CANCELLED
         activitymoment.save()
         self._build_response_calendar()
         component = self._get_component(activitymoment)
@@ -266,7 +266,7 @@ class ICalFeedTestCase(FeedTestMixin, TestCase):
         self.assertEqual(len(self._get_component(activity)['EXDATE'].dts), 2)
 
         # Cancel the activity
-        activitymoment.status = STATUS_REMOVED
+        activitymoment.status = ActivityStatus.STATUS_REMOVED
         activitymoment.save()
         self._build_response_calendar()
 

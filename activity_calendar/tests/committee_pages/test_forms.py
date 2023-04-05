@@ -5,7 +5,7 @@ from committees.models import AssociationGroup
 from utils.testing import FormValidityMixin
 
 from activity_calendar.committee_pages.forms import *
-from activity_calendar.constants import *
+from activity_calendar.constants import ActivityType, ActivityStatus
 from activity_calendar.models import ActivityMoment, Activity
 from activity_calendar.widgets import BootstrapDateTimePickerInput
 
@@ -76,7 +76,7 @@ class AddMeetingFormTestCase(FormValidityMixin, TestCase):
         meeting = ActivityMoment.meetings.filter_group(group).get(
             recurrence_id="2023-02-27T8:45:00Z"
         )
-        self.assertEqual(meeting.parent_activity.type, ACTIVITY_MEETING)
+        self.assertEqual(meeting.parent_activity.type, ActivityType.ACTIVITY_MEETING)
 
     def test_save_existing_parent_activity(self):
         """ Tests ActivityMomentCreation on groups with existing parent_activity objects for meetings"""
@@ -173,7 +173,7 @@ class EditCancelledMeetingFormTestCase(FormValidityMixin, TestCase):
     def test_save(self):
         self.assertFormValid({}).save()
         self.activity_moment.refresh_from_db()
-        self.assertEqual(self.activity_moment.status, STATUS_NORMAL)
+        self.assertEqual(self.activity_moment.status, ActivityStatus.STATUS_NORMAL)
 
 
 class MeetingRecurrenceFormTestCase(FormValidityMixin, TestCase):
@@ -243,9 +243,9 @@ class CancelMeetingFormTestCase(FormValidityMixin, TestCase):
     def test_save_cancelled(self):
         form = self.assertFormValid({'full_delete': False}, activity_moment_id=63)
         form.save()
-        self.assertEqual(form.instance.status, STATUS_CANCELLED)
+        self.assertEqual(form.instance.status, ActivityStatus.STATUS_CANCELLED)
 
     def test_save_delete(self):
         form = self.assertFormValid({'full_delete': True}, activity_moment_id=63)
         form.save()
-        self.assertEqual(form.instance.status, STATUS_REMOVED)
+        self.assertEqual(form.instance.status, ActivityStatus.STATUS_REMOVED)
