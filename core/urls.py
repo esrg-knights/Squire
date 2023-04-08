@@ -9,6 +9,7 @@ from . import views
 
 app_name = 'core'
 
+# fmt: off
 urlpatterns = [
     # Martor
     path('api/martor/', include([

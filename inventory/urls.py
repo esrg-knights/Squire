@@ -8,7 +8,7 @@ from inventory.models import Item
 
 
 class CatalogueConverter:
-    regex = '[\w.-]+'
+    regex = r"[\w.-]+"
 
     def to_python(self, value):
         content_types = Item.get_item_contenttypes()
@@ -26,14 +26,16 @@ class CatalogueConverter:
         else:
             raise KeyError("Given value '{}' is not of a valid type".format(value))
 
-register_converter(CatalogueConverter, 'cat_item')
+
+register_converter(CatalogueConverter, "cat_item")
 
 
 ####################################################
 
 
-app_name = 'inventory'
+app_name = "inventory"
 
+# fmt: off
 urlpatterns = [
     path('catalogue/info/', CatalogueInstructionsView.as_view(), name='catalogue_info'),
     path('catalogue/<cat_item:type_id>/', include([

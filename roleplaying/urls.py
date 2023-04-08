@@ -2,8 +2,9 @@ from django.urls import path, include
 
 from roleplaying.views import *
 
-namespace = 'roleplaying'
+namespace = "roleplaying"
 
+# fmt: off
 urlpatterns = [
     # Change Language helper view
     path('systems/', include([
