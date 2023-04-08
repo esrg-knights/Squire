@@ -82,16 +82,23 @@ class SquireMailcowManager:
     def __str__(self) -> str:
         return f"SquireMailcowManager[{self.mailcow_host}]"
 
-    def clean_emails(self, queryset: QuerySet, email_field="email") -> QuerySet:
+    def clean_emails(self, queryset: QuerySet, email_field="email", extra: Optional[List[str]]=None) -> QuerySet:
         """ Cleans a queryset of models with an email field (of any name),
             by removing blocklisted email addresses.
+            Additional blocklisted addresses can be passed through the
+            `extra` keyword argument.
         """
-        queryset = queryset.exclude(**{f"{email_field}__in": self.BLOCKLISTED_EMAIL_ADDRESSES}).order_by(email_field)
+        # TODO: Update tests to check the "extra" keyword
+        blocklisted_addresses = [] # NOTE: Do not perform arithmetic on BLOCKLIST directly to prevent modification
+        blocklisted_addresses += self.BLOCKLISTED_EMAIL_ADDRESSES
+        if extra is not None:
+            blocklisted_addresses += extra
+        queryset = queryset.exclude(**{f"{email_field}__in": blocklisted_addresses}).order_by(email_field)
         return queryset
 
-    def clean_emails_flat(self, queryset: QuerySet, email_field="email") -> List[str]:
+    def clean_emails_flat(self, queryset: QuerySet, email_field="email", **kwargs) -> List[str]:
         """ Does the same as `clean_emails`, but also flattens the resulting queryset """
-        queryset = self.clean_emails(queryset, email_field)
+        queryset = self.clean_emails(queryset, email_field, **kwargs)
         return list(queryset.values_list(email_field, flat=True))
 
     @property
@@ -203,17 +210,17 @@ class SquireMailcowManager:
         # Failsafe in case we attempt to overwrite an alias that is not managed by Squire.
         #   This should only happen if such an alias is modified in the Mailcow admin after its creation.
         if alias.public_comment != public_comment:
-            logging.warning(f"Cannot update alias for {address}. It already exists and is not managed by Squire! <{alias.public_comment}>")
+            logger.warning(f"Cannot update alias for {address}. It already exists and is not managed by Squire! <{alias.public_comment}>")
             return
 
         alias.active = True
-        if not alias.goto:
+        if not goto_addresses:
             # If the alias is emtpy, Mailcow will accept the response and act as if things were properly changed.
             #   In practise, all changes are ignored!
             # As a failsafe, this just disables the alias.
             alias.active = False
-
-        alias.goto = goto_addresses
+        else:
+            alias.goto = goto_addresses
         alias.sogo_visible = False
         self._client.update_alias(alias)
 
@@ -246,7 +253,7 @@ class SquireMailcowManager:
         return active_members.filter(opts)
 
     def get_archive_adresses_for_type(self, alias_type: AliasCategory, address: str) -> List[str]:
-        """ TODO """
+        """ Gets a list of email addresses that are used as an archive for an alias-address """
         if alias_type == AliasCategory.MEMBER:
             return settings.MEMBER_ALIASES[address]["archive_addresses"]
         elif alias_type == AliasCategory.GLOBAL_COMMITTEE:
@@ -258,6 +265,7 @@ class SquireMailcowManager:
         # TODO: Return a list of failures (i.e., API calls that returned an exception)
         # Fetch active members here so the results can be cached
         active_members = self.get_active_members()
+        committee_emails = self._committee_model.objects.values_list("contact_email", flat=True)
 
         for alias_address, alias_data in settings.MEMBER_ALIASES.items():
             if alias_address in self.mailbox_map:
@@ -266,10 +274,10 @@ class SquireMailcowManager:
 
             logger.info(f"Forced updating {alias_address}")
             emails = self.clean_emails_flat(
-                self.get_subscribed_members(active_members, alias_address, default=alias_data['default_opt'])
+                self.get_subscribed_members(active_members, alias_address, default=alias_data['default_opt']),
+                extra=committee_emails
             )
-            # emails.append(settings.MEMBER_ALIAS_ARCHIVE_ADDRESS)
-            logger.info(emails)
+            emails = self.get_archive_adresses_for_type(AliasCategory.MEMBER, alias_address) + emails
 
             self._set_alias_by_name(alias_address, emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT)
         self._alias_cache = None
@@ -283,16 +291,16 @@ class SquireMailcowManager:
         )
 
     def update_committee_aliases(self) -> None:
-        """ TODO
-        """
+        """ Updates all committee aliases """
+        committee_emails = self._committee_model.objects.values_list("contact_email", flat=True)
         for assoc_group in self.clean_emails(self.get_active_committees(), email_field="contact_email"):
             if assoc_group.contact_email in self.mailbox_map:
                 logger.warning(f"Skipping over {assoc_group} ({assoc_group.contact_email}): Mailbox with the same name already exists")
                 continue
 
-            goto_emails = self.clean_emails_flat(assoc_group.members.filter_active())
-            # emails.append(settings.COMMITTEE_ALIAS_ARCHIVE_ADDRESS)
+            goto_emails = self.clean_emails_flat(assoc_group.members.filter_active(), extra=committee_emails)
             logger.info(f"Forced updating {assoc_group} ({len(goto_emails)} subscribers)")
+            goto_emails = self.get_archive_adresses_for_type(AliasCategory.COMMITTEE, assoc_group.contact_email) + goto_emails
 
             self._set_alias_by_name(assoc_group.contact_email, goto_emails, public_comment=self.ALIAS_COMMITTEE_PUBLIC_COMMENT)
         self._alias_cache = None

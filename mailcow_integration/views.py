@@ -9,6 +9,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html
 from django.views.generic import TemplateView
+from committees.models import AssociationGroup
 
 from mailcow_integration.api.exceptions import MailcowAPIAccessDenied, MailcowAPIReadWriteAccessDenied, MailcowAuthException, MailcowException
 from mailcow_integration.api.interface.alias import MailcowAlias
@@ -61,6 +62,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.mailcow_manager: SquireMailcowManager = get_mailcow_manager()
+        self._committee_addresses = AssociationGroup.objects.values_list("contact_email", flat=True)
 
     def _get_alias_status(self, address: str, subscribers: QuerySet, alias_type: AliasCategory,
             aliases: List[MailcowAlias], mailboxes: List[MailcowMailbox], squire_comment: str) -> Tuple[AliasStatus, Optional[MailcowAlias], Optional[MailcowMailbox]]:
@@ -79,7 +81,11 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             if alias.public_comment != squire_comment:
                 # Public comment does not indicate it's managed by squire
                 return AliasStatus.NOT_MANAGED_BY_SQUIRE, alias, None
-            elif alias.goto != self.mailcow_manager.get_archive_adresses_for_type(alias_type, address) + self.mailcow_manager.clean_emails_flat(subscribers):
+            elif alias.goto != (self.mailcow_manager.get_archive_adresses_for_type(alias_type, address)
+                                + self.mailcow_manager.clean_emails_flat(
+                                    subscribers,
+                                    extra=([] if alias_type == AliasCategory.GLOBAL_COMMITTEE else self._committee_addresses)
+                                )):
                 # Alias is outdated
                 return AliasStatus.OUTDATED, alias, None
             else:
@@ -115,16 +121,17 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
         else:
             email_field = "email"
             get_name = lambda sub: sub.get_full_name()
+            blocklist = []
+            blocklist += self.mailcow_manager.BLOCKLISTED_EMAIL_ADDRESSES
             if alias_type == AliasCategory.GLOBAL_COMMITTEE:
                 email_field = "contact_email"
                 get_name = lambda sub: f"{sub.site_group.name} ({sub.get_type_display()})"
+            else:
+                blocklist += self._committee_addresses
 
-            subscribers = subscribers.annotate(has_invalid_email=ExpressionWrapper(
-                Q(**{f"{email_field}__in": self.mailcow_manager.BLOCKLISTED_EMAIL_ADDRESSES}), output_field=BooleanField()
-            ))
             return [{
                 'name': format_html("{} &mdash; {}", get_name(sub), getattr(sub, email_field)),
-                'invalid': sub.has_invalid_email
+                'invalid': getattr(sub, email_field) in blocklist
             } for sub in subscribers]
 
     def _init_member_alias_list(self, aliases: List[MailcowAlias], mailboxes: List[MailcowMailbox]) -> List[AliasInfos]:

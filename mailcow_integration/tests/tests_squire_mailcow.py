@@ -1,10 +1,12 @@
 from copy import deepcopy
+from typing import List
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.test import TestCase
 from dynamic_preferences.users.models import UserPreferenceModel
-from unittest.mock import Mock, PropertyMock, patch
-from committees.models import AssociationGroup
+from unittest.mock import Mock, PropertyMock, patch, ANY
+from committees.models import AssociationGroup, AssociationGroupMembership
+from core.tests.util import suppress_infos, suppress_warnings
 
 from mailcow_integration.api.interface.alias import MailcowAlias
 from mailcow_integration.api.interface.mailbox import MailcowMailbox
@@ -316,3 +318,103 @@ class SquireMailcowManagerTest(TestCase):
         self.squire_mailcow_manager.mailbox_map
         mock_get.assert_called_once()
         self.assertIsNotNone(self.squire_mailcow_manager._mailbox_map_cache)
+
+    ################
+    # Updating aliases
+    ################
+    @patch('mailcow_integration.api.client.MailcowAPIClient.create_alias')
+    @patch('mailcow_integration.api.client.MailcowAPIClient.update_alias')
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.alias_map', return_value={
+        "foo@example.com": MailcowAlias("foo@example.com", ["a@example.com", "b@example.com"], 99, public_comment="Foo!"),
+    }, new_callable=PropertyMock)
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.mailbox_map', return_value={}, new_callable=PropertyMock)
+    @suppress_warnings(logger_name="mailcow_integration.squire_mailcow")
+    def test_set_alias_by_name(self, mock_mailbox_map: Mock, mock_alias_map: Mock,
+            mock_update: Mock, mock_create: Mock):
+        """ Tests the way aliases are updated/created """
+        # New alias created
+        self.squire_mailcow_manager._set_alias_by_name("new@example.com", ["a@example.com", "b@example.com"], "Foo!")
+        mock_create.assert_called_once()
+        mock_update.assert_not_called()
+        self.assertTrue(mock_create.call_args.args)
+        alias: MailcowAlias = mock_create.call_args.args[0]
+        self.assertIsInstance(alias, MailcowAlias)
+        self.assertEqual(alias.address, "new@example.com")
+        self.assertEqual(alias.goto, ["a@example.com", "b@example.com"])
+        self.assertEqual(alias.public_comment, "Foo!")
+        self.assertTrue(alias.active)
+        self.assertFalse(alias.sogo_visible)
+        mock_create.reset_mock()
+
+        # Public comment does not match up
+        self.squire_mailcow_manager._set_alias_by_name("foo@example.com", ["c@example.com", "d@example.com"], "Bar!")
+        mock_create.assert_not_called()
+        mock_update.assert_not_called()
+
+        # Alias updated successfully
+        self.squire_mailcow_manager._set_alias_by_name("foo@example.com", ["c@example.com", "d@example.com"], "Foo!")
+        mock_create.assert_not_called()
+        alias = mock_alias_map.return_value["foo@example.com"] # Should re-use existing alias
+        mock_update.assert_called_once_with(alias)
+        self.assertEqual(alias.address, "foo@example.com")
+        self.assertEqual(alias.goto, ["c@example.com", "d@example.com"])
+        self.assertEqual(alias.public_comment, "Foo!")
+        self.assertTrue(alias.active)
+        self.assertFalse(alias.sogo_visible)
+        mock_update.reset_mock()
+
+        # goto is empty (failsafe)
+        self.squire_mailcow_manager._set_alias_by_name("foo@example.com", [], "Foo!")
+        mock_create.assert_not_called()
+        alias = mock_alias_map.return_value["foo@example.com"] # Should re-use existing alias
+        mock_update.assert_called_once_with(alias)
+        self.assertEqual(alias.address, "foo@example.com")
+        self.assertEqual(alias.goto, ["c@example.com", "d@example.com"]) # Previous goto addresses remain
+        self.assertEqual(alias.public_comment, "Foo!")
+        self.assertFalse(alias.active) # Alias made inactive
+        self.assertFalse(alias.sogo_visible)
+        mock_update.reset_mock()
+
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_archive_adresses_for_type', return_value=[
+        'archive@example.com', 'archive2@example.com'
+    ])
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.mailbox_map', return_value={
+        "foo@example.com": MailcowMailbox("mailbox@example.com", "Mr. Foo"),
+    }, new_callable=PropertyMock)
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager._set_alias_by_name')
+    @suppress_infos(logger_name="mailcow_integration.squire_mailcow")
+    def test_update_committee_aliases(self, mock_set_alias: Mock, mock_mailbox_map: Mock, archive_mock: Mock):
+        """ Tests updating committee aliases """
+        self.squire_mailcow_manager.BLOCKLISTED_EMAIL_ADDRESSES = ["blocklisted@example.com"]
+        # Setup committees:
+        #   - boardgames: foo, bar
+        #   - roleplay: foo
+        #   - blocked: bar
+        bg = AssociationGroup.objects.create(site_group=Group.objects.create(name="Boardgamers"),
+            type=AssociationGroup.COMMITTEE, contact_email="bg@example.com")
+        rp = AssociationGroup.objects.create(site_group=Group.objects.create(name="Roleplayers"),
+            type=AssociationGroup.COMMITTEE, contact_email="rp@example.com")
+        mailbox = AssociationGroup.objects.create(site_group=Group.objects.create(name="Mailbox"),
+            type=AssociationGroup.COMMITTEE, contact_email="mailbox@example.com")
+        blocked = AssociationGroup.objects.create(site_group=Group.objects.create(name="Blocklisted"),
+            type=AssociationGroup.COMMITTEE, contact_email="blocklisted@example.com")
+        foo = Member.objects.create(first_name='Foo', last_name="Oof", legal_name="Foo Oof", email="memberfoo@example.com")
+        bar = Member.objects.create(first_name='Bar', last_name="Rab", legal_name="Bar Rab", email="memberbar@example.com")
+        blockedmem = Member.objects.create(first_name='Blocked', last_name="Dekcolb", legal_name="Blocked Dekcolb", email="blocklisted@example.com")
+        AssociationGroupMembership.objects.create(member=foo, group=bg)
+        AssociationGroupMembership.objects.create(member=bar, group=bg)
+        AssociationGroupMembership.objects.create(member=foo, group=rp)
+        AssociationGroupMembership.objects.create(member=blockedmem, group=rp)
+        AssociationGroupMembership.objects.create(member=bar, group=blocked)
+
+        self.squire_mailcow_manager.update_committee_aliases()
+        # Blockedlisted member email not used
+        mock_set_alias.assert_any_call("bg@example.com", archive_mock.return_value + ["memberbar@example.com", "memberfoo@example.com"],
+            public_comment=self.squire_mailcow_manager.ALIAS_COMMITTEE_PUBLIC_COMMENT)
+        mock_set_alias.assert_any_call("rp@example.com", archive_mock.return_value + ["memberfoo@example.com"],
+            public_comment=self.squire_mailcow_manager.ALIAS_COMMITTEE_PUBLIC_COMMENT)
+        # Blocklisted committee email not called
+        self.assertEqual(mock_set_alias.call_count, 2)
+
+        # Alias cache is invalidated
+        self.assertIsNone(self.squire_mailcow_manager._alias_cache)
