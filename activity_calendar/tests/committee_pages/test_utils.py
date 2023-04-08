@@ -10,7 +10,7 @@ from activity_calendar.models import Activity
 
 
 class ActivityCommmitteePageUtilsTestCase(TestCase):
-    fixtures = ['activity_calendar/test_meetings']
+    fixtures = ["activity_calendar/test_meetings"]
 
     def test_get_meeting_activity(self):
         meeting_activity = get_meeting_activity(AssociationGroup.objects.get(id=60))

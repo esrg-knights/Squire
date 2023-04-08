@@ -17,7 +17,7 @@ class MeetingCalendarFeed(CESTEventFeed):
 
     @property
     def product_id(self):
-        return f'-//Squire//{self.association_group.name} Meeting Calendar//EN'
+        return f"-//Squire//{self.association_group.name} Meeting Calendar//EN"
 
     @property
     def calendar_title(self):
@@ -29,13 +29,15 @@ class MeetingCalendarFeed(CESTEventFeed):
 
     def item_link(self, item):
         # The local url to the activity
-        return reverse("committees:meetings:home", kwargs={'group_id': self.association_group.id})
+        return reverse("committees:meetings:home", kwargs={"group_id": self.association_group.id})
 
     def __call__(self, *args, **kwargs):
-        self.association_group = get_object_or_404(AssociationGroup, id=kwargs['group_id'])
+        self.association_group = get_object_or_404(AssociationGroup, id=kwargs["group_id"])
         return super(MeetingCalendarFeed, self).__call__(*args, **kwargs)
 
     def items(self):
         activity = get_meeting_activity(self.association_group)
-        unique_meetings = ActivityMoment.meetings.filter_group(self.association_group).exclude(status=ActivityStatus.STATUS_REMOVED)
+        unique_meetings = ActivityMoment.meetings.filter_group(self.association_group).exclude(
+            status=ActivityStatus.STATUS_REMOVED
+        )
         return [activity, *unique_meetings]

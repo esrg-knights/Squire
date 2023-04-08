@@ -14,19 +14,29 @@ from activity_calendar.committee_pages.utils import get_meeting_activity, create
 from activity_calendar.widgets import BootstrapDateTimePickerInput
 
 
-__all__=["CreateActivityMomentForm", "AddMeetingForm", "EditMeetingForm", "MeetingRecurrenceForm",
-         "CancelMeetingForm", "EditCancelledMeetingForm"]
+__all__ = [
+    "CreateActivityMomentForm",
+    "AddMeetingForm",
+    "EditMeetingForm",
+    "MeetingRecurrenceForm",
+    "CancelMeetingForm",
+    "EditCancelledMeetingForm",
+]
+
 
 class CreateActivityMomentForm(ActivityMomentFormMixin, MarkdownForm):
     class Meta:
         model = ActivityMoment
         fields = [
-            'recurrence_id',
-            'local_title', 'local_description',
-            'local_promotion_image',
-            'local_location',
-            'local_max_participants', 'local_subscriptions_required',
-            'local_slot_creation', 'local_private_slot_locations'
+            "recurrence_id",
+            "local_title",
+            "local_description",
+            "local_promotion_image",
+            "local_location",
+            "local_max_participants",
+            "local_subscriptions_required",
+            "local_slot_creation",
+            "local_private_slot_locations",
         ]
 
     placeholder_detail_title = "Base Activity %s"
@@ -41,25 +51,24 @@ class CreateActivityMomentForm(ActivityMomentFormMixin, MarkdownForm):
         self.prep_placeholders()
 
         self.instance.recurrence_id = timezone.now() + datetime.timedelta(days=7)
-        self.fields['recurrence_id'].initial = self.instance.recurrence_id
+        self.fields["recurrence_id"].initial = self.instance.recurrence_id
 
 
 class AddMeetingForm(ModelForm):
-
     class Meta:
         model = ActivityMoment
         fields = [
-            'local_start_date',
-            'local_location',
+            "local_start_date",
+            "local_location",
         ]
         widgets = {
-            'local_start_date': BootstrapDateTimePickerInput(),
+            "local_start_date": BootstrapDateTimePickerInput(),
         }
         labels = {
-            'local_start_date': 'Start date and time',
+            "local_start_date": "Start date and time",
         }
 
-    def __init__(self, *args, association_group: AssociationGroup=None, **kwargs):
+    def __init__(self, *args, association_group: AssociationGroup = None, **kwargs):
         if association_group is None:
             raise KeyError("Association group was not given")
         self.association_group = association_group
@@ -67,16 +76,13 @@ class AddMeetingForm(ModelForm):
 
         self.instance.parent_activity = self.get_parent_activity()
 
-        self.fields['local_start_date'].required = True
+        self.fields["local_start_date"].required = True
 
     def clean_local_start_date(self):
         if self.instance.id is None:
-            if self.get_parent_activity().get_occurrence_at(self.cleaned_data['local_start_date']):
-                raise ValidationError(
-                    message="A meeting already exists for the given moment",
-                    code='already-exists'
-                )
-        return self.cleaned_data['local_start_date']
+            if self.get_parent_activity().get_occurrence_at(self.cleaned_data["local_start_date"]):
+                raise ValidationError(message="A meeting already exists for the given moment", code="already-exists")
+        return self.cleaned_data["local_start_date"]
 
     def get_parent_activity(self):
         activity = get_meeting_activity(association_group=self.association_group)
@@ -89,23 +95,21 @@ class AddMeetingForm(ModelForm):
         return super(AddMeetingForm, self).save(commit=commit)
 
     def set_default_values(self):
-        self.instance.recurrence_id = self.cleaned_data['local_start_date']
+        self.instance.recurrence_id = self.cleaned_data["local_start_date"]
         if not self.instance.local_location:
             self.instance.local_location = "-"
 
 
 class EditMeetingForm(ModelForm):
-
     class Meta:
         model = ActivityMoment
         fields = [
-            'local_description',
-            'local_location',
+            "local_description",
+            "local_location",
         ]
         labels = {
-            'local_description': 'Information',
-            'local_location': "Location",
-
+            "local_description": "Information",
+            "local_location": "Location",
         }
 
     def save(self, commit=True):
@@ -134,17 +138,17 @@ class EditCancelledMeetingForm(ModelForm):
 class MeetingRecurrenceForm(ModelForm):
     class Meta:
         model = Activity
-        fields = [
-            'recurrences', 'start_date'
-        ]
+        fields = ["recurrences", "start_date"]
 
 
 class CancelMeetingForm(ModelForm):
-    full_delete = forms.BooleanField(label="Delete entirely", help_text="Checking this will delete the meeting entirely",
-                                     required=False)
+    full_delete = forms.BooleanField(
+        label="Delete entirely", help_text="Checking this will delete the meeting entirely", required=False
+    )
+
     class Meta:
         model = ActivityMoment
-        fields = ['full_delete']
+        fields = ["full_delete"]
 
     def __init__(self, *args, instance=None, **kwargs):
         if instance.is_cancelled:
@@ -152,11 +156,11 @@ class CancelMeetingForm(ModelForm):
         super(CancelMeetingForm, self).__init__(*args, instance=instance, **kwargs)
 
         if self.instance.is_part_of_recurrence:
-            self.fields['full_delete'].disabled = True
-            self.fields['full_delete'].help_text = "option disabled. Recurrent meetings can not be deleted"
+            self.fields["full_delete"].disabled = True
+            self.fields["full_delete"].help_text = "option disabled. Recurrent meetings can not be deleted"
 
     def save(self, commit=True):
-        if self.cleaned_data['full_delete']:
+        if self.cleaned_data["full_delete"]:
             self.instance.status = ActivityStatus.STATUS_REMOVED
         else:
             self.instance.status = ActivityStatus.STATUS_CANCELLED
@@ -166,7 +170,7 @@ class CancelMeetingForm(ModelForm):
 class GroupMeetingSettingsForm(ModelForm):
     class Meta:
         model = Activity
-        fields = ['title', 'description']
+        fields = ["title", "description"]
 
     def __init__(self, *args, instance=None, **kwargs):
         instance = get_meeting_activity(instance)

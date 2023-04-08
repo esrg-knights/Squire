@@ -17,64 +17,78 @@ from activity_calendar.committee_pages.views import *
 
 
 class TestCommitteeActivityOverview(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
-    fixtures = ['test_users',  'test_groups', 'test_members', 'committees/associationgroups',
-                'test_activity_slots', 'activity_calendar/test_activity_organisers']
+    fixtures = [
+        "test_users",
+        "test_groups",
+        "test_members",
+        "committees/associationgroups",
+        "test_activity_slots",
+        "activity_calendar/test_activity_organisers",
+    ]
     base_user_id = 40
     association_group_id = 41
-    url_name = 'group_activities'
+    url_name = "group_activities"
 
     def test_class(self):
         self.assertTrue(issubclass(ActivityCalendarView, AssociationGroupMixin))
         self.assertTrue(issubclass(ActivityCalendarView, ListView))
-        self.assertEqual(ActivityCalendarView.template_name, "activity_calendar/committee_pages/committee_activities.html")
-        self.assertEqual(ActivityCalendarView.context_object_name, 'activities')
+        self.assertEqual(
+            ActivityCalendarView.template_name, "activity_calendar/committee_pages/committee_activities.html"
+        )
+        self.assertEqual(ActivityCalendarView.context_object_name, "activities")
 
     def test_successful_get(self):
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 200)
 
         # Test context
-        self.assertEqual(response.context['activities'].count(), 1)
-        self.assertIn(Activity.objects.get(id=2), response.context['activities'])
+        self.assertEqual(response.context["activities"].count(), 1)
+        self.assertIn(Activity.objects.get(id=2), response.context["activities"])
 
     def test_archived_in_queryset(self):
-        """ Tests that the archived setting excludes an activity from the activity list """
+        """Tests that the archived setting excludes an activity from the activity list"""
         OrganiserLink.objects.filter(id=42).update(archived=True)
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 200)
 
         # Test context
-        self.assertEqual(response.context['activities'].count(), 0)
-        self.assertNotIn(Activity.objects.get(id=2), response.context['activities'])
+        self.assertEqual(response.context["activities"].count(), 0)
+        self.assertNotIn(Activity.objects.get(id=2), response.context["activities"])
 
 
 class TestCommitteeActivityAddActivityMomentView(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
-    fixtures = ['test_users',  'test_groups', 'test_members', 'committees/associationgroups',
-                'test_activity_slots', 'activity_calendar/test_activity_organisers']
+    fixtures = [
+        "test_users",
+        "test_groups",
+        "test_members",
+        "committees/associationgroups",
+        "test_activity_slots",
+        "activity_calendar/test_activity_organisers",
+    ]
     base_user_id = 40
     association_group_id = 41
-    url_name = 'add_activity_moment'
-    group_permissions_required = 'activity_calendar.add_activitymoment'
+    url_name = "add_activity_moment"
+    group_permissions_required = "activity_calendar.add_activitymoment"
 
     def setUp(self):
         super(TestCommitteeActivityAddActivityMomentView, self).setUp()
         self.activity = Activity.objects.get(id=2)
 
     def get_url_kwargs(self, **kwargs):
-        return super(TestCommitteeActivityAddActivityMomentView, self).get_url_kwargs(
-            activity_id=3,
-            **kwargs
-        )
+        return super(TestCommitteeActivityAddActivityMomentView, self).get_url_kwargs(activity_id=3, **kwargs)
 
     def test_class(self):
         self.assertTrue(issubclass(AddActivityMomentCalendarView, AssociationGroupMixin))
         self.assertTrue(issubclass(AddActivityMomentCalendarView, FormView))
-        self.assertEqual(AddActivityMomentCalendarView.template_name, "activity_calendar/committee_pages/committee_add_moment_page.html")
+        self.assertEqual(
+            AddActivityMomentCalendarView.template_name,
+            "activity_calendar/committee_pages/committee_add_moment_page.html",
+        )
         self.assertEqual(AddActivityMomentCalendarView.form_class, CreateActivityMomentForm)
 
     @suppress_warnings
     def test_add_activitymoment_access(self):
-        self.association_group.permissions.remove(Permission.objects.get(codename='add_activitymoment'))
+        self.association_group.permissions.remove(Permission.objects.get(codename="add_activitymoment"))
 
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 403)
@@ -85,11 +99,11 @@ class TestCommitteeActivityAddActivityMomentView(AssocationGroupTestingMixin, Vi
 
 
 class MeetingOverviewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
-    fixtures = ['activity_calendar/test_meetings']
+    fixtures = ["activity_calendar/test_meetings"]
     base_user_id = 67
     association_group_id = 60
-    url_name = 'meetings:home'
-    group_permissions_required = ['activity_calendar.can_host_meetings']
+    url_name = "meetings:home"
+    group_permissions_required = ["activity_calendar.can_host_meetings"]
 
     def test_class(self):
         self.assertTrue(issubclass(MeetingOverview, AssociationGroupMixin))
@@ -101,47 +115,42 @@ class MeetingOverviewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, Te
 
 
 class MeetingRecurrenceFormViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
-    fixtures = ['activity_calendar/test_meetings']
+    fixtures = ["activity_calendar/test_meetings"]
     base_user_id = 67
     association_group_id = 60
-    url_name = 'meetings:edit_recurrence'
-    group_permissions_required = ['activity_calendar.can_host_meetings', 'activity_calendar.change_meeting_recurrences']
-    recurrence_id = '2023-03-25T19:00:00Z'
+    url_name = "meetings:edit_recurrence"
+    group_permissions_required = [
+        "activity_calendar.can_host_meetings",
+        "activity_calendar.change_meeting_recurrences",
+    ]
+    recurrence_id = "2023-03-25T19:00:00Z"
 
     def test_class(self):
         self.assertTrue(issubclass(MeetingRecurrenceFormView, AssociationGroupMixin))
         self.assertTrue(issubclass(MeetingRecurrenceFormView, FormView))
-        self.assertEqual(MeetingRecurrenceFormView.template_name, "activity_calendar/committee_pages/meeting_recurrences.html")
+        self.assertEqual(
+            MeetingRecurrenceFormView.template_name, "activity_calendar/committee_pages/meeting_recurrences.html"
+        )
         self.assertEqual(MeetingRecurrenceFormView.form_class, MeetingRecurrenceForm)
 
     def test_successful_get(self):
         self.assertValidGetResponse()
 
     def test_succesful_post(self):
-        data = {
-            'start_date': "2023-03-01T12:30:00Z",
-            'recurrences': 'RRULE:FREQ=WEEKLY;UNTIL=20230330T220000Z'
-        }
-        redirect_url = reverse("committees:meetings:home", kwargs={'group_id': self.association_group.id})
-        self.assertValidPostResponse(
-            data=data,
-            redirect_url=redirect_url,
-            fetch_redirect_response=False
-        )
+        data = {"start_date": "2023-03-01T12:30:00Z", "recurrences": "RRULE:FREQ=WEEKLY;UNTIL=20230330T220000Z"}
+        redirect_url = reverse("committees:meetings:home", kwargs={"group_id": self.association_group.id})
+        self.assertValidPostResponse(data=data, redirect_url=redirect_url, fetch_redirect_response=False)
         response = self.assertValidGetResponse(url=redirect_url)
 
-        self.assertHasMessage(
-            response,
-            level=messages.SUCCESS
-        )
+        self.assertHasMessage(response, level=messages.SUCCESS)
 
 
 class AddMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
-    fixtures = ['activity_calendar/test_meetings']
+    fixtures = ["activity_calendar/test_meetings"]
     base_user_id = 67
     association_group_id = 60
-    url_name = 'meetings:add'
-    group_permissions_required = ['activity_calendar.can_host_meetings']
+    url_name = "meetings:add"
+    group_permissions_required = ["activity_calendar.can_host_meetings"]
 
     def test_class(self):
         self.assertTrue(issubclass(AddMeetingView, AssociationGroupMixin))
@@ -153,35 +162,27 @@ class AddMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, Tes
         self.assertValidGetResponse()
 
     def test_succesful_post(self):
-        data = {'local_start_date': "2023-03-01T12:00:00Z"}
-        redirect_url = reverse("committees:meetings:home", kwargs={'group_id': self.association_group.id})
-        self.assertValidPostResponse(
-            data=data,
-            redirect_url=redirect_url,
-            fetch_redirect_response=False
-        )
+        data = {"local_start_date": "2023-03-01T12:00:00Z"}
+        redirect_url = reverse("committees:meetings:home", kwargs={"group_id": self.association_group.id})
+        self.assertValidPostResponse(data=data, redirect_url=redirect_url, fetch_redirect_response=False)
         response = self.assertValidGetResponse(url=redirect_url)
 
-        self.assertHasMessage(
-            response,
-            level=messages.SUCCESS
-        )
+        self.assertHasMessage(response, level=messages.SUCCESS)
 
 
 class EditMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
-    fixtures = ['activity_calendar/test_meetings']
+    fixtures = ["activity_calendar/test_meetings"]
     base_user_id = 67
     association_group_id = 60
-    url_name = 'meetings:edit'
-    group_permissions_required = ['activity_calendar.can_host_meetings']
-    recurrence_id = '2023-03-09T19:00:00+00:00'
+    url_name = "meetings:edit"
+    group_permissions_required = ["activity_calendar.can_host_meetings"]
+    recurrence_id = "2023-03-09T19:00:00+00:00"
 
     def get_url_kwargs(self, recurrence_id=None, **kwargs):
         recurrence_id = recurrence_id or self.recurrence_id
 
         return super(EditMeetingViewTestCase, self).get_url_kwargs(
-            recurrence_id=datetime.fromisoformat(recurrence_id),
-            **kwargs
+            recurrence_id=datetime.fromisoformat(recurrence_id), **kwargs
         )
 
     @suppress_warnings
@@ -201,48 +202,45 @@ class EditMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, Te
     def test_redirect_cancelled_meetings(self):
         recurrence_id = "2023-03-25T19:00:00+00:00"
         response = self.client.get(self.get_base_url(recurrence_id=recurrence_id), follow=False)
-        redirect_url = reverse("committees:meetings:un-cancel", kwargs={
-            'group_id': self.association_group.id,
-            'recurrence_id': datetime.fromisoformat(recurrence_id),
-        })
+        redirect_url = reverse(
+            "committees:meetings:un-cancel",
+            kwargs={
+                "group_id": self.association_group.id,
+                "recurrence_id": datetime.fromisoformat(recurrence_id),
+            },
+        )
         self.assertRedirects(response, expected_url=redirect_url, fetch_redirect_response=False)
 
     def test_succesful_post(self):
         data = {}
-        redirect_url = reverse("committees:meetings:home", kwargs={'group_id': self.association_group.id})
-        self.assertValidPostResponse(
-            data=data,
-            redirect_url=redirect_url,
-            fetch_redirect_response=False
-        )
+        redirect_url = reverse("committees:meetings:home", kwargs={"group_id": self.association_group.id})
+        self.assertValidPostResponse(data=data, redirect_url=redirect_url, fetch_redirect_response=False)
         response = self.assertValidGetResponse(url=redirect_url)
 
-        self.assertHasMessage(
-            response,
-            level=messages.SUCCESS
-        )
+        self.assertHasMessage(response, level=messages.SUCCESS)
 
 
 class EditCancelledMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
-    fixtures = ['activity_calendar/test_meetings']
+    fixtures = ["activity_calendar/test_meetings"]
     base_user_id = 67
     association_group_id = 60
-    url_name = 'meetings:un-cancel'
-    group_permissions_required = ['activity_calendar.can_host_meetings']
-    recurrence_id = '2023-03-25T19:00:00+00:00'
+    url_name = "meetings:un-cancel"
+    group_permissions_required = ["activity_calendar.can_host_meetings"]
+    recurrence_id = "2023-03-25T19:00:00+00:00"
 
     def get_url_kwargs(self, recurrence_id=None, **kwargs):
         recurrence_id = recurrence_id or self.recurrence_id
 
         return super(EditCancelledMeetingViewTestCase, self).get_url_kwargs(
-            recurrence_id=datetime.fromisoformat(recurrence_id),
-            **kwargs
+            recurrence_id=datetime.fromisoformat(recurrence_id), **kwargs
         )
 
     def test_class(self):
         self.assertTrue(issubclass(EditCancelledMeetingView, AssociationGroupMixin))
         self.assertTrue(issubclass(EditCancelledMeetingView, FormView))
-        self.assertEqual(EditCancelledMeetingView.template_name, "activity_calendar/committee_pages/meeting_edit_cancelled.html")
+        self.assertEqual(
+            EditCancelledMeetingView.template_name, "activity_calendar/committee_pages/meeting_edit_cancelled.html"
+        )
         self.assertEqual(EditCancelledMeetingView.form_class, EditCancelledMeetingForm)
 
     @suppress_warnings
@@ -256,45 +254,43 @@ class EditCancelledMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidity
     def test_redirect_non_cancelled_meetings(self):
         recurrence_id = "2023-03-09T19:00:00+00:00"
         response = self.client.get(self.get_base_url(recurrence_id=recurrence_id), follow=False)
-        redirect_url = reverse("committees:meetings:edit", kwargs={
-            'group_id': self.association_group.id,
-            'recurrence_id': datetime.fromisoformat(recurrence_id),
-        })
+        redirect_url = reverse(
+            "committees:meetings:edit",
+            kwargs={
+                "group_id": self.association_group.id,
+                "recurrence_id": datetime.fromisoformat(recurrence_id),
+            },
+        )
         self.assertRedirects(response, expected_url=redirect_url, fetch_redirect_response=False)
 
     def test_succesful_post(self):
         data = {}
-        redirect_url = reverse("committees:meetings:edit", kwargs={
-            'group_id': self.association_group.id,
-            'recurrence_id': dateparse.parse_datetime(self.recurrence_id),
-        })
-        self.assertValidPostResponse(
-            data=data,
-            redirect_url=redirect_url,
-            fetch_redirect_response=False
+        redirect_url = reverse(
+            "committees:meetings:edit",
+            kwargs={
+                "group_id": self.association_group.id,
+                "recurrence_id": dateparse.parse_datetime(self.recurrence_id),
+            },
         )
+        self.assertValidPostResponse(data=data, redirect_url=redirect_url, fetch_redirect_response=False)
         response = self.assertValidGetResponse(url=redirect_url)
 
-        self.assertHasMessage(
-            response,
-            level=messages.SUCCESS
-        )
+        self.assertHasMessage(response, level=messages.SUCCESS)
 
 
 class DeleteMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, TestCase):
-    fixtures = ['activity_calendar/test_meetings']
+    fixtures = ["activity_calendar/test_meetings"]
     base_user_id = 67
     association_group_id = 60
-    url_name = 'meetings:delete'
-    group_permissions_required = ['activity_calendar.can_host_meetings']
+    url_name = "meetings:delete"
+    group_permissions_required = ["activity_calendar.can_host_meetings"]
     recurrence_id = "2023-03-09T19:00:00+00:00"
 
     def get_url_kwargs(self, recurrence_id=None, **kwargs):
         recurrence_id = recurrence_id or self.recurrence_id
 
         return super(DeleteMeetingViewTestCase, self).get_url_kwargs(
-            recurrence_id=datetime.fromisoformat(recurrence_id),
-            **kwargs
+            recurrence_id=datetime.fromisoformat(recurrence_id), **kwargs
         )
 
     def test_class(self):
@@ -314,22 +310,15 @@ class DeleteMeetingViewTestCase(AssocationGroupTestingMixin, ViewValidityMixin, 
     def test_catch_already_cancelled_meetings(self):
         recurrence_id = "2023-03-25T19:00:00+00:00"
         response = self.client.get(self.get_base_url(recurrence_id=recurrence_id), follow=False)
-        redirect_url = reverse("committees:meetings:home", kwargs={'group_id': self.association_group.id})
+        redirect_url = reverse("committees:meetings:home", kwargs={"group_id": self.association_group.id})
         self.assertRedirects(response, expected_url=redirect_url, fetch_redirect_response=False)
         response = self.client.get(redirect_url)
         self.assertHasMessage(response, level=messages.ERROR)
 
     def test_succesful_post(self):
         data = {}
-        redirect_url = reverse("committees:meetings:home", kwargs={'group_id': self.association_group.id})
-        self.assertValidPostResponse(
-            data=data,
-            redirect_url=redirect_url,
-            fetch_redirect_response=False
-        )
+        redirect_url = reverse("committees:meetings:home", kwargs={"group_id": self.association_group.id})
+        self.assertValidPostResponse(data=data, redirect_url=redirect_url, fetch_redirect_response=False)
         response = self.assertValidGetResponse(url=redirect_url)
 
-        self.assertHasMessage(
-            response,
-            level=messages.SUCCESS
-        )
+        self.assertHasMessage(response, level=messages.SUCCESS)

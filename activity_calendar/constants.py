@@ -22,5 +22,3 @@ class ActivityStatus:
     STATUS_NORMAL = "GO"
     STATUS_CANCELLED = "STOP"
     STATUS_REMOVED = "RMV"
-
-
