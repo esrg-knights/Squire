@@ -43,14 +43,11 @@ class MeetingConfig(CommitteeBaseConfig):
             path("", views.MeetingOverview.as_view(config=self), name="home"),
             path("add/", views.AddMeetingView.as_view(config=self), name="add"),
             path("edit-recurrence/", views.MeetingRecurrenceFormView.as_view(config=self), name="edit_recurrence"),
-            path(
-                "<dt:recurrence_id>/",
-                include(
-                    [
-                        path("edit/", views.EditMeetingView.as_view(config=self), name="edit"),
-                        path("activate/", views.EditCancelledMeetingView.as_view(config=self), name="un-cancel"),
-                        path("delete/", views.DeleteMeetingView.as_view(config=self), name="delete"),
-                    ]
-                ),
+            path("<dt:recurrence_id>/",
+                include([
+                    path("edit/", views.EditMeetingView.as_view(config=self), name="edit"),
+                    path("activate/", views.EditCancelledMeetingView.as_view(config=self), name="un-cancel"),
+                    path("delete/", views.DeleteMeetingView.as_view(config=self), name="delete"),
+                ]),
             ),
         ]
