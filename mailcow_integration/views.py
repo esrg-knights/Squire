@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Dict, List, Optional, Tuple, TypedDict
 
 from django.conf import settings
-from django.db.models import Q, ExpressionWrapper, BooleanField, QuerySet
+from django.db.models import QuerySet
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -39,8 +39,10 @@ class SubscriberInfos(TypedDict):
 
 @dataclass
 class AliasInfos:
-    """ TODO """
-    status: str
+    """ Shared interface for email lists, regardless of whether it is for
+        member aliases, committee aliases, or orphan data.
+    """
+    status: str # One of AliasStatus.name
     subscribers: List[SubscriberInfos]
     address: str
     modal_id: str
@@ -66,7 +68,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
 
     def _get_alias_status(self, address: str, subscribers: QuerySet, alias_type: AliasCategory,
             aliases: List[MailcowAlias], mailboxes: List[MailcowMailbox], squire_comment: str) -> Tuple[AliasStatus, Optional[MailcowAlias], Optional[MailcowMailbox]]:
-        """ TODO """
+        """ Gets the status for an address, along with the alias or mailbox data associated with that address (if any). """
         if (alias_type != AliasCategory.MEMBER and address in settings.MEMBER_ALIASES
                 or alias_type == AliasCategory.COMMITTEE and address in settings.COMMITTEE_CONFIGS['global_addresses']):
             # Address is reserved
@@ -87,17 +89,20 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
                                     extra=([] if alias_type == AliasCategory.GLOBAL_COMMITTEE else self._committee_addresses)
                                 )):
                 # Alias is outdated
+                #   goto-addresses include archive addresses and subscriber's addresses
+                #   goto-addresses exclude member-alias addresses and (usually) committee addresses
                 return AliasStatus.OUTDATED, alias, None
             else:
                 # Alias is valid
-               return AliasStatus.VALID, alias, None
+                return AliasStatus.VALID, alias, None
         else:
             # Alias does not exist
             return AliasStatus.MISSING, None, None
 
     def _get_alias_exposure_routes(self, address: str, aliases: List[MailcowAlias], mailboxes: List[MailcowMailbox],
             member_aliases: Dict[str, Dict]) -> List[List[str]]:
-        """ TODO """
+        """ Gets addresses through which an internal alias is exposed. That is, public addresses
+            with the internal alias in their goto-addresses."""
         routes: List[List[str]] = []
         for alias in aliases:
             if address in alias.goto:
@@ -115,8 +120,10 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             alias: Optional[MailcowAlias], alias_type: AliasCategory = AliasCategory.MEMBER) -> List[SubscriberInfos]:
         """ Determines how subscribers should be displayed, based on the status of the alias """
         if status == AliasStatus.NOT_MANAGED_BY_SQUIRE:
+            # Not managed by Squire; no specific way to display subscribers
             return [{'name': addr, 'invalid': False} for addr in alias.goto]
         elif status == AliasStatus.MAILBOX or status == AliasStatus.RESERVED:
+            # Mailboxes or reserved aliases have no subscribers
             return []
         else:
             email_field = "email"
@@ -135,7 +142,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             } for sub in subscribers]
 
     def _init_member_alias_list(self, aliases: List[MailcowAlias], mailboxes: List[MailcowMailbox]) -> List[AliasInfos]:
-        """ TODO """
+        """ Initialize member aliases. e.g. leden@example.com """
         active_members = self.mailcow_manager.get_active_members()
         infos: List[AliasInfos] = []
 
@@ -160,7 +167,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
         return infos
 
     def _init_global_committee_alias_list(self, aliases: List[MailcowAlias], mailboxes: List[MailcowMailbox]) -> List[AliasInfos]:
-        """ TODO """
+        """ Initialize global committee aliases. e.g. commissies@example.com """
         infos: List[AliasInfos] = []
 
         for address in settings.COMMITTEE_CONFIGS["global_addresses"]:
@@ -178,7 +185,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
         return infos
 
     def _init_committee_alias_list(self, aliases: List[MailcowAlias], mailboxes: List[MailcowMailbox]) -> List[AliasInfos]:
-        """ TODO """
+        """ Initialize committee aliases. e.g. bg@example.com """
         infos: List[AliasInfos] = []
 
         for assoc_group in self.mailcow_manager.get_active_committees():
@@ -200,7 +207,7 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
     def _init_unused_squire_addresses_list(self, aliases: List[MailcowAlias],
             member_aliases: List[AliasInfos], committee_aliases: List[AliasInfos],
             global_committee_aliases: List[AliasInfos]) -> List[AliasInfos]:
-        """ TODO """
+        """ Initialize orphan aliases. i.e. those no longer being used by Squire, but still present in Mailcow """
         # Only include aliases starting with [MANAGED BY SQUIRE]
         aliases = filter(lambda alias: alias.public_comment.startswith(self.mailcow_manager.SQUIRE_MANAGE_INDICATOR), aliases)
         # Ignore addresses that are member aliases
@@ -252,16 +259,15 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
             messages.success(self.request, "Member aliases updated.")
         elif self.request.POST.get("alias_type", None) == "global_committee":
             # Update all global committee aliases
-            # TODO: self.mailcow_manager.update_member_aliases()
+            # TODO:
             messages.success(self.request, "Global committee aliases updated.")
         elif self.request.POST.get("alias_type", None) == "committees":
             # Update all committee aliases
-            # TODO: Update user aliases
             self.mailcow_manager.update_committee_aliases()
             messages.success(self.request, "Committee aliases updated.")
         else:
             # Delete orphan data
-            # TODO: self.mailcow_manager.update_member_aliases()
+            # TODO:
             messages.success(self.request, "Orphan data deleted.")
 
         return HttpResponseRedirect(self.request.get_full_path())

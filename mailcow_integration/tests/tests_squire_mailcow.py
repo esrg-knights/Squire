@@ -2,7 +2,7 @@ from copy import deepcopy
 from typing import List
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from dynamic_preferences.users.models import UserPreferenceModel
 from unittest.mock import Mock, PropertyMock, patch, ANY
 from committees.models import AssociationGroup, AssociationGroupMembership
@@ -11,7 +11,7 @@ from core.tests.util import suppress_infos, suppress_warnings
 from mailcow_integration.api.interface.alias import MailcowAlias
 from mailcow_integration.api.interface.mailbox import MailcowMailbox
 from mailcow_integration.api.interface.rspamd import RspamdSettings
-from mailcow_integration.squire_mailcow import SquireMailcowManager
+from mailcow_integration.squire_mailcow import AliasCategory, SquireMailcowManager
 from membership_file.models import Member
 
 User = get_user_model()
@@ -96,6 +96,11 @@ class SquireMailcowManagerTest(TestCase):
         # Flat variant only contains email addresses (and is also sorted)
         cleaned_flat = self.squire_mailcow_manager.clean_emails_flat(User.objects.all(), email_field="email")
         self.assertListEqual(cleaned_flat, ["baq@example.com", "baz@example.com"])
+
+        # Passing the "extra" keyword extends the blocklist, but does not modify it for future runs
+        cleaned = self.squire_mailcow_manager.clean_emails(User.objects.all(), extra=[baz.email])
+        self.assertQuerysetEqual(cleaned, User.objects.filter(email__in=[baq.email]))
+        self.assertEqual(self.squire_mailcow_manager.BLOCKLISTED_EMAIL_ADDRESSES, ["foo@example.com", "bar@example.com"])
 
     @patch("membership_file.models.Member.objects.filter_active")
     def test_get_active_members(self, mock: Mock):
@@ -379,7 +384,7 @@ class SquireMailcowManagerTest(TestCase):
         'archive@example.com', 'archive2@example.com'
     ])
     @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.mailbox_map', return_value={
-        "foo@example.com": MailcowMailbox("mailbox@example.com", "Mr. Foo"),
+        "mailbox@example.com": MailcowMailbox("mailbox@example.com", "Mr. Foo"),
     }, new_callable=PropertyMock)
     @patch('mailcow_integration.squire_mailcow.SquireMailcowManager._set_alias_by_name')
     @suppress_infos(logger_name="mailcow_integration.squire_mailcow")
@@ -413,8 +418,78 @@ class SquireMailcowManagerTest(TestCase):
             public_comment=self.squire_mailcow_manager.ALIAS_COMMITTEE_PUBLIC_COMMENT)
         mock_set_alias.assert_any_call("rp@example.com", archive_mock.return_value + ["memberfoo@example.com"],
             public_comment=self.squire_mailcow_manager.ALIAS_COMMITTEE_PUBLIC_COMMENT)
-        # Blocklisted committee email not called
+        # Blocklisted & Mailbox committee email not called
         self.assertEqual(mock_set_alias.call_count, 2)
 
         # Alias cache is invalidated
         self.assertIsNone(self.squire_mailcow_manager._alias_cache)
+
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.mailbox_map', return_value={
+        "mailbox@example.com": MailcowMailbox("mailbox@example.com", "Mr. Foo"),
+    }, new_callable=PropertyMock)
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager._set_alias_by_name')
+    @override_settings(MEMBER_ALIASES={
+        "leden@example.com": {
+            "title": "Announcements",
+            "description": "General emails and announcements, such as those for General Members Meetings.",
+            "internal": True,
+            "allow_opt_out": False,
+            "default_opt": True,
+            "archive_addresses": ["archive@example.com"]
+        },
+        "mailbox@example.com": {
+            "title": "Mailbox",
+            "description": "This is a mailbox.",
+            "internal": True,
+            "allow_opt_out": True,
+            "default_opt": False,
+            "archive_addresses": ["archive@example.com"]
+        },
+    })
+    @suppress_warnings(logger_name="mailcow_integration.squire_mailcow")
+    def test_update_member_aliases(self, mock_set_alias: Mock, mock_mailbox_map: Mock):
+        """ Tests updating member aliases """
+        self.squire_mailcow_manager.BLOCKLISTED_EMAIL_ADDRESSES = ["blocklisted@example.com"]
+
+        bg = AssociationGroup.objects.create(site_group=Group.objects.create(name="Boardgamers"),
+            type=AssociationGroup.COMMITTEE, contact_email="bg@example.com")
+
+        foo = Member.objects.create(first_name='Foo', last_name="Oof", legal_name="Foo Oof", email="foo@example.com")
+        committeemem = Member.objects.create(first_name='Bar', last_name="Rab", legal_name="Bar Rab", email="bg@example.com")
+        blockedmem = Member.objects.create(first_name='Blocked', last_name="Dekcolb", legal_name="Blocked Dekcolb", email="blocklisted@example.com")
+
+        self.squire_mailcow_manager.update_member_aliases()
+
+        # Blockedlisted & committee (BG) member email not used
+        mock_set_alias.assert_any_call("leden@example.com", ["archive@example.com", foo.email],
+            public_comment=self.squire_mailcow_manager.ALIAS_MEMBERS_PUBLIC_COMMENT)
+        # Blocklisted & Mailbox email not called
+        self.assertEqual(mock_set_alias.call_count, 1)
+
+        # Alias cache is invalidated
+        self.assertIsNone(self.squire_mailcow_manager._alias_cache)
+
+    @override_settings(
+        MEMBER_ALIASES={
+            "leden@example.com": {
+                "title": "Announcements",
+                "description": "General emails and announcements, such as those for General Members Meetings.",
+                "internal": True,
+                "allow_opt_out": False,
+                "default_opt": True,
+                "archive_addresses": ["archive@example.com"]
+            },
+        },
+        COMMITTEE_CONFIGS={
+            "archive_addresses": ["archivecommittee@example.com"],
+            "global_archive_addresses": ["bestuur@example.com"]
+        }
+    )
+    def test_get_archive_adresses_for_type(self):
+        """ Tests whether the correct archive address is provided for a given AliasType """
+        addr = self.squire_mailcow_manager.get_archive_adresses_for_type(AliasCategory.MEMBER, "leden@example.com")
+        self.assertEqual(addr, ["archive@example.com"])
+        addr = self.squire_mailcow_manager.get_archive_adresses_for_type(AliasCategory.GLOBAL_COMMITTEE, "foo@example.com")
+        self.assertEqual(addr, ["bestuur@example.com"])
+        addr = self.squire_mailcow_manager.get_archive_adresses_for_type(AliasCategory.COMMITTEE, "bar@example.com")
+        self.assertEqual(addr, ["archivecommittee@example.com"])

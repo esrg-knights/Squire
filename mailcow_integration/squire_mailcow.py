@@ -62,12 +62,12 @@ class SquireMailcowManager:
         # List of internal addresses (sorted in order of appearance in the config)
         self.INTERNAL_ALIAS_ADDRESSES: List[str] = [
             address for address, alias_data in settings.MEMBER_ALIASES.items() if alias_data['internal']
-        ]
+        ] + settings.COMMITTEE_CONFIGS["global_addresses"]
 
         # List of all member alias addresses; these should never be included in an alias's goto addresses
         self.BLOCKLISTED_EMAIL_ADDRESSES: List[str] = [
             address for address in settings.MEMBER_ALIASES.keys()
-        ]
+        ] + settings.COMMITTEE_CONFIGS["global_addresses"]
 
         # Caches
         self._alias_cache: Optional[List[MailcowAlias]] = None
@@ -88,7 +88,6 @@ class SquireMailcowManager:
             Additional blocklisted addresses can be passed through the
             `extra` keyword argument.
         """
-        # TODO: Update tests to check the "extra" keyword
         blocklisted_addresses = [] # NOTE: Do not perform arithmetic on BLOCKLIST directly to prevent modification
         blocklisted_addresses += self.BLOCKLISTED_EMAIL_ADDRESSES
         if extra is not None:
