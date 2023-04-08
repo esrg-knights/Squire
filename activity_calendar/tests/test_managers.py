@@ -8,7 +8,7 @@ from activity_calendar.managers import MeetingManager
 
 
 class TestActivityTags(TestCase):
-    fixtures = ['test_users.json', 'test_activity_slots', 'activity_calendar/test_meetings']
+    fixtures = ["test_users.json", "test_activity_slots", "activity_calendar/test_meetings"]
 
     def setUp(self):
         self.manager = MeetingManager()
@@ -22,6 +22,5 @@ class TestActivityTags(TestCase):
     def test_filter_group(self):
         association_group = AssociationGroup.objects.get(id=60)
         meetings = self.manager.filter_group(association_group)
-        self.assertIn(62, meetings.values_list('id', flat=True))
-        self.assertNotIn(66, meetings.values_list('id', flat=True))
-
+        self.assertIn(62, meetings.values_list("id", flat=True))
+        self.assertNotIn(66, meetings.values_list("id", flat=True))
