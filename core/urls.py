@@ -7,8 +7,9 @@ from martor.views import markdownfy_view
 from .forms import LoginForm, PasswordResetForm, PasswordResetConfirmForm
 from . import views
 
-app_name = 'core'
+app_name = "core"
 
+# fmt: off
 urlpatterns = [
     # Martor
     path('api/martor/', include([

@@ -10,6 +10,7 @@ from activity_calendar.committee_pages.feeds import MeetingCalendarFeed
 
 register_converter(DateTimeIsoConverter, "dt")
 
+# fmt: off
 urlpatterns = [
     path("activities/",
         include([
