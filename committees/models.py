@@ -3,6 +3,7 @@ import datetime
 from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 
 from core.fields import MarkdownTextField
 from membership_file.models import Member
@@ -56,6 +57,14 @@ class AssociationGroup(models.Model):
 
     def __str__(self):
         return self.name
+
+    def has_perm(self, perm):
+        app_label, codename = perm.split('.', maxsplit=1)
+        return Permission.objects.filter(
+            Q(group__associationgroup=self) | Q(associationgroup=self),
+            codename=codename,
+            content_type__app_label=app_label
+        ).exists()
 
 
 class GroupExternalUrl(models.Model):

@@ -1,4 +1,4 @@
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ImproperlyConfigured
 
 from utils.viewcollectives import *
 
@@ -31,6 +31,24 @@ class AssociationGroupMixin(ViewCollectiveViewMixin):
         """ Returns the url for the tab. Interject url_kwargs to add extra perameters"""
         url_kwargs['group_id'] = self.association_group
         return super(AssociationGroupMixin, self)._get_tab_url(url_name, **url_kwargs)
+
+
+class AssociationGroupPermissionRequiredMixin:
+    group_permissions_required = None
+
+    def dispatch(self, request, *args, **kwargs):
+        if self.group_permissions_required is None:
+            raise ImproperlyConfigured(
+                f"{self.__class__.__name__} is missing the group_permissions_required attribute."
+            )
+        if isinstance(self.group_permissions_required, str):
+            self.group_permissions_required = [self.group_permissions_required]
+
+        for perm in self.group_permissions_required:
+            if not self.association_group.has_perm(perm):
+                raise PermissionDenied
+
+        return super(AssociationGroupPermissionRequiredMixin, self).dispatch(request, *args, **kwargs)
 
 
 class GroupSettingsMixin(AssociationGroupMixin):

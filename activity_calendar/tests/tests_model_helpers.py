@@ -3,6 +3,7 @@ from django.test import TestCase
 from activity_calendar.models import Activity, ActivityMoment, ActivitySlot, Participant
 
 from django.contrib.auth import get_user_model
+
 User = get_user_model()
 
 ##################################################################################
@@ -10,8 +11,9 @@ User = get_user_model()
 # @since 29 AUG 2020
 ##################################################################################
 
+
 class ActivityRelatedModelHelpersTest(TestCase):
-    fixtures = ['test_users.json']
+    fixtures = ["test_users.json"]
 
     def setUp(self):
         self.activity = Activity(id=4, title="Wow")

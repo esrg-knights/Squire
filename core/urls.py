@@ -1,13 +1,15 @@
-from django.urls import path, include
 from django.conf import settings
 from django.contrib.auth import views as djangoViews
+from django.urls import path, include
+from django.views.i18n import JavaScriptCatalog
 from martor.views import markdownfy_view
 
 from .forms import LoginForm, PasswordResetForm, PasswordResetConfirmForm
 from . import views
 
-app_name = 'core'
+app_name = "core"
 
+# fmt: off
 urlpatterns = [
     # Martor
     path('api/martor/', include([
@@ -66,4 +68,6 @@ urlpatterns = [
         path('404/', views.show_error_404),
         path('403/', views.show_error_403),
     ])),
+    # Internalisation library for javascript code. Used by django-recurrence
+    path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
 ]

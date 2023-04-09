@@ -38,8 +38,8 @@
     "subscriptions_required": true,
     "slot_creation": "CREATION_AUTO",
     "subscriptions_open": "7 00:00:00",
-    "subscriptions_close": "00:30:00",
-      "is_public": true
+      "subscriptions_close": "00:30:00",
+      "type": "PUBLIC"
   }
 },
 {
@@ -64,7 +64,7 @@
     "slot_creation": "CREATION_USER",
     "subscriptions_open": "7 00:00:00",
     "subscriptions_close": "02:00:00",
-      "is_public": true
+      "type": "PUBLIC"
   }
 },
 {
@@ -88,8 +88,8 @@
     "subscriptions_required": true,
     "slot_creation": "CREATION_STAFF",
     "subscriptions_open": "7 00:00:00",
-    "subscriptions_close": "00:30:00",
-    "is_public": true
+      "subscriptions_close": "00:30:00",
+      "type": "PUBLIC"
   }
 },
 {
@@ -114,7 +114,24 @@
         "slot_creation": "CREATION_NONE",
         "subscriptions_open": "7 00:00:00",
         "subscriptions_close": "02:00:00",
-        "is_public": false
+        "type": "MEETING"
+    }
+},
+{
+    "model": "activity_calendar.activity",
+    "pk": 5,
+    "fields": {
+        "title": "Winter time test activity",
+        "description": "Used to test dsl from winter to summer",
+        "location": "Online",
+        "created_date": "2023-01-02T20:00:00Z",
+        "last_updated_date": "2020-08-29T10:36:45.859Z",
+        "published_date": "2023-01-01T20:00:00Z",
+        "start_date": "2023-01-02T20:00:00Z",
+        "end_date": "2023-01-02T21:00:00Z",
+        "recurrences": "RRULE:FREQ=WEEKLY",
+        "slot_creation": "CREATION_NONE",
+        "type": "PUBLIC"
     }
 },
 {

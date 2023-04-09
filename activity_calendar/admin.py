@@ -63,7 +63,7 @@ class ActivityAdmin(MarkdownImageInlineAdmin):
     is_recurring.boolean = True
 
     list_display = ('id', 'title', 'start_date', 'is_recurring', 'subscriptions_required', )
-    list_filter = ['subscriptions_required', 'start_date', 'is_public']
+    list_filter = ['subscriptions_required', 'start_date',]
     list_display_links = ('id', 'title')
     date_hierarchy = 'start_date'
     search_fields = ['title']
@@ -81,7 +81,7 @@ class ActivityAdmin(MarkdownImageInlineAdmin):
 class ActivityMomentAdmin(MarkdownImageInlineAdmin):
     form = ActivityMomentAdminForm
 
-    list_filter = ['recurrence_id', 'local_start_date']
+    list_filter = ['recurrence_id', 'local_start_date', 'parent_activity__type']
     date_hierarchy = 'recurrence_id'
     search_fields = ['local_title', 'parent_activity__title']
     autocomplete_fields = ['parent_activity',]

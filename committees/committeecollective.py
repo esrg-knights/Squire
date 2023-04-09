@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Permission
+from django.db.models import Q
 
 from utils.viewcollectives import *
 from utils.auth_utils import get_perm_from_name
@@ -41,15 +42,7 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
     def check_group_access(self, association_group):
         """ Checks whether the group has access """
         if self.group_requires_permission is not None:
-            try:
-                perm = get_perm_from_name(self.group_requires_permission)
-            except Permission.DoesNotExist:
-                raise KeyError(f"{self.__class__} is configured incorrectly. "
-                               f"{self.group_requires_permission} is not a valid permission. ")
-            else:
-                if not perm.group_set.filter(associationgroup=association_group).exists() and \
-                    not perm.associationgroup_set.filter(id=association_group.id).exists():
-                    return False
+            return association_group.has_perm(self.group_requires_permission)
         return True
 
     def enable_access(self, association_group: AssociationGroup):

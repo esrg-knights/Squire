@@ -13,16 +13,19 @@ from django_ical.feedgenerator import ICal20Feed
 from django_ical.utils import build_rrule_from_recurrences_rrule
 from django_ical.views import ICalFeed
 
+from membership_file.models import Member
 
 from .models import Activity, ActivityMoment, Calendar
+from .constants import ActivityStatus, ActivityType
 import activity_calendar.util as util
-from membership_file.models import Member
+
 
 # Monkey-patch; Why is this not open for extension in the first place?
 feedgenerator.ITEM_EVENT_FIELD_MAP = (
     *(feedgenerator.ITEM_EVENT_FIELD_MAP),
-    ('recurrenceid',    'recurrence-id'),
+    ("recurrenceid", "recurrence-id"),
 )
+
 
 def only_for(class_type, default=None):
     def only_for_decorator(func):
@@ -30,7 +33,9 @@ def only_for(class_type, default=None):
             if isinstance(item, class_type):
                 return func(self, item)
             return default
+
         return func_wrapper
+
     return only_for_decorator
 
 
@@ -45,7 +50,8 @@ def get_feed_id(item):
         else:
             return f"local_activity-name-{item.parent_activity.id}-special-{item.id}@kotkt.nl"
 
-    raise RuntimeError(f'An incorrect object instance has entered the calendar feed: {item.__class__.__name__}')
+    raise RuntimeError(f"An incorrect object instance has entered the calendar feed: {item.__class__.__name__}")
+
 
 class ExtendedICal20Feed(ICal20Feed):
     """
@@ -57,17 +63,18 @@ class ExtendedICal20Feed(ICal20Feed):
         Writes the feed to the specified file in the
         specified encoding.
         """
-        tz_info = self.feed.get('vtimezone')
+        tz_info = self.feed.get("vtimezone")
         if tz_info:
             calendar.add_component(tz_info)
 
         super().write_items(calendar)
 
+
 # Activities should only be processed if either it is recurring or it is non-recurring, but the activitymoment
 # object has not yet been created. Otherwise it would yield two calendar activity copies
 # as described in issue #213
 def recurring_activities(activities):
-    """ Generator for activities to exclude invalid activity instances """
+    """Generator for activities to exclude invalid activity instances"""
     for activity in activities:
         if activity.is_recurring:
             yield activity
@@ -81,16 +88,16 @@ class CESTEventFeed(ICalFeed):
     Please refer the docs for the full list of options:
     https://django-ical.readthedocs.io/en/latest/usage.html#property-reference-and-extensions
     """
+
     feed_type = ExtendedICal20Feed
 
-    product_id = '-//Squire//Activity Calendar//EN'
+    product_id = "-//Squire//Activity Calendar//EN"
     file_name = "knights-calendar.ics"
 
     calendar_title = None
     calendar_description = None
 
-
-# Quick overwrite to allow results to be printed in the browser instead
+    # Quick overwrite to allow results to be printed in the browser instead
     # Good for testing
     # def __call__(self, *args, **kwargs):
     #     response = super(CESTEventFeed, self).__call__(*args, **kwargs)
@@ -99,16 +106,12 @@ class CESTEventFeed(ICalFeed):
 
     def title(self):
         if self.calendar_title is None:
-            raise KeyError(
-                f"'calendar_title' for {self.__class__.__name__} has not been defined."
-            )
+            raise KeyError(f"'calendar_title' for {self.__class__.__name__} has not been defined.")
         return self.calendar_title
 
     def description(self):
         if self.calendar_description is None:
-            raise KeyError(
-                f"'calendar_description' for {self.__class__.__name__} has not been defined."
-            )
+            raise KeyError(f"'calendar_description' for {self.__class__.__name__} has not been defined.")
         return self.calendar_description
 
     def method(self):
@@ -121,7 +124,7 @@ class CESTEventFeed(ICalFeed):
     # Timezone information (Daylight-saving time, etc.)
     def vtimezone(self):
         tz_info = util.generate_vtimezone(settings.TIME_ZONE, datetime(2020, 1, 1))
-        tz_info.add('x-lic-location', settings.TIME_ZONE)
+        tz_info.add("x-lic-location", settings.TIME_ZONE)
         return tz_info
 
     #######################################################
@@ -129,8 +132,8 @@ class CESTEventFeed(ICalFeed):
 
     def items(self):
         raise NotImplementedError(
-            "This has not yet been implemented. "
-            "Overwrite items() to add the activity gathering logic.")
+            "This has not yet been implemented. " "Overwrite items() to add the activity gathering logic."
+        )
 
     def item_guid(self, item):
         return get_feed_id(item)
@@ -190,7 +193,7 @@ class CESTEventFeed(ICalFeed):
         else:
             return "CONFIRMED"
 
-    @only_for(ActivityMoment, default=reverse_lazy('activity_calendar:activity_upcoming'))
+    @only_for(ActivityMoment, default=reverse_lazy("activity_calendar:activity_upcoming"))
     def item_link(self, item):
         # The local url to the activity
         return item.get_absolute_url()
@@ -237,16 +240,15 @@ class CESTEventFeed(ICalFeed):
             # The RDATES in the recurrency module store only dates and not times, so we need to address that
             exclude_dates += list(util.set_time_for_RDATE_EXDATE(item.recurrences.exdates, item.start_date))
 
-        cancelled_moments = item.activitymoment_set.\
-            filter(status=ActivityMoment.STATUS_REMOVED).\
-            values_list('recurrence_id', flat=True)
+        cancelled_moments = item.activitymoment_set.filter(status=ActivityStatus.STATUS_REMOVED).values_list(
+            "recurrence_id", flat=True
+        )
 
         # Correct timezone to the default timezone settings
-        cancelled_moments = [util.dst_aware_to_dst_ignore(
-            recurrence_id,
-            item.start_date,
-            reverse=True
-        ) for recurrence_id in cancelled_moments ]
+        cancelled_moments = [
+            util.dst_aware_to_dst_ignore(recurrence_id, item.start_date, reverse=True)
+            for recurrence_id in cancelled_moments
+        ]
         exclude_dates += filter(lambda occ: occ not in exclude_dates, cancelled_moments)
 
         # If there are no exclude_dates, don't bother including it
@@ -265,36 +267,39 @@ class CESTEventFeed(ICalFeed):
     # Include
     def feed_extra_kwargs(self, obj):
         kwargs = super().feed_extra_kwargs(obj)
-        val = self._get_dynamic_attr('vtimezone', obj)
+        val = self._get_dynamic_attr("vtimezone", obj)
         if val:
-            kwargs['vtimezone'] = val
+            kwargs["vtimezone"] = val
         return kwargs
 
     # We also want to store the recurrence-id
     def item_extra_kwargs(self, item):
         kwargs = super().item_extra_kwargs(item)
 
-        val =  self._get_dynamic_attr('item_recurrenceid', item)
+        val = self._get_dynamic_attr("item_recurrenceid", item)
         if val:
-            kwargs['recurrenceid'] = val
+            kwargs["recurrenceid"] = val
         return kwargs
 
 
 class PublicCalendarFeed(CESTEventFeed):
-    """ Define the feed for the public calendar """
-    product_id = '-//Squire//Activity Calendar//EN'
+    """Define the feed for the public calendar"""
+
+    product_id = "-//Squire//Activity Calendar//EN"
     file_name = "knights-calendar.ics"
     calendar_title = "Activiteiten Agenda - Knights"
     calendar_description = "Knights of the Kitchen Table Activiteiten en Evenementen."
 
     def items(self):
         # Only consider published activities
-        activities = Activity.objects.\
-            filter(published_date__lte=timezone.now()).order_by('-published_date'). \
-            filter(is_public=True)
-        exceptions = ActivityMoment.objects. \
-            filter(parent_activity__in=activities). \
-            exclude(status=ActivityMoment.STATUS_REMOVED)
+        activities = (
+            Activity.objects.filter(published_date__lte=timezone.now())
+            .order_by("-published_date")
+            .filter(type=ActivityType.ACTIVITY_PUBLIC)
+        )
+        exceptions = ActivityMoment.objects.filter(parent_activity__in=activities).exclude(
+            status=ActivityStatus.STATUS_REMOVED
+        )
 
         return [*recurring_activities(activities), *exceptions]
 
@@ -304,39 +309,37 @@ class CustomCalendarFeed(CESTEventFeed):
 
     @property
     def product_id(self):
-        return f'-//Squire//Activity Calendar {self.calendar.name}//EN'
+        return f"-//Squire//Activity Calendar {self.calendar.name}//EN"
 
     def __call__(self, *args, **kwargs):
-        self.calendar = get_object_or_404(Calendar, slug=kwargs['calendar_slug'])
+        self.calendar = get_object_or_404(Calendar, slug=kwargs["calendar_slug"])
         self.calendar_title = self.calendar.name
         self.calendar_description = self.calendar.description
 
         return super(CustomCalendarFeed, self).__call__(*args, **kwargs)
 
     def items(self):
-        activities = self.calendar.activities.\
-            filter(published_date__lte=timezone.now()).order_by('-published_date')
-        exceptions = ActivityMoment.objects. \
-            filter(parent_activity__in=activities). \
-            exclude(status=ActivityMoment.STATUS_REMOVED)
+        activities = self.calendar.activities.filter(published_date__lte=timezone.now()).order_by("-published_date")
+        exceptions = ActivityMoment.objects.filter(parent_activity__in=activities).exclude(
+            status=ActivityStatus.STATUS_REMOVED
+        )
 
         return [*recurring_activities(activities), *exceptions]
 
 
 class BirthdayCalendarFeed(CESTEventFeed):
-    product_id = '-//Squire//Birthday Calendar//EN'
+    product_id = "-//Squire//Birthday Calendar//EN"
     file_name = "knights-birthday-calendar.ics"
     calendar_title = "Birthday calendar - Knights"
     calendar_description = "Knights of the Kitchen Table Birthday Calendar."
 
     @classmethod
     def construct_birthday(cls, member):
-        """ Constructs the birthday for the given member"""
+        """Constructs the birthday for the given member"""
         recurrence_pattern = recurrence.Recurrence(rrules=[recurrence.Rule(recurrence.YEARLY)])
         start_time = datetime.combine(
-            member.date_of_birth,
-            datetime.min.time(),
-            tzinfo=timezone.get_current_timezone())
+            member.date_of_birth, datetime.min.time(), tzinfo=timezone.get_current_timezone()
+        )
         activity = Activity(
             title=f"It's {member.get_full_name()}'s birthday!",
             full_day=True,
@@ -349,7 +352,7 @@ class BirthdayCalendarFeed(CESTEventFeed):
         return activity
 
     def items(self):
-        """ Constructs a list of activities that represent the birthdays of the members """
+        """Constructs a list of activities that represent the birthdays of the members"""
         # Create iterator that builds activities from the list of members
         return map(
             self.construct_birthday,
@@ -357,14 +360,14 @@ class BirthdayCalendarFeed(CESTEventFeed):
                 memberyear__is_active=True,
                 membercalendarsettings__use_birthday=True,
                 date_of_birth__isnull=False,
-            )
+            ),
         )
 
     def item_guid(self, item):
         return item.feed_id
 
     def item_link(self, item):
-        return "" # There is no page for a birthday
+        return ""  # There is no page for a birthday
 
     def item_end_datetime(self, item):
         return item.start_date.date()

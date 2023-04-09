@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, Permission
 from membership_file.util import get_member_from_user
 
 

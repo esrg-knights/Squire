@@ -9,6 +9,7 @@ from django.utils.timezone import localtime
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import ValidationError
 
+from .constants import SlotCreationType, ActivityStatus
 from .models import ActivitySlot, Activity, Participant, ActivityMoment
 from core.forms import MarkdownForm
 from core.models import PresetImage
@@ -129,7 +130,7 @@ class RegisterForActivityForm(RegisterActivityMixin, Form):
         super(RegisterForActivityForm, self).check_validity(data)
 
         # Subscribing directly on activities can only happen if we don't use the multiple-slots feature
-        if self.activity_moment.slot_creation != Activity.SLOT_CREATION_AUTO:
+        if self.activity_moment.slot_creation != SlotCreationType.SLOT_CREATION_AUTO:
             raise ValidationError(
                 _("Activity mode is incorrect. Please refresh the page."), code='invalid_slot_mode')
 
@@ -279,9 +280,9 @@ class RegisterNewSlotForm(RegisterActivityMixin, ModelForm):
         super(RegisterNewSlotForm, self).check_validity(data)
 
         # Is user allowed to create a slot
-        if self.activity_moment.slot_creation == Activity.SLOT_CREATION_USER:
+        if self.activity_moment.slot_creation == SlotCreationType.SLOT_CREATION_USER:
             pass
-        elif self.activity_moment.slot_creation == Activity.SLOT_CREATION_STAFF and\
+        elif self.activity_moment.slot_creation == SlotCreationType.SLOT_CREATION_STAFF and\
             (self.user.has_perm('activity_calendar.can_ignore_none_slot_creation_type') or
              self.activity.is_organiser(self.user)):
             pass
@@ -413,7 +414,7 @@ class CancelActivityForm(ModelForm):
         fields = ['status',]
 
     def clean_status(self):
-        valid_options = [ActivityMoment.STATUS_CANCELLED, ActivityMoment.STATUS_REMOVED]
+        valid_options = [ActivityStatus.STATUS_CANCELLED, ActivityStatus.STATUS_REMOVED]
 
         if not self.cleaned_data['status'] in valid_options:
             raise ValidationError("You must mark any of the cancellation statuses to cancel this.", code='not-cancelled')

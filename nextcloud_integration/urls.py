@@ -2,6 +2,7 @@ from django.urls import path, include
 
 from . import views as views
 
+# fmt: off
 urlpatterns = [
     path('browse/', views.FileBrowserView.as_view(), name='browse_nextcloud'),
     path('browse/<path:path>/', views.FileBrowserView.as_view(), name='browse_nextcloud'),

@@ -44,13 +44,14 @@ class AssocationGroupTestingMixin(ViewValidityMixin):
                 self._set_group_perm(perm_name, self.association_group)
 
     def _set_group_perm(self, perm_name, group:AssociationGroup):
-        group.site_group.permissions.add(self._get_perm_by_name(perm_name))
+        group.permissions.add(self._get_perm_by_name(perm_name))
         # Delete the group permission cache
-        try:
-            del group.site_group._group_perm_cache
-            del group.site_group._perm_cache
-        except AttributeError:
-            pass
+        if group.site_group is not None:
+            try:
+                del group.site_group._group_perm_cache
+                del group.site_group._perm_cache
+            except AttributeError:
+                pass
 
     def get_base_url(self, **url_kwargs):
         if self.url_name is None:

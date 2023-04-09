@@ -23,29 +23,27 @@ from django.conf.urls import handler403, handler404
 
 urlpatterns = [
     # Progressive web app
-    path('', include('pwa.urls')),
+    path("", include("pwa.urls")),
     # Change Language helper view
-    path('i18n/', include('django.conf.urls.i18n')),
+    path("i18n/", include("django.conf.urls.i18n")),
     # Admin Panel
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
     # Achievements
-    path('', include('achievements.urls')),
+    path("", include("achievements.urls")),
     # Inventory
-    path('inventory/', include(('inventory.urls', 'inventory'), namespace='inventory')),
-    path('boardgames/', include(('boardgames.urls', 'boardgames'), namespace='boardgames')),
-    path('roleplay/', include(('roleplaying.urls', 'roleplaying'), namespace='roleplaying')),
-    path('nextcloud/', include(('nextcloud_integration.urls', 'nextcloud'), namespace='nextcloud')),
-
+    path("inventory/", include(("inventory.urls", "inventory"), namespace="inventory")),
+    path("boardgames/", include(("boardgames.urls", "boardgames"), namespace="boardgames")),
+    path("roleplay/", include(("roleplaying.urls", "roleplaying"), namespace="roleplaying")),
+    path("nextcloud/", include(("nextcloud_integration.urls", "nextcloud"), namespace="nextcloud")),
     # Activity Calendar
-    path('', include(('activity_calendar.urls', 'activity_calendar'), namespace='activity_calendar')),
+    path("", include(("activity_calendar.urls", "activity_calendar"), namespace="activity_calendar")),
     # Committee pages
-    path('groups/', include('committees.urls')),
+    path("groups/", include("committees.urls")),
     # Membership File
-    path('', include('membership_file.urls')),
+    path("", include("membership_file.urls")),
     # Redirect all other paths to the core module
-    path('', include('core.urls', namespace='core')),
-
-    path('', include('user_interaction.urls')),
+    path("", include("core.urls", namespace="core")),
+    path("", include("user_interaction.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 # NB: 'static(...) above only works when Debug=True! In production, the web server should be set up to serve files
 # For production use, view the following:
@@ -53,15 +51,15 @@ urlpatterns = [
 # https://docs.djangoproject.com/en/3.2/howto/static-files/deployment/
 #
 
-if settings.DEBUG and os.getenv('DJANGO_ENV') != 'TESTING':
+if settings.DEBUG and os.getenv("DJANGO_ENV") != "TESTING":
     # Debugging (Django Debug Toolbar)
-    urlpatterns.append(path('__debug__/', include('debug_toolbar.urls')))
+    urlpatterns.append(path("__debug__/", include("debug_toolbar.urls")))
 
 urlpatterns += [
     # Shortcuts should always be last to prevent replacements of functional built-in urls
-    path('', include('core.shortcut_urls')),
+    path("", include("core.shortcut_urls")),
 ]
 
-handler403 = 'core.views.show_error_403'
-handler404 = 'core.views.show_error_404'
-handler500 = 'core.views.show_error_500'
+handler403 = "core.views.show_error_403"
+handler404 = "core.views.show_error_404"
+handler500 = "core.views.show_error_500"

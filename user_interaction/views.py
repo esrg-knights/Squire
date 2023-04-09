@@ -8,6 +8,7 @@ from django.utils import timezone
 from dynamic_preferences.registries import global_preferences_registry
 
 from activity_calendar.models import Activity
+from activity_calendar.constants import ActivityType
 from core.forms import LoginForm
 from membership_file.models import Membership
 from membership_file.views import MembershipRequiredMixin
@@ -85,7 +86,7 @@ class HomeUsersView(TemplateView):
             welcome_name = optimise_naming_scheme(welcome_name)
 
         activities = []
-        for activity in Activity.objects.filter(published_date__lte=timezone.now(), is_public=True):
+        for activity in Activity.objects.filter(published_date__lte=timezone.now(), type=ActivityType.ACTIVITY_PUBLIC):
             for activity_moment in activity.get_activitymoments_between(start_date, end_date):
                 activities.append(activity_moment)
 

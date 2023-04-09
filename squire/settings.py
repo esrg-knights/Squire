@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     # External Libraries
     'bootstrap4',
+    'tempus_dominus', # Bootstrap DateTime picker
     'dynamic_preferences', # Global Preferences
     'dynamic_preferences.users.apps.UserPreferencesConfig', # Per-user preferences
     'recurrence',
