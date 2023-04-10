@@ -138,13 +138,17 @@ class ViewCollectiveViewMixin:
                 'name': None, # redacted
                 'verbose': page_config.name,
                 'icon_class': page_config.icon_class,
-                'url': self._get_tab_url(registry.namespace+':'+page_config.url_name),
+                'url': self._get_tab_url(page_config.url_name),
                 'selected': page_config == self.config,
             })
         return tabs
 
     def _get_tab_url(self, url_name, **url_kwargs):
         """ Returns the url for the tab. Interject url_kwargs to add extra perameters"""
+        if self.config.registry.namespace:
+            url_name = f"{self.config.registry.namespace}:{url_name}"
+        if self.config.registry.root_namespace:
+            url_name = f"{self.config.registry.root_namespace}:{url_name}"
         return reverse(url_name, kwargs=url_kwargs)
 
 
@@ -155,14 +159,17 @@ class ViewCollectiveRegistry:
     config_class = ViewCollectiveConfig
     namespace = None
 
-    def __init__(self, collective_namespace: str, folder_name: str, config_class: Type[ViewCollectiveConfig]=None):
+    def __init__(self, collective_namespace: str, folder_name: str, config_class: Type[ViewCollectiveConfig]=None,
+                 root_namespace: Optional[str]=None):
         """
         Registry class that regulates access to all config classes
         :param collective_namespace: Name of the collective. Used for the namespace
         :param folder_name: the name of the folder in which the configs will be located
         :param config_class: Type of config classes being used
+        :param root_namespace: The namespace path that the registry is in.
         """
         self.namespace = collective_namespace
+        self.root_namespace = root_namespace
         self.folder_name = folder_name
         self.config_class = config_class or self.config_class
         self._configs: List[ViewCollectiveConfig] = None
