@@ -183,3 +183,96 @@ class MailcowSubscriberInfosTests(MailcowStatusViewTests):
         self.assertEqual(len(subinfos), 1)
         self.assertEqual(subinfos[0], {'name': "Boardgamers (Committee) &mdash; bg@example.com", 'invalid': False})
 
+class MailcowStatusExposureTests(MailcowStatusViewTests):
+    """ Tests exposure route detection """
+    def setUp(self):
+        super().setUp()
+        self.member_aliases = {
+            "foo@example.com": {
+                "internal": True,
+            },
+            "internal@example.com": {
+                "internal": True
+            },
+            "public@example.com": {
+                "internal": False
+            }
+        }
+
+    def test_exposed_direct(self):
+        """ Tests if exposure routes are found when there is one direct exposure """
+        aliases = [MailcowAlias("exposer@example.com", ["baz@example.com", "foo@example.com", "abc@example.com"])]
+
+        exposure_routes = self.view._get_alias_exposure_routes("foo@example.com", aliases, [], self.member_aliases)
+        self.assertListEqual(exposure_routes, [["exposer@example.com"]])
+
+    def test_exposed_direct_multiple(self):
+        """ Tests if exposure routes are found when there are multiple direct exposures """
+        aliases = [
+            MailcowAlias("exposer1@example.com", ["baz@example.com", "foo@example.com", "abc@example.com"]),
+            MailcowAlias("exposer0@example.com", ["foo@example.com", "abc@example.com"]),
+            MailcowAlias("exposer2@example.com", ["baz@example.com", "foo@example.com"])
+        ]
+
+        exposure_routes = self.view._get_alias_exposure_routes("foo@example.com", aliases, [], self.member_aliases)
+        # Exposed addresses are sorted alphabetically
+        self.assertListEqual(exposure_routes, [
+            ["exposer0@example.com"],
+            ["exposer1@example.com"],
+            ["exposer2@example.com"]
+        ])
+
+    def test_member_alias_exposure(self):
+        """ Tests if exposure routes are found depending on the internal-status of an alias """
+        aliases = [
+            MailcowAlias("internal@example.com", ["baz@example.com", "foo@example.com", "abc@example.com"]),
+            MailcowAlias("public@example.com", ["baz@example.com", "foo@example.com", "abc@example.com"]),
+        ]
+
+        exposure_routes = self.view._get_alias_exposure_routes("foo@example.com", aliases, [], self.member_aliases)
+        # Internal alias cannot expose another internal alias
+        self.assertNotIn(["internal@example.com"], exposure_routes)
+        # Public alias should expose an internal alias
+        self.assertListEqual(exposure_routes, [["public@example.com"]])
+
+    def test_exposed_indirect(self):
+        """ Tests if exposure routes are found when there is one indirect exposure """
+        aliases = [
+            MailcowAlias("internal@example.com", ["baz@example.com", "foo@example.com", "abc@example.com"]),
+            MailcowAlias("exposed@example.com", ["baz@example.com", "internal@example.com", "abc@example.com"]),
+        ]
+
+        exposure_routes = self.view._get_alias_exposure_routes("foo@example.com", aliases, [], self.member_aliases)
+        # Address exposed via [exposed@example.com -> internal@example.com -> foo@example.com]
+        self.assertListEqual(exposure_routes, [["exposed@example.com", "internal@example.com"]])
+
+        # Test a very indirect exposure route
+        expected_exposure_route = []
+        aliases = []
+        for i in range(10):
+            expected_exposure_route.append(f"addr{i}@example.com")
+            # Note: addr0@example.com is public
+            self.member_aliases[f"addr{i+1}@example.com"] = {"internal": True}
+            aliases.append(MailcowAlias(f"addr{i}@example.com", [f"addr{i+1}@example.com"]))
+        aliases.append(MailcowAlias("addr10@example.com", ["foo@example.com"]))
+        expected_exposure_route.append(f"addr10@example.com")
+        exposure_routes = self.view._get_alias_exposure_routes("foo@example.com", aliases, [], self.member_aliases)
+        # Exposed via [addr0@example.com -> addr1@example.com -> addr2@example.com -> addr3@example.com
+        #   -> addr4@example.com -> addr5@example.com -> addr6@example.com -> addr7@example.com
+        #   -> addr8@example.com -> addr9@example.com -> addr10@example.com -> foo@example.com]
+        self.assertListEqual(exposure_routes, [expected_exposure_route])
+
+    def test_exposed_indirect_multiple(self):
+        """ Tests if exposure routes are found when there is one indirect exposure """
+        aliases = [
+            MailcowAlias("exposed2@example.com", ["baz@example.com", "internal@example.com", "abc@example.com"]),
+            MailcowAlias("internal@example.com", ["baz@example.com", "foo@example.com", "abc@example.com"]),
+            MailcowAlias("exposed1@example.com", ["baz@example.com", "internal@example.com", "abc@example.com"]),
+        ]
+
+        exposure_routes = self.view._get_alias_exposure_routes("foo@example.com", aliases, [], self.member_aliases)
+        # Address exposed via [exposed@example.com -> internal@example.com -> foo@example.com]
+        self.assertListEqual(exposure_routes, [
+            ["exposed1@example.com", "internal@example.com"],
+            ["exposed2@example.com", "internal@example.com"]
+        ])

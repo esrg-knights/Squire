@@ -106,15 +106,17 @@ class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
         routes: List[List[str]] = []
         for alias in aliases:
             if address in alias.goto:
+                # Address appears in the alias's goto
                 if not next((config['internal'] for member_address, config in member_aliases.items() if member_address == alias.address), False):
-                    # Exposed
+                    # Exposed: The alias is a public (non-internal) member alias
                     routes.append([alias.address])
                 else:
-                    # Other internal address might be exposed
+                    # The alias is an internal member alias, but it _might_ be exposed.
                     for route in self._get_alias_exposure_routes(alias.address, aliases, mailboxes, member_aliases):
                         route.append(alias.address)
                         routes.append(route)
-        return routes
+        # Sort routes alphabetically
+        return sorted(routes, key=lambda route: route[0])
 
     def _get_subscriberinfos_by_status(self, status: AliasStatus, subscribers: QuerySet,
             alias: Optional[MailcowAlias], alias_type: AliasCategory = AliasCategory.MEMBER) -> List[SubscriberInfos]:
