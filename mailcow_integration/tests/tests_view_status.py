@@ -8,7 +8,7 @@ from committees.models import AssociationGroup
 from mailcow_integration.api.interface.alias import MailcowAlias
 from mailcow_integration.api.interface.mailbox import MailcowMailbox
 from mailcow_integration.squire_mailcow import AliasCategory, SquireMailcowManager
-from mailcow_integration.views import AliasStatus, MailcowStatusView
+from mailcow_integration.admin_status.views import AliasStatus, MailcowStatusView
 from membership_file.models import Member
 
 User = get_user_model()

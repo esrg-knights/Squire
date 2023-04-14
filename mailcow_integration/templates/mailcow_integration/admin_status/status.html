@@ -2,12 +2,19 @@
 {% extends 'core/base.html' %}
 
 {% load static %}
+{% load bootstrap_tabs %}
 
 {% block title %}
   Mailcow Server Status
 {% endblock title %}
 
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/bootstrap_tabs.css' %}">
+{% endblock css %}
+
 {% block content %}
+    {% bootstrap_tabs tabs %}
     <h1>Mailcow Server Status</h1>
     {% if not mailcow_host %}
         <p>Mailcow client is not set up. Modify settings.py and add a host and API key.</p>

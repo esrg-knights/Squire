@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.views.generic import TemplateView
 from committees.models import AssociationGroup
+from core.status_collective import AdminStatusViewMixin
 
 from mailcow_integration.api.exceptions import MailcowAPIAccessDenied, MailcowAPIReadWriteAccessDenied, MailcowAuthException, MailcowException
 from mailcow_integration.api.interface.alias import MailcowAlias
@@ -55,11 +56,11 @@ class AliasInfos:
     squire_edit_url: Optional[str] = None
     archive_addresses: List[str] = field(default_factory=list)
 
-class MailcowStatusView(SuperUserRequiredMixin, TemplateView):
+class MailcowStatusView(AdminStatusViewMixin, TemplateView):
     """ An overview of aliases managed by Squire. Connects to the Mailcow API to determine whether
         such aliases are considered up-to-date. Also allows forced updates of each alias.
     """
-    template_name = "mailcow_integration/status.html"
+    template_name = "mailcow_integration/admin_status/status.html"
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

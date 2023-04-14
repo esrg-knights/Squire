@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib.auth import views as djangoViews
 from martor.views import markdownfy_view
 
+from core.status_collective import registry
 from .forms import LoginForm, PasswordResetForm, PasswordResetConfirmForm
 from . import views
 
@@ -61,6 +62,7 @@ urlpatterns = [
     path('register/success', views.registerSuccess, name='user_accounts/register/success'),
     path('newsletters/', views.NewsletterView.as_view(), name='newsletters'),
     path('downloads/', views.DownloadsView.as_view(), name='downloads'),
+    path('status/', registry.get_urls()),
     # Mock 403 and 404 views for display testing in development
     path('mock/', include([
         path('500/', views.show_error_500),
