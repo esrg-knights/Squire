@@ -37,6 +37,8 @@ urlpatterns = [
     path("nextcloud/", include(("nextcloud_integration.urls", "nextcloud"), namespace="nextcloud")),
     # Activity Calendar
     path("", include(("activity_calendar.urls", "activity_calendar"), namespace="activity_calendar")),
+    # Mail
+    path("mail/", include(("mailing.urls", "mailing"))),
     # Committee pages
     path("groups/", include("committees.urls")),
     # Membership File

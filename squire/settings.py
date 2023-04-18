@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'recurrence',
     'rest_framework',
     # Internal Components
+    'mailing',
     'achievements',
     'membership_file',
     'inventory',
@@ -132,6 +133,22 @@ TEMPLATES = [
             ],
         },
     },
+    {
+        "NAME": "EmailTemplates",
+        # "BACKEND": "django.core.mail.backends.console.EmailBackend",
+        "BACKEND": 'django.template.backends.django.DjangoTemplates',
+        "OPTIONS": {
+            "builtins": [],
+            "loaders": [
+                (
+                    "django.template.loaders.cached.Loader",
+                    [
+                        ("mailing.loaders.CustomAppDirectoryLoader", "mail_templates"),
+                    ]
+                )
+            ]
+        }
+    }
 ]
 
 WSGI_APPLICATION = 'squire.wsgi.application'
@@ -256,6 +273,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'htdocs', 'media')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'core', 'static_compiled'),
 ]
+
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 # The directory in which the coverage reports should be stored
