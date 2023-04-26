@@ -1,7 +1,10 @@
 from django.core import mail
 from django.test import TestCase
 from django.test.utils import modify_settings, override_settings
+from typing import Union
 
+
+__all__ = ["MailTestingMixin"]
 
 class MailTestingMixin(TestCase):
     def assertSendMail(self, subject=None, email_class=None, to=None) -> mail.EmailMessage:
@@ -46,7 +49,7 @@ class MailTestingMixin(TestCase):
         raise AssertionError(msg)
 
     @staticmethod
-    def get_html_template(mail_message: mail.EmailMultiAlternatives) -> str | None:
+    def get_html_template(mail_message: mail.EmailMultiAlternatives) ->  Union[str, None]:
         """Returns the html template associated with the e-mail"""
         for content, minetype in mail_message.alternatives:
             if minetype == "text/html":

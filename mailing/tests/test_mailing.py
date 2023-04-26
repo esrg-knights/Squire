@@ -74,3 +74,9 @@ class SimpleMessageEmailTestCase(MailTestingMixin, TestCase):
         send_mail = self.assertSendMail()
         self.assertIn("Here is a message", self.get_html_template(send_mail))
         self.assertIn("Here is a message", send_mail.body)
+
+    def test_send_as_bcc(self):
+        mail = SimpleMessageEmail(message="Here is a message", subject="Mail subject")
+        mail.send_as_bcc("", bcc_list=["bcc1@test.com", "bcc2@test.com"])
+        send_mail = self.assertSendMail()
+        self.assertIn("bcc2@test.com", send_mail.bcc)

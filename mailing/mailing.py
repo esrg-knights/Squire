@@ -59,9 +59,21 @@ class Email:
             "recipient": recipient,
         }
 
+    def deconstruct_recipient(self, recipients):
+        """
+        Processes a recipient to return the actual recipients. This can be overridden to deconstruct a group into
+        the individual members of the group
+        :param recipients:
+        :return:
+        """
+
     def _get_to_mail_addresses(self, recipient: str):
         """Returns the e-mail address from the recipient  instance. Can be overwritten to use User other sources"""
         if isinstance(recipient, str):
+            if recipient == "":
+                # String is deliberately empty, so assume it is for a reason
+                return ""
+
             regexp = re.compile(r"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$", re.IGNORECASE)
             email = regexp.findall(recipient)
             if email:
@@ -88,6 +100,7 @@ class Email:
         """
         Send emails to the recipients
         :param recipients: Single instance or iteration of recipients. Initially expected email string
+        :param bcc: List of bcc addresses,
         :param fail_silently: A boolean. When it’s False, send_mail() will raise an smtplib.SMTPException if an error occurs.
         :return:
         """
@@ -143,9 +156,26 @@ class SimpleMessageEmail(Email):
 
     def __init__(self, message, **kwargs):
         self.message = message
+        self._bcc = None
         super(SimpleMessageEmail, self).__init__(**kwargs)
+
+    def _get_bcc_mail_addresses(self, recipient):
+        if self._bcc:
+            return self._bcc
+        return []
 
     def get_context_data(self):
         context = super(SimpleMessageEmail, self).get_context_data()
         context["message"] = self.message
         return context
+
+    def send_as_bcc(self, to_address: str, bcc_list: list):
+        """
+        Send an email as a bcc email
+        :param to_address: The address in the header (does not have to be an existing email). Can be an empty string
+        :param bcc_list: The list of bcc instances
+        :return: None
+        """
+        self._bcc = bcc_list
+        self.send_to([to_address])
+        self._bcc = None
