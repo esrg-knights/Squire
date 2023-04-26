@@ -10,8 +10,8 @@ class Email:
     Renders and sends emails in a predefined template. It's basically the email alternative to the View class
     :param template_name: The path and name of the template (without extention)
     """
-    template_name:str = None
-    subject:str = None
+    template_name: str = None
+    subject: str = None
 
     @cached_property
     def txt_template(self):
@@ -30,21 +30,23 @@ class Email:
         except TemplateDoesNotExist:
             return None
 
-    def __init__(self, template_name: str=None, subject: str=None):
+    def __init__(self, template_name: str = None, subject: str = None):
         self.template_name = template_name or self.template_name
         self.subject = subject or self.subject
 
-    def _get_mail_templates(self, extension:str ):
-        """ Gets the mail template with the given extention """
+    def _get_mail_templates(self, extension: str):
+        """Gets the mail template with the given extention"""
         return get_template(f"{self.template_name}.{extension}", using='EmailTemplates')
 
     def get_mail_subject(self):
-        """ Returns the subject of the mail """
+        """Returns the subject of the mail"""
         if self.subject:
             return self.subject
         else:
-            raise KeyError(f"No mail_subject is defined for {self.__class__.__name__}. Make sure to set the "
-                           f"mail_subject attribute or overwrite the 'get_mail_subject' method")
+            raise KeyError(
+                f"No mail_subject is defined for {self.__class__.__name__}. Make sure to set the "
+                f"mail_subject attribute or overwrite the 'get_mail_subject' method"
+            )
 
     def get_connection(self):
         return get_connection()
@@ -57,10 +59,10 @@ class Email:
             "recipient": recipient,
         }
 
-    def _get_to_mail_addresses(self, recipient:str):
-        """ Returns the e-mail address from the recipient  instance. Can be overwritten to use User other sources """
+    def _get_to_mail_addresses(self, recipient: str):
+        """Returns the e-mail address from the recipient  instance. Can be overwritten to use User other sources"""
         if isinstance(recipient, str):
-            regexp = re.compile(r'^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$', re.IGNORECASE)
+            regexp = re.compile(r"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$", re.IGNORECASE)
             email = regexp.findall(recipient)
             if email:
                 return email
@@ -78,7 +80,7 @@ class Email:
         return []
 
     def _get_from_mail_address(self):
-        """ Returns the from email address """
+        """Returns the from email address"""
         # None defaults the from email to the settings DEFAULT_FROM_EMAIL
         return None
 
@@ -104,7 +106,7 @@ class Email:
             self._send_single_email_to(recipient, local_context, connection=connection, fail_silently=fail_silently)
         connection.close()
 
-    def _send_single_email_to(self, recipient, context_data:dict, connection=None, fail_silently=False):
+    def _send_single_email_to(self, recipient, context_data: dict, connection=None, fail_silently=False):
         """
         Constructs a single email and sends it
         :param recipient: The recipient
@@ -119,7 +121,7 @@ class Email:
             to=self._get_to_mail_addresses(recipient),
             body=self.txt_template.render(context_data),
             connection=connection,
-            bcc=self._get_bcc_mail_addresses(recipient)
+            bcc=self._get_bcc_mail_addresses(recipient),
         )
 
         # Store the email design class. This is used for class verification with testing
@@ -133,7 +135,7 @@ class Email:
             mail_obj.attach_alternative(content_html, "text/html")
 
         # Send the mail
-        mail_obj.send(fail_silently=False)
+        mail_obj.send(fail_silently=fail_silently)
 
 
 class SimpleMessageEmail(Email):
@@ -145,5 +147,5 @@ class SimpleMessageEmail(Email):
 
     def get_context_data(self):
         context = super(SimpleMessageEmail, self).get_context_data()
-        context['message'] = self.message
+        context["message"] = self.message
         return context

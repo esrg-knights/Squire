@@ -16,7 +16,9 @@ class MailTestingMixin(TestCase):
             if isinstance(to, str):
                 to = [to]
             if not isinstance(to, (list, tuple)):
-                raise KeyError("To attribute fo assertSendMail should be a string, or list or tuple of string instances")
+                raise KeyError(
+                    "To attribute fo assertSendMail should be a string, or list or tuple of string instances"
+                )
 
         for email in mail.outbox:
             if subject and email.subject != subject:
@@ -44,11 +46,9 @@ class MailTestingMixin(TestCase):
         raise AssertionError(msg)
 
     @staticmethod
-    def get_html_template(mail_message: mail.EmailMultiAlternatives) -> str:
-        """ Returns the html template associated with the e-mail """
+    def get_html_template(mail_message: mail.EmailMultiAlternatives) -> str | None:
+        """Returns the html template associated with the e-mail"""
         for content, minetype in mail_message.alternatives:
-            if minetype == 'text/html':
+            if minetype == "text/html":
                 return content
         return None
-
-

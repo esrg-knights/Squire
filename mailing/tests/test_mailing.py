@@ -7,33 +7,23 @@ from mailing.mailing import Email, SimpleMessageEmail
 
 
 class MailingTestCase(MailTestingMixin, TestCase):
-
     class CustomEmail(Email):
         template_name = "mailing/tests/test_custom_mail"
 
         def get_context_data(self):
             context = super().get_context_data()
-            context['number'] = 50
+            context["number"] = 50
             return context
 
         def get_recipient_context_data(self, recipient):
             context = super().get_recipient_context_data(recipient)
-            context.update({
-                'recipient_data': 'BASED'
-            })
+            context.update({"recipient_data": "BASED"})
             return context
 
         def _get_bcc_mail_addresses(self, recipient):
-            """
-            Returns a list of email adresses to include in the bcc
-            :param recipient: The recipient of the mail
-            :return: A list of email strings
-            """
-            return ['bcc@test.com']
+            return ["bcc@test.com"]
 
         def _get_from_mail_address(self):
-            """ Returns the from email address """
-            # None defaults the from email to the settings DEFAULT_FROM_EMAIL
             return "from_email@from.mail"
 
     def setUp(self):
@@ -48,7 +38,7 @@ class MailingTestCase(MailTestingMixin, TestCase):
         self.assertEqual(self.send_mail.from_email, "from_email@from.mail")
 
     def test_send_bcc(self):
-        self.assertEqual(self.send_mail.bcc, ['bcc@test.com'])
+        self.assertEqual(self.send_mail.bcc, ["bcc@test.com"])
 
     def test_subject(self):
         self.assertEqual(self.send_mail.subject, self.mail.subject)
@@ -56,13 +46,13 @@ class MailingTestCase(MailTestingMixin, TestCase):
     def test_context_data(self):
         context_data = self.send_mail.context_data
         self.assertEqual(context_data["recipient"], "send_to@test.com")
-        self.assertEqual(context_data["recipient_data"], 'BASED')
+        self.assertEqual(context_data["recipient_data"], "BASED")
         self.assertEqual(context_data["number"], 50)
 
     def test_require_subject(self):
         with self.assertRaises(KeyError):
-            self.CustomEmail().send_to('to@test.com')
-        self.CustomEmail(subject="Test subject").send_to('to@test.com')
+            self.CustomEmail().send_to("to@test.com")
+        self.CustomEmail(subject="Test subject").send_to("to@test.com")
 
     def test_txt_only_templates(self):
         Email(
