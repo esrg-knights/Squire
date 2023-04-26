@@ -1,0 +1,4 @@
+Dear {{ recipient }}
+Data: {{ recipient_data }}
+
+The number is {{ number }}

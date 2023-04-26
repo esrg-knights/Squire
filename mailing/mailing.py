@@ -1,10 +1,11 @@
 import re
+from collections.abc import Iterable
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.template.loader import get_template, TemplateDoesNotExist
 from functools import cached_property
 
 
-class Mail:
+class Email:
     """
     Renders and sends emails in a predefined template. It's basically the email alternative to the View class
     :param template_name: The path and name of the template (without extention)
@@ -90,6 +91,9 @@ class Mail:
         """
         context = self.get_context_data()
 
+        if isinstance(recipients, str) or not isinstance(recipients, Iterable):
+            recipients = [recipients]
+
         # Open the connection
         connection = self.get_connection()
         connection.open()
@@ -118,23 +122,28 @@ class Mail:
             bcc=self._get_bcc_mail_addresses(recipient)
         )
 
+        # Store the email design class. This is used for class verification with testing
+        # Store the context data for the same reason
+        mail_obj.email_class = self.__class__
+        mail_obj.context_data = context_data
+
         # Set up the html content in the mail
         if self.html_template is not None:
             content_html = self.html_template.render(context_data)
             mail_obj.attach_alternative(content_html, "text/html")
 
         # Send the mail
-        mail_obj.send(fail_silently=fail_silently)
+        mail_obj.send(fail_silently=False)
 
 
-class SimpleMessageMail(Mail):
+class SimpleMessageEmail(Email):
     template_name = "mailing/simple_message"
 
     def __init__(self, message, **kwargs):
         self.message = message
-        super(SimpleMessageMail, self).__init__(**kwargs)
+        super(SimpleMessageEmail, self).__init__(**kwargs)
 
     def get_context_data(self):
-        context = super(SimpleMessageMail, self).get_context_data()
+        context = super(SimpleMessageEmail, self).get_context_data()
         context['message'] = self.message
         return context

@@ -89,16 +89,11 @@ class EmailTemplateView(LoginRequiredMixin, View):
 
     def get(self, request):
         template_location = request.GET.get("template", "") + ".html"
-
-        # Test if template exists
         try:
-            template = get_template(template_location, using="EmailTemplates")
-            # template = get_template(template_location)
+            context = self.get_context_data(request)
+            return render(None, template_location, context, using="EmailTemplates")
         except TemplateDoesNotExist:
             raise Http404(f"Given template name not found: {template_location}")
-
-        context = self.get_context_data(request)
-        return render(None, template_location, context, using="EmailTemplates")
 
 
 class ConstructMailView(LoginRequiredMixin, UserPassesTestMixin, FormView):
