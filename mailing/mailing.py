@@ -186,7 +186,7 @@ class SimpleMessageEmail(Email):
 class UserEmailMixin:
     """Enables User instances to be used as recipient. Keyword 'user' can be used in context"""
     def _get_to_mail_addresses(self, recipient: User):
-        return recipient.email
+        return [recipient.email]
 
     def get_recipient_context_data(self, recipient):
         context = super(UserEmailMixin, self).get_recipient_context_data(recipient)
