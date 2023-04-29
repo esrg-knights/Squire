@@ -138,7 +138,9 @@ TEMPLATES = [
         # "BACKEND": "django.core.mail.backends.console.EmailBackend",
         "BACKEND": 'django.template.backends.django.DjangoTemplates',
         "OPTIONS": {
-            "builtins": [],
+            "builtins": [
+                "mailing.templatetags.mailing_tags",
+            ],
             "loaders": [
                 (
                     "django.template.loaders.cached.Loader",
@@ -399,6 +401,10 @@ COMMITTEE_FULL_NAME = 'UUPS Ultraviolet Programmer Squad'
 
 # The email address that error messages come from, such as those sent to ADMINS and MANAGERS.
 SERVER_EMAIL = f'{APPLICATION_NAME} Error <{APPLICATION_NAME.lower()}-error@kotkt.nl>'
+
+# Set the default site name and domain
+SITE_DOMAIN = "127.0.0.1:8000"
+SITE_NAME = "Squire, the Knights webapp"
 
 # Default email address to use for various automated correspondence from the site manager(s).
 DEFAULT_FROM_EMAIL = f'{APPLICATION_NAME} <{APPLICATION_NAME.lower()}-noreply@kotkt.nl>'

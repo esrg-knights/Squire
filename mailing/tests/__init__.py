@@ -55,3 +55,12 @@ class MailTestingMixin(TestCase):
             if minetype == "text/html":
                 return content
         return None
+
+
+class CustomTestSite:
+    """
+        A class that shares the primary interface of Site (i.e., it has ``domain``
+        and ``name`` attributes) but it returns simple test values
+    """
+    domain = "test.com"
+    name = "Test site"

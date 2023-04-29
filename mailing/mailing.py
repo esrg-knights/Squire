@@ -1,8 +1,13 @@
 import re
 from collections.abc import Iterable
+from django.contrib.auth.models import User
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.template.loader import get_template, TemplateDoesNotExist
 from functools import cached_property
+
+
+from .sites import DefaultSite
 
 
 class Email:
@@ -52,20 +57,17 @@ class Email:
         return get_connection()
 
     def get_context_data(self):
-        return {}
+        context = {}
+        # Initialise a site object in the context. Defaults to settings, but can be overridden in the future if needed.
+        # Or when the sites module is activated.
+        context['site'] = DefaultSite()
+
+        return context
 
     def get_recipient_context_data(self, recipient):
         return {
             "recipient": recipient,
         }
-
-    def deconstruct_recipient(self, recipients):
-        """
-        Processes a recipient to return the actual recipients. This can be overridden to deconstruct a group into
-        the individual members of the group
-        :param recipients:
-        :return:
-        """
 
     def _get_to_mail_addresses(self, recipient: str):
         """Returns the e-mail address from the recipient  instance. Can be overwritten to use User other sources"""
@@ -179,3 +181,22 @@ class SimpleMessageEmail(Email):
         self._bcc = bcc_list
         self.send_to([to_address])
         self._bcc = None
+
+
+class UserEmailMixin:
+    """Enables User instances to be used as recipient. Keyword 'user' can be used in context"""
+    def _get_to_mail_addresses(self, recipient: User):
+        return recipient.email
+
+    def get_recipient_context_data(self, recipient):
+        context = super(UserEmailMixin, self).get_recipient_context_data(recipient)
+        context['user'] = recipient
+        return context
+
+    def _get_bcc_mail_addresses(self, recipient):
+        bcc_list = super(UserEmailMixin, self)._get_bcc_mail_addresses(recipient)
+
+        for i in range(len(bcc_list)):
+            if isinstance(bcc_list[i], User):
+                bcc_list[i] = bcc_list[i].email
+        return bcc_list
