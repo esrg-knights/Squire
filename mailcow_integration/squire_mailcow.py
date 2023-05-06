@@ -189,6 +189,22 @@ class SquireMailcowManager:
         self._mailbox_map_cache = { mailbox.username: mailbox for mailbox in mailboxes}
         return self._mailbox_map_cache
 
+    def delete_committee_aliases(self, alias_addresses: List[str]) -> None:
+        """ Deletes a given list of aliases """
+        aliases: List[MailcowAlias] = []
+        for address in alias_addresses:
+            alias = self.alias_map.get(address, None)
+            if alias is not None and alias.public_comment == self.ALIAS_COMMITTEE_PUBLIC_COMMENT:
+                aliases.append(alias)
+        # Delete aliases themselves
+        self._client.delete_aliases(aliases)
+
+        # Remove them from the global commitee aliases
+        self.update_global_committee_aliases()
+
+        # Invalidate cache
+        self._alias_cache = None
+
     def _set_alias_by_name(self, address: str, goto_addresses: List[str], public_comment: str) -> None:
         """ Sets an alias's goto addresses, and optionally sets its visible in SOGo. If the corresponding
             Mailcow alias's public comment does not match `public_comment`, modifications are aborted.
@@ -260,7 +276,7 @@ class SquireMailcowManager:
         return settings.COMMITTEE_CONFIGS["archive_addresses"]
 
     def update_member_aliases(self) -> None:
-        """ Updates all member aliases """
+        """ Updates all member aliases, or a subset thereof """
         # TODO: Return a list of failures (i.e., API calls that returned an exception)
         # Fetch active members here so the results can be cached
         active_members = self.get_active_members()
@@ -277,7 +293,6 @@ class SquireMailcowManager:
                 extra=committee_emails
             )
             emails = self.get_archive_adresses_for_type(AliasCategory.MEMBER, alias_address) + emails
-
             self._set_alias_by_name(alias_address, emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT)
         self._alias_cache = None
 
@@ -289,10 +304,15 @@ class SquireMailcowManager:
             contact_email__isnull=False
         )
 
-    def update_committee_aliases(self) -> None:
-        """ Updates all committee aliases """
+    def update_committee_aliases(self, limit_update_to: Optional[List[str]]=None) -> None:
+        """ Updates all committee aliases, or a subset thereof """
         committee_emails = self._committee_model.objects.values_list("contact_email", flat=True)
-        for assoc_group in self.clean_emails(self.get_active_committees(), email_field="contact_email"):
+        valid_groups = self.clean_emails(self.get_active_committees(), email_field="contact_email")
+        if limit_update_to is not None:
+            # Only update a selection of committee aliases
+            valid_groups = valid_groups.filter(contact_email__in=limit_update_to)
+
+        for assoc_group in valid_groups:
             if assoc_group.contact_email in self.mailbox_map:
                 logger.warning(f"Skipping over {assoc_group} ({assoc_group.contact_email}): Mailbox with the same name already exists")
                 continue
@@ -302,4 +322,19 @@ class SquireMailcowManager:
             goto_emails = self.get_archive_adresses_for_type(AliasCategory.COMMITTEE, assoc_group.contact_email) + goto_emails
 
             self._set_alias_by_name(assoc_group.contact_email, goto_emails, public_comment=self.ALIAS_COMMITTEE_PUBLIC_COMMENT)
+        self._alias_cache = None
+
+    def update_global_committee_aliases(self):
+        """ TODO """
+        for alias_address in filter(lambda address: address not in self.BLOCKLISTED_EMAIL_ADDRESSES,
+                settings.COMMITTEE_CONFIGS['global_addresses']):
+            if alias_address in self.mailbox_map:
+                logger.warning(f"Skipping over {alias_address}: Mailbox with the same name already exists")
+                continue
+
+            logger.info(f"Forced updating {alias_address}")
+            emails = self.clean_emails_flat(self.get_active_committees(), email_field="contact_email")
+            emails = self.get_archive_adresses_for_type(AliasCategory.GLOBAL_COMMITTEE, alias_address) + emails
+
+            self._set_alias_by_name(alias_address, emails, public_comment=self.ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT)
         self._alias_cache = None

@@ -387,7 +387,7 @@ class SquireMailcowManagerTest(TestCase):
         "mailbox@example.com": MailcowMailbox("mailbox@example.com", "Mr. Foo"),
     }, new_callable=PropertyMock)
     @patch('mailcow_integration.squire_mailcow.SquireMailcowManager._set_alias_by_name')
-    @suppress_infos(logger_name="mailcow_integration.squire_mailcow")
+    @suppress_warnings(logger_name="mailcow_integration.squire_mailcow")
     def test_update_committee_aliases(self, mock_set_alias: Mock, mock_mailbox_map: Mock, archive_mock: Mock):
         """ Tests updating committee aliases """
         self.squire_mailcow_manager.BLOCKLISTED_EMAIL_ADDRESSES = ["blocklisted@example.com"]

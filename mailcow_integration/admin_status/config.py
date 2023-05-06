@@ -1,7 +1,7 @@
 from django.urls import path
 
 from core.status_collective import AdminStatusBaseConfig
-from mailcow_integration.admin_status.views import MailcowStatusView
+from mailcow_integration.admin_status.views import MailcowTabbedStatusView
 
 
 class MailcowStatusConfig(AdminStatusBaseConfig):
@@ -13,5 +13,5 @@ class MailcowStatusConfig(AdminStatusBaseConfig):
 
     def get_urls(self):
         return [
-            path('', MailcowStatusView.as_view(config=self), name='mailcow_status'),
+            path('', MailcowTabbedStatusView.as_view(config=self), name='mailcow_status'),
         ]

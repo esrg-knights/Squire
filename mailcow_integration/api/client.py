@@ -1,6 +1,6 @@
 from enum import Enum
 import json
-from typing import Generator, Union
+from typing import Generator, List, Union
 import requests
 
 from mailcow_integration.api.exceptions import *
@@ -153,6 +153,17 @@ class MailcowAPIClient:
 
         data = json.dumps(data)
         return self._make_request(f"add/alias", request_type=RequestType.POST, data=data)
+
+    def delete_aliases(self, aliases: List[MailcowAlias]) -> dict:
+        """ Deletes a collection of aliases"""
+        assert aliases
+        assert all(alias.id is not None for alias in aliases)
+
+        data = {
+            'items': list(map(lambda alias: alias.id, aliases)),
+        }
+        data = json.dumps(data)
+        return self._make_request("delete/alias", request_type=RequestType.POST, data=data)
 
     ################
     # MAILBOXES

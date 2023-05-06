@@ -56,7 +56,7 @@ class AliasInfos:
     squire_edit_url: Optional[str] = None
     archive_addresses: List[str] = field(default_factory=list)
 
-class MailcowStatusView(AdminStatusViewMixin, TemplateView):
+class MailcowStatusView(TemplateView):
     """ An overview of aliases managed by Squire. Connects to the Mailcow API to determine whether
         such aliases are considered up-to-date. Also allows forced updates of each alias.
     """
@@ -182,7 +182,7 @@ class MailcowStatusView(AdminStatusViewMixin, TemplateView):
             subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias, alias_type=AliasCategory.GLOBAL_COMMITTEE)
             info = AliasInfos(status.name, subscribers, address, "gc_" + alias_address_to_id(address), address,
                 "Allows mailing all committees at the same time.",
-                alias or mailbox, False, allow_opt_out=False, archive_addresses=settings.COMMITTEE_CONFIGS['global_archive_addresses']
+                alias or mailbox, internal=False, allow_opt_out=False, archive_addresses=settings.COMMITTEE_CONFIGS['global_archive_addresses']
             )
             infos.append(info)
         return infos
@@ -274,3 +274,6 @@ class MailcowStatusView(AdminStatusViewMixin, TemplateView):
             messages.success(self.request, "Orphan data deleted.")
 
         return HttpResponseRedirect(self.request.get_full_path())
+
+class MailcowTabbedStatusView(AdminStatusViewMixin, MailcowStatusView):
+    """ Variant of the Mailcow status view to use in a tabbed ViewCollective """

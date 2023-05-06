@@ -327,6 +327,30 @@ class MailcowClientTest(TestCase):
             self.assertNotIn('goto_ham', attr)
             self.assertNotIn('goto_spam', attr)
 
+    def test_delete_aliases(self):
+        """ Tests deleting a specific alias """
+        aliases = [
+            MailcowAlias("foo@example.com", ["bar@example.com", "baz@example.com"], 999),
+            MailcowAlias("oof@example.com", ["rab@example.com", "zab@example.com"], 998),
+        ]
+
+        # goto-addresses
+        with patch('mailcow_integration.api.client.MailcowAPIClient._make_request',
+                return_value=self._get_success_response("alias_removed", "foo@example.com, oof@example.com")) as mock_request:
+            self.mailcow_client.delete_aliases(aliases)
+
+            # Correct endpoint
+            self.assertEqual(len(mock_request.call_args.args), 1)
+            self.assertEqual(mock_request.call_args.args[0], "delete/alias")
+
+            # data is JSON-encoded
+            kwargs: dict = mock_request.call_args.kwargs
+            data = kwargs.get("data", None)
+            self.assertIsInstance(data, str)
+            self.assertDictEqual(json.loads(data), {
+                'items': [999, 998],
+            })
+
     ################
     # MAILBOXES
     ################
