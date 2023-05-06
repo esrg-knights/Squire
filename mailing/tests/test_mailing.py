@@ -21,10 +21,10 @@ class MailingTestCase(MailTestingMixin, TestCase):
             context.update({"recipient_data": "BASED"})
             return context
 
-        def _get_bcc_mail_addresses(self, recipient):
+        def get_bcc_mail_addresses(self, recipient):
             return ["bcc@test.com"]
 
-        def _get_from_mail_address(self):
+        def get_from_mail_address(self):
             return "from_email@from.mail"
 
     def setUp(self):
@@ -37,9 +37,9 @@ class MailingTestCase(MailTestingMixin, TestCase):
 
     def send_to_catch_invalid_mail(self):
         with self.assertRaises(AttributeError):
-            self.mail._get_to_mail_addresses(42)
+            self.mail.get_to_mail_addresses(42)
         with self.assertRaises(AttributeError):
-            self.mail._get_to_mail_addresses("fake@com")
+            self.mail.get_to_mail_addresses("fake@com")
 
 
     def test_send_from(self):
@@ -94,7 +94,7 @@ class UserMailTestCase(MailTestingMixin, TestCase):
     class CustomUserEmail(UserEmailMixin, Email):
         template_name = "mailing/tests/test_custom_mail"
 
-        def _get_bcc_mail_addresses(self, recipient):
+        def get_bcc_mail_addresses(self, recipient):
             return [recipient]
 
     def setUp(self):
@@ -103,7 +103,7 @@ class UserMailTestCase(MailTestingMixin, TestCase):
 
     def test_get_mail_from_user(self):
         self.assertEqual(
-            self.mail._get_to_mail_addresses(self.user),
+            self.mail.get_to_mail_addresses(self.user),
             [self.user.email]
         )
 

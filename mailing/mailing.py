@@ -71,7 +71,7 @@ class Email:
             "recipient": recipient,
         }
 
-    def _get_to_mail_addresses(self, recipient: str):
+    def get_to_mail_addresses(self, recipient: str):
         """Returns the e-mail address from the recipient  instance. Can be overwritten to use User other sources"""
         if isinstance(recipient, str):
             if recipient == "":
@@ -87,7 +87,7 @@ class Email:
         else:
             raise AttributeError(f"Expected email string as recipient not {recipient.__repr__()}")
 
-    def _get_bcc_mail_addresses(self, recipient):
+    def get_bcc_mail_addresses(self, recipient):
         """
         Returns a list of email adresses to include in the bcc
         :param recipient: The recipient of the mail
@@ -95,7 +95,7 @@ class Email:
         """
         return []
 
-    def _get_from_mail_address(self):
+    def get_from_mail_address(self):
         """Returns the from email address"""
         # None defaults the from email to the settings DEFAULT_FROM_EMAIL
         return None
@@ -134,11 +134,11 @@ class Email:
         # Set up the Email template with the txt_template
         mail_obj = EmailMultiAlternatives(
             subject=self.get_mail_subject(),
-            from_email=self._get_from_mail_address(),
-            to=self._get_to_mail_addresses(recipient),
+            from_email=self.get_from_mail_address(),
+            to=self.get_to_mail_addresses(recipient),
             body=self.txt_template.render(context_data),
             connection=connection,
-            bcc=self._get_bcc_mail_addresses(recipient),
+            bcc=self.get_bcc_mail_addresses(recipient),
         )
 
         # Store the email design class. This is used for class verification with testing
@@ -163,7 +163,7 @@ class SimpleMessageEmail(Email):
         self._bcc = None
         super(SimpleMessageEmail, self).__init__(**kwargs)
 
-    def _get_bcc_mail_addresses(self, recipient):
+    def get_bcc_mail_addresses(self, recipient):
         if self._bcc:
             return self._bcc
         return []
@@ -188,7 +188,7 @@ class SimpleMessageEmail(Email):
 class UserEmailMixin:
     """Enables User instances to be used as recipient. Keyword 'user' can be used in context"""
 
-    def _get_to_mail_addresses(self, recipient: User):
+    def get_to_mail_addresses(self, recipient: User):
         return [recipient.email]
 
     def get_recipient_context_data(self, recipient):
