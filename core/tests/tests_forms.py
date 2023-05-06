@@ -9,9 +9,14 @@ from django.test.testcases import TestCase
 from django.utils.safestring import SafeText
 from martor.fields import MartorFormField
 from martor.widgets import MartorWidget
+from unittest.mock import Mock
+
+from mailing.tests import MailTestingMixin
+from utils.testing import FormValidityMixin
 
 from core.fields import MarkdownObject, MarkdownCharField, MarkdownTextField
-from core.forms import MarkdownForm
+from core.forms import MarkdownForm, PasswordResetForm
+from core.mailing import PasswordResetEmail
 from core.models import MarkdownImage
 from core.widgets import ImageUploadMartorWidget
 
@@ -74,3 +79,14 @@ class MarkdownFormTest(TestCase):
         self.assertIsNone(MarkdownImage.objects.get(id=diff_img.id).object_id)
         self.assertEqual(MarkdownImage.objects.get(id=child_img.id).object_id, 123)
 
+
+class PasswordResetFormTestCase(MailTestingMixin, FormValidityMixin, TestCase):
+    fixtures = ["test_users"]
+    form_class = PasswordResetForm
+
+    def test_password_reset_mailing(self):
+        form = self.assertFormValid({
+            "email": "test_mail@test.com",
+        })
+        form.save(request=Mock())
+        self.assertSendMail(email_class=PasswordResetEmail)

@@ -6,6 +6,7 @@ from typing import Union
 
 __all__ = ["MailTestingMixin"]
 
+
 class MailTestingMixin(TestCase):
     def assertSendMail(self, subject=None, email_class=None, to=None) -> mail.EmailMessage:
         """
@@ -26,6 +27,8 @@ class MailTestingMixin(TestCase):
         for email in mail.outbox:
             if subject and email.subject != subject:
                 continue
+            # email_class is given to the email by the Email class, but we can not assume a mail is send by such
+            # a class. So check if the property is availlable first
             if email_class and hasattr(email, "email_class"):
                 if email.email_class != email_class:
                     continue
@@ -49,7 +52,7 @@ class MailTestingMixin(TestCase):
         raise AssertionError(msg)
 
     @staticmethod
-    def get_html_template(mail_message: mail.EmailMultiAlternatives) ->  Union[str, None]:
+    def get_html_template(mail_message: mail.EmailMultiAlternatives) -> Union[str, None]:
         """Returns the html template associated with the e-mail"""
         for content, minetype in mail_message.alternatives:
             if minetype == "text/html":

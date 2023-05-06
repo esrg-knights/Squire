@@ -21,6 +21,7 @@ class EmailTemplateView(LoginRequiredMixin, View):
         A dictionary that either returns the content, or a new dictionary with the name of the searched content
         Used to replace unfound content in the template with the original name
         """
+
         def __init__(self, name="", dictionary=None):
             self._dict = dictionary
             self._name = name
@@ -58,7 +59,7 @@ class EmailTemplateView(LoginRequiredMixin, View):
                 # If key is not in dictionary, create a new ContentFactory to act as a query shell
                 return type(self)(name=name)
             else:
-                if hasattr(item, '__getattr__') or hasattr(item, '__getitem__'):
+                if hasattr(item, "__getattr__") or hasattr(item, "__getitem__"):
                     return type(self)(name=name, dictionary=item)
                 return item
 
@@ -81,10 +82,10 @@ class EmailTemplateView(LoginRequiredMixin, View):
             self._dict[key] = value
 
     def get_context_data(self, request):
-        """ Create the context data """
+        """Create the context data"""
         context = self.ContentFactory(dictionary=request.GET.dict())
-        context['request'] = request
-        context['user'] = request.user
+        context["request"] = request
+        context["user"] = request.user
         return context
 
     def get(self, request):
@@ -97,7 +98,7 @@ class EmailTemplateView(LoginRequiredMixin, View):
 
 
 class ConstructMailView(LoginRequiredMixin, UserPassesTestMixin, FormView):
-    """ A view that allows users to send_to mails with the set mail adres """
+    """A view that allows users to send_to mails with the set mail adres"""
     template_name = "mailing/construct_mail.html"
     form_class = MailForm
 
@@ -109,4 +110,4 @@ class ConstructMailView(LoginRequiredMixin, UserPassesTestMixin, FormView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('mailing:construct')
+        return reverse("mailing:construct")

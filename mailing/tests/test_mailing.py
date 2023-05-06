@@ -1,9 +1,10 @@
+from django.contrib.auth.models import User
 from django.template import TemplateDoesNotExist
 from django.test import TestCase
 
 from . import MailTestingMixin
 
-from mailing.mailing import Email, SimpleMessageEmail
+from mailing.mailing import Email, SimpleMessageEmail, UserEmailMixin
 
 
 class MailingTestCase(MailTestingMixin, TestCase):
@@ -33,6 +34,13 @@ class MailingTestCase(MailTestingMixin, TestCase):
 
     def test_send_to(self):
         self.assertEqual(self.send_mail.to, ["send_to@test.com"])
+
+    def send_to_catch_invalid_mail(self):
+        with self.assertRaises(AttributeError):
+            self.mail._get_to_mail_addresses(42)
+        with self.assertRaises(AttributeError):
+            self.mail._get_to_mail_addresses("fake@com")
+
 
     def test_send_from(self):
         self.assertEqual(self.send_mail.from_email, "from_email@from.mail")
@@ -80,3 +88,25 @@ class SimpleMessageEmailTestCase(MailTestingMixin, TestCase):
         mail.send_as_bcc("", bcc_list=["bcc1@test.com", "bcc2@test.com"])
         send_mail = self.assertSendMail()
         self.assertIn("bcc2@test.com", send_mail.bcc)
+
+
+class UserMailTestCase(MailTestingMixin, TestCase):
+    class CustomUserEmail(UserEmailMixin, Email):
+        template_name = "mailing/tests/test_custom_mail"
+
+        def _get_bcc_mail_addresses(self, recipient):
+            return [recipient]
+
+    def setUp(self):
+        self.user = User(email="testmail@test.com")
+        self.mail = self.CustomUserEmail(subject="Custom email")
+
+    def test_get_mail_from_user(self):
+        self.assertEqual(
+            self.mail._get_to_mail_addresses(self.user),
+            [self.user.email]
+        )
+
+    def test_user_in_context_data(self):
+        context = self.mail.get_recipient_context_data(self.user)
+        self.assertEqual(context["user"], self.user)

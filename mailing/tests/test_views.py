@@ -6,7 +6,7 @@ from utils.testing.view_test_utils import ViewValidityMixin
 
 
 class TestCatalogueInstructions(ViewValidityMixin, TestCase):
-    fixtures = ['test_users']
+    fixtures = ["test_users"]
     base_url = reverse_lazy("mailing:construct")
 
     def test_authorised_get(self):

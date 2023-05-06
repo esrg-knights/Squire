@@ -117,26 +117,25 @@ ROOT_URLCONF = 'squire.urls'
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            'squire/templates'
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [
+            "squire/templates"
         ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'dynamic_preferences.processors.global_preferences',
-                'membership_file.processor.member_context',
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "dynamic_preferences.processors.global_preferences",
+                "membership_file.processor.member_context",
             ],
         },
     },
     {
         "NAME": "EmailTemplates",
-        # "BACKEND": "django.core.mail.backends.console.EmailBackend",
-        "BACKEND": 'django.template.backends.django.DjangoTemplates',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
         "OPTIONS": {
             "builtins": [
                 "mailing.templatetags.mailing_tags",
@@ -146,11 +145,11 @@ TEMPLATES = [
                     "django.template.loaders.cached.Loader",
                     [
                         ("mailing.loaders.CustomAppDirectoryLoader", "mail_templates"),
-                    ]
+                    ],
                 )
-            ]
-        }
-    }
+            ],
+        },
+    },
 ]
 
 WSGI_APPLICATION = 'squire.wsgi.application'
@@ -277,11 +276,11 @@ STATICFILES_DIRS = [
 ]
 
 # Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 
 # The directory in which the coverage reports should be stored
-COVERAGE_REPORT_DIR = os.path.join(BASE_DIR, 'coverage')
+COVERAGE_REPORT_DIR = os.path.join(BASE_DIR, "coverage")
 
 # Automatically create a /coverage folder if it does not exist
 util.create_coverage_directory(COVERAGE_REPORT_DIR)
@@ -292,18 +291,18 @@ util.create_coverage_directory(COVERAGE_REPORT_DIR)
 # The URL or named URL pattern where requests are redirected for login
 # when using the login_required() decorator.
 # Also used to specify the location of the login page
-LOGIN_URL = '/login'
+LOGIN_URL = "/login"
 
 # The URL or named URL pattern where requests are redirected after
 # login when the LoginView doesn’t get a next GET parameter.
-LOGIN_REDIRECT_URL = '/' # Redirect to homepage
+LOGIN_REDIRECT_URL = "/" # Redirect to homepage
 
 # Not a native Django-setting, but used to specify the location of the logout page
-LOGOUT_URL = '/logout'
+LOGOUT_URL = "/logout"
 
 # The URL or named URL pattern where requests are redirected after
 # logout if LogoutView doesn’t have a next_page attribute.
-LOGOUT_REDIRECT_URL = '/logout/success'
+LOGOUT_REDIRECT_URL = "/logout/success"
 
 ####################################################################
 # Martor settings (Markdown Editor)

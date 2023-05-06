@@ -14,7 +14,9 @@ class Email:
     """
     Renders and sends emails in a predefined template. It's basically the email alternative to the View class
     :param template_name: The path and name of the template (without extention)
+    :param subject: The subject string
     """
+
     template_name: str = None
     subject: str = None
 
@@ -41,7 +43,7 @@ class Email:
 
     def _get_mail_templates(self, extension: str):
         """Gets the mail template with the given extention"""
-        return get_template(f"{self.template_name}.{extension}", using='EmailTemplates')
+        return get_template(f"{self.template_name}.{extension}", using="EmailTemplates")
 
     def get_mail_subject(self):
         """Returns the subject of the mail"""
@@ -185,6 +187,7 @@ class SimpleMessageEmail(Email):
 
 class UserEmailMixin:
     """Enables User instances to be used as recipient. Keyword 'user' can be used in context"""
+
     def _get_to_mail_addresses(self, recipient: User):
         return [recipient.email]
 
@@ -192,11 +195,3 @@ class UserEmailMixin:
         context = super(UserEmailMixin, self).get_recipient_context_data(recipient)
         context['user'] = recipient
         return context
-
-    def _get_bcc_mail_addresses(self, recipient):
-        bcc_list = super(UserEmailMixin, self)._get_bcc_mail_addresses(recipient)
-
-        for i in range(len(bcc_list)):
-            if isinstance(bcc_list[i], User):
-                bcc_list[i] = bcc_list[i].email
-        return bcc_list

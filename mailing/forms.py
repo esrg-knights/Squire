@@ -5,6 +5,7 @@ from .mailing import SimpleMessageEmail
 
 class MailForm(forms.Form):
     """A simple form to construct and send_to e-mails"""
+
     to = forms.EmailField()
     subject = forms.CharField(max_length=128)
     text = forms.CharField(widget=forms.Textarea)
