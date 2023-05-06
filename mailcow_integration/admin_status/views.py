@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
 from typing import Dict, List, Optional, Tuple, TypedDict
 
 from django.conf import settings
@@ -87,6 +88,7 @@ class MailcowStatusView(TemplateView):
             elif alias.goto != (self.mailcow_manager.get_archive_adresses_for_type(alias_type, address)
                                 + self.mailcow_manager.clean_emails_flat(
                                     subscribers,
+                                    email_field=("contact_email" if alias_type == AliasCategory.GLOBAL_COMMITTEE else "email"),
                                     extra=([] if alias_type == AliasCategory.GLOBAL_COMMITTEE else self._committee_addresses)
                                 )):
                 # Alias is outdated
@@ -244,7 +246,9 @@ class MailcowStatusView(TemplateView):
             ip = str(e).rpartition(" ")[2]
             context['error'] = f"IP address is not whitelisted in the Mailcow admin: {ip}"
         except MailcowException as e:
-            context['error'] = print(", ".join(e.args))
+            err = ", ".join(e.args)
+            logging.error(err)
+            context['error'] = err
         else:
             context['member_aliases'] = self._init_member_alias_list(aliases, mailboxes)
             context['global_committee_aliases'] = self._init_global_committee_alias_list(aliases, mailboxes)
@@ -262,7 +266,7 @@ class MailcowStatusView(TemplateView):
             messages.success(self.request, "Member aliases updated.")
         elif self.request.POST.get("alias_type", None) == "global_committee":
             # Update all global committee aliases
-            # TODO:
+            self.mailcow_manager.update_global_committee_aliases()
             messages.success(self.request, "Global committee aliases updated.")
         elif self.request.POST.get("alias_type", None) == "committees":
             # Update all committee aliases
@@ -270,8 +274,12 @@ class MailcowStatusView(TemplateView):
             messages.success(self.request, "Committee aliases updated.")
         else:
             # Delete orphan data
-            # TODO:
-            messages.success(self.request, "Orphan data deleted.")
+            unused_aliases: List[AliasInfos] = self.get_context_data()["unused_aliases"]
+            unused_addresses = []
+            for aliasinfo in unused_aliases:
+                unused_addresses.append(aliasinfo.address)
+            self.mailcow_manager.delete_aliases(unused_addresses, self.mailcow_manager.SQUIRE_MANAGE_INDICATOR)
+            messages.success(self.request, f"Orphan data deleted: {', '.join(unused_addresses)}.")
 
         return HttpResponseRedirect(self.request.get_full_path())
 

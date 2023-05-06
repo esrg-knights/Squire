@@ -1,6 +1,10 @@
+from functools import wraps
+from typing import Callable, Tuple
+
 from django.apps import apps
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete, ModelSignal
-from typing import Callable, Tuple
+from dynamic_preferences.registries import global_preferences_registry
+
 
 from mailcow_integration.squire_mailcow import SquireMailcowManager, get_mailcow_manager
 
@@ -12,8 +16,6 @@ def register_signals() -> None:
     """ Registers signals that handle Mailcow aliases """
     for (signal_method, call_method, sender, dispatch_uid) in ALIAS_SIGNALS:
         signal_method.connect(call_method, sender=sender, dispatch_uid=dispatch_uid)
-    # post_save.connect(post_save_member_add_to_alias, sender='membership_file.Member', dispatch_uid="alias_member_save")
-    # post_delete.connect(post_delete_member_remove_from_alias, sender='membership_file.Member', dispatch_uid="alias_member_delete")
 
 def deregister_signals() -> None:
     """ Deregisters signals that handle Mailcow aliases """
@@ -21,9 +23,29 @@ def deregister_signals() -> None:
         signal_method.disconnect(call_method, sender=sender, dispatch_uid=dispatch_uid)
 
 
+def global_preference_required_for_signal(function=None):
+    """
+    Decorator
+    """
+    def decorator(signal_fn):
+        @wraps(signal_fn)
+        def _wrapped_view(*args, **kwargs):
+            global_preferences = global_preferences_registry.manager()
+            if global_preferences["mailcow__mailcow_signals_enabled"]:
+                # Only connect to the API if the global setting allows it
+                return signal_fn(*args, **kwargs)
+            return
+        # Wrap inside the login_required decorator (as non-logged in users can never be members)
+        return _wrapped_view
+
+    if function:
+        return decorator(function)
+    return decorator
+
 #########################################
 # MEMBERS
 #########################################
+@global_preference_required_for_signal
 def pre_save_member(sender, instance, raw, **kwargs):
     """ Temporarily stores some data when a member is updated. This data
         is then used in_post save.
@@ -43,6 +65,7 @@ def pre_save_member(sender, instance, raw, **kwargs):
             "email": None,
         }
 
+@global_preference_required_for_signal
 def post_save_member(sender, instance, created: bool, raw: bool, **kwargs) -> None:
     """ Update member and committee aliases when a member is updated/created. """
     # Do not create logs if the database is not yet in a consistent state (happens with fixtures)
@@ -68,6 +91,7 @@ def post_save_member(sender, instance, created: bool, raw: bool, **kwargs) -> No
     addresses = comm_model.objects.filter(members__email=instance.email).values_list("contact_email", flat=True)
     mailcow_client.update_committee_aliases(addresses)
 
+@global_preference_required_for_signal
 def pre_delete_member(sender, instance, **kwargs):
     """ Temporarily stores some data when a member is removed """
     # Committee membership data will no longer be present when post_delete activates.
@@ -78,6 +102,7 @@ def pre_delete_member(sender, instance, **kwargs):
         "committee_addresses": addresses,
     }
 
+@global_preference_required_for_signal
 def post_delete_member(sender, instance, **kwargs):
     """ Update member and committee aliases when a member is deleted """
     # Member is not active
@@ -97,6 +122,7 @@ def post_delete_member(sender, instance, **kwargs):
 #########################################
 # COMMITTEES
 #########################################
+@global_preference_required_for_signal
 def pre_save_committee(sender, instance, raw, **kwargs):
     """ Temporarily stores some data when a committee is updated. This data
         is then used in_post save.
@@ -118,6 +144,7 @@ def pre_save_committee(sender, instance, raw, **kwargs):
             "type": None,
         }
 
+@global_preference_required_for_signal
 def post_save_committee(sender, instance, created: bool, raw: bool, **kwargs):
     """ Update (global) committee aliases when a committee is updated/created.
         The aliases are only updated here, as at this point the data was successfully
@@ -143,7 +170,7 @@ def post_save_committee(sender, instance, created: bool, raw: bool, **kwargs):
 
     if should_remove:
         # Delete alias
-        mailcow_client.delete_committee_aliases([instance.contact_email])
+        mailcow_client.delete_aliases([instance.contact_email])
         return
 
     if instance._mailcow_old_data["email"] == instance.contact_email:
@@ -154,6 +181,7 @@ def post_save_committee(sender, instance, created: bool, raw: bool, **kwargs):
     mailcow_client.update_committee_aliases([instance.contact_email])
     mailcow_client.update_global_committee_aliases()
 
+@global_preference_required_for_signal
 def post_delete_committee(sender, instance, **kwargs):
     """ Update (global) committee aliases when a committee is deleted. """
     comm_model = apps.get_model("committees", "AssociationGroup")
@@ -162,12 +190,13 @@ def post_delete_committee(sender, instance, **kwargs):
         return
     # Delete alias
     mailcow_client: SquireMailcowManager = get_mailcow_manager()
-    mailcow_client.delete_committee_aliases([instance.contact_email])
+    mailcow_client.delete_aliases([instance.contact_email])
     mailcow_client.update_global_committee_aliases()
 
 #########################################
 # COMMITTEE MEMBERSHIP
 #########################################
+@global_preference_required_for_signal
 def pre_save_committee_membership(sender, instance, raw, **kwargs):
     """ Temporarily stores some data when committee membership is updated. This data
         is then used in_post save.
@@ -188,6 +217,7 @@ def pre_save_committee_membership(sender, instance, raw, **kwargs):
             "member": None,
         }
 
+@global_preference_required_for_signal
 def post_save_committee_membership(sender, instance, created: bool, raw: bool, **kwargs):
     """ Update member and committee aliases when a committee is updated/created.
         The aliases are only updated here, as at this point the data was successfully
@@ -215,6 +245,7 @@ def post_save_committee_membership(sender, instance, created: bool, raw: bool, *
     mailcow_client.update_member_aliases()
     mailcow_client.update_committee_aliases()
 
+@global_preference_required_for_signal
 def post_delete_committee_membership(sender, instance, **kwargs):
     """ Update member and committee aliases when a committee is deleted. """
     if instance.member is None or not instance.member.is_active:
@@ -228,6 +259,7 @@ def post_delete_committee_membership(sender, instance, **kwargs):
 #########################################
 # ACTIVE YEARS
 #########################################
+@global_preference_required_for_signal
 def pre_save_memberyear(sender, instance, raw, **kwargs):
     """ Temporarily stores some data when a memberYear is updated. This data
         is then used in_post save.
@@ -247,6 +279,7 @@ def pre_save_memberyear(sender, instance, raw, **kwargs):
             "is_active": False,
         }
 
+@global_preference_required_for_signal
 def post_save_memberyear(sender, instance, created: bool, raw: bool, **kwargs):
     """ Update member and committee aliases when a MemberYear is updated/created.
         The aliases are only updated here, as at this point the data was successfully
@@ -263,6 +296,7 @@ def post_save_memberyear(sender, instance, created: bool, raw: bool, **kwargs):
     mailcow_client.update_member_aliases()
     mailcow_client.update_committee_aliases()
 
+@global_preference_required_for_signal
 def post_delete_memberyear(sender, instance, **kwargs):
     """ Update member and committee aliases when a memberYear is deleted """
     if not instance.is_active:
@@ -275,6 +309,7 @@ def post_delete_memberyear(sender, instance, **kwargs):
 #########################################
 # MEMBERSHIP
 #########################################
+@global_preference_required_for_signal
 def pre_save_membership(sender, instance, raw, **kwargs):
     """ Temporarily stores some data when a membership is updated. This data
         is then used in_post save.
@@ -294,6 +329,7 @@ def pre_save_membership(sender, instance, raw, **kwargs):
             "member": None,
         }
 
+@global_preference_required_for_signal
 def post_save_membership(sender, instance, created: bool, raw: bool, **kwargs):
     """ Update member and committee aliases when a Membership is updated/created.
         The aliases are only updated here, as at this point the data was successfully
@@ -316,6 +352,7 @@ def post_save_membership(sender, instance, created: bool, raw: bool, **kwargs):
     mailcow_client.update_member_aliases()
     mailcow_client.update_committee_aliases()
 
+@global_preference_required_for_signal
 def post_delete_membership(sender, instance, **kwargs):
     """ Update member and committee aliases when a Membership is deleted """
     if instance.member is None or not instance.member.is_active:

@@ -22,7 +22,6 @@ class EmailPreferencesChangeView(AccountViewMixin, FormView):
     def form_valid(self, form: PreferenceForm):
         message = _("Your mail preferences have been updated!")
         messages.success(self.request, message)
-        print(form.initial)
         form.update_preferences()
 
         has_any_changes = False
@@ -33,7 +32,6 @@ class EmailPreferencesChangeView(AccountViewMixin, FormView):
                 break
 
         if has_any_changes:
-            print("updating member aliases (user form)")
             # Update mailcow alias;
             #   Mailcow client must be set up if this view can be accessed
             config = apps.get_app_config("mailcow_integration")

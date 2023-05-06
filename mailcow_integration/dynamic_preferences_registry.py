@@ -3,11 +3,20 @@ from django.conf import settings
 from django.utils.text import slugify
 from django.utils.html import format_html
 from dynamic_preferences.preferences import Section
+from dynamic_preferences.registries import global_preferences_registry
 from dynamic_preferences.types import BooleanPreference
 from dynamic_preferences.users.registries import user_preferences_registry
 
 mail = Section('mail')
+mailcow = Section('mailcow')
 
+@global_preferences_registry.register
+class MailcowSignalsEnabled(BooleanPreference):
+    section = mailcow
+    name = 'mailcow_signals_enabled'
+    verbose_name = "Auto-update email aliases"
+    description = 'When enabled, email aliases are automatically updated through Django signals that connect to the Mailcow API.'
+    default = False
 
 def alias_address_to_id(address: str) -> str:
     """ Converts an alias address to a string compatible with django-dynamic-preferences """

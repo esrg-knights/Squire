@@ -60,6 +60,7 @@ class MailcowAPIClient:
                 # Some other error (should not happen)
                 raise MailcowException(f"{request_url}: {content['msg']}")
         elif content.get('type', None) == 'danger':
+            print(content)
             # Unknown exception occurred. E.g. invalid parameters passed to POST
             raise MailcowException(f"{request_url}: {content['msg']}")
         elif not content:
@@ -159,9 +160,10 @@ class MailcowAPIClient:
         assert aliases
         assert all(alias.id is not None for alias in aliases)
 
-        data = {
-            'items': list(map(lambda alias: alias.id, aliases)),
-        }
+        # NOTE: This does not match up with the requests made in the Mailcow admin panel,
+        #   which has the format:
+        #   { items: [<id1>, <id2>, ...] }
+        data = [str(alias.id) for alias in aliases]
         data = json.dumps(data)
         return self._make_request("delete/alias", request_type=RequestType.POST, data=data)
 

@@ -189,12 +189,13 @@ class SquireMailcowManager:
         self._mailbox_map_cache = { mailbox.username: mailbox for mailbox in mailboxes}
         return self._mailbox_map_cache
 
-    def delete_committee_aliases(self, alias_addresses: List[str]) -> None:
+    def delete_aliases(self, alias_addresses: List[str], public_comment: Optional[str]=None) -> None:
         """ Deletes a given list of aliases """
+        public_comment = public_comment or self.ALIAS_COMMITTEE_PUBLIC_COMMENT
         aliases: List[MailcowAlias] = []
         for address in alias_addresses:
             alias = self.alias_map.get(address, None)
-            if alias is not None and alias.public_comment == self.ALIAS_COMMITTEE_PUBLIC_COMMENT:
+            if alias is not None and alias.public_comment.startswith(public_comment):
                 aliases.append(alias)
         # Delete aliases themselves
         self._client.delete_aliases(aliases)
@@ -323,7 +324,7 @@ class SquireMailcowManager:
 
     def update_global_committee_aliases(self):
         """ TODO """
-        for alias_address in filter(lambda address: address not in self.BLOCKLISTED_EMAIL_ADDRESSES,
+        for alias_address in filter(lambda address: address not in settings.MEMBER_ALIASES.keys(),
                 settings.COMMITTEE_CONFIGS['global_addresses']):
             if alias_address in self.mailbox_map:
                 logger.warning(f"Skipping over {alias_address}: Mailbox with the same name already exists")
