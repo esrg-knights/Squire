@@ -252,7 +252,8 @@ class MemberYear(models.Model):
 
 class Membership(models.Model):
     """ Defines membership details of a member in a certain memberyear"""
-    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    # NULL-value allows keeping track of membership numbers over the years, even when members are deleted
+    member = models.ForeignKey(Member, on_delete=models.SET_NULL, null=True)
     year = models.ForeignKey(MemberYear, on_delete=models.PROTECT)
     created_by = models.ForeignKey(Member, on_delete=models.SET_NULL, null=True, related_name='created_memberships')
     created_on = models.DateTimeField(auto_now_add=True)

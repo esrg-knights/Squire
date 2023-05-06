@@ -72,9 +72,9 @@ class AssociationGroupMembership(models.Model):
     For another we want additional information stored that is difficult when attempting to override the link between
     user and group.
     """
-    member = models.ForeignKey(Member, on_delete=models.CASCADE, blank=True, null=True)
+    member = models.ForeignKey(Member, on_delete=models.PROTECT, blank=True, null=True)
     external_person = models.CharField(max_length=64, help_text="Name of a person who is not a registered member", blank=True)
-    group = models.ForeignKey(AssociationGroup, on_delete=models.CASCADE)
+    group = models.ForeignKey(AssociationGroup, on_delete=models.PROTECT)
     role = models.CharField(max_length=32, blank=True, default="",
                             help_text="Name of the formal role. E.g. treasurer, president")
     title = models.CharField(max_length=64, blank=True, default="",

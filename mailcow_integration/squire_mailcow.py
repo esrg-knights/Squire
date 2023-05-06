@@ -199,9 +199,6 @@ class SquireMailcowManager:
         # Delete aliases themselves
         self._client.delete_aliases(aliases)
 
-        # Remove them from the global commitee aliases
-        self.update_global_committee_aliases()
-
         # Invalidate cache
         self._alias_cache = None
 

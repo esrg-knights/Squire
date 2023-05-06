@@ -161,7 +161,9 @@ def post_delete_committee(sender, instance, **kwargs):
         # Committee had no email, or was not eligible for an alias
         return
     # Delete alias
-    get_mailcow_manager().delete_committee_aliases([instance.contact_email])
+    mailcow_client: SquireMailcowManager = get_mailcow_manager()
+    mailcow_client.delete_committee_aliases([instance.contact_email])
+    mailcow_client.update_global_committee_aliases()
 
 #########################################
 # COMMITTEE MEMBERSHIP
@@ -197,14 +199,15 @@ def post_save_committee_membership(sender, instance, created: bool, raw: bool, *
     mailcow_client: SquireMailcowManager = get_mailcow_manager()
 
     if created:
-        if instance.member.is_active:
+        if instance.member is not None and instance.member.is_active:
             comm_model = apps.get_model("committees", "AssociationGroup")
             addresses = comm_model.objects.filter(members__email=instance.member.email).values_list("contact_email", flat=True)
             mailcow_client.update_member_aliases()
             mailcow_client.update_committee_aliases(addresses)
         return
     elif (instance.committee_id == instance._mailcow_old_data["committee"].id
-            and instance.member_id == instance._mailcow_old_data["member"].id):
+            and (instance._mailcow_old_data["member"] is None
+                or instance.member_id == instance._mailcow_old_data["member"].id)):
         # Attached committee and member haven't changed
         return
 
@@ -214,7 +217,7 @@ def post_save_committee_membership(sender, instance, created: bool, raw: bool, *
 
 def post_delete_committee_membership(sender, instance, **kwargs):
     """ Update member and committee aliases when a committee is deleted. """
-    if not instance.member.is_active:
+    if instance.member is None or not instance.member.is_active:
         return
     # Update all member and committee aliases
     mailcow_client: SquireMailcowManager = get_mailcow_manager()
@@ -283,12 +286,12 @@ def pre_save_membership(sender, instance, raw, **kwargs):
         membership = apps.get_model("membership_file", "MemberShip").objects.get(id=instance.id)
         instance._mailcow_old_data = {
             "is_active": membership.year.is_active,
-            "email": membership.member.email,
+            "member": membership.member,
         }
     else:
         instance._mailcow_old_data = {
             "is_active": None,
-            "email": None,
+            "member": None,
         }
 
 def post_save_membership(sender, instance, created: bool, raw: bool, **kwargs):
@@ -300,11 +303,11 @@ def post_save_membership(sender, instance, created: bool, raw: bool, **kwargs):
         return
 
     if created:
-        if not instance.member.is_active:
+        if instance.member is not None and not instance.member.is_active:
             # Attached member isn't active; no need to update
             return
     elif (instance.year.is_active == instance._mailcow_old_data["is_active"]
-            and instance.member.email == instance._mailcow_old_data["email"]):
+            and instance.member == instance._mailcow_old_data["member"]):
         # Attached year and member haven't changed
         return
 
@@ -315,7 +318,7 @@ def post_save_membership(sender, instance, created: bool, raw: bool, **kwargs):
 
 def post_delete_membership(sender, instance, **kwargs):
     """ Update member and committee aliases when a Membership is deleted """
-    if not instance.member.is_active:
+    if instance.member is None or not instance.member.is_active:
         return
     # Update all member and committee aliases
     mailcow_client: SquireMailcowManager = get_mailcow_manager()
@@ -339,6 +342,9 @@ ALIAS_SIGNALS: Tuple[Tuple[ModelSignal, Callable, str, str], ...] = (
     (post_delete, post_delete_committee, "committees.AssociationGroup", "alias_committee_delete_post"),
 
     # AssociationGroupMembership (Member-Committee connection)
+    (pre_save, pre_save_committee_membership, "committees.AssociationGroupMembership", "alias_committee_membership_save_pre"),
+    (post_save, post_save_committee_membership, "committees.AssociationGroupMembership", "alias_committee_membership_save_post"),
+    (post_delete, post_delete_committee_membership, "committees.AssociationGroupMembership", "alias_committee_membership_delete_post"),
 
     # Active Years
     (pre_save, pre_save_memberyear, "membership_file.MemberYear", "alias_memberyear_save_pre"),
