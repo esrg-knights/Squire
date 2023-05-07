@@ -19,7 +19,7 @@ class MailcowIntegrationConfig(AppConfig):
 
     def ready(self):
         # Setup Mailcow API client
-        if settings.MAILCOW_HOST is not None:
+        if settings.MAILCOW_HOST is not None: # pragma: no cover
             logger.info(f"Mailcow client set up: {settings.MAILCOW_HOST}")
             self.mailcow_client = SquireMailcowManager(settings.MAILCOW_HOST, settings.MAILCOW_API_KEY)
 

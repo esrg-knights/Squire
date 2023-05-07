@@ -347,9 +347,7 @@ class MailcowClientTest(TestCase):
             kwargs: dict = mock_request.call_args.kwargs
             data = kwargs.get("data", None)
             self.assertIsInstance(data, str)
-            self.assertDictEqual(json.loads(data), {
-                'items': [999, 998],
-            })
+            self.assertListEqual(json.loads(data), [str(999), str(998)])
 
     ################
     # MAILBOXES
