@@ -120,9 +120,11 @@
                                     <a class="dropdown-item"
                                        target="_blank" rel="noopener noreferrer"
                                        href="{% url 'admin:index' %}"><i class="fas fa-toolbox"></i> Admin panel</a>
-
+									{% if user.is_superuser %}
+										<a class="dropdown-item"
+											href="{% url 'core:status:mailcow_status' %}"><i class="fas fa-server"></i> Server Status</a>
+									{% endif %}
                                 {% endif %}
-
 								<div class="dropdown-divider"></div>
 								<a class="dropdown-item" href="{% url 'core:user_accounts/logout' %}">
                                     <i class="fas fa-power-off"></i> Sign out</a>

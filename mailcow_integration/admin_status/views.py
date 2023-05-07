@@ -89,7 +89,7 @@ class MailcowStatusView(TemplateView):
                                 + self.mailcow_manager.clean_emails_flat(
                                     subscribers,
                                     email_field=("contact_email" if alias_type == AliasCategory.GLOBAL_COMMITTEE else "email"),
-                                    extra=([] if alias_type == AliasCategory.GLOBAL_COMMITTEE else self._committee_addresses)
+                                    exclude=([] if alias_type == AliasCategory.GLOBAL_COMMITTEE else self._committee_addresses)
                                 )):
                 # Alias is outdated
                 #   goto-addresses include archive addresses and subscriber's addresses

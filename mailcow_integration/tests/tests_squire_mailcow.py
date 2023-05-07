@@ -98,7 +98,7 @@ class SquireMailcowManagerTest(TestCase):
         self.assertListEqual(cleaned_flat, ["baq@example.com", "baz@example.com"])
 
         # Passing the "extra" keyword extends the blocklist, but does not modify it for future runs
-        cleaned = self.squire_mailcow_manager.clean_emails(User.objects.all(), extra=[baz.email])
+        cleaned = self.squire_mailcow_manager.clean_emails(User.objects.all(), exclude=[baz.email])
         self.assertQuerysetEqual(cleaned, User.objects.filter(email__in=[baq.email]))
         self.assertEqual(self.squire_mailcow_manager.BLOCKLISTED_EMAIL_ADDRESSES, ["foo@example.com", "bar@example.com"])
 

@@ -82,7 +82,7 @@ class SquireMailcowManager:
     def __str__(self) -> str:
         return f"SquireMailcowManager[{self.mailcow_host}]"
 
-    def clean_emails(self, queryset: QuerySet, email_field="email", extra: Optional[List[str]]=None) -> QuerySet:
+    def clean_emails(self, queryset: QuerySet, email_field="email", exclude: Optional[List[str]]=None) -> QuerySet:
         """ Cleans a queryset of models with an email field (of any name),
             by removing blocklisted email addresses.
             Additional blocklisted addresses can be passed through the
@@ -90,8 +90,8 @@ class SquireMailcowManager:
         """
         blocklisted_addresses = [] # NOTE: Do not perform arithmetic on BLOCKLIST directly to prevent modification
         blocklisted_addresses += self.BLOCKLISTED_EMAIL_ADDRESSES
-        if extra is not None:
-            blocklisted_addresses += extra
+        if exclude is not None:
+            blocklisted_addresses += exclude
         queryset = queryset.exclude(**{f"{email_field}__in": blocklisted_addresses}).order_by(email_field)
         return queryset
 
@@ -290,7 +290,7 @@ class SquireMailcowManager:
             logger.info(f"Forced updating {alias_address}")
             emails = self.clean_emails_flat(
                 self.get_subscribed_members(active_members, alias_address, default=alias_data['default_opt']),
-                extra=committee_emails
+                exclude=committee_emails
             )
             emails = self.get_archive_adresses_for_type(AliasCategory.MEMBER, alias_address) + emails
             self._set_alias_by_name(alias_address, emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT)
@@ -317,7 +317,7 @@ class SquireMailcowManager:
                 logger.warning(f"Skipping over {assoc_group} ({assoc_group.contact_email}): Mailbox with the same name already exists")
                 continue
 
-            goto_emails = self.clean_emails_flat(assoc_group.members.filter_active(), extra=committee_emails)
+            goto_emails = self.clean_emails_flat(assoc_group.members.filter_active(), exclude=committee_emails)
             logger.info(f"Forced updating {assoc_group} ({len(goto_emails)} subscribers)")
             goto_emails = self.get_archive_adresses_for_type(AliasCategory.COMMITTEE, assoc_group.contact_email) + goto_emails
 

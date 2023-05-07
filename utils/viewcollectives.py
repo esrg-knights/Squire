@@ -62,7 +62,8 @@ class ViewCollectiveConfig:
         if self.requires_login and not request.user.is_authenticated:
             return False
         if self.requires_membership and request.member is None:
-            # TODO: limit to active members
+        # if self.requires_membership and (request.member is None or not request.member.is_active):
+        # TODO: Limit to active members
             return False
         return True
 

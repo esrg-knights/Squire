@@ -265,7 +265,9 @@ class Membership(models.Model):
         unique_together = [['member', 'year']]
 
     def __str__(self):
-        return f'{self.member.get_full_name()} for {self.year}'
+        if self.member is not None:
+            return f'{self.member.get_full_name()} for {self.year}'
+        return f"Deleted member for {self.year}"
 
 
 # The MemberLog Model represents a log entry that is created whenever membership data is updated

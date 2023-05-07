@@ -34,8 +34,6 @@ urlpatterns = [
     path('inventory/', include(('inventory.urls', 'inventory'), namespace='inventory')),
     path('boardgames/', include(('boardgames.urls', 'boardgames'), namespace='boardgames')),
     path('roleplay/', include(('roleplaying.urls', 'roleplaying'), namespace='roleplaying')),
-    # Mailcow
-    path('mailcow/', include('mailcow_integration.urls', namespace='mailcow')),
     # Activity Calendar
     path('', include(('activity_calendar.urls', 'activity_calendar'), namespace='activity_calendar')),
     # Committee pages

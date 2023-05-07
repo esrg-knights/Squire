@@ -62,7 +62,7 @@ welcome_messages = [
     "Good dawning to thee, friend. May thy day be blissful.",
     "Anoniem lid X is bij deze gejsorsd.",
     "ERROR 404: Welcome message not found",
-    "Congratulations, you are the 1,000,000th visitor! You won a free embroidery machine!",
+    "Congratulations, you are the 1,000,000th visitor!",
     "Pam fyddech chi'n cyfieithu'r neges hon?",
     "We wish you a merry Christmas!",
     "The kitchen pool has reopened.",

@@ -21,8 +21,8 @@ class EmailPreferencesChangeView(AccountViewMixin, FormView):
 
     def form_valid(self, form: PreferenceForm):
         message = _("Your mail preferences have been updated!")
-        messages.success(self.request, message)
         form.update_preferences()
+        messages.success(self.request, message)
 
         has_any_changes = False
         for name, field in form.fields.items():
