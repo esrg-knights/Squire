@@ -162,9 +162,9 @@ def post_save_committee(sender, instance, created: bool, raw: bool, **kwargs):
         if instance.contact_email is None:
             # Committee no longer has an email address
             should_remove = True
-        elif instance._mailcow_old_data["type"] in [comm_model.COMMITTEE, comm_model.GUILD, comm_model.WORKGROUP]:
+        elif instance._mailcow_old_data["type"] in [comm_model.COMMITTEE, comm_model.ORDER, comm_model.WORKGROUP]:
             # Committee was eligible for an alias
-            if instance.type not in [comm_model.COMMITTEE, comm_model.GUILD, comm_model.WORKGROUP]:
+            if instance.type not in [comm_model.COMMITTEE, comm_model.ORDER, comm_model.WORKGROUP]:
                 # Committee is no longer eligible for an alias (e.g. it is a board)
                 should_remove = True
 
@@ -185,7 +185,7 @@ def post_save_committee(sender, instance, created: bool, raw: bool, **kwargs):
 def post_delete_committee(sender, instance, **kwargs):
     """ Update (global) committee aliases when a committee is deleted. """
     comm_model = apps.get_model("committees", "AssociationGroup")
-    if instance.contact_email is None or instance.type not in [comm_model.COMMITTEE, comm_model.GUILD, comm_model.WORKGROUP]:
+    if instance.contact_email is None or instance.type not in [comm_model.COMMITTEE, comm_model.ORDER, comm_model.WORKGROUP]:
         # Committee had no email, or was not eligible for an alias
         return
     # Delete alias

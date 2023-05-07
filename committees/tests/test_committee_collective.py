@@ -30,26 +30,26 @@ class CommitteeConfigTestCase(TestCase):
         # New request with no info WILL fail at the parent
         request = RequestFactory().get(path='')
         request.user = AnonymousUser()
-        self.assertEqual(self.config.check_access_validity(request, self.association_group), False)
+        self.assertEqual(self.config.is_accessible(request, self.association_group), False)
 
     def test_check_access_user_not_in_group(self):
         self.mock_user_in_a_group.return_value = False
-        self.assertEqual(self.config.check_access_validity(self.request, self.association_group), False)
+        self.assertEqual(self.config.is_accessible(self.request, self.association_group), False)
 
     def test_check_access_no_permissions_set(self):
-        self.assertEqual(self.config.check_access_validity(self.request, self.association_group), True)
+        self.assertEqual(self.config.is_accessible(self.request, self.association_group), True)
 
     def test_check_access_without_permission_requirement(self):
-        self.assertEqual(self.config.check_access_validity(self.request, self.association_group), True)
+        self.assertEqual(self.config.is_accessible(self.request, self.association_group), True)
 
     def test_check_access_permission_requirement_fails(self):
         self.config.group_requires_permission = 'auth.change_user'
-        self.assertEqual(self.config.check_access_validity(self.request, self.association_group), False)
+        self.assertEqual(self.config.is_accessible(self.request, self.association_group), False)
 
     def test_check_access_permission_requirement_success(self):
         self.config.group_requires_permission = 'auth.change_user'
         self.config.enable_access(self.association_group)
-        self.assertEqual(self.config.check_access_validity(self.request, self.association_group), True)
+        self.assertEqual(self.config.is_accessible(self.request, self.association_group), True)
 
     def test_enable_access(self):
         perm_name = 'auth.change_user'

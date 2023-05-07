@@ -7,8 +7,8 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('membership_file', '0017_membership_member_null'),
-        ('committees', '0005_longer_group_member_titles'),
+        ('membership_file', '0018_membership_member_null'),
+        ('committees', '0008_auto_20220417_2305'),
     ]
 
     operations = [

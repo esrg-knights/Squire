@@ -300,7 +300,7 @@ class SquireMailcowManager:
         """ Gets a queryset containing all associationGroups that should have an alias setup """
         AssociationGroup = self._committee_model
         return AssociationGroup.objects.filter(
-            type__in=[AssociationGroup.COMMITTEE, AssociationGroup.GUILD, AssociationGroup.WORKGROUP],
+            type__in=[AssociationGroup.COMMITTEE, AssociationGroup.ORDER, AssociationGroup.WORKGROUP],
             contact_email__isnull=False
         )
 

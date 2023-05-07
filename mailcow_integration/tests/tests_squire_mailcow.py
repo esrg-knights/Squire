@@ -110,15 +110,15 @@ class SquireMailcowManagerTest(TestCase):
 
     def test_get_active_committees(self):
         """ Tests whether only a specific group of committtees are considered for email aliases """
-        committee = AssociationGroup.objects.create(site_group=Group.objects.create(name="Dummy Group0"),
+        committee = AssociationGroup.objects.create(name="Dummy Group0",
             type=AssociationGroup.COMMITTEE, contact_email="c@example.com")
-        order = AssociationGroup.objects.create(site_group=Group.objects.create(name="Dummy Group1"),
-            type=AssociationGroup.GUILD, contact_email="o@example.com")
-        workgroup = AssociationGroup.objects.create(site_group=Group.objects.create(name="Dummy Group2"),
+        order = AssociationGroup.objects.create(name="Dummy Group1",
+            type=AssociationGroup.ORDER, contact_email="o@example.com")
+        workgroup = AssociationGroup.objects.create(name="Dummy Group2",
             type=AssociationGroup.WORKGROUP, contact_email="w@example.com")
-        board = AssociationGroup.objects.create(site_group=Group.objects.create(name="Dummy Group3"),
+        board = AssociationGroup.objects.create(name="Dummy Group3",
             type=AssociationGroup.BOARD, contact_email="b@example.com")
-        no_address = AssociationGroup.objects.create(site_group=Group.objects.create(name="Dummy Group4"),
+        no_address = AssociationGroup.objects.create(name="Dummy Group4",
             type=AssociationGroup.COMMITTEE)
 
         valid_assoc_groups = self.squire_mailcow_manager.get_active_committees()
@@ -416,13 +416,13 @@ class SquireMailcowManagerTest(TestCase):
         #   - boardgames: foo, bar
         #   - roleplay: foo
         #   - blocked: bar
-        bg = AssociationGroup.objects.create(site_group=Group.objects.create(name="Boardgamers"),
+        bg = AssociationGroup.objects.create(name="Boardgamers",
             type=AssociationGroup.COMMITTEE, contact_email="bg@example.com")
-        rp = AssociationGroup.objects.create(site_group=Group.objects.create(name="Roleplayers"),
+        rp = AssociationGroup.objects.create(name="Roleplayers",
             type=AssociationGroup.COMMITTEE, contact_email="rp@example.com")
-        mailbox = AssociationGroup.objects.create(site_group=Group.objects.create(name="Mailbox"),
+        mailbox = AssociationGroup.objects.create(name="Mailbox",
             type=AssociationGroup.COMMITTEE, contact_email="mailbox@example.com")
-        blocked = AssociationGroup.objects.create(site_group=Group.objects.create(name="Blocklisted"),
+        blocked = AssociationGroup.objects.create(name="Blocklisted",
             type=AssociationGroup.COMMITTEE, contact_email="blocklisted@example.com")
         foo = Member.objects.create(first_name='Foo', last_name="Oof", legal_name="Foo Oof", email="memberfoo@example.com")
         bar = Member.objects.create(first_name='Bar', last_name="Rab", legal_name="Bar Rab", email="memberbar@example.com")
@@ -513,14 +513,10 @@ class SquireMailcowManagerTest(TestCase):
             "leden@example.com", "commissies@example.com", "ordes@example.com"
         ]
         # Setup committees:
-        AssociationGroup.objects.create(site_group=Group.objects.create(name="Valid"),
-            type=AssociationGroup.COMMITTEE, contact_email="valid@example.com")
-        AssociationGroup.objects.create(site_group=Group.objects.create(name="MemberAlias"),
-            type=AssociationGroup.COMMITTEE, contact_email="leden@example.com")
-        AssociationGroup.objects.create(site_group=Group.objects.create(name="Mailbox"),
-            type=AssociationGroup.COMMITTEE, contact_email="mailbox@example.com")
-        AssociationGroup.objects.create(site_group=Group.objects.create(name="Board"),
-            type=AssociationGroup.BOARD, contact_email="board@example.com")
+        AssociationGroup.objects.create(name="Valid", type=AssociationGroup.COMMITTEE, contact_email="valid@example.com")
+        AssociationGroup.objects.create(name="MemberAlias", type=AssociationGroup.COMMITTEE, contact_email="leden@example.com")
+        AssociationGroup.objects.create(name="Mailbox", type=AssociationGroup.COMMITTEE, contact_email="mailbox@example.com")
+        AssociationGroup.objects.create(name="Board", type=AssociationGroup.BOARD, contact_email="board@example.com")
 
         self.squire_mailcow_manager.update_global_committee_aliases()
         # Called once for each global committee alias
