@@ -197,11 +197,13 @@ class SquireMailcowManager:
             alias = self.alias_map.get(address, None)
             if alias is not None and alias.public_comment.startswith(public_comment):
                 aliases.append(alias)
-        # Delete aliases themselves
-        self._client.delete_aliases(aliases)
 
-        # Invalidate cache
-        self._alias_cache = None
+        if aliases:
+            # Delete aliases themselves
+            self._client.delete_aliases(aliases)
+
+            # Invalidate cache
+            self._alias_cache = None
 
     def _set_alias_by_name(self, address: str, goto_addresses: List[str], public_comment: str) -> None:
         """ Sets an alias's goto addresses, and optionally sets its visible in SOGo. If the corresponding
@@ -274,7 +276,7 @@ class SquireMailcowManager:
         return settings.COMMITTEE_CONFIGS["archive_addresses"]
 
     def update_member_aliases(self) -> None:
-        """ Updates all member aliases, or a subset thereof """
+        """ Updates all member aliases """
         # TODO: Return a list of failures (i.e., API calls that returned an exception)
         # Fetch active members here so the results can be cached
         active_members = self.get_active_members()
@@ -323,7 +325,7 @@ class SquireMailcowManager:
         self._alias_cache = None
 
     def update_global_committee_aliases(self):
-        """ TODO """
+        """ Updates all global committee aliases """
         for alias_address in filter(lambda address: address not in settings.MEMBER_ALIASES.keys(),
                 settings.COMMITTEE_CONFIGS['global_addresses']):
             if alias_address in self.mailbox_map:

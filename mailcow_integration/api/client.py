@@ -1,14 +1,14 @@
 from enum import Enum
 import json
-from typing import Generator, List, Union
+import logging
 import requests
+from typing import Generator, List, Union
 
 from mailcow_integration.api.exceptions import *
 from mailcow_integration.api.interface.alias import AliasType, MailcowAlias
 from mailcow_integration.api.interface.mailbox import MailcowMailbox
 from mailcow_integration.api.interface.rspamd import RspamdSettings
 
-import logging
 logger = logging.getLogger(__name__)
 
 class RequestType(Enum):
@@ -58,10 +58,11 @@ class MailcowAPIClient:
                 raise MailcowRouteNotFoundException(f"{request_url}: {content['msg']}")
             else:
                 # Some other error (should not happen)
+                logger.error(content)
                 raise MailcowException(f"{request_url}: {content['msg']}")
         elif content.get('type', None) == 'danger':
-            print(content)
             # Unknown exception occurred. E.g. invalid parameters passed to POST
+            logger.error(content)
             raise MailcowException(f"{request_url}: {content['msg']}")
         elif not content:
             # API returned an empty response

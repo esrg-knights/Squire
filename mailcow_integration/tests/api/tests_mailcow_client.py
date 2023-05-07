@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from requests import Response
 from unittest.mock import patch, Mock, call
-from core.tests.util import suppress_infos
+from core.tests.util import suppress_errors, suppress_infos
 
 from mailcow_integration.api.client import MailcowAPIClient, RequestType
 from mailcow_integration.api.exceptions import *
@@ -88,6 +88,7 @@ class MailcowClientTest(TestCase):
             with self.assertRaisesMessage(MailcowException, "Unexpected response"):
                 self.mailcow_client._make_request("my_url", RequestType.GET, params={'foo': 'bar'}, data={'hello': 'there'})
 
+    @suppress_errors(logger_name='mailcow_integration.api.client')
     def test_response_verification(self):
         """ Tests if responses given by the API are verified properly """
         # Empty response

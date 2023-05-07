@@ -109,6 +109,26 @@ def check_http_response_with_login_redirect(test, url, http_method, **kwargs):
             response_status=200, redirect_url=(f"{settings.LOGIN_URL}?next={url}"), **kwargs)
     )
 
+def suppress_errors(function=None, logger_name='django'):
+    """ Decorator that surpresses ERROR logs when calling a function. """
+    def decorator(original_func):
+        @wraps(original_func)
+        def _wrapped_view(*args, **kwargs):
+            # raise logging level to CRITICAL
+            logger = logging.getLogger(logger_name)
+            previous_logging_level = logger.getEffectiveLevel()
+            logger.setLevel(logging.CRITICAL)
+
+            # trigger original function that would throw warning
+            original_func(*args, **kwargs)
+
+            # lower logging level back to previous
+            logger.setLevel(previous_logging_level)
+        return _wrapped_view
+
+    if function:
+        return decorator(function)
+    return decorator
 
 def suppress_warnings(function=None, logger_name='django.request'):
     """

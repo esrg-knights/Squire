@@ -325,6 +325,27 @@ class SquireMailcowManagerTest(TestCase):
         self.assertIsNotNone(self.squire_mailcow_manager._mailbox_map_cache)
 
     ################
+    # Deleting aliases
+    ################
+    @patch('mailcow_integration.api.client.MailcowAPIClient.delete_aliases')
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.alias_map', return_value={
+        "foo@example.com": MailcowAlias("foo@example.com", ["a@example.com", "b@example.com"], 99, public_comment="Foo!"),
+    }, new_callable=PropertyMock)
+    def test_delete_aliases(self, mock_alias_map: Mock, mock_delete: Mock):
+        """ Tests deletion of aliases """
+        self.squire_mailcow_manager._alias_cache = mock_alias_map.return_value.values()
+        # Not deleted when public comment does not match up, alias cache kept intact
+        self.squire_mailcow_manager.delete_aliases(["foo@example.com"], "Bar!")
+        mock_delete.assert_not_called()
+        self.assertIsNotNone(self.squire_mailcow_manager._alias_cache)
+
+        # Deletion happens normally; invalid addresses skipped
+        #   alias cache invalidated
+        self.squire_mailcow_manager.delete_aliases(["foo@example.com", "invalid@example.com"], "Fo")
+        mock_delete.assert_called_once_with([mock_alias_map.return_value["foo@example.com"]])
+        self.assertIsNone(self.squire_mailcow_manager._alias_cache)
+
+    ################
     # Updating aliases
     ################
     @patch('mailcow_integration.api.client.MailcowAPIClient.create_alias')
@@ -424,6 +445,12 @@ class SquireMailcowManagerTest(TestCase):
         # Alias cache is invalidated
         self.assertIsNone(self.squire_mailcow_manager._alias_cache)
 
+        # limit_update_to is adhered to
+        mock_set_alias.reset_mock()
+        self.squire_mailcow_manager.update_committee_aliases(limit_update_to=["bg@example.com"])
+        mock_set_alias.assert_called_once_with("bg@example.com", archive_mock.return_value + ["memberbar@example.com", "memberfoo@example.com"],
+            public_comment=self.squire_mailcow_manager.ALIAS_COMMITTEE_PUBLIC_COMMENT)
+
     @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.mailbox_map', return_value={
         "mailbox@example.com": MailcowMailbox("mailbox@example.com", "Mr. Foo"),
     }, new_callable=PropertyMock)
@@ -465,6 +492,47 @@ class SquireMailcowManagerTest(TestCase):
             public_comment=self.squire_mailcow_manager.ALIAS_MEMBERS_PUBLIC_COMMENT)
         # Blocklisted & Mailbox email not called
         self.assertEqual(mock_set_alias.call_count, 1)
+
+        # Alias cache is invalidated
+        self.assertIsNone(self.squire_mailcow_manager._alias_cache)
+
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_archive_adresses_for_type', return_value=[
+        'archive@example.com', 'archive2@example.com'
+    ])
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.mailbox_map', return_value={
+        "mailbox@example.com": MailcowMailbox("mailbox@example.com", "Mr. Foo"),
+    }, new_callable=PropertyMock)
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager._set_alias_by_name')
+    @override_settings(
+        MEMBER_ALIASES={ "leden@example.com": {} },
+        COMMITTEE_CONFIGS={ "global_addresses": ["commissies@example.com", "ordes@example.com"] })
+    @suppress_warnings(logger_name="mailcow_integration.squire_mailcow")
+    def test_update_global_committee_aliases(self, mock_set_alias: Mock, mock_mailbox_map: Mock, archive_mock: Mock):
+        """ Tests updating committee aliases """
+        self.squire_mailcow_manager.BLOCKLISTED_EMAIL_ADDRESSES = [
+            "leden@example.com", "commissies@example.com", "ordes@example.com"
+        ]
+        # Setup committees:
+        AssociationGroup.objects.create(site_group=Group.objects.create(name="Valid"),
+            type=AssociationGroup.COMMITTEE, contact_email="valid@example.com")
+        AssociationGroup.objects.create(site_group=Group.objects.create(name="MemberAlias"),
+            type=AssociationGroup.COMMITTEE, contact_email="leden@example.com")
+        AssociationGroup.objects.create(site_group=Group.objects.create(name="Mailbox"),
+            type=AssociationGroup.COMMITTEE, contact_email="mailbox@example.com")
+        AssociationGroup.objects.create(site_group=Group.objects.create(name="Board"),
+            type=AssociationGroup.BOARD, contact_email="board@example.com")
+
+        self.squire_mailcow_manager.update_global_committee_aliases()
+        # Called once for each global committee alias
+        #   Included goto-addresses: aliases, mailboxes
+        #   Skipped goto-addresses: member aliases, groups without email aliases (e.g. boards)
+        mock_set_alias.assert_any_call("commissies@example.com",
+            archive_mock.return_value + ["mailbox@example.com", "valid@example.com"],
+            public_comment=self.squire_mailcow_manager.ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT)
+        mock_set_alias.assert_any_call("ordes@example.com",
+            archive_mock.return_value + ["mailbox@example.com", "valid@example.com"],
+            public_comment=self.squire_mailcow_manager.ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT)
+        self.assertEqual(mock_set_alias.call_count, 2)
 
         # Alias cache is invalidated
         self.assertIsNone(self.squire_mailcow_manager._alias_cache)
