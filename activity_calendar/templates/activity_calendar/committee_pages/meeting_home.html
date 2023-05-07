@@ -1,0 +1,182 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% load activity_tags %}
+{% load build_absolute_uri %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    {{ block.super }}
+
+    <h3>
+        Meetings
+    </h3>
+    <div class="row">
+        <div class="col-12 col-md-8">
+            {% for meeting in meeting_list %}
+                <div class="">
+                    <div class="justify-content-between d-flex">
+                        <div>
+                            <span class="h5 {% if meeting.is_cancelled %}text-muted{% endif %}">
+                                <i class="fas fa-calendar-day"></i>
+                                {{ meeting.start_date|date:"l j F, H:i"|capfirst }}
+
+                            </span>
+                            {% if meeting.parent_activity.is_recurring and not meeting.is_part_of_recurrence %}
+                                <small class="{% if meeting.is_cancelled %}text-muted{% endif %}">
+                                    <i class="fas fa-exclamation-circle"></i> non-recurring
+                                </small>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {% if meeting.is_cancelled %}
+                                <a href="{% url "committees:meetings:un-cancel" group_id=association_group.id recurrence_id=meeting.recurrence_id %}"
+                                   class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-pen"></i> Edit
+                                </a>
+                            {% else %}
+                                <a href="{% url "committees:meetings:edit" group_id=association_group.id recurrence_id=meeting.recurrence_id %}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-pen"></i> Edit
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <table class="table table-sm">
+                        <tbody>
+                        {% if meeting.is_cancelled %}
+                            <tr>
+                                <td colspan="2">
+                                    <span class="text-muted">
+                                        This meeting is cancelled
+                                    </span>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td class="col-auto">
+                                    Location:
+                                </td>
+                                <td class="col">
+                                    {{ meeting.location|default:"undetermined" }}
+                                </td>
+                            </tr>
+                            {% if meeting.description %}
+                                <tr>
+                                    <td>
+                                        Info:
+                                    </td>
+                                    <td>
+                                        {{ meeting.description.as_rendered }}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            {% empty %}
+                <div>There are currently no upcoming meetings planned</div>
+            {% endfor %}
+        </div>
+        <div class="col-12 col-md-4 border-left border-dark">
+            <div class="btn btn-info btn-block mb-4" onclick="display_import_info()">
+                <i class="fas fa-calendar-plus"></i> Import meetings in your calendar
+            </div>
+            <script>
+                function display_import_info() {
+                    $('#importModal').modal('show');
+                }
+            </script>
+            <p>
+                Use this page to organise your meetings. At most the next 5 meetings are displayed on this page.
+            </p>
+
+            {% if meeting_activity.is_recurring %}
+                <div class="">
+                    This meeting is recurring:
+                    <ul>
+                    {% for rule in meeting_activity.recurrences.rrules %}
+                        <li>
+                            {{ rule.to_text }}
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </p>
+                {% if can_change_recurrences %}
+                    <div>
+                        <a class="btn btn-outline-primary btn-sm"
+                           href="{% url "committees:meetings:edit_recurrence" group_id=association_group.id %}">
+                            <i class="fas fa-calendar-alt"></i> Change recurrence
+                        </a>
+                    </div>
+                {% endif %}
+            {% else %}
+                {% if can_change_recurrences %}
+                    <div>
+                        <a class="btn btn-outline-primary btn-sm"
+                           href="{% url "committees:meetings:edit_recurrence" group_id=association_group.id %}">
+                            <i class="fas fa-calendar-alt"></i> Set recurrence
+                        </a>
+                    </div>
+                {% endif %}
+            {% endif %}
+            <div class="my-2">
+                <a class="btn btn-primary btn-sm"
+                   href="{% url "committees:meetings:add" group_id=association_group.id %}">
+                    <i class="fas fa-plus"></i> Add new meeting
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">Import this Calendar</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        You can import the meetings as a feed into your agenda. To do so, follow the instructions on adding an agenda from URL and use the URL below.
+                        <br>
+                        <span class="text-danger small">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Do not import the file you get if you navigate to this URL directly
+                        </span>
+                    </p>
+                    <div class="mb-3 text-center">
+                        <p class="mb-2">
+                            <a id="calendar-url" data-copy="{{ full_calendar_url }}" tabindex="0" data-content="Url has been copied to the clipboard">
+                                {% build_absolute_uri request feed_url as full_calendar_url %}
+                                {{ full_calendar_url }}
+                            </a>
+                        </p>
+                        <a id="copy-calendar-url-to-clipboard" type="button" class="btn btn-info btn-sm"
+                           tabindex="1" data-content="Url has been copied to the clipboard"
+                                data-copy="{{ full_calendar_url }}">
+                            <i class="fas fa-copy"></i> Copy URL to clipboard
+                        </a>
+                    </div>
+                    <p><small class="text-muted">
+                        For instance, in Google Calendar, go to <i>Add Calendar</i> > <i>From URL</i> and enter URL listed above.
+                    </small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block js_bottom %}
+    {{ block.super }}
+    <script src="{% static "js/copy_data.js" %}"></script>
+
+{% endblock %}

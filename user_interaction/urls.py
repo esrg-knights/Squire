@@ -12,7 +12,8 @@ def user_interaction_urls():
         ################
         # BEGIN APRIL 2022
         ################
-        path('upgrade', views.SquirePremiumView.as_view(), name='squire_premium'),
+        path('upgrade/', views.April2022SquirePremiumView.as_view(), name='squire_premium'),
+        path('live/', views.April2023LiveStreamView.as_view(), name='april_live'),
         ################
         # END APRIL 2022
         ################

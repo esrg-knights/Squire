@@ -1,14 +1,17 @@
 from datetime import timedelta
 import random
 from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.utils import timezone
 
 from dynamic_preferences.registries import global_preferences_registry
 
 from activity_calendar.models import Activity
+from activity_calendar.constants import ActivityType
 from core.forms import LoginForm
 from membership_file.models import Membership
+from membership_file.views import MembershipRequiredMixin
 from utils.spoofs import optimise_naming_scheme
 
 
@@ -32,12 +35,16 @@ class HomeNonAuthenticatedView(TemplateView):
         )
 
 ################
-# BEGIN APRIL 2022
+# BEGIN APRIL FOOLS VIEWS
 ################
-class SquirePremiumView(TemplateView):
+class April2022SquirePremiumView(TemplateView):
     template_name = "user_interaction/april_2022.html"
+
+class April2023LiveStreamView(MembershipRequiredMixin, TemplateView):
+    template_name = "user_interaction/april_2023.html"
+    requires_active_membership = False
 ################
-# END APRIL 2022
+# END APRIL FOOLS VIEWS
 ################
 
 welcome_messages = [
@@ -87,7 +94,7 @@ class HomeUsersView(TemplateView):
             welcome_name = optimise_naming_scheme(welcome_name)
 
         activities = []
-        for activity in Activity.objects.filter(published_date__lte=timezone.now(), is_public=True):
+        for activity in Activity.objects.filter(published_date__lte=timezone.now(), type=ActivityType.ACTIVITY_PUBLIC):
             for activity_moment in activity.get_activitymoments_between(start_date, end_date):
                 activities.append(activity_moment)
 

@@ -85,6 +85,14 @@ class ViewCollectiveConfig:
         url_key = f'{self.url_keyword}/' if self.url_keyword else ''
         return path(url_key, (self.get_urls(), self.namespace, self.namespace))
 
+    def get_absolute_url(self, **url_kwargs):
+        url_name = ""
+        if self.registry.namespace:
+            url_name += f"{self.registry.namespace}:"
+        url_name += self.url_name
+
+        return reverse(url_name, kwargs=url_kwargs)
+
 
 class ViewCollectiveViewMixin:
     """
@@ -207,8 +215,9 @@ class ViewCollectiveRegistry:
                 pass
             else:
                 for name, cls in module.__dict__.items():
-                    if isinstance(cls, type):
+                    if isinstance(cls, type) and cls.__module__ == module.__name__:
                         # Get all subclasses of the root config class, but not accidental imported copies of itself
+
                         if issubclass(cls, self.config_class) and cls != self.config_class:
                             config = cls(self)  # Initialise config
                             if config.is_enabled():

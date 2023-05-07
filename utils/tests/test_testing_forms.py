@@ -9,7 +9,7 @@ from utils.testing.form_test_util import FormValidityMixin
 class TestFormValidityMixin(FormValidityMixin, TestCase):
     class TestForm(forms.Form):
         """ Fictive form for Form testing used in TestFormValidityMixin"""
-        main_field = forms.CharField(required=False)
+        main_field = forms.CharField(required=True)
         fake_field = forms.CharField(required=False)
 
         def clean_main_field(self):
@@ -48,6 +48,41 @@ class TestFormValidityMixin(FormValidityMixin, TestCase):
             )
         )
 
+    def test_assertHasField_contains_property(self):
+        self.raisesAssertionError(self.assertHasField, 'main_field', fake_prop=True)
+
+    def test_assertHasField_equal_property(self):
+        """ Tests that properties of the field can be tested """
+        # This should not raise an error
+        self.assertHasField('main_field', required=True)
+        # This should
+        error = self.raisesAssertionError(self.assertHasField, 'main_field', required=False)
+        self.assertEqual(
+            error.__str__(),
+            "{field_name}.{key} was not '{expected_value}', but '{actual_value}' instead".format(
+                field_name = 'main_field',
+                key='required',
+                expected_value=False,
+                actual_value=True
+            )
+        )
+
+    def test_assertHasField_equal_instance(self):
+        """ Tests that properties of the field can be tested """
+        # This should not raise an error
+        self.assertHasField('main_field', widget__class=forms.TextInput)
+        # This should
+        error = self.raisesAssertionError(self.assertHasField, 'main_field', widget__class=forms.EmailInput)
+        self.assertEqual(
+            error.__str__(),
+            "{field_name}.{key} was not of type '{expected_type}', but '{actual_type}' instead".format(
+                field_name = 'main_field',
+                key='widget',
+                expected_type=forms.EmailInput.__name__,
+                actual_type=forms.TextInput.__name__
+            )
+        )
+
     def test_assertFormValid(self):
         # This should not raise an error
         self.assertFormValid({'main_field': "ok"})
@@ -63,12 +98,12 @@ class TestFormValidityMixin(FormValidityMixin, TestCase):
 
     def test_assertFormHasError_in_field(self):
         self.assertFormHasError({'main_field': 'break_field'}, 'invalid_field')
-        self.assertFormHasError({'main_field': 'break_field'}, 'invalid_field', field='main_field')
+        self.assertFormHasError({'main_field': 'break_field'}, 'invalid_field', field_name='main_field')
 
         # Error is in main_field not fake_field
-        self.raisesAssertionError(self.assertFormHasError, {'main_field': 'break_field'}, 'invalid_form', field='fake_field')
+        self.raisesAssertionError(self.assertFormHasError, {'main_field': 'break_field'}, 'invalid_form', field_name='fake_field')
         # This next data raises an error, just not the one with this code
-        error = self.raisesAssertionError(self.assertFormHasError, {'main_field': 'break_field'}, 'invalid_data', field='main_field')
+        error = self.raisesAssertionError(self.assertFormHasError, {'main_field': 'break_field'}, 'invalid_data', field_name='main_field')
         self.assertEqual(
             error.__str__(),
             "Form did not contain an error with code '{code}' in field '{field}'".format(
@@ -85,7 +120,7 @@ class TestFormValidityMixin(FormValidityMixin, TestCase):
         error = self.raisesAssertionError(self.assertFormHasError, {'main_field': 'break_nothing'}, 'invalid_form')
         self.assertEqual(error.__str__(), "The form contained no errors")
         # Error is not in main_field, but elsewhere
-        error = self.raisesAssertionError(self.assertFormHasError, {'main_field': 'break_form'}, 'invalid_form', field='main_field')
+        error = self.raisesAssertionError(self.assertFormHasError, {'main_field': 'break_form'}, 'invalid_form', field_name='main_field')
         self.assertEqual(
             error.__str__(),
             "Form did not encounter an error in '{field_name}'.".format(

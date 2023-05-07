@@ -65,3 +65,78 @@ class RequestUserToFormModelAdminMixin:
             def __new__(cls, *args, **kwargs):
                 return Form(*args, user=request.user, **kwargs)
         return RequestUserForm
+
+
+
+class FormGroup:
+    """ A formgroup functions as a shell to a form and any number of formsets. This is ideal when editing an
+    object along with some directly related objects. Can be used on FormViews
+    form_class: The class of the main form
+    formset_class: The class of the formset
+    form_kwargs: dictionary of form init arguments
+    formset_kwargs: dictionary of dictionaries with formset init keyword arguments. Keys are names of the formset classes
+    i.e. {'MyFormset': {'Init_keyword': 'value'}}
+    """
+    form_class = None
+    form_kwargs = {}
+    formset_kwargs = {}
+    formset_class = None
+
+    def __init__(self, **kwargs):
+        self.init_kwargs = kwargs
+        self.form = self.form_class(**self.get_form_kwargs(self.form_class))
+        self.formsets = [self.formset_class(**self.get_formset_kwargs(self.formset_class))]
+
+    def get_form_kwargs(self, form_class):
+        """ Get the form initial keyword arguments for the form """
+        kwargs = {}
+        # Carry over the basic init kwargs over to the form, but no more as any unexpected kwarg throws an exception
+        # in the form itself
+        _form_base_init_kwargs = ['data', 'files', 'auto_id', 'error_class', 'label_suffix', 'renderer']
+        for kwarg_key in _form_base_init_kwargs:
+            if kwarg_key in self.init_kwargs:
+                kwargs[kwarg_key] = self.init_kwargs[kwarg_key]
+
+        if self.init_kwargs.get('prefix', None):
+            kwargs['prefix'] = self.init_kwargs['prefix'] + "-"
+        kwargs['prefix'] = kwargs.get('prefix', '') + "main"
+        kwargs.update(self.form_kwargs)
+        return kwargs
+
+    def get_formset_kwargs(self, formset_class):
+        """ Get the form initial keyword arguments for the formset """
+        kwargs = {}
+        # Carry over the basic init kwargs over to the formset, but no more as any unexpected kwarg throws an exception
+        # in the formset itself
+        _formset_base_init_kwargs = ['data', 'files', 'auto_id', 'error_class']
+        for kwarg_key in _formset_base_init_kwargs:
+            if kwarg_key in self.init_kwargs:
+                kwargs[kwarg_key] = self.init_kwargs[kwarg_key]
+
+        if self.init_kwargs.get('prefix', None):
+            kwargs['prefix'] = self.init_kwargs['prefix'] + "-"
+        kwargs['prefix'] = kwargs.get('prefix', '') + "formset"
+
+        kwargs.update(self.formset_kwargs.get(formset_class.__name__, {}))
+        return kwargs
+
+    def is_valid(self):
+        """ Checks if any and all subforms and formsets are valid"""
+        is_valid = True
+
+        # Run over all forms and formsets to ensure that errors are build
+        if not self.form.is_valid():
+            is_valid = False
+        for formset in self.formsets:
+            if not formset.is_valid():
+                is_valid = False
+
+        return is_valid
+
+    def save(self):
+        """ Executes save() on all forms and formsets (if applicable) """
+        if hasattr(self.form, "save"):
+            self.form.save()
+        for formset in self.formsets:
+            if hasattr(formset, "save"):
+                formset.save()

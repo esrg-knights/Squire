@@ -1,0 +1,37 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% load render_form %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url "committees:meetings:home" group_id=association_group.id %}">Home</a></li>
+    <li class="breadcrumb-item"><a>Edit meeting details</a></li>
+{% endblock %}
+
+
+{% block content %}
+    {{ block.super }}
+
+    <h4>Change meeting details</h4>
+    <h5>
+        <i class="fas fa-calendar-day"></i>
+        <del>{{ meeting.start_date|date:"l j F, H:i"|capfirst }}</del>
+    </h5>
+    <hr>
+
+    <div class="my-2">
+        <div>
+            This meeting is marked as cancelled. You need to un-cancel it first before you can edit its details
+        </div>
+        <button form="submit_form" type="submit" class="btn btn-success">
+            <i class="fas fa-calendar-check"></i> Un-cancel meeting
+        </button>
+    </div>
+
+    {% render_form method="post" id="submit_form"  has_submit_button=False uses_file_field=True %}
+
+{% endblock %}

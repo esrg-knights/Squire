@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     # External Libraries
     'bootstrap4',
+    'tempus_dominus', # Bootstrap DateTime picker
     'dynamic_preferences', # Global Preferences
     'dynamic_preferences.users.apps.UserPreferencesConfig', # Per-user preferences
     'recurrence',
@@ -65,6 +66,7 @@ INSTALLED_APPS = [
     'utils',
     'boardgames',
     'roleplaying',
+    'nextcloud_integration',
     'user_interaction.apps.UserInteractionConfig',
     'mailcow_integration',
     # More External Libraries
@@ -286,11 +288,6 @@ LOGOUT_URL = '/logout'
 # logout if LogoutView doesn’t have a next_page attribute.
 LOGOUT_REDIRECT_URL = '/logout/success'
 
-
-# Not a native Django setting, but used to specify the url to redirect to
-# when the membership_required-decorator does not receive a fail_url parameter
-MEMBERSHIP_FAIL_URL = '/no_member'
-
 ####################################################################
 # Martor settings (Markdown Editor)
 # https://github.com/agusmakmun/django-markdown-editor
@@ -488,3 +485,12 @@ PWA_SERVICE_WORKER_PATH =  os.path.join(BASE_DIR, 'core', 'static', 'js', 'servi
 PWA_APP_DIR = 'ltr'
 PWA_APP_LANG = 'en-US'
 
+try:
+    from .local_settings import *
+except ImportError:
+    try:
+        util.create_local_settings(
+            os.path.join(BASE_DIR, 'squire', 'local_settings.py')
+        )
+    except FileExistsError:
+        pass

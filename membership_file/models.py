@@ -140,7 +140,6 @@ class Member(models.Model):
     # Other membership statuses
     is_deregistered = models.BooleanField(default=False, help_text="Use this if you need to store (contact) information of someone who is not a member anymore.")
     is_honorary_member = models.BooleanField(default=False, help_text="Honorary members can stay members forever and do not need to pay a membership fee.")
-    has_paid_membership_fee = models.BooleanField(default=False)
 
     # Any additional information that cannot be stored in other fields (e.g., preferred pronouns)
     notes = models.TextField(blank=True, help_text="Notes are invisible to members.")

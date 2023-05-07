@@ -17,16 +17,29 @@ class TestAssociationGroupBackend(TestCase):
         perm = Permission.objects.get(codename='add_associationgroup')
         assoc_group.site_group.permissions.add(perm)
 
+        perm = Permission.objects.get(codename='change_associationgroup')
+        assoc_group.permissions.add(perm)
+
         return user, assoc_group
 
-    def test_has_perm(self):
-        """ Tests that permission checking also go through associationgroups """
+    def test_has_perm_on_site_group(self):
+        """ Tests that permission checking also go through associationgroups, sitegroup permissions """
         user, assoc_group = self.prep_group()
 
         user_has_perm = AssociationGroupAuthBackend().has_perm(
             user, 'committees.add_associationgroup'
         )
         self.assertTrue(user_has_perm)
+
+    def test_has_perm_on_association_group(self):
+        """ Tests that permission checking also go through associationgroups permissions """
+        user, assoc_group = self.prep_group()
+
+        user_has_perm = AssociationGroupAuthBackend().has_perm(
+            user, 'committees.change_associationgroup'
+        )
+        self.assertTrue(user_has_perm)
+
 
     def test_has_perm_anonymous_user(self):
         user_has_perm = AssociationGroupAuthBackend().has_perm(

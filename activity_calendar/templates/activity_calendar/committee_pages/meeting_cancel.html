@@ -1,0 +1,41 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% load render_form %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url "committees:meetings:home" group_id=association_group.id %}">Home</a></li>
+    <li class="breadcrumb-item"><a>Edit meeting details</a></li>
+{% endblock %}
+
+
+{% block content %}
+    {{ block.super }}
+
+    <h4>Cancel meeting
+
+        {{ meeting.start_date|date:"l j F, H:i"|capfirst }}
+    </h4>
+    <p>
+        Are you sure you want to cancel this meeting?
+    </p>
+
+    {% render_form method="post" id="submit_form"  has_submit_button=False uses_file_field=True %}
+
+    <div class="btn-group" role="group" aria-label="Form changing">
+        <button form="submit_form" type="submit" class="btn btn-danger">
+            <i class="fas fa-calendar-times"></i> Yes, cancel this meeting
+        </button>
+        <a href="{% url "committees:meetings:home" group_id=association_group.id %}"
+           class="btn btn-secondary">
+            <i class="fas fa-calendar-check"></i> No, keep this meeting
+        </a>
+    </div>
+
+
+
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% load nextcloud_tags %}
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a>
+        Folders
+    </a></li>
+{% endblock %}
+
+
+{% block content %}
+    {{ block.super }}
+
+    <div class="row">
+        <div class="col">
+            <p>
+                Below are all stored folders connected to the cloud
+            </p>
+        </div>
+    </div>
+    <div class="row" id="folder-list">
+        <div class="col">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                    <tr class="">
+                        <th scope="col-auto" colspan="2">Name</th>
+                        <th scope="col-auto">On downloads page</th>
+                        <th scope="col-auto">Req. membership</th>
+                        <th scope="col-auto">Status</th>
+                        <th scope="col-auto">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for folder in folders %}
+                        <tr class="">
+                            <td class="col-auto">
+                                <i class="fas fa-folder"></i>
+                            </td>
+                            <td class="col-auto pb-0">
+                                {{ folder.display_name }}
+                            </td>
+                            <td class="col-auto pb-0">
+                                {{ folder.on_overview_page }}
+                            </td>
+                            <td class="col-auto pb-0">
+                                {{ folder.requires_membership }}
+                            </td>
+                            <td class="col-auto pb-0">
+                                {% if folder.is_missing %}
+                                    <span class="text-danger">
+                                        Missing
+                                    </span>
+                                {% else %}
+                                    <span class="text-success">Live</span>
+                                {% endif %}
+                            </td>
+                            <td class="col-auto">
+                                <div class="btn-group btn-group-sm" role="group" aria-label="">
+                                    <!-- Left open for additional actions -->
+                                    <a class="btn btn-primary"
+                                       href="{% url "committees:nextcloud:folder_edit" group_id=association_group.id folder_slug=folder.slug %}">
+                                        <i class="fas fa-pen"></i> Edit
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% for file in folder.files.all %}
+                            <tr>
+                                <td></td>
+                                <td colspan="3" class="py-0">
+                                    <i class="{{ file.get_file_type.icon_class }}"></i> {{ file.display_name }}
+                                    <span class="pl-2"><small><i>{{ file.file_name }}</i></small></span>
+                                </td>
+                                <td class="py-0">
+                                    {% if folder.is_missing %}
+                                        <span class="text-muted">Unknown</span>
+                                    {% elif file.is_missing %}
+                                        <span class="text-danger">Missing</span>
+                                    {% else %}
+                                        <span class="text-success">Live</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-0">
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="">
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        <tr>
+                            <td></td>
+                            <td class="col-auto" colspan="3">
+                                <div class="btn-group btn-group-sm" role="group" aria-label="">
+                                    {% if user|has_sync_access %}
+                                        {% if folder.is_missing %}
+                                            <a class="btn btn-secondary disabled">
+                                                <i class="fas fa-cloud-download-alt"></i> Sync file
+                                            </a>
+                                        {% else %}
+                                            <a class="btn btn-primary"
+                                               href="{% url "committees:nextcloud:folder_sync_file" group_id=association_group.id folder_slug=folder.slug %}">
+                                                <i class="fas fa-cloud-download-alt"></i> Sync file
+                                            </a>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="col-auto" colspan="3">
+                                <form method="post" action="{% url "committees:nextcloud:folder_refresh" group_id=association_group.id folder_slug=folder.slug %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-info">
+                                    <i class="fas fa-sync"></i>  Refresh
+                                </button>
+                                </form>
+                            </td>
+                            <td>
+
+                            </td>
+
+                        </tr>
+                    {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <a class="btn btn-primary" href="{% url "committees:nextcloud:cloud_add_folder" group_id=association_group.id %}">
+        <i class="fas fa-plus"></i> Add folder
+    </a>
+
+
+{% endblock %}

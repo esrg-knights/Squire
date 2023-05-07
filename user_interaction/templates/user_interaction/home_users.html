@@ -29,19 +29,7 @@
         </div>
         <div class="row">
             {% for message in unique_messages %}
-                <div id="{{ message.msg_id }}" class="w-100 alert alert-{{ message.msg_type }}">
-                    <div class="row">
-                        <div class="col"
-                             style="display: flex; justify-content: center;align-items: center;"
-                            >{{ message.msg_text }}</div>
-                        {% if message.btn_text %}
-                            <a class="btn btn-{{ message.msg_type }} mr-2"
-                               href="{{ message.btn_url }}">
-                                {{ message.btn_text }}
-                            </a>
-                        {% endif %}
-                    </div>
-                </div>
+                {% include "snippets/unique_alerts.html" %}
             {% endfor %}
             <div class="col-md-8">
                 <div class="row">
@@ -71,17 +59,10 @@
                             {% for group in member.associationgroup_set.all %}
                                 <div class="card mb-2">
                                     <div class="card-header d-flex">
-                                        <div style="width: 2em;">
-                                            {% if group.icon %}
-                                                <div class="">
-                                                    <div class=""
-                                                         style="background-size: contain; background-position: center;
-                                                             background-image: url('{{ group.icon.url }}');
-                                                             background-repeat: no-repeat; width: 3em; height: 3em;
-                                                             margin-left: -1em; margin-top: -0.5em;"
-                                                    ></div>
-                                                </div>
-                                            {% endif %}
+                                        <div style="font-size: xx-small;">
+                                            <div style="margin-left: -1.5em; margin-top: -1em;">
+                                                {% include "committees/snippets/snippet_assoc_group_icon.html" with association_group=group%}
+                                            </div>
                                         </div>
                                         <div>
                                             {{ group.name }}

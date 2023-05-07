@@ -1,7 +1,7 @@
 from import_export import resources
 from import_export.fields import Field
 
-from .models import Member
+from .models import Member, Membership
 
 
 class MemberResource(resources.ModelResource):
@@ -14,7 +14,7 @@ class MemberResource(resources.ModelResource):
             'educational_institution', 'student_number',
             'key_id', 'tue_card_number', 'full_external_card', 'external_card_deposit', 'accessible_rooms',
             'street', 'house_number', 'house_number_addition', 'postal_code', 'city', 'country',
-            'date_of_birth', 'has_paid_membership_fee', 'is_honorary_member', 'member_since',
+            'date_of_birth', 'is_honorary_member', 'member_since',
             'is_deregistered', 'email_deregistered_member',
             'notes_single_line',
         )
@@ -48,3 +48,19 @@ class MemberResource(resources.ModelResource):
     def dehydrate_email_deregistered_member(self, member):
         return member.email if member.is_deregistered else None
 
+
+class MembersFinancialResource(resources.ModelResource):
+    class Meta:
+        model = Membership
+        fields = (
+            'member', 'email', 'year__name', 'created_on', 'has_paid', 'payment_date',
+        )
+        export_order = fields
+
+    email = Field()
+
+    def dehydrate_email(self, membership):
+        return membership.member.email
+
+    def dehydrate_member(self, membership):
+        return membership.member.get_full_name()

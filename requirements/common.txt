@@ -15,3 +15,5 @@ martor~=1.6.14 # Markdown Editor
 pymdown-extensions~=9.5 # Extra markdown features
 django-pwa~=1.0.10 # Progressive Webapp
 requests~=2.28.1 # Requests (needed for Mailcow API)
+django-tempus-dominus~=5.1.2.17 # DateTimePicker
+easywebdav~=1.2.0 # For Nextcloud

@@ -1,0 +1,43 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% load render_form %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url "committees:meetings:home" group_id=association_group.id %}">Home</a></li>
+    <li class="breadcrumb-item"><a>Add meeting</a></li>
+{% endblock %}
+
+{% block form_media %}
+    {#  Keep this empty and load form media later as JQuery is not loaded here yet. #}
+{% endblock %}
+
+
+{% block content %}
+    {{ block.super }}
+    {{ form.media }}
+
+    <h2>
+        Add new meeting
+    </h2>
+    <hr>
+
+    {% render_form method="post" id="submit_form"  has_submit_button=False uses_file_field=True %}
+
+    <div class="btn-group" role="group" aria-label="Form changing">
+        <button form="submit_form" type="submit" class="btn btn-success">
+            <i class="fas fa-plus"></i> Create meeting
+        </button>
+        <a href="{% url "committees:meetings:home" group_id=association_group.id %}"
+           class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancel creation
+        </a>
+    </div>
+
+
+
+{% endblock %}

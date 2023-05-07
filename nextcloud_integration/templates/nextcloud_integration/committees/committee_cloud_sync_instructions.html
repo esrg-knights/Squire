@@ -1,0 +1,50 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% load render_form %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url "committees:nextcloud:cloud_overview" group_id=association_group.id %}">
+        Folders
+    </a></li>
+    <li class="breadcrumb-item"><a href="{% url "committees:nextcloud:cloud_overview" group_id=association_group.id %}">
+        {{ folder.display_name }}
+    </a></li>
+    <li class="breadcrumb-item"><a href="{% url "committees:nextcloud:folder_sync_file" group_id=association_group.id folder_slug=folder.slug %}">
+        Sync File
+    </a></li>
+    <li class="breadcrumb-item"><a>
+        Instructions
+    </a></li>
+{% endblock %}
+
+
+{% block content %}
+{{ block.super }}
+    <h2>How to sync a file from Nextcloud</h2>
+    <p>
+        Syncing a file with the cloud is the process of establishing a link between Squire and a file on the cloud.
+        When this happens, Squire registers a copy of the file location so it can find the file on the cloud whenever
+        needed. The Squire app however can not retrieve every file on Nextcloud. Only those who are shared with the
+        Nextcloud user account called <i>Squire</i>. Therefore you first need to share the file with  this account.
+        This can be done by following the instructions below.
+    </p>
+    <img src="{% static "img/nextcloud/nextcloud_sync_instruction.png" %}"
+         alt="Nextcloud sync instructions" style="height: auto; width: 100%; max-width: 700px;">
+
+    <ol>
+        <li>On the file sharing tab in Nextcloud, type <i>Squire</i>, click the Squire account</li>
+        <li>You should now see the file is being shared with Squire</li>
+        <li>Now on the Squire webapp use
+            <a class="btn btn-sm btn-primary"
+               href="{% url "committees:nextcloud:folder_sync_file" group_id=association_group.id folder_slug=folder.slug %}">
+                <i class="fas fa-cloud-download-alt"></i> Sync File</a>
+            to select the file you want to sync. This only displays files which
+            are yet unsynched
+        </li>
+    </ol>
+{% endblock %}

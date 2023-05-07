@@ -119,12 +119,9 @@ myvenv
 local_settings.py
 *.sqlite3
 
-#Disables tracking of membership Card file, need to be added manually
-/membership_file/static/images/MembershipCard.jpg
-
-
 # Visual Studio Code
-.vscode
+.vscode/*
+!.vscode/extensions.json
 
 # IntelliJ
 /.idea/
@@ -141,5 +138,9 @@ htdocs/static
 /test/output/
 
 # Secrets
+/squire/local_settings.py
 /squire/mailcowconfig.json
 /squire/secret_key.txt
+
+# Disables tracking of membership Card file, need to be added manually
+/membership_file/static/images/MembershipCard.jpg

@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Permission
+from django.db.models import Q
 
 from membership_file.util import get_member_from_user
 
@@ -18,9 +19,9 @@ class AssociationGroupAuthBackend:
         app_label, codename = perm.split('.')
 
         return Permission.objects.filter(
+            Q(group__associationgroup__members__in=[member]) | Q(associationgroup__members__in=[member]),
             content_type__app_label=app_label,
             codename=codename,
-            group__associationgroup__members__in=[member],
         ).exists()
 
     def authenticate(self, *args, **kwargs):

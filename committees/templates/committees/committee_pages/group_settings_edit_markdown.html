@@ -1,0 +1,43 @@
+{% extends 'committees/committee_pages/group_settings_base.html' %}
+{% load static %}
+{% load render_form %}
+{% load bootstrap4 %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+{% block bootstrap_js %}
+    {# We need to prevent bootstrap's jQuery JS from loading, as Martor's MarkdownWidget #}
+    {#    also includes it. We cannot remove it from that widget and rely on our version #}
+    {#    as it seems to require a specific version. #}
+    {#    This is ugly... #}
+    {# TODO: Unify bootstrap and jQuery versions of Martor and Squire #}
+    {% bootstrap_javascript jquery=False %}
+{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url "committees:settings:settings_home" group_id=association_group.id %}">Settings</a></li>
+    <li class="breadcrumb-item"><a>{{ settings_option.name }}</a></li>
+{% endblock %}
+
+
+{% block setting_option %}
+    <h2>{{ settings_option.display_title }}</h2>
+    <p>
+        {{ settings_option.display_text }}
+    </p>
+
+    {% render_form method="post" id="submit_form"  has_submit_button=False uses_file_field=True %}
+
+    <div class="btn-group">
+        <button type="submit" form="submit_form" class="btn btn-success">
+            <i class="fas fa-edit"></i> Save changes
+        </button>
+        <a href="{% url "committees:settings:settings_home" group_id=association_group %}"
+           class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancel changes
+        </a>
+    </div>
+
+{% endblock %}

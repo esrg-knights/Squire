@@ -1,0 +1,8 @@
+{% if widget.attrs.default_enabled %}
+    <input type="checkbox" disabled checked>
+    <span>This tab is availlable by default</span>
+{% else %}
+    <input type="checkbox" name="{{ widget.name }}"
+        {% include "django/forms/widgets/attrs.html" %}>
+{% endif %}
+

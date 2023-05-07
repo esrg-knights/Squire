@@ -1,0 +1,64 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% load generic_field %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url "committees:nextcloud:cloud_overview" group_id=association_group.id %}">
+        Folders
+    </a></li>
+    <li class="breadcrumb-item"><a href="{% url "committees:nextcloud:cloud_overview" group_id=association_group.id %}">
+        {{ folder.display_name }}
+    </a></li>
+    <li class="breadcrumb-item"><a>
+        Edit
+    </a></li>
+{% endblock %}
+
+
+{% block content %}
+{{ block.super }}
+
+    <h2>Edit {{ folder.display_name }}</h2>
+    <form method="post">
+        {% csrf_token %}
+
+        {% for hidden in form.form.hidden_fields %}{{ hidden }}{% endfor %}
+        {% if form.form.non_field_errors %}
+            {% for error in form.form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">{{ error }}</div>
+            {% endfor %}
+        {% endif %}
+
+        {% for field in form.form.visible_fields %}
+            {% generic_field field -1 %}
+        {% endfor %}
+        <hr>
+        <h3>Edit file information</h3>
+        <div>
+            <hr>
+            {% for formset in form.formsets %}
+                {{ formset.management_form }}
+                {% for formset_part in formset %}
+                    {% include "nextcloud_integration/snippets/nc_file_edit_form.html" with form=formset_part %}
+                    <hr>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        <div class="btn-group">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-edit"></i> Save changes
+            </button>
+            <a href="{% url "committees:nextcloud:cloud_overview" group_id=association_group.id %}"
+               class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel changes
+            </a>
+        </div>
+    </form>
+
+
+
+{% endblock %}

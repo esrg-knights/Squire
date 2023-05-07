@@ -1,0 +1,44 @@
+{% load nextcloud_tags %}
+
+<div>
+    <div class="" id="folder-{{ folder.slug }}">
+        <h4 class="mb-0">
+            <i class="fas fa-folder-open"></i> {{ folder.display_name }}
+        </h4>
+        {% if folder.is_missing %}
+            <div class="text-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                Folder missing
+            </div>
+        {% endif %}
+        <p class="mb-0">
+            {{ folder.description }}
+        </p>
+    </div>
+    <table class="table table-sm">
+        <tbody class="{% if folder.is_missing %}text-muted{% endif %}">
+            {% for file in folder.files.all %}
+                <tr>
+                    <td class="">
+                        <i class="{{ file.get_file_type.icon_class }}"></i>
+                        <span class="">{{ file.display_name }}</span>
+                    </td>
+                    <td class="small d-none d-md-table-cell">
+                        {{ file.description }}
+                    </td>
+                    <td style="width: 1px; white-space: nowrap">
+                        {% if file.is_missing or folder.is_missing %}
+                            <a class="btn btn-secondary disabled btn-sm">
+                                <i class="fas fa-download"></i> Missing
+                            </a>
+                        {% else %}
+                            <a class="btn btn-primary btn-sm"
+                               href="{{ file.get_absolute_url }}"><i class="fas fa-download"></i> Download</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+

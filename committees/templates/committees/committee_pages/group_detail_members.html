@@ -1,0 +1,109 @@
+{% extends 'committees/committee_pages/group_settings_base.html' %}
+{% load static %}
+{% load render_form %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url "committees:settings:settings_home" group_id=association_group.id %}">Settings</a></li>
+    <li class="breadcrumb-item"><a>Members</a></li>
+{% endblock %}
+
+{% block setting_option %}
+    <h2>
+        Members
+    </h2>
+    <p>
+        Member overview, contact the board if you want to add or remove a member from the list.
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr class="">
+                    <th scope="col-auto">Name</th>
+                    <th scope="col-auto">Role</th>
+                    <th scope="col-auto">Title</th>
+                    <th scope="col-auto">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member_link in member_links %}
+                    <tr>
+                        <td>
+                            {{ member_link.member }}
+                        </td>
+                        <td>
+                            {{ member_link.role|default:'' }}
+                        </td>
+                        <td>
+                            <div class="font-italic">
+                                {{ member_link.title }}
+                            </div>
+                        </td>
+                        <td>
+                            <button type="button"
+                                    class="btn btn-primary px-4"
+                                    data-toggle="modal" data-target="#edit_modal"
+                                    data-id="{{ member_link.id }}"
+                                    data-member_name="{{ member_link.member }}"
+                                    data-title="{{ member_link.title }}"
+                                    data-role="{{ member_link.role }}"
+                            > <i class="fas fa-pen"></i> Edit
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Define the Bootstrap modal that is displayed when edit is pressed. -->
+    <div class="modal fade" id="edit_modal" tabindex="-1" role="dialog" aria-labelledby="EditModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="EditModalLabel">
+                        Edit membership of <span class="modal_member_name_span"></span>
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {% url "committees:settings:group_members_edit" group_id=association_group.id as post_url %}
+                    {% render_form method="post" has_submit_button=False id="submit_form" action=post_url %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                    <button form="submit_form" type="submit" class="btn btn-success" name="btn_save">
+                        <i class="fas fa-edit"></i> Save item
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js_bottom %}
+    {{ block.super }}
+
+    <script>
+        $('#edit_modal').on('show.bs.modal', function (event) {
+
+            var button = $(event.relatedTarget); // Button that triggered the modal
+            // Extract info from data-* attributes
+            var membership_id = button.data('id');
+            var membership_member_name = button.data('member_name');
+            var membership_title = button.data('title');
+            var membership_role = button.data('role');
+
+            var modal = $(this);
+            modal.find('#id_id').attr("value", membership_id);;
+            modal.find('#id_title').attr("value", membership_title);
+            modal.find('#id_role').attr("value", membership_role);
+            modal.find('.modal_member_name_span').text(membership_member_name);
+        })
+    </script>
+{% endblock %}

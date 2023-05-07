@@ -1,0 +1,28 @@
+{% extends 'core/base.html' %}
+{% load nextcloud_tags %}
+
+{% block title %}
+    Squire - 424 Failed dependency
+{% endblock title %}
+
+{% block content %}
+
+    <h1>Houston, we have a problem</h1>
+    <p>
+        Due to hightly technical reasons involving quantum entanglement, the golden ratio and the infinite multiverse
+        the resource you are trying to connect is stored elsewhere. However... we can't reach it.
+    </p>
+
+    {% if user.is_superuser %}
+    <p>
+        We did gather the following information:<br>
+        {{ error }}
+    </p>
+    {% endif %}
+
+    <p>
+        Please check back later or contact the uups (<a href="mailto:uups@kotkt.nl">uups@kotkt.nl</a>)
+        if this keeps occuring.
+    </p>
+
+{% endblock %}

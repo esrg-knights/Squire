@@ -1,0 +1,54 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load generic_field %}
+
+{% block title %}
+    Squire - Nextcloud
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+
+    <h2>Edit {{ folder.display_name }}</h2>
+    <form method="post">
+        {% csrf_token %}
+
+        {% for hidden in form.form.hidden_fields %}{{ hidden }}{% endfor %}
+        {% if form.form.non_field_errors %}
+            {% for error in form.form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">{{ error }}</div>
+            {% endfor %}
+        {% endif %}
+
+        {% for field in form.form.visible_fields %}
+            {% generic_field field -1 %}
+        {% endfor %}
+        <hr>
+        <h3>Edit file information</h3>
+        <div>
+            <hr>
+            {% for formset in form.formsets %}
+                {{ formset.management_form }}
+                {% for formset_part in formset %}
+                    {% include "nextcloud_integration/snippets/nc_file_edit_form.html" with form=formset_part %}
+                    <hr>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        <div class="btn-group">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-edit"></i> Save changes
+            </button>
+            <a href="{% url "nextcloud:site_downloads" %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel changes
+            </a>
+        </div>
+    </form>
+
+
+
+{% endblock %}

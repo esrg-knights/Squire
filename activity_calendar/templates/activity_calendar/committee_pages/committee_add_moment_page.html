@@ -7,6 +7,12 @@
 {% endblock %}
 
 
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url "committees:group_activities" group_id=association_group.id %}">Home</a></li>
+    <li class="breadcrumb-item"><a>Add actuvity for {activity.title}</a></li>
+{% endblock %}
+
+
 {% block content %}
     {{ block.super }}
 

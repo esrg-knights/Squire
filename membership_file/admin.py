@@ -2,16 +2,22 @@
 from datetime import datetime
 
 from django.contrib import admin, messages
-from django.utils.html import format_html
-from django.utils.translation import gettext_lazy as _
 from import_export.admin import ExportActionMixin
-from import_export.formats.base_formats import CSV
+from import_export.formats.base_formats import CSV, TSV, ODS, XLSX
 
 from .forms import AdminMemberForm
 from .models import Member, MemberLog, MemberLogField, Room, MemberYear, Membership
 from core.admin import DisableModificationsAdminMixin, URLLinkInlineAdminMixin
-from membership_file.export import MemberResource
+from membership_file.export import MemberResource, MembersFinancialResource
 from utils.forms import RequestUserToFormModelAdminMixin
+
+
+class TSVUnicodeBOM(TSV):
+    '''.tsv that starts with a `ZERO WIDTH NO-BREAK SPACE`, which is a Byte Order Marker, which forces Excel to recognise it as Unicode.
+    More info: https://en.wikipedia.org/w/index.php?title=Byte_order_mark&oldid=1135118973#Usage'''
+
+    def export_data(self, *args, **kwargs):
+        return '\N{ZERO WIDTH NO-BREAK SPACE}' + super().export_data(*args, **kwargs)
 
 
 class HideRelatedNameAdmin(admin.ModelAdmin):
@@ -46,12 +52,13 @@ class MemberLogReadOnlyInline(DisableModificationsAdminMixin, URLLinkInlineAdmin
     # Whether the object can be deleted inline
     can_delete = False
 
+
 @admin.register(Member)
 class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRelatedNameAdmin):
     ##############################
     #  Export functionality
     resource_class = MemberResource
-    formats = (CSV,)
+    formats = (CSV, XLSX, TSVUnicodeBOM, ODS,)
 
     def has_export_permission(self, request):
         return request.user.has_perm('membership_file.can_export_membership_file')
@@ -62,7 +69,8 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
             filename_prefix = "HAS_DEREGISTERED_MEMBERS-"
 
         date_str = datetime.now().strftime('%Y-%m-%d')
-        filename = "%sMembershipFile-%s.%s" % (filename_prefix, date_str, file_format.get_extension())
+        filename = "%sMembershipFile-%s.%s" % (
+            filename_prefix, date_str, file_format.get_extension())
 
         return filename
 
@@ -70,30 +78,35 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
     form = AdminMemberForm
     save_on_top = True
 
-    list_display = ('id', 'user', 'first_name', 'tussenvoegsel', 'last_name', 'educational_institution', 'is_deregistered', 'marked_for_deletion')
+    list_display = ('id', 'user', 'first_name', 'tussenvoegsel', 'last_name',
+                    'educational_institution', 'is_deregistered', 'marked_for_deletion')
     list_filter = [
         'memberyear',
         'is_deregistered', 'marked_for_deletion',
         'is_honorary_member',
         'educational_institution',
-        ('tue_card_number', admin.EmptyFieldListFilter), ('external_card_number', admin.EmptyFieldListFilter),
-        ('key_id', admin.EmptyFieldListFilter), ('phone_number', admin.EmptyFieldListFilter),
+        ('tue_card_number', admin.EmptyFieldListFilter),
+        ('external_card_number', admin.EmptyFieldListFilter),
+        ('key_id', admin.EmptyFieldListFilter),
+        ('phone_number', admin.EmptyFieldListFilter),
     ]
     list_display_links = ('id', 'user', 'first_name')
-    search_fields = ['first_name', 'last_name', 'email', 'phone_number', 'tue_card_number', 'external_card_number', 'key_id']
+    search_fields = ['first_name', 'last_name', 'email', 'phone_number',
+                     'tue_card_number', 'external_card_number', 'key_id']
 
     readonly_fields = ['last_updated_by', 'last_updated_date']
 
     # Display a search box instead of a dropdown menu
     autocomplete_fields = ['user']
 
+    #fmt: off
     fieldsets = [
         (None, {'fields':
             ['user', ('first_name', 'tussenvoegsel', 'last_name'),
             'marked_for_deletion',
             ('last_updated_date', 'last_updated_by'),]}),
         ('Membership Status', {'fields':
-            ['is_deregistered', 'has_paid_membership_fee', 'is_honorary_member', 'member_since']}),
+            ['is_deregistered', 'is_honorary_member', 'member_since']}),
         ('Contact Details', {'fields':
             ['email', 'phone_number',
             ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
@@ -107,6 +120,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
         ('Notes', {'fields':
             ['notes']}),
     ]
+    #fmt: on
 
     inlines = [MemberLogReadOnlyInline, MemberYearInline]
 
@@ -119,8 +133,6 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
     list_per_page = 150
     list_max_show_all = 999
 
-    # Allow bulk updating has_paid_membership_fee = False
-    # TODO: This isn't a clean solution but it'll work for now
     actions = ['mark_as_current_member', ExportActionMixin.export_admin_action]
 
     # Disable bulk delete
@@ -214,9 +226,29 @@ class RoomAdmin(admin.ModelAdmin):
 
 
 @admin.register(MemberYear)
-class MemberYearAdmin(admin.ModelAdmin):
+class MemberYearAdmin(ExportActionMixin, admin.ModelAdmin):
+    ##############################
+    #  Export functionality
+    resource_class = MembersFinancialResource
+    formats = (CSV, XLSX, TSVUnicodeBOM, ODS,)
+
+    def has_export_permission(self, request):
+        return request.user.has_perm('membership_file.can_export_membership_file')
+
+    def get_export_filename(self, request, queryset, file_format):
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        filename = "YearSubscriptions-%s.%s" % (
+            date_str, file_format.get_extension())
+        return filename
+
+    def get_data_for_export(self, request, queryset, *args, **kwargs):
+        queryset = Membership.objects.filter(year__in=queryset)
+        return super(MemberYearAdmin, self).get_data_for_export(request, queryset, *args, **kwargs)
+
+    ##############################
+
     list_display = ['name', 'is_active', 'member_count']
-    list_filter = ['is_active',]
+    list_filter = ['is_active', ]
 
     def member_count(self, obj):
         return obj.members.count()
@@ -226,5 +258,3 @@ class MemberYearAdmin(admin.ModelAdmin):
 class MembershipAdmin(admin.ModelAdmin):
     list_display = ['member', 'year', 'has_paid', 'payment_date']
     list_filter = ['year', 'has_paid']
-
-

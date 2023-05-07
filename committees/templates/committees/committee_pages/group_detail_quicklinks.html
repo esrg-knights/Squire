@@ -1,0 +1,149 @@
+{% extends 'committees/committee_pages/group_settings_base.html' %}
+{% load static %}
+{% load render_form %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url "committees:settings:settings_home" group_id=association_group.id %}">Settings</a></li>
+    <li class="breadcrumb-item"><a>Edit links</a></li>
+{% endblock %}
+
+
+{% block setting_option %}
+    <h2>
+        Useful links
+    </h2>
+    <div class="mt-3">
+        <p>
+            Add shortcuts to other sites or places such as groupchat, cloud services, or other often used websites.
+            The links will be displayed on the overview page for the group.
+        </p>
+        <p>
+            Note: Depending on your group rights, some pages on this website might already be present automatically
+        </p>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr class="">
+                    <th scope="col-auto">Name</th>
+                    <th scope="col-auto">url</th>
+                    <th scope="col-auto">Description</th>
+                    <th scope="col-auto">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for quicklink in association_group.shortcut_set.all %}
+                    <tr>
+                        <td>
+                            {{ quicklink.name }}
+                        </td>
+                        <td>
+                            <a href="{{ quicklink.url }}" target="_blank" rel="noopener noreferrer">
+                                {{ quicklink.url }}
+                            </a>
+                        </td>
+                        <td>
+                            {{ quicklink.description|default:'' }}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group" aria-label="Basic example">
+                                <button type="button"
+                                        class="btn btn-primary px-4"
+                                        data-toggle="modal" data-target="#quicklink_modal"
+                                        data-action="Update {{ quicklink.name }} link"
+                                        data-id="{{ quicklink.id }}"
+                                        data-name="{{ quicklink.name }}"
+                                        data-url="{{ quicklink.url }}"
+                                        data-description="{{ quicklink.description|default:'' }}"
+                                > <i class="fas fa-pen"></i> Edit
+                                </button>
+                                <form method="post"
+                                      action="{% url "committees:settings:group_quicklink_delete" group_id=association_group.id quicklink_id=quicklink.id %}"
+                                    id="delete-{{ quicklink.id }}">
+                                    {% csrf_token %}
+                                </form>
+                                <button type="submit" form="delete-{{ quicklink.id }}" class="btn btn-danger">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+    <button type="button"
+            class="btn btn-outline-primary"
+            data-toggle="modal" data-target="#quicklink_modal"
+            data-action="Add new link"
+            data-id=""
+            data-name=""
+            data-url="https://"
+            data-description=""
+    > <i class="fas fa-plus"></i> Add new link
+    </button>
+
+
+    <!-- Define the Bootstrap modal that is displayed when edit is pressed. -->
+    <div class="modal fade" id="quicklink_modal" tabindex="-1" role="dialog" aria-labelledby="quicklinkModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="quicklinkModalLabel">
+
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {% url "committees:settings:group_quicklinks_edit" group_id=association_group.id as post_url %}
+                    {% render_form method="post" has_submit_button=False id="submit_form" action=post_url %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                    <button form="submit_form" type="submit" class="btn btn-success" name="btn_save">
+                        <i class="fas fa-edit"></i> Save link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock %}
+
+
+{% block js_bottom %}
+    {{ block.super }}
+
+    <script>
+        $('#quicklink_modal').on('show.bs.modal', function (event) {
+
+            var button = $(event.relatedTarget); // Button that triggered the modal
+            var action = button.data('action'); // Extract info from data-* attributes
+            var quicklink_id = button.data('id'); // Extract info from data-* attributes
+            var quicklink_name = button.data('name'); // Extract info from data-* attributes
+            var quicklink_url = button.data('url'); // Extract info from data-* attributes
+            var quicklink_description = button.data('description'); // Extract info from data-* attributes
+
+            var modal = $(this);
+            modal.find('#quicklinkModalLabel').text(action);
+            modal.find('#id_id').attr("value", quicklink_id);
+            modal.find('#id_name').attr("value", quicklink_name);
+            modal.find('#id_description').attr("value", quicklink_description);
+            modal.find('#id_url').attr("value", quicklink_url);
+        })
+    </script>
+{% endblock %}

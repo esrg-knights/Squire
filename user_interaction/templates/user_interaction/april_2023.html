@@ -1,0 +1,50 @@
+
+{% extends 'core/base.html' %}
+
+{% block title %}
+    Squire - Upgrade
+{% endblock title %}
+
+{% block og-title %}
+    Livestream Knights room
+{% endblock og-title %}
+
+{% block og-description %}
+    Watch the livestream from the Knight room and don't miss a moment of what's going on with the Knights!
+{% endblock %}
+
+{% block content-frame-class %}
+    wideContentFrame
+{% endblock %}
+
+{% block content %}
+
+    <div class="px-3 py-3 pt-md-4 pb-md-3 mx-auto text-center">
+        <h1 class="display-4">Livestream Garnizoen</h1>
+    </div>
+    <p class="pb-3 text-muted">
+        Are you ever stuck in a lecture and wish you were at the Knights instead? Than why not check out the livestream
+        from you college benches! No longer will you miss an exiting game of Blood-Bowl or the comfort of Isa's
+        creative endeavours. With the livestream you can now check in whereever you are. During a workshop, in the train
+        or at home. No longer will you miss the Knights
+    </p>
+
+    <div class="alert alert-info">
+        Unfortunately the battery in the camera cut out on April 1st at 23:59. As we have lost the charger we will
+        no longer continue the livestream. A recording of the livestream can be found below as a reminder to the
+        fantastic Luna Festival 2023 edition
+    </div>
+
+    <div class="container">
+        <div style="max-width: 800px;  margin: 0px auto;">
+            <div style="position: relative; padding-bottom: 75%; height: 0px;">
+                    <iframe src="https://www.youtube.com/embed/1iQzFLO8xeE?loop=1&playlist=1iQzFLO8xeE"
+                            style="position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;"
+                            title="ESRG Knights Livestream" frameborder="0"
+
+                            allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

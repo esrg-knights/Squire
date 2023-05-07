@@ -28,6 +28,7 @@ class TestForm(Form):
     def save(self):
         pass
 
+
 class TestRedirectMixin(TestCase):
     class TestView(RedirectMixin, FormView):
         success_url = "/success/"

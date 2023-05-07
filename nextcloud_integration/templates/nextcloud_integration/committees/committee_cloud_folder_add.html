@@ -1,0 +1,36 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% load render_form %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url "committees:nextcloud:cloud_overview" group_id=association_group.id %}">
+        Folders
+    </a></li>
+    <li class="breadcrumb-item"><a>
+        Add folder
+    </a></li>
+{% endblock %}
+
+{% block content %}
+    {{ block.super }}
+
+    <h3>Create new folder</h3>
+
+    {% render_form method="post" has_submit_button=False id="create_folder_form" %}
+
+    <div class="btn-group">
+        <button type="submit" class="btn btn-success" form="create_folder_form">
+            <i class="fas fa-edit"></i> Add folder
+        </button>
+        <a href="{% url "committees:nextcloud:cloud_overview" group_id=association_group.id %}"
+           class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancel changes
+        </a>
+    </div>
+
+{% endblock %}

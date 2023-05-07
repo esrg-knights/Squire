@@ -1,0 +1,66 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load nextcloud_tags %}
+
+{% block title %}
+    Squire - Nextcloud - {{ folder.display_name }}
+{% endblock title %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block content %}
+    <h2>Downloads</h2>
+    <p>
+        Below are all files available for download.
+    </p>
+    {% for alert in unique_messages %}
+        {% include "snippets/unique_alerts.html" with message=alert %}
+    {% endfor %}
+
+    <div class="row">
+        <div class="col-lg-9 col-12">
+            {% for folder in folders %}
+                <div class="mb-4">
+                    {% include "nextcloud_integration/snippets/nc_folder_contents.html" with folder=folder %}
+                </div>
+                <hr>
+            {% empty %}
+                <div>
+                    There are currently no available downloads for you
+                </div>
+            {% endfor %}
+        </div>
+        <div class="col-3 d-none d-lg-inline-flex border-left border-dark" style="flex-direction: column">
+            <div class="row">
+                <div class="col-12">
+                    <h3>
+                        Folders
+                    </h3>
+                </div>
+            </div>
+            <ul class="">
+                {% for folder in folders %}
+                    <li class="">
+                        <a href="#folder-{{ folder.slug }}">
+                            {{ folder.display_name }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            {% if user.is_superuser %}
+                <div class="row">
+                    <div class="col-12">
+                        <a class="btn btn-info btn-sm" href="{% url "nextcloud:browse_nextcloud" %}">
+                            <i class="fas fa-search"></i> Browse cloud
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}

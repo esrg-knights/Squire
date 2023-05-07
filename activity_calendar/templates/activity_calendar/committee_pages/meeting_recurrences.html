@@ -1,0 +1,61 @@
+{% extends 'committees/group_detail_base.html' %}
+{% load static %}
+{% load render_form %}
+{% load generic_field %}
+
+{% block content-frame-class %}
+    container
+{% endblock %}
+
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url "committees:meetings:home" group_id=association_group.id %}">Home</a></li>
+    <li class="breadcrumb-item"><a>Edit meeting recurrences</a></li>
+{% endblock %}
+
+{% block form_media %}
+    <script src="{% url "core:javascript-catalog" %}"></script>
+    {{ block.super }}
+
+{% endblock %}
+
+
+{% block content %}
+    {{ block.super }}
+
+    <h4>Set recurrences</h4>
+
+    <div class="row mb-3">
+        <div class="col">
+            <form method="post" id="submit_form">
+                {% csrf_token %}
+
+                {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+                {# Non field errors #}
+                {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                {% generic_field form.start_date -1 %}
+
+                {{ form.recurrences }}
+            </form>
+        </div>
+    </div>
+
+    <div class="btn-group" role="group" aria-label="Form changing">
+        <button form="submit_form" type="submit" class="btn btn-success">
+            <i class="fas fa-pen"></i> Set recurrences
+        </button>
+        <a href="{% url "committees:meetings:home" group_id=association_group.id %}"
+           class="btn btn-secondary">
+            <i class="fas fa-times"></i> Ignore changes
+        </a>
+    </div>
+
+
+
+{% endblock %}
