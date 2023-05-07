@@ -2,13 +2,17 @@ from typing import List
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.test import RequestFactory, TestCase, override_settings
-from unittest.mock import Mock, PropertyMock, patch, ANY
+from django.urls import reverse
+from django.utils.html import format_html
+from unittest.mock import Mock, patch, sentinel, ANY
 
 from committees.models import AssociationGroup
+from core.tests.util import suppress_errors
+from mailcow_integration.api.exceptions import MailcowAPIAccessDenied, MailcowAPIReadWriteAccessDenied, MailcowAuthException, MailcowException
 from mailcow_integration.api.interface.alias import MailcowAlias
 from mailcow_integration.api.interface.mailbox import MailcowMailbox
 from mailcow_integration.squire_mailcow import AliasCategory, SquireMailcowManager
-from mailcow_integration.admin_status.views import AliasStatus, MailcowStatusView
+from mailcow_integration.admin_status.views import AliasInfos, AliasStatus, MailcowStatusView
 from membership_file.models import Member
 
 User = get_user_model()
@@ -276,3 +280,297 @@ class MailcowStatusExposureTests(MailcowStatusViewTests):
             ["exposed1@example.com", "internal@example.com"],
             ["exposed2@example.com", "internal@example.com"]
         ])
+
+class MailcowStatusInitializersTests(MailcowStatusViewTests):
+    """ Tests the MailcowStatusView._init_<foo>_alias_list methods """
+    def setUp(self):
+        AssociationGroup.objects.create(site_group=Group.objects.create(name="Committee"),
+            type=AssociationGroup.COMMITTEE, contact_email="bg@example.com")
+        super().setUp()
+
+    @patch('mailcow_integration.admin_status.views.MailcowStatusView._get_subscriberinfos_by_status', return_value=[])
+    @patch('mailcow_integration.admin_status.views.MailcowStatusView._get_alias_exposure_routes', return_value=[])
+    @patch('mailcow_integration.admin_status.views.MailcowStatusView._get_alias_status', return_value=(
+        AliasStatus.VALID, None, None
+    ))
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_active_members',
+        return_value=Member.objects.none()
+    )
+    @override_settings(MEMBER_ALIASES={
+        "leden@example.com": {
+            "title": "Announcements",
+            "description": "Cool description",
+            "internal": True,
+            "allow_opt_out": False,
+            "default_opt": True,
+            "archive_addresses": ["archive@example.com"]
+        },
+    })
+    def test_init_member_alias_list(self, members_mock: Mock, status_mock: Mock, exposure_mock: Mock, subinfos_mock: Mock):
+        """ Tests initialization for a member alias list """
+        status = self.view._init_member_alias_list(sentinel.aliases, sentinel.mailboxes)
+
+        # Alias status fetched
+        status_mock.assert_called_once_with("leden@example.com", ANY,
+            AliasCategory.MEMBER, sentinel.aliases, sentinel.mailboxes, self.view.mailcow_manager.ALIAS_MEMBERS_PUBLIC_COMMENT
+        )
+
+        # Alias is internal, exposure_routes are calculated
+        exposure_mock.assert_called_once_with("leden@example.com", sentinel.aliases, sentinel.mailboxes, ANY)
+
+        # Subinfos calculated once
+        subinfos_mock.assert_called_once()
+
+        # AliasInfos returned
+        self.assertListEqual(status, [ AliasInfos(
+            AliasStatus.VALID.name, [],
+            "leden@example.com", "m_ledenexamplecom", "Announcements", "Cool description",
+            None, True, [], False,
+            archive_addresses=["archive@example.com"]
+        )])
+
+    @patch('mailcow_integration.admin_status.views.MailcowStatusView._get_subscriberinfos_by_status', return_value=[])
+    @patch('mailcow_integration.admin_status.views.MailcowStatusView._get_alias_status', return_value=(
+        AliasStatus.VALID, None, None
+    ))
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_active_committees',
+        return_value=AssociationGroup.objects.none()
+    )
+    @override_settings(COMMITTEE_CONFIGS={
+        "global_addresses": ["commissies@example.com"],
+        "global_archive_addresses": ["archief@example.com"],
+    })
+    def test_init_global_committee_alias_list(self, committees_mock: Mock, status_mock: Mock, subinfos_mock: Mock):
+        """ Tests initialization for a global committee alias list """
+        status = self.view._init_global_committee_alias_list(sentinel.aliases, sentinel.mailboxes)
+
+        # Alias status fetched
+        status_mock.assert_called_once_with("commissies@example.com", ANY,
+            AliasCategory.GLOBAL_COMMITTEE, sentinel.aliases, sentinel.mailboxes,
+            self.view.mailcow_manager.ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT
+        )
+
+        # Subinfos calculated once
+        subinfos_mock.assert_called_once()
+
+        # AliasInfos returned
+        self.assertListEqual(status, [ AliasInfos(
+            AliasStatus.VALID.name, [],
+            "commissies@example.com", "gc_commissiesexamplecom", "commissies@example.com",
+            "Allows mailing all committees at the same time.",
+            None, internal=False, allow_opt_out=False,
+            archive_addresses=["archief@example.com"]
+        )])
+
+    @patch('mailcow_integration.admin_status.views.MailcowStatusView._get_subscriberinfos_by_status', return_value=[])
+    @patch('mailcow_integration.admin_status.views.MailcowStatusView._get_alias_status', return_value=(
+        AliasStatus.VALID, None, None
+    ))
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_active_committees',
+        return_value=AssociationGroup.objects.all()
+    )
+    @override_settings(COMMITTEE_CONFIGS={
+        "archive_addresses": ["archief@example.com"],
+    })
+    def test_init_committee_alias_list(self, committees_mock: Mock, status_mock: Mock, subinfos_mock: Mock):
+        """ Tests initialization for a committee alias list """
+        status = self.view._init_committee_alias_list(sentinel.aliases, sentinel.mailboxes)
+        committee: AssociationGroup = committees_mock.return_value.first()
+
+        # Alias status fetched
+        status_mock.assert_called_once_with(committee.contact_email, ANY,
+            AliasCategory.COMMITTEE, sentinel.aliases, sentinel.mailboxes,
+            self.view.mailcow_manager.ALIAS_COMMITTEE_PUBLIC_COMMENT
+        )
+
+        # Subinfos calculated once
+        subinfos_mock.assert_called_once()
+
+        # AliasInfos returned
+        self.assertListEqual(status, [ AliasInfos(
+            AliasStatus.VALID.name, [],
+            committee.contact_email, "c_" + str(committee.id), committee.site_group.name,
+            format_html("{} ({}): {}", committee.site_group.name, committee.get_type_display(), committee.short_description),
+            None, False, squire_edit_url=reverse("admin:committees_associationgroup_change", args=[committee.id]),
+            archive_addresses=["archief@example.com"]
+        )])
+
+
+    def test_init_orphan_alias_list(self):
+        """ Tests initialization for a orphaned aliases """
+        # Set up aliases
+        aliases = [
+            MailcowAlias("notmanaged@example.com", [], public_comment="Foo!"),
+            MailcowAlias("leden@example.com", [], public_comment=self.view.mailcow_manager.SQUIRE_MANAGE_INDICATOR),
+            MailcowAlias("bg@example.com", [], public_comment=self.view.mailcow_manager.SQUIRE_MANAGE_INDICATOR),
+            MailcowAlias("commissies@example.com", [], public_comment=self.view.mailcow_manager.SQUIRE_MANAGE_INDICATOR),
+            MailcowAlias("valid@example.com", ['goto@example.com'],
+                public_comment=self.view.mailcow_manager.SQUIRE_MANAGE_INDICATOR, private_comment="hi there!"
+            ),
+        ]
+        member_infos = [AliasInfos(AliasStatus.VALID, [], "leden@example.com", "0", "", "")]
+        committee_infos = [AliasInfos(AliasStatus.VALID, [], "bg@example.com", "0", "", "")]
+        global_committee_infos = [AliasInfos(AliasStatus.VALID, [], "commissies@example.com", "0", "", "")]
+
+        status = self.view._init_unused_squire_addresses_list(aliases, member_infos, committee_infos, global_committee_infos)
+
+        # AliasInfos returned.
+        #   Skip over aliases not managed by Squire
+        #   Skip over aliases used by Squire: Member aliases, committee aliases, global committee aliases
+        self.assertListEqual(status, [ AliasInfos(
+            AliasStatus.ORPHAN.name, [{'name': "goto@example.com", 'invalid': False}],
+            "valid@example.com", "o_validexamplecom", "valid@example.com",
+            "hi there!", aliases[-1], False
+        )])
+
+@patch('mailcow_integration.admin_status.views.MailcowStatusView._init_member_alias_list', return_value=sentinel.m_alias)
+@patch('mailcow_integration.admin_status.views.MailcowStatusView._init_global_committee_alias_list', return_value=sentinel.gc_alias)
+@patch('mailcow_integration.admin_status.views.MailcowStatusView._init_committee_alias_list', return_value=sentinel.c_alias)
+@patch('mailcow_integration.admin_status.views.MailcowStatusView._init_unused_squire_addresses_list', return_value=sentinel.o_alias)
+class MailcowContextDataTests(MailcowStatusViewTests):
+    """ Tests context data generation """
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_alias_all', return_value=[1])
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_mailbox_all', return_value=[2])
+    def test_get_context_data_valid(self, mock_mailboxes: Mock, mock_aliases: Mock,
+        mock_orphan: Mock, mock_comm: Mock, mock_global_comm: Mock, mock_member: Mock):
+        """ Tests the view's get_context_data """
+        self.view.get_context_data()
+
+        # Mailbox/alias data retrieved once, ignoring the cache
+        mock_aliases.assert_called_once_with(use_cache=False)
+        mock_mailboxes.assert_called_once_with(use_cache=False)
+
+        # No API errors: Init list methods called once
+        mock_member.assert_called_once_with([1], [2])
+        mock_global_comm.assert_called_once_with([1], [2])
+        mock_comm.assert_called_once_with([1], [2])
+        mock_orphan.assert_called_once_with([1], sentinel.m_alias, sentinel.c_alias, sentinel.gc_alias)
+
+    def _test_exception_not_call_list_init(self, exception: MailcowException, error_message: str,
+            mock_orphan: Mock, mock_comm: Mock, mock_global_comm: Mock, mock_member: Mock):
+        """ Tests whether a given exception is handled with the given message """
+        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_alias_all', side_effect=exception):
+            context = self.view.get_context_data()
+            # Error message present in the context
+            self.assertIn("error", context)
+            self.assertEqual(context["error"], error_message)
+
+            # Init list methods not called
+            mock_member.assert_not_called()
+            mock_global_comm.assert_not_called()
+            mock_comm.assert_not_called()
+            mock_orphan.assert_not_called()
+
+    @suppress_errors(logger_name='mailcow_integration.admin_status.views')
+    def test_get_context_data_exceptions(self,
+            mock_orphan: Mock, mock_comm: Mock, mock_global_comm: Mock, mock_member: Mock):
+        """ Tests exception handling in get_context_data """
+        # Auth exception
+        self._test_exception_not_call_list_init(MailcowAuthException(),
+            "No valid API key set.",
+            mock_orphan, mock_comm, mock_global_comm, mock_member
+        )
+
+        # R/W Access denied
+        self._test_exception_not_call_list_init(MailcowAPIReadWriteAccessDenied(),
+            "API key only allows access to read operations, not write.",
+            mock_orphan, mock_comm, mock_global_comm, mock_member
+        )
+
+        # API Access denied for IP
+        self._test_exception_not_call_list_init(MailcowAPIAccessDenied("invalid ip oh noes: 1234"),
+            "IP address is not whitelisted in the Mailcow admin: 1234",
+            mock_orphan, mock_comm, mock_global_comm, mock_member
+        )
+
+        # Unknown exception
+        self._test_exception_not_call_list_init(MailcowException("something went wrong!"),
+            "something went wrong!",
+            mock_orphan, mock_comm, mock_global_comm, mock_member
+        )
+
+@patch('mailcow_integration.squire_mailcow.SquireMailcowManager.update_member_aliases')
+@patch('mailcow_integration.squire_mailcow.SquireMailcowManager.update_global_committee_aliases')
+@patch('mailcow_integration.squire_mailcow.SquireMailcowManager.update_committee_aliases')
+@patch('mailcow_integration.squire_mailcow.SquireMailcowManager.delete_aliases')
+@patch('mailcow_integration.admin_status.views.MailcowStatusView.get_context_data', return_value={
+    "unused_aliases": [MailcowAlias("unused@example.com", [])]
+})
+@patch('django.contrib.messages.success') # Messages middelware doesn't activate when using RequestFactory
+class MailcowStatusPostTests(MailcowStatusViewTests):
+    """ Tests POST requests on the status page """
+    def test_post_update_aliases_member(self, _, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
+        """ Tests if member aliases are updated when requested """
+        self.request = RequestFactory().post("/status", data={ "alias_type": "members" })
+        res = self.view.dispatch(self.request)
+
+        # Correct methods called
+        mock_m.assert_called_once()
+        mock_gc.assert_not_called()
+        mock_c.assert_not_called()
+        mock_o.assert_not_called()
+        mock_context.assert_not_called()
+
+        # Redirect
+        self.assertEqual(res.status_code, 302)
+
+    def test_post_update_aliases_global_committee(self, _, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
+        """ Tests if global committee aliases are updated when requested """
+        self.request = RequestFactory().post("/status", data={ "alias_type": "global_committee" })
+        res = self.view.dispatch(self.request)
+
+        # Correct methods called
+        mock_m.assert_not_called()
+        mock_gc.assert_called_once()
+        mock_c.assert_not_called()
+        mock_o.assert_not_called()
+        mock_context.assert_not_called()
+
+        # Redirect
+        self.assertEqual(res.status_code, 302)
+
+    def test_post_update_aliases_committee(self, _, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
+        """ Tests if committee aliases are updated when requested """
+        self.request = RequestFactory().post("/status", data={ "alias_type": "committees" })
+        res = self.view.dispatch(self.request)
+
+        # Correct methods called
+        mock_m.assert_not_called()
+        mock_gc.assert_not_called()
+        mock_c.assert_called_once()
+        mock_o.assert_not_called()
+        mock_context.assert_not_called()
+
+        # Redirect
+        self.assertEqual(res.status_code, 302)
+
+    def test_post_delete_aliases_orphan(self, _, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
+        """ Tests if orphan aliases are deleted when requested """
+        self.request = RequestFactory().post("/status", data={ "alias_type": "orphan" })
+        res = self.view.dispatch(self.request)
+
+        # Correct methods called
+        mock_m.assert_not_called()
+        mock_gc.assert_not_called()
+        mock_c.assert_not_called()
+        mock_o.assert_called_once_with(["unused@example.com"], self.view.mailcow_manager.SQUIRE_MANAGE_INDICATOR)
+        mock_context.assert_called_once()
+
+        # Redirect
+        self.assertEqual(res.status_code, 302)
+
+    def test_post_invalid(self, _, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
+        """ Tests if no methods are called if invalid data is passed """
+        self.request = RequestFactory().post("/status", data={})
+        res = self.view.dispatch(self.request)
+
+        # Correct methods called
+        mock_m.assert_not_called()
+        mock_gc.assert_not_called()
+        mock_c.assert_not_called()
+        mock_o.assert_not_called()
+        mock_context.assert_not_called()
+
+        # HTTP Bad Request
+        self.assertEqual(res.status_code, 400)
+

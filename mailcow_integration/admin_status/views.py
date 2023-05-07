@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Tuple, TypedDict
 from django.conf import settings
 from django.db.models import QuerySet
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html
 from django.views.generic import TemplateView
@@ -20,7 +20,7 @@ from mailcow_integration.api.interface.mailbox import MailcowMailbox
 from mailcow_integration.dynamic_preferences_registry import alias_address_to_id
 from mailcow_integration.squire_mailcow import AliasCategory, SquireMailcowManager, get_mailcow_manager
 
-from utils.views import SuperUserRequiredMixin
+logger = logging.getLogger(__name__)
 
 class AliasStatus(Enum):
     """ Aliases that should exist according to Squire may not be in sync with those in Mailcow.
@@ -165,7 +165,7 @@ class MailcowStatusView(TemplateView):
                 exposure_routes = self._get_alias_exposure_routes(address, aliases, mailboxes, config)
 
             subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias)
-            info = AliasInfos(status.name, subscribers, address, alias_address_to_id(address), config['title'], config['description'],
+            info = AliasInfos(status.name, subscribers, address, "m_" + alias_address_to_id(address), config['title'], config['description'],
                 alias or mailbox, config['internal'], exposure_routes, config['allow_opt_out'], archive_addresses=config['archive_addresses']
             )
             infos.append(info)
@@ -174,10 +174,9 @@ class MailcowStatusView(TemplateView):
     def _init_global_committee_alias_list(self, aliases: List[MailcowAlias], mailboxes: List[MailcowMailbox]) -> List[AliasInfos]:
         """ Initialize global committee aliases. e.g. commissies@example.com """
         infos: List[AliasInfos] = []
+        subscribers = self.mailcow_manager.get_active_committees()
 
         for address in settings.COMMITTEE_CONFIGS["global_addresses"]:
-            subscribers = self.mailcow_manager.get_active_committees()
-
             status, alias, mailbox = self._get_alias_status(address, subscribers, AliasCategory.GLOBAL_COMMITTEE,
                 aliases, mailboxes, self.mailcow_manager.ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT)
 
@@ -201,7 +200,7 @@ class MailcowStatusView(TemplateView):
                 aliases, mailboxes, self.mailcow_manager.ALIAS_COMMITTEE_PUBLIC_COMMENT)
 
             subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias)
-            info = AliasInfos(status.name, subscribers, address, assoc_group.id, assoc_group.site_group.name,
+            info = AliasInfos(status.name, subscribers, address, "c_" + str(assoc_group.id), assoc_group.site_group.name,
                 format_html("{} ({}): {}", assoc_group.site_group.name, assoc_group.get_type_display(), assoc_group.short_description),
                 alias or mailbox, False, squire_edit_url=reverse("admin:committees_associationgroup_change", args=[assoc_group.id]),
                 archive_addresses=settings.COMMITTEE_CONFIGS['archive_addresses']
@@ -224,7 +223,7 @@ class MailcowStatusView(TemplateView):
 
         return [
             AliasInfos(AliasStatus.ORPHAN.name, [{'name': addr, 'invalid': False} for addr in alias.goto],
-                alias.address, alias_address_to_id(alias.address), alias.address, alias.private_comment, alias, False)
+                alias.address, "o_" + alias_address_to_id(alias.address), alias.address, alias.private_comment, alias, False)
             for alias in aliases
         ]
 
@@ -247,7 +246,7 @@ class MailcowStatusView(TemplateView):
             context['error'] = f"IP address is not whitelisted in the Mailcow admin: {ip}"
         except MailcowException as e:
             err = ", ".join(e.args)
-            logging.error(err)
+            logger.error(err)
             context['error'] = err
         else:
             context['member_aliases'] = self._init_member_alias_list(aliases, mailboxes)
@@ -260,19 +259,19 @@ class MailcowStatusView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         # One of the update buttons was pressed.
-        if self.request.POST.get("alias_type", None) == "members":
+        if request.POST.get("alias_type", None) == "members":
             # Update all member aliases
             self.mailcow_manager.update_member_aliases()
             messages.success(self.request, "Member aliases updated.")
-        elif self.request.POST.get("alias_type", None) == "global_committee":
+        elif request.POST.get("alias_type", None) == "global_committee":
             # Update all global committee aliases
             self.mailcow_manager.update_global_committee_aliases()
             messages.success(self.request, "Global committee aliases updated.")
-        elif self.request.POST.get("alias_type", None) == "committees":
+        elif request.POST.get("alias_type", None) == "committees":
             # Update all committee aliases
             self.mailcow_manager.update_committee_aliases()
             messages.success(self.request, "Committee aliases updated.")
-        else:
+        elif request.POST.get("alias_type", None) == "orphan":
             # Delete orphan data
             unused_aliases: List[AliasInfos] = self.get_context_data()["unused_aliases"]
             unused_addresses = []
@@ -280,6 +279,8 @@ class MailcowStatusView(TemplateView):
                 unused_addresses.append(aliasinfo.address)
             self.mailcow_manager.delete_aliases(unused_addresses, self.mailcow_manager.SQUIRE_MANAGE_INDICATOR)
             messages.success(self.request, f"Orphan data deleted: {', '.join(unused_addresses)}.")
+        else:
+            return HttpResponseBadRequest("Invalid alias_type passed")
 
         return HttpResponseRedirect(self.request.get_full_path())
 
