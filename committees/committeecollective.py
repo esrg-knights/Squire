@@ -30,8 +30,8 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
                 option.group_requires_permission = cls.group_requires_permission
             settings_options_registry.register(option)
 
-    def is_accessible(self, request, association_group=None):
-        if not super(CommitteeBaseConfig, self).is_accessible(request):
+    def is_accessible_for(self, request, association_group=None) -> bool:
+        if not super(CommitteeBaseConfig, self).is_accessible_for(request):
             return False
 
         if not user_in_association_group(request.user, association_group):

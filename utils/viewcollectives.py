@@ -57,7 +57,7 @@ class ViewCollectiveConfig:
     def __init__(self, registry: 'ViewCollectiveRegistry'):
         self.registry = registry
 
-    def is_accessible(self, request):
+    def is_accessible_for(self, request) -> bool:
         """ Determines whether the given request allows this """
         if self.requires_login and not request.user.is_authenticated:
             return False
@@ -109,7 +109,7 @@ class ViewCollectiveViewMixin:
         super(ViewCollectiveViewMixin, self).__init__(*args, **kwargs)
 
     def dispatch(self, request, *args, **kwargs):
-        if not self.config.is_accessible(
+        if not self.config.is_accessible_for(
             request=self.request,
             **self._get_other_check_kwargs()
         ):
@@ -192,7 +192,7 @@ class ViewCollectiveRegistry:
         """
         applicable_configs: List[ViewCollectiveConfig] = []
         for config in self.configs:
-            if config.is_accessible(request, **other_kwargs):
+            if config.is_accessible_for(request, **other_kwargs):
                 applicable_configs.append(config)
         return applicable_configs
 

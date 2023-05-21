@@ -5,7 +5,7 @@ from mailcow_integration.squire_mailcow import get_mailcow_manager
 
 from user_interaction.accountcollective import AccountBaseConfig
 
-from .views import *
+from .views import TabbedEmailPreferencesChangeView
 
 # TODO: This config might fit better on one of the already existing account subpages
 #   It's only available to members.
@@ -22,5 +22,5 @@ class MailSettingsConfig(AccountBaseConfig):
 
     def get_urls(self):
         return [
-            path('', EmailPreferencesChangeView.as_view(config=self), name='email_preferences'),
+            path('', TabbedEmailPreferencesChangeView.as_view(config=self), name='email_preferences'),
         ]

@@ -13,7 +13,7 @@ class AdminStatusBaseConfig(ViewCollectiveConfig):
     """
     namespace = None
 
-    def is_accessible(self, request):
+    def is_accessible_for(self, request) -> bool:
         return request.user.is_superuser
 
 class AdminStatusViewMixin(ViewCollectiveViewMixin):

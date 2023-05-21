@@ -76,15 +76,12 @@ def post_save_member(sender, instance, created: bool, raw: bool, **kwargs) -> No
     if instance._mailcow_old_data.get('email') == instance.email:
         return
 
-    # Member is not active
-    if not instance.is_active:
-        return
-
     # Update member/committee mail aliases
     mailcow_client: SquireMailcowManager = get_mailcow_manager()
 
     # Update member aliases
-    mailcow_client.update_member_aliases()
+    if instance.is_active:
+        mailcow_client.update_member_aliases()
 
     # Update committee aliases (only for committees the member is part of)
     comm_model = apps.get_model("committees", "AssociationGroup")
@@ -105,15 +102,12 @@ def pre_delete_member(sender, instance, **kwargs):
 @global_preference_required_for_signal
 def post_delete_member(sender, instance, **kwargs):
     """ Update member and committee aliases when a member is deleted """
-    # Member is not active
-    if not instance.is_active:
-        return
-
     # Update member/committee mail aliases
     mailcow_client: SquireMailcowManager = get_mailcow_manager()
 
     # Update member aliases
-    mailcow_client.update_member_aliases()
+    if instance.is_active:
+        mailcow_client.update_member_aliases()
 
     # Update committee aliases (only for committees the member is part of)
     mailcow_client.update_committee_aliases(instance._mailcow_old_data["committee_addresses"])
@@ -229,7 +223,7 @@ def post_save_committee_membership(sender, instance, created: bool, raw: bool, *
     mailcow_client: SquireMailcowManager = get_mailcow_manager()
 
     if created:
-        if instance.member is not None and instance.member.is_active:
+        if instance.member is not None:
             comm_model = apps.get_model("committees", "AssociationGroup")
             addresses = comm_model.objects.filter(members__email=instance.member.email).values_list("contact_email", flat=True)
             mailcow_client.update_member_aliases()
@@ -248,7 +242,7 @@ def post_save_committee_membership(sender, instance, created: bool, raw: bool, *
 @global_preference_required_for_signal
 def post_delete_committee_membership(sender, instance, **kwargs):
     """ Update member and committee aliases when a committee is deleted. """
-    if instance.member is None or not instance.member.is_active:
+    if instance.member is None:
         return
     # Update all member and committee aliases
     mailcow_client: SquireMailcowManager = get_mailcow_manager()
@@ -339,27 +333,33 @@ def post_save_membership(sender, instance, created: bool, raw: bool, **kwargs):
         return
 
     if created:
-        if instance.member is not None and not instance.member.is_active:
-            # Attached member isn't active; no need to update
+        if instance.member is None:
+            # No member attached; no need to update
             return
     elif (instance.year.is_active == instance._mailcow_old_data["is_active"]
             and instance.member == instance._mailcow_old_data["member"]):
         # Attached year and member haven't changed
         return
 
-    mailcow_client: SquireMailcowManager = get_mailcow_manager()
     # Update all member and committee aliases
-    mailcow_client.update_member_aliases()
+    mailcow_client: SquireMailcowManager = get_mailcow_manager()
+    if not created or instance.member.is_active:
+        # Only need to update member aliases if the member was updated,
+        #   or if the newly added member is active.
+        mailcow_client.update_member_aliases()
+    # Always update committee aliases; they can include non-active members
     mailcow_client.update_committee_aliases()
 
 @global_preference_required_for_signal
 def post_delete_membership(sender, instance, **kwargs):
     """ Update member and committee aliases when a Membership is deleted """
-    if instance.member is None or not instance.member.is_active:
+    if instance.member is None:
         return
     # Update all member and committee aliases
     mailcow_client: SquireMailcowManager = get_mailcow_manager()
-    mailcow_client.update_member_aliases()
+    if instance.member.is_active:
+        mailcow_client.update_member_aliases()
+    # Always update committee aliases; they can include non-active members
     mailcow_client.update_committee_aliases()
 
 #########################################

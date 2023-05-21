@@ -1,42 +1,40 @@
-from django.apps import apps
+from typing import Any, Dict, Type
 from django.contrib import messages
-from django.forms import BooleanField
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView
-from dynamic_preferences.forms import PreferenceForm
-from dynamic_preferences.users.forms import user_preference_form_builder
-from mailcow_integration.squire_mailcow import SquireMailcowManager
+from dynamic_preferences.users.forms import preference_form_builder
+from mailcow_integration.account_pages.forms import MemberMailPreferencesForm
+from mailcow_integration.squire_mailcow import get_mailcow_manager
 
 from user_interaction.accountcollective import AccountViewMixin
 
-
-class EmailPreferencesChangeView(AccountViewMixin, FormView):
+class EmailPreferencesChangeView(FormView):
     """ View for updating mail preferences """
     template_name = 'mailcow_integration/account_pages/mail_preferences_change_form.html'
     success_url = reverse_lazy('account:email_preferences')
 
-    def get_form_class(self):
-        return user_preference_form_builder(instance=self.request.user, section='mail')
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.mailcow_manager = get_mailcow_manager()
 
-    def form_valid(self, form: PreferenceForm):
+    def get_form_class(self) -> Type[MemberMailPreferencesForm]:
+        return preference_form_builder(MemberMailPreferencesForm, instance=self.request.user, section='mail')
+
+    def get_form_kwargs(self) -> Dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+        kwargs["mailcow_manager"]=self.mailcow_manager
+        return kwargs
+
+    def form_valid(self, form: MemberMailPreferencesForm):
         message = _("Your mail preferences have been updated!")
+        # Updating preferences is done in form_valid, as suggested by the docs:
+        #   https://django-dynamic-preferences.readthedocs.io/en/latest/quickstart.html#form-builder-with-djangoformview
         form.update_preferences()
         messages.success(self.request, message)
 
-        has_any_changes = False
-        for name, field in form.fields.items():
-            field: BooleanField
-            if field.has_changed(field.initial, form.cleaned_data[name]):
-                has_any_changes = True
-                break
-
-        if has_any_changes:
-            # Update mailcow alias;
-            #   Mailcow client must be set up if this view can be accessed
-            config = apps.get_app_config("mailcow_integration")
-            mailcow_client: SquireMailcowManager = config.mailcow_client
-            mailcow_client.update_member_aliases()
-
         form = self.get_form()
         return super().form_valid(form)
+
+class TabbedEmailPreferencesChangeView(AccountViewMixin, EmailPreferencesChangeView):
+    """ EmailPreferencesView for usage in registry tabs """

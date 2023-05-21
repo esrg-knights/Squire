@@ -22,13 +22,16 @@ class MemberManager(models.Manager):
             one of the currently active years, excluding those that are specifically
             marked as 'deregistered'.
         """
+        filter = self.filter(is_deregistered=False, marked_for_deletion=False)
+
         active_years = MemberYear.objects.filter(is_active=True).values_list('id', flat=True)
         if not active_years:
             # No active membership year set; only return registered members
-            return self.filter(is_deregistered=False, marked_for_deletion=False)
+            return filter
 
         # Active membership year set; only return members registered in these years.
-        return self.filter(is_deregistered=False, marked_for_deletion=False, memberyear__in=active_years)
+        #   Honorary members are always active, regardless of active years
+        return filter.filter(models.Q(memberyear__in=active_years) | models.Q(is_honorary_member=True))
 
 # The Member model represents a Member in the membership file
 class Member(models.Model):
@@ -152,6 +155,10 @@ class Member(models.Model):
         """
         if self.is_deregistered or self.marked_for_deletion:
             return False
+
+        # Honorary members are active regardless of active member years
+        if self.is_honorary_member:
+            return True
 
         # Do not block membership if no year is active
         if MemberYear.objects.filter(is_active=True):

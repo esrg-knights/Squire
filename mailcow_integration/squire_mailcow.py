@@ -316,8 +316,8 @@ class SquireMailcowManager:
             if assoc_group.contact_email in self.mailbox_map:
                 logger.warning(f"Skipping over {assoc_group} ({assoc_group.contact_email}): Mailbox with the same name already exists")
                 continue
-
-            goto_emails = self.clean_emails_flat(assoc_group.members.filter_active(), exclude=committee_emails)
+            # NOTE: Include all committee member emails here, not just active members' ones
+            goto_emails = self.clean_emails_flat(assoc_group.members, exclude=committee_emails)
             logger.info(f"Forced updating {assoc_group} ({len(goto_emails)} subscribers)")
             goto_emails = self.get_archive_adresses_for_type(AliasCategory.COMMITTEE, assoc_group.contact_email) + goto_emails
 
