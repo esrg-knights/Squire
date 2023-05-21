@@ -161,7 +161,7 @@ class Member(models.Model):
             return True
 
         # Do not block membership if no year is active
-        if MemberYear.objects.filter(is_active=True):
+        if MemberYear.objects.filter(is_active=True).exists():
             return self.memberyear_set.filter(is_active=True).exists()
         return True
 

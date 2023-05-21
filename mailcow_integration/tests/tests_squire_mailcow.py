@@ -501,11 +501,12 @@ class SquireMailcowManagerTest(TestCase):
     ])
     @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.mailbox_map', return_value={
         "mailbox@example.com": MailcowMailbox("mailbox@example.com", "Mr. Foo"),
+        "globalaliasmailbox@example.com": MailcowMailbox("globalaliasmailbox@example.com", "Mr. Bar"),
     }, new_callable=PropertyMock)
     @patch('mailcow_integration.squire_mailcow.SquireMailcowManager._set_alias_by_name')
     @override_settings(
         MEMBER_ALIASES={ "leden@example.com": {} },
-        COMMITTEE_CONFIGS={ "global_addresses": ["commissies@example.com", "ordes@example.com"] })
+        COMMITTEE_CONFIGS={ "global_addresses": ["commissies@example.com", "ordes@example.com", "globalaliasmailbox@example.com"] })
     @suppress_warnings(logger_name="mailcow_integration.squire_mailcow")
     def test_update_global_committee_aliases(self, mock_set_alias: Mock, mock_mailbox_map: Mock, archive_mock: Mock):
         """ Tests updating committee aliases """
@@ -529,6 +530,7 @@ class SquireMailcowManagerTest(TestCase):
             archive_mock.return_value + ["mailbox@example.com", "valid@example.com"],
             public_comment=self.squire_mailcow_manager.ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT)
         self.assertEqual(mock_set_alias.call_count, 2)
+        # globalaliasmailbox@example.com is a mailbox; alias shouldn't be created
 
         # Alias cache is invalidated
         self.assertIsNone(self.squire_mailcow_manager._alias_cache)

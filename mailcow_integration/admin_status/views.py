@@ -68,6 +68,8 @@ class MailcowStatusView(TemplateView):
         self.mailcow_manager: SquireMailcowManager = get_mailcow_manager()
         self._committee_addresses = AssociationGroup.objects.values_list("contact_email", flat=True)
 
+    # TODO: A lot of this logic should be moved to SquireMailcowManager in case these kind of checks
+    #   were to be used in forms and such. Right now, this is the only view that does something with this logic.
     def _get_alias_status(self, address: str, subscribers: QuerySet, alias_type: AliasCategory,
             aliases: List[MailcowAlias], mailboxes: List[MailcowMailbox], squire_comment: str) -> Tuple[AliasStatus, Optional[MailcowAlias], Optional[MailcowMailbox]]:
         """ Gets the status for an address, along with the alias or mailbox data associated with that address (if any). """
