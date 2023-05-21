@@ -140,7 +140,7 @@ class SquireMailcowManagerTest(TestCase):
     ]))
     def test_get_rspamd_setting(self, mock_get: Mock):
         """ Tests whether the correct Rspamd setting can be found by Squire """
-        setting = self.squire_mailcow_manager._internal_alias_rspamd_setting
+        setting = self.squire_mailcow_manager.internal_alias_rspamd_setting
         self.assertIsNotNone(setting)
         self.assertEqual(setting.id, 567)
 
@@ -148,7 +148,7 @@ class SquireMailcowManagerTest(TestCase):
 
         # Setting should not be found if no descriptions match
         with patch('mailcow_integration.squire_mailcow.SquireMailcowManager.INTERNAL_ALIAS_SETTING_NAME', '[MANAGED BY SQUIRE] fake name'):
-            self.assertIsNone(self.squire_mailcow_manager._internal_alias_rspamd_setting)
+            self.assertIsNone(self.squire_mailcow_manager.internal_alias_rspamd_setting)
 
     @patch('mailcow_integration.api.client.MailcowAPIClient.create_rspamd_setting')
     @patch('mailcow_integration.api.client.MailcowAPIClient.update_rspamd_setting')

@@ -17,6 +17,7 @@ from mailcow_integration.api.exceptions import MailcowAPIAccessDenied, MailcowAP
 from mailcow_integration.api.interface.alias import MailcowAlias
 from mailcow_integration.api.interface.base import MailcowAPIResponse
 from mailcow_integration.api.interface.mailbox import MailcowMailbox
+from mailcow_integration.api.interface.rspamd import RspamdSettings
 from mailcow_integration.dynamic_preferences_registry import alias_address_to_id
 from mailcow_integration.squire_mailcow import AliasCategory, SquireMailcowManager, get_mailcow_manager
 
@@ -164,7 +165,9 @@ class MailcowStatusView(TemplateView):
 
             exposure_routes = []
             if config['internal']:
-                exposure_routes = self._get_alias_exposure_routes(address, aliases, mailboxes, config)
+                if not self.mailcow_manager.is_address_internal(address):
+                    exposure_routes.append([address, "Alias not located in Rspamd settings map."])
+                exposure_routes += self._get_alias_exposure_routes(address, aliases, mailboxes, config)
 
             subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias)
             info = AliasInfos(status.name, subscribers, address, "m_" + alias_address_to_id(address), config['title'], config['description'],
@@ -182,10 +185,14 @@ class MailcowStatusView(TemplateView):
             status, alias, mailbox = self._get_alias_status(address, subscribers, AliasCategory.GLOBAL_COMMITTEE,
                 aliases, mailboxes, self.mailcow_manager.ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT)
 
+            exp_routes = []
+            if not self.mailcow_manager.is_address_internal(address) and status != AliasStatus.RESERVED:
+                exp_routes = [[address, "Alias not located in Rspamd settings map."]]
+
             subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias, alias_type=AliasCategory.GLOBAL_COMMITTEE)
             info = AliasInfos(status.name, subscribers, address, "gc_" + alias_address_to_id(address), address,
                 "Allows mailing all committees at the same time.",
-                alias or mailbox, internal=False, allow_opt_out=False, archive_addresses=settings.COMMITTEE_CONFIGS['global_archive_addresses']
+                alias or mailbox, internal=True, exposure_routes=exp_routes, allow_opt_out=None, archive_addresses=settings.COMMITTEE_CONFIGS['global_archive_addresses']
             )
             infos.append(info)
         return infos
@@ -238,7 +245,6 @@ class MailcowStatusView(TemplateView):
         try:
             aliases = list(self.mailcow_manager.get_alias_all(use_cache=False))
             mailboxes = list(self.mailcow_manager.get_mailbox_all(use_cache=False))
-            # TODO: Fetch internal status
         except MailcowAuthException as e:
             context['error'] = "No valid API key set."
         except MailcowAPIReadWriteAccessDenied as e:
@@ -257,6 +263,8 @@ class MailcowStatusView(TemplateView):
             context['unused_aliases'] = self._init_unused_squire_addresses_list(aliases,
                 context['member_aliases'], context['committee_aliases'], context['global_committee_aliases']
             )
+            context['internal_alias_rspamd_setting'] = self.mailcow_manager.internal_alias_rspamd_setting
+            context['mailcow_host'] = self.mailcow_manager.mailcow_host
         return context
 
     def post(self, request, *args, **kwargs):

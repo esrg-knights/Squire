@@ -17,6 +17,7 @@ class MemberManagerTest(TestCase):
         self._active = Member.objects.create(first_name="Foo", last_name="Oof", legal_name="Foo Oof", email="foo@example.com")
         self._deregistered = Member.objects.create(is_deregistered=True, first_name="Bar", last_name="Rab", legal_name="Bar Rab", email="bar@example.com")
         self._pending_deletion = Member.objects.create(marked_for_deletion=True, first_name="Baz", last_name="Zab", legal_name="Baz Zab", email="baz@example.com")
+        self._honorary = Member.objects.create(first_name="Ya", last_name="Ay", legal_name="Ya Ay", email="ay@example.com", is_honorary_member=True)
 
         year = MemberYear.objects.create(name="1970", is_active=True)
         year.members.set([self._active, self._deregistered, self._pending_deletion])
@@ -36,7 +37,8 @@ class MemberManagerTest(TestCase):
         active_members = Member.objects.filter_active()
         self.assertIn(self._active, active_members)
         self.assertIn(self._inactive, active_members)
-        self.assertEqual(len(active_members), 2)
+        self.assertIn(self._honorary, active_members)
+        self.assertEqual(len(active_members), 3)
 
     def test_filter_active_active_year(self):
         """ Tests if filter_active() returns all members that aren't deregistered and
@@ -45,7 +47,8 @@ class MemberManagerTest(TestCase):
         active_members = Member.objects.filter_active()
         self.assertIn(self._active, active_members)
         self.assertNotIn(self._inactive, active_members)
-        self.assertEqual(len(active_members), 1)
+        self.assertIn(self._honorary, active_members)
+        self.assertEqual(len(active_members), 2)
 
 
 
@@ -104,3 +107,13 @@ class MembershipTest(TestCase):
         self.assertTrue(Membership.objects.filter(year_id=1, member_id=1).exists())
         with self.assertRaises(IntegrityError):
             Membership.objects.create(year_id=1, member_id=1)
+
+    def test_str(self):
+        """ Tests __str__ of Membership """
+        # Member linked
+        membership = Membership.objects.get(year_id=1, member_id=1)
+        self.assertEqual(str(membership), "Charlie van der Dommel for ActiveYear")
+
+        # No member linked
+        membership = Membership.objects.create(year_id=1, member=None)
+        self.assertEqual(str(membership), "Deleted member for ActiveYear")

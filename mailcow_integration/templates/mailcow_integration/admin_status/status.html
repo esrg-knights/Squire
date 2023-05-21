@@ -29,6 +29,7 @@
 
         <div class="d-flex justify-content-between align-items-center">
             <h2>Member Aliases</h2>
+            <button type="submit" class="btn btn-info" data-toggle="modal" data-target="#rspamdModal"><i class="fas fa-pencil-ruler"></i> Rspamd Rule</button>
             {% if error %}
                 <button type="button" class="btn btn-primary" disabled><i class="fas fa-redo-alt"></i> Update</button>
             {% else %}
@@ -40,10 +41,61 @@
             {% endif %}
         </div>
         <p>
-            A member alias is an alias that can be used to send mails to specific groups of members registered in Squire, depending on their <a href="{% url 'account:site_account' %}">personal preferences</a>.
+            A member alias is an alias that can be used to send mails to specific groups of members registered in Squire, depending on their <a href="{% url 'account:site_account' %}" >personal preferences</a>.
             The alias can be 'internal' in the sense that only mailboxes in the domain can send emails to this alias. Note that <b>public</b> aliases on the domain can also allow external emails to reach these 'internal' addresses, which is undesired.
         </p>
         {% include "mailcow_integration/snippets/alias_list.html" with aliases=member_aliases host=mailcow_host only %}
+
+        <div class="modal fade" id="rspamdModal" tabindex="-1" role="dialog" aria-labelledby="rspamdModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="rspamdModalLabel">
+                            {% if internal_alias_rspamd_setting %}
+                                {{internal_alias_rspamd_setting.desc}} ({{internal_alias_rspamd_setting.id}})
+                            {% else %}
+                                Rspamd Setting - Internal Alias
+                            {% endif %}
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        {% if not internal_alias_rspamd_setting %}
+                            <div class="alert alert-danger d-flex align-items-center" role="alert">
+                                <i class="fas fa-question-circle mr-3"></i> Setting is missing.
+                            </div>
+                        {% else %}
+                            {% if not internal_alias_rspamd_setting.active %}
+                                <div class="alert alert-danger d-flex align-items-center" role="alert">
+                                    <i class="fas fa-times-circle mr-3"></i> Setting is inactive.
+                                </div>
+                            {% endif %}
+
+                            <p>
+                                The following Rspamd setting ensures only addresses in domains set up in Mailcow can send emails to the 'internal' addresses.
+                            </p>
+
+                            <pre>{{internal_alias_rspamd_setting.content }}</pre>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <div class="d-flex justify-content-end" style="gap: 4px;">
+                            <form id="update_internal_aliases" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="alias_type" value="internal_alias"/>
+                                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-redo-alt"></i> Update</button>
+                            </form>
+
+                            <a class="btn btn-primary btn-sm" href="{{ mailcow_host }}/admin"
+                                target="_blank" rel="noopener noreferrer"
+                                role="button"><i class="fas fa-pen"></i> Edit in Mailcow</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <hr>
 

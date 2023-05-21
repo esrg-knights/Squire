@@ -109,11 +109,18 @@ class MemberAliasSignalsTests(AliasSignalsTestsBase):
 
     def test_delete_member(self, _, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
         """ Tests deleting member signals """
+        # active
         member = Member.objects.create(first_name='Foo', last_name="", legal_name="Foo", email="foo@example.com")
         self.reset(mock_m, mock_c)
-
         member.delete()
         mock_m.assert_called_once()
+        mock_c.assert_not_called()
+
+        # inactive
+        member = Member.objects.create(first_name='Foo', last_name="", legal_name="Foo", email="foo@example.com", is_deregistered=True)
+        self.reset(mock_m, mock_c)
+        member.delete()
+        mock_m.assert_not_called()
         mock_c.assert_not_called()
 
 
