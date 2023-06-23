@@ -101,8 +101,7 @@ class SquireMailcowManager:
         queryset = self.clean_emails(queryset, email_field, **kwargs)
         return list(queryset.values_list(email_field, flat=True))
 
-    @property
-    def internal_alias_rspamd_setting(self, use_cache=True) -> Optional[RspamdSettings]:
+    def get_internal_alias_rspamd_setting(self, use_cache=True) -> Optional[RspamdSettings]:
         """ Gets the Rspamd setting (if it exists) that disallows external domains
             to send emails to a specific set of email addresses. Squire recognises
             which Rspamd setting to find based on the setting's name.
@@ -122,7 +121,7 @@ class SquireMailcowManager:
 
     def is_address_internal(self, address: str) -> bool:
         """ Whether an alias address is made internal by means of an Rspamd setting """
-        setting = self.internal_alias_rspamd_setting
+        setting = self.get_internal_alias_rspamd_setting()
         if setting is None or not setting.active:
             return False
 
@@ -153,7 +152,7 @@ class SquireMailcowManager:
         addresses = list(map(lambda addr: re.escape(addr), addresses))
 
         # Fetch existing rspamd settings
-        setting = self.internal_alias_rspamd_setting
+        setting = self.get_internal_alias_rspamd_setting(use_cache=False)
         if setting is not None and setting.active and f'rcpt = "/^({"|".join(addresses)})$/"' in setting.content:
             # Setting already exists, is active, and is up-to-date; no need to do anything
             return

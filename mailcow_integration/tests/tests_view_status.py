@@ -296,6 +296,7 @@ class MailcowStatusInitializersTests(MailcowStatusViewTests):
     @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_active_members',
         return_value=Member.objects.none()
     )
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.is_address_internal', return_value=True)
     @override_settings(MEMBER_ALIASES={
         "leden@example.com": {
             "title": "Announcements",
@@ -306,7 +307,7 @@ class MailcowStatusInitializersTests(MailcowStatusViewTests):
             "archive_addresses": ["archive@example.com"]
         },
     })
-    def test_init_member_alias_list(self, members_mock: Mock, status_mock: Mock, exposure_mock: Mock, subinfos_mock: Mock):
+    def test_init_member_alias_list(self, rspamd_mock: Mock, members_mock: Mock, status_mock: Mock, exposure_mock: Mock, subinfos_mock: Mock):
         """ Tests initialization for a member alias list """
         status = self.view._init_member_alias_list(sentinel.aliases, sentinel.mailboxes)
 
@@ -329,6 +330,12 @@ class MailcowStatusInitializersTests(MailcowStatusViewTests):
             archive_addresses=["archive@example.com"]
         )])
 
+        # Address is not internal; extra exposure route should be generated
+        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager.is_address_internal', return_value=False):
+            status = self.view._init_member_alias_list(sentinel.aliases, sentinel.mailboxes)
+            self.assertEqual(len(status), 1)
+            self.assertListEqual(status[0].exposure_routes, [["leden@example.com", "Alias not located in Rspamd settings map."]])
+
     @patch('mailcow_integration.admin_status.views.MailcowStatusView._get_subscriberinfos_by_status', return_value=[])
     @patch('mailcow_integration.admin_status.views.MailcowStatusView._get_alias_status', return_value=(
         AliasStatus.VALID, None, None
@@ -336,11 +343,12 @@ class MailcowStatusInitializersTests(MailcowStatusViewTests):
     @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_active_committees',
         return_value=AssociationGroup.objects.none()
     )
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.is_address_internal', return_value=True)
     @override_settings(COMMITTEE_CONFIGS={
         "global_addresses": ["commissies@example.com"],
         "global_archive_addresses": ["archief@example.com"],
     })
-    def test_init_global_committee_alias_list(self, committees_mock: Mock, status_mock: Mock, subinfos_mock: Mock):
+    def test_init_global_committee_alias_list(self, rspamd_mock: Mock, committees_mock: Mock, status_mock: Mock, subinfos_mock: Mock):
         """ Tests initialization for a global committee alias list """
         status = self.view._init_global_committee_alias_list(sentinel.aliases, sentinel.mailboxes)
 
@@ -358,9 +366,15 @@ class MailcowStatusInitializersTests(MailcowStatusViewTests):
             AliasStatus.VALID.name, [],
             "commissies@example.com", "gc_commissiesexamplecom", "commissies@example.com",
             "Allows mailing all committees at the same time.",
-            None, internal=False, allow_opt_out=False,
+            None, internal=True, allow_opt_out=None,
             archive_addresses=["archief@example.com"]
         )])
+
+        # Address is not internal; extra exposure route should be generated
+        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager.is_address_internal', return_value=False):
+            status = self.view._init_global_committee_alias_list(sentinel.aliases, sentinel.mailboxes)
+            self.assertEqual(len(status), 1)
+            self.assertListEqual(status[0].exposure_routes, [["commissies@example.com", "Alias not located in Rspamd settings map."]])
 
     @patch('mailcow_integration.admin_status.views.MailcowStatusView._get_subscriberinfos_by_status', return_value=[])
     @patch('mailcow_integration.admin_status.views.MailcowStatusView._get_alias_status', return_value=(
@@ -431,7 +445,8 @@ class MailcowContextDataTests(MailcowStatusViewTests):
     """ Tests context data generation """
     @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_alias_all', return_value=[1])
     @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_mailbox_all', return_value=[2])
-    def test_get_context_data_valid(self, mock_mailboxes: Mock, mock_aliases: Mock,
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_internal_alias_rspamd_setting', return_value=None)
+    def test_get_context_data_valid(self, mock_rspamd: Mock, mock_mailboxes: Mock, mock_aliases: Mock,
         mock_orphan: Mock, mock_comm: Mock, mock_global_comm: Mock, mock_member: Mock):
         """ Tests the view's get_context_data """
         self.view.get_context_data()

@@ -140,15 +140,20 @@ class SquireMailcowManagerTest(TestCase):
     ]))
     def test_get_rspamd_setting(self, mock_get: Mock):
         """ Tests whether the correct Rspamd setting can be found by Squire """
-        setting = self.squire_mailcow_manager.internal_alias_rspamd_setting
+        setting = self.squire_mailcow_manager.get_internal_alias_rspamd_setting()
         self.assertIsNotNone(setting)
         self.assertEqual(setting.id, 567)
 
         mock_get.assert_called_once()
 
-        # Setting should not be found if no descriptions match
+
         with patch('mailcow_integration.squire_mailcow.SquireMailcowManager.INTERNAL_ALIAS_SETTING_NAME', '[MANAGED BY SQUIRE] fake name'):
-            self.assertIsNone(self.squire_mailcow_manager.internal_alias_rspamd_setting)
+            # Use cache; old setting should still be found
+            self.assertEqual(self.squire_mailcow_manager.get_internal_alias_rspamd_setting(use_cache=True).id, setting.id)
+
+            # No cache
+            # Setting should not be found if no descriptions match
+            self.assertIsNone(self.squire_mailcow_manager.get_internal_alias_rspamd_setting(use_cache=False))
 
     @patch('mailcow_integration.api.client.MailcowAPIClient.create_rspamd_setting')
     @patch('mailcow_integration.api.client.MailcowAPIClient.update_rspamd_setting')
@@ -159,8 +164,8 @@ class SquireMailcowManagerTest(TestCase):
         setting = RspamdSettings(999, "Other rule", rule, True)
 
         # Setting is active and rule addresses are up-to-date
-        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager._internal_alias_rspamd_setting',
-                return_value=setting, new_callable=PropertyMock) as setting_prop:
+        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_internal_alias_rspamd_setting',
+                return_value=setting) as setting_prop:
             # Verify return value, and that the property is only called once.
             self.assertIsNone(self.squire_mailcow_manager.set_internal_addresses())
             setting_prop.assert_called_once()
@@ -170,8 +175,8 @@ class SquireMailcowManagerTest(TestCase):
 
         # Setting is inactive
         setting.active = False
-        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager._internal_alias_rspamd_setting',
-                return_value=setting, new_callable=PropertyMock):
+        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_internal_alias_rspamd_setting',
+                return_value=setting):
             self.squire_mailcow_manager.set_internal_addresses()
             # Create/update methods should not be called
             mock_create.assert_not_called()
@@ -183,8 +188,8 @@ class SquireMailcowManagerTest(TestCase):
         mock_update.reset_mock()
         setting.active = True
         setting.content = "out of date"
-        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager._internal_alias_rspamd_setting',
-                return_value=setting, new_callable=PropertyMock):
+        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_internal_alias_rspamd_setting',
+                return_value=setting):
             self.squire_mailcow_manager.set_internal_addresses()
             # Create/update methods should not be called
             mock_create.assert_not_called()
@@ -194,8 +199,8 @@ class SquireMailcowManagerTest(TestCase):
 
         # Setting does not exist
         mock_update.reset_mock()
-        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager._internal_alias_rspamd_setting',
-                return_value=None, new_callable=PropertyMock):
+        with patch('mailcow_integration.squire_mailcow.SquireMailcowManager.get_internal_alias_rspamd_setting',
+                return_value=None):
             self.squire_mailcow_manager.set_internal_addresses()
             # Create/update methods should not be called
             mock_create.assert_called_once()

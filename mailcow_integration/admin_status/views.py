@@ -263,7 +263,7 @@ class MailcowStatusView(TemplateView):
             context['unused_aliases'] = self._init_unused_squire_addresses_list(aliases,
                 context['member_aliases'], context['committee_aliases'], context['global_committee_aliases']
             )
-            context['internal_alias_rspamd_setting'] = self.mailcow_manager.internal_alias_rspamd_setting
+            context['internal_alias_rspamd_setting'] = self.mailcow_manager.get_internal_alias_rspamd_setting(use_cache=False)
             context['mailcow_host'] = self.mailcow_manager.mailcow_host
         return context
 
