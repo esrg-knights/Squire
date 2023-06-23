@@ -74,6 +74,13 @@ class MemberModelTest(TestCase):
         # (why this scenario would occur in real life I don't know, but let's set consistent behavior)
         self.assertFalse(Member.objects.get(id=3).is_active)
 
+        # Honorary members are always active
+        honorary = Member.objects.create(first_name='John', last_name="Doe", legal_name="JD", email="johndoe@example.com", is_honorary_member=True)
+        self.assertTrue(honorary.is_active)
+        # unless they're actively deregistered
+        honorary.is_deregistered = True
+        self.assertFalse(honorary.is_active)
+
     def test_is_active_no_active_years(self):
         MemberYear.objects.update(is_active=False)
         self.assertTrue(Member.objects.get(id=1).is_active)
@@ -81,6 +88,13 @@ class MemberModelTest(TestCase):
         # Member is deregistered so should not be member, even though there is an active membership connected
         # (why this scenario would occur in real life I don't know, but let's set consistent behavior)
         self.assertFalse(Member.objects.get(id=3).is_active)
+
+        # Honorary members are always active
+        honorary = Member.objects.create(first_name='John', last_name="Doe", legal_name="JD", email="johndoe@example.com", is_honorary_member=True)
+        self.assertTrue(honorary.is_active)
+        # unless they're actively deregistered
+        honorary.is_deregistered = True
+        self.assertFalse(honorary.is_active)
 
 
 # Tests methods related to the Room model
