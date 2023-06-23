@@ -4,13 +4,15 @@ from django.db.models.signals import pre_save
 from django.test import TestCase
 from dynamic_preferences.registries import global_preferences_registry
 from committees.models import AssociationGroup, AssociationGroupMembership
+from core.tests.util import suppress_infos
+from mailcow_integration.api.exceptions import MailcowException
 
 from mailcow_integration.signals import deregister_signals, global_preference_required_for_signal, register_signals
 from mailcow_integration.squire_mailcow import SquireMailcowManager
 from membership_file.models import Member, MemberYear, Membership
 
-class GlobalPreferenceRequiredDecoratorTests(TestCase):
-    """ Tests the global_preference_required_for_signal decorator """
+class MailcowSignalTestMixin:
+    """ Mixin that register/deregisters mailcow alias signals so that they don't interfere with other test cases """
     def setUp(self) -> None:
         register_signals()
         self.global_preferences = global_preferences_registry.manager()
@@ -22,6 +24,8 @@ class GlobalPreferenceRequiredDecoratorTests(TestCase):
         deregister_signals()
         super().tearDownClass()
 
+class GlobalPreferenceRequiredDecoratorTests(MailcowSignalTestMixin, TestCase):
+    """ Tests the global_preference_required_for_signal decorator """
     def test_signal_activate_with_preference(self):
         """
         Tests if signals with @global_preference_required_for_signal only activate
@@ -49,19 +53,8 @@ class GlobalPreferenceRequiredDecoratorTests(TestCase):
 @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.delete_aliases')
 @patch("mailcow_integration.squire_mailcow.get_mailcow_manager",
     return_value=SquireMailcowManager(mailcow_host="example.com", mailcow_api_key="fake_key"))
-class AliasSignalsTestsBase(TestCase):
+class AliasSignalsTestsBase(MailcowSignalTestMixin, TestCase):
     """ Base class for alias signal tests """
-    def setUp(self) -> None:
-        register_signals()
-        self.global_preferences = global_preferences_registry.manager()
-        self.global_preferences["mailcow__mailcow_signals_enabled"] = True
-
-    @classmethod
-    def tearDownClass(cls):
-        # Deregister signals so they don't interfere with other tests
-        deregister_signals()
-        super().tearDownClass()
-
     def reset(self, *args):
         """ Resets all mock objects """
         for mock in args:
@@ -517,3 +510,15 @@ class MembershipAliasSignalsTests(AliasSignalsTestsBase):
         membership.delete()
         mock_m.assert_called_once()
         mock_c.assert_called_once_with()
+
+@patch("mailcow_integration.signals.get_mailcow_manager",
+    return_value=SquireMailcowManager(mailcow_host="example.com", mailcow_api_key="fake_key"))
+class MiscAliasSignalTests(MailcowSignalTestMixin, TestCase):
+    """ Miscellaneous tests for Mailcow alias signals """
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager._set_alias_by_name', side_effect=MailcowException())
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.mailbox_map', return_value={})
+    @suppress_infos(logger_name="mailcow_integration.squire_mailcow")
+    def test_exception_handling(self, _, mock_a: Mock, mock_mailcow_manager: Mock):
+        """ Tests whether signals do not break when the API raises a MailcowException """
+        AssociationGroup.objects.create(name="group3", contact_email="bar@example.com", type=AssociationGroup.COMMITTEE)
+        mock_a.assert_called_once() # Sanity check

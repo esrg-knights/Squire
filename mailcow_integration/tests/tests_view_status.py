@@ -504,17 +504,18 @@ class MailcowContextDataTests(MailcowStatusViewTests):
             mock_orphan, mock_comm, mock_global_comm, mock_member
         )
 
-@patch('mailcow_integration.squire_mailcow.SquireMailcowManager.update_member_aliases')
-@patch('mailcow_integration.squire_mailcow.SquireMailcowManager.update_global_committee_aliases')
-@patch('mailcow_integration.squire_mailcow.SquireMailcowManager.update_committee_aliases')
-@patch('mailcow_integration.squire_mailcow.SquireMailcowManager.delete_aliases')
+@patch('mailcow_integration.squire_mailcow.SquireMailcowManager.update_member_aliases', return_value=[])
+@patch('mailcow_integration.squire_mailcow.SquireMailcowManager.update_global_committee_aliases', return_value=[])
+@patch('mailcow_integration.squire_mailcow.SquireMailcowManager.update_committee_aliases', return_value=[])
+@patch('mailcow_integration.squire_mailcow.SquireMailcowManager.delete_aliases', return_value=None)
 @patch('mailcow_integration.admin_status.views.MailcowStatusView.get_context_data', return_value={
     "unused_aliases": [MailcowAlias("unused@example.com", [])]
 })
 @patch('django.contrib.messages.success') # Messages middelware doesn't activate when using RequestFactory
+@patch('django.contrib.messages.error')
 class MailcowStatusPostTests(MailcowStatusViewTests):
     """ Tests POST requests on the status page """
-    def test_post_update_aliases_member(self, _, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
+    def test_post_update_aliases_member(self, _, __, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
         """ Tests if member aliases are updated when requested """
         self.request = RequestFactory().post("/status", data={ "alias_type": "members" })
         res = self.view.dispatch(self.request)
@@ -529,7 +530,7 @@ class MailcowStatusPostTests(MailcowStatusViewTests):
         # Redirect
         self.assertEqual(res.status_code, 302)
 
-    def test_post_update_aliases_global_committee(self, _, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
+    def test_post_update_aliases_global_committee(self, _, __, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
         """ Tests if global committee aliases are updated when requested """
         self.request = RequestFactory().post("/status", data={ "alias_type": "global_committee" })
         res = self.view.dispatch(self.request)
@@ -544,7 +545,7 @@ class MailcowStatusPostTests(MailcowStatusViewTests):
         # Redirect
         self.assertEqual(res.status_code, 302)
 
-    def test_post_update_aliases_committee(self, _, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
+    def test_post_update_aliases_committee(self, _, __, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
         """ Tests if committee aliases are updated when requested """
         self.request = RequestFactory().post("/status", data={ "alias_type": "committees" })
         res = self.view.dispatch(self.request)
@@ -559,7 +560,7 @@ class MailcowStatusPostTests(MailcowStatusViewTests):
         # Redirect
         self.assertEqual(res.status_code, 302)
 
-    def test_post_delete_aliases_orphan(self, _, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
+    def test_post_delete_aliases_orphan(self, _, __, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
         """ Tests if orphan aliases are deleted when requested """
         self.request = RequestFactory().post("/status", data={ "alias_type": "orphan" })
         res = self.view.dispatch(self.request)
@@ -574,7 +575,24 @@ class MailcowStatusPostTests(MailcowStatusViewTests):
         # Redirect
         self.assertEqual(res.status_code, 302)
 
-    def test_post_invalid(self, _, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
+    @patch('mailcow_integration.squire_mailcow.SquireMailcowManager.update_internal_addresses', return_value=None)
+    def test_post_update_rspamd(self, mock_rspamd: Mock, _, __, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
+        """ Tests if the internal Rspamd rule is updated when requested """
+        self.request = RequestFactory().post("/status", data={ "alias_type": "internal_alias" })
+        res = self.view.dispatch(self.request)
+
+        # Correct methods called
+        mock_m.assert_not_called()
+        mock_gc.assert_not_called()
+        mock_c.assert_not_called()
+        mock_o.assert_not_called()
+        mock_context.assert_not_called()
+        mock_rspamd.assert_called_once()
+
+        # Redirect
+        self.assertEqual(res.status_code, 302)
+
+    def test_post_invalid(self, _, __, mock_context: Mock, mock_o: Mock, mock_c: Mock, mock_gc: Mock, mock_m: Mock):
         """ Tests if no methods are called if invalid data is passed """
         self.request = RequestFactory().post("/status", data={})
         res = self.view.dispatch(self.request)

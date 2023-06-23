@@ -1,6 +1,6 @@
 from enum import Enum
 import re
-from typing import Dict, Generator, Optional, List
+from typing import Dict, Generator, Optional, List, Tuple
 
 from django.apps import apps
 from django.conf import settings
@@ -8,6 +8,7 @@ from django.db.models import Q, QuerySet, Exists, OuterRef
 from django.template.loader import get_template
 
 from mailcow_integration.api.client import MailcowAPIClient
+from mailcow_integration.api.exceptions import MailcowException
 from mailcow_integration.api.interface.alias import MailcowAlias
 from mailcow_integration.api.interface.mailbox import MailcowMailbox
 from mailcow_integration.api.interface.rspamd import RspamdSettings
@@ -133,7 +134,7 @@ class SquireMailcowManager:
         mtch = re.search(f'{prefix}{wildcard}{address}{wildcard}{suffix}', setting.content)
         return mtch is not None
 
-    def set_internal_addresses(self) -> None:
+    def update_internal_addresses(self) -> None:
         """ Makes a list of member aliases 'internal'. That is, these aliases can only
             be emailed from within one of the domains set up in Mailcow.
             See `templates/internal_mailbox.conf` for the Rspamd configuration used to
@@ -207,21 +208,25 @@ class SquireMailcowManager:
         self._mailbox_map_cache = { mailbox.username: mailbox for mailbox in mailboxes}
         return self._mailbox_map_cache
 
-    def delete_aliases(self, alias_addresses: List[str], public_comment: Optional[str]=None) -> None:
-        """ Deletes a given list of aliases """
+    def delete_aliases(self, alias_addresses: List[str], public_comment: Optional[str]=None) -> Optional[MailcowException]:
+        """ Deletes a given list of aliases. Returns the error returned by the Mailcow API (if any) """
         public_comment = public_comment or self.ALIAS_COMMITTEE_PUBLIC_COMMENT
         aliases: List[MailcowAlias] = []
-        for address in alias_addresses:
-            alias = self.alias_map.get(address, None)
-            if alias is not None and alias.public_comment.startswith(public_comment):
-                aliases.append(alias)
 
-        if aliases:
-            # Delete aliases themselves
-            self._client.delete_aliases(aliases)
+        try:
+            for address in alias_addresses:
+                alias = self.alias_map.get(address, None)
+                if alias is not None and alias.public_comment.startswith(public_comment):
+                    aliases.append(alias)
 
-            # Invalidate cache
-            self._alias_cache = None
+            if aliases:
+                # Delete aliases themselves
+                self._client.delete_aliases(aliases)
+
+                # Invalidate cache
+                self._alias_cache = None
+        except MailcowException as e:
+            return e
 
     def _set_alias_by_name(self, address: str, goto_addresses: List[str], public_comment: str) -> None:
         """ Sets an alias's goto addresses, and optionally sets its visible in SOGo. If the corresponding
@@ -293,26 +298,30 @@ class SquireMailcowManager:
             return settings.COMMITTEE_CONFIGS["global_archive_addresses"]
         return settings.COMMITTEE_CONFIGS["archive_addresses"]
 
-    def update_member_aliases(self) -> None:
-        """ Updates all member aliases """
-        # TODO: Return a list of failures (i.e., API calls that returned an exception)
+    def update_member_aliases(self) -> List[Tuple[str, MailcowException]]:
+        """ Updates all member aliases. Returns a list of addresses for which the API returned an error """
         # Fetch active members here so the results can be cached
+        errors = []
         active_members = self.get_active_members()
         committee_emails = self._committee_model.objects.values_list("contact_email", flat=True)
 
         for alias_address, alias_data in settings.MEMBER_ALIASES.items():
-            if alias_address in self.mailbox_map:
-                logger.warning(f"Skipping over {alias_address}: Mailbox with the same name already exists")
-                continue
+            try:
+                if alias_address in self.mailbox_map:
+                    logger.warning(f"Skipping over {alias_address}: Mailbox with the same name already exists")
+                    continue
 
-            logger.info(f"Forced updating {alias_address}")
-            emails = self.clean_emails_flat(
-                self.get_subscribed_members(active_members, alias_address, default=alias_data['default_opt']),
-                exclude=committee_emails
-            )
-            emails = self.get_archive_adresses_for_type(AliasCategory.MEMBER, alias_address) + emails
-            self._set_alias_by_name(alias_address, emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT)
+                logger.info(f"Forced updating {alias_address}")
+                emails = self.clean_emails_flat(
+                    self.get_subscribed_members(active_members, alias_address, default=alias_data['default_opt']),
+                    exclude=committee_emails
+                )
+                emails = self.get_archive_adresses_for_type(AliasCategory.MEMBER, alias_address) + emails
+                self._set_alias_by_name(alias_address, emails, public_comment=self.ALIAS_MEMBERS_PUBLIC_COMMENT)
+            except MailcowException as e:
+                errors.append((alias_address, e))
         self._alias_cache = None
+        return errors
 
     def get_active_committees(self):
         """ Gets a queryset containing all associationGroups that should have an alias setup """
@@ -322,8 +331,9 @@ class SquireMailcowManager:
             contact_email__isnull=False
         )
 
-    def update_committee_aliases(self, limit_update_to: Optional[List[str]]=None) -> None:
-        """ Updates all committee aliases, or a subset thereof """
+    def update_committee_aliases(self, limit_update_to: Optional[List[str]]=None) -> List[Tuple[str, MailcowException]]:
+        """ Updates all committee aliases, or a subset thereof. Returns a list of addresses for which the API returned an error """
+        errors = []
         committee_emails = self._committee_model.objects.values_list("contact_email", flat=True)
         valid_groups = self.clean_emails(self.get_active_committees(), email_field="contact_email")
         if limit_update_to is not None:
@@ -331,28 +341,37 @@ class SquireMailcowManager:
             valid_groups = valid_groups.filter(contact_email__in=limit_update_to)
 
         for assoc_group in valid_groups:
-            if assoc_group.contact_email in self.mailbox_map:
-                logger.warning(f"Skipping over {assoc_group} ({assoc_group.contact_email}): Mailbox with the same name already exists")
-                continue
-            # NOTE: Include all committee member emails here, not just active members' ones
-            goto_emails = self.clean_emails_flat(assoc_group.members, exclude=committee_emails)
-            logger.info(f"Forced updating {assoc_group} ({len(goto_emails)} subscribers)")
-            goto_emails = self.get_archive_adresses_for_type(AliasCategory.COMMITTEE, assoc_group.contact_email) + goto_emails
+            try:
+                if assoc_group.contact_email in self.mailbox_map:
+                    logger.warning(f"Skipping over {assoc_group} ({assoc_group.contact_email}): Mailbox with the same name already exists")
+                    continue
+                # NOTE: Include all committee member emails here, not just active members' ones
+                goto_emails = self.clean_emails_flat(assoc_group.members, exclude=committee_emails)
+                logger.info(f"Forced updating {assoc_group} ({len(goto_emails)} subscribers)")
+                goto_emails = self.get_archive_adresses_for_type(AliasCategory.COMMITTEE, assoc_group.contact_email) + goto_emails
 
-            self._set_alias_by_name(assoc_group.contact_email, goto_emails, public_comment=self.ALIAS_COMMITTEE_PUBLIC_COMMENT)
+                self._set_alias_by_name(assoc_group.contact_email, goto_emails, public_comment=self.ALIAS_COMMITTEE_PUBLIC_COMMENT)
+            except MailcowException as e:
+                errors.append((assoc_group.contact_email, e))
         self._alias_cache = None
+        return errors
 
-    def update_global_committee_aliases(self):
-        """ Updates all global committee aliases """
+    def update_global_committee_aliases(self) -> List[Tuple[str, MailcowException]]:
+        """ Updates all global committee aliases Returns a list of addresses for which the API returned an error """
+        errors = []
         for alias_address in filter(lambda address: address not in settings.MEMBER_ALIASES.keys(),
                 settings.COMMITTEE_CONFIGS['global_addresses']):
-            if alias_address in self.mailbox_map:
-                logger.warning(f"Skipping over {alias_address}: Mailbox with the same name already exists")
-                continue
+            try:
+                if alias_address in self.mailbox_map:
+                    logger.warning(f"Skipping over {alias_address}: Mailbox with the same name already exists")
+                    continue
 
-            logger.info(f"Forced updating {alias_address}")
-            emails = self.clean_emails_flat(self.get_active_committees(), email_field="contact_email")
-            emails = self.get_archive_adresses_for_type(AliasCategory.GLOBAL_COMMITTEE, alias_address) + emails
+                logger.info(f"Forced updating {alias_address}")
+                emails = self.clean_emails_flat(self.get_active_committees(), email_field="contact_email")
+                emails = self.get_archive_adresses_for_type(AliasCategory.GLOBAL_COMMITTEE, alias_address) + emails
 
-            self._set_alias_by_name(alias_address, emails, public_comment=self.ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT)
+                self._set_alias_by_name(alias_address, emails, public_comment=self.ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT)
+            except MailcowException as e:
+                errors.append((alias_address, e))
         self._alias_cache = None
+        return errors

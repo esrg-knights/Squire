@@ -245,6 +245,8 @@ class MailcowStatusView(TemplateView):
         try:
             aliases = list(self.mailcow_manager.get_alias_all(use_cache=False))
             mailboxes = list(self.mailcow_manager.get_mailbox_all(use_cache=False))
+            # Force cache update; we don't care about the result
+            self.mailcow_manager.get_internal_alias_rspamd_setting(use_cache=False)
         except MailcowAuthException as e:
             context['error'] = "No valid API key set."
         except MailcowAPIReadWriteAccessDenied as e:
@@ -269,17 +271,19 @@ class MailcowStatusView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         # One of the update buttons was pressed.
+        errors: List[Tuple[str, MailcowException]] = []
+
         if request.POST.get("alias_type", None) == "members":
             # Update all member aliases
-            self.mailcow_manager.update_member_aliases()
+            errors = self.mailcow_manager.update_member_aliases()
             messages.success(self.request, "Member aliases updated.")
         elif request.POST.get("alias_type", None) == "global_committee":
             # Update all global committee aliases
-            self.mailcow_manager.update_global_committee_aliases()
+            errors = self.mailcow_manager.update_global_committee_aliases()
             messages.success(self.request, "Global committee aliases updated.")
         elif request.POST.get("alias_type", None) == "committees":
             # Update all committee aliases
-            self.mailcow_manager.update_committee_aliases()
+            errors = self.mailcow_manager.update_committee_aliases()
             messages.success(self.request, "Committee aliases updated.")
         elif request.POST.get("alias_type", None) == "orphan":
             # Delete orphan data
@@ -287,10 +291,22 @@ class MailcowStatusView(TemplateView):
             unused_addresses = []
             for aliasinfo in unused_aliases:
                 unused_addresses.append(aliasinfo.address)
-            self.mailcow_manager.delete_aliases(unused_addresses, self.mailcow_manager.SQUIRE_MANAGE_INDICATOR)
-            messages.success(self.request, f"Orphan data deleted: {', '.join(unused_addresses)}.")
+            error = self.mailcow_manager.delete_aliases(unused_addresses, self.mailcow_manager.SQUIRE_MANAGE_INDICATOR)
+            if error is None:
+                messages.success(self.request, f"Orphan data deleted: {', '.join(unused_addresses)}.")
+            else:
+                messages.error(self.request, f"Error deleting data: {', '.join(unused_addresses)}.\nException: {error}")
+        elif request.POST.get("alias_type", None) == "internal_alias":
+            # Update Rspamd rule for internal aliases
+            try:
+                self.mailcow_manager.update_internal_addresses()
+            except MailcowException as e:
+                pass
         else:
             return HttpResponseBadRequest("Invalid alias_type passed")
+
+        for (addr, e) in errors:
+            messages.error(self.request, f"Error while updating alias: {addr}\nException: {e}")
 
         return HttpResponseRedirect(self.request.get_full_path())
 
