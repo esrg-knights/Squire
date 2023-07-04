@@ -4,8 +4,8 @@ from django.urls import path, include
 from django.views.i18n import JavaScriptCatalog
 from martor.views import markdownfy_view
 
-from .forms import LoginForm, PasswordResetForm, PasswordResetConfirmForm
-from . import views
+from core.forms import LoginForm, PasswordResetForm, PasswordResetConfirmForm
+from core import views
 
 app_name = "core"
 
@@ -17,13 +17,7 @@ urlpatterns = [
         path('image_uploader/', views.MartorImageUploadAPIView.as_view(), name='martor_image_upload'),
     ])),
     # Login and logout
-    path('login', djangoViews.LoginView.as_view(
-            template_name='core/user_accounts/login.html',
-            extra_context={}, authentication_form=LoginForm,
-            redirect_authenticated_user=False), # Setting to True will enable Social Media Fingerprinting.
-                                                # For more information, see the corresponding warning at:
-                                            #  https://docs.djangoproject.com/en/2.2/topics/auth/default/#all-authentication-views
-        name='user_accounts/login'),
+    path('login', views.LoginView.as_view(), name='user_accounts/login'),
     path('logout', djangoViews.LogoutView.as_view(), name='user_accounts/logout'),
     path('logout/success', views.logoutSuccess, name='user_accounts/logout/succes'),
     # Password resets
@@ -61,7 +55,6 @@ urlpatterns = [
         name='user_accounts/password_reset/success'),
     path('register', views.register, name='user_accounts/register'),
     path('register/success', views.registerSuccess, name='user_accounts/register/success'),
-    path('newsletters/', views.NewsletterView.as_view(), name='newsletters'),
     # Mock 403 and 404 views for display testing in development
     path('mock/', include([
         path('500/', views.show_error_500),

@@ -1,8 +1,10 @@
 import os
+from typing import List
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse, HttpRequest
 from django.http.response import Http404
@@ -16,8 +18,8 @@ from django.views.decorators.http import require_safe
 
 from membership_file.util import MembershipRequiredMixin
 
-from .forms import RegisterForm
-from .models import MarkdownImage, Shortcut
+from core.forms import LoginForm, RegisterForm
+from core.models import MarkdownImage, Shortcut
 
 from dynamic_preferences.registries import global_preferences_registry
 global_preferences = global_preferences_registry.manager()
@@ -47,16 +49,17 @@ class GlobalPreferenceRequiredMixin:
         if not preference:
             raise Http404()
 
-class NewsletterView(GlobalPreferenceRequiredMixin, MembershipRequiredMixin, TemplateView):
-    """ Page for viewing newsletters """
-    global_preference = "newsletter__share_link"
-    template_name = "core/newsletters.html"
-
+class LoginView(DjangoLoginView):
+    """ View for users logging in. """
+    template_name = "core/user_accounts/login.html"
+    authentication_form = LoginForm
+    redirect_authenticated_user = False
+    # Setting to True will enable Social Media Fingerprinting.
+    #   See: https://docs.djangoproject.com/en/3.2/topics/auth/default/#all-authentication-views
 
 @require_safe
 def registerSuccess(request):
     return render(request, 'core/user_accounts/register/register_done.html', {})
-
 
 def register(request):
     # if this is a POST request we need to process the form data

@@ -24,6 +24,8 @@ from django.conf.urls import handler403, handler404
 urlpatterns = [
     # Progressive web app
     path("", include("pwa.urls")),
+    # API
+    path("api/discord/", include(("discord_integration.urls", "discord"), namespace="discord")),
     # Change Language helper view
     path("i18n/", include("django.conf.urls.i18n")),
     # Admin Panel

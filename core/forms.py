@@ -22,31 +22,13 @@ User = get_user_model()
 # @since 15 AUG 2019
 ##################################################################################
 
-
-# LoginForm that changes the default AuthenticationForm
-# It provides a different error message when passing invalid login credentials,
-# and allows Inactive users to login
 class LoginForm(AuthenticationForm):
-    def clean(self):
-        # Obtain username and password
-        username = self.cleaned_data.get('username')
-        password = self.cleaned_data.get('password')
+    """Provides a different error message than Django's form, but is otherwise identical."""
 
-        # Check if both are provided
-        if username and password:
-            self.user_cache = authenticate(self.request, username=username, password=password)
-            if self.user_cache is None:
-                # Invalid credentials provided
-                self.add_error(None, ValidationError(
-                    _("The username and/or password you specified are not correct."),
-                    code='ERROR_INVALID_LOGIN',
-                    params={'username': self.username_field.verbose_name},
-                ))
-                return
-            # else:
-                # Valid credentials provided
-        return self.cleaned_data
-
+    error_messages = {
+        'invalid_login': _("The username and/or password you specified are not correct."),
+        'inactive': _("This account is inactive."),
+    }
 
 # RegisterForm that expands on the default UserCreationForm
 # It requires a (unique) email address, and includes a required real_name field

@@ -37,7 +37,7 @@ if os.getenv('SENTRY_DSN'): # pragma: no cover
     )
 
 # Hosts on which the application will run
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["f85d-2a00-bba0-110d-5000-a9f1-b4c0-bba1-b3c2.ngrok-free.app"]
 if os.getenv('SQUIRE_ALLOWED_HOSTS'): # pragma: no cover
     ALLOWED_HOSTS += os.getenv('SQUIRE_ALLOWED_HOSTS').split(',')
 
@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'roleplaying',
     'nextcloud_integration',
     'user_interaction.apps.UserInteractionConfig',
+    'discord_integration.apps.DiscordIntegrationConfig',
     # More External Libraries
     'django_cleanup.apps.CleanupConfig',
     'martor',
