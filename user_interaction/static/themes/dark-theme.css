@@ -49,6 +49,9 @@
 
     /*Calendar day color*/
     --fc-neutral-bg-color: green;
+
+    /* Make the default elements the dark colour */
+    color-scheme: dark;
 }
 
 /* Lighten link colors */
