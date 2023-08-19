@@ -1,0 +1,13 @@
+{% extends 'core/base.html' %}
+{% load render_form %}
+
+{% block title %}
+    Squire - Send Mail
+{% endblock title %}
+
+
+{% block content %}
+    <h1>Send mail</h1>
+
+    {% render_form submit_text="Send" method="post" submit_class="btn btn-success" %}
+{% endblock %}

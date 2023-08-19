@@ -33,13 +33,6 @@ urlpatterns = [
             success_url='/password_reset/done',
             extra_context={},
             template_name='core/user_accounts/password_reset/password_reset_form.html',
-            subject_template_name='core/user_accounts/password_reset/password_reset_subject.txt',
-            email_template_name='core/user_accounts/password_reset/password_reset_email.txt',
-            extra_email_context={
-                'committee_name': settings.COMMITTEE_FULL_NAME,
-                'committee_abbreviation': settings.COMMITTEE_ABBREVIATION,
-                'application_name': settings.APPLICATION_NAME,
-            },
             form_class=PasswordResetForm,
         ),
         name='user_accounts/password_reset'),

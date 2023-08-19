@@ -1,0 +1,4 @@
+{% block content %}{% endblock content %}
+{% block mail_footer %}
+ This message has been send_to automatically by Squire. It is not possible to reply to this message.
+{% endblock %}

@@ -1,0 +1,43 @@
+<body style="font-family: Lato, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
+background-color: #E5E0E0;">
+<div style="position: relative;">
+<div style="margin: auto; max-width: 600px;">
+<table style="width:100%; border-collapse: collapse;">
+    <tr height="30">
+        <th colspan="3" style="background-color: #206141; height: 20px; text-align: left;">
+            <div style="margin: 10px; display: flex; position:relative;">
+                <img src="https://app.kotkt.nl/static/images/header_logo.png" alt="Modified Knights Logo" class="knights-logo-img" height="75px">
+                <div style="position: relative; width: 100%;">
+                    <div style="top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%); margin: 0; position: absolute;">
+                        <span style="font-size: x-large; color: whitesmoke;">Knights of the kitchen table</span><br>
+                        <span style="font-size: small; color: #ADC6BE;">Supported by Squire</span>
+                    </div>
+                </div>
+            </div>
+        </th>
+    </tr>
+    <tr>
+        <td width="30"></td>
+        <td style="padding: 1em 0;">
+            {% block content %}
+                Non used content block
+            {% endblock content %}
+        </td>
+        <td width="30"></td>
+    </tr>
+    <tr height="30">
+        <th colspan="3"></th>
+    </tr>
+    <tr colspan="3" style="background-color: #206141; height: 20px; text-align: left;">
+        <td></td>
+        <td style="font-size: small; color: #ADC6BE; padding: 1em 0;">
+            {% block mail_footer %}
+                This email has been send through Squire. You can not respond to this e-mail.
+            {% endblock %}
+        </td>
+        <td></td>
+    </tr>
+</table>
+</div>
+</div>
+</body>

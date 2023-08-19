@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+    {{ message|linebreaks }}
+{% endblock content %}
+
+{% block mail_footer %}
+    This email has been send through Squire. You can not respond to this e-mail.
+{% endblock %}

@@ -12,6 +12,7 @@ from martor.widgets import MartorWidget
 
 from core.models import MarkdownImage
 from core.widgets import  ImageUploadMartorWidget
+from core.mailing import PasswordResetEmail
 from utils.forms import UpdatingUserFormMixin
 
 from django.contrib.auth import get_user_model
@@ -84,7 +85,23 @@ class PasswordChangeForm(DjangoPasswordChangeForm):
 
 # Adds the relevant bootstrap classes to the password reset form
 class PasswordResetForm(DjangoPasswordResetForm):
-    pass
+
+    def send_mail(
+        self,
+        subject_template_name,
+        email_template_name,
+        context,
+        from_email,
+        to_email,
+        html_email_template_name=None,
+    ):
+        # We override this method to move logic to the generalised Email format in mailing.py
+        PasswordResetEmail(
+            uid=context["uid"],
+            token=context["token"]
+        ).send_to(
+            context["user"]
+        )
 
 class PasswordResetConfirmForm(DjangoPasswordResetConfirmForm):
     pass
