@@ -369,7 +369,9 @@ class TestCaseActivityClean(TestCase):
 
 
 class ActivityTestCase(TestCase):
-    fixtures = ["test_users.json", "test_activity_slots", "activity_calendar/test_activity_organisers"]
+    fixtures = ["test_users.json", "test_activity_slots", "test_members.json",
+                "activity_calendar/test_activity_organisers",
+    ]
 
     def setUp(self):
         self.activity = Activity.objects.get(id=2)

@@ -1,0 +1,210 @@
+<p>
+{% if aliases %}
+    <ul class="list-group">
+    {% for alias in aliases %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span data-toggle="tooltip" data-placement="top" title="{{ alias.address }}">{{ alias.title }}</span>
+            <div>
+                <!-- Status -->
+                {% if alias.status == "RESERVED" %}
+                    <span class="badge badge-danger badge-pill"><i class="fas fa-exclamation-triangle"></i> Invalid Address</span>
+                {% elif alias.status == "MAILBOX" %}
+                    {% if alias.data.active.name == "INACTIVE" %}
+                        <span class="badge badge-danger badge-pill"><i class="fas fa-envelope"></i> Mailbox Disabled</span>
+                    {% elif alias.data.active.name == "DISALLOW_LOGIN" %}
+                        <span class="badge badge-warning badge-pill"><i class="fas fa-envelope"></i> Mailbox Inactive</span>
+                    {% else %}
+                        <span class="badge badge-success badge-pill"><i class="fas fa-envelope"></i> Mailbox</span>
+                    {% endif %}
+                    <span class="badge badge-secondary badge-pill"><i class="fas fa-unlink"></i> Not managed by Squire</span>
+                {% elif alias.data is None %}
+                    <span class="badge badge-danger badge-pill"><i class="fas fa-question-circle"></i> Missing</span>
+                {% elif alias.status == "NOT_MANAGED_BY_SQUIRE" %}
+                    <span class="badge badge-secondary badge-pill"><i class="fas fa-unlink"></i> Not managed by Squire</span>
+                {% elif alias.status == "OUTDATED" %}
+                    <span class="badge badge-danger badge-pill"><i class="fas fa-exclamation-triangle"></i> Outdated</span>
+                {% elif alias.status != "ORPHAN" %}
+                    <span class="badge badge-success badge-pill"><i class="fas fa-check-circle"></i> Up-to-date</span>
+                {% endif %}
+
+                <!-- Active status -->
+                {% if alias.status == "NOT_MANAGED_BY_SQUIRE" or alias.status == "OUTDATED" or alias.status == "ORPHAN" or alias.status == "VALID" %}
+                    {% if not alias.data.active %}
+                        <span class="badge badge-warning badge-pill"><i class="fas fa-pause-circle"></i> Inactive</span>
+                    {% endif %}
+                {% endif %}
+
+                <!-- Internal/opt-out status -->
+                {% if alias.internal is None %}
+                    {# Do nothing #}
+                {% elif alias.internal %}
+                    <span class="badge badge-success badge-pill"><i class="fas fa-home"></i> Internal</span>
+                    {% if alias.exposure_routes %}
+                        <span class="badge badge-danger badge-pill"><i class="fas fa-globe"></i> Exposed</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge badge-primary badge-pill"><i class="fas fas fa-globe"></i> Public</span>
+                {% endif %}
+
+                {% if alias.allow_opt_out == False %}
+                    <span class="badge badge-warning badge-pill"><i class="fas fa-lock"></i> Cannot opt-out</span>
+                {% endif %}
+
+                <!-- Subscribers -->
+                <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#subsModal-{{ alias.modal_id }}">
+                    {% if alias.status == "RESERVED" %}
+                        <i class="fas fa-user-friends"></i> No Subscribers
+                    {% elif alias.status == "MAILBOX" %}
+                        <!-- TODO: Fetch SOGo forwards? -->
+                        <i class="fas fa-user-friends"></i> No Subscribers
+                    {% else %}
+                        <i class="fas fa-user-friends"></i> {{ alias.subscribers|length }} Subscriber{{ alias.subscribers|length|pluralize }}
+                    {% endif %}
+                </button>
+
+                <div class="modal fade" id="subsModal-{{ alias.modal_id }}" tabindex="-1" role="dialog" aria-labelledby="subsModalLabel-{{ alias.modal_id }}" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="subsModalLabel-{{ alias.modal_id }}">{{ alias.address }}</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                {% if alias.description %}
+                                    <p>{{ alias.description }}</p>
+                                {% endif %}
+
+                                {% if alias.status == "RESERVED" %}
+                                    {# Do nothing #}
+                                {% elif alias.exposure_routes %}
+                                    <div class="alert alert-danger d-flex align-items-center" role="alert">
+                                        <i class="fas fa-globe mr-3"></i>
+                                        <div>Alias should only be mailable from within the domain, but can still be mailed from external domains through the following (public) aliases:
+                                            <ul class="text-monospace">
+                                                {% for route in alias.exposure_routes %}
+                                                    <li><code>{{ route|join:" -> " }}</code></li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                {% elif alias.internal %}
+                                    <div class="alert alert-success d-flex align-items-center" role="alert">
+                                        <i class="fas fa-home mr-3"></i> Alias can only be emailed from addressses within the domain.
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-primary d-flex align-items-center" role="alert">
+                                        <i class="fas fa-globe mr-3"></i> Alias can be emailed by anyone.
+                                    </div>
+                                {% endif %}
+
+                                {% if alias.allow_opt_out == False %}
+                                    <div class="alert alert-warning d-flex align-items-center" role="alert">
+                                        <i class="fas fa-lock mr-3"></i> All members will receive emails through this address. They cannot opt-out for this.
+                                    </div>
+                                {% endif %}
+
+                                {% if alias.status == "NOT_MANAGED_BY_SQUIRE" %}
+                                    <div class="alert alert-secondary d-flex align-items-center" role="alert">
+                                        <i class="fas fa-unlink mr-3"></i> This alias was likely manually overridden by a Mailcow admin. Squire can only modify aliases with a specific public comment. This prevents Squire from accidentally overwriting pre-existing data.
+                                    </div>
+                                {% elif alias.status == "ORPHAN" %}
+                                    <div class="alert alert-info d-flex align-items-center" role="alert">
+                                        <i class="fas fa-wrench mr-3"></i> Squire no longer needs this alias to operate. It can be removed.
+                                    </div>
+                                {% endif %}
+
+                                {% if alias.status == "NOT_MANAGED_BY_SQUIRE" or alias.status == "OUTDATED" or alias.status == "ORPHAN" or alias.status == "VALID" %}
+                                    {% if not alias.data.active %}
+                                        <div class="alert alert-warning d-flex align-items-center" role="alert">
+                                            <i class="fas fa-pause-circle mr-3"></i> Alias is inactive. It will not forward emails.
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if alias.status == "RESERVED" %}
+                                    <div class="alert alert-danger d-flex align-items-center" role="alert">
+                                        <i class="fas fa-exclamation-triangle mr-3"></i> Alias is identical to a member alias.
+                                    </div>
+                                {% elif alias.status == "MAILBOX" %}
+                                    <div class="alert alert-success d-flex align-items-center" role="alert">
+                                        <i class="fas fa-envelope mr-3"></i> Alias is a mailbox, allowing the address to send emails as well as receive them.
+                                    </div>
+                                    {% if alias.data.active.name == "INACTIVE" %}
+                                        <div class="alert alert-danger d-flex align-items-center" role="alert">
+                                            <i class="fas fa-pause-circle mr-3"></i> Mailbox is disabled
+                                        </div>
+                                    {% elif alias.data.active.name == "DISALLOW_LOGIN" %}
+                                        <div class="alert alert-warning d-flex align-items-center" role="alert">
+                                            <i class="fas fa-pause-circle mr-3"></i> Mailbox logins are disallowed. Incoming mail is still accepted.
+                                        </div>
+                                    {% endif %}
+                                    <div class="alert alert-secondary d-flex align-items-center" role="alert">
+                                        <i class="fas fa-unlink mr-3"></i> Mailboxes are never modified by Squire.
+                                    </div>
+
+                                    <h4><i class="fas fa-user-friends"></i> Access</h4>
+                                    <ul>
+                                        {% if alias.data.attributes.sogo_access %}<li>Logins to <a href="{{ host }}/SOGo">SOGo</a></li>{% endif %}
+                                        {% if alias.data.attributes.imap_access %}<li>IMAP (allow receiving from server)</li>{% endif %}
+                                        {% if alias.data.attributes.smtp_access %}<li>SMTP (allow send to server)</li>{% endif %}
+                                        {% if alias.data.attributes.pop3_access %}<li>POP3 (allow downloading from server)</li>{% endif %}
+                                    </ul>
+                                    <p></p>
+                                    <h4><i class="fas fa-history"></i> Last Syncs</h4>
+                                    <ul>
+                                        {% if alias.data.attributes.imap_access %}<li>IMAP: {{ alias.data.last_imap_login|default:"<i>Never</i>" }}</li>{% endif %}
+                                        {% if alias.data.attributes.smtp_access %}<li>SMTP: {{ alias.data.last_smtp_login|default:"<i>Never</i>" }}</li>{% endif %}
+                                        {% if alias.data.attributes.pop3_access %}<li>POP3: {{ alias.data.last_pop3_login|default:"<i>Never</i>" }}</li>{% endif %}
+                                    </ul>
+                                {% else %}
+                                    {% if alias.archive_addresses and alias.status != "NOT_MANAGED_BY_SQUIRE" %}
+                                        <div class="alert alert-info d-flex align-items-center" role="alert">
+                                            <i class="fas fa-archive mr-3"></i> Archives into: {{ alias.archive_addresses|join:", " }}
+                                        </div>
+                                    {% endif %}
+
+                                    <h4><i class="fas fa-user-friends"></i> Subscribers ({{ alias.subscribers|length }})</h4>
+                                    <ul>
+                                        {% for sub in alias.subscribers %}
+                                            {% if sub.invalid %}
+                                                <li class="text-muted">{{sub.name}} <span class="badge badge-secondary badge-pill"><i class="fas fa-ban"></i> Ignored</span></li>
+                                            {% else %}
+                                                <li>{{sub.name}}</li>
+                                            {% endif %}
+                                        {% empty %}
+                                            <li><i>No subscribers</i></li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                            <div class="modal-footer">
+                                <div class="d-flex justify-content-end" style="gap: 4px;">
+                                    {% if alias.status == "MAILBOX" %}
+                                        <a class="btn btn-primary btn-sm" href="{{ host }}/edit/mailbox/{{ alias.data.username }}"
+                                            target="_blank" rel="noopener noreferrer"
+                                            role="button"><i class="fas fa-pen"></i> Edit in Mailcow</a>
+                                    {% elif alias.status != "RESERVED" and alias.status != "MISSING" %}
+                                        <a class="btn btn-primary btn-sm" href="{{ host }}/edit/alias/{{ alias.data.id }}"
+                                            target="_blank" rel="noopener noreferrer"
+                                            role="button"><i class="fas fa-pen"></i> Edit in Mailcow</a>
+                                    {% endif %}
+                                    {% if alias.squire_edit_url %}
+                                        <a class="btn btn-primary btn-sm" href="{{ alias.squire_edit_url }}"
+                                            target="_blank" rel="noopener noreferrer"
+                                            role="button"><i class="fas fa-pen"></i> Edit in Squire</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <i>{{ empty_message|default:"No such aliases are set up." }}</i>
+{% endif %}
+</p>
