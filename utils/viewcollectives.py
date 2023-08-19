@@ -61,9 +61,7 @@ class ViewCollectiveConfig:
         """ Determines whether the given request allows this """
         if self.requires_login and not request.user.is_authenticated:
             return False
-        if self.requires_membership and request.member is None:
-        # if self.requires_membership and (request.member is None or not request.member.is_active):
-        # TODO: Limit to active members
+        if self.requires_membership and (request.member is None or not request.member.is_active):
             return False
         return True
 
