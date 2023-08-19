@@ -189,8 +189,8 @@ class MailcowStatusView(TemplateView):
             if not self.mailcow_manager.is_address_internal(address) and status != AliasStatus.RESERVED:
                 exp_routes = [[address, "Alias not located in Rspamd settings map."]]
 
-            subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias, alias_type=AliasCategory.GLOBAL_COMMITTEE)
-            info = AliasInfos(status.name, subscribers, address, "gc_" + alias_address_to_id(address), address,
+            info_subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias, alias_type=AliasCategory.GLOBAL_COMMITTEE)
+            info = AliasInfos(status.name, info_subscribers, address, "gc_" + alias_address_to_id(address), address,
                 "Allows mailing all committees at the same time.",
                 alias or mailbox, internal=True, exposure_routes=exp_routes, allow_opt_out=None, archive_addresses=settings.COMMITTEE_CONFIGS['global_archive_addresses']
             )
@@ -203,7 +203,7 @@ class MailcowStatusView(TemplateView):
 
         for assoc_group in self.mailcow_manager.get_active_committees():
             address = assoc_group.contact_email
-            subscribers = assoc_group.members.filter_active().order_by('email')
+            subscribers = assoc_group.members.order_by('email')
 
             status, alias, mailbox = self._get_alias_status(address, subscribers, AliasCategory.COMMITTEE,
                 aliases, mailboxes, self.mailcow_manager.ALIAS_COMMITTEE_PUBLIC_COMMENT)
