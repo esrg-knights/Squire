@@ -140,7 +140,7 @@ class MailcowStatusView(TemplateView):
             blocklist += self.mailcow_manager.BLOCKLISTED_EMAIL_ADDRESSES
             if alias_type == AliasCategory.GLOBAL_COMMITTEE:
                 email_field = "contact_email"
-                get_name = lambda sub: f"{sub.site_group.name} ({sub.get_type_display()})"
+                get_name = lambda sub: f"{sub.name} ({sub.get_type_display()})"
             else:
                 blocklist += self._committee_addresses
 
@@ -209,8 +209,8 @@ class MailcowStatusView(TemplateView):
                 aliases, mailboxes, self.mailcow_manager.ALIAS_COMMITTEE_PUBLIC_COMMENT)
 
             subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias)
-            info = AliasInfos(status.name, subscribers, address, "c_" + str(assoc_group.id), assoc_group.site_group.name,
-                format_html("{} ({}): {}", assoc_group.site_group.name, assoc_group.get_type_display(), assoc_group.short_description),
+            info = AliasInfos(status.name, subscribers, address, "c_" + str(assoc_group.id), assoc_group.name,
+                format_html("{} ({}): {}", assoc_group.name, assoc_group.get_type_display(), assoc_group.short_description),
                 alias or mailbox, False, squire_edit_url=reverse("admin:committees_associationgroup_change", args=[assoc_group.id]),
                 archive_addresses=settings.COMMITTEE_CONFIGS['archive_addresses']
             )

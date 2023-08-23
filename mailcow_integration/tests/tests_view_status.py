@@ -403,8 +403,8 @@ class MailcowStatusInitializersTests(MailcowStatusViewTests):
         # AliasInfos returned
         self.assertListEqual(status, [ AliasInfos(
             AliasStatus.VALID.name, [],
-            committee.contact_email, "c_" + str(committee.id), committee.site_group.name,
-            format_html("{} ({}): {}", committee.site_group.name, committee.get_type_display(), committee.short_description),
+            committee.contact_email, "c_" + str(committee.id), committee.name,
+            format_html("{} ({}): {}", committee.name, committee.get_type_display(), committee.short_description),
             None, False, squire_edit_url=reverse("admin:committees_associationgroup_change", args=[committee.id]),
             archive_addresses=["archief@example.com"]
         )])
