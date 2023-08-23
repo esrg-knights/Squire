@@ -1,14 +1,19 @@
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, PermissionDenied
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.messages import constants
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.middleware import SessionMiddleware
+from django.http import HttpResponse
 from django.test import TestCase, RequestFactory
+from django.views import View
 from django.views.generic import ListView, FormView
 from django.forms import Form, BooleanField
 
+User = get_user_model()
 
-from utils.views import SearchFormMixin, RedirectMixin, PostOnlyFormViewMixin
+
+from utils.views import SearchFormMixin, RedirectMixin, PostOnlyFormViewMixin, SuperUserRequiredMixin
 
 
 class TestForm(Form):
@@ -131,7 +136,6 @@ class TestPostOnlyFormViewMixin(TestCase):
             # This is weird, but searching with [0] provides an error. So I do this instead
             return message
 
-
 class TestSearchFormMixin(TestCase):
 
     class TestView(SearchFormMixin, ListView):
@@ -162,3 +166,35 @@ class TestSearchFormMixin(TestCase):
 
     def test_get_queryset(self):
         self.assertEqual(self.view.get_queryset().count(), 3)
+
+class TestSuperUserRequiredMixin(TestCase):
+    """ Tests whether only superusers can access views with this Mixin """
+    class TestView(SuperUserRequiredMixin, View):
+        def get(self, *args, **kwargs):
+            return HttpResponse()
+
+    def setUp(self):
+        self.admin = User.objects.create(username="admin", is_superuser=True)
+        self.staff = User.objects.create(username="staff", is_staff=True)
+        self.user = User.objects.create(username="user")
+
+        self.request = RequestFactory().get('')
+        self.view = self.TestView.as_view()
+
+    def test_admin_access(self):
+        """ Admins can access the view """
+        self.request.user = self.admin
+        res = self.view(self.request)
+        self.assertEqual(res.status_code, 200)
+
+    def test_user_denied(self):
+        """ Normal users cannot access the view """
+        self.request.user = self.user
+        with self.assertRaises(PermissionDenied):
+            self.view(self.request)
+
+    def test_staff_denied(self):
+        """ Staff cannot access the view """
+        self.request.user = self.staff
+        with self.assertRaises(PermissionDenied):
+            self.view(self.request)

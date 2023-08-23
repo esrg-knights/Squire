@@ -1,0 +1,28 @@
+
+{% extends 'core/user_accounts/account_base.html' %}
+
+{% load render_form %}
+
+{% block title %}
+    Squire - Update Email Preferences
+{% endblock title %}
+
+{% block og-title %}
+    Squire Update Email Preferences
+{% endblock og-title %}
+
+{% block content %}
+    <h1>Email Preferences</h1>
+    <p>
+        You will receive password reset emails on your <a href="{% url 'account:site_account' %}">account email</a>: <i>{{ user.email|default:"Not provided." }}</i><br>
+        You will receive emails from the board your <a href="{% url 'account:membership:view' %}">membership email</a>: <i>{{ member.email }}</i>
+    </p>
+
+    {% render_form id="update_preferences_form" method="post" has_submit_button=False %}
+
+    <div class="btn-group">
+        <button type="submit" form="update_preferences_form" class="btn btn-success">
+            <i class="fas fa-edit"></i> Save changes
+        </button>
+    </div>
+{% endblock %}

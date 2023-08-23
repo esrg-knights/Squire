@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http.response import HttpResponseRedirect
 from django.contrib.messages import success, warning
 
@@ -111,3 +112,10 @@ class SearchFormMixin:
             filter_form=self.search_form,
             **kwargs
         )
+
+
+
+class SuperUserRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """ Verify that the current user is an admin """
+    def test_func(self):
+        return self.request.user.is_superuser

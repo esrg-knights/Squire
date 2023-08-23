@@ -364,7 +364,7 @@ class BirthdayFeedTestCase(FeedTestMixin, TestCase):
         self.assertIsNone(component)
 
         # Make sure that the member is considered member so the testcase data is still correct
-        self.assertTrue(member.is_considered_member(), msg="Data incorrect. Member 26 should be a current member")
+        self.assertTrue(member.is_active, msg="Data incorrect. Member 26 should be a current member")
 
     def test_exclude_nonmembers(self):
         member = Member.objects.get(id=26)

@@ -133,7 +133,7 @@
         "pk": 67,
         "fields": {
             "user": 67,
-            "is_deregistered": true,
+            "is_deregistered": false,
             "legal_name": "M.E.",
             "first_name": "Mathias",
             "tussenvoegsel": "",

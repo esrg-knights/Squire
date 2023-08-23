@@ -6,15 +6,16 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import resolve_url
 from functools import wraps
 
+from membership_file.models import Member
 from .exceptions import UserIsNotCurrentMember
 
 
 def user_is_current_member(user):
     member = get_member_from_user(user)
-    return not (member is None or not member.is_considered_member())
+    return member is not None and member.is_active
 
 
-def get_member_from_user(user):
+def get_member_from_user(user) -> Member:
     """
     Retrieves the member associated with this user (if any)
     :param user: The user object
@@ -43,7 +44,7 @@ class BaseMembershipRequiredMixin:
         if member is None:
             # Current session has no member connected
             return False
-        if not member.is_considered_member() and self.requires_active_membership:
+        if not member.is_active and self.requires_active_membership:
             # Current session has a disabled member connected
             return False
         return True
