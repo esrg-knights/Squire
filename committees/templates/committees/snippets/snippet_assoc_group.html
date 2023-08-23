@@ -37,7 +37,7 @@
             {% for membership in group.associationgroupmembership_set.all %}
                 <div>
                     {{ membership.member_name }}{% if membership.role %}, {{ membership.role }}{% endif %}
-                    {% if membership.title %}(<span class="font-italic">"{{ membership.title }}"</span>){% endif %}
+                    {% if membership.title %}(<span class="font-italic">“{{ membership.title }}”</span>){% endif %}
                 </div>
             {% empty %}
                 <div>
