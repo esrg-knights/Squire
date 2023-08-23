@@ -181,7 +181,7 @@ class MailcowSubscriberInfosTests(MailcowStatusViewTests):
         self.assertEqual(subinfos[1], {'name': "Foo Oof &mdash; foo@example.com", 'invalid': True})
 
         # Committee Subscribers
-        AssociationGroup.objects.create(site_group=Group.objects.create(name="Boardgamers"),
+        AssociationGroup.objects.create(name="Boardgamers",
             type=AssociationGroup.COMMITTEE, contact_email="bg@example.com")
         subinfos = self.view._get_subscriberinfos_by_status(AliasStatus.VALID, AssociationGroup.objects.all(), None, AliasCategory.GLOBAL_COMMITTEE)
         self.assertEqual(len(subinfos), 1)
