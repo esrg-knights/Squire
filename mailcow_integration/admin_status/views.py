@@ -140,7 +140,7 @@ class MailcowStatusView(TemplateView):
             blocklist += self.mailcow_manager.BLOCKLISTED_EMAIL_ADDRESSES
             if alias_type == AliasCategory.GLOBAL_COMMITTEE:
                 email_field = "contact_email"
-                get_name = lambda sub: f"{sub.site_group.name} ({sub.get_type_display()})"
+                get_name = lambda sub: f"{sub.name} ({sub.get_type_display()})"
             else:
                 blocklist += self._committee_addresses
 
@@ -189,8 +189,8 @@ class MailcowStatusView(TemplateView):
             if not self.mailcow_manager.is_address_internal(address) and status != AliasStatus.RESERVED:
                 exp_routes = [[address, "Alias not located in Rspamd settings map."]]
 
-            subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias, alias_type=AliasCategory.GLOBAL_COMMITTEE)
-            info = AliasInfos(status.name, subscribers, address, "gc_" + alias_address_to_id(address), address,
+            info_subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias, alias_type=AliasCategory.GLOBAL_COMMITTEE)
+            info = AliasInfos(status.name, info_subscribers, address, "gc_" + alias_address_to_id(address), address,
                 "Allows mailing all committees at the same time.",
                 alias or mailbox, internal=True, exposure_routes=exp_routes, allow_opt_out=None, archive_addresses=settings.COMMITTEE_CONFIGS['global_archive_addresses']
             )
@@ -203,14 +203,14 @@ class MailcowStatusView(TemplateView):
 
         for assoc_group in self.mailcow_manager.get_active_committees():
             address = assoc_group.contact_email
-            subscribers = assoc_group.members.filter_active().order_by('email')
+            subscribers = assoc_group.members.order_by('email')
 
             status, alias, mailbox = self._get_alias_status(address, subscribers, AliasCategory.COMMITTEE,
                 aliases, mailboxes, self.mailcow_manager.ALIAS_COMMITTEE_PUBLIC_COMMENT)
 
             subscribers = self._get_subscriberinfos_by_status(status, subscribers, alias)
-            info = AliasInfos(status.name, subscribers, address, "c_" + str(assoc_group.id), assoc_group.site_group.name,
-                format_html("{} ({}): {}", assoc_group.site_group.name, assoc_group.get_type_display(), assoc_group.short_description),
+            info = AliasInfos(status.name, subscribers, address, "c_" + str(assoc_group.id), assoc_group.name,
+                format_html("{} ({}): {}", assoc_group.name, assoc_group.get_type_display(), assoc_group.short_description),
                 alias or mailbox, False, squire_edit_url=reverse("admin:committees_associationgroup_change", args=[assoc_group.id]),
                 archive_addresses=settings.COMMITTEE_CONFIGS['archive_addresses']
             )
