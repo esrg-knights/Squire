@@ -15,9 +15,10 @@ class ConfigTabSelectWidget(Input):
         self.config = config
 
     def get_context(self, name, value, attrs):
-        attrs['config'] = self.config
-        attrs['default_enabled'] = self.config.group_requires_permission is None
-        if value: attrs["checked"] = True
+        attrs["config"] = self.config
+        attrs["default_enabled"] = self.config.group_requires_permission is None
+        if value:
+            attrs["checked"] = True
         return super().get_context(name, value, attrs)
 
     def value_from_datadict(self, data, files, name):
@@ -35,8 +36,9 @@ class ConfigTabSelectWidget(Input):
 
 
 class AssociationGroupsTabAccessForm(Form):
-    """ Form that allows changing of tab access for the given AssociationGroupPanelControl instance """
-    def __init__(self, *args, instance: AssociationGroupPanelControl=None, **kwargs):
+    """Form that allows changing of tab access for the given AssociationGroupPanelControl instance"""
+
+    def __init__(self, *args, instance: AssociationGroupPanelControl = None, **kwargs):
         super(AssociationGroupsTabAccessForm, self).__init__(*args, **kwargs)
         self.instance = instance
         for config in registry.configs:
@@ -68,7 +70,6 @@ class AssociationGroupsTabAccessForm(Form):
                 config.disable_access(self.instance)
 
         return self.instance
-
 
     def save_m2m(self):
         # Required to be used in the admin

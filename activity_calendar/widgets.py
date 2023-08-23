@@ -16,20 +16,22 @@ class BootstrapDateTimePickerInput(DateTimePicker):
         :param kwargs:
         """
         kwargs["options"] = options or {}
-        kwargs["options"].update({
-            "icons": {
-                "time": "fas fa-clock",
-                "date": "fas fa-calendar",
-                "up": "fas fa-arrow-up",
-                "down": "fas fa-arrow-down",
-                "previous": "fas fa-chevron-left",
-                "next": "fas fa-chevron-right",
-                "today": "fas fa-calendar-check-o",
-                "clear": "fas fa-trash",
-                "close": "fas fa-times",
-            },
-            "format": "YYYY-MM-DD HH:mm",
-        })
+        kwargs["options"].update(
+            {
+                "icons": {
+                    "time": "fas fa-clock",
+                    "date": "fas fa-calendar",
+                    "up": "fas fa-arrow-up",
+                    "down": "fas fa-arrow-down",
+                    "previous": "fas fa-chevron-left",
+                    "next": "fas fa-chevron-right",
+                    "today": "fas fa-calendar-check-o",
+                    "clear": "fas fa-trash",
+                    "close": "fas fa-times",
+                },
+                "format": "YYYY-MM-DD HH:mm",
+            }
+        )
 
         kwargs.setdefault("attrs", {})
         kwargs["attrs"].setdefault("input_group", False)

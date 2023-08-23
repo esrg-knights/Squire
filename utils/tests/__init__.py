@@ -1,5 +1,3 @@
-
-
 def raisesAssertionError(method, *args, **kwargs):
     try:
         method(*args, **kwargs)

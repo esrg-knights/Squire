@@ -18,12 +18,21 @@ from nextcloud_integration.forms import *
 from nextcloud_integration.models import SquireNextCloudFolder, SquireNextCloudFile
 
 
-__all__ = ["SiteDownloadView", "FileBrowserView", "FolderCreateView", "SyncFileToFolderView", "DownloadFileview",
-           "FolderEditView", "SyncFileToFolderView", "NextcloudConnectionViewMixin"]
+__all__ = [
+    "SiteDownloadView",
+    "FileBrowserView",
+    "FolderCreateView",
+    "SyncFileToFolderView",
+    "DownloadFileview",
+    "FolderEditView",
+    "SyncFileToFolderView",
+    "NextcloudConnectionViewMixin",
+]
 
 
 class NextcloudConnectionViewMixin:
-    """ Mixin that catches ConnectionErrors from the requests module and throws a 424 (Failed Dependency) instead """
+    """Mixin that catches ConnectionErrors from the requests module and throws a 424 (Failed Dependency) instead"""
+
     failed_connection_template = "nextcloud_integration/failed_nextcloud_link.html"
     _client = None
 
@@ -36,16 +45,13 @@ class NextcloudConnectionViewMixin:
             return self.nextcloud_operation_failed(error)
 
     def nextcloud_connection_failed(self, error):
-        """ Runs code to handle a fail in the nextcloud connection. Should return a HttpResponse """
+        """Runs code to handle a fail in the nextcloud connection. Should return a HttpResponse"""
         return TemplateResponse(
-            self.request,
-            self.failed_connection_template,
-            context={"error": error},
-            status=424 # Failed dependency
+            self.request, self.failed_connection_template, context={"error": error}, status=424  # Failed dependency
         )
 
     def nextcloud_operation_failed(self, error):
-        """ Runs code to handle a fail in the nextcloud connection. Should return a HttpResponse """
+        """Runs code to handle a fail in the nextcloud connection. Should return a HttpResponse"""
         return self.nextcloud_connection_failed(error)
 
     @property
@@ -57,26 +63,21 @@ class NextcloudConnectionViewMixin:
 
 class FileBrowserView(NextcloudConnectionViewMixin, PermissionRequiredMixin, ListView):
     template_name = "nextcloud_integration/browser.html"
-    permission_required = 'nextcloud_integration.view_squirenextcloudfolder'
-    context_object_name = 'nextcloud_resources'
+    permission_required = "nextcloud_integration.view_squirenextcloudfolder"
+    context_object_name = "nextcloud_resources"
 
     def nextcloud_connection_failed(self, error):
         if error.actual_code == 404:
             return TemplateResponse(
-                self.request,
-                "nextcloud_integration/browser_not_exist.html",
-                {'path': self.kwargs.get('path', '')}
+                self.request, "nextcloud_integration/browser_not_exist.html", {"path": self.kwargs.get("path", "")}
             )
         return super(FileBrowserView, self).nextcloud_connection_failed(error)
 
     def get_queryset(self):
-        return construct_client().ls(remote_path=self.kwargs.get('path', ''))
+        return construct_client().ls(remote_path=self.kwargs.get("path", ""))
 
     def get_context_data(self, **kwargs):
-        return super(FileBrowserView, self).get_context_data(
-            path=self.kwargs.get('path', ''),
-            **kwargs
-        )
+        return super(FileBrowserView, self).get_context_data(path=self.kwargs.get("path", ""), **kwargs)
 
 
 class SiteDownloadView(ListView):
@@ -88,8 +89,6 @@ class SiteDownloadView(ListView):
         queryset = super(SiteDownloadView, self).get_queryset()
         queryset = queryset.filter(on_overview_page=True)
 
-
-
         if not user_is_current_member(self.request.user):
             queryset = queryset.filter(requires_membership=False)
 
@@ -99,27 +98,32 @@ class SiteDownloadView(ListView):
         context = super(SiteDownloadView, self).get_context_data(*args, **kwargs)
         unique_messages = []
         if not self.request.user.is_authenticated:
-            unique_messages.append({
-                'msg_text': "You are currently not logged in. Not all files might be available to you.",
-                'msg_type': "warning",
-                'btn_text': "Log in!",
-                'btn_url': reverse_lazy('core:user_accounts/login'),
-            })
+            unique_messages.append(
+                {
+                    "msg_text": "You are currently not logged in. Not all files might be available to you.",
+                    "msg_type": "warning",
+                    "btn_text": "Log in!",
+                    "btn_url": reverse_lazy("core:user_accounts/login"),
+                }
+            )
         elif not user_is_current_member(self.request.user):
-            unique_messages.append({
-                'msg_text': "You are currently not a member. Not all files might be available to you.",
-                'msg_type': "warning",
-            })
+            unique_messages.append(
+                {
+                    "msg_text": "You are currently not a member. Not all files might be available to you.",
+                    "msg_type": "warning",
+                }
+            )
 
         context["unique_messages"] = unique_messages
         return context
 
 
 class FolderMixin:
-    """ Mixin that retrieves, stores and displays the NCFolder """
+    """Mixin that retrieves, stores and displays the NCFolder"""
+
     def setup(self, request, *args, **kwargs):
         super(FolderMixin, self).setup(request, *args, **kwargs)
-        self.folder = get_object_or_404(SquireNextCloudFolder, slug=kwargs.get('folder_slug', ''))
+        self.folder = get_object_or_404(SquireNextCloudFolder, slug=kwargs.get("folder_slug", ""))
 
     def get_context_data(self, **kwargs):
         context = super(FolderMixin, self).get_context_data(**kwargs)
@@ -131,7 +135,7 @@ class FolderCreateView(NextcloudConnectionViewMixin, PermissionRequiredMixin, Fo
     template_name = "nextcloud_integration/folder_add.html"
     form_class = FolderCreateForm
     success_url = reverse_lazy("nextcloud:site_downloads")
-    permission_required = 'nextcloud_integration.add_squirenextcloudfolder'
+    permission_required = "nextcloud_integration.add_squirenextcloudfolder"
 
     def form_valid(self, form):
         form.save()
@@ -142,7 +146,7 @@ class FolderEditView(NextcloudConnectionViewMixin, PermissionRequiredMixin, Fold
     template_name = "nextcloud_integration/folder_edit.html"
     form_class = FolderEditFormGroup
     success_url = reverse_lazy("nextcloud:site_downloads")
-    permission_required = 'nextcloud_integration.change_squirenextcloudfolder'
+    permission_required = "nextcloud_integration.change_squirenextcloudfolder"
 
     def form_valid(self, form):
         form.save()
@@ -150,13 +154,13 @@ class FolderEditView(NextcloudConnectionViewMixin, PermissionRequiredMixin, Fold
 
     def get_form_kwargs(self):
         kwargs = super(FolderEditView, self).get_form_kwargs()
-        kwargs['folder'] = self.folder
+        kwargs["folder"] = self.folder
         return kwargs
 
 
 class SyncFileToFolderView(NextcloudConnectionViewMixin, PermissionRequiredMixin, FolderMixin, FormView):
     template_name = "nextcloud_integration/sync_file_to_folder.html"
-    permission_required = 'nextcloud_integration.sync_squirenextcloudfile'
+    permission_required = "nextcloud_integration.sync_squirenextcloudfile"
     success_url = reverse_lazy("nextcloud:site_downloads")
     form_class = SyncFileToFolderForm
 
@@ -181,8 +185,8 @@ class DownloadFileview(MembershipRequiredMixin, NextcloudConnectionViewMixin, Si
     def dispatch(self, request, *args, **kwargs):
         self.file = get_object_or_404(
             SquireNextCloudFile,
-            folder__slug = self.kwargs.get('folder_slug'),
-            slug = self.kwargs.get('file_slug'),
+            folder__slug=self.kwargs.get("folder_slug"),
+            slug=self.kwargs.get("file_slug"),
         )
         return super(DownloadFileview, self).dispatch(request, *args, **kwargs)
 
@@ -198,8 +202,8 @@ class DownloadFileview(MembershipRequiredMixin, NextcloudConnectionViewMixin, Si
             return HttpResponseRedirect(reverse_lazy("nextcloud:site_downloads"))
 
         file_data = self.get_file(self.file)
-        response = HttpResponse(file_data.content, content_type='application/vnd.ms-excel')
-        response['Content-Disposition'] = f'attachment; filename="{self.file.file_name}"'
+        response = HttpResponse(file_data.content, content_type="application/vnd.ms-excel")
+        response["Content-Disposition"] = f'attachment; filename="{self.file.file_name}"'
 
         return response
 
@@ -213,16 +217,19 @@ class DownloadFileview(MembershipRequiredMixin, NextcloudConnectionViewMixin, Si
                 # Set folder
                 self.file.folder.is_missing = True
                 self.file.folder.save(update_fields=["is_missing"])
-                msg = "The file could not be retrieved as its folder has been moved or renamed. " \
-                      "It is unknown when it will be fixed as it needs to be addressed manually."
+                msg = (
+                    "The file could not be retrieved as its folder has been moved or renamed. "
+                    "It is unknown when it will be fixed as it needs to be addressed manually."
+                )
             elif not self.client.exists(self.file.file):
                 self.file.is_missing = True
                 self.file.save(update_fields=["is_missing"])
-                msg = "The file could not be retrieved as it has been moved or renamed. " \
-                      "It is unknown when it will be fixed as it needs to be addressed manually."
+                msg = (
+                    "The file could not be retrieved as it has been moved or renamed. "
+                    "It is unknown when it will be fixed as it needs to be addressed manually."
+                )
         if msg is None:
             msg = "Something unexpected occurred. Please inform the UUPS is this keeps occuring."
         error_msg(self.request, msg)
 
         return HttpResponseRedirect(reverse_lazy("nextcloud:site_downloads"))
-

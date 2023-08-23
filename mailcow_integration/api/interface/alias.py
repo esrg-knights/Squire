@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from mailcow_integration.api.interface.base import MailcowAPIResponse
 
+
 class AliasType(Enum):
     NORMAL = "internal-mails"
     SILENT_DISCARD = "null@localhost"
@@ -15,13 +16,14 @@ class AliasType(Enum):
 
 @dataclass
 class MailcowAlias(MailcowAPIResponse):
-    """ Mailcow Alias """
+    """Mailcow Alias"""
+
     address: str
     goto: List[str]
 
     id: Optional[int] = None
     active: bool = True
-    active_int: int = None # ???
+    active_int: int = None  # ???
 
     in_primary_domain: str = ""
     domain: str = ""
@@ -30,8 +32,8 @@ class MailcowAlias(MailcowAPIResponse):
     public_comment: str = ""
     private_comment: str = ""
 
-    sogo_visible: bool = True # Alias can be used as a selectable sender in SOGo
-    sogo_visible_int: int = None # ???
+    sogo_visible: bool = True  # Alias can be used as a selectable sender in SOGo
+    sogo_visible_int: int = None  # ???
 
     created: Optional[datetime] = None
     modified: Optional[datetime] = None
@@ -52,15 +54,17 @@ class MailcowAlias(MailcowAPIResponse):
         return AliasType.NORMAL
 
     @classmethod
-    def from_json(cls, json: dict) -> 'MailcowAlias':
-        json.update({
-            'goto': json['goto'].split(","),
-            'active': bool(json['active']),
-            'is_catch_all': bool(json['is_catch_all']),
-            'public_comment': json['public_comment'] or "",
-            'private_comment': json['private_comment'] or "",
-            'sogo_visible': bool(json['sogo_visible']),
-            'created': datetime.fromisoformat(json['created']),
-            'modified': datetime.fromisoformat(json['modified']) if json['modified'] is not None else None,
-        })
+    def from_json(cls, json: dict) -> "MailcowAlias":
+        json.update(
+            {
+                "goto": json["goto"].split(","),
+                "active": bool(json["active"]),
+                "is_catch_all": bool(json["is_catch_all"]),
+                "public_comment": json["public_comment"] or "",
+                "private_comment": json["private_comment"] or "",
+                "sogo_visible": bool(json["sogo_visible"]),
+                "created": datetime.fromisoformat(json["created"]),
+                "modified": datetime.fromisoformat(json["modified"]) if json["modified"] is not None else None,
+            }
+        )
         return cls(**json)

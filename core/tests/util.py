@@ -11,6 +11,7 @@ from dynamic_preferences.serializers import UNSET
 from core.util import get_permission_objects_from_string
 
 from django.contrib.auth import get_user_model
+
 User = get_user_model()
 
 ##################################################################################
@@ -18,7 +19,8 @@ User = get_user_model()
 # @since 15 AUG 2019
 ##################################################################################
 
-class TestSquireUser():
+
+class TestSquireUser:
     instance = None
     fixtures = []
 
@@ -33,20 +35,30 @@ class TestSquireUser():
             user = User.objects.get(username=cls.instance)
         return user
 
+
 class TestPublicUser(TestSquireUser):
     pass
 
+
 class TestAccountUser(TestPublicUser):
-    instance = 'test_user'
+    instance = "test_user"
 
     @classmethod
     def get_fixtures(cls):
-        return super().get_fixtures() + ['test_users.json']
+        return super().get_fixtures() + ["test_users.json"]
 
 
-def check_http_response(test: TestCase, url: str, http_method: str, squire_user: TestSquireUser,
-        permissions: Collection = [], response_status: int = 200, redirect_url: str = None,
-        data: dict = {}, **kwargs):
+def check_http_response(
+    test: TestCase,
+    url: str,
+    http_method: str,
+    squire_user: TestSquireUser,
+    permissions: Collection = [],
+    response_status: int = 200,
+    redirect_url: str = None,
+    data: dict = {},
+    **kwargs,
+):
     """
     Checks whether a given url can be accessed with a given HTTP Method by a
         given Squire User (e.g. account holders, anonymous users, etc.)
@@ -75,7 +87,7 @@ def check_http_response(test: TestCase, url: str, http_method: str, squire_user:
     elif permissions:
         # Anonymous users cannot be assigned Permissions directly. Use Django Dynamic Preferences instead.
         global_preferences = global_preferences_registry.manager()
-        global_preferences['permissions__base_permissions'] = get_permission_objects_from_string(permissions)
+        global_preferences["permissions__base_permissions"] = get_permission_objects_from_string(permissions)
 
     # Issue an HTTP request
     response = getattr(client, http_method)(url, data=data, follow=(redirect_url is not None), secure=True, **kwargs)
@@ -103,14 +115,22 @@ def check_http_response_with_login_redirect(test, url, http_method, **kwargs):
     :returns:               A tuple of both responses (account user first).
     """
     return (
-        check_http_response(test, url, http_method, squire_user=TestAccountUser,
-            response_status=200, **kwargs),
-        check_http_response(test, url, http_method, squire_user=TestPublicUser,
-            response_status=200, redirect_url=(f"{settings.LOGIN_URL}?next={url}"), **kwargs)
+        check_http_response(test, url, http_method, squire_user=TestAccountUser, response_status=200, **kwargs),
+        check_http_response(
+            test,
+            url,
+            http_method,
+            squire_user=TestPublicUser,
+            response_status=200,
+            redirect_url=(f"{settings.LOGIN_URL}?next={url}"),
+            **kwargs,
+        ),
     )
 
-def suppress_errors(function=None, logger_name='django'):
-    """ Decorator that surpresses ERROR logs when calling a function. """
+
+def suppress_errors(function=None, logger_name="django"):
+    """Decorator that surpresses ERROR logs when calling a function."""
+
     def decorator(original_func):
         @wraps(original_func)
         def _wrapped_view(*args, **kwargs):
@@ -124,19 +144,22 @@ def suppress_errors(function=None, logger_name='django'):
 
             # lower logging level back to previous
             logger.setLevel(previous_logging_level)
+
         return _wrapped_view
 
     if function:
         return decorator(function)
     return decorator
 
-def suppress_warnings(function=None, logger_name='django.request'):
+
+def suppress_warnings(function=None, logger_name="django.request"):
     """
     Decorator that surpresses Django-warnings when calling a function.
     Useful for testcases where warnings are triggered on purpose and only
     clutter the command prompt.
     Source: https://stackoverflow.com/a/46079090
     """
+
     def decorator(original_func):
         @wraps(original_func)
         def _wrapped_view(*args, **kwargs):
@@ -150,14 +173,17 @@ def suppress_warnings(function=None, logger_name='django.request'):
 
             # lower logging level back to previous
             logger.setLevel(previous_logging_level)
+
         return _wrapped_view
 
     if function:
         return decorator(function)
     return decorator
 
+
 def suppress_infos(function=None, logger_name="django"):
-    """ Decorator that surpresses INFO logs when calling a function. """
+    """Decorator that surpresses INFO logs when calling a function."""
+
     def decorator(original_func):
         @wraps(original_func)
         def _wrapped_view(*args, **kwargs):
@@ -171,6 +197,7 @@ def suppress_infos(function=None, logger_name="django"):
 
             # lower logging level back to previous
             logger.setLevel(previous_logging_level)
+
         return _wrapped_view
 
     if function:
@@ -183,6 +210,7 @@ class DynamicRegistryUsageMixin:
     Mixin that is required when testing instances in the dynamicregistryusagemixin. This module uses the django cache
     that needs clearing whenever a testcases is done.
     """
+
     @classmethod
     def _rollback_atomics(cls, atomics):
         dynamic_preference_manager = global_preferences_registry.manager()

@@ -10,7 +10,8 @@ User = get_user_model()
 
 
 class ImageUploadMartorWidgetTest(TestCase):
-    """ Tests for a variant of Martor's widget that allows image uploads """
+    """Tests for a variant of Martor's widget that allows image uploads"""
+
     def setUp(self):
         self.user = User.objects.create(username="test_user")
 
@@ -21,7 +22,7 @@ class ImageUploadMartorWidgetTest(TestCase):
         self.widget = ImageUploadMartorWidget(self.content_type, self.obj.id)
 
     def test_no_placeholder_content(self):
-        """ Tests if the placeholder is hidden if there's no content to display """
+        """Tests if the placeholder is hidden if there's no content to display"""
         self.widget.placeholder = None
         self.widget.placeholder_detail_title = "Cool title!"
 
@@ -31,7 +32,7 @@ class ImageUploadMartorWidgetTest(TestCase):
         self.assertIn("**markdown** content", html)
 
     def test_no_placeholder_title(self):
-        """ Tests if the placeholder title is hidden if there's no title to display """
+        """Tests if the placeholder title is hidden if there's no title to display"""
         self.widget.placeholder = MarkdownObject("placeholder _markdown_ text")
         self.widget.placeholder_detail_title = None
 
@@ -44,7 +45,7 @@ class ImageUploadMartorWidgetTest(TestCase):
         self.assertIn("placeholder <em>markdown</em> text", html)
 
     def test_hiddenfields_no_object_id(self):
-        """ Tests if the hidden fields for image uploads are correctly set without an object-id """
+        """Tests if the hidden fields for image uploads are correctly set without an object-id"""
         self.widget.object_id = None
         html = self.widget.render("markdown_field_name", "**markdown** content", attrs={})
 
@@ -52,7 +53,7 @@ class ImageUploadMartorWidgetTest(TestCase):
         self.assertIn("martor-image-upload:content_type", html)
 
     def test_hiddenfields_with_object_id(self):
-        """ Tests if the hidden fields for image uploads are correctly set with an object-id """
+        """Tests if the hidden fields for image uploads are correctly set with an object-id"""
         html = self.widget.render("markdown_field_name", "**markdown** content", attrs={})
 
         self.assertIn("martor-image-upload:id", html)

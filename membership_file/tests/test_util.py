@@ -11,7 +11,7 @@ from membership_file.util import user_is_current_member, MembershipRequiredMixin
 
 
 class TestUserIsCurrentMember(TestCase):
-    fixtures = ['test_users', 'test_members.json']
+    fixtures = ["test_users", "test_members.json"]
 
     def test_no_member_linked(self):
         self.assertFalse(user_is_current_member(User.objects.create()))
@@ -24,7 +24,7 @@ class TestUserIsCurrentMember(TestCase):
 
 
 class MembershipRequiredMixinTestCase(TestMixinMixin, TestCase):
-    fixtures = ['test_users', 'test_members.json']
+    fixtures = ["test_users", "test_members.json"]
     mixin_class = MembershipRequiredMixin
     requires_active_membership = None  # The state of requires_active_membership on the class. None = default
 
@@ -39,13 +39,13 @@ class MembershipRequiredMixinTestCase(TestMixinMixin, TestCase):
         return klass
 
     def test_no_user(self):
-        """ Test that non-logged in users are redirected to a login page """
+        """Test that non-logged in users are redirected to a login page"""
         response = self._build_get_response("member_area/", user=AnonymousUser())
         self.assertIsInstance(response, HttpResponseRedirect)
         self.assertEqual(response["Location"], f"{settings.LOGIN_URL}?next=/member_area")
 
     def test_no_member(self):
-        """ Test that non-members are lead to an access denied page """
+        """Test that non-members are lead to an access denied page"""
         with self.assertRaises(UserIsNotCurrentMember):
             self._build_get_response("member_area/", user=User.objects.get(id=1))
 
@@ -54,7 +54,7 @@ class MembershipRequiredMixinTestCase(TestMixinMixin, TestCase):
         self.assertResponseSuccessful(response)
 
     def test_inactive_member_denied(self):
-        """ Test that non-members are lead to an access denied page """
+        """Test that non-members are lead to an access denied page"""
         with self.assertRaises(UserIsNotCurrentMember):
             self._build_get_response("member_area/", user=User.objects.get(id=3))
 

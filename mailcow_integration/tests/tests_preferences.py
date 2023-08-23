@@ -10,25 +10,27 @@ from mailcow_integration.dynamic_preferences_registry import alias_address_to_id
 # @since 08 APR 2023
 ##################################################################################
 
+
 class EmailPreferencesTest(TestCase):
-    """ Tests email preferences """
+    """Tests email preferences"""
+
     def _generate_preference_dict(self, name: str, is_public=False, allow_opt_out=True, default_opt=False) -> Dict:
-        """ Generates a preference dict. Its format is identical to how it would appear in mailcowconfig.json """
+        """Generates a preference dict. Its format is identical to how it would appear in mailcowconfig.json"""
         return {
             "title": name,
             "description": name,
             "internal": not is_public,
             "allow_opt_out": allow_opt_out,
             "default_opt": default_opt,
-            "archive_addresses": []
+            "archive_addresses": [],
         }
 
     def test_alias_address_to_id(self):
-        """ Tests whether addresses are encoded to a format that dynamic preferences can use """
+        """Tests whether addresses are encoded to a format that dynamic preferences can use"""
         self.assertEqual(alias_address_to_id("foo@abc.example.com"), "fooabcexamplecom")
 
     def test_preferences_creation(self):
-        """ Tests the creation of mail preferences """
+        """Tests the creation of mail preferences"""
         preferences = {
             "internal@example.com": self._generate_preference_dict("Internal"),
             "public@example.com": self._generate_preference_dict("PublicAlias", is_public=True),

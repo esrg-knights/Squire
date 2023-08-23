@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from dynamic_preferences.registries import global_preferences_registry
+
 global_preferences = global_preferences_registry.manager()
 
 from core.forms import LoginForm
@@ -13,40 +14,40 @@ from membership_file.models import MemberYear
 
 
 class TestHomePageView(ViewValidityMixin, DynamicRegistryUsageMixin, TestCase):
-    base_url = '/'
+    base_url = "/"
 
     def test_anonymoususer(self):
         # Assert response is valid and uses the correct class (soft validation through template name)
         response = self.assertValidGetResponse()
         self.assertTemplateUsed(response, HomeNonAuthenticatedView.template_name)
-        self.assertIn('form', response.context)
-        self.assertIsInstance(response.context['form'], LoginForm)
+        self.assertIn("form", response.context)
+        self.assertIsInstance(response.context["form"], LoginForm)
 
     def test_authenticated_user(self):
         self.client.force_login(User.objects.create())
 
         response = self.assertValidGetResponse()
         self.assertTemplateUsed(response, HomeUsersView.template_name)
-        self.assertIn('activities', response.context)
+        self.assertIn("activities", response.context)
 
     def test_home_page_message(self):
         # Set environment variables
-        global_preferences['homepage__home_page_message'] = "Here is a message"
+        global_preferences["homepage__home_page_message"] = "Here is a message"
 
         self.client.force_login(User.objects.create())
-        msg = self.assertValidGetResponse().context['unique_messages'][0]
+        msg = self.assertValidGetResponse().context["unique_messages"][0]
 
-        self.assertIn('msg_text', msg)
-        self.assertEqual(msg['msg_type'], "info")
+        self.assertIn("msg_text", msg)
+        self.assertEqual(msg["msg_type"], "info")
 
     def test_home_page_extend_membership_message(self):
         # Set environment variables
-        global_preferences['membership__signup_year'] = MemberYear.objects.create(name='current year')
+        global_preferences["membership__signup_year"] = MemberYear.objects.create(name="current year")
 
         self.client.force_login(User.objects.create())
-        msg = self.assertValidGetResponse().context['unique_messages'][0]
+        msg = self.assertValidGetResponse().context["unique_messages"][0]
 
-        self.assertIn('msg_text', msg)
-        self.assertIn('btn_text', msg)
-        self.assertEqual(msg['msg_type'], "info")
-        self.assertEqual(msg['btn_url'],  reverse('membership_file/continue_membership'))
+        self.assertIn("msg_text", msg)
+        self.assertIn("btn_text", msg)
+        self.assertEqual(msg["msg_type"], "info")
+        self.assertEqual(msg["btn_url"], reverse("membership_file/continue_membership"))

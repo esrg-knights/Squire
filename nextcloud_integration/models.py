@@ -8,21 +8,24 @@ from nextcloud_integration.nextcloud_client import construct_client
 
 
 class SquireNextCloudFolder(models.Model):
-    """ Represents a folder on the nextcloud storage """
+    """Represents a folder on the nextcloud storage"""
+
     display_name = models.CharField(help_text="Name displayed in Squire", max_length=64)
     slug = models.SlugField(blank=True, unique=True)
     description = models.CharField(max_length=256, blank=True)
-    path = models.CharField(help_text="The path to the folder (including the folder itself)",
-                            max_length=64, blank=True, default=None)
+    path = models.CharField(
+        help_text="The path to the folder (including the folder itself)", max_length=64, blank=True, default=None
+    )
     folder: NextCloudFolder = None  # Used to translate Nextcloud folder contents
 
     # Define status for the link to Nextcloud
-    is_missing = models.BooleanField(default=False) # Whether the folder is non-existant on nextcloud
+    is_missing = models.BooleanField(default=False)  # Whether the folder is non-existant on nextcloud
 
     # Access settings
     requires_membership = models.BooleanField(default=True)
-    on_overview_page = models.BooleanField(default=True, help_text="Whether this folder is displayed on the "
-                                                                   "association download page")
+    on_overview_page = models.BooleanField(
+        default=True, help_text="Whether this folder is displayed on the " "association download page"
+    )
 
     def __init__(self, *args, **kwargs):
         super(SquireNextCloudFolder, self).__init__(*args, **kwargs)
@@ -43,7 +46,7 @@ class SquireNextCloudFolder(models.Model):
         return super(SquireNextCloudFolder, self).save(**kwargs)
 
     def exists_on_nextcloud(self):
-        """ Checks whether the folder exists on the nextcloud """
+        """Checks whether the folder exists on the nextcloud"""
         client = construct_client()
         return client.exists(self.folder)
 
@@ -52,7 +55,8 @@ class SquireNextCloudFolder(models.Model):
 
 
 class SquireNextCloudFile(models.Model):
-    """ Represents a file on the nextcloud storage """
+    """Represents a file on the nextcloud storage"""
+
     display_name = models.CharField(help_text="Name displayed in Squire", max_length=64)
     description = models.CharField(max_length=256, blank=True)
     file_name = models.CharField(help_text="The file name", max_length=64, blank=True, default=None)
@@ -60,20 +64,29 @@ class SquireNextCloudFile(models.Model):
     slug = models.SlugField(blank=True)
     file: NextCloudFolder = None  # Used to translate Nextcloud folder contents
 
-    is_missing = models.BooleanField(default=False) # Whether the file is non-existant on nextcloud
+    is_missing = models.BooleanField(default=False)  # Whether the file is non-existant on nextcloud
     CONNECTION_NEXTCLOUD_SYNC = "NcS"
     CONNECTION_SQUIRE_UPLOAD = "SqU"
     CONNECTION_MANUAL = "Mnl"
-    connection = models.CharField(max_length=3, default=CONNECTION_MANUAL, choices=[
-        (CONNECTION_NEXTCLOUD_SYNC, "Synched through file on Nextcloud"),
-        (CONNECTION_SQUIRE_UPLOAD, "Uploaded through Squire"),
-        (CONNECTION_MANUAL, "Added manually in backend"),
-    ]) # Defines how the connection occured
+    connection = models.CharField(
+        max_length=3,
+        default=CONNECTION_MANUAL,
+        choices=[
+            (CONNECTION_NEXTCLOUD_SYNC, "Synched through file on Nextcloud"),
+            (CONNECTION_SQUIRE_UPLOAD, "Uploaded through Squire"),
+            (CONNECTION_MANUAL, "Added manually in backend"),
+        ],
+    )  # Defines how the connection occured
 
     class Meta:
         # Set the default permissions. Each item has a couple of additional default permissions
-        default_permissions = ('add', 'change', 'delete', 'view',
-                               'sync',)
+        default_permissions = (
+            "add",
+            "change",
+            "delete",
+            "view",
+            "sync",
+        )
         unique_together = [["slug", "folder"], ["file_name", "folder"]]
 
     def __init__(self, *args, **kwargs):
@@ -103,7 +116,7 @@ class SquireNextCloudFile(models.Model):
             self.slug = slugify(self.display_name)
 
     def exists_on_nextcloud(self):
-        """ Checks whether the folder exists on the nextcloud """
+        """Checks whether the folder exists on the nextcloud"""
         client = construct_client()
         return client.exists(self.file)
 
@@ -115,10 +128,13 @@ class SquireNextCloudFile(models.Model):
         return f"{self.folder.path}{self.file_name}"
 
     def get_absolute_url(self):
-        return reverse("nextcloud:file_dl", kwargs={
-            'folder_slug': self.folder.slug,
-            'file_slug': self.slug,
-        })
+        return reverse(
+            "nextcloud:file_dl",
+            kwargs={
+                "folder_slug": self.folder.slug,
+                "file_slug": self.slug,
+            },
+        )
 
     def get_file_type(self):
         return get_file_type(self.file_name)

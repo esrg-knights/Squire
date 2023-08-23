@@ -6,57 +6,47 @@ from committees.models import AssociationGroup
 
 
 class TestAssociationGroupBackend(TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members', 'committees/associationgroups']
+    fixtures = ["test_users", "test_groups", "test_members", "committees/associationgroups"]
 
     def prep_group(self):
-        """ Preps user 100 and group 1 for perm check """
+        """Preps user 100 and group 1 for perm check"""
         user = User.objects.get(id=100)
         user.groups.clear()
 
         assoc_group = AssociationGroup.objects.get(id=1)
-        perm = Permission.objects.get(codename='add_associationgroup')
+        perm = Permission.objects.get(codename="add_associationgroup")
         assoc_group.site_group.permissions.add(perm)
 
-        perm = Permission.objects.get(codename='change_associationgroup')
+        perm = Permission.objects.get(codename="change_associationgroup")
         assoc_group.permissions.add(perm)
 
         return user, assoc_group
 
     def test_has_perm_on_site_group(self):
-        """ Tests that permission checking also go through associationgroups, sitegroup permissions """
+        """Tests that permission checking also go through associationgroups, sitegroup permissions"""
         user, assoc_group = self.prep_group()
 
-        user_has_perm = AssociationGroupAuthBackend().has_perm(
-            user, 'committees.add_associationgroup'
-        )
+        user_has_perm = AssociationGroupAuthBackend().has_perm(user, "committees.add_associationgroup")
         self.assertTrue(user_has_perm)
 
     def test_has_perm_on_association_group(self):
-        """ Tests that permission checking also go through associationgroups permissions """
+        """Tests that permission checking also go through associationgroups permissions"""
         user, assoc_group = self.prep_group()
 
-        user_has_perm = AssociationGroupAuthBackend().has_perm(
-            user, 'committees.change_associationgroup'
-        )
+        user_has_perm = AssociationGroupAuthBackend().has_perm(user, "committees.change_associationgroup")
         self.assertTrue(user_has_perm)
 
-
     def test_has_perm_anonymous_user(self):
-        user_has_perm = AssociationGroupAuthBackend().has_perm(
-            AnonymousUser(),
-            'committees.add_associationgroup'
-        )
+        user_has_perm = AssociationGroupAuthBackend().has_perm(AnonymousUser(), "committees.add_associationgroup")
         self.assertFalse(user_has_perm)
 
     def test_inactive_user(self):
-        """ Tests that inactive users don't validate on a permission check """
+        """Tests that inactive users don't validate on a permission check"""
         user, assoc_group = self.prep_group()
         user.is_active = False
         user.save()
 
-        user_has_perm = AssociationGroupAuthBackend().has_perm(
-            user, 'committees.add_associationgroup'
-        )
+        user_has_perm = AssociationGroupAuthBackend().has_perm(user, "committees.add_associationgroup")
         self.assertFalse(user_has_perm)
 
     def test_authentication(self):

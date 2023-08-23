@@ -13,12 +13,12 @@ from inventory.views import OwnershipMixin
 from user_interaction.accountcollective import AccountViewMixin
 
 
-__all__ = ['MemberItemsOverview', 'MemberItemRemovalFormView', 'MemberItemLoanFormView', 'MemberOwnershipAlterView']
+__all__ = ["MemberItemsOverview", "MemberItemRemovalFormView", "MemberItemLoanFormView", "MemberOwnershipAlterView"]
 
 
 class MemberItemsOverview(AccountViewMixin, ListView):
     template_name = "inventory/account_pages/inventory/membership_inventory.html"
-    context_object_name = 'ownerships'
+    context_object_name = "ownerships"
 
     def get_queryset(self):
         return Ownership.objects.filter(member=self.request.member).filter(is_active=True)
@@ -26,9 +26,9 @@ class MemberItemsOverview(AccountViewMixin, ListView):
     def get_context_data(self, *args, **kwargs):
         context = super(MemberItemsOverview, self).get_context_data(*args, **kwargs)
         # Get items previously stored at the associatoin
-        context[self.context_object_name+'_history'] = Ownership.objects. \
-            filter(member=self.request.member). \
-            filter(is_active=False)
+        context[self.context_object_name + "_history"] = Ownership.objects.filter(member=self.request.member).filter(
+            is_active=False
+        )
         return context
 
 
@@ -39,7 +39,7 @@ class MemberItemRemovalFormView(AccountViewMixin, OwnershipMixin, FormView):
 
     def get_form_kwargs(self):
         kwargs = super(MemberItemRemovalFormView, self).get_form_kwargs()
-        kwargs['ownership'] = self.ownership
+        kwargs["ownership"] = self.ownership
         return kwargs
 
     def form_valid(self, form):
@@ -61,7 +61,7 @@ class MemberItemLoanFormView(AccountViewMixin, OwnershipMixin, FormView):
 
     def get_form_kwargs(self):
         kwargs = super(MemberItemLoanFormView, self).get_form_kwargs()
-        kwargs['ownership'] = self.ownership
+        kwargs["ownership"] = self.ownership
         return kwargs
 
     def form_valid(self, form):
@@ -83,7 +83,7 @@ class MemberOwnershipAlterView(AccountViewMixin, OwnershipMixin, FormView):
 
     def get_form_kwargs(self):
         kwargs = super(MemberOwnershipAlterView, self).get_form_kwargs()
-        kwargs['instance'] = self.ownership
+        kwargs["instance"] = self.ownership
         return kwargs
 
     def form_valid(self, form):

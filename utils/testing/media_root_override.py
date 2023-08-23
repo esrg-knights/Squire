@@ -5,15 +5,16 @@ from django.conf import settings
 
 
 def set_media_test_folder():
-    """ Use as a decorator to set media root to test/files. Ideal for filefield instances defined in fixtures """
-    media_folder = os.path.join(settings.BASE_DIR, 'test', 'files')
+    """Use as a decorator to set media root to test/files. Ideal for filefield instances defined in fixtures"""
+    media_folder = os.path.join(settings.BASE_DIR, "test", "files")
 
     class UseTestMediaRootMixin(override_settings):
-
         def __init__(self, **kwargs):
-            kwargs.update({
-                'MEDIA_ROOT': media_folder,
-            })
+            kwargs.update(
+                {
+                    "MEDIA_ROOT": media_folder,
+                }
+            )
             super(UseTestMediaRootMixin, self).__init__(**kwargs)
 
     return UseTestMediaRootMixin

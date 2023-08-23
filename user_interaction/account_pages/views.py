@@ -13,8 +13,14 @@ from membership_file.util import MembershipRequiredMixin
 from activity_calendar.models import MemberCalendarSettings
 
 
-__all__ = ['SiteAccountView', 'AccountPasswordChangeView', 'AccountChangeView', 'LayoutPreferencesUpdateView',
-           'CalendarPreferenceView']
+__all__ = [
+    "SiteAccountView",
+    "AccountPasswordChangeView",
+    "AccountChangeView",
+    "LayoutPreferencesUpdateView",
+    "CalendarPreferenceView",
+]
+
 
 class SiteAccountView(AccountViewMixin, TemplateView):
     template_name = "user_interaction/account_pages/site_account_page.html"
@@ -32,9 +38,9 @@ class AccountPasswordChangeView(AccountViewMixin, PasswordChangeView):
 
 
 class AccountChangeView(AccountViewMixin, UpdateView):
-    template_name = 'user_interaction/account_pages/account_edit.html'
+    template_name = "user_interaction/account_pages/account_edit.html"
     form_class = AccountForm
-    success_url = reverse_lazy('account:site_account')
+    success_url = reverse_lazy("account:site_account")
 
     def get_object(self, queryset=None):
         return self.request.user
@@ -46,12 +52,13 @@ class AccountChangeView(AccountViewMixin, UpdateView):
 
 
 class LayoutPreferencesUpdateView(AccountViewMixin, FormView):
-    """ View for updating user preferences """
-    template_name = 'user_interaction/account_pages/layout_preferences_change_form.html'
-    success_url = reverse_lazy('account:site_account')
+    """View for updating user preferences"""
+
+    template_name = "user_interaction/account_pages/layout_preferences_change_form.html"
+    success_url = reverse_lazy("account:site_account")
 
     def get_form_class(self):
-        return user_preference_form_builder(instance=self.request.user, section='layout')
+        return user_preference_form_builder(instance=self.request.user, section="layout")
 
     def form_valid(self, form):
         message = _("Your preferences have been updated!")
@@ -64,14 +71,12 @@ class LayoutPreferencesUpdateView(AccountViewMixin, FormView):
 class CalendarPreferenceView(MembershipRequiredMixin, AccountViewMixin, UpdateView):
     template_name = "user_interaction/account_pages/calendar_preferences_change_form.html"
     model = MemberCalendarSettings
-    fields = ['use_birthday']
+    fields = ["use_birthday"]
     requires_active_membership = False
-    success_url = reverse_lazy('account:site_account')
+    success_url = reverse_lazy("account:site_account")
 
     def get_object(self, queryset=None):
-        return self.model.objects.get_or_create(
-            member = self.request.member
-        )[0]
+        return self.model.objects.get_or_create(member=self.request.member)[0]
 
     def form_valid(self, form):
         result = super().form_valid(form)

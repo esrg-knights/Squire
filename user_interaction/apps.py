@@ -2,8 +2,9 @@ from django.apps import AppConfig
 from django.contrib.auth import get_user_model
 from utils.spoofs import optimise_naming_scheme
 
+
 class UserInteractionConfig(AppConfig):
-    name = 'user_interaction'
+    name = "user_interaction"
 
     def ready(self):
         from membership_file.util import get_member_from_user
@@ -11,14 +12,14 @@ class UserInteractionConfig(AppConfig):
 
         def _get_user_display_name(user):
             """
-                Describes how a user should be displayed throughout the entire application
+            Describes how a user should be displayed throughout the entire application
 
-                If the user is a member:
-                - <first name> <?tussenvoegsel> <lastname>
+            If the user is a member:
+            - <first name> <?tussenvoegsel> <lastname>
 
-                If the user is not a member:
-                - No real name set: <username>
-                - Real name set: <first_name>
+            If the user is not a member:
+            - No real name set: <username>
+            - Real name set: <first_name>
             """
             member = get_member_from_user(user)
 
@@ -27,7 +28,7 @@ class UserInteractionConfig(AppConfig):
             ################
             # Rename everyone to Dennis/Laura, and rename the actual ones to Sjors
             global_preferences = global_preferences_registry.manager()
-            if global_preferences['homepage__april_2022']:
+            if global_preferences["homepage__april_2022"]:
                 namelist = []
                 # Members
                 if member is not None:
@@ -46,8 +47,8 @@ class UserInteractionConfig(AppConfig):
 
             if member is not None:
                 return member.get_full_name()
-            return (user.first_name or user.username)
+            return user.first_name or user.username
 
         # Monkey-patch the user model's string method
         User = get_user_model()
-        User.add_to_class('__str__', _get_user_display_name)
+        User.add_to_class("__str__", _get_user_display_name)

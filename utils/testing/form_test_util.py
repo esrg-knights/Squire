@@ -1,14 +1,13 @@
-
-
 class FormValidityMixin:
-    """ A mixin for TestCase classes designed to add form functionality """
+    """A mixin for TestCase classes designed to add form functionality"""
+
     form_class = None
 
     def get_form_kwargs(self, **kwargs):
         return kwargs
 
     def build_form(self, data, form_class=None, **kwargs):
-        """ Builds the form, form_class can overwrite the default class attribute form_class """
+        """Builds the form, form_class can overwrite the default class attribute form_class"""
         if form_class is None:
             form_class = self.form_class
         return form_class(data=data, **self.get_form_kwargs(**kwargs))
@@ -30,40 +29,31 @@ class FormValidityMixin:
         for key, value in field_properties.items():
             try:
                 if key.endswith("__class"):
-                    key = key[:-len("__class")]
+                    key = key[: -len("__class")]
                     field_property = getattr(field, key)
-                    fail_message =\
+                    fail_message = (
                         "{field_name}.{key} was not of type '{expected_type}', but '{actual_type}' instead".format(
-                        field_name=field_name,
-                        key=key,
-                        expected_type=value.__name__,
-                        actual_type=field_property.__class__.__name__
+                            field_name=field_name,
+                            key=key,
+                            expected_type=value.__name__,
+                            actual_type=field_property.__class__.__name__,
+                        )
                     )
-                    self.assertIsInstance(
-                        field_property,
-                        value,
-                        msg=fail_message
-                    )
+                    self.assertIsInstance(field_property, value, msg=fail_message)
                 else:
                     field_property = getattr(field, key)
-                    fail_message = \
+                    fail_message = (
                         "{field_name}.{key} was not '{expected_value}', but '{actual_value}' instead".format(
-                        field_name=field_name,
-                        key=key,
-                        expected_value=value,
-                        actual_value=field_property
+                            field_name=field_name, key=key, expected_value=value, actual_value=field_property
+                        )
                     )
-                    self.assertEqual(
-                        field_property,
-                        value,
-                        msg=fail_message
-                    )
+                    self.assertEqual(field_property, value, msg=fail_message)
             except AttributeError:
                 fail_message = f"Field name {field_name} did not contain the property {key}"
                 raise AssertionError(fail_message)
 
     def assertFormValid(self, data, form_class=None, **form_kwargs):
-        """ Asserts that the form is valid otherwise raises AssertionError mentioning the form error
+        """Asserts that the form is valid otherwise raises AssertionError mentioning the form error
         :param data: The form data
         :param form_class: The form class, defaults to self.form_class
         :param form_kwargs: Any form init kwargs not defined in self.build_form()
@@ -82,7 +72,7 @@ class FormValidityMixin:
         return form
 
     def assertFormHasError(self, data, code, form_class=None, field_name=None, **form_kwargs):
-        """ Asserts that a form with the given data invalidates on a certain error
+        """Asserts that a form with the given data invalidates on a certain error
         :param data: The form data
         :param code: the 'code' of the ValidationError
         :param form_class: The form class, defaults to self.form_class

@@ -16,20 +16,21 @@ def get_image_upload_path(instance, filename):
     _, extension = os.path.splitext(filename)
 
     # file will be uploaded to MEDIA_ROOT / presets/<achievement_id>.<file_extension>
-    return 'images/presets/{0}{1}'.format(slugify(instance.name), extension)
+    return "images/presets/{0}{1}".format(slugify(instance.name), extension)
 
 
 class PresetImageManager(models.Manager):
     def for_user(self, user):
-        if user.has_perm('core.can_select_presetimage_any'):
+        if user.has_perm("core.can_select_presetimage_any"):
             return self.get_queryset()
         return self.get_queryset().filter(selectable=True)
+
 
 # A general model allowing the storage of images
 class PresetImage(models.Model):
     class Meta:
         permissions = [
-            ('can_select_presetimage_any',  "[F] Can choose PresetImages that are normally not selectable."),
+            ("can_select_presetimage_any", "[F] Can choose PresetImages that are normally not selectable."),
         ]
 
     objects = PresetImageManager()
@@ -52,10 +53,11 @@ def _get_markdown_image_upload_path_for_instance(instance, filename):
     # storage_path: MEDIA_ROOT/uploads/<uploader_id>/<uuid>.<file_extension>
     return storage_path
 
+
 # Each instance represents an image uploaded in Martor's markdown editor
 # This allows admins to easily delete these images
 class MarkdownImage(models.Model):
-    class Meta():
+    class Meta:
         permissions = [
             ("can_upload_martor_images", "Can upload images using the Martor Markdown editor"),
         ]
@@ -68,7 +70,7 @@ class MarkdownImage(models.Model):
     # Object that uses this MarkdownImage (E.g. an Activity or ActivityMoment)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField(blank=True, null=True)
-    content_object = GenericForeignKey('content_type', 'object_id')
+    content_object = GenericForeignKey("content_type", "object_id")
 
     def clean(self):
         super().clean()
@@ -76,34 +78,38 @@ class MarkdownImage(models.Model):
         # Can only upload MarkdownImages for specific models
         if self.content_type is not None:
             if f"{self.content_type.app_label}.{self.content_type.model}" not in settings.MARKDOWN_IMAGE_MODELS:
-                raise ValidationError({'content_type': "MarkdownImages cannot be uploaded for this ContentType"})
+                raise ValidationError({"content_type": "MarkdownImages cannot be uploaded for this ContentType"})
 
         # Cannot have a content_type - object_id combination that does not exist
         if self.object_id is not None and self.content_object is None:
-            raise ValidationError({'object_id': 'The selected ContentType does not have an object with this id'})
+            raise ValidationError({"object_id": "The selected ContentType does not have an object with this id"})
 
     def __str__(self):
         return f"{self.content_type.name}-MarkdownImage ({self.id})"
 
 
 class Shortcut(models.Model):
-    """ A model class that function as an url shortener.
+    """A model class that function as an url shortener.
 
     Url shortening system should ALWAYS be the last in urls.
 
     """
+
     # Title and description are used for displaying through Open Graph
     title = models.CharField(max_length=16)
     description = models.CharField(
-        max_length=256, blank=True, null=True,
-        help_text="Will be displayed when sharing the link on e.g. Telegram or Whatsapp")
+        max_length=256,
+        blank=True,
+        null=True,
+        help_text="Will be displayed when sharing the link on e.g. Telegram or Whatsapp",
+    )
 
     location = models.CharField(
-        max_length=128, unique=True,
-        help_text="The local url e.g. intro results in <squire-domain>.nl/intro")
+        max_length=128, unique=True, help_text="The local url e.g. intro results in <squire-domain>.nl/intro"
+    )
     reference_url = models.URLField(
         help_text="The url it references to. It should be the full url e.g. 'https://www.google.com'"
     )
 
     def __str__(self):
-        return f'{self.title} on {self.location}'
+        return f"{self.title} on {self.location}"

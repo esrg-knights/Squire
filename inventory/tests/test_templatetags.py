@@ -1,4 +1,3 @@
-
 from django.contrib.auth.models import User, Group
 from django.test import TestCase
 from django.test.client import RequestFactory
@@ -10,32 +9,35 @@ from inventory.templatetags.inventory_tags import render_ownership_tags, get_own
 
 
 class RenderOwnershipTemplatetagTest(TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
 
     def setUp(self):
         self.request = RequestFactory().get("/")
         self.request.user = User.objects.get(id=100)
         self.request.member = self.request.user.member
-        self.context = Context({'request': self.request,})
+        self.context = Context(
+            {
+                "request": self.request,
+            }
+        )
 
     def test_self_owned(self):
         item = MiscellaneousItem.objects.get(id=1)
 
         results = render_ownership_tags(self.context, item)
-        self.assertEqual(results['is_owner'], True)
-        self.assertEqual(results['is_owned_by_member'], False)
-        self.assertEqual(results['is_owned_by_knights'], True)
-
+        self.assertEqual(results["is_owner"], True)
+        self.assertEqual(results["is_owned_by_member"], False)
+        self.assertEqual(results["is_owned_by_knights"], True)
 
     def test_association_owned(self):
         item = MiscellaneousItem.objects.get(id=2)
         results = render_ownership_tags(self.context, item)
-        self.assertEqual(results['is_owner'], False)
-        self.assertEqual(results['is_owned_by_member'], False)
-        self.assertEqual(results['is_owned_by_knights'], True)
+        self.assertEqual(results["is_owner"], False)
+        self.assertEqual(results["is_owned_by_member"], False)
+        self.assertEqual(results["is_owned_by_knights"], True)
 
     def test_loaned(self):
-        """ Tests the sistuation for a loaned item, besides the current users loaned item"""
+        """Tests the sistuation for a loaned item, besides the current users loaned item"""
         item = MiscellaneousItem.objects.get(id=2)
         Ownership(
             member_id=3,
@@ -44,21 +46,20 @@ class RenderOwnershipTemplatetagTest(TestCase):
         ).save()
 
         results = render_ownership_tags(self.context, item)
-        self.assertEqual(results['is_owner'], False)
-        self.assertEqual(results['is_owned_by_member'], True)
-        self.assertEqual(results['is_owned_by_knights'], True)
-
+        self.assertEqual(results["is_owner"], False)
+        self.assertEqual(results["is_owned_by_member"], True)
+        self.assertEqual(results["is_owned_by_knights"], True)
 
     def test_notn_owned(self):
         item = MiscellaneousItem.objects.get(id=4)
         results = render_ownership_tags(self.context, item)
-        self.assertEqual(results['is_owner'], False)
-        self.assertEqual(results['is_owned_by_member'], False)
-        self.assertEqual(results['is_owned_by_knights'], False)
+        self.assertEqual(results["is_owner"], False)
+        self.assertEqual(results["is_owned_by_member"], False)
+        self.assertEqual(results["is_owned_by_knights"], False)
 
 
 class GetOwnedByTemplatetagTest(TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
 
     def test_group(self):
         item = MiscellaneousItem.objects.get(id=1)
@@ -75,4 +76,3 @@ class GetOwnedByTemplatetagTest(TestCase):
         self.assertTrue(get_owned_by(item, member))
         member = Member.objects.get(id=2)
         self.assertFalse(get_owned_by(item, member))
-

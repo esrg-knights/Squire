@@ -1,8 +1,9 @@
 from django.test import TestCase
 
-from achievements.models import (Achievement, Category, Claimant, get_achievement_image_upload_path)
+from achievements.models import Achievement, Category, Claimant, get_achievement_image_upload_path
 
 from django.contrib.auth import get_user_model
+
 User = get_user_model()
 
 ##################################################################################
@@ -13,7 +14,7 @@ User = get_user_model()
 
 # Tests methods related to the Member model
 class AchievementModelHelpersTest(TestCase):
-    fixtures = ['test_users.json']
+    fixtures = ["test_users.json"]
 
     def setUp(self):
         self.category = Category(id=1, name="TU/e", description="Things at the TU/e")

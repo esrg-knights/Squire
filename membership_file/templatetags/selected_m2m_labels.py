@@ -8,6 +8,7 @@ register = template.Library()
 # @since 02 JAN 2021
 ##################################################################################
 
+
 @register.filter
 def selected_m2m_labels(form, fieldname):
     return [label for value, label in form.fields[fieldname].choices if value in form[fieldname].value()]

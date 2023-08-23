@@ -11,11 +11,11 @@ register = template.Library()
 @register.filter
 def category_has_any_achievement_unlocked_or_empty(category):
     # Retrun True if the category is empty
-    if not category.get('achievements'):
+    if not category.get("achievements"):
         return True
 
     # Otherwise iterate over all the category's achievements
-    for achievement in category.get('achievements'):
-        if achievement.get('claimants'):
+    for achievement in category.get("achievements"):
+        if achievement.get("claimants"):
             return True
     return False
