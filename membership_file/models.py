@@ -16,6 +16,23 @@ global_preferences = global_preferences_registry.manager()
 # @since 06 JUL 2019
 ##################################################################################
 
+class MemberManager(models.Manager):
+    def filter_active(self):
+        """ Filter all 'active' members. That is, members who have a membership in
+            one of the currently active years, excluding those that are specifically
+            marked as 'deregistered'.
+        """
+        filter = self.filter(is_deregistered=False, marked_for_deletion=False)
+
+        active_years = MemberYear.objects.filter(is_active=True).values_list('id', flat=True)
+        if not active_years:
+            # No active membership year set; only return registered members
+            return filter
+
+        # Active membership year set; only return members registered in these years.
+        #   Honorary members are always active, regardless of active years
+        return filter.filter(models.Q(memberyear__in=active_years) | models.Q(is_honorary_member=True))
+
 # The Member model represents a Member in the membership file
 class Member(models.Model):
     class Meta:
@@ -25,6 +42,8 @@ class Member(models.Model):
             ('can_export_membership_file',              "Can export the membership file.")
         ]
         ordering = ['first_name', 'last_name']
+
+    objects = MemberManager()
 
     # The User that is linked to this member
     # NB: Only one user can be linked to one member at the same time!
@@ -128,12 +147,23 @@ class Member(models.Model):
     # Any additional information that cannot be stored in other fields (e.g., preferred pronouns)
     notes = models.TextField(blank=True, help_text="Notes are invisible to members.")
 
-    def is_considered_member(self):
+    @property
+    def is_active(self):
+        """ A member is active if it has membership in one of the active years, and if
+            it is otherwise not explicitly marked as inactive (i.e., deregistered or a pending deletion).
+            Behaviour is consistent with Member.objects.filter_active()
+        """
+        if self.is_deregistered or self.marked_for_deletion:
+            return False
+
+        # Honorary members are active regardless of active member years
+        if self.is_honorary_member:
+            return True
+
         # Do not block membership if no year is active
-        if MemberYear.objects.filter(is_active=True):
-            return not self.is_deregistered and self.memberyear_set.filter(is_active=True).exists()
-        else:
-            return not self.is_deregistered
+        if MemberYear.objects.filter(is_active=True).exists():
+            return self.memberyear_set.filter(is_active=True).exists()
+        return True
 
     ##################################
     # STRING REPRESENTATION METHODS
@@ -228,7 +258,8 @@ class MemberYear(models.Model):
 
 class Membership(models.Model):
     """ Defines membership details of a member in a certain memberyear"""
-    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    # NULL-value allows keeping track of membership numbers over the years, even when members are deleted
+    member = models.ForeignKey(Member, on_delete=models.SET_NULL, null=True)
     year = models.ForeignKey(MemberYear, on_delete=models.PROTECT)
     created_by = models.ForeignKey(Member, on_delete=models.SET_NULL, null=True, related_name='created_memberships')
     created_on = models.DateTimeField(auto_now_add=True)
@@ -240,7 +271,9 @@ class Membership(models.Model):
         unique_together = [['member', 'year']]
 
     def __str__(self):
-        return f'{self.member.get_full_name()} for {self.year}'
+        if self.member is not None:
+            return f'{self.member.get_full_name()} for {self.year}'
+        return f"Deleted member for {self.year}"
 
 
 # The MemberLog Model represents a log entry that is created whenever membership data is updated

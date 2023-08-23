@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import os
-from time import strftime
+import json
 
 from . import util
 
@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'roleplaying',
     'nextcloud_integration',
     'user_interaction.apps.UserInteractionConfig',
+    'mailcow_integration',
     # More External Libraries
     'django_cleanup.apps.CleanupConfig',
     'martor',
@@ -239,6 +240,10 @@ LOGGING = {
             'handlers': ['console'],
             'level': APPLICATION_LOG_LEVEL,
         },
+        'mailcow_integration': {
+            'handlers': ['console'],
+            'level': APPLICATION_LOG_LEVEL,
+        },
     },
 }
 
@@ -369,6 +374,19 @@ MARKDOWN_IMAGE_MODELS = (
 MARTOR_ALTERNATIVE_JS_FILE_THEME = None
 MARTOR_ALTERNATIVE_CSS_FILE_THEME = "theming/martor-admin-bootstrap.css" # default None
 MARTOR_ALTERNATIVE_JQUERY_JS_FILE = None
+
+
+####################################################################
+# Mailcow API
+#   If MAILCOW_HOST is None, no API connection is established
+MAILCOW_HOST = None
+MAILCOW_API_KEY = None
+MEMBER_ALIASES = {}
+COMMITTEE_CONFIGS = {
+    "archive_addresses": [],
+    "global_addresses": [],
+    "global_archive_addresses": []
+}
 
 ####################################################################
 # Other Settings

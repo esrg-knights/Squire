@@ -98,7 +98,7 @@
                                     <i class="fas fa-id-card"></i> My Account</a>
 								<a class="dropdown-item" href="{% url 'account:achievements' %}">
                                     <i class="fas fa-trophy"></i> My  Achievements</a>
-                                {% if member.is_considered_member %}
+                                {% if member.is_active %}
                                     <a class="dropdown-item" href="{% url 'account:inventory:member_items' %}">
                                         <i class="fas fa-archive"></i> My items</a>
                                     {% if member.associationgroup_set.all %}
@@ -111,9 +111,11 @@
                                     <a class="dropdown-item"
                                        target="_blank" rel="noopener noreferrer"
                                        href="{% url 'admin:index' %}"><i class="fas fa-toolbox"></i> Admin panel</a>
-
+									{% if user.is_superuser %}
+										<a class="dropdown-item"
+											href="{% url 'core:status:mailcow_status' %}"><i class="fas fa-server"></i> Server Status</a>
+									{% endif %}
                                 {% endif %}
-
 								<div class="dropdown-divider"></div>
 								<a class="dropdown-item" href="{% url 'core:user_accounts/logout' %}">
                                     <i class="fas fa-power-off"></i> Sign out</a>

@@ -1,0 +1,27 @@
+{
+    "host": "https://example.com/mailcow",
+    "api_key": "AAAAAA-AAAAAA-AAAAAA-AAAAAA-AAAAAA",
+    "committee_aliases": {
+        "archive_addresses": ["archief@example.com"],
+        "global_addresses": ["commissies@example.com"],
+        "global_archive_addresses": ["bestuur@example.com"]
+    },
+    "member_aliases": {
+        "leden@example.com": {
+            "title": "Leden",
+            "description": "General emails.",
+            "internal": true,
+            "allow_opt_out": false,
+            "default_opt": true,
+            "archive_addresses": ["bestuur@example.com"]
+        },
+        "newsletter@example.com": {
+            "title": "Newsletter",
+            "description": "Receive the newsletter.",
+            "internal": true,
+            "allow_opt_out": true,
+            "default_opt": true,
+            "archive_addresses": ["secretaris@example.com"]
+        }
+    }
+}
