@@ -86,3 +86,8 @@ class PlaceholderRegisterMemberView(CreateView):
     template_name = "membership_file/register_member.html"
 
     success_url = "/registermember/"
+
+    def get_form_kwargs(self, *args, **kwargs):
+        kwargs = super().get_form_kwargs(*args, **kwargs)
+        kwargs['user'] = self.request.user
+        return kwargs

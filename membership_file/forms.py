@@ -123,3 +123,28 @@ class RegisterMemberForm(UpdatingUserFormMixin, forms.ModelForm):
             'country': OtherRadioSelect(choices=[('The Netherlands', 'The Netherlands'),]),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.has_active_years = False
+
+        # Add field to automatically create memberships in one or more active years
+        choices = [(year.id, year.name) for year in MemberYear.objects.filter(is_active=True)]
+
+        if choices:
+            # Skip the field entirely if there are no active years
+            self.has_active_years = True
+            field = forms.MultipleChoiceField(choices=choices, required=True, widget=forms.CheckboxSelectMultiple, initial=[choices[0][0]],
+                label="Create membership for year(s)")
+            self.fields["active_years"] = field
+
+    def _save_m2m(self):
+        """ Generate membership in active years """
+        # This is done in _save_m2m as the member-instance must exist. This is only the case if commit=True
+        super()._save_m2m()
+        if self.has_active_years:
+            # No need to do this if there were no active years to begin with
+            years = MemberYear.objects.filter(id__in=self.cleaned_data['active_years'])
+
+            for year in years:
+                Membership.objects.create(member=self.instance, year=year, created_by=self.user)
+
