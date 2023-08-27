@@ -3,6 +3,8 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.utils.translation import gettext_lazy as _
 
+from utils.widgets import OtherRadioSelect
+
 from .models import Member, Room, MemberYear, Membership
 from utils.forms import UpdatingUserFormMixin
 
@@ -35,7 +37,6 @@ class MemberRoomForm(forms.ModelForm):
         super()._save_m2m()
         self.instance.accessible_rooms.clear()
         self.instance.accessible_rooms.add(*self.cleaned_data["accessible_rooms"])
-
 
 class AdminMemberForm(UpdatingUserFormMixin, MemberRoomForm):
     def __init__(self, *args, **kwargs):
@@ -99,3 +100,26 @@ class ContinueMembershipForm(forms.Form):
             year=self.year,
             member=self.member,
         )
+
+class RegisterMemberForm(UpdatingUserFormMixin, forms.ModelForm):
+    """
+    Registers a member in the membership file, and optionally sends them an email to link or register a Squire account.
+    Also contains some useful presets.
+    """
+    class Meta:
+        model = Member
+        fields = ('first_name', 'tussenvoegsel', 'last_name', 'legal_name', 'student_number', 'educational_institution',
+                  'tue_card_number', 'email', 'phone_number', 'street', 'house_number', 'house_number_addition', 'postal_code', 'city', 'country',
+                  'date_of_birth', 'notes')
+
+        widgets = {
+            'educational_institution': OtherRadioSelect(choices=[
+                ('TU/e', 'Eindhoven University of Technology'),
+                ('Fontys Eindhoven', 'Fontys Eindhoven'),
+                ('Summa College', 'Summa College'),
+                ('', 'None (not a student)')
+            ]),
+            'city': OtherRadioSelect(choices=[('Eindhoven', 'Eindhoven'), ('Helmond', 'Helmond'), ('Veldhoven', 'Veldhoven')]),
+            'country': OtherRadioSelect(choices=[('The Netherlands', 'The Netherlands'),]),
+        }
+

@@ -10,7 +10,7 @@ from .util import MembershipRequiredMixin
 # Enable the auto-creation of logs
 from .auto_model_update import *
 from .export import *
-from membership_file.forms import ContinueMembershipForm
+from membership_file.forms import ContinueMembershipForm, RegisterMemberForm
 from membership_file.models import Membership
 
 global_preferences = global_preferences_registry.manager()
@@ -76,3 +76,13 @@ class ExtendMembershipView(MemberMixin, UpdateMemberYearMixin, FormView):
 
 class ExtendMembershipSuccessView(MemberMixin, UpdateMemberYearMixin, TemplateView):
     template_name = "membership_file/extend_membership_successpage.html"
+
+
+from django.views.generic.edit import CreateView
+
+class PlaceholderRegisterMemberView(CreateView):
+    """ placeholder """
+    form_class = RegisterMemberForm
+    template_name = "membership_file/register_member.html"
+
+    success_url = "/registermember/"
