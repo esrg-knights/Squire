@@ -1,13 +1,18 @@
 from datetime import datetime
 
 from django.contrib import admin, messages
+from django.contrib.contenttypes.models import ContentType
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django_object_actions import DjangoObjectActions, action as object_action
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV, TSV, ODS, XLSX
 
-from .forms import AdminMemberForm
-from .models import Member, MemberLog, MemberLogField, Room, MemberYear, Membership
 from core.admin import DisableModificationsAdminMixin, URLLinkInlineAdminMixin
+from membership_file.forms import AdminMemberForm
 from membership_file.export import MemberResource, MembersFinancialResource
+from membership_file.models import Member, MemberLog, MemberLogField, Room, MemberYear, Membership
+from membership_file.views import RegisterNewMemberAdminView
 from utils.forms import RequestUserToFormModelAdminMixin
 
 
@@ -51,9 +56,8 @@ class MemberLogReadOnlyInline(DisableModificationsAdminMixin, URLLinkInlineAdmin
     # Whether the object can be deleted inline
     can_delete = False
 
-
 @admin.register(Member)
-class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRelatedNameAdmin):
+class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, ExportActionMixin, HideRelatedNameAdmin):
     ##############################
     #  Export functionality
     resource_class = MemberResource
@@ -63,6 +67,20 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
         TSVUnicodeBOM,
         ODS,
     )
+
+    @object_action(attrs={'class': 'addlink'})
+    def register_new_member(modeladmin, request, queryset):
+        view = RegisterNewMemberAdminView.as_view()
+        return view(request)
+
+    changelist_actions = ('register_new_member', )
+
+    def get_changelist_actions(self, request):
+        # Action is only available if the user can add members normally
+        actions = super().get_changelist_actions(request)
+        if not request.user.has_perm("membership_file.add_member"):
+            actions = [action for action in actions if action != "register_new_member"]
+        return actions
 
     def has_export_permission(self, request):
         return request.user.has_perm("membership_file.can_export_membership_file")

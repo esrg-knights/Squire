@@ -51,12 +51,13 @@ INSTALLED_APPS = [
     "core",  # Core Module should load first
     "django.contrib.admin",
     # External Libraries
-    "bootstrap4",
-    "tempus_dominus",  # Bootstrap DateTime picker
-    "dynamic_preferences",  # Global Preferences
-    "dynamic_preferences.users.apps.UserPreferencesConfig",  # Per-user preferences
-    "recurrence",
-    "rest_framework",
+    'bootstrap4',
+    'tempus_dominus', # Bootstrap DateTime picker
+    'django_object_actions', # Dynamic admin panel actions
+    'dynamic_preferences', # Global Preferences
+    'dynamic_preferences.users.apps.UserPreferencesConfig', # Per-user preferences
+    'recurrence',
+    'rest_framework',
     # Internal Components
     "achievements",
     "membership_file",

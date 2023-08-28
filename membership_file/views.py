@@ -1,8 +1,12 @@
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.forms.models import BaseModelForm
+from django.http import HttpResponse
+from django.views.generic.edit import CreateView
 from django.views.generic import TemplateView, FormView
 from django.template.response import TemplateResponse
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
+
 from dynamic_preferences.registries import global_preferences_registry
 
 from .util import MembershipRequiredMixin
@@ -77,17 +81,25 @@ class ExtendMembershipView(MemberMixin, UpdateMemberYearMixin, FormView):
 class ExtendMembershipSuccessView(MemberMixin, UpdateMemberYearMixin, TemplateView):
     template_name = "membership_file/extend_membership_successpage.html"
 
-
-from django.views.generic.edit import CreateView
-
-class PlaceholderRegisterMemberView(CreateView):
+class RegisterNewMemberAdminView(CreateView):
     """ placeholder """
     form_class = RegisterMemberForm
     template_name = "membership_file/register_member.html"
-
-    success_url = "/registermember/"
+    success_message = ''
 
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super().get_form_kwargs(*args, **kwargs)
         kwargs['user'] = self.request.user
         return kwargs
+
+    def form_valid(self, form: BaseModelForm) -> HttpResponse:
+        self.email_sent = form.cleaned_data["send_registration_email"]
+        return super().form_valid(form)
+
+    def get_success_url(self) -> str:
+        if self.email_sent:
+            messages.success(self.request, f"Registered and emailed member “{self.object}”")
+        else:
+            messages.warning(self.request, f"Registered, but did not email member “{self.object}”")
+
+        return reverse(f'admin:membership_file_member_change', args=(self.object.id,))

@@ -127,7 +127,7 @@ class RegisterMemberForm(UpdatingUserFormMixin, forms.ModelForm):
             'country': OtherRadioSelect(choices=[('The Netherlands', 'The Netherlands'),]),
         }
 
-    send_registration_email = forms.BooleanField(initial=True, help_text="Whether to email a registration link to the new member, allowing them to link their account to this membership data.")
+    send_registration_email = forms.BooleanField(initial=True, required=False, help_text="Whether to email a registration link to the new member, allowing them to link their account to this membership data.")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -154,7 +154,6 @@ class RegisterMemberForm(UpdatingUserFormMixin, forms.ModelForm):
 
     def clean(self) -> Dict[str, Any]:
         res = super().clean()
-        print(self.cleaned_data)
         # Phone number requirements
         if not self.cleaned_data['phone_number'] and self.cleaned_data["room_access"]:
             self.add_error("phone_number", ValidationError("A phone number is required if room access is provided.", code="phone_required"))
