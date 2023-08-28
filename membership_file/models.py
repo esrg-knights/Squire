@@ -71,8 +71,9 @@ class Member(models.Model):
     ##################################
     # STUDENT INFORMATION
     ##################################
+    EDUCATIONAL_INSTITUTION_TUE = "TU/e"
     student_number = models.CharField(max_length=15, blank=True)
-    educational_institution = models.CharField(max_length=255, blank=True, default="TU/e")
+    educational_institution = models.CharField(max_length=255, blank=True, default=EDUCATIONAL_INSTITUTION_TUE)
 
     ##################################
     # CARD NUMBERS
