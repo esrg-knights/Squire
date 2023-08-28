@@ -35,5 +35,6 @@ def render_form(context, form=None, has_submit_button=True, uses_file_field=Fals
         'form_enctype': "multipart/form-data" if uses_file_field else None,
         'submit_display': has_submit_button,
         'submit_class': kwargs.get('submit_class', submit_class_default),
-        'submit_text': _(kwargs.get('submit_text', submit_text_default))
+        'submit_text': _(kwargs.get('submit_text', submit_text_default)),
+        'has_csrf_token': kwargs.get('has_csrf_token', True),
     }

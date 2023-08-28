@@ -1,0 +1,25 @@
+{% extends 'core/base.html' %}
+{% load render_form %}
+
+{% block title %}
+    Squire - Preview mail template
+{% endblock title %}
+
+
+{% block content %}
+    <p>
+        Template_name: {{ template_name }}
+    </p>
+    {% render_form method="get" submit_text="Display template" submit_class="btn btn-info" has_csrf_token=False %}
+
+    <div class="text-right">
+        <a class="btn btn-sm btn-outline-info" target="popup"
+           onclick="window.open('{{ form.get_absolute_url }}',
+            'popup','width=750,height=600'); return false;">
+            Pop out</a>
+    </div>
+
+    <div style="border: 1px solid black;">
+        {{ html_template }}
+    </div>
+{% endblock %}

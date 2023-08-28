@@ -6,7 +6,9 @@
       {% if form_class %}class="{{ form_class }}"{% endif%}
       {% if form_enctype %}enctype="{{ form_enctype }}"{% endif %}
     >
-    {% csrf_token %}
+    {% if has_csrf_token %}
+        {% csrf_token %}
+    {% endif %}
 
     {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
 

@@ -1,10 +1,12 @@
 import re
 from collections.abc import Iterable
+from css_inline import CSSInliner
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.template.loader import get_template, TemplateDoesNotExist
 from functools import cached_property
+from .inlining import MailInliner
 
 
 from .sites import DefaultSite
@@ -44,6 +46,14 @@ class Email:
     def _get_mail_templates(self, extension: str):
         """Gets the mail template with the given extention"""
         return get_template(f"{self.template_name}.{extension}", using="EmailTemplates")
+
+    def _inline_css(self, html_layout):
+        """
+        Places CSS inline as mail programs generally do not support stylesheets
+        :param html_layout: The html layout
+        :return:
+        """
+        return MailInliner.inline(html_layout)
 
     def get_mail_subject(self):
         """Returns the subject of the mail"""
@@ -149,6 +159,7 @@ class Email:
         # Set up the html content in the mail
         if self.html_template is not None:
             content_html = self.html_template.render(context_data)
+            content_html = self._inline_css(content_html)
             mail_obj.attach_alternative(content_html, "text/html")
 
         # Send the mail
