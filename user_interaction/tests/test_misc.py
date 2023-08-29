@@ -12,12 +12,13 @@ User = get_user_model()
 
 class DisplayTest(TestCase):
     """
-        Tests for displaying certain information in the frontend
+    Tests for displaying certain information in the frontend
     """
-    fixtures = ['test_users.json', 'test_members.json']
+
+    fixtures = ["test_users.json", "test_members.json"]
 
     def test_user_display_method(self):
-        """ Test whether users are displayed correctly, depending on their membership status """
+        """Test whether users are displayed correctly, depending on their membership status"""
         # If the user is a member, should display the member's name
         user = User.objects.filter(username="test_member").first()
         self.assertEqual(str(user), user.member.get_full_name())

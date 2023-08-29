@@ -1,4 +1,3 @@
-
 from datetime import datetime
 
 from django.contrib import admin, messages
@@ -13,11 +12,11 @@ from utils.forms import RequestUserToFormModelAdminMixin
 
 
 class TSVUnicodeBOM(TSV):
-    '''.tsv that starts with a `ZERO WIDTH NO-BREAK SPACE`, which is a Byte Order Marker, which forces Excel to recognise it as Unicode.
-    More info: https://en.wikipedia.org/w/index.php?title=Byte_order_mark&oldid=1135118973#Usage'''
+    """.tsv that starts with a `ZERO WIDTH NO-BREAK SPACE`, which is a Byte Order Marker, which forces Excel to recognise it as Unicode.
+    More info: https://en.wikipedia.org/w/index.php?title=Byte_order_mark&oldid=1135118973#Usage"""
 
     def export_data(self, *args, **kwargs):
-        return '\N{ZERO WIDTH NO-BREAK SPACE}' + super().export_data(*args, **kwargs)
+        return "\N{ZERO WIDTH NO-BREAK SPACE}" + super().export_data(*args, **kwargs)
 
 
 class HideRelatedNameAdmin(admin.ModelAdmin):
@@ -26,7 +25,7 @@ class HideRelatedNameAdmin(admin.ModelAdmin):
         # We don't need to edit this information anyways, so it's safe to hide
         # https://stackoverflow.com/a/5556813
         css = {
-            'all': ('css/hide_related_model_name.css',),
+            "all": ("css/hide_related_model_name.css",),
         }
 
 
@@ -37,16 +36,16 @@ class RoomInline(admin.TabularInline):
 
 class MemberYearInline(admin.TabularInline):
     model = Membership
-    fk_name = 'member'
+    fk_name = "member"
     extra = 0
-    fields = ['year', 'has_paid', 'payment_date']
+    fields = ["year", "has_paid", "payment_date"]
 
 
 class MemberLogReadOnlyInline(DisableModificationsAdminMixin, URLLinkInlineAdminMixin, admin.TabularInline):
     model = MemberLog
     extra = 0
-    readonly_fields = ['date', 'get_url']
-    fields = ['log_type', 'user', 'date', 'get_url']
+    readonly_fields = ["date", "get_url"]
+    fields = ["log_type", "user", "date", "get_url"]
     ordering = ("-date",)
 
     # Whether the object can be deleted inline
@@ -58,19 +57,23 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
     ##############################
     #  Export functionality
     resource_class = MemberResource
-    formats = (CSV, XLSX, TSVUnicodeBOM, ODS,)
+    formats = (
+        CSV,
+        XLSX,
+        TSVUnicodeBOM,
+        ODS,
+    )
 
     def has_export_permission(self, request):
-        return request.user.has_perm('membership_file.can_export_membership_file')
+        return request.user.has_perm("membership_file.can_export_membership_file")
 
     def get_export_filename(self, request, queryset, file_format):
         filename_prefix = ""
         if queryset.filter(is_deregistered=True).exists():
             filename_prefix = "HAS_DEREGISTERED_MEMBERS-"
 
-        date_str = datetime.now().strftime('%Y-%m-%d')
-        filename = "%sMembershipFile-%s.%s" % (
-            filename_prefix, date_str, file_format.get_extension())
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        filename = "%sMembershipFile-%s.%s" % (filename_prefix, date_str, file_format.get_extension())
 
         return filename
 
@@ -78,28 +81,44 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
     form = AdminMemberForm
     save_on_top = True
 
-    list_display = ('id', 'user', 'first_name', 'tussenvoegsel', 'last_name',
-                    'educational_institution', 'is_deregistered', 'marked_for_deletion')
+    list_display = (
+        "id",
+        "user",
+        "first_name",
+        "tussenvoegsel",
+        "last_name",
+        "educational_institution",
+        "is_deregistered",
+        "marked_for_deletion",
+    )
     list_filter = [
-        'memberyear',
-        'is_deregistered', 'marked_for_deletion',
-        'is_honorary_member',
-        'educational_institution',
-        ('tue_card_number', admin.EmptyFieldListFilter),
-        ('external_card_number', admin.EmptyFieldListFilter),
-        ('key_id', admin.EmptyFieldListFilter),
-        ('phone_number', admin.EmptyFieldListFilter),
+        "memberyear",
+        "is_deregistered",
+        "marked_for_deletion",
+        "is_honorary_member",
+        "educational_institution",
+        ("tue_card_number", admin.EmptyFieldListFilter),
+        ("external_card_number", admin.EmptyFieldListFilter),
+        ("key_id", admin.EmptyFieldListFilter),
+        ("phone_number", admin.EmptyFieldListFilter),
     ]
-    list_display_links = ('id', 'user', 'first_name')
-    search_fields = ['first_name', 'last_name', 'email', 'phone_number',
-                     'tue_card_number', 'external_card_number', 'key_id']
+    list_display_links = ("id", "user", "first_name")
+    search_fields = [
+        "first_name",
+        "last_name",
+        "email",
+        "phone_number",
+        "tue_card_number",
+        "external_card_number",
+        "key_id",
+    ]
 
-    readonly_fields = ['last_updated_by', 'last_updated_date']
+    readonly_fields = ["last_updated_by", "last_updated_date"]
 
     # Display a search box instead of a dropdown menu
-    autocomplete_fields = ['user']
+    autocomplete_fields = ["user"]
 
-    #fmt: off
+    # fmt: off
     fieldsets = [
         (None, {'fields':
             ['user', ('first_name', 'tussenvoegsel', 'last_name'),
@@ -120,7 +139,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
         ('Notes', {'fields':
             ['notes']}),
     ]
-    #fmt: on
+    # fmt: on
 
     inlines = [MemberLogReadOnlyInline, MemberYearInline]
 
@@ -133,13 +152,13 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
     list_per_page = 150
     list_max_show_all = 999
 
-    actions = ['mark_as_current_member', ExportActionMixin.export_admin_action]
+    actions = ["mark_as_current_member", ExportActionMixin.export_admin_action]
 
     # Disable bulk delete
     def get_actions(self, request):
         actions = super().get_actions(request)
-        if 'delete_selected' in actions:
-            del actions['delete_selected']
+        if "delete_selected" in actions:
+            del actions["delete_selected"]
         return actions
 
     def mark_as_current_member(self, request, queryset):
@@ -147,16 +166,12 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
             year = MemberYear.objects.get(is_active=True)
         except MemberYear.MultipleObjectsReturned:
             self.message_user(
-                request,
-                "There are multiple years active,  only  one should be active",
-                level=messages.ERROR
+                request, "There are multiple years active,  only  one should be active", level=messages.ERROR
             )
             return
         except MemberYear.DoesNotExist:
             self.message_user(
-                request,
-                "There is currently no year active, make sure that one is active",
-                level=messages.ERROR
+                request, "There is currently no year active, make sure that one is active", level=messages.ERROR
             )
             return
         created_count = 0
@@ -170,9 +185,10 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
         self.message_user(
             request,
             f"Succesfully created {created_count} new members. {queryset.count() - created_count} instances were already a member",
-            level=messages.SUCCESS
+            level=messages.SUCCESS,
         )
-    mark_as_current_member.short_description = 'Assign as member of the currently active year'
+
+    mark_as_current_member.short_description = "Assign as member of the currently active year"
 
     # Disable deletion if the member was not marked for deletion
     # Disable deletion for the user that marked the member for deletion
@@ -205,10 +221,10 @@ class MemberLogFieldReadOnlyInline(DisableModificationsAdminMixin, admin.Tabular
 @admin.register(MemberLog)
 class MemberLogReadOnly(DisableModificationsAdminMixin, HideRelatedNameAdmin):
     # Show the date at which the information was updated as well
-    readonly_fields = ['date']
-    list_display = ('id', 'log_type', 'user', 'member', 'date')
-    list_filter = ['log_type', 'member']
-    list_display_links = ('id', 'log_type')
+    readonly_fields = ["date"]
+    list_display = ("id", "log_type", "user", "member", "date")
+    list_filter = ["log_type", "member"]
+    list_display_links = ("id", "log_type")
 
     inlines = [MemberLogFieldReadOnlyInline]
 
@@ -217,12 +233,12 @@ class MemberLogReadOnly(DisableModificationsAdminMixin, HideRelatedNameAdmin):
 class RoomAdmin(admin.ModelAdmin):
     model = Room
 
-    list_display = ('id', 'name', 'access')
-    list_display_links = ('id', 'name')
-    search_fields = ['name', 'access']
+    list_display = ("id", "name", "access")
+    list_display_links = ("id", "name")
+    search_fields = ["name", "access"]
 
     ordering = ("access",)
-    filter_horizontal = ('members_with_access',)
+    filter_horizontal = ("members_with_access",)
 
 
 @admin.register(MemberYear)
@@ -230,15 +246,19 @@ class MemberYearAdmin(ExportActionMixin, admin.ModelAdmin):
     ##############################
     #  Export functionality
     resource_class = MembersFinancialResource
-    formats = (CSV, XLSX, TSVUnicodeBOM, ODS,)
+    formats = (
+        CSV,
+        XLSX,
+        TSVUnicodeBOM,
+        ODS,
+    )
 
     def has_export_permission(self, request):
-        return request.user.has_perm('membership_file.can_export_membership_file')
+        return request.user.has_perm("membership_file.can_export_membership_file")
 
     def get_export_filename(self, request, queryset, file_format):
-        date_str = datetime.now().strftime('%Y-%m-%d')
-        filename = "YearSubscriptions-%s.%s" % (
-            date_str, file_format.get_extension())
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        filename = "YearSubscriptions-%s.%s" % (date_str, file_format.get_extension())
         return filename
 
     def get_data_for_export(self, request, queryset, *args, **kwargs):
@@ -247,8 +267,10 @@ class MemberYearAdmin(ExportActionMixin, admin.ModelAdmin):
 
     ##############################
 
-    list_display = ['name', 'is_active', 'member_count']
-    list_filter = ['is_active', ]
+    list_display = ["name", "is_active", "member_count"]
+    list_filter = [
+        "is_active",
+    ]
 
     def member_count(self, obj):
         return obj.members.count()
@@ -256,5 +278,5 @@ class MemberYearAdmin(ExportActionMixin, admin.ModelAdmin):
 
 @admin.register(Membership)
 class MembershipAdmin(admin.ModelAdmin):
-    list_display = ['member', 'year', 'has_paid', 'payment_date']
-    list_filter = ['year', 'has_paid']
+    list_display = ["member", "year", "has_paid", "payment_date"]
+    list_filter = ["year", "has_paid"]

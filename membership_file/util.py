@@ -22,17 +22,20 @@ def get_member_from_user(user) -> Member:
     :return: a Member instance or None if user has no link to a member
     """
     if user.is_authenticated:
-        if hasattr(user, 'member'):
+        if hasattr(user, "member"):
             return user.member
     return None
 
 
 class BaseMembershipRequiredMixin:
     """
-        Verifies that the current user is a member, redirecting to a special page if needed.
-        Mixin-equivalent of the @membership_required decorator.
+    Verifies that the current user is a member, redirecting to a special page if needed.
+    Mixin-equivalent of the @membership_required decorator.
     """
-    requires_active_membership = True  # Boolean defining whether user should be active, or just linked as an (old) member
+
+    requires_active_membership = (
+        True  # Boolean defining whether user should be active, or just linked as an (old) member
+    )
 
     def dispatch(self, request, *args, **kwargs):
         if self.check_member_access(request.member):
@@ -48,6 +51,7 @@ class BaseMembershipRequiredMixin:
             # Current session has a disabled member connected
             return False
         return True
+
 
 class MembershipRequiredMixin(LoginRequiredMixin, BaseMembershipRequiredMixin):
     pass

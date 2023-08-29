@@ -6,7 +6,7 @@ __all__ = ["user_in_association_group"]
 
 
 def user_in_association_group(user, association_group):
-    """ Checks if the given user is part of the selected association_group """
+    """Checks if the given user is part of the selected association_group"""
     # Check standard Django group structure
     if isinstance(user, AnonymousUser):
         return False

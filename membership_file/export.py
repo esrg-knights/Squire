@@ -8,15 +8,32 @@ class MemberResource(resources.ModelResource):
     class Meta:
         model = Member
         fields = (
-            'id',
-            'first_name', 'tussenvoegsel', 'last_name', 'legal_name',
-            'phone_number', 'email',
-            'educational_institution', 'student_number',
-            'key_id', 'tue_card_number', 'full_external_card', 'external_card_deposit', 'accessible_rooms',
-            'street', 'house_number', 'house_number_addition', 'postal_code', 'city', 'country',
-            'date_of_birth', 'is_honorary_member', 'member_since',
-            'is_deregistered', 'email_deregistered_member',
-            'notes_single_line',
+            "id",
+            "first_name",
+            "tussenvoegsel",
+            "last_name",
+            "legal_name",
+            "phone_number",
+            "email",
+            "educational_institution",
+            "student_number",
+            "key_id",
+            "tue_card_number",
+            "full_external_card",
+            "external_card_deposit",
+            "accessible_rooms",
+            "street",
+            "house_number",
+            "house_number_addition",
+            "postal_code",
+            "city",
+            "country",
+            "date_of_birth",
+            "is_honorary_member",
+            "member_since",
+            "is_deregistered",
+            "email_deregistered_member",
+            "notes_single_line",
         )
         export_order = fields
 
@@ -37,7 +54,7 @@ class MemberResource(resources.ModelResource):
         return member.display_external_card_number()
 
     def dehydrate_accessible_rooms(self, member):
-        return ' | '.join(map(str, member.accessible_rooms.all()))
+        return " | ".join(map(str, member.accessible_rooms.all()))
 
     def dehydrate_notes_single_line(self, member):
         return member.notes.replace("\n", " ")
@@ -53,7 +70,12 @@ class MembersFinancialResource(resources.ModelResource):
     class Meta:
         model = Membership
         fields = (
-            'member', 'email', 'year__name', 'created_on', 'has_paid', 'payment_date',
+            "member",
+            "email",
+            "year__name",
+            "created_on",
+            "has_paid",
+            "payment_date",
         )
         export_order = fields
 

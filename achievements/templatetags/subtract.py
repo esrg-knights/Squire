@@ -8,6 +8,7 @@ register = template.Library()
 # @since 27 MAR 2020
 ##################################################################################
 
+
 @register.filter(is_safe=False)
 def subtract(value, arg):
     """Subtract the arg from the value."""

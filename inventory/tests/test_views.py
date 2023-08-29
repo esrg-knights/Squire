@@ -21,7 +21,7 @@ from inventory.views import OwnershipMixin, CatalogueMixin, ItemMixin, Ownership
 
 
 class TestOwnershipMixin(TestMixinWithMemberMiddleware, TestMixinMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
     mixin_class = OwnershipMixin
     base_user_id = 100
 
@@ -31,11 +31,11 @@ class TestOwnershipMixin(TestMixinWithMemberMiddleware, TestMixinMixin, TestCase
 
     def _imitiate_request_middleware(self, request, **kwargs):
         super(TestOwnershipMixin, self)._imitiate_request_middleware(request, **kwargs)
-        if hasattr(request.user, 'member'):
+        if hasattr(request.user, "member"):
             request.member = request.user.member
 
     def get_base_url_kwargs(self):
-        return {'ownership_id': self.ownership.id}
+        return {"ownership_id": self.ownership.id}
 
     def test_get_successful(self):
         response = self._build_get_response()
@@ -44,23 +44,20 @@ class TestOwnershipMixin(TestMixinWithMemberMiddleware, TestMixinMixin, TestCase
     def test_context_data(self):
         self._build_get_response(save_view=True)
         context = self.view.get_context_data()
-        self.assertIn('ownership', context.keys())
-        self.assertEqual(context['ownership'], self.ownership)
+        self.assertIn("ownership", context.keys())
+        self.assertEqual(context["ownership"], self.ownership)
 
     def test_get_no_access(self):
         # A new ownership that is not owned by the current user (member_id=1)
-        not_my_ownership = Ownership.objects.create(
-            member_id=3,
-            content_object=MiscellaneousItem.objects.last()
-        )
-        self.assertRaises403(url_kwargs={'ownership_id': not_my_ownership.id})
+        not_my_ownership = Ownership.objects.create(member_id=3, content_object=MiscellaneousItem.objects.last())
+        self.assertRaises403(url_kwargs={"ownership_id": not_my_ownership.id})
 
     def test_get_non_existent(self):
-        self.assertRaises404(url_kwargs={'ownership_id': 99})
+        self.assertRaises404(url_kwargs={"ownership_id": 99})
 
 
 class TestCatalogueMixin(TestMixinMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
     mixin_class = CatalogueMixin
     base_user_id = 100
 
@@ -69,7 +66,7 @@ class TestCatalogueMixin(TestMixinMixin, TestCase):
         super(TestCatalogueMixin, self).setUp()
 
     def get_base_url_kwargs(self):
-        return {'type_id': self.content_type}
+        return {"type_id": self.content_type}
 
     def test_get_successful(self):
         response = self._build_get_response()
@@ -77,13 +74,13 @@ class TestCatalogueMixin(TestMixinMixin, TestCase):
 
     @suppress_warnings
     def test_denied_access(self):
-        """ Tests that only those with view access can access this page """
+        """Tests that only those with view access can access this page"""
         user = User.objects.get(id=self.base_user_id)
         self.assertTrue(
-            user.user_permissions.filter(codename='view_miscellaneousitem').exists(),
-            msg="Fixtures should set up the view permission on this base user"
+            user.user_permissions.filter(codename="view_miscellaneousitem").exists(),
+            msg="Fixtures should set up the view permission on this base user",
         )
-        user.user_permissions.remove(Permission.objects.get(codename='view_miscellaneousitem'))
+        user.user_permissions.remove(Permission.objects.get(codename="view_miscellaneousitem"))
 
         # permission is no longer present, so it should deny access
         self.assertRaises403()
@@ -91,27 +88,27 @@ class TestCatalogueMixin(TestMixinMixin, TestCase):
     def test_context_data(self):
         self._build_get_response(save_view=True)
         context = self.view.get_context_data()
-        self.assertIn('item_type', context.keys())
-        self.assertIn('tabs', context.keys())
-        self.assertEqual(context['item_type'], self.content_type)
+        self.assertIn("item_type", context.keys())
+        self.assertIn("tabs", context.keys())
+        self.assertEqual(context["item_type"], self.content_type)
 
     def test_tabs(self):
         self._build_get_response(save_view=True)
         tabs = self.view.get_tabs()
         self.assertEqual(len(tabs), 2)
-        self.assertEqual(tabs[0]['verbose'], "Miscellaneous Items")
-        self.assertEqual(tabs[0]['icon_class'], MiscellaneousItem.icon_class)
-        self.assertIn('url', tabs[0].keys())
-        self.assertTrue(tabs[0]['selected'])
+        self.assertEqual(tabs[0]["verbose"], "Miscellaneous Items")
+        self.assertEqual(tabs[0]["icon_class"], MiscellaneousItem.icon_class)
+        self.assertIn("url", tabs[0].keys())
+        self.assertTrue(tabs[0]["selected"])
 
-        self.assertEqual(tabs[1]['verbose'], "Instructions")
-        self.assertEqual(tabs[1]['icon_class'], 'fas fa-info')
-        self.assertEqual(tabs[1]['url'], reverse("inventory:catalogue_info"))
-        self.assertFalse(tabs[1]['selected'])
+        self.assertEqual(tabs[1]["verbose"], "Instructions")
+        self.assertEqual(tabs[1]["icon_class"], "fas fa-info")
+        self.assertEqual(tabs[1]["url"], reverse("inventory:catalogue_info"))
+        self.assertFalse(tabs[1]["selected"])
 
 
 class TestItemMixin(TestMixinMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
     mixin_class = ItemMixin
     pre_inherit_classes = [CatalogueMixin]
     base_user_id = 100
@@ -123,8 +120,8 @@ class TestItemMixin(TestMixinMixin, TestCase):
 
     def get_base_url_kwargs(self):
         return {
-            'type_id': self.content_type,
-            'item_id': self.item.id,
+            "type_id": self.content_type,
+            "item_id": self.item.id,
         }
 
     def test_get_successful(self):
@@ -132,31 +129,33 @@ class TestItemMixin(TestMixinMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_get_non_existent(self):
-        self.assertRaises404(url_kwargs={
-            'type_id':self.content_type,
-            'item_id': 99,
-        })
+        self.assertRaises404(
+            url_kwargs={
+                "type_id": self.content_type,
+                "item_id": 99,
+            }
+        )
 
     def test_context_data(self):
         self._build_get_response(save_view=True)
         context = self.view.get_context_data()
-        self.assertIn('item_type', context.keys())
-        self.assertEqual(context['item_type'], self.content_type)
+        self.assertIn("item_type", context.keys())
+        self.assertEqual(context["item_type"], self.content_type)
 
 
 class TestCatalogueInstructions(ViewValidityMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
     base_user_id = 100
 
     def test_succesful_get(self):
-        response = self.client.get(reverse('inventory:catalogue_info'), data={})
+        response = self.client.get(reverse("inventory:catalogue_info"), data={})
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "inventory/inventory_instructions.html")
-        self.assertTrue(response.context['tabs'][1]['selected'])
+        self.assertTrue(response.context["tabs"][1]["selected"])
 
 
 class TestTypeCatalogue(ViewValidityMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
     base_user_id = 100
 
     def setUp(self):
@@ -165,7 +164,12 @@ class TestTypeCatalogue(ViewValidityMixin, TestCase):
 
     def get_base_url(self, content_type=None):
         content_type = content_type or self.content_type
-        return reverse('inventory:catalogue', kwargs={'type_id':content_type,})
+        return reverse(
+            "inventory:catalogue",
+            kwargs={
+                "type_id": content_type,
+            },
+        )
 
     def test_class(self):
         self.assertTrue(issubclass(TypeCatalogue, MembershipRequiredMixin))
@@ -180,45 +184,48 @@ class TestTypeCatalogue(ViewValidityMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_context_data(self):
-        response  = self.client.get(self.get_base_url(), data={})
+        response = self.client.get(self.get_base_url(), data={})
         context = response.context
 
         # Ensure that ownerships only contain activated instances
-        self.assertIn('can_add_to_group', context.keys())
+        self.assertIn("can_add_to_group", context.keys())
 
         # Ensure that the right object types are available
-        self.assertIn('can_add_to_member', context.keys())
-        self.assertFalse(context['can_add_to_member'])
+        self.assertIn("can_add_to_member", context.keys())
+        self.assertFalse(context["can_add_to_member"])
 
         # Test that the actual permissions are updated in the context
-        self.user.user_permissions.add(Permission.objects.get(codename='add_group_ownership_for_miscellaneousitem'))
+        self.user.user_permissions.add(Permission.objects.get(codename="add_group_ownership_for_miscellaneousitem"))
         context = self.client.get(self.get_base_url(), data={}).context
-        self.assertTrue(context['can_add_to_group'])
-        self.assertFalse(context['can_add_to_member'])
+        self.assertTrue(context["can_add_to_group"])
+        self.assertFalse(context["can_add_to_member"])
 
-        self.user.user_permissions.add(Permission.objects.get(codename='add_member_ownership_for_miscellaneousitem'))
+        self.user.user_permissions.add(Permission.objects.get(codename="add_member_ownership_for_miscellaneousitem"))
         context = self.client.get(self.get_base_url(), data={}).context
-        self.assertTrue(context['can_add_to_group'])
-        self.assertTrue(context['can_add_to_member'])
+        self.assertTrue(context["can_add_to_group"])
+        self.assertTrue(context["can_add_to_member"])
 
 
 class TestAddLinkCommitteeView(ViewValidityMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
     base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
         self.item = MiscellaneousItem.objects.get(id=4)
         super(TestAddLinkCommitteeView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='add_group_ownership_for_miscellaneousitem'))
+        self.user.user_permissions.add(Permission.objects.get(codename="add_group_ownership_for_miscellaneousitem"))
 
     def get_base_url(self, content_type=None, item_id=None):
         content_type = content_type or self.content_type
         item_id = item_id or self.item.id
-        return reverse('inventory:catalogue_add_group_link', kwargs={
-            'type_id':content_type,
-            'item_id': item_id,
-        })
+        return reverse(
+            "inventory:catalogue_add_group_link",
+            kwargs={
+                "type_id": content_type,
+                "item_id": item_id,
+            },
+        )
 
     def test_class(self):
         self.assertTrue(issubclass(AddLinkCommitteeView, MembershipRequiredMixin))
@@ -236,45 +243,48 @@ class TestAddLinkCommitteeView(ViewValidityMixin, TestCase):
 
     @suppress_warnings
     def test_not_authorised_get(self):
-        self.user.user_permissions.remove(Permission.objects.get(codename='add_group_ownership_for_miscellaneousitem'))
+        self.user.user_permissions.remove(Permission.objects.get(codename="add_group_ownership_for_miscellaneousitem"))
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 403)
 
     def test_post_successful(self):
         group_id = 2
-        response = self.client.post(self.get_base_url(), data={'committee': group_id}, follow=True)
-        self.assertRedirects(response, reverse("inventory:catalogue", kwargs={'type_id': self.content_type}))
+        response = self.client.post(self.get_base_url(), data={"committee": group_id}, follow=True)
+        self.assertRedirects(response, reverse("inventory:catalogue", kwargs={"type_id": self.content_type}))
         msg = "{item} has been placed in {owner}'s inventory".format(
-            item = self.item,
+            item=self.item,
             owner=Group.objects.get(id=group_id),
         )
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
 
     def test_success_url(self):
         # Test redirect_param
-        data = {'committee': 2}
-        url = self.get_base_url()+'?redirect_to=/alt_url/'
+        data = {"committee": 2}
+        url = self.get_base_url() + "?redirect_to=/alt_url/"
         response = self.client.post(url, data=data, follow=False)
-        self.assertRedirects(response, '/alt_url/', fetch_redirect_response=False)
+        self.assertRedirects(response, "/alt_url/", fetch_redirect_response=False)
 
 
 class TestAddLinkMemberView(ViewValidityMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
     base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
         self.item = MiscellaneousItem.objects.get(id=4)
         super(TestAddLinkMemberView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='add_member_ownership_for_miscellaneousitem'))
+        self.user.user_permissions.add(Permission.objects.get(codename="add_member_ownership_for_miscellaneousitem"))
 
     def get_base_url(self, content_type=None, item_id=None):
         content_type = content_type or self.content_type
         item_id = item_id or self.item.id
-        return reverse('inventory:catalogue_add_member_link', kwargs={
-            'type_id':content_type,
-            'item_id': item_id,
-        })
+        return reverse(
+            "inventory:catalogue_add_member_link",
+            kwargs={
+                "type_id": content_type,
+                "item_id": item_id,
+            },
+        )
 
     def test_class(self):
         self.assertTrue(issubclass(AddLinkMemberView, MembershipRequiredMixin))
@@ -288,7 +298,9 @@ class TestAddLinkMemberView(ViewValidityMixin, TestCase):
 
     @suppress_warnings
     def test_not_authorised_get(self):
-        self.user.user_permissions.remove(Permission.objects.get(codename='add_member_ownership_for_miscellaneousitem'))
+        self.user.user_permissions.remove(
+            Permission.objects.get(codename="add_member_ownership_for_miscellaneousitem")
+        )
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 403)
 
@@ -298,36 +310,39 @@ class TestAddLinkMemberView(ViewValidityMixin, TestCase):
 
     def test_post_successful(self):
         member_id = 2
-        response = self.client.post(self.get_base_url(), data={'member': member_id}, follow=True)
-        self.assertRedirects(response, reverse('inventory:catalogue', kwargs={'type_id': self.content_type}))
+        response = self.client.post(self.get_base_url(), data={"member": member_id}, follow=True)
+        self.assertRedirects(response, reverse("inventory:catalogue", kwargs={"type_id": self.content_type}))
         msg = "{item} has been placed in {owner}'s inventory".format(
-            item = self.item,
+            item=self.item,
             owner=Member.objects.get(id=member_id),
         )
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
 
     def test_success_url(self):
         # Test redirect_param
-        data = {'member': 2}
-        url = self.get_base_url()+'?redirect_to=/alt_url/'
+        data = {"member": 2}
+        url = self.get_base_url() + "?redirect_to=/alt_url/"
         response = self.client.post(url, data=data, follow=False)
-        self.assertRedirects(response, '/alt_url/', fetch_redirect_response=False)
+        self.assertRedirects(response, "/alt_url/", fetch_redirect_response=False)
 
 
 class TestItemCreateView(ViewValidityMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
     base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
         super(TestItemCreateView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='add_miscellaneousitem'))
+        self.user.user_permissions.add(Permission.objects.get(codename="add_miscellaneousitem"))
 
     def get_base_url(self, content_type=None, item_id=None):
         content_type = content_type or self.content_type
-        return reverse('inventory:catalogue_add_new_item', kwargs={
-            'type_id':content_type,
-        })
+        return reverse(
+            "inventory:catalogue_add_new_item",
+            kwargs={
+                "type_id": content_type,
+            },
+        )
 
     def test_class(self):
         self.assertTrue(issubclass(CreateItemView, MembershipRequiredMixin))
@@ -335,11 +350,11 @@ class TestItemCreateView(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(CreateItemView, PermissionRequiredMixin))
         self.assertTrue(issubclass(CreateItemView, CreateView))
         self.assertEqual(CreateItemView.template_name, "inventory/catalogue_add_item.html")
-        self.assertEqual(CreateItemView.fields, '__all__')
+        self.assertEqual(CreateItemView.fields, "__all__")
 
     @suppress_warnings
     def test_not_authorised_get(self):
-        self.user.user_permissions.remove(Permission.objects.get(codename='add_miscellaneousitem'))
+        self.user.user_permissions.remove(Permission.objects.get(codename="add_miscellaneousitem"))
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 403)
 
@@ -348,57 +363,73 @@ class TestItemCreateView(ViewValidityMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_post_successful(self):
-        data = {'name': 'test_create_view_item'}
+        data = {"name": "test_create_view_item"}
         response = self.client.post(self.get_base_url(), data=data, follow=True)
         # Test success message
-        msg = "{item_name} has been created".format(item_name=data['name'])
+        msg = "{item_name} has been created".format(item_name=data["name"])
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
 
         # Test item creation
-        self.assertTrue(MiscellaneousItem.objects.filter(name='test_create_view_item').exists())
+        self.assertTrue(MiscellaneousItem.objects.filter(name="test_create_view_item").exists())
 
     def test_success_url(self):
         # Test normal save
-        data = {'name': 'test_create_view_item'}
+        data = {"name": "test_create_view_item"}
         self.assertValidPostResponse(
-            data=data,
-            redirect_url=reverse('inventory:catalogue', kwargs={'type_id': self.content_type})
+            data=data, redirect_url=reverse("inventory:catalogue", kwargs={"type_id": self.content_type})
         )
 
         # Pressed '& add to member' button
-        data = {'name': 'test_create_view_item_member', 'btn_save_to_member': True}
+        data = {"name": "test_create_view_item_member", "btn_save_to_member": True}
         response = self.client.post(self.get_base_url(), data=data)
-        self.assertRedirects(response, reverse('inventory:catalogue_add_member_link', kwargs={
-            'type_id': self.content_type,
-            'item_id': MiscellaneousItem.objects.get(name='test_create_view_item_member').id,
-        }), fetch_redirect_response=False)
+        self.assertRedirects(
+            response,
+            reverse(
+                "inventory:catalogue_add_member_link",
+                kwargs={
+                    "type_id": self.content_type,
+                    "item_id": MiscellaneousItem.objects.get(name="test_create_view_item_member").id,
+                },
+            ),
+            fetch_redirect_response=False,
+        )
 
         # Pressed '& add to group' button
-        data = {'name': 'test_create_view_item_group', 'btn_save_to_group': True}
+        data = {"name": "test_create_view_item_group", "btn_save_to_group": True}
         response = self.client.post(self.get_base_url(), data=data)
-        self.assertRedirects(response, reverse('inventory:catalogue_add_group_link', kwargs={
-            'type_id': self.content_type,
-            'item_id': MiscellaneousItem.objects.get(name='test_create_view_item_group').id,
-        }), fetch_redirect_response=False)
+        self.assertRedirects(
+            response,
+            reverse(
+                "inventory:catalogue_add_group_link",
+                kwargs={
+                    "type_id": self.content_type,
+                    "item_id": MiscellaneousItem.objects.get(name="test_create_view_item_group").id,
+                },
+            ),
+            fetch_redirect_response=False,
+        )
 
 
 class TestItemUpdateView(ViewValidityMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
     base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
         self.item = MiscellaneousItem.objects.get(id=4)
         super(TestItemUpdateView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='change_miscellaneousitem'))
+        self.user.user_permissions.add(Permission.objects.get(codename="change_miscellaneousitem"))
 
     def get_base_url(self, content_type=None, item_id=None):
         content_type = content_type or self.content_type
         item_id = item_id or self.item.id
-        return reverse('inventory:catalogue_update_item', kwargs={
-            'type_id':content_type,
-            'item_id': item_id,
-        })
+        return reverse(
+            "inventory:catalogue_update_item",
+            kwargs={
+                "type_id": content_type,
+                "item_id": item_id,
+            },
+        )
 
     def test_class(self):
         self.assertTrue(issubclass(UpdateItemView, MembershipRequiredMixin))
@@ -408,11 +439,11 @@ class TestItemUpdateView(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(UpdateItemView, PermissionRequiredMixin))
         self.assertTrue(issubclass(UpdateItemView, UpdateView))
         self.assertEqual(UpdateItemView.template_name, "inventory/catalogue_change_item.html")
-        self.assertEqual(UpdateItemView.fields, '__all__')
+        self.assertEqual(UpdateItemView.fields, "__all__")
 
     @suppress_warnings
     def test_not_authorised_get(self):
-        self.user.user_permissions.remove(Permission.objects.get(codename='change_miscellaneousitem'))
+        self.user.user_permissions.remove(Permission.objects.get(codename="change_miscellaneousitem"))
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 403)
 
@@ -421,61 +452,78 @@ class TestItemUpdateView(ViewValidityMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_post_successful(self):
-        data = {'name': 'test_update_view_item'}
+        data = {"name": "test_update_view_item"}
         response = self.client.post(self.get_base_url(), data=data, follow=True)
         # Test success message
-        msg = "{item_name} has been updated".format(item_name=data['name'])
+        msg = "{item_name} has been updated".format(item_name=data["name"])
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
 
         # Test item update
         self.item.refresh_from_db()
-        self.assertEqual(self.item.name, data['name'])
+        self.assertEqual(self.item.name, data["name"])
 
     def test_success_url(self):
         # Test redirect_param
-        data = {'name': 'test_update_view_item'}
-        response = self.client.post(self.get_base_url()+'?redirect_to=/alt_url/', data=data, follow=False)
-        self.assertRedirects(response, '/alt_url/', fetch_redirect_response=False)
+        data = {"name": "test_update_view_item"}
+        response = self.client.post(self.get_base_url() + "?redirect_to=/alt_url/", data=data, follow=False)
+        self.assertRedirects(response, "/alt_url/", fetch_redirect_response=False)
 
         # Test normal save
-        data = {'name': 'test_update_view_item'}
+        data = {"name": "test_update_view_item"}
         response = self.client.post(self.get_base_url(), data=data, follow=True)
-        self.assertRedirects(response, reverse('inventory:catalogue', kwargs={'type_id': self.content_type}))
+        self.assertRedirects(response, reverse("inventory:catalogue", kwargs={"type_id": self.content_type}))
 
         # Pressed '& add to member' button
-        data = {'name': 'test_update_view_item_member', 'btn_save_to_member': True}
+        data = {"name": "test_update_view_item_member", "btn_save_to_member": True}
         response = self.client.post(self.get_base_url(), data=data)
-        self.assertRedirects(response, reverse('inventory:catalogue_add_member_link', kwargs={
-            'type_id': self.content_type,
-            'item_id': MiscellaneousItem.objects.get(name='test_update_view_item_member').id,
-        }), fetch_redirect_response=False)
+        self.assertRedirects(
+            response,
+            reverse(
+                "inventory:catalogue_add_member_link",
+                kwargs={
+                    "type_id": self.content_type,
+                    "item_id": MiscellaneousItem.objects.get(name="test_update_view_item_member").id,
+                },
+            ),
+            fetch_redirect_response=False,
+        )
 
         # Pressed '& add to group' button
-        data = {'name': 'test_update_view_item_group', 'btn_save_to_group': True}
+        data = {"name": "test_update_view_item_group", "btn_save_to_group": True}
         response = self.client.post(self.get_base_url(), data=data)
-        self.assertRedirects(response, reverse('inventory:catalogue_add_group_link', kwargs={
-            'type_id': self.content_type,
-            'item_id': MiscellaneousItem.objects.get(name='test_update_view_item_group').id,
-        }), fetch_redirect_response=False)
+        self.assertRedirects(
+            response,
+            reverse(
+                "inventory:catalogue_add_group_link",
+                kwargs={
+                    "type_id": self.content_type,
+                    "item_id": MiscellaneousItem.objects.get(name="test_update_view_item_group").id,
+                },
+            ),
+            fetch_redirect_response=False,
+        )
 
 
 class TestItemDeleteView(ViewValidityMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
     base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
         self.item = MiscellaneousItem.objects.get(id=4)
         super(TestItemDeleteView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='delete_miscellaneousitem'))
+        self.user.user_permissions.add(Permission.objects.get(codename="delete_miscellaneousitem"))
 
     def get_base_url(self, content_type=None, item_id=None):
         content_type = content_type or self.content_type
         item_id = item_id or self.item.id
-        return reverse('inventory:catalogue_delete_item', kwargs={
-            'type_id':content_type,
-            'item_id': item_id,
-        })
+        return reverse(
+            "inventory:catalogue_delete_item",
+            kwargs={
+                "type_id": content_type,
+                "item_id": item_id,
+            },
+        )
 
     def test_class(self):
         self.assertTrue(issubclass(DeleteItemView, MembershipRequiredMixin))
@@ -488,7 +536,7 @@ class TestItemDeleteView(ViewValidityMixin, TestCase):
 
     @suppress_warnings
     def test_not_authorised_get(self):
-        self.user.user_permissions.remove(Permission.objects.get(codename='delete_miscellaneousitem'))
+        self.user.user_permissions.remove(Permission.objects.get(codename="delete_miscellaneousitem"))
         response = self.client.get(self.get_base_url(), data={})
         self.assertEqual(response.status_code, 403)
 
@@ -497,9 +545,9 @@ class TestItemDeleteView(ViewValidityMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_post_successful(self):
-        """ Tests a succesful post on a non-conflicted item type """
+        """Tests a succesful post on a non-conflicted item type"""
         response = self.client.post(self.get_base_url(), data={}, follow=True)
-        success_url = reverse('inventory:catalogue', kwargs={'type_id': self.content_type})
+        success_url = reverse("inventory:catalogue", kwargs={"type_id": self.content_type})
         self.assertRedirects(response, success_url)
 
         # Test success message
@@ -510,9 +558,9 @@ class TestItemDeleteView(ViewValidityMixin, TestCase):
         self.assertFalse(MiscellaneousItem.objects.filter(id=self.item.id).exists())
 
     def test_can_maintain_ownerships(self):
-        """ Tests that can_maintain_ownerships is handed to the form """
+        """Tests that can_maintain_ownerships is handed to the form"""
         return
-        permission = f'can_maintain_{slugify(self.item.__class__.__name__)}_ownerships'
+        permission = f"can_maintain_{slugify(self.item.__class__.__name__)}_ownerships"
         permission = Permission.objects.get(codename=permission)
         self.user.user_permissions.remove(Permission.objects.get(codename=permission))
 
@@ -525,34 +573,34 @@ class TestItemDeleteView(ViewValidityMixin, TestCase):
         self.assertNotEqual(response.status_code, 200)
 
     def test_template_context(self):
-        response  = self.client.get(self.get_base_url(item_id=1), data={})
+        response = self.client.get(self.get_base_url(item_id=1), data={})
         context = response.context
 
-        self.assertIn('active_links', context.keys())
-        self.assertIn('can_maintain_ownerships', context.keys())
+        self.assertIn("active_links", context.keys())
+        self.assertIn("can_maintain_ownerships", context.keys())
 
-        self.assertIsInstance(context['active_links'], QuerySet)
-        self.assertEqual(context['active_links'].last().id, 3)
-        self.assertEqual(context['can_maintain_ownerships'], False)
+        self.assertIsInstance(context["active_links"], QuerySet)
+        self.assertEqual(context["active_links"].last().id, 3)
+        self.assertEqual(context["can_maintain_ownerships"], False)
 
 
 ######################################################
 
 
 class TestItemLinkMaintenanceView(ViewValidityMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
     base_user_id = 100
 
     def setUp(self):
         self.content_type = ContentType.objects.get_for_model(MiscellaneousItem)
         self.item = MiscellaneousItem.objects.get(id=1)
         super(TestItemLinkMaintenanceView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_miscellaneousitem'))
+        self.user.user_permissions.add(Permission.objects.get(codename="maintain_ownerships_for_miscellaneousitem"))
 
     def get_base_url(self, content_type=None, item_id=None):
         content_type = content_type or self.content_type
         item = item_id or self.item.id
-        return reverse('inventory:catalogue_item_links', kwargs={'type_id':content_type, 'item_id': item})
+        return reverse("inventory:catalogue_item_links", kwargs={"type_id": content_type, "item_id": item})
 
     def test_class(self):
         self.assertTrue(issubclass(ItemLinkMaintenanceView, MembershipRequiredMixin))
@@ -567,42 +615,42 @@ class TestItemLinkMaintenanceView(ViewValidityMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_context_data(self):
-        response  = self.client.get(self.get_base_url(), data={})
+        response = self.client.get(self.get_base_url(), data={})
         context = response.context
 
         # Ensure that ownerships only contain activated instances
-        self.assertIn('active_links', context.keys())
-        self.assertEqual(set(context['active_links']), set(self.item.ownerships.filter(is_active=True)))
+        self.assertIn("active_links", context.keys())
+        self.assertEqual(set(context["active_links"]), set(self.item.ownerships.filter(is_active=True)))
 
-        self.assertIn('inactive_links', context.keys())
-        self.assertEqual(set(context['inactive_links']), set(self.item.ownerships.filter(is_active=False)))
+        self.assertIn("inactive_links", context.keys())
+        self.assertEqual(set(context["inactive_links"]), set(self.item.ownerships.filter(is_active=False)))
 
         # Test presence of context permission attributes
-        self.assertIn('can_add_to_group', context.keys())
-        self.assertIn('can_add_to_member', context.keys())
-        self.assertFalse(context['can_add_to_group'])
-        self.assertFalse(context['can_add_to_member'])
+        self.assertIn("can_add_to_group", context.keys())
+        self.assertIn("can_add_to_member", context.keys())
+        self.assertFalse(context["can_add_to_group"])
+        self.assertFalse(context["can_add_to_member"])
 
         # Test that the actual permissions are updated in the context
-        self.user.user_permissions.add(Permission.objects.get(codename='add_group_ownership_for_miscellaneousitem'))
+        self.user.user_permissions.add(Permission.objects.get(codename="add_group_ownership_for_miscellaneousitem"))
         context = self.client.get(self.get_base_url(), data={}).context
-        self.assertTrue(context['can_add_to_group'])
-        self.assertFalse(context['can_add_to_member'])
+        self.assertTrue(context["can_add_to_group"])
+        self.assertFalse(context["can_add_to_member"])
 
-        self.user.user_permissions.add(Permission.objects.get(codename='add_member_ownership_for_miscellaneousitem'))
+        self.user.user_permissions.add(Permission.objects.get(codename="add_member_ownership_for_miscellaneousitem"))
         context = self.client.get(self.get_base_url(), data={}).context
-        self.assertTrue(context['can_add_to_group'])
-        self.assertTrue(context['can_add_to_member'])
+        self.assertTrue(context["can_add_to_group"])
+        self.assertTrue(context["can_add_to_member"])
 
         context = self.client.get(self.get_base_url(), data={}).context
-        self.assertFalse(context['can_delete'])
-        self.user.user_permissions.add(Permission.objects.get(codename='delete_miscellaneousitem'))
+        self.assertFalse(context["can_delete"])
+        self.user.user_permissions.add(Permission.objects.get(codename="delete_miscellaneousitem"))
         context = self.client.get(self.get_base_url(), data={}).context
-        self.assertTrue(context['can_delete'])
+        self.assertTrue(context["can_delete"])
 
 
 class TestOwnershipCatalogueLinkMixin(TestMixinMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
     mixin_class = OwnershipCatalogueLinkMixin
     pre_inherit_classes = [CatalogueMixin, ItemMixin]
     base_user_id = 100
@@ -615,9 +663,9 @@ class TestOwnershipCatalogueLinkMixin(TestMixinMixin, TestCase):
 
     def get_base_url_kwargs(self):
         return {
-            'type_id': self.content_type,
-            'item_id': self.item.id,
-            'link_id': self.ownership.id,
+            "type_id": self.content_type,
+            "item_id": self.item.id,
+            "link_id": self.ownership.id,
         }
 
     def test_get_successful(self):
@@ -625,30 +673,34 @@ class TestOwnershipCatalogueLinkMixin(TestMixinMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_invalid_item(self):
-        """ Tests that the Ownership instance has to be part of the known item """
-        self.assertRaises404(url_kwargs={
-            'type_id': self.content_type,
-            'item_id': 2,
-            'link_id': 1,
-        })
+        """Tests that the Ownership instance has to be part of the known item"""
+        self.assertRaises404(
+            url_kwargs={
+                "type_id": self.content_type,
+                "item_id": 2,
+                "link_id": 1,
+            }
+        )
 
     def test_get_non_existent(self):
-        """ Assert that a nonexistent ownership throws a 404 page """
-        self.assertRaises404(url_kwargs={
-            'type_id':self.content_type,
-            'item_id': self.item.id,
-            'link_id': 404,
-        })
+        """Assert that a nonexistent ownership throws a 404 page"""
+        self.assertRaises404(
+            url_kwargs={
+                "type_id": self.content_type,
+                "item_id": self.item.id,
+                "link_id": 404,
+            }
+        )
 
     def test_context_data(self):
         self._build_get_response(save_view=True)
         context = self.view.get_context_data()
-        self.assertIn('ownership', context.keys())
-        self.assertEqual(context['ownership'], self.ownership)
+        self.assertIn("ownership", context.keys())
+        self.assertEqual(context["ownership"], self.ownership)
 
 
 class TestUpdateCatalogueLinkView(ViewValidityMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
     base_user_id = 100
 
     def setUp(self):
@@ -656,17 +708,20 @@ class TestUpdateCatalogueLinkView(ViewValidityMixin, TestCase):
         self.item = MiscellaneousItem.objects.get(id=1)
         self.ownership = Ownership.objects.get(id=1)
         super(TestUpdateCatalogueLinkView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_miscellaneousitem'))
+        self.user.user_permissions.add(Permission.objects.get(codename="maintain_ownerships_for_miscellaneousitem"))
 
     def get_base_url(self, content_type=None, item_id=None, ownership_id=None):
         content_type = content_type or self.content_type
         item_id = item_id or self.item.id
         ownership_id = ownership_id or self.ownership.id
-        return reverse('inventory:catalogue_item_links', kwargs={
-            'type_id':content_type,
-            'item_id': item_id,
-            'link_id': ownership_id,
-        })
+        return reverse(
+            "inventory:catalogue_item_links",
+            kwargs={
+                "type_id": content_type,
+                "item_id": item_id,
+                "link_id": ownership_id,
+            },
+        )
 
     def test_class(self):
         self.assertTrue(issubclass(UpdateCatalogueLinkView, MembershipRequiredMixin))
@@ -676,7 +731,7 @@ class TestUpdateCatalogueLinkView(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(UpdateCatalogueLinkView, PermissionRequiredMixin))
         self.assertTrue(issubclass(UpdateCatalogueLinkView, UpdateView))
         self.assertEqual(UpdateCatalogueLinkView.template_name, "inventory/catalogue_adjust_link.html")
-        self.assertEqual(UpdateCatalogueLinkView.fields, ['note', 'added_since', 'value'])
+        self.assertEqual(UpdateCatalogueLinkView.fields, ["note", "added_since", "value"])
 
     def test_successful_get(self):
         response = self.client.get(self.get_base_url(), data={})
@@ -684,21 +739,20 @@ class TestUpdateCatalogueLinkView(ViewValidityMixin, TestCase):
 
     def test_user_form_has_no_value_field(self):
         response = self.client.get(self.get_base_url(), data={})
-        form = response.context['form']
+        form = response.context["form"]
         # The value field should not be in fields
-        self.assertNotIn('value', form.fields.keys())
-
+        self.assertNotIn("value", form.fields.keys())
 
     def test_post_successful(self):
-        """ Tests a succesful post """
-        response = self.client.post(self.get_base_url(), data={'added_since': '2021-08-07'}, follow=True)
-        success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type, 'item_id': 1})
+        """Tests a succesful post"""
+        response = self.client.post(self.get_base_url(), data={"added_since": "2021-08-07"}, follow=True)
+        success_url = reverse("inventory:catalogue_item_links", kwargs={"type_id": self.content_type, "item_id": 1})
         self.assertRedirects(response, success_url)
 
 
 class TestLinkActivationStateView(ViewValidityMixin, TestCase):
     # Uses activation form as default context
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
     base_user_id = 100
 
     def setUp(self):
@@ -706,17 +760,20 @@ class TestLinkActivationStateView(ViewValidityMixin, TestCase):
         self.item = MiscellaneousItem.objects.get(id=1)
         self.ownership = Ownership.objects.get(id=2)
         super(TestLinkActivationStateView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_miscellaneousitem'))
+        self.user.user_permissions.add(Permission.objects.get(codename="maintain_ownerships_for_miscellaneousitem"))
 
     def get_base_url(self, content_type=None, item_id=None, ownership_id=None):
         content_type = content_type or self.content_type
         item_id = item_id or self.item.id
         ownership_id = ownership_id or self.ownership.id
-        return reverse('inventory:catalogue_item_link_activation', kwargs={
-            'type_id':content_type,
-            'item_id': item_id,
-            'link_id': ownership_id,
-        })
+        return reverse(
+            "inventory:catalogue_item_link_activation",
+            kwargs={
+                "type_id": content_type,
+                "item_id": item_id,
+                "link_id": ownership_id,
+            },
+        )
 
     def test_class(self):
         self.assertTrue(issubclass(LinkActivationStateView, MembershipRequiredMixin))
@@ -725,7 +782,7 @@ class TestLinkActivationStateView(ViewValidityMixin, TestCase):
         self.assertTrue(issubclass(LinkActivationStateView, OwnershipCatalogueLinkMixin))
         self.assertTrue(issubclass(LinkActivationStateView, PermissionRequiredMixin))
         self.assertTrue(issubclass(LinkActivationStateView, FormView))
-        self.assertEqual(LinkActivationStateView.http_method_names, ['post'])
+        self.assertEqual(LinkActivationStateView.http_method_names, ["post"])
 
     @suppress_warnings
     def test_unsuccessful_get(self):
@@ -733,9 +790,9 @@ class TestLinkActivationStateView(ViewValidityMixin, TestCase):
         self.assertEqual(response.status_code, 405)
 
     def test_post_successful(self):
-        """ Tests a succesful post """
+        """Tests a succesful post"""
         response = self.client.post(self.get_base_url(), data={}, follow=True)
-        success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type, 'item_id': 1})
+        success_url = reverse("inventory:catalogue_item_links", kwargs={"type_id": self.content_type, "item_id": 1})
         self.assertRedirects(response, success_url)
         msg = f"{self.item} has been marked as taken home"
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
@@ -743,24 +800,27 @@ class TestLinkActivationStateView(ViewValidityMixin, TestCase):
 
     def test_post_unsuccesful(self):
         response = self.client.post(self.get_base_url(ownership_id=1), data={}, follow=True)
-        success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type, 'item_id': 1})
+        success_url = reverse("inventory:catalogue_item_links", kwargs={"type_id": self.content_type, "item_id": 1})
         self.assertRedirects(response, success_url)
         self.assertHasMessage(response, level=messages.ERROR, text="This action was not possible")
 
     def test_deactivation_post(self):
-        url = reverse('inventory:catalogue_item_link_deactivation', kwargs={
-            'type_id': self.content_type,
-            'item_id': 1,
-            'link_id': 1,
-        })
+        url = reverse(
+            "inventory:catalogue_item_link_deactivation",
+            kwargs={
+                "type_id": self.content_type,
+                "item_id": 1,
+                "link_id": 1,
+            },
+        )
         response = self.client.post(url, data={}, follow=True)
-        success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type, 'item_id': 1})
+        success_url = reverse("inventory:catalogue_item_links", kwargs={"type_id": self.content_type, "item_id": 1})
         self.assertRedirects(response, success_url)
         self.assertFalse(Ownership.objects.get(id=1).is_active)
 
 
 class TestLinkDeletionView(ViewValidityMixin, TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'inventory/test_ownership']
+    fixtures = ["test_users", "test_groups", "test_members.json", "inventory/test_ownership"]
     base_user_id = 100
 
     def setUp(self):
@@ -768,17 +828,20 @@ class TestLinkDeletionView(ViewValidityMixin, TestCase):
         self.item = MiscellaneousItem.objects.get(id=1)
         self.ownership = Ownership.objects.get(id=2)
         super(TestLinkDeletionView, self).setUp()
-        self.user.user_permissions.add(Permission.objects.get(codename='maintain_ownerships_for_miscellaneousitem'))
+        self.user.user_permissions.add(Permission.objects.get(codename="maintain_ownerships_for_miscellaneousitem"))
 
     def get_base_url(self, content_type=None, item_id=None, ownership_id=None):
         content_type = content_type or self.content_type
         item_id = item_id or self.item.id
         ownership_id = ownership_id or self.ownership.id
-        return reverse('inventory:catalogue_item_link_deletion', kwargs={
-            'type_id': content_type,
-            'item_id': item_id,
-            'link_id': ownership_id,
-        })
+        return reverse(
+            "inventory:catalogue_item_link_deletion",
+            kwargs={
+                "type_id": content_type,
+                "item_id": item_id,
+                "link_id": ownership_id,
+            },
+        )
 
     def test_class(self):
         self.assertTrue(issubclass(LinkDeletionView, MembershipRequiredMixin))
@@ -795,15 +858,19 @@ class TestLinkDeletionView(ViewValidityMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_post_successful(self):
-        """ Tests a succesful post """
+        """Tests a succesful post"""
         response = self.client.post(self.get_base_url(), data={}, follow=True)
-        success_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type, 'item_id': self.item.id})
+        success_url = reverse(
+            "inventory:catalogue_item_links", kwargs={"type_id": self.content_type, "item_id": self.item.id}
+        )
         self.assertRedirects(response, success_url)
         self.assertHasMessage(response, level=messages.SUCCESS, text=f"{self.ownership} has been removed")
 
     def test_post_unsuccessful(self):
-        """ Tests a succesful post """
+        """Tests a succesful post"""
         response = self.client.post(self.get_base_url(ownership_id=1), data={}, follow=True)
-        faillure_url = reverse('inventory:catalogue_item_links', kwargs={'type_id': self.content_type, 'item_id': self.item.id})
+        faillure_url = reverse(
+            "inventory:catalogue_item_links", kwargs={"type_id": self.content_type, "item_id": self.item.id}
+        )
         self.assertRedirects(response, faillure_url)
         self.assertHasMessage(response, level=messages.ERROR, text="This action was not possible")

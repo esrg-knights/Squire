@@ -6,9 +6,8 @@ from django.contrib.messages import success, warning
 from utils.forms import get_basic_filter_by_field_form
 
 
-
 class PostOnlyFormViewMixin:
-    form_success_method_name = 'save'
+    form_success_method_name = "save"
 
     def get(self, request, *args, **kwargs):
         warning(request, "You can't visit the page you tried to... visit...")
@@ -34,7 +33,7 @@ class PostOnlyFormViewMixin:
         return HttpResponseRedirect(self.get_success_url())
 
     def get_first_form_error(self, form):
-        """ Returns the error code from the first invalidation error found"""
+        """Returns the error code from the first invalidation error found"""
         if form.errors:
             invalidation_errors = form.errors.as_data()
             first_error = invalidation_errors[list(invalidation_errors.keys())[0]][0]
@@ -46,11 +45,12 @@ class PostOnlyFormViewMixin:
 
     def get_faillure_message(self, form):
         invalidation_error = self.get_first_form_error(form)
-        return f'Action could not be performed; {invalidation_error.message}'
+        return f"Action could not be performed; {invalidation_error.message}"
 
 
 class RedirectMixin:
-    """ A mixin that takes 'redirect_to' from the GET parameters and applies that when necessary """
+    """A mixin that takes 'redirect_to' from the GET parameters and applies that when necessary"""
+
     redirect_url_name = "redirect_to"
 
     def __init__(self, *args, **kwargs):
@@ -64,7 +64,7 @@ class RedirectMixin:
 
     def get_context_data(self, *args, **kwargs):
         context = super(RedirectMixin, self).get_context_data(*args, **kwargs)
-        context['redirect_to_url'] = self.redirect_to
+        context["redirect_to_url"] = self.redirect_to
         return context
 
     def get_success_url(self):
@@ -75,23 +75,25 @@ class RedirectMixin:
 
 
 class SearchFormMixin:
-    """ A mixin for ListViews that allow filtering of the data in the queryset through a form """
+    """A mixin for ListViews that allow filtering of the data in the queryset through a form"""
+
     search_form_class = None
     filter_field_name = None
 
     def get_filter_form(self):
-        """ Returns the initialised filter form """
+        """Returns the initialised filter form"""
         if self.filter_field_name:
             form_class = get_basic_filter_by_field_form(self.filter_field_name)
         elif self.search_form_class:
             form_class = self.search_form_class
         else:
-            raise KeyError("Either 'search_form_class' or a 'filter_field_name' need to be defined"
-                           "to use SearchFormMixin")
+            raise KeyError(
+                "Either 'search_form_class' or a 'filter_field_name' need to be defined" "to use SearchFormMixin"
+            )
         return form_class(**self.get_filter_form_kwargs())
 
     def get_filter_form_kwargs(self, **kwargs):
-        return {'data': self.request.GET, **kwargs}
+        return {"data": self.request.GET, **kwargs}
 
     def dispatch(self, request, *args, **kwargs):
         self.search_form = self.get_filter_form()
@@ -108,14 +110,11 @@ class SearchFormMixin:
             return queryset
 
     def get_context_data(self, **kwargs):
-        return super(SearchFormMixin, self).get_context_data(
-            filter_form=self.search_form,
-            **kwargs
-        )
-
+        return super(SearchFormMixin, self).get_context_data(filter_form=self.search_form, **kwargs)
 
 
 class SuperUserRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
-    """ Verify that the current user is an admin """
+    """Verify that the current user is an admin"""
+
     def test_func(self):
         return self.request.user.is_superuser

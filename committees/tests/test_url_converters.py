@@ -5,7 +5,8 @@ from committees.url_converters import AssociationgroupConverter
 
 
 class AssociationGroupConverterTestCase(TestCase):
-    fixtures = ['test_users', 'test_groups', 'test_members.json', 'committees/associationgroups']
+    fixtures = ["test_users", "test_groups", "test_members.json", "committees/associationgroups"]
+
     def setUp(self):
         self.converter = AssociationgroupConverter()
 
@@ -17,10 +18,7 @@ class AssociationGroupConverterTestCase(TestCase):
         self.assertEqual(self.converter.to_python(3).id, 3)
 
     def test_to_url_from_int(self):
-        self.assertEqual(self.converter.to_url(2),2)
+        self.assertEqual(self.converter.to_url(2), 2)
 
     def test_to_url_from_group(self):
-        self.assertEqual(
-            self.converter.to_url(AssociationGroup.objects.get(id=1)),
-            1
-        )
+        self.assertEqual(self.converter.to_url(AssociationGroup.objects.get(id=1)), 1)

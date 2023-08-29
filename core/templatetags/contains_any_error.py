@@ -7,6 +7,7 @@ register = template.Library()
 # @since 27 MAR 2020
 ##################################################################################
 
+
 @register.filter
 def contains_any_error(fields):
     return len([field.errors for field, _ in fields if field.errors]) > 0

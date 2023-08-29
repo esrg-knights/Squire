@@ -7,11 +7,23 @@ from committees.mixins import AssociationGroupMixin
 
 from nextcloud_integration.models import SquireNextCloudFolder
 from nextcloud_integration.utils import refresh_status
-from nextcloud_integration.views import FolderEditView, FolderCreateView, SyncFileToFolderView, FolderMixin, NextcloudConnectionViewMixin
+from nextcloud_integration.views import (
+    FolderEditView,
+    FolderCreateView,
+    SyncFileToFolderView,
+    FolderMixin,
+    NextcloudConnectionViewMixin,
+)
 
 
-__all__ = ["CloudFoldersOverview", "CloudFolderEditView", "CloudFolderCreateView", "CloudFileSyncView", \
-           "CloudFileSyncInstructionsView", "CloudFolderRefreshView"]
+__all__ = [
+    "CloudFoldersOverview",
+    "CloudFolderEditView",
+    "CloudFolderCreateView",
+    "CloudFileSyncView",
+    "CloudFileSyncInstructionsView",
+    "CloudFolderRefreshView",
+]
 
 
 class CloudFoldersOverview(AssociationGroupMixin, ListView):
@@ -25,9 +37,12 @@ class CloudFolderCreateView(AssociationGroupMixin, FolderCreateView):
     permission_required = []
 
     def get_success_url(self):
-        return reverse("committees:nextcloud:cloud_overview", kwargs={
-            'group_id': self.association_group.id,
-        })
+        return reverse(
+            "committees:nextcloud:cloud_overview",
+            kwargs={
+                "group_id": self.association_group.id,
+            },
+        )
 
 
 class CloudFolderEditView(AssociationGroupMixin, FolderEditView):
@@ -35,18 +50,24 @@ class CloudFolderEditView(AssociationGroupMixin, FolderEditView):
     permission_required = []
 
     def get_success_url(self):
-        return reverse("committees:nextcloud:cloud_overview", kwargs={
-            'group_id': self.association_group.id,
-        })
+        return reverse(
+            "committees:nextcloud:cloud_overview",
+            kwargs={
+                "group_id": self.association_group.id,
+            },
+        )
 
 
 class CloudFileSyncView(AssociationGroupMixin, SyncFileToFolderView):
     template_name = "nextcloud_integration/committees/committee_cloud_folder_sync.html"
 
     def get_success_url(self):
-        return reverse("committees:nextcloud:cloud_overview", kwargs={
-            'group_id': self.association_group.id,
-        })
+        return reverse(
+            "committees:nextcloud:cloud_overview",
+            kwargs={
+                "group_id": self.association_group.id,
+            },
+        )
 
 
 class CloudFileSyncInstructionsView(AssociationGroupMixin, FolderMixin, TemplateView):
@@ -54,7 +75,7 @@ class CloudFileSyncInstructionsView(AssociationGroupMixin, FolderMixin, Template
 
 
 class CloudFolderRefreshView(AssociationGroupMixin, NextcloudConnectionViewMixin, FolderMixin, View):
-    http_method_names = ['post']
+    http_method_names = ["post"]
 
     def post(self, *args, **kwargs):
         if refresh_status(self.folder):
@@ -70,8 +91,9 @@ class CloudFolderRefreshView(AssociationGroupMixin, NextcloudConnectionViewMixin
         return HttpResponseRedirect(self.get_redirect_url())
 
     def get_redirect_url(self):
-        return reverse("committees:nextcloud:cloud_overview", kwargs={
-            'group_id': self.association_group.id,
-        })
-
-
+        return reverse(
+            "committees:nextcloud:cloud_overview",
+            kwargs={
+                "group_id": self.association_group.id,
+            },
+        )

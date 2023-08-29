@@ -8,7 +8,6 @@ from committees.models import GroupExternalUrl, AssociationGroup, AssociationGro
 
 
 class DeleteGroupExternalUrlForm(Form):
-
     def __init__(self, *args, instance=None, **kwargs):
         self.instance = instance
         super(DeleteGroupExternalUrlForm, self).__init__(*args, **kwargs)
@@ -22,7 +21,9 @@ class AddOrUpdateExternalUrlForm(ModelForm):
 
     class Meta:
         model = GroupExternalUrl
-        exclude = ['association_group',]
+        exclude = [
+            "association_group",
+        ]
 
     def __init__(self, *args, association_group=None, **kwargs):
         assert association_group is not None
@@ -31,15 +32,15 @@ class AddOrUpdateExternalUrlForm(ModelForm):
 
     def clean_id(self):
         try:
-            self.instance = GroupExternalUrl.objects.get(id=self.cleaned_data['id'])
+            self.instance = GroupExternalUrl.objects.get(id=self.cleaned_data["id"])
         except GroupExternalUrl.DoesNotExist:
             # Connect the association group to the new model instance
             self.instance.association_group = self.association_group
             return None
         if self.instance not in self.association_group.shortcut_set.all():
-            raise ValidationError(f"Shortcut was not part of {self.association_group}", code='unconnected')
+            raise ValidationError(f"Shortcut was not part of {self.association_group}", code="unconnected")
 
-        return self.cleaned_data['id']
+        return self.cleaned_data["id"]
 
     def save(self, commit=True):
         created = self.instance.id is None
@@ -49,9 +50,10 @@ class AddOrUpdateExternalUrlForm(ModelForm):
 
 class AssociationGroupMembershipForm(ModelForm):
     id = IntegerField(min_value=0, required=True, widget=HiddenInput)
+
     class Meta:
         model = AssociationGroupMembership
-        fields = ['role', 'title']
+        fields = ["role", "title"]
 
     def __init__(self, *args, association_group=None, **kwargs):
         assert association_group is not None
@@ -59,7 +61,7 @@ class AssociationGroupMembershipForm(ModelForm):
         super(AssociationGroupMembershipForm, self).__init__(*args, **kwargs)
 
     def clean_id(self):
-        id = self.cleaned_data['id']
+        id = self.cleaned_data["id"]
         try:
             self.instance = self.association_group.associationgroupmembership_set.get(id=id)
         except AssociationGroupMembership.DoesNotExist:
@@ -71,10 +73,12 @@ class AssociationGroupMembershipForm(ModelForm):
 class AssociationGroupUpdateForm(MarkdownForm):
     class Meta:
         model = AssociationGroup
-        fields = ['instructions',]
+        fields = [
+            "instructions",
+        ]
 
 
 class AssociationGroupAdminForm(MarkdownForm):
     class Meta:
         model = AssociationGroup
-        fields = '__all__'
+        fields = "__all__"

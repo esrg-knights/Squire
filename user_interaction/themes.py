@@ -4,14 +4,17 @@ from django.utils.safestring import mark_safe
 
 
 class SquireUserTheme:
-    """ Base class for user themes """
+    """Base class for user themes"""
+
     name = None
     css = ()
     js = ()
     raw_js = ()
 
     def get_css(self):
-        return format_html_join("\n", "<link rel='stylesheet' href='{}'>", ((StaticNode.handle_simple(x),) for x in self.css))
+        return format_html_join(
+            "\n", "<link rel='stylesheet' href='{}'>", ((StaticNode.handle_simple(x),) for x in self.css)
+        )
 
     def get_js(self):
         return format_html_join("\n", "<script src='{}'></script>", ((StaticNode.handle_simple(x),) for x in self.js))
@@ -24,16 +27,18 @@ class SquireUserTheme:
 
 
 class LightUserTheme(SquireUserTheme):
-    """ Standard green-white theme """
+    """Standard green-white theme"""
+
     name = "Light Theme"
-    css = ('themes/standard-theme.css',)
+    css = ("themes/standard-theme.css",)
 
 
 class DarkUserTheme(SquireUserTheme):
-    """ Dark Mode """
+    """Dark Mode"""
+
     name = "Dark Mode"
     # here, so it's consistent
-    css = LightUserTheme.css + ('themes/dark-theme.css',)
+    css = LightUserTheme.css + ("themes/dark-theme.css",)
 
 
 class DefaultAutoTheme(SquireUserTheme):
@@ -42,10 +47,11 @@ class DefaultAutoTheme(SquireUserTheme):
 
 
 class AprilUserTheme(SquireUserTheme):
-    """ April's Fools 2020 theme """
+    """April's Fools 2020 theme"""
+
     name = '"Classic"'
-    css = ('themes/april-theme.css',)
-    js = ('themes/april-theme.js',)
+    css = ("themes/april-theme.css",)
+    js = ("themes/april-theme.js",)
     raw_js = (
         f"var parrotImg = \"{StaticNode.handle_simple('themes/images/april/parrot.gif')}\"",
         f"var adImg = \"{StaticNode.handle_simple('themes/images/april/tim-merch-ad.gif')}\"",
@@ -53,51 +59,54 @@ class AprilUserTheme(SquireUserTheme):
 
 
 class FantasyCourtUserTheme(SquireUserTheme):
-    """ Fantasy Court theme """
-    name = 'Fantasy Court'
-    css = ('themes/fc-theme.css',)
-    js = ('themes/fc-theme.js',)
-    raw_js = (
-        f"var fancyedgeImg = \"{StaticNode.handle_simple('themes/images/fc/fancy-edge.png')}\"",
-    )
+    """Fantasy Court theme"""
+
+    name = "Fantasy Court"
+    css = ("themes/fc-theme.css",)
+    js = ("themes/fc-theme.js",)
+    raw_js = (f"var fancyedgeImg = \"{StaticNode.handle_simple('themes/images/fc/fancy-edge.png')}\"",)
 
 
 class QuadriviumUserTheme(SquireUserTheme):
-    """ Quadrivium Theme """
-    name = 'Nemesis'
-    css = ('themes/q-theme.css',)
-    js = ('themes/util-fns.js', 'themes/q-theme.js')
+    """Quadrivium Theme"""
+
+    name = "Nemesis"
+    css = ("themes/q-theme.css",)
+    js = ("themes/util-fns.js", "themes/q-theme.js")
 
 
 class DoppioUserTheme(SquireUserTheme):
-    """ Doppio Theme """
-    name = 'Espresso'
-    css = ('themes/doppio-theme.css',)
+    """Doppio Theme"""
+
+    name = "Espresso"
+    css = ("themes/doppio-theme.css",)
 
 
 class ScalaUserTheme(SquireUserTheme):
-    """ Scala Theme """
-    name = 'Dining'
-    css = ('themes/scala-theme.css',)
+    """Scala Theme"""
+
+    name = "Dining"
+    css = ("themes/scala-theme.css",)
 
 
 class KinjinUserTheme(SquireUserTheme):
-    """ Kinjin Theme """
-    name = '日本スキン'
-    css = ('themes/kinjin-theme.css',)
-    js = ('themes/util-fns.js', 'themes/kinjin-theme.js')
+    """Kinjin Theme"""
+
+    name = "日本スキン"
+    css = ("themes/kinjin-theme.css",)
+    js = ("themes/util-fns.js", "themes/kinjin-theme.js")
 
 
 THEMES = {
-    'THEME_DEFAULT': DefaultAutoTheme,
-    'THEME_LIGHT': LightUserTheme,
-    'THEME_DARK': DarkUserTheme,
-    'THEME_APRIL': AprilUserTheme,
-    'THEME_FC': FantasyCourtUserTheme,
-    'THEME_Q': QuadriviumUserTheme,
-    'THEME_DOPPIO': DoppioUserTheme,
-    'THEME_SCALA': ScalaUserTheme,
-    'THEME_KINJIN': KinjinUserTheme,
+    "THEME_DEFAULT": DefaultAutoTheme,
+    "THEME_LIGHT": LightUserTheme,
+    "THEME_DARK": DarkUserTheme,
+    "THEME_APRIL": AprilUserTheme,
+    "THEME_FC": FantasyCourtUserTheme,
+    "THEME_Q": QuadriviumUserTheme,
+    "THEME_DOPPIO": DoppioUserTheme,
+    "THEME_SCALA": ScalaUserTheme,
+    "THEME_KINJIN": KinjinUserTheme,
 }
 
-DEFAULT_THEME = 'THEME_DEFAULT'
+DEFAULT_THEME = "THEME_DEFAULT"

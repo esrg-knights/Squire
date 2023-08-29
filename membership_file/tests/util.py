@@ -7,12 +7,13 @@ from core.tests.util import TestAccountUser, check_http_response
 # @since 12 FEB 2020
 ##################################################################################
 
+
 class TestMemberUser(TestAccountUser):
-    instance = 'test_member'
+    instance = "test_member"
 
     @classmethod
     def get_fixtures(cls):
-        return super().get_fixtures() + ['test_members.json']
+        return super().get_fixtures() + ["test_members.json"]
 
 
 def check_http_response_with_member_redirect(test, url, http_method, **kwargs):
@@ -26,11 +27,18 @@ def check_http_response_with_member_redirect(test, url, http_method, **kwargs):
     :returns:               A tuple of both responses (account user first).
     """
     return (
-        check_http_response(test, url, http_method, squire_user=TestMemberUser,
-            response_status=200, **kwargs),
-        check_http_response(test, url, http_method, squire_user=TestAccountUser,
-            response_status=200, redirect_url=settings.MEMBERSHIP_FAIL_URL, **kwargs)
+        check_http_response(test, url, http_method, squire_user=TestMemberUser, response_status=200, **kwargs),
+        check_http_response(
+            test,
+            url,
+            http_method,
+            squire_user=TestAccountUser,
+            response_status=200,
+            redirect_url=settings.MEMBERSHIP_FAIL_URL,
+            **kwargs
+        ),
     )
+
 
 # Fills the keys of one dictionary with those of another
 # @param toFill The dictionary to fill
@@ -38,6 +46,7 @@ def check_http_response_with_member_redirect(test, url, http_method, **kwargs):
 # @returns The values from fillData are in toFill
 def fillDictKeys(toFill: dict, fillData: dict) -> dict:
     return {**toFill, **fillData}
+
 
 # Gets the number of non-empty fields in a dictionary
 # @param data The dictionary

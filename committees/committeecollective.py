@@ -10,7 +10,8 @@ from committees.options import settings_options_registry
 
 
 class CommitteeBaseConfig(ViewCollectiveConfig):
-    """ Configurations for additional tabs on committee pages """
+    """Configurations for additional tabs on committee pages"""
+
     setting_option_classes = []
     url_keyword = None
     name = None
@@ -40,33 +41,27 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
         return self.check_group_access(association_group)
 
     def check_group_access(self, association_group):
-        """ Checks whether the group has access """
+        """Checks whether the group has access"""
         if self.group_requires_permission is not None:
             return association_group.has_perm(self.group_requires_permission)
         return True
 
     def enable_access(self, association_group: AssociationGroup):
-        """ Adjusts the association_group so that it can access this collective """
-        association_group.permissions.add(
-            get_perm_from_name(self.group_requires_permission)
-        )
+        """Adjusts the association_group so that it can access this collective"""
+        association_group.permissions.add(get_perm_from_name(self.group_requires_permission))
 
     def disable_access(self, association_group: AssociationGroup):
-        """ Adjusts the association_group so that it can no longer access this collective """
-        association_group.site_group.permissions.remove(
-            get_perm_from_name(self.group_requires_permission)
-        )
-        association_group.permissions.remove(
-            get_perm_from_name(self.group_requires_permission)
-        )
+        """Adjusts the association_group so that it can no longer access this collective"""
+        association_group.site_group.permissions.remove(get_perm_from_name(self.group_requires_permission))
+        association_group.permissions.remove(get_perm_from_name(self.group_requires_permission))
 
     def is_default_for_group(self, association_group: AssociationGroup):
-        """ Whether this collective is a default """
+        """Whether this collective is a default"""
         # Later PR will replace this to default for certain types of groups
         return self.group_requires_permission is None
 
     def get_local_quicklinks(self, association_group):
-        """ Returns a list of dicts with local shortcut instances
+        """Returns a list of dicts with local shortcut instances
         ('name': X, 'url': X)
         """
         return []
@@ -75,8 +70,8 @@ class CommitteeBaseConfig(ViewCollectiveConfig):
         raise NotImplementedError
 
     def get_absolute_url(self, association_group, **url_kwargs):
-        url_kwargs.setdefault('group_id', association_group)
+        url_kwargs.setdefault("group_id", association_group)
         return super(CommitteeBaseConfig, self).get_absolute_url(**url_kwargs)
 
 
-registry = ViewCollectiveRegistry('committees', 'committee_pages', config_class=CommitteeBaseConfig)
+registry = ViewCollectiveRegistry("committees", "committee_pages", config_class=CommitteeBaseConfig)

@@ -7,7 +7,7 @@ from nextcloud_integration.utils import refresh_status
 from . import patch_construction
 
 
-@patch_construction('utils')
+@patch_construction("utils")
 class RefreshStatusTestCase(TestCase):
     fixtures = ["nextcloud_integration/nextcloud_fixtures"]
 
@@ -21,6 +21,7 @@ class RefreshStatusTestCase(TestCase):
     def test_fail_folder(self, mock):
         def mock_exists(resource=None):
             return not isinstance(resource, NextCloudFolder)
+
         mock.return_value.exists.side_effect = mock_exists
 
         self.assertEqual(refresh_status(self.folder), False)
@@ -31,6 +32,7 @@ class RefreshStatusTestCase(TestCase):
     def test_fail_file(self, mock):
         def mock_exists(resource=None):
             return isinstance(resource, NextCloudFolder)
+
         mock.return_value.exists.side_effect = mock_exists
 
         self.assertEqual(refresh_status(self.folder), False)

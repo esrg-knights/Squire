@@ -2,13 +2,13 @@ from committees.models import AssociationGroup
 
 
 class AssociationgroupConverter:
-    regex = '[0-9]*'
+    regex = "[0-9]*"
 
     def to_python(self, value):
         try:
             return AssociationGroup.objects.get(id=value)
         except AssociationGroup.DoesNotExist:
-            raise ValueError("There is no Associationgroup for id "+str(value))
+            raise ValueError("There is no Associationgroup for id " + str(value))
 
     def to_url(self, association_group):
         # Make sure id values still work for old versions

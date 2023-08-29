@@ -6,13 +6,15 @@ from django.utils.safestring import mark_safe
 from martor.fields import MartorFormField
 from martor.utils import markdownify
 
-__all__ = ['MarkdownObject', 'MarkdownFieldMixin', 'MarkdownCharField', 'MarkdownTextField']
+__all__ = ["MarkdownObject", "MarkdownFieldMixin", "MarkdownCharField", "MarkdownTextField"]
+
 
 class MarkdownObject:
     """
-        A wrapper object for strings containing Markdown. Contains methods
-        for rendering, stripping, and displaying as raw Markdown.
+    A wrapper object for strings containing Markdown. Contains methods
+    for rendering, stripping, and displaying as raw Markdown.
     """
+
     def __init__(self, raw_value):
         self.raw_value = raw_value
 
@@ -32,31 +34,33 @@ class MarkdownObject:
 
     def as_rendered(self):
         """
-            Returns the Markdown in html format.  E.g. <b>bold text</b>
-            Tags not compiled by Markdown are escaped, meaning that it is safe to use.
-            Note that markdownify(..) strips HTML tags using django's strip_tags(..) before
-            applying markdown.
+        Returns the Markdown in html format.  E.g. <b>bold text</b>
+        Tags not compiled by Markdown are escaped, meaning that it is safe to use.
+        Note that markdownify(..) strips HTML tags using django's strip_tags(..) before
+        applying markdown.
         """
         return mark_safe(markdownify(self.raw_value))
 
     def as_raw(self):
-        """ Returns the Markdown in its native syntax. E.g. **bold text** """
+        """Returns the Markdown in its native syntax. E.g. **bold text**"""
         return self.raw_value
 
     def as_plaintext(self):
-        """ Returns the Markdown with its html tags stripped. E.g. <**bold text**> becomes <bold text>.
-            Note that some text may lose meaning this way.
-            For example, <click [here](https://kotkt.nl)> becomes <click here>
+        """Returns the Markdown with its html tags stripped. E.g. <**bold text**> becomes <bold text>.
+        Note that some text may lose meaning this way.
+        For example, <click [here](https://kotkt.nl)> becomes <click here>
         """
         return mark_safe(strip_tags(self.as_rendered()))
 
+
 class MarkdownFieldMixin:
     """
-        Mixin to be used by other model fields that converts text to
-        MarkdownObjects (and vice versa).
-        Should only be used for model fields that natively store text,
-        such as CharField or TextField.
+    Mixin to be used by other model fields that converts text to
+    MarkdownObjects (and vice versa).
+    Should only be used for model fields that natively store text,
+    such as CharField or TextField.
     """
+
     def to_python(self, value):
         if isinstance(value, MarkdownObject) or value is None:
             return value
@@ -87,14 +91,18 @@ class MarkdownFieldMixin:
         # Note: There's no point in using ImageUploadMartorWidget here, as that
         #   requires the user of the view and the model using this field,
         #   which we don't actually know here
-        defaults = {'form_class': MartorFormField}
+        defaults = {"form_class": MartorFormField}
         defaults.update(kwargs)
         return super().formfield(**defaults)
 
+
 class MarkdownCharField(MarkdownFieldMixin, models.CharField):
-    """ CharField that allows Markdown """
+    """CharField that allows Markdown"""
+
     description = "Raw Markdown (up to %(max_length)s)"
 
+
 class MarkdownTextField(MarkdownFieldMixin, models.TextField):
-    """ TextField that allows Markdown """
+    """TextField that allows Markdown"""
+
     description = "Raw Markdown"

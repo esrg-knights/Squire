@@ -27,18 +27,14 @@ try:
     with open(os.path.join(BASE_DIR, "squire", "mailcowconfig.json"), "r") as mailcow_config_fp:
         _mailcow_config = json.load(mailcow_config_fp)
 
-        MAILCOW_HOST = _mailcow_config['host']
-        MAILCOW_API_KEY = _mailcow_config['api_key']
+        MAILCOW_HOST = _mailcow_config["host"]
+        MAILCOW_API_KEY = _mailcow_config["api_key"]
 
-        MEMBER_ALIASES = _mailcow_config['member_aliases']
-        COMMITTEE_CONFIGS = _mailcow_config['committee_aliases']
+        MEMBER_ALIASES = _mailcow_config["member_aliases"]
+        COMMITTEE_CONFIGS = _mailcow_config["committee_aliases"]
 except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
     # Something went wrong in parsing the config file
     MAILCOW_HOST = None
     MAILCOW_API_KEY = None
     MEMBER_ALIASES = {}
-    COMMITTEE_CONFIGS = {
-        "archive_addresses": [],
-        "global_addresses": [],
-        "global_archive_addresses": []
-    }
+    COMMITTEE_CONFIGS = {"archive_addresses": [], "global_addresses": [], "global_archive_addresses": []}
