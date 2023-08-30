@@ -70,7 +70,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, Expor
 
     @object_action(attrs={'class': 'addlink'})
     def register_new_member(modeladmin, request, queryset):
-        view = RegisterNewMemberAdminView.as_view()
+        view = modeladmin.admin_site.admin_view(RegisterNewMemberAdminView.as_view())
         return view(request)
 
     changelist_actions = ('register_new_member', )

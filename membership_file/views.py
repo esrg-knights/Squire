@@ -1,4 +1,6 @@
+from typing import Any, Dict
 from django.contrib import messages
+from django.contrib.admin import helpers
 from django.core.exceptions import PermissionDenied
 from django.forms.models import BaseModelForm
 from django.http import HttpResponse
@@ -103,3 +105,28 @@ class RegisterNewMemberAdminView(CreateView):
             messages.warning(self.request, f"Registered, but did not email member “{self.object}”")
 
         return reverse(f'admin:membership_file_member_change', args=(self.object.id,))
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+
+
+        fields = ['first_name']
+        fields = context['form'].fields
+
+        fieldsets = [(None, {'fields': fields})]
+
+        adminForm = helpers.AdminForm(
+            context['form'],
+            list(fieldsets),
+            {})
+
+        context.update({
+            'adminform': adminForm,
+            # 'form_url': form_url,
+            'is_nav_sidebar_enabled': True,
+            'opts': Member._meta,
+            'title': "Register new member",
+            # 'content_type_id': get_content_type_for_model(self.model).pk,
+            # 'app_label': app_label,
+        })
+        return context

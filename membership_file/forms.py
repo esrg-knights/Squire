@@ -110,6 +110,7 @@ class RegisterMemberForm(UpdatingUserFormMixin, forms.ModelForm):
     Registers a member in the membership file, and optionally sends them an email to link or register a Squire account.
     Also contains some useful presets.
     """
+    required_css_class = 'required'
     class Meta:
         model = Member
         fields = ('first_name', 'tussenvoegsel', 'last_name', 'legal_name', 'student_number', 'educational_institution',
