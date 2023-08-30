@@ -42,6 +42,7 @@ class MemberRoomForm(forms.ModelForm):
         self.instance.accessible_rooms.clear()
         self.instance.accessible_rooms.add(*self.cleaned_data["accessible_rooms"])
 
+
 class AdminMemberForm(UpdatingUserFormMixin, MemberRoomForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -105,30 +106,61 @@ class ContinueMembershipForm(forms.Form):
             member=self.member,
         )
 
+
 class RegisterMemberForm(UpdatingUserFormMixin, forms.ModelForm):
     """
     Registers a member in the membership file, and optionally sends them an email to link or register a Squire account.
     Also contains some useful presets.
     """
-    required_css_class = 'required'
+
+    required_css_class = "required"
+
     class Meta:
         model = Member
-        fields = ('first_name', 'tussenvoegsel', 'last_name', 'legal_name', 'student_number', 'educational_institution',
-                  'tue_card_number', 'email', 'phone_number', 'street', 'house_number', 'house_number_addition', 'postal_code', 'city', 'country',
-                  'date_of_birth', 'notes')
+        fields = (
+            "first_name",
+            "tussenvoegsel",
+            "last_name",
+            "legal_name",
+            "student_number",
+            "educational_institution",
+            "tue_card_number",
+            "email",
+            "phone_number",
+            "street",
+            "house_number",
+            "house_number_addition",
+            "postal_code",
+            "city",
+            "country",
+            "date_of_birth",
+            "notes",
+        )
 
         widgets = {
-            'educational_institution': OtherRadioSelect(choices=[
-                (Member.EDUCATIONAL_INSTITUTION_TUE, 'Eindhoven University of Technology'),
-                ('Fontys Eindhoven', 'Fontys Eindhoven'),
-                ('Summa College', 'Summa College'),
-                ('', 'None (not a student)')
-            ]),
-            'city': OtherRadioSelect(choices=[('Eindhoven', 'Eindhoven'), ('Helmond', 'Helmond'), ('Veldhoven', 'Veldhoven')]),
-            'country': OtherRadioSelect(choices=[('The Netherlands', 'The Netherlands'),]),
+            "educational_institution": OtherRadioSelect(
+                choices=[
+                    (Member.EDUCATIONAL_INSTITUTION_TUE, "Eindhoven University of Technology"),
+                    ("Fontys Eindhoven", "Fontys Eindhoven"),
+                    ("Summa College", "Summa College"),
+                    ("", "None (not a student)"),
+                ]
+            ),
+            "city": OtherRadioSelect(
+                choices=[("Eindhoven", "Eindhoven"), ("Helmond", "Helmond"), ("Veldhoven", "Veldhoven")]
+            ),
+            "country": OtherRadioSelect(
+                choices=[
+                    ("The Netherlands", "The Netherlands"),
+                ]
+            ),
         }
 
-    send_registration_email = forms.BooleanField(initial=True, required=False, help_text="Whether to email a registration link to the new member, allowing them to link their account to this membership data.")
+    send_registration_email = forms.BooleanField(
+        initial=True,
+        required=False,
+        help_text="Whether to email a registration link to the new member, allowing them to link their account to this membership data.",
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -142,69 +174,94 @@ class RegisterMemberForm(UpdatingUserFormMixin, forms.ModelForm):
         choices = [(year.id, year.name) for year in MemberYear.objects.filter(is_active=True)]
         if choices:
             # Skip the field entirely if there are no active years
-            field = forms.MultipleChoiceField(choices=choices, required=True, widget=forms.CheckboxSelectMultiple, initial=[choices[0][0]],
-                label="Create membership for year(s)")
+            field = forms.MultipleChoiceField(
+                choices=choices,
+                required=True,
+                widget=forms.CheckboxSelectMultiple,
+                initial=[choices[0][0]],
+                label="Create membership for year(s)",
+            )
             self.fields["active_years"] = field
 
         # Add room access
         choices = [(room.id, str(room)) for room in Room.objects.all()]
         if choices:
-            field = forms.MultipleChoiceField(choices=choices, required=False, widget=forms.CheckboxSelectMultiple,
-                label="Grant access to room(s)")
+            field = forms.MultipleChoiceField(
+                choices=choices, required=False, widget=forms.CheckboxSelectMultiple, label="Grant access to room(s)"
+            )
             self.fields["room_access"] = field
 
     def clean(self) -> Dict[str, Any]:
         res = super().clean()
         # Phone number requirements
-        if not self.cleaned_data['phone_number'] and self.cleaned_data["room_access"]:
-            self.add_error("phone_number", ValidationError("A phone number is required if room access is provided.", code="phone_required"))
+        if not self.cleaned_data["phone_number"] and self.cleaned_data["room_access"]:
+            self.add_error(
+                "phone_number",
+                ValidationError("A phone number is required if room access is provided.", code="phone_required"),
+            )
 
         # Educational institution requirements
-        if self.cleaned_data['tue_card_number'] and self.cleaned_data['educational_institution'] != Member.EDUCATIONAL_INSTITUTION_TUE:
-            self.add_error('tue_card_number', ValidationError("Member must study at the TU/e if a TU/e card number is entered.", code="education_tue_required"))
+        if (
+            self.cleaned_data["tue_card_number"]
+            and self.cleaned_data["educational_institution"] != Member.EDUCATIONAL_INSTITUTION_TUE
+        ):
+            self.add_error(
+                "tue_card_number",
+                ValidationError(
+                    "Member must study at the TU/e if a TU/e card number is entered.", code="education_tue_required"
+                ),
+            )
 
-        if self.cleaned_data['educational_institution'] and not self.cleaned_data['student_number']:
-            self.add_error('student_number', ValidationError("A student number is required when an educational institution is set.", code="student_number_required"))
+        if self.cleaned_data["educational_institution"] and not self.cleaned_data["student_number"]:
+            self.add_error(
+                "student_number",
+                ValidationError(
+                    "A student number is required when an educational institution is set.",
+                    code="student_number_required",
+                ),
+            )
 
         return res
 
     def _save_m2m(self):
-        """ Auto-create related instances based on selections """
+        """Auto-create related instances based on selections"""
         # This is done in _save_m2m as the member-instance must exist. This is only the case if commit=True
         super()._save_m2m()
         # Create membership in selected active years
         if self.cleaned_data["active_years"]:
             # No need to do this if there were no active years to begin with
-            years = MemberYear.objects.filter(id__in=self.cleaned_data['active_years'])
+            years = MemberYear.objects.filter(id__in=self.cleaned_data["active_years"])
 
             for year in years:
                 # TODO: created_by must be a Member instance for some reason
-                Membership.objects.create(member=self.instance, year=year)#, created_by=self.user)
+                Membership.objects.create(member=self.instance, year=year)  # , created_by=self.user)
 
         # Room access
         if self.cleaned_data["room_access"]:
-            self.instance.accessible_rooms.add(self.cleaned_data['room_access'])
+            self.instance.accessible_rooms.add(self.cleaned_data["room_access"])
 
         # Only send out an email once the member is actually saved
-        if self.cleaned_data['send_registration_email']:
+        if self.cleaned_data["send_registration_email"]:
             context = {
                 "member": self.instance,
                 "sender": {
                     "name": str(self.user),
                     "role": "Secretary",
                     "board_number": "305th board",
-                    "board_name": "Het Ontbijtboard"
-                }
+                    "board_name": "Het Ontbijtboard",
+                },
             }
             self.send_mail(
                 "membership_file/registration/registration_subject.txt",
                 "membership_file/registration/registration_email.txt",
                 context,
-                None, self.instance.email)
+                None,
+                self.instance.email,
+            )
 
-
-    def send_mail(self, subject_template_name, email_template_name,
-                  context, from_email, to_email, html_email_template_name=None):
+    def send_mail(
+        self, subject_template_name, email_template_name, context, from_email, to_email, html_email_template_name=None
+    ):
         """
         Send a django.core.mail.EmailMultiAlternatives to `to_email`.
         """
@@ -213,13 +270,13 @@ class RegisterMemberForm(UpdatingUserFormMixin, forms.ModelForm):
 
         subject = loader.render_to_string(subject_template_name, context)
         # Email subject *must not* contain newlines
-        subject = ''.join(subject.splitlines())
+        subject = "".join(subject.splitlines())
         body = loader.render_to_string(email_template_name, context)
 
         email_message = EmailMultiAlternatives(subject, body, from_email, [to_email])
         if html_email_template_name is not None:
             html_email = loader.render_to_string(html_email_template_name, context)
-            email_message.attach_alternative(html_email, 'text/html')
+            email_message.attach_alternative(html_email, "text/html")
 
         email_message.send()
 

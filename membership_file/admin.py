@@ -56,6 +56,7 @@ class MemberLogReadOnlyInline(DisableModificationsAdminMixin, URLLinkInlineAdmin
     # Whether the object can be deleted inline
     can_delete = False
 
+
 @admin.register(Member)
 class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, ExportActionMixin, HideRelatedNameAdmin):
     ##############################
@@ -68,12 +69,12 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, Expor
         ODS,
     )
 
-    @object_action(attrs={'class': 'addlink'})
+    @object_action(attrs={"class": "addlink"})
     def register_new_member(modeladmin, request, queryset):
         view = modeladmin.admin_site.admin_view(RegisterNewMemberAdminView.as_view())
         return view(request)
 
-    changelist_actions = ('register_new_member', )
+    changelist_actions = ("register_new_member",)
 
     def get_changelist_actions(self, request):
         # Action is only available if the user can add members normally

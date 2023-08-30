@@ -83,15 +83,17 @@ class ExtendMembershipView(MemberMixin, UpdateMemberYearMixin, FormView):
 class ExtendMembershipSuccessView(MemberMixin, UpdateMemberYearMixin, TemplateView):
     template_name = "membership_file/extend_membership_successpage.html"
 
+
 class RegisterNewMemberAdminView(CreateView):
-    """ placeholder """
+    """placeholder"""
+
     form_class = RegisterMemberForm
     template_name = "membership_file/register_member.html"
-    success_message = ''
+    success_message = ""
 
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super().get_form_kwargs(*args, **kwargs)
-        kwargs['user'] = self.request.user
+        kwargs["user"] = self.request.user
         return kwargs
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
@@ -104,29 +106,27 @@ class RegisterNewMemberAdminView(CreateView):
         else:
             messages.warning(self.request, f"Registered, but did not email member “{self.object}”")
 
-        return reverse(f'admin:membership_file_member_change', args=(self.object.id,))
+        return reverse(f"admin:membership_file_member_change", args=(self.object.id,))
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
+        fields = ["first_name"]
+        fields = context["form"].fields
 
-        fields = ['first_name']
-        fields = context['form'].fields
+        fieldsets = [(None, {"fields": fields})]
 
-        fieldsets = [(None, {'fields': fields})]
+        adminForm = helpers.AdminForm(context["form"], list(fieldsets), {})
 
-        adminForm = helpers.AdminForm(
-            context['form'],
-            list(fieldsets),
-            {})
-
-        context.update({
-            'adminform': adminForm,
-            # 'form_url': form_url,
-            'is_nav_sidebar_enabled': True,
-            'opts': Member._meta,
-            'title': "Register new member",
-            # 'content_type_id': get_content_type_for_model(self.model).pk,
-            # 'app_label': app_label,
-        })
+        context.update(
+            {
+                "adminform": adminForm,
+                # 'form_url': form_url,
+                "is_nav_sidebar_enabled": True,
+                "opts": Member._meta,
+                "title": "Register new member",
+                # 'content_type_id': get_content_type_for_model(self.model).pk,
+                # 'app_label': app_label,
+            }
+        )
         return context
