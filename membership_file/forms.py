@@ -1,5 +1,6 @@
 from typing import Any, Dict
 from django import forms
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.core.exceptions import ImproperlyConfigured, ValidationError
@@ -106,14 +107,102 @@ class ContinueMembershipForm(forms.Form):
             member=self.member,
         )
 
+from django.contrib.admin.options import FORMFIELD_FOR_DBFIELD_DEFAULTS
+import copy
 
-class RegisterMemberForm(UpdatingUserFormMixin, forms.ModelForm):
+def formfield_for_dbfield(db_field, **kwargs):
+    """
+    Copy of BaseModelAdmin.formfield_for_dbfield
+    Hook for specifying the form Field instance for a given database Field
+    instance.
+
+    If kwargs are given, they're passed to the form Field's constructor.
+    """
+    # If the field specifies choices, we don't need to look for special
+    # admin widgets - we just need to use a select widget of some kind.
+    # if db_field.choices:
+    #     return self.formfield_for_choice_field(db_field, request, **kwargs)
+
+    # # ForeignKey or ManyToManyFields
+    # if isinstance(db_field, (models.ForeignKey, models.ManyToManyField)):
+    #     # Combine the field kwargs with any options for formfield_overrides.
+    #     # Make sure the passed in **kwargs override anything in
+    #     # formfield_overrides because **kwargs is more specific, and should
+    #     # always win.
+    #     if db_field.__class__ in self.formfield_overrides:
+    #         kwargs = {**self.formfield_overrides[db_field.__class__], **kwargs}
+
+    #     # Get the correct formfield.
+    #     if isinstance(db_field, models.ForeignKey):
+    #         formfield = self.formfield_for_foreignkey(db_field, request, **kwargs)
+    #     elif isinstance(db_field, models.ManyToManyField):
+    #         formfield = self.formfield_for_manytomany(db_field, request, **kwargs)
+
+    #     # For non-raw_id fields, wrap the widget with a wrapper that adds
+    #     # extra HTML -- the "add other" interface -- to the end of the
+    #     # rendered output. formfield can be None if it came from a
+    #     # OneToOneField with parent_link=True or a M2M intermediary.
+    #     if formfield and db_field.name not in self.raw_id_fields:
+    #         related_modeladmin = self.admin_site._registry.get(db_field.remote_field.model)
+    #         wrapper_kwargs = {}
+    #         if related_modeladmin:
+    #             wrapper_kwargs.update(
+    #                 can_add_related=related_modeladmin.has_add_permission(request),
+    #                 can_change_related=related_modeladmin.has_change_permission(request),
+    #                 can_delete_related=related_modeladmin.has_delete_permission(request),
+    #                 can_view_related=related_modeladmin.has_view_permission(request),
+    #             )
+    #         formfield.widget = widgets.RelatedFieldWidgetWrapper(
+    #             formfield.widget, db_field.remote_field, self.admin_site, **wrapper_kwargs
+    #         )
+
+    #     return formfield
+
+    # # If we've got overrides for the formfield defined, use 'em. **kwargs
+    # # passed to formfield_for_dbfield override the defaults.
+    for klass in db_field.__class__.mro():
+        if klass in FORMFIELD_FOR_DBFIELD_DEFAULTS:
+            print(klass)
+            kwargs = {**copy.deepcopy(FORMFIELD_FOR_DBFIELD_DEFAULTS[klass]), **kwargs}
+            print("", kwargs)
+            return db_field.formfield(**kwargs)
+
+    # For any other type of field, just call its formfield() method.
+    return db_field.formfield(**kwargs)
+
+class Foo:
+    class Meta:
+        formfield_callback = formfield_for_dbfield
+
+
+class RegisterMemberForm(UpdatingUserFormMixin, Foo, forms.ModelForm):
     """
     Registers a member in the membership file, and optionally sends them an email to link or register a Squire account.
     Also contains some useful presets.
     """
+    # Required for ModelAdmin.formfield_overrides functionality
+    #   See BaseModelAdmin.formfield_for_dbfield for other uses (e.g. foreign key/m2m/radio)
+    #   This class variable is used by ModelFormMetaclass
+    # formfield_callback = "foooo" # partial(self.formfield_for_dbfield, request=request)
 
     required_css_class = "required"
+    # field_order = ()
+
+    # ModelAdmin media
+    @property
+    def media(self):
+        extra = '' if settings.DEBUG else '.min'
+        js = [
+            'vendor/jquery/jquery%s.js' % extra,
+            'jquery.init.js',
+            'core.js',
+            'admin/RelatedObjectLookups.js',
+            'actions.js',
+            'urlify.js',
+            'prepopulate.js',
+            'vendor/xregexp/xregexp%s.js' % extra,
+        ]
+        return forms.Media(js=['admin/js/%s' % url for url in js]) + super().media
 
     class Meta:
         model = Member
@@ -162,8 +251,12 @@ class RegisterMemberForm(UpdatingUserFormMixin, forms.ModelForm):
         help_text="Whether to email a registration link to the new member, allowing them to link their account to this membership data.",
     )
 
+
+
     def __init__(self, *args, **kwargs):
+        print(args)
         super().__init__(*args, **kwargs)
+
         # Make more fields required
         # TODO
         # req_fields = ('street', 'house_number', 'postal_code', 'city', 'country', 'date_of_birth')

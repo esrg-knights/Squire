@@ -116,7 +116,24 @@ class RegisterNewMemberAdminView(CreateView):
 
         fieldsets = [(None, {"fields": fields})]
 
+        fieldsets = [
+        (None, {'fields':
+            [('first_name', 'tussenvoegsel', 'last_name'),
+             'legal_name', 'date_of_birth',
+             ('educational_institution', 'student_number'),
+             'tue_card_number',
+            ]}),
+
+        ('Contact Details', {'fields':
+            ['email', 'phone_number',
+            ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
+        ('Notes', {'fields':
+            ['notes']}),
+    ]
+        # fieldsets = [(None, {"fields": ["date_of_birth"]})]
+
         adminForm = helpers.AdminForm(context["form"], list(fieldsets), {})
+        # FORMFIELD_FOR_DBFIELD_DEFAULTS
 
         context.update(
             {
