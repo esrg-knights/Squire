@@ -1,0 +1,14 @@
+<p></p>
+{% if not rspamd_setting %}
+    <div class="alert alert-danger d-flex align-items-center" role="alert">
+        <i class="fas fa-question-circle mr-3"></i> Setting is missing.
+    </div>
+{% else %}
+    {% if not rspamd_setting.active %}
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <i class="fas fa-pause-circle mr-3"></i> Setting is inactive.
+        </div>
+    {% endif %}
+    <h5>{{rspamd_setting.desc}} &ndash; {{rspamd_setting.id}}</h5>
+    <pre><code>{{rspamd_setting.content }}</code></pre>
+{% endif %}

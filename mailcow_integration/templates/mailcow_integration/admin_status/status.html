@@ -29,7 +29,7 @@
 
         <div class="d-flex justify-content-between align-items-center">
             <h2>Member Aliases</h2>
-            <button type="submit" class="btn btn-info" data-toggle="modal" data-target="#rspamdModal"><i class="fas fa-pencil-ruler"></i> Rspamd Rule</button>
+            <button type="submit" class="btn btn-info" data-toggle="modal" data-target="#rspamdModal" {% if error %}disabled{%endif%}><i class="fas fa-pencil-ruler"></i> Rspamd Rule</button>
             {% if error %}
                 <button type="button" class="btn btn-primary" disabled><i class="fas fa-redo-alt"></i> Update</button>
             {% else %}
@@ -51,34 +51,47 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="rspamdModalLabel">
-                            {% if internal_alias_rspamd_setting %}
-                                {{internal_alias_rspamd_setting.desc}} ({{internal_alias_rspamd_setting.id}})
-                            {% else %}
-                                Rspamd Setting - Internal Alias
-                            {% endif %}
+                            Rspamd Settings - Internal Alias
                         </h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        {% if not internal_alias_rspamd_setting %}
-                            <div class="alert alert-danger d-flex align-items-center" role="alert">
-                                <i class="fas fa-question-circle mr-3"></i> Setting is missing.
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="nav-item">
+                              <a class="nav-link active" data-toggle="tab" href="#rspamd-internal-allow" role="tab" aria-controls="rspamd-internal-block" aria-selected="true">
+                                {% if not internal_alias_rspamd_setting_allow %}
+                                <i class="fas fa-question-circle"></i>
+                                {% elif not internal_alias_rspamd_setting_allow.active %}
+                                <i class="fas fa-pause-circle"></i>
+                                {% else %}
+                                <i class="fas fa-check-circle"></i>
+                                {% endif %}
+                                Allow Rule
+                            </a>
+                            </li>
+                            <li class="nav-item">
+                              <a class="nav-link" data-toggle="tab" href="#rspamd-internal-block" role="tab" aria-controls="rspamd-internal-allow" aria-selected="false">
+                                {% if not internal_alias_rspamd_setting_block %}
+                                <i class="fas fa-question-circle"></i>
+                                {% elif not internal_alias_rspamd_setting_block.active %}
+                                <i class="fas fa-pause-circle"></i>
+                                {% else %}
+                                <i class="fas fa-check-circle"></i>
+                                {% endif %}
+                                Reject Rule
+                            </a>
+                            </li>
+                        </ul>
+                            <div class="tab-content" id="myTabContent">
+                            <div class="tab-pane fade show active" id="rspamd-internal-allow" role="tabpanel" aria-labelledby="home-tab">
+                                {% include "mailcow_integration/snippets/rspamd_setting.html" with rspamd_setting=internal_alias_rspamd_setting_allow %}
                             </div>
-                        {% else %}
-                            {% if not internal_alias_rspamd_setting.active %}
-                                <div class="alert alert-danger d-flex align-items-center" role="alert">
-                                    <i class="fas fa-times-circle mr-3"></i> Setting is inactive.
-                                </div>
-                            {% endif %}
-
-                            <p>
-                                The following Rspamd setting ensures only addresses in domains set up in Mailcow can send emails to the 'internal' addresses.
-                            </p>
-
-                            <pre>{{internal_alias_rspamd_setting.content }}</pre>
-                        {% endif %}
+                            <div class="tab-pane fade" id="rspamd-internal-block" role="tabpanel" aria-labelledby="profile-tab">
+                                {% include "mailcow_integration/snippets/rspamd_setting.html" with rspamd_setting=internal_alias_rspamd_setting_block %}
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <div class="d-flex justify-content-end" style="gap: 4px;">

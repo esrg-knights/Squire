@@ -52,10 +52,12 @@ class SquireMailcowManager:
     """
 
     SQUIRE_MANAGE_INDICATOR = "[MANAGED BY SQUIRE]" if not settings.DEBUG else "[DEV][MANAGED BY SQUIRE]"
-    INTERNAL_ALIAS_SETTING_NAME = "%s Internal Alias" % SQUIRE_MANAGE_INDICATOR
-    ALIAS_COMMITTEE_PUBLIC_COMMENT = "%s Committee Alias" % SQUIRE_MANAGE_INDICATOR
-    ALIAS_MEMBERS_PUBLIC_COMMENT = "%s Members Alias" % SQUIRE_MANAGE_INDICATOR
-    ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT = "%s Global Committee Alias" % SQUIRE_MANAGE_INDICATOR
+    INTERNAL_ALIAS_SETTING_NAME = SQUIRE_MANAGE_INDICATOR + " Internal Alias (%s)"
+    INTERNAL_ALIAS_SETTING_WHITELIST_NAME = "Authenticated"
+    INTERNAL_ALIAS_SETTING_BLACKLIST_NAME = "Reject"
+    ALIAS_COMMITTEE_PUBLIC_COMMENT = f"{SQUIRE_MANAGE_INDICATOR} Committee Alias"
+    ALIAS_MEMBERS_PUBLIC_COMMENT = f"{SQUIRE_MANAGE_INDICATOR} Members Alias"
+    ALIAS_GLOBAL_COMMITTEE_PUBLIC_COMMENT = f"{SQUIRE_MANAGE_INDICATOR} Global Committee Alias"
 
     def __init__(self, mailcow_host: str, mailcow_api_key: str):
         self._client = MailcowAPIClient(mailcow_host, mailcow_api_key)
@@ -76,7 +78,8 @@ class SquireMailcowManager:
         ] + settings.COMMITTEE_CONFIGS["global_addresses"]
 
         # Caches
-        self._internal_rspamd_setting: Optional[RspamdSettings] = None
+        self._internal_rspamd_setting_whitelist: Optional[RspamdSettings] = None
+        self._internal_rspamd_setting_blacklist: Optional[RspamdSettings] = None
         self._alias_cache: Optional[List[MailcowAlias]] = None
         self._mailbox_cache: Optional[List[MailcowMailbox]] = None
         self._alias_map_cache: Optional[Dict[str, MailcowAlias]] = None
@@ -107,28 +110,38 @@ class SquireMailcowManager:
         queryset = self.clean_emails(queryset, email_field, **kwargs)
         return list(queryset.values_list(email_field, flat=True))
 
-    def get_internal_alias_rspamd_setting(self, use_cache=True) -> Optional[RspamdSettings]:
-        """Gets the Rspamd setting (if it exists) that disallows external domains
+    def get_internal_alias_rspamd_settings(
+        self, use_cache=True
+    ) -> Tuple[Optional[RspamdSettings], Optional[RspamdSettings]]:
+        """Gets the Rspamd settings (if it exists) that disallows external domains
         to send emails to a specific set of email addresses. Squire recognises
         which Rspamd setting to find based on the setting's name.
         See `self.INTERNAL_ALIAS_SETTING_NAME`
         """
-        if self._internal_rspamd_setting is not None and use_cache:
-            return self._internal_rspamd_setting
+        if (
+            self._internal_rspamd_setting_whitelist is not None
+            and self._internal_rspamd_setting_blacklist is not None
+            and use_cache
+        ):
+            return self._internal_rspamd_setting_whitelist, self._internal_rspamd_setting_blacklist
+
+        self._internal_rspamd_setting_whitelist = None
+        self._internal_rspamd_setting_blacklist = None
 
         # Fetch all Rspamd settings
         settings = self._client.get_rspamd_setting_all()
         for setting in settings:
             # Setting description matches the one we normally set
-            if setting.desc == self.INTERNAL_ALIAS_SETTING_NAME:
-                self._internal_rspamd_setting = setting
-                return setting
-        return None
+            if setting.desc == self.INTERNAL_ALIAS_SETTING_NAME % self.INTERNAL_ALIAS_SETTING_WHITELIST_NAME:
+                self._internal_rspamd_setting_whitelist = setting
+            elif setting.desc == self.INTERNAL_ALIAS_SETTING_NAME % self.INTERNAL_ALIAS_SETTING_BLACKLIST_NAME:
+                self._internal_rspamd_setting_blacklist = setting
+        return (self._internal_rspamd_setting_whitelist, self._internal_rspamd_setting_blacklist)
 
     def is_address_internal(self, address: str) -> bool:
         """Whether an alias address is made internal by means of an Rspamd setting"""
-        setting = self.get_internal_alias_rspamd_setting()
-        if setting is None or not setting.active:
+        setting_w, setting_b = self.get_internal_alias_rspamd_settings()
+        if setting_w is None or not setting_w.active or setting_b is None or not setting_b.active:
             return False
 
         prefix = re.escape('rcpt = "/^(')
@@ -136,39 +149,29 @@ class SquireMailcowManager:
         wildcard = '[^"\n]*'
         # Double escape since we're using regex to find a match ourselves
         address = re.escape(re.escape(address))
-        mtch = re.search(f"{prefix}{wildcard}{address}{wildcard}{suffix}", setting.content)
-        return mtch is not None
+        mtch_w = re.search(f"{prefix}{wildcard}{address}{wildcard}{suffix}", setting_w.content)
+        mtch_b = re.search(f"{prefix}{wildcard}{address}{wildcard}{suffix}", setting_b.content)
+        return mtch_w is not None and mtch_b is not None
 
-    def update_internal_addresses(self) -> None:
-        """Makes a list of member aliases 'internal'. That is, these aliases can only
-        be emailed from within one of the domains set up in Mailcow.
-        See `templates/internal_mailbox.conf` for the Rspamd configuration used to
-        achieve this.
-
-        Example:
-            `@example.com` is a domain set up in Mailcow.
-            Using this function to make `members@example.com` interal ensures that
-            `foo@spam.com` cannot send emails to `members@example.com` (those are
-            discarded), while `importantperson@example.com` can send emails to
-            `members@example.com`. Spoofed sender addresses are properly discarded
-            as well.
-        """
-        # Escape addresses
-        addresses = self.INTERNAL_ALIAS_ADDRESSES
-        addresses = list(map(lambda addr: re.escape(addr), addresses))
-
-        # Fetch existing rspamd settings
-        setting = self.get_internal_alias_rspamd_setting(use_cache=False)
+    def update_internal_alias_setting(self, addresses: List[str], setting: RspamdSettings, is_whitelist_setting: bool):
+        """Updates the allow/block setting"""
         if setting is not None and setting.active and f'rcpt = "/^({"|".join(addresses)})$/"' in setting.content:
             # Setting already exists, is active, and is up-to-date; no need to do anything
             return
 
         # Setting emails are different than from what we expect, or the setting
         #   does not yet exist
-        template = get_template("mailcow_integration/internal_mailbox.conf")
+        subtemplate_name = "allow" if is_whitelist_setting else "block"
+        subsetting_name = (
+            self.INTERNAL_ALIAS_SETTING_WHITELIST_NAME
+            if is_whitelist_setting
+            else self.INTERNAL_ALIAS_SETTING_BLACKLIST_NAME
+        )
+
+        template = get_template("mailcow_integration/internal_mailbox_%s.conf" % subtemplate_name)
         setting_content = template.render({"addresses": addresses})
         id = setting.id if setting is not None else None
-        setting = RspamdSettings(id, self.INTERNAL_ALIAS_SETTING_NAME, setting_content, True)
+        setting = RspamdSettings(id, self.INTERNAL_ALIAS_SETTING_NAME % subsetting_name, setting_content, True)
 
         if setting.id is None:
             # Setting does not yet exist
@@ -176,6 +179,28 @@ class SquireMailcowManager:
         else:
             # Setting exists but should be updated
             self._client.update_rspamd_setting(setting)
+
+    def update_internal_addresses(self) -> None:
+        """Makes specific member aliases 'internal'. That is, these aliases can only
+        be emailed from within one of the domains set up in Mailcow.
+        See `templates/internal_mailbox_<allow/block>.conf` for the Rspamd configuration used to
+        achieve this.
+
+        Example:
+            `@example.com` is a domain set up in Mailcow
+            members@example.com is an internal member address according to Squire's mailcowconfig.json
+            Using this function ensures that `foo@spam.com` (note the domain) cannot send emails to
+            `members@example.com` (those are rejected), while `importantperson@example.com` (note the domain)
+            can send emails to `members@example.com`.
+            Spoofed sender addresses are properly discarded as well.
+        """
+        # Escape addresses
+        addresses = self.INTERNAL_ALIAS_ADDRESSES
+        addresses = list(map(lambda addr: re.escape(addr), addresses))
+
+        setting_w, setting_b = self.get_internal_alias_rspamd_settings(use_cache=False)
+        self.update_internal_alias_setting(addresses, setting_w, True)
+        self.update_internal_alias_setting(addresses, setting_b, False)
 
     def get_alias_all(self, use_cache=True) -> List[MailcowAlias]:
         """Gets all email aliases"""

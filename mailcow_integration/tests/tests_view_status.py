@@ -596,7 +596,8 @@ class MailcowContextDataTests(MailcowStatusViewTests):
     @patch("mailcow_integration.squire_mailcow.SquireMailcowManager.get_alias_all", return_value=[1])
     @patch("mailcow_integration.squire_mailcow.SquireMailcowManager.get_mailbox_all", return_value=[2])
     @patch(
-        "mailcow_integration.squire_mailcow.SquireMailcowManager.get_internal_alias_rspamd_setting", return_value=None
+        "mailcow_integration.squire_mailcow.SquireMailcowManager.get_internal_alias_rspamd_settings",
+        return_value=(None, None),
     )
     def test_get_context_data_valid(
         self,
