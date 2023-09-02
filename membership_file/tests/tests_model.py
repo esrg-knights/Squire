@@ -70,6 +70,17 @@ class MemberManagerTest(TestCase):
         self.assertIn(self._honorary, active_members)
         self.assertEqual(len(active_members), 2)
 
+    def test_filter_active_duplicates(self):
+        """Tests if filter_active() accounts for duplicates when multiple years are active simultaneously"""
+        year = MemberYear.objects.create(name="1980", is_active=True)
+        year.members.set([self._active, self._deregistered, self._pending_deletion])
+
+        active_members = Member.objects.filter_active()
+        self.assertIn(self._active, active_members)
+        self.assertNotIn(self._inactive, active_members)
+        self.assertIn(self._honorary, active_members)
+        self.assertEqual(len(active_members), 2)
+
 
 # Tests methods related to the Member model
 class MemberModelTest(TestCase):
