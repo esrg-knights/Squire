@@ -155,8 +155,8 @@ class SquireMailcowManagerTest(TestCase):
             [
                 # NOTE: Wrap list in iterable to match function signature (it returns a generator, not a list)
                 RspamdSettings(999, "Other rule", "RULE 1", True),
-                RspamdSettings(234, "[MANAGED BY SQUIRE] Other thing", "RULE 2", True),
-                RspamdSettings(567, "[MANAGED BY SQUIRE] Internal Alias", "RULE 3", True),
+                RspamdSettings(234, "[DEV][MANAGED BY SQUIRE] Other thing", "RULE 2", True),
+                RspamdSettings(567, "[DEV][MANAGED BY SQUIRE] Internal Alias", "RULE 3", True),
                 RspamdSettings(890, "Another rule", "RULE 4", True),
             ]
         ),
@@ -171,7 +171,7 @@ class SquireMailcowManagerTest(TestCase):
 
         with patch(
             "mailcow_integration.squire_mailcow.SquireMailcowManager.INTERNAL_ALIAS_SETTING_NAME",
-            "[MANAGED BY SQUIRE] fake name",
+            "[DEV][MANAGED BY SQUIRE] fake name",
         ):
             # Use cache; old setting should still be found
             self.assertEqual(

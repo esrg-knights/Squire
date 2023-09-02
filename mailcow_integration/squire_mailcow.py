@@ -1,10 +1,10 @@
 from enum import Enum
 import re
-from typing import Dict, Generator, Optional, List, Tuple
+from typing import Dict, Optional, List, Tuple
 
 from django.apps import apps
 from django.conf import settings
-from django.db.models import Q, QuerySet, Exists, OuterRef
+from django.db.models import QuerySet, Exists, OuterRef
 from django.template.loader import get_template
 
 from mailcow_integration.api.client import MailcowAPIClient
@@ -28,7 +28,7 @@ def get_mailcow_manager() -> Optional["SquireMailcowManager"]:
 class AliasCategory(Enum):
     """Squire's Mailcow Aliases can exist in different forms.
     1. Member aliases are used to email all Squire Members active in the current year.
-    2. Global committee aliases are used to email all committees (Committtees and orders)
+    2. Global committee aliases are used to email all committees (Committees and orders)
         registered in Squire.
     3. Committee aliases are used to email a specific committee (or order).
     """
@@ -51,7 +51,7 @@ class SquireMailcowManager:
     it also allows manual overrides by Mailcow admins.
     """
 
-    SQUIRE_MANAGE_INDICATOR = "[MANAGED BY SQUIRE]"
+    SQUIRE_MANAGE_INDICATOR = "[MANAGED BY SQUIRE]" if not settings.DEBUG else "[DEV][MANAGED BY SQUIRE]"
     INTERNAL_ALIAS_SETTING_NAME = "%s Internal Alias" % SQUIRE_MANAGE_INDICATOR
     ALIAS_COMMITTEE_PUBLIC_COMMENT = "%s Committee Alias" % SQUIRE_MANAGE_INDICATOR
     ALIAS_MEMBERS_PUBLIC_COMMENT = "%s Members Alias" % SQUIRE_MANAGE_INDICATOR
