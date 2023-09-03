@@ -1,3 +1,4 @@
+import copy
 from typing import Any, Dict
 from django import forms
 from django.conf import settings
@@ -108,125 +109,54 @@ class ContinueMembershipForm(forms.Form):
             member=self.member,
         )
 
-from django.contrib.admin.options import FORMFIELD_FOR_DBFIELD_DEFAULTS
-import copy
-
-def formfield_for_dbfield(db_field, **kwargs):
-    """
-    Copy of BaseModelAdmin.formfield_for_dbfield
-    Hook for specifying the form Field instance for a given database Field
-    instance.
-
-    If kwargs are given, they're passed to the form Field's constructor.
-    """
-    # If the field specifies choices, we don't need to look for special
-    # admin widgets - we just need to use a select widget of some kind.
-    # if db_field.choices:
-    #     return self.formfield_for_choice_field(db_field, request, **kwargs)
-
-    # # ForeignKey or ManyToManyFields
-    # if isinstance(db_field, (models.ForeignKey, models.ManyToManyField)):
-    #     # Combine the field kwargs with any options for formfield_overrides.
-    #     # Make sure the passed in **kwargs override anything in
-    #     # formfield_overrides because **kwargs is more specific, and should
-    #     # always win.
-    #     if db_field.__class__ in self.formfield_overrides:
-    #         kwargs = {**self.formfield_overrides[db_field.__class__], **kwargs}
-
-    #     # Get the correct formfield.
-    #     if isinstance(db_field, models.ForeignKey):
-    #         formfield = self.formfield_for_foreignkey(db_field, request, **kwargs)
-    #     elif isinstance(db_field, models.ManyToManyField):
-    #         formfield = self.formfield_for_manytomany(db_field, request, **kwargs)
-
-    #     # For non-raw_id fields, wrap the widget with a wrapper that adds
-    #     # extra HTML -- the "add other" interface -- to the end of the
-    #     # rendered output. formfield can be None if it came from a
-    #     # OneToOneField with parent_link=True or a M2M intermediary.
-    #     if formfield and db_field.name not in self.raw_id_fields:
-    #         related_modeladmin = self.admin_site._registry.get(db_field.remote_field.model)
-    #         wrapper_kwargs = {}
-    #         if related_modeladmin:
-    #             wrapper_kwargs.update(
-    #                 can_add_related=related_modeladmin.has_add_permission(request),
-    #                 can_change_related=related_modeladmin.has_change_permission(request),
-    #                 can_delete_related=related_modeladmin.has_delete_permission(request),
-    #                 can_view_related=related_modeladmin.has_view_permission(request),
-    #             )
-    #         formfield.widget = widgets.RelatedFieldWidgetWrapper(
-    #             formfield.widget, db_field.remote_field, self.admin_site, **wrapper_kwargs
-    #         )
-
-    #     return formfield
-
-    # # If we've got overrides for the formfield defined, use 'em. **kwargs
-    # # passed to formfield_for_dbfield override the defaults.
-    for klass in db_field.__class__.mro():
-        if klass in FORMFIELD_FOR_DBFIELD_DEFAULTS:
-            # print(klass)
-            kwargs = {**copy.deepcopy(FORMFIELD_FOR_DBFIELD_DEFAULTS[klass]), **kwargs}
-            # print("", kwargs)
-            return db_field.formfield(**kwargs)
-
-    # For any other type of field, just call its formfield() method.
-    return db_field.formfield(**kwargs)
-
-class Foo:
-    # Add this as a superclass to RegisterMemberForm to use the admin form overrides
-    class Meta:
-        formfield_callback = formfield_for_dbfield
 
 class FieldsetModelFormMetaclass(ModelFormMetaclass):
+    """TODO"""
+
     def __new__(mcs, name, bases, attrs):
         new_class = super().__new__(mcs, name, bases, attrs)
         new_class._meta.fieldsets = None
-        meta_class = getattr(new_class, 'Meta', None)
+        meta_class = getattr(new_class, "Meta", None)
         if meta_class is not None:
             new_class._meta.fieldsets = getattr(meta_class, "fieldsets", None)
         return new_class
 
+
 class FieldsetAdminFormMixin(metaclass=FieldsetModelFormMetaclass):
-    """ TODO """
+    """TODO"""
+
     required_css_class = "required"
 
     # ModelAdmin media
     @property
     def media(self):
-        extra = '' if settings.DEBUG else '.min'
+        extra = "" if settings.DEBUG else ".min"
         js = [
-            'vendor/jquery/jquery%s.js' % extra,
-            'jquery.init.js',
-            'core.js',
-            'admin/RelatedObjectLookups.js',
-            'actions.js',
-            'urlify.js',
-            'prepopulate.js',
-            'vendor/xregexp/xregexp%s.js' % extra,
+            "vendor/jquery/jquery%s.js" % extra,
+            "jquery.init.js",
+            "core.js",
+            "admin/RelatedObjectLookups.js",
+            "actions.js",
+            "urlify.js",
+            "prepopulate.js",
+            "vendor/xregexp/xregexp%s.js" % extra,
         ]
-        return forms.Media(js=['admin/js/%s' % url for url in js]) + super().media
+        return forms.Media(js=["admin/js/%s" % url for url in js]) + super().media
 
     def get_fieldsets(self, request, obj=None):
         """
         Hook for specifying fieldsets.
         """
-        print(self._meta.__dict__)
         if self._meta.fieldsets:
-            return self._meta.fieldsets
-        return [(None, {'fields': self.fields})]
+            return copy.deepcopy(self._meta.fieldsets)
+        return [(None, {"fields": self.fields})]
+
 
 class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.ModelForm):
     """
     Registers a member in the membership file, and optionally sends them an email to link or register a Squire account.
     Also contains some useful presets.
     """
-    # Required for ModelAdmin.formfield_overrides functionality
-    #   See BaseModelAdmin.formfield_for_dbfield for other uses (e.g. foreign key/m2m/radio)
-    #   This class variable is used by ModelFormMetaclass
-    # formfield_callback = "foooo" # partial(self.formfield_for_dbfield, request=request)
-
-
-    # field_order = ()
-
 
     class Meta:
         model = Member
@@ -251,25 +181,39 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
         )
 
         fieldsets = [
-            (None, {'fields':
-                [('first_name', 'tussenvoegsel', 'last_name'),
-                'legal_name', 'date_of_birth',
-                ('educational_institution', 'student_number'),
-                'tue_card_number',
-                ]}),
-
-            ('Contact Details', {'fields':
-                [('email', "send_registration_email"), 'phone_number',
-                ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
-            ('Notes', {'fields':
-                ['notes']}),
+            (
+                None,
+                {
+                    "fields": [
+                        ("first_name", "tussenvoegsel", "last_name"),
+                        "legal_name",
+                        "date_of_birth",
+                        ("educational_institution", "student_number"),
+                        "tue_card_number",
+                    ]
+                },
+            ),
+            (
+                "Contact Details",
+                {
+                    "fields": [
+                        "email",
+                        "send_registration_email",
+                        "phone_number",
+                        ("street", "house_number", "house_number_addition"),
+                        ("postal_code", "city"),
+                        "country",
+                    ]
+                },
+            ),
+            ("Miscellaneous", {"fields": ["notes"]}),
         ]
 
         widgets = {
             "educational_institution": OtherRadioSelect(
                 choices=[
                     (Member.EDUCATIONAL_INSTITUTION_TUE, "Eindhoven University of Technology"),
-                    (Member.EDUCATIONAL_INSTITUTION_TUE + "PhD", "TU/e (PhD)"),
+                    (Member.EDUCATIONAL_INSTITUTION_TUE + " (PhD)", "TU/e (PhD)"),
                     ("Fontys Eindhoven", "Fontys Eindhoven"),
                     ("Summa College", "Summa College"),
                     ("", "None (not a student)"),
@@ -290,7 +234,6 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
         required=False,
         help_text="Whether to email a registration link to the new member, allowing them to link their account to this membership data.",
     )
-
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -318,9 +261,22 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
         choices = [(room.id, str(room)) for room in Room.objects.all()]
         if choices:
             field = forms.MultipleChoiceField(
-                choices=choices, required=False, widget=forms.CheckboxSelectMultiple, label="Grant access to room(s)"
+                choices=choices,
+                required=False,
+                widget=forms.CheckboxSelectMultiple,
+                label="Grant access to room(s)",
+                help_text="A phone number is required in order to gain access to a room.",
             )
             self.fields["room_access"] = field
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        # Append conditional fields to the last fieldset
+        if "active_years" in self.fields:
+            fieldsets[-1][1]["fields"].append("active_years")
+        if "room_access" in self.fields:
+            fieldsets[-1][1]["fields"].append("room_access")
+        return fieldsets
 
     def clean(self) -> Dict[str, Any]:
         res = super().clean()
@@ -412,4 +368,3 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
             email_message.attach_alternative(html_email, "text/html")
 
         email_message.send()
-

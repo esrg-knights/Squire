@@ -60,9 +60,7 @@ class MemberLogReadOnlyInline(DisableModificationsAdminMixin, URLLinkInlineAdmin
 
 
 @admin.register(Member)
-class MemberWithLog(
-    # RequestUserToFormModelAdminMixin,
-    DjangoObjectActions, ExportActionMixin, HideRelatedNameAdmin):
+class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, ExportActionMixin, HideRelatedNameAdmin):
     ##############################
     #  Export functionality
     resource_class = MemberResource

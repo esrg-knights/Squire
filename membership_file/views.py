@@ -87,30 +87,29 @@ class ExtendMembershipSuccessView(MemberMixin, UpdateMemberYearMixin, TemplateVi
 
 
 class ModelAdminFormViewMixin:
-    """ TODO """
+    """TODO"""
+
     model_admin: ModelAdmin = None
 
-    def __init__(self, *args, model_admin: ModelAdmin=None, **kwargs) -> None:
+    def __init__(self, *args, model_admin: ModelAdmin = None, **kwargs) -> None:
         assert model_admin is not None
         self.model_admin = model_admin
         super().__init__(*args, **kwargs)
 
-    def get_form(self, form_class: Optional[type[BaseModelForm]]=None) -> BaseModelForm:
-        # This should return a form instance
-        # NB: More defaults can be passed into the **kwargs of ModelAdmin.get_form
+    def get_form(self, form_class: Optional[type[BaseModelForm]] = None) -> BaseModelForm:
+        # This method should return a form instance
         if form_class is None:
             form_class = self.get_form_class()
 
         # Use this form_class's excludes instead of those from the ModelAdmin's form_class
         exclude = form_class._meta.exclude or ()
 
-        # fields = flatten_fieldsets(self.get_fieldsets(request, obj))
-
-        # print(form_class)
-
         # This constructs a form class
+        # NB: More defaults can be passed into the **kwargs of ModelAdmin.get_form
         form_class = self.model_admin.get_form(
-            self.request, None, change=False,
+            self.request,
+            None,
+            change=False,
             # Fields are defined in the form
             fields=None,
             # Override standard ModelAdmin form and ignore its exclude list
@@ -118,14 +117,15 @@ class ModelAdminFormViewMixin:
             exclude=exclude,
         )
 
-
+        # Use the newly constructed form class to create a form
         return super().get_form(form_class)
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         form: RegisterMemberForm = context.pop("form")
-        adminForm = helpers.AdminForm(form, list(form.get_fieldsets(self.request, self.object)), {}, model_admin=self.model_admin)
-        # FORMFIELD_FOR_DBFIELD_DEFAULTS
+        adminForm = helpers.AdminForm(
+            form, list(form.get_fieldsets(self.request, self.object)), {}, model_admin=self.model_admin
+        )
 
         context.update(
             {
@@ -143,16 +143,10 @@ class ModelAdminFormViewMixin:
 
 
 class RegisterNewMemberAdminView(ModelAdminFormViewMixin, CreateView):
-    """placeholder"""
+    """TODO"""
 
     form_class = RegisterMemberForm
     template_name = "membership_file/register_member.html"
-    success_message = ""
-
-    def get_form_kwargs(self, *args, **kwargs):
-        kwargs = super().get_form_kwargs(*args, **kwargs)
-        kwargs["user"] = self.request.user
-        return kwargs
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
         self.email_sent = form.cleaned_data["send_registration_email"]
@@ -165,8 +159,3 @@ class RegisterNewMemberAdminView(ModelAdminFormViewMixin, CreateView):
             messages.warning(self.request, f"Registered, but did not email member “{self.object}”")
 
         return reverse(f"admin:membership_file_member_change", args=(self.object.id,))
-
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-
-        return context
