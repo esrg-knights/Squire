@@ -1,6 +1,8 @@
-from typing import Any, Dict
+from functools import partial
+from typing import Any, Dict, Optional, Type
 from django.contrib import messages
-from django.contrib.admin import helpers
+from django.contrib.admin import helpers, ModelAdmin
+from django.contrib.admin.utils import flatten_fieldsets
 from django.core.exceptions import PermissionDenied
 from django.forms.models import BaseModelForm
 from django.http import HttpResponse
@@ -84,7 +86,63 @@ class ExtendMembershipSuccessView(MemberMixin, UpdateMemberYearMixin, TemplateVi
     template_name = "membership_file/extend_membership_successpage.html"
 
 
-class RegisterNewMemberAdminView(CreateView):
+class ModelAdminFormViewMixin:
+    """ TODO """
+    model_admin: ModelAdmin = None
+
+    def __init__(self, *args, model_admin: ModelAdmin=None, **kwargs) -> None:
+        assert model_admin is not None
+        self.model_admin = model_admin
+        super().__init__(*args, **kwargs)
+
+    def get_form(self, form_class: Optional[type[BaseModelForm]]=None) -> BaseModelForm:
+        # This should return a form instance
+        # NB: More defaults can be passed into the **kwargs of ModelAdmin.get_form
+        if form_class is None:
+            form_class = self.get_form_class()
+
+        # Use this form_class's excludes instead of those from the ModelAdmin's form_class
+        exclude = form_class._meta.exclude or ()
+
+        # fields = flatten_fieldsets(self.get_fieldsets(request, obj))
+
+        # print(form_class)
+
+        # This constructs a form class
+        form_class = self.model_admin.get_form(
+            self.request, None, change=False,
+            # Fields are defined in the form
+            fields=None,
+            # Override standard ModelAdmin form and ignore its exclude list
+            form=form_class,
+            exclude=exclude,
+        )
+
+
+        return super().get_form(form_class)
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        form: RegisterMemberForm = context.pop("form")
+        adminForm = helpers.AdminForm(form, list(form.get_fieldsets(self.request, self.object)), {}, model_admin=self.model_admin)
+        # FORMFIELD_FOR_DBFIELD_DEFAULTS
+
+        context.update(
+            {
+                "adminform": adminForm,
+                # 'form_url': form_url,
+                "is_nav_sidebar_enabled": True,
+                "opts": Member._meta,
+                "title": "Register new member",
+                # 'content_type_id': get_content_type_for_model(self.model).pk,
+                # 'app_label': app_label,
+            }
+        )
+
+        return context
+
+
+class RegisterNewMemberAdminView(ModelAdminFormViewMixin, CreateView):
     """placeholder"""
 
     form_class = RegisterMemberForm
@@ -111,39 +169,4 @@ class RegisterNewMemberAdminView(CreateView):
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
-        fields = ["first_name"]
-        fields = context["form"].fields
-
-        fieldsets = [(None, {"fields": fields})]
-
-        fieldsets = [
-        (None, {'fields':
-            [('first_name', 'tussenvoegsel', 'last_name'),
-             'legal_name', 'date_of_birth',
-             ('educational_institution', 'student_number'),
-             'tue_card_number',
-            ]}),
-
-        ('Contact Details', {'fields':
-            ['email', 'phone_number',
-            ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
-        ('Notes', {'fields':
-            ['notes']}),
-    ]
-        # fieldsets = [(None, {"fields": ["date_of_birth"]})]
-
-        adminForm = helpers.AdminForm(context["form"], list(fieldsets), {})
-        # FORMFIELD_FOR_DBFIELD_DEFAULTS
-
-        context.update(
-            {
-                "adminform": adminForm,
-                # 'form_url': form_url,
-                "is_nav_sidebar_enabled": True,
-                "opts": Member._meta,
-                "title": "Register new member",
-                # 'content_type_id': get_content_type_for_model(self.model).pk,
-                # 'app_label': app_label,
-            }
-        )
         return context

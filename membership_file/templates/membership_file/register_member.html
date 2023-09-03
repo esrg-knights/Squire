@@ -4,10 +4,7 @@
 {% block extrahead %}{{ block.super }}
 <script src="{% url 'admin:jsi18n' %}"></script>
 <!-- media normally form.media + inline.media -->
-{{ media }}
-<!-- TODO -->
-{{ form.media }}
-<!-- ENDTODO -->
+{{ adminform.media }}
 {% endblock %}
 
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}">{% endblock %}

@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
+from django.forms.models import ModelFormMetaclass
 from django.template import loader
 from django.utils.translation import gettext_lazy as _
 
@@ -162,31 +163,31 @@ def formfield_for_dbfield(db_field, **kwargs):
     # # passed to formfield_for_dbfield override the defaults.
     for klass in db_field.__class__.mro():
         if klass in FORMFIELD_FOR_DBFIELD_DEFAULTS:
-            print(klass)
+            # print(klass)
             kwargs = {**copy.deepcopy(FORMFIELD_FOR_DBFIELD_DEFAULTS[klass]), **kwargs}
-            print("", kwargs)
+            # print("", kwargs)
             return db_field.formfield(**kwargs)
 
     # For any other type of field, just call its formfield() method.
     return db_field.formfield(**kwargs)
 
 class Foo:
+    # Add this as a superclass to RegisterMemberForm to use the admin form overrides
     class Meta:
         formfield_callback = formfield_for_dbfield
 
+class FieldsetModelFormMetaclass(ModelFormMetaclass):
+    def __new__(mcs, name, bases, attrs):
+        new_class = super().__new__(mcs, name, bases, attrs)
+        new_class._meta.fieldsets = None
+        meta_class = getattr(new_class, 'Meta', None)
+        if meta_class is not None:
+            new_class._meta.fieldsets = getattr(meta_class, "fieldsets", None)
+        return new_class
 
-class RegisterMemberForm(UpdatingUserFormMixin, Foo, forms.ModelForm):
-    """
-    Registers a member in the membership file, and optionally sends them an email to link or register a Squire account.
-    Also contains some useful presets.
-    """
-    # Required for ModelAdmin.formfield_overrides functionality
-    #   See BaseModelAdmin.formfield_for_dbfield for other uses (e.g. foreign key/m2m/radio)
-    #   This class variable is used by ModelFormMetaclass
-    # formfield_callback = "foooo" # partial(self.formfield_for_dbfield, request=request)
-
+class FieldsetAdminFormMixin(metaclass=FieldsetModelFormMetaclass):
+    """ TODO """
     required_css_class = "required"
-    # field_order = ()
 
     # ModelAdmin media
     @property
@@ -203,6 +204,29 @@ class RegisterMemberForm(UpdatingUserFormMixin, Foo, forms.ModelForm):
             'vendor/xregexp/xregexp%s.js' % extra,
         ]
         return forms.Media(js=['admin/js/%s' % url for url in js]) + super().media
+
+    def get_fieldsets(self, request, obj=None):
+        """
+        Hook for specifying fieldsets.
+        """
+        print(self._meta.__dict__)
+        if self._meta.fieldsets:
+            return self._meta.fieldsets
+        return [(None, {'fields': self.fields})]
+
+class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.ModelForm):
+    """
+    Registers a member in the membership file, and optionally sends them an email to link or register a Squire account.
+    Also contains some useful presets.
+    """
+    # Required for ModelAdmin.formfield_overrides functionality
+    #   See BaseModelAdmin.formfield_for_dbfield for other uses (e.g. foreign key/m2m/radio)
+    #   This class variable is used by ModelFormMetaclass
+    # formfield_callback = "foooo" # partial(self.formfield_for_dbfield, request=request)
+
+
+    # field_order = ()
+
 
     class Meta:
         model = Member
@@ -226,10 +250,26 @@ class RegisterMemberForm(UpdatingUserFormMixin, Foo, forms.ModelForm):
             "notes",
         )
 
+        fieldsets = [
+            (None, {'fields':
+                [('first_name', 'tussenvoegsel', 'last_name'),
+                'legal_name', 'date_of_birth',
+                ('educational_institution', 'student_number'),
+                'tue_card_number',
+                ]}),
+
+            ('Contact Details', {'fields':
+                [('email', "send_registration_email"), 'phone_number',
+                ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
+            ('Notes', {'fields':
+                ['notes']}),
+        ]
+
         widgets = {
             "educational_institution": OtherRadioSelect(
                 choices=[
                     (Member.EDUCATIONAL_INSTITUTION_TUE, "Eindhoven University of Technology"),
+                    (Member.EDUCATIONAL_INSTITUTION_TUE + "PhD", "TU/e (PhD)"),
                     ("Fontys Eindhoven", "Fontys Eindhoven"),
                     ("Summa College", "Summa College"),
                     ("", "None (not a student)"),
@@ -252,9 +292,7 @@ class RegisterMemberForm(UpdatingUserFormMixin, Foo, forms.ModelForm):
     )
 
 
-
     def __init__(self, *args, **kwargs):
-        print(args)
         super().__init__(*args, **kwargs)
 
         # Make more fields required
@@ -306,13 +344,15 @@ class RegisterMemberForm(UpdatingUserFormMixin, Foo, forms.ModelForm):
             )
 
         if self.cleaned_data["educational_institution"] and not self.cleaned_data["student_number"]:
-            self.add_error(
-                "student_number",
-                ValidationError(
-                    "A student number is required when an educational institution is set.",
-                    code="student_number_required",
-                ),
-            )
+            # PhD'ers do not have student numbers
+            if "(PhD)" not in self.cleaned_data["educational_institution"]:
+                self.add_error(
+                    "student_number",
+                    ValidationError(
+                        "A student number is required when an educational institution is set.",
+                        code="student_number_required",
+                    ),
+                )
 
         return res
 

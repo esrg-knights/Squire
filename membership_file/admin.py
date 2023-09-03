@@ -1,10 +1,12 @@
 from datetime import datetime
+from typing import List
 
 from django.contrib import admin, messages
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect
-from django.urls import reverse
 from django_object_actions import DjangoObjectActions, action as object_action
+from django.urls import reverse, path
+from django.urls.resolvers import URLPattern
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV, TSV, ODS, XLSX
 
@@ -58,7 +60,9 @@ class MemberLogReadOnlyInline(DisableModificationsAdminMixin, URLLinkInlineAdmin
 
 
 @admin.register(Member)
-class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, ExportActionMixin, HideRelatedNameAdmin):
+class MemberWithLog(
+    # RequestUserToFormModelAdminMixin,
+    DjangoObjectActions, ExportActionMixin, HideRelatedNameAdmin):
     ##############################
     #  Export functionality
     resource_class = MemberResource
@@ -71,9 +75,10 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, Expor
 
     @object_action(attrs={"class": "addlink"})
     def register_new_member(modeladmin, request, queryset):
-        view = modeladmin.admin_site.admin_view(RegisterNewMemberAdminView.as_view())
+        view = modeladmin.admin_site.admin_view(RegisterNewMemberAdminView.as_view(model_admin=modeladmin))
         return view(request)
 
+    # Note: get_urls is extended by
     changelist_actions = ("register_new_member",)
 
     def get_changelist_actions(self, request):
@@ -227,7 +232,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, Expor
         return True
 
 
-# Prevents MemberLogField creation, edting, or deletion in the Django Admin Panel
+# Prevents MemberLogField creation, editing, or deletion in the Django Admin Panel
 class MemberLogFieldReadOnlyInline(DisableModificationsAdminMixin, admin.TabularInline):
     model = MemberLogField
     extra = 0

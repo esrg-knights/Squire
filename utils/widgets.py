@@ -24,6 +24,12 @@ class OtherRadioSelect(RadioSelect):
     class Media:
         js = ("js/other_option_widget.js",)
 
+    def __init__(self, attrs=None, choices=None) -> None:
+        if attrs is None or attrs.get("class", None):
+            attrs = attrs or {}
+            attrs["class"] = "radiolist"
+        super().__init__(attrs, choices)
+
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         # If an initial value was provided that does not occur in the list,
