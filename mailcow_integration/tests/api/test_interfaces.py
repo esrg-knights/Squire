@@ -19,7 +19,7 @@ def get_alias_json():
             "in_primary_domain": "",
             "id": 42,
             "domain": "example.com",
-            "public_comment": "[MANAGED BY SQUIRE] Members Alias",
+            "public_comment": "[DEV][MANAGED BY SQUIRE] Members Alias",
             "private_comment": None,
             "goto": "bar@example.com,baz@example.com",
             "address": "foo@example.com",
@@ -83,7 +83,7 @@ def get_rspamd_json():
     return deepcopy(
         {
             "id": 1,
-            "desc": "[MANAGED BY SQUIRE] Internal Alias",
+            "desc": "[DEV][MANAGED BY SQUIRE] Internal Alias",
             "content": "# MANAGED BY SQUIRE - DO NOT MODIFY;\r\nfoo faa rules;\r\nyet another rule;\r\n]",
             "active": 0,
         }
