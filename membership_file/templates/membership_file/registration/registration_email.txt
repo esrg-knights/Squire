@@ -4,7 +4,7 @@ You're receiving this email because your Knights membership was just processed i
 
 You can register an account for {{ member.get_full_name }} through the following link. Doing so will automatically link it to your membership data.
 
-{%comment%}{{ protocol }}://{{ domain }}{% url 'core:user_accounts/password_reset/confirm' uidb64=uid token=token %}{%endcomment%}
+{{ protocol }}://{{ domain }}{% url 'membership:link_account/confirm' uidb64=uid token=token %}
 
 If this email was not meant for you, then do let us know.
 

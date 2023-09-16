@@ -4,16 +4,21 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.forms.models import ModelFormMetaclass
+from django.http import HttpRequest
 from django.template import loader
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
 
-from utils.widgets import OtherRadioSelect
-
-from .models import Member, Room, MemberYear, Membership
+from core.forms import LoginForm, RegisterForm
+from membership_file.models import Member, Room, MemberYear, Membership
+from membership_file.util import LinkAccountTokenGenerator
 from utils.forms import UpdatingUserFormMixin
+from utils.widgets import OtherRadioSelect
 
 ##################################################################################
 # Defines forms related to the membership file.
@@ -235,7 +240,10 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
         help_text="Whether to email a registration link to the new member, allowing them to link their account to this membership data.",
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, request: HttpRequest, token_generator: LinkAccountTokenGenerator, *args, **kwargs):
+        self.domain = get_current_site(request).domain
+        self.use_https = request.is_secure()
+        self.token_generator = token_generator
         super().__init__(*args, **kwargs)
 
         # Make more fields required
@@ -339,6 +347,10 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
                     "board_number": "305th board",
                     "board_name": "Het Ontbijtboard",
                 },
+                "domain": self.domain,
+                "uid": urlsafe_base64_encode(force_bytes(self.instance.pk)),
+                "token": self.token_generator.make_token(user=self.instance),
+                "protocol": "https" if self.use_https else "http",
             }
             self.send_mail(
                 "membership_file/registration/registration_subject.txt",
@@ -368,3 +380,24 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
             email_message.attach_alternative(html_email, "text/html")
 
         email_message.send()
+
+
+# TODO: RequestingUserMixin
+class ConfirmLinkMembershipRegisterForm(RegisterForm):
+    """TODO"""
+
+    def __init__(self, member: Member, *args, **kwargs):
+        # Member should not already have an attached user
+        assert member.user is None
+        print("form initialized")
+        self.member = member
+        super().__init__(*args, **kwargs)
+
+    def _save_m2m(self):
+        super()._save_m2m()
+        print("save-m2m-called")
+        # Attach new user to predetermined member
+        self.member.user = self.instance
+        print(self.member)
+        print(self.instance)
+        self.member.save()

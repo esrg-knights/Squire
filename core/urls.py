@@ -23,12 +23,12 @@ urlpatterns = [
             extra_context={}, authentication_form=LoginForm,
             redirect_authenticated_user=False), # Setting to True will enable Social Media Fingerprinting.
                                                 # For more information, see the corresponding warning at:
-                                            #  https://docs.djangoproject.com/en/2.2/topics/auth/default/#all-authentication-views
+                                            #  https://docs.djangoproject.com/en/3.2/topics/auth/default/#all-authentication-views
         name='user_accounts/login'),
     path('logout', djangoViews.LogoutView.as_view(), name='user_accounts/logout'),
     path('logout/success', views.logoutSuccess, name='user_accounts/logout/succes'),
     # Password resets
-    # See: https://docs.djangoproject.com/en/2.2/topics/auth/default/#django.contrib.auth.views.PasswordResetView
+    # See: https://docs.djangoproject.com/en/3.2/topics/auth/default/#django.contrib.auth.views.PasswordResetView
     path('password_reset', djangoViews.PasswordResetView.as_view(
             success_url='/password_reset/done',
             extra_context={},
@@ -60,8 +60,8 @@ urlpatterns = [
             extra_context={},
         ),
         name='user_accounts/password_reset/success'),
-    path('register', views.register, name='user_accounts/register'),
-    path('register/success', views.registerSuccess, name='user_accounts/register/success'),
+    path('register', views.RegisterUserView.as_view(), name='user_accounts/register'),
+    path('register/success', views.RegisterSuccessView.as_view(), name='user_accounts/register/success'),
     path('newsletters/', views.NewsletterView.as_view(), name='newsletters'),
     path('status/', registry.get_urls()),
     # Mock 403 and 404 views for display testing in development

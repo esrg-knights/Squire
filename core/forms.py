@@ -1,3 +1,4 @@
+from typing import Any
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import (
@@ -56,42 +57,33 @@ class LoginForm(AuthenticationForm):
         return self.cleaned_data
 
 
-# RegisterForm that expands on the default UserCreationForm
-# It requires a (unique) email address, and includes a required real_name field
 class RegisterForm(UserCreationForm):
-    email = forms.EmailField(label="Email")
-    real_name = forms.CharField(
-        label="Real Name",
-        help_text="Your real name will be shown instead of your username when you register for activities.",
-    )
+    """
+    Form that registers a user that expands upon Django's UserCreationForm.
+    This registration also requires a (unique) email address, and sets the user's `first_name`.
+    If an email address or first name have initial values, then these cannot be changed.
+    """
 
     class Meta:
         model = User
-        fields = ("username", "real_name", "email")
+        fields = ("first_name", "username", "email")
+        help_texts = {
+            'first_name': 'Your name will be shown instead of your username in various parts of Squire. For example, when you register for activities.',
+        }
+        labels = {
+            'first_name': 'name',
+        }
 
-    def clean_email(self):
-        # Ensure that another user with the same email does not exist
-        cleaned_email = self.cleaned_data.get("email")
-        if User.objects.filter(email=cleaned_email).exists():
-            self.add_error(
-                "email",
-                ValidationError(
-                    _("A user with that email address already exists."),
-                    code="ERROR_EMAIL_EXISTS",
-                ),
-            )
-        return cleaned_email
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        # If initial data is passed to the form, ensure it cannot be changed
+        self.fields['first_name'].required = True
+        if self.fields['first_name'].initial is not None:
+            self.fields['first_name'].disabled = True
 
-    def save(self, commit=True):
-        user = super(RegisterForm, self).save(commit=False)
-        # First name field is used as a real_name field
-        user.first_name = self.cleaned_data["real_name"]
-        user.email = self.cleaned_data["email"]
-
-        if commit:
-            user.save()
-        return user
-
+        self.fields['email'].required = True
+        if self.fields['email'].initial is not None:
+            self.fields['email'].disabled = True
 
 # Adds the relevant bootstrap classes to the password change form
 class PasswordChangeForm(DjangoPasswordChangeForm):

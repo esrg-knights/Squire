@@ -126,7 +126,7 @@ class HomeUsersView(TemplateView):
                         "msg_text": f"A new adventure awaits! Continue your membership into {year} now!",
                         "msg_type": "info",
                         "btn_text": "Continue Questing!",
-                        "btn_url": reverse_lazy("membership_file/continue_membership"),
+                        "btn_url": reverse_lazy("membership:continue_membership"),
                     }
                 )
 

@@ -1,25 +1,39 @@
 from functools import partial
 from typing import Any, Dict, Optional, Type
+from django import forms
 from django.contrib import messages
+from django.contrib.auth import get_user_model, login as auth_login
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.admin import helpers, ModelAdmin
-from django.contrib.admin.utils import flatten_fieldsets
 from django.core.exceptions import PermissionDenied
+from django.db.models import Model
+from django.forms import ValidationError
 from django.forms.models import BaseModelForm
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
+from django.views import View
+from django.views.decorators.cache import never_cache
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic.edit import CreateView
 from django.views.generic import TemplateView, FormView
 from django.template.response import TemplateResponse
 from django.urls import reverse, reverse_lazy
-
+from django.utils.decorators import method_decorator
+from django.utils.http import urlsafe_base64_decode
 from dynamic_preferences.registries import global_preferences_registry
+from core.views import RegisterUserView
 
-from .util import MembershipRequiredMixin
+UserModel = get_user_model()
 
 # Enable the auto-creation of logs
-from .auto_model_update import *
-from .export import *
-from membership_file.forms import ContinueMembershipForm, RegisterMemberForm
+from membership_file.auto_model_update import *
+from membership_file.export import *
+from membership_file.forms import (
+    ConfirmLinkMembershipRegisterForm,
+    ContinueMembershipForm,
+    RegisterMemberForm,
+)
 from membership_file.models import Membership
+from membership_file.util import LinkAccountTokenGenerator, MembershipRequiredMixin
 
 global_preferences = global_preferences_registry.manager()
 
@@ -58,7 +72,7 @@ class UpdateMemberYearMixin:
 class ExtendMembershipView(MemberMixin, UpdateMemberYearMixin, FormView):
     template_name = "membership_file/extend_membership.html"
     form_class = ContinueMembershipForm
-    success_url = reverse_lazy("membership_file/continue_success")
+    success_url = reverse_lazy("membership:continue_success")
 
     def dispatch(self, request, *args, **kwargs):
         if Membership.objects.filter(year=self.year, member=self.request.member).exists():
@@ -89,6 +103,7 @@ class ExtendMembershipSuccessView(MemberMixin, UpdateMemberYearMixin, TemplateVi
 class ModelAdminFormViewMixin:
     """TODO"""
 
+    # Class variable needed as we need to be able to pass this through as_view(..)
     model_admin: ModelAdmin = None
 
     def __init__(self, *args, model_admin: ModelAdmin = None, **kwargs) -> None:
@@ -142,11 +157,26 @@ class ModelAdminFormViewMixin:
         return context
 
 
+LINK_TOKEN_GENERATOR = LinkAccountTokenGenerator()
+INTERNAL_LINK_SESSION_TOKEN = "_link_account_token"
+
+
 class RegisterNewMemberAdminView(ModelAdminFormViewMixin, CreateView):
     """TODO"""
 
     form_class = RegisterMemberForm
     template_name = "membership_file/register_member.html"
+    token_generator = LINK_TOKEN_GENERATOR
+
+    def get_form_kwargs(self) -> Dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "request": self.request,
+                "token_generator": self.token_generator,
+            }
+        )
+        return kwargs
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
         self.email_sent = form.cleaned_data["send_registration_email"]
@@ -159,3 +189,176 @@ class RegisterNewMemberAdminView(ModelAdminFormViewMixin, CreateView):
             messages.warning(self.request, f"Registered, but did not email member “{self.object}”")
 
         return reverse(f"admin:membership_file_member_change", args=(self.object.id,))
+
+
+class TokenMixinBase:
+    """TODO"""
+
+    # Subclasses should override this
+    session_token_name: str = None
+    token_generator: PasswordResetTokenGenerator = None
+    object_id_kwarg_name = "uidb64"
+    object_class: Type[Model] = UserModel
+
+    def get_url_object(self, uidb64: str):
+        """Equivalent to get_user"""
+        try:
+            # urlsafe_base64_decode() decodes to bytestring
+            uid = urlsafe_base64_decode(uidb64).decode()
+            url_object = self.object_class._default_manager.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, self.object_class.DoesNotExist, ValidationError):
+            url_object = None
+        return url_object
+
+    def delete_token(self):
+        """TODO"""
+        del self.request.session[self.session_token_name]
+
+
+class UrlTokenMixin(TokenMixinBase):
+    """Converts a URL token to a session token"""
+
+    # Subclasses should override this
+    url_token_name: str = None
+
+    token_kwarg_name = "token"
+    object_class: Type[Model] = UserModel
+
+    @method_decorator(sensitive_post_parameters())
+    @method_decorator(never_cache)
+    def dispatch(self, *args, **kwargs):
+        assert self.object_id_kwarg_name in kwargs and self.token_kwarg_name in kwargs
+
+        self.validlink = False
+        self.url_object = self.get_url_object(kwargs[self.object_id_kwarg_name])
+
+        # View is only valid if a url object was passed
+        if self.url_object is not None:
+            token = kwargs[self.token_kwarg_name]
+            print("cool token is:")
+            print(token)
+            if token == self.url_token_name:
+                session_token = self.request.session.get(self.session_token_name)
+                if self.token_generator.check_token(self.url_object, session_token):
+                    # If the token is valid, display the link account form.
+                    self.validlink = True
+                    return super().dispatch(*args, **kwargs)
+            else:
+                if self.token_generator.check_token(self.url_object, token):
+                    # Store the token in the session and redirect to the
+                    # link account form at a URL without the token. That
+                    # avoids the possibility of leaking the token in the
+                    # HTTP Referer header.
+                    self.request.session[self.session_token_name] = token
+                    print("-------")
+                    print("session token is: ")
+                    print(token)
+                    print(f"name: {self.session_token_name}, obj: {self.url_object}")
+                    redirect_url = self.request.path.replace(token, self.url_token_name)
+                    return HttpResponseRedirect(redirect_url)
+
+        # Display the "Password reset unsuccessful" page.
+        return self.render_to_response(self.get_context_data())
+
+
+class SessionTokenMixin(TokenMixinBase):
+    """Uses a session token"""
+
+    @method_decorator(sensitive_post_parameters())
+    @method_decorator(never_cache)
+    def dispatch(self, *args, **kwargs):
+        assert self.object_id_kwarg_name in kwargs
+
+        self.validlink = False
+        self.url_object = self.get_url_object(kwargs[self.object_id_kwarg_name])
+
+        # View is only valid if a url object was passed
+        if self.url_object is not None:
+            session_token = self.request.session.get(self.session_token_name)
+            print("session token is: ")
+            print(session_token)
+            print(f"name: {self.session_token_name}, obj: {self.url_object}")
+            if self.token_generator.check_token(self.url_object, session_token):
+                # If the token is valid, display the link account form.
+                self.validlink = True
+                return super().dispatch(*args, **kwargs)
+
+        print("session token fail!")
+
+        # Display the "Password reset unsuccessful" page.
+        return self.render_to_response(self.get_context_data())
+
+
+class LinkMembershipViewTokenMixin:
+    """TODO"""
+
+    session_token_name = INTERNAL_LINK_SESSION_TOKEN
+    token_generator = LINK_TOKEN_GENERATOR
+
+    object_class = Member
+
+    def get_url_object(self, uidb64: str):
+        member = super().get_url_object(uidb64)
+        # If the member already has an associated user, then abort
+        if member is not None and member.user is not None:
+            return None
+        return member
+
+
+class LinkMembershipConfirmView(LinkMembershipViewTokenMixin, UrlTokenMixin, View):
+    """
+    `self.url_token_name` is the equivalent of reset_url_token in PasswordResetConfirmView
+    """
+
+    url_token_name = "link-account"
+
+    def get(self, request, *args, **kwargs):
+        if not self.validlink:
+            pass
+            # TODO: render fail template
+
+        if self.request.user.is_authenticated:
+            # Already logged in
+            return HttpResponseRedirect(
+                reverse("membership:link_account/login", args=(kwargs[self.object_id_kwarg_name],))
+            )
+        # Create a new account
+        print("Redirect to register page")
+        return HttpResponseRedirect(
+            reverse("membership:link_account/register", args=(kwargs[self.object_id_kwarg_name],))
+        )
+
+
+class LinkMembershipRegisterView(LinkMembershipViewTokenMixin, SessionTokenMixin, RegisterUserView):
+    """
+    Shows a registration form which, when filled, registers a new user and
+    attached a predetermined member to it.
+    """
+
+    form_class = ConfirmLinkMembershipRegisterForm
+    post_reset_login = True
+    post_reset_login_backend = "django.contrib.auth.backends.ModelBackend"
+    # TODO
+    success_url = reverse_lazy("account:membership:view")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["member"] = self.url_object
+        # Prefill some form fields
+        kwargs["initial"] = {
+            "first_name": self.url_object.get_full_name(allow_spoof=False),
+            "email": self.url_object.email,
+        }
+        return kwargs
+
+    def form_valid(self, form: ConfirmLinkMembershipRegisterForm):
+        user = form.save(commit=False)
+        # UserCreationForm saves form with commit=False, so we need to call save_m2m ourselves
+        user.save()
+        form.save_m2m()
+        self.delete_token()
+        if self.post_reset_login:
+            auth_login(self.request, user, self.post_reset_login_backend)
+
+        messages.success(self.request, "Membership data linked successfully!")
+        return super().form_valid(form)

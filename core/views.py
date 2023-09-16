@@ -1,36 +1,32 @@
 import os
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse, HttpRequest
 from django.http.response import Http404
 from django.shortcuts import redirect, render
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
 from django.views import View
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, FormView
 from django.views.decorators.http import require_safe
-
-from membership_file.util import MembershipRequiredMixin
-
-from .forms import RegisterForm
-from .models import MarkdownImage, Shortcut
-
 from dynamic_preferences.registries import global_preferences_registry
 
+from core.forms import RegisterForm
+from core.models import MarkdownImage, Shortcut
+from membership_file.util import MembershipRequiredMixin
+
 global_preferences = global_preferences_registry.manager()
-
-from django.contrib.auth import get_user_model
-
 User = get_user_model()
+
 ##################################################################################
 # Contains render-code for displaying general pages.
 # @since 15 JUL 2019
 ##################################################################################
-
 
 @require_safe
 def logoutSuccess(request):
@@ -59,27 +55,14 @@ class NewsletterView(GlobalPreferenceRequiredMixin, MembershipRequiredMixin, Tem
     template_name = "core/newsletters.html"
 
 
-@require_safe
-def registerSuccess(request):
-    return render(request, "core/user_accounts/register/register_done.html", {})
+class RegisterSuccessView(TemplateView):
+    template_name = "core/user_accounts/register/register_done.html"
 
-
-def register(request):
-    # if this is a POST request we need to process the form data
-    if request.method == "POST":
-        # create a form instance and populate it with data from the request:
-        form = RegisterForm(request.POST)
-        # check whether it's valid:
-        if form.is_valid():
-            # Save the user
-            form.save(commit=True)
-            return redirect(reverse("core:user_accounts/register/success"))
-
-    # if a GET (or any other method) we'll create a blank form
-    else:
-        form = RegisterForm()
-
-    return render(request, "core/user_accounts/register/register.html", {"form": form})
+class RegisterUserView(FormView):
+    """ Register a user """
+    template_name = "core/user_accounts/register/register.html"
+    form_class = RegisterForm
+    success_url = reverse_lazy("core:user_accounts/register/success")
 
 
 ##################################################################################

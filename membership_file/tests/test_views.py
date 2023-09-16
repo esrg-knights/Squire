@@ -24,20 +24,20 @@ class ExtendMembershipViewTest(ViewValidityMixin, DynamicRegistryUsageMixin, Tes
         super(ExtendMembershipViewTest, self).setUp()
 
     def get_base_url(self, content_type=None, item_id=None):
-        return reverse("membership_file/continue_membership")
+        return reverse("membership:continue_membership")
 
     def test_class(self):
         self.assertTrue(issubclass(ExtendMembershipView, FormView))
         self.assertEqual(ExtendMembershipView.template_name, "membership_file/extend_membership.html")
         self.assertEqual(ExtendMembershipView.form_class, ContinueMembershipForm)
-        self.assertEqual(ExtendMembershipView.success_url, reverse("membership_file/continue_success"))
+        self.assertEqual(ExtendMembershipView.success_url, reverse("membership:continue_success"))
 
     def test_successful_get(self):
         self.assertValidGetResponse()
 
     def test_succesful_post(self):
         response = self.client.post(self.get_base_url(), data={}, follow=True)
-        self.assertRedirects(response, reverse("membership_file/continue_success"))
+        self.assertRedirects(response, reverse("membership:continue_success"))
         msg = "Succesfully extended Knights membership into {year}".format(year=MemberYear.objects.get(id=3))
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
 
