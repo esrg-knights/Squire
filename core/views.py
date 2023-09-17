@@ -39,6 +39,22 @@ class LoginView(DjangoLoginView):
     # For more information, see the corresponding warning at:
     #  https://docs.djangoproject.com/en/3.2/topics/auth/default/#all-authentication-views
 
+    register_url = reverse_lazy("core:user_accounts/register")
+    reset_password_url = reverse_lazy("core:user_accounts/password_reset")
+
+    def get_register_url(self):
+        """TODO"""
+        return self.register_url
+
+    def get_reset_password_url(self):
+        """TODO"""
+        return self.reset_password_url
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context.update({'register_url': self.get_register_url(), 'reset_password_url': self.get_reset_password_url()})
+        return context
+
 class LogoutSuccessView(TemplateView):
     template_name = "core/user_accounts/logout-success.html"
 
@@ -71,10 +87,21 @@ class RegisterSuccessView(TemplateView):
     template_name = "core/user_accounts/register/register_done.html"
 
 class RegisterUserView(FormView):
-    """ Register a user """
+    """ Register a user. `login_url` is a url to the login page. """
     template_name = "core/user_accounts/register/register.html"
     form_class = RegisterForm
     success_url = reverse_lazy("core:user_accounts/register/success")
+
+    login_url = reverse_lazy("core:user_accounts/login")
+
+    def get_login_url(self):
+        """TODO"""
+        return self.login_url
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context.update({'login_url': self.get_login_url()})
+        return context
 
 
 ##################################################################################

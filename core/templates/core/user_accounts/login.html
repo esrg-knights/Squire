@@ -33,8 +33,12 @@
   </form>
   <br>
   <p>
-    Forgot your password? Click <a href="{% url 'core:user_accounts/password_reset' %}">here</a> to reset it.
+    {% if reset_password_url is not None %}
+    Forgot your password? Click <a href="{{ reset_password_url }}">here</a> to reset it.
+    {% endif %}
     <br>
-    You don't have an account? <a href="{% url 'core:user_accounts/register' %}">Register</a> instead!
+    {% if register_url is not None %}
+    You don't have an account? <a href="{{ register_url }}">Register</a> instead!
+    {% endif %}
   </p>
 {% endblock content %}

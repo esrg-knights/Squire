@@ -345,6 +345,9 @@ class LinkMembershipRegisterView(LinkMembershipViewTokenMixin, SessionTokenMixin
     post_link_login_backend = "django.contrib.auth.backends.ModelBackend"
     success_url = reverse_lazy("account:membership:view")
 
+    def get_login_url(self):
+        return reverse("membership:link_account/login", args=(self.kwargs[self.object_id_kwarg_name],))
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["member"] = self.url_object
@@ -426,6 +429,11 @@ class LinkMembershipLoginView(LinkMembershipViewTokenMixin, SessionTokenMixin, L
 
     def get_link_description(self):
         return format_html("Logging in will automatically link membership data for <i>{0}</i> to your account.", self.url_object.get_full_name(allow_spoof=False))
+
+    def get_register_url(self):
+        if self.request.user.is_authenticated:
+            return None
+        return reverse("membership:link_account/register", args=(self.kwargs[self.object_id_kwarg_name],))
 
     def get_form_kwargs(self):
         print("LinkMembershipLoginView::get_form_kwargs")

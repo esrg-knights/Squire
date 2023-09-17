@@ -40,7 +40,8 @@ class LoginForm(AuthenticationForm):
         print(kwargs)
         super().__init__(request, *args, **kwargs)
         print(self.fields['username'].initial)
-        if kwargs.get("initial", {}).get('username') is not None:
+        initial = kwargs.get("initial", {})
+        if 'username' in initial:
             self.fields['username'].disabled = True
 
     def clean(self):
@@ -87,12 +88,13 @@ class RegisterForm(UserCreationForm):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # If initial data is passed to the form, ensure it cannot be changed
+        initial = kwargs.get("initial", {})
         self.fields['first_name'].required = True
-        if self.fields['first_name'].initial is not None:
+        if 'first_name' in initial:
             self.fields['first_name'].disabled = True
 
         self.fields['email'].required = True
-        if self.fields['email'].initial is not None:
+        if 'email' in initial:
             self.fields['email'].disabled = True
 
 # Adds the relevant bootstrap classes to the password change form
