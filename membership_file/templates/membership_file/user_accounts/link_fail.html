@@ -1,0 +1,14 @@
+{% extends 'core/base.html' %}
+
+{% load static %}
+
+{% block title %}
+Squire - Link failed!
+{% endblock title %}
+
+{% block content %}
+<h1>Account Link Invalid!</h1>
+<p>The account link was invalid, possibly because it has already been used. Please generate a new
+    link, or ask the board for help if this is not possible.</p>
+<img src="{% static 'images/bankpas.webp' %}" alt="Crooked bank card" height='256px' class="mx-auto d-block">
+{% endblock content %}

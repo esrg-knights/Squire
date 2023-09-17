@@ -390,17 +390,13 @@ class ConfirmLinkMembershipRegisterForm(RegisterForm):
     def __init__(self, member: Member, *args, **kwargs):
         # Member should not already have an attached user
         assert member.user is None
-        print("form initialized")
         self.member = member
         super().__init__(*args, **kwargs)
 
     def _save_m2m(self):
         super()._save_m2m()
-        print("save-m2m-called")
         # Attach new user to predetermined member
         self.member.user = self.instance
-        print(self.member)
-        print(self.instance)
         self.member.save()
 
 class ConfirmLinkMembershipLoginForm(LoginForm):
@@ -412,8 +408,6 @@ class ConfirmLinkMembershipLoginForm(LoginForm):
         # Member should not already have an attached user
         assert member.user is None
         self.member = member
-        print("ConfirmLInkMembershipLoginForm::init")
-        print(kwargs)
         super().__init__(*args, **kwargs)
 
     def save(self):

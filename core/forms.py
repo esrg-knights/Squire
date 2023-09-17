@@ -37,9 +37,7 @@ class LoginForm(AuthenticationForm):
     If an initial `username` is provided, then the user cannot change it.
     """
     def __init__(self, request, *args, **kwargs) -> None:
-        print(kwargs)
         super().__init__(request, *args, **kwargs)
-        print(self.fields['username'].initial)
         initial = kwargs.get("initial", {})
         if 'username' in initial:
             self.fields['username'].disabled = True

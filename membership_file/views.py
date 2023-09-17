@@ -10,6 +10,7 @@ from django.db.models import Model
 from django.forms import ValidationError
 from django.forms.models import BaseModelForm
 from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
 from django.views import View
 from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
@@ -160,7 +161,6 @@ class ModelAdminFormViewMixin:
 
 
 LINK_TOKEN_GENERATOR = LinkAccountTokenGenerator()
-INTERNAL_LINK_SESSION_TOKEN = "_link_account_token"
 
 
 class RegisterNewMemberAdminView(ModelAdminFormViewMixin, CreateView):
@@ -197,6 +197,7 @@ class TokenMixinBase:
     """TODO"""
 
     # Subclasses should override this
+    fail_template_name = "fail_template_name: TokenMixin fail placeholder"
     session_token_name: str = None
     token_generator: PasswordResetTokenGenerator = None
     object_id_kwarg_name = "uidb64"
@@ -215,6 +216,11 @@ class TokenMixinBase:
     def delete_token(self):
         """TODO"""
         del self.request.session[self.session_token_name]
+
+    def dispatch(self, *args, **kwargs):
+        if not self.validlink:
+            return render(self.request, self.fail_template_name)
+        return super().dispatch(*args, **kwargs)
 
 
 class UrlTokenMixin(TokenMixinBase):
@@ -237,8 +243,6 @@ class UrlTokenMixin(TokenMixinBase):
         # View is only valid if a url object was passed
         if self.url_object is not None:
             token = kwargs[self.token_kwarg_name]
-            print("cool token is:")
-            print(token)
             if token == self.url_token_name:
                 session_token = self.request.session.get(self.session_token_name)
                 if self.token_generator.check_token(self.url_object, session_token):
@@ -252,15 +256,11 @@ class UrlTokenMixin(TokenMixinBase):
                     # avoids the possibility of leaking the token in the
                     # HTTP Referer header.
                     self.request.session[self.session_token_name] = token
-                    print("-------")
-                    print("session token is: ")
-                    print(token)
-                    print(f"name: {self.session_token_name}, obj: {self.url_object}")
                     redirect_url = self.request.path.replace(token, self.url_token_name)
                     return HttpResponseRedirect(redirect_url)
 
-        # Display the "Password reset unsuccessful" page.
-        return self.render_to_response(self.get_context_data())
+        # Token was invalid
+        return super().dispatch(*args, **kwargs)
 
 
 class SessionTokenMixin(TokenMixinBase):
@@ -277,24 +277,19 @@ class SessionTokenMixin(TokenMixinBase):
         # View is only valid if a url object was passed
         if self.url_object is not None:
             session_token = self.request.session.get(self.session_token_name)
-            print("session token is: ")
-            print(session_token)
-            print(f"name: {self.session_token_name}, obj: {self.url_object}")
             if self.token_generator.check_token(self.url_object, session_token):
                 # If the token is valid, display the link account form.
                 self.validlink = True
                 return super().dispatch(*args, **kwargs)
 
-        print("session token fail!")
-
-        # Display the "Password reset unsuccessful" page.
-        return self.render_to_response(self.get_context_data())
+        return super().dispatch(*args, **kwargs)
 
 
 class LinkMembershipViewTokenMixin:
     """TODO"""
 
-    session_token_name = INTERNAL_LINK_SESSION_TOKEN
+    fail_template_name = "membership_file/user_accounts/link_fail.html"
+    session_token_name = "_link_account_token"
     token_generator = LINK_TOKEN_GENERATOR
 
     object_class = Member
@@ -306,6 +301,14 @@ class LinkMembershipViewTokenMixin:
             return None
         return member
 
+    def dispatch(self, *args, **kwargs):
+        res = super().dispatch(*args, **kwargs)
+        # Fail if the requesting user already has a member
+        if hasattr(self.request.user, "member"):
+            return render(self.request, self.fail_template_name)
+        return res
+
+
 
 class LinkMembershipConfirmView(LinkMembershipViewTokenMixin, UrlTokenMixin, View):
     """
@@ -315,20 +318,12 @@ class LinkMembershipConfirmView(LinkMembershipViewTokenMixin, UrlTokenMixin, Vie
     url_token_name = "link-account"
 
     def get(self, request, *args, **kwargs):
-        if not self.validlink:
-            pass
-            # TODO: render fail template
-
         if self.request.user.is_authenticated:
-            # if self.request.user.member is not None:
-            #     pass
-            #     TODO: render fail template
             # Already logged in
             return HttpResponseRedirect(
                 reverse("membership:link_account/login", args=(kwargs[self.object_id_kwarg_name],))
             )
         # Create a new account
-        print("Redirect to register page")
         return HttpResponseRedirect(
             reverse("membership:link_account/register", args=(kwargs[self.object_id_kwarg_name],))
         )
@@ -344,6 +339,13 @@ class LinkMembershipRegisterView(LinkMembershipViewTokenMixin, SessionTokenMixin
     post_link_login = True
     post_link_login_backend = "django.contrib.auth.backends.ModelBackend"
     success_url = reverse_lazy("account:membership:view")
+
+    def dispatch(self, *args, **kwargs):
+        res = super().dispatch(*args, **kwargs)
+        # Fail if a user is logged in
+        if self.request.user.is_authenticated:
+            return render(self.request, self.fail_template_name)
+        return res
 
     def get_login_url(self):
         return reverse("membership:link_account/login", args=(self.kwargs[self.object_id_kwarg_name],))
@@ -417,7 +419,6 @@ class LinkMembershipLoginView(LinkMembershipViewTokenMixin, SessionTokenMixin, L
     """
     Shows a login form which, when filled, attached a predetermined member to the user that was logged in.
     TODO: Skip asking for login credentials if the user had already logged in very recently (e.g. 5 minutes ago)
-    TODO: Fail if the logged in user already has a linked membership
     """
 
     authentication_form = ConfirmLinkMembershipLoginForm
@@ -436,7 +437,6 @@ class LinkMembershipLoginView(LinkMembershipViewTokenMixin, SessionTokenMixin, L
         return reverse("membership:link_account/register", args=(self.kwargs[self.object_id_kwarg_name],))
 
     def get_form_kwargs(self):
-        print("LinkMembershipLoginView::get_form_kwargs")
         kwargs = super().get_form_kwargs()
         kwargs["member"] = self.url_object
         if self.request.user.is_authenticated:
