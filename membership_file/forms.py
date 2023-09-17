@@ -1,13 +1,9 @@
-import copy
 from typing import Any, Dict
 from django import forms
-from django.conf import settings
-from django.contrib import messages
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ImproperlyConfigured, ValidationError
-from django.core.mail import EmailMultiAlternatives, send_mail
-from django.forms.models import ModelFormMetaclass
+from django.core.mail import EmailMultiAlternatives
 from django.http import HttpRequest
 from django.template import loader
 from django.utils.encoding import force_bytes
@@ -18,7 +14,7 @@ from dynamic_preferences.registries import global_preferences_registry
 from core.forms import LoginForm, RegisterForm
 from membership_file.models import Member, Room, MemberYear, Membership
 from membership_file.util import LinkAccountTokenGenerator
-from utils.forms import UpdatingUserFormMixin
+from utils.forms import FieldsetAdminFormMixin, UpdatingUserFormMixin
 from utils.widgets import OtherRadioSelect
 
 ##################################################################################
@@ -114,51 +110,6 @@ class ContinueMembershipForm(forms.Form):
             year=self.year,
             member=self.member,
         )
-
-
-class FieldsetModelFormMetaclass(ModelFormMetaclass):
-    """Sets the `_meta.fieldsets` attribute that is required by the admin panel."""
-
-    def __new__(mcs, name, bases, attrs):
-        new_class = super().__new__(mcs, name, bases, attrs)
-        new_class._meta.fieldsets = None
-        meta_class = getattr(new_class, "Meta", None)
-        if meta_class is not None:
-            new_class._meta.fieldsets = getattr(meta_class, "fieldsets", None)
-        return new_class
-
-
-class FieldsetAdminFormMixin(metaclass=FieldsetModelFormMetaclass):
-    """
-    This mixin allows a form to be used in the admin panel. Notably allows using fieldsets
-    and default admin widgets (e.g. the datetime picker)
-    """
-
-    required_css_class = "required"
-
-    # ModelAdmin media
-    @property
-    def media(self):
-        extra = "" if settings.DEBUG else ".min"
-        js = [
-            "vendor/jquery/jquery%s.js" % extra,
-            "jquery.init.js",
-            "core.js",
-            "admin/RelatedObjectLookups.js",
-            "actions.js",
-            "urlify.js",
-            "prepopulate.js",
-            "vendor/xregexp/xregexp%s.js" % extra,
-        ]
-        return forms.Media(js=["admin/js/%s" % url for url in js]) + super().media
-
-    def get_fieldsets(self, request, obj=None):
-        """
-        Hook for specifying fieldsets.
-        """
-        if self._meta.fieldsets:
-            return copy.deepcopy(self._meta.fieldsets)
-        return [(None, {"fields": self.fields})]
 
 
 class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.ModelForm):
@@ -404,9 +355,7 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
 
 
 class ConfirmLinkMembershipRegisterForm(RegisterForm):
-    """
-    TODO: RequestingUserMixin
-    """
+    """A RegisterForm that, when saved, also links a predetermined member to the newly registered user."""
 
     def __init__(self, member: Member, *args, **kwargs):
         # Member should not already have an attached user
@@ -418,12 +367,14 @@ class ConfirmLinkMembershipRegisterForm(RegisterForm):
         super()._save_m2m()
         # Attach new user to predetermined member
         self.member.user = self.instance
+        self.member.last_updated_by = self.instance
         self.member.save()
 
 
 class ConfirmLinkMembershipLoginForm(LoginForm):
     """
-    TODO: RequestingUserMixin
+    A LoginForm that, when saved, also links a predetermined member to the logged in user.
+    Also sets the user's email and name to match that of the linked member.
     """
 
     def __init__(self, member: Member, *args, **kwargs):
@@ -436,6 +387,7 @@ class ConfirmLinkMembershipLoginForm(LoginForm):
         # Attach new user to predetermined member
         user = self.get_user()
         self.member.user = user
+        self.member.last_updated_by = user
         self.member.save()
 
         # Update user email and real name

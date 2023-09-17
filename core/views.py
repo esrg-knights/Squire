@@ -62,6 +62,53 @@ class LoginView(DjangoLoginView):
         return context
 
 
+class LinkedLoginView(LoginView):
+    """
+    A variant of the standard LoginView that shows that some data will be linked to
+    the Squire account when logging in. This does not actually link any data itself;
+    subclasses should implement that sort of behaviour.
+    """
+
+    image_source = None
+    image_alt = None
+    link_title = None
+    link_description = None
+    link_extra = None
+
+    def get_image_source(self):
+        """The image for the data to be linked. Defaults to Squire's logo."""
+        return self.image_source
+
+    def get_image_alt(self):
+        """Alt text for the image."""
+        return self.image_alt
+
+    def get_link_title(self):
+        """Title for the data to be linked."""
+        return self.link_title
+
+    def get_link_description(self):
+        """A description of the data to be linked."""
+        return self.link_description
+
+    def get_link_extra(self):
+        """Any extra information for the data to be linked."""
+        return self.link_extra
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "image_source": self.get_image_source(),
+                "image_alt": self.get_image_alt(),
+                "link_title": self.get_link_title(),
+                "link_description": self.get_link_description(),
+                "link_extra": self.get_link_extra(),
+            }
+        )
+        return context
+
+
 class LogoutSuccessView(TemplateView):
     """View that is displayed when a user is logged out."""
 
