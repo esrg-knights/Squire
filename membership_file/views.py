@@ -18,9 +18,10 @@ from django.views.generic import TemplateView, FormView
 from django.template.response import TemplateResponse
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
+from django.utils.html import format_html
 from django.utils.http import urlsafe_base64_decode
 from dynamic_preferences.registries import global_preferences_registry
-from core.views import RegisterUserView
+from core.views import LoginView, RegisterUserView
 
 UserModel = get_user_model()
 
@@ -28,6 +29,7 @@ UserModel = get_user_model()
 from membership_file.auto_model_update import *
 from membership_file.export import *
 from membership_file.forms import (
+    ConfirmLinkMembershipLoginForm,
     ConfirmLinkMembershipRegisterForm,
     ContinueMembershipForm,
     RegisterMemberForm,
@@ -318,6 +320,9 @@ class LinkMembershipConfirmView(LinkMembershipViewTokenMixin, UrlTokenMixin, Vie
             # TODO: render fail template
 
         if self.request.user.is_authenticated:
+            # if self.request.user.member is not None:
+            #     pass
+            #     TODO: render fail template
             # Already logged in
             return HttpResponseRedirect(
                 reverse("membership:link_account/login", args=(kwargs[self.object_id_kwarg_name],))
@@ -336,9 +341,8 @@ class LinkMembershipRegisterView(LinkMembershipViewTokenMixin, SessionTokenMixin
     """
 
     form_class = ConfirmLinkMembershipRegisterForm
-    post_reset_login = True
-    post_reset_login_backend = "django.contrib.auth.backends.ModelBackend"
-    # TODO
+    post_link_login = True
+    post_link_login_backend = "django.contrib.auth.backends.ModelBackend"
     success_url = reverse_lazy("account:membership:view")
 
     def get_form_kwargs(self):
@@ -357,8 +361,87 @@ class LinkMembershipRegisterView(LinkMembershipViewTokenMixin, SessionTokenMixin
         user.save()
         form.save_m2m()
         self.delete_token()
-        if self.post_reset_login:
-            auth_login(self.request, user, self.post_reset_login_backend)
+        if self.post_link_login:
+            auth_login(self.request, user, self.post_link_login_backend)
 
         messages.success(self.request, "Membership data linked successfully!")
         return super().form_valid(form)
+
+
+class LinkedLoginView(LoginView):
+    """TODO"""
+
+    image_source = None
+    image_alt = None
+    link_title = None
+    link_description = None
+    link_extra = None
+
+    def get_image_source(self):
+        """TODO"""
+        return self.image_source
+
+    def get_image_alt(self):
+        """TODO"""
+        return self.image_alt
+
+    def get_link_title(self):
+        """TODO"""
+        return self.link_title
+
+    def get_link_description(self):
+        """TODO"""
+        return self.link_description
+
+    def get_link_extra(self):
+        """TODO"""
+        return self.link_extra
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "image_source": self.get_image_source(),
+                "image_alt": self.get_image_alt(),
+                "link_title": self.get_link_title(),
+                "link_description": self.get_link_description(),
+                "link_extra": self.get_link_extra(),
+            }
+        )
+        return context
+
+class LinkMembershipLoginView(LinkMembershipViewTokenMixin, SessionTokenMixin, LinkedLoginView):
+    """
+    Shows a login form which, when filled, attached a predetermined member to the user that was logged in.
+    TODO: Skip asking for login credentials if the user had already logged in very recently (e.g. 5 minutes ago)
+    TODO: Fail if the logged in user already has a linked membership
+    """
+
+    authentication_form = ConfirmLinkMembershipLoginForm
+    success_url = reverse_lazy("account:membership:view")
+    template_name = "membership_file/user_accounts/login_linked.html"
+
+    link_title = "Link Membership Data"
+    link_extra = "This will also update your Squire account's email and real name."
+
+    def get_link_description(self):
+        return format_html("Logging in will automatically link membership data for <i>{0}</i> to your account.", self.url_object.get_full_name(allow_spoof=False))
+
+    def get_form_kwargs(self):
+        print("LinkMembershipLoginView::get_form_kwargs")
+        kwargs = super().get_form_kwargs()
+        kwargs["member"] = self.url_object
+        if self.request.user.is_authenticated:
+            # Prefill some form fields
+            kwargs["initial"] = {
+                "username": self.request.user.username,
+            }
+        return kwargs
+
+    def form_valid(self, form: ConfirmLinkMembershipLoginForm):
+        form.save()
+        messages.success(self.request, "Membership data linked successfully!")
+        return super().form_valid(form)
+
+    def get_redirect_url(self) -> str:
+        return self.success_url

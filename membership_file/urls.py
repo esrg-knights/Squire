@@ -18,11 +18,11 @@ urlpatterns = [
         views.LinkMembershipRegisterView.as_view(),
         name="link_account/register",
     ),
-    # path(
-    #     "link_account/<uidb64>/login/",
-    #     views.LinkMembershipConfirmView.as_view(),
-    #     name="link_account/login",
-    # ),
+    path(
+        "link_account/<uidb64>/login/",
+        views.LinkMembershipLoginView.as_view(),
+        name="link_account/login",
+    ),
     path(
         "link_account/<uidb64>/<token>/",
         views.LinkMembershipConfirmView.as_view(),

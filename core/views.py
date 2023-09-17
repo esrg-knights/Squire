@@ -1,11 +1,14 @@
 import os
+from typing import Any
+from django import http
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import JsonResponse, HttpRequest
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, HttpRequest
 from django.http.response import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
@@ -16,7 +19,7 @@ from django.views.generic import TemplateView, FormView
 from django.views.decorators.http import require_safe
 from dynamic_preferences.registries import global_preferences_registry
 
-from core.forms import RegisterForm
+from core.forms import LoginForm, RegisterForm
 from core.models import MarkdownImage, Shortcut
 from membership_file.util import MembershipRequiredMixin
 
@@ -28,12 +31,21 @@ User = get_user_model()
 # @since 15 JUL 2019
 ##################################################################################
 
-@require_safe
-def logoutSuccess(request):
-    if request.user.is_authenticated:
-        return redirect(reverse("core:user_accounts/logout"))
-    return render(request, "core/user_accounts/logout-success.html", {})
+class LoginView(DjangoLoginView):
+    template_name = 'core/user_accounts/login.html'
+    authentication_form = LoginForm
+    redirect_authenticated_user = False
+    # Setting to True will enable Social Media Fingerprinting.
+    # For more information, see the corresponding warning at:
+    #  https://docs.djangoproject.com/en/3.2/topics/auth/default/#all-authentication-views
 
+class LogoutSuccessView(TemplateView):
+    template_name = "core/user_accounts/logout-success.html"
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        if request.user.is_authenticated:
+            return HttpResponseRedirect(reverse("core:user_accounts/logout"))
+        return super().get(request, *args, **kwargs)
 
 class GlobalPreferenceRequiredMixin:
     """Mixin that requires a specific global_preference to be non-empty or True. Throws a HTTP 404 otherwise."""

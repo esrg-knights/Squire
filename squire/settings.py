@@ -285,7 +285,7 @@ LOGOUT_URL = "/logout"
 
 # The URL or named URL pattern where requests are redirected after
 # logout if LogoutView doesn’t have a next_page attribute.
-LOGOUT_REDIRECT_URL = "/logout/success"
+LOGOUT_REDIRECT_URL = "/logout/success/"
 
 ####################################################################
 # Martor settings (Markdown Editor)

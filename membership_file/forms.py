@@ -382,9 +382,10 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
         email_message.send()
 
 
-# TODO: RequestingUserMixin
 class ConfirmLinkMembershipRegisterForm(RegisterForm):
-    """TODO"""
+    """
+    TODO: RequestingUserMixin
+    """
 
     def __init__(self, member: Member, *args, **kwargs):
         # Member should not already have an attached user
@@ -401,3 +402,27 @@ class ConfirmLinkMembershipRegisterForm(RegisterForm):
         print(self.member)
         print(self.instance)
         self.member.save()
+
+class ConfirmLinkMembershipLoginForm(LoginForm):
+    """
+    TODO: RequestingUserMixin
+    """
+
+    def __init__(self, member: Member, *args, **kwargs):
+        # Member should not already have an attached user
+        assert member.user is None
+        self.member = member
+        print("ConfirmLInkMembershipLoginForm::init")
+        print(kwargs)
+        super().__init__(*args, **kwargs)
+
+    def save(self):
+        # Attach new user to predetermined member
+        user = self.get_user()
+        self.member.user = user
+        self.member.save()
+
+        # Update user email and real name
+        user.email = self.member.email
+        user.first_name = self.member.get_full_name(allow_spoof=False)
+        user.save()

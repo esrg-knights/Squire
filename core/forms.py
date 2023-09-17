@@ -28,11 +28,21 @@ User = get_user_model()
 # @since 15 AUG 2019
 ##################################################################################
 
-
-# LoginForm that changes the default AuthenticationForm
-# It provides a different error message when passing invalid login credentials,
-# and allows Inactive users to login
 class LoginForm(AuthenticationForm):
+    """
+    LoginForm that changes the default AuthenticationForm
+    It provides a different error message when passing invalid login credentials,
+    and allows Inactive users to login.
+
+    If an initial `username` is provided, then the user cannot change it.
+    """
+    def __init__(self, request, *args, **kwargs) -> None:
+        print(kwargs)
+        super().__init__(request, *args, **kwargs)
+        print(self.fields['username'].initial)
+        if kwargs.get("initial", {}).get('username') is not None:
+            self.fields['username'].disabled = True
+
     def clean(self):
         # Obtain username and password
         username = self.cleaned_data.get("username")
