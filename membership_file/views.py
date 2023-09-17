@@ -104,7 +104,16 @@ class ExtendMembershipSuccessView(MemberMixin, UpdateMemberYearMixin, TemplateVi
 
 
 class ModelAdminFormViewMixin:
-    """TODO"""
+    """
+    A Mixin that allows a ModelForm (e.g in a CreateView) to be rendered
+    inside a ModelAdmin in the admin panel using features normally available there.
+
+    This includes default widgets and styling (e.g. for datetime) and formsets.
+
+    The `form_class` must also inherit `membership_file.forms.FieldsetAdminFormMixin`
+    in order for this to work.
+    Furthermore, a `model_admin` should be passed in order to instantiate this view.
+    """
 
     # Class variable needed as we need to be able to pass this through as_view(..)
     model_admin: ModelAdmin = None
@@ -140,7 +149,7 @@ class ModelAdminFormViewMixin:
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        form: RegisterMemberForm = context.pop("form")
+        form = context.pop("form")
         adminForm = helpers.AdminForm(
             form, list(form.get_fieldsets(self.request, self.object)), {}, model_admin=self.model_admin
         )
@@ -148,12 +157,9 @@ class ModelAdminFormViewMixin:
         context.update(
             {
                 "adminform": adminForm,
-                # 'form_url': form_url,
                 "is_nav_sidebar_enabled": True,
                 "opts": Member._meta,
                 "title": "Register new member",
-                # 'content_type_id': get_content_type_for_model(self.model).pk,
-                # 'app_label': app_label,
             }
         )
 
@@ -164,7 +170,12 @@ LINK_TOKEN_GENERATOR = LinkAccountTokenGenerator()
 
 
 class RegisterNewMemberAdminView(ModelAdminFormViewMixin, CreateView):
-    """TODO"""
+    """
+    A form in the admin panel that registers a new user, and optionally
+    sends them a registration email. The receiver can use this registration
+    email in order to link the created membership data to a new or pre-existing
+    account.
+    """
 
     form_class = RegisterMemberForm
     template_name = "membership_file/register_member.html"
@@ -185,16 +196,33 @@ class RegisterNewMemberAdminView(ModelAdminFormViewMixin, CreateView):
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
+        # Send user back to the member registration form, and show a message with a link to the newly created member object
+        member_link = reverse(f"admin:membership_file_member_change", args=(self.object.id,))
         if self.email_sent:
-            messages.success(self.request, f"Registered and emailed member “{self.object}”")
+            messages.success(
+                self.request,
+                format_html('Registered and emailed member “<a href="{1}">{0}</a>”', self.object, member_link),
+            )
         else:
-            messages.warning(self.request, f"Registered, but did not email member “{self.object}”")
-
-        return reverse(f"admin:membership_file_member_change", args=(self.object.id,))
+            messages.warning(
+                self.request,
+                format_html('Registered, but did not email member “<a href="{1}">{0}</a>”', self.object, member_link),
+            )
+        return reverse(f"admin:membership_file_member_actions", args=("register_new_member",))
 
 
 class TokenMixinBase:
-    """TODO"""
+    """
+    The basis for a more general implementation of token verification in Django's `PasswordResetConfirmView`.
+    This base class is used for both `UrlTokenMixin` and `SessionTokenMixin`; refer there for details.
+
+    `fail_template_name`: Name of the template that is rendered whenever token verification fails.
+    `session_token_name`: Name of the session token stored inside `django_session`
+    `token_generator`: Token generator used to create and validate tokens. This should be different for each type
+        of token (e.g. password reset, link account, etc.)
+    `object_id_kwarg_name`: The url kwarg used to pass the base64-encoded id of the object
+    `object_class`: The model class that objects passed to this view belong to. E.g. User for Django's password resets
+    """
 
     # Subclasses should override this
     fail_template_name = "fail_template_name: TokenMixin fail placeholder"
@@ -204,7 +232,11 @@ class TokenMixinBase:
     object_class: Type[Model] = UserModel
 
     def get_url_object(self, uidb64: str):
-        """Equivalent to get_user"""
+        """
+        Decodes the base64-encoded id for an object of type `object_class` from the URL. If
+        no object can be decoded, then `None` is returned instead.
+        Equivalent to `PasswordResetConfirmView.get_user`
+        """
         try:
             # urlsafe_base64_decode() decodes to bytestring
             uid = urlsafe_base64_decode(uidb64).decode()
@@ -214,23 +246,39 @@ class TokenMixinBase:
         return url_object
 
     def delete_token(self):
-        """TODO"""
+        """Deletes the token from the session data"""
         del self.request.session[self.session_token_name]
 
-    def dispatch(self, *args, **kwargs):
-        if not self.validlink:
+    def dispatch(self, validlink, *args, **kwargs):
+        # Render fail template if the URL is invalid
+        if not validlink:
             return render(self.request, self.fail_template_name)
         return super().dispatch(*args, **kwargs)
 
 
 class UrlTokenMixin(TokenMixinBase):
-    """Converts a URL token to a session token"""
+    """
+    Stores a token passed through a URL in the session data. This allows it to be reused later, and
+    avoids the possibility of leaking the token in the HTTP Referer header.
+
+    This class generalizes Django's `PasswordResetConfirmView` token handling. The behaviour of
+    `dispatch` is pretty much identical, but instead plugs in overridable methods and class variables
+    to allow this mixin to be reused.
+
+    Views using this mixin have a URL formatted like `foo/<base64-encoded-object-id>/<token>`, where the
+    token is a long hash generated by the token generator. This hash contains various properties of the passed
+    object that must have changed once the link/token should become invalid. In order to not leak the token,
+    the token is first removed from the URL and replaced by `url_token_name`. The token is also saved in the
+    session data so it can actually be used and verified later on.
+
+    `url_token_name`: The value the token is set to in the URL once the token is stored in the session data.
+                        Identical behaviour to `reset_url_token` in Django's `PasswordResetConfirmView`
+    `token_kwarg_name`: The url kwarg used to pass the token
+    """
 
     # Subclasses should override this
     url_token_name: str = None
-
     token_kwarg_name = "token"
-    object_class: Type[Model] = UserModel
 
     @method_decorator(sensitive_post_parameters())
     @method_decorator(never_cache)
@@ -248,7 +296,7 @@ class UrlTokenMixin(TokenMixinBase):
                 if self.token_generator.check_token(self.url_object, session_token):
                     # If the token is valid, display the link account form.
                     self.validlink = True
-                    return super().dispatch(*args, **kwargs)
+                    return super().dispatch(self.validlink, *args, **kwargs)
             else:
                 if self.token_generator.check_token(self.url_object, token):
                     # Store the token in the session and redirect to the
@@ -260,11 +308,19 @@ class UrlTokenMixin(TokenMixinBase):
                     return HttpResponseRedirect(redirect_url)
 
         # Token was invalid
-        return super().dispatch(*args, **kwargs)
+        return super().dispatch(self.validlink, *args, **kwargs)
 
 
 class SessionTokenMixin(TokenMixinBase):
-    """Uses a session token"""
+    """
+    A more simplistic mixin that allows verifying a token already present in the session data.
+    This mixin is thus only useful in combination with `UrlTokenMixin`. Specifically, only when a
+    view using `UrlTokenMixin` redirects to a view using this mixin.
+
+    This class generalizes a fraction of Django's `PasswordResetConfirmView` token handling. The behaviour of
+    `dispatch` mimics the session token verification, but instead plugs in overridable methods and class variables
+    to allow this mixin to be reused.
+    """
 
     @method_decorator(sensitive_post_parameters())
     @method_decorator(never_cache)
@@ -280,13 +336,20 @@ class SessionTokenMixin(TokenMixinBase):
             if self.token_generator.check_token(self.url_object, session_token):
                 # If the token is valid, display the link account form.
                 self.validlink = True
-                return super().dispatch(*args, **kwargs)
+                return super().dispatch(self.validlink, *args, **kwargs)
 
-        return super().dispatch(*args, **kwargs)
+        return super().dispatch(self.validlink, *args, **kwargs)
 
 
 class LinkMembershipViewTokenMixin:
-    """TODO"""
+    """
+    A mixin to be used in combination with `UrlTokenMixin` or `SessionTokenMixin`.
+    It is able to generate (and verify) tokens for Member objects for the purpose
+    of linking a Member to some user.
+
+    This linking should fail if a member already has an associated user, or if
+    the request's user already has an associated member.
+    """
 
     fail_template_name = "membership_file/user_accounts/link_fail.html"
     session_token_name = "_link_account_token"
@@ -309,10 +372,14 @@ class LinkMembershipViewTokenMixin:
         return res
 
 
-
 class LinkMembershipConfirmView(LinkMembershipViewTokenMixin, UrlTokenMixin, View):
     """
-    `self.url_token_name` is the equivalent of reset_url_token in PasswordResetConfirmView
+    This view is the starting point for linking a member to a user. It (verifies and ) stores
+    a token from the URL in the session data, and redirects to other views to handle the linking
+    process.
+
+    If a user is already logged in, the user is redirected to a login view. Otherwise, they are
+    redirected to a registration page where they can create a new Squire account.
     """
 
     url_token_name = "link-account"
@@ -331,8 +398,8 @@ class LinkMembershipConfirmView(LinkMembershipViewTokenMixin, UrlTokenMixin, Vie
 
 class LinkMembershipRegisterView(LinkMembershipViewTokenMixin, SessionTokenMixin, RegisterUserView):
     """
-    Shows a registration form which, when filled, registers a new user and
-    attached a predetermined member to it.
+    Shows a registration form which, when filled, registers a new user and attaches a predetermined
+    member to it. This also prefills some of the user registration form fields based on the member's data.
     """
 
     form_class = ConfirmLinkMembershipRegisterForm
@@ -374,7 +441,11 @@ class LinkMembershipRegisterView(LinkMembershipViewTokenMixin, SessionTokenMixin
 
 
 class LinkedLoginView(LoginView):
-    """TODO"""
+    """
+    A variant of the standard LoginView that shows that some data will be linked to
+    the Squire account when logging in. This does not actually link any data itself;
+    subclasses should implement that sort of behaviour.
+    """
 
     image_source = None
     image_alt = None
@@ -383,23 +454,23 @@ class LinkedLoginView(LoginView):
     link_extra = None
 
     def get_image_source(self):
-        """TODO"""
+        """The image for the data to be linked. Defaults to Squire's logo."""
         return self.image_source
 
     def get_image_alt(self):
-        """TODO"""
+        """Alt text for the image."""
         return self.image_alt
 
     def get_link_title(self):
-        """TODO"""
+        """Title for the data to be linked."""
         return self.link_title
 
     def get_link_description(self):
-        """TODO"""
+        """A description of the data to be linked."""
         return self.link_description
 
     def get_link_extra(self):
-        """TODO"""
+        """Any extra information for the data to be linked."""
         return self.link_extra
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -415,10 +486,13 @@ class LinkedLoginView(LoginView):
         )
         return context
 
+
 class LinkMembershipLoginView(LinkMembershipViewTokenMixin, SessionTokenMixin, LinkedLoginView):
     """
     Shows a login form which, when filled, attached a predetermined member to the user that was logged in.
+    If a user is already logged in, they should still enter their credentials.
     TODO: Skip asking for login credentials if the user had already logged in very recently (e.g. 5 minutes ago)
+    TODO: Additional cleaning: A user that successfully logs in should not already have an associated member
     """
 
     authentication_form = ConfirmLinkMembershipLoginForm
@@ -429,9 +503,13 @@ class LinkMembershipLoginView(LinkMembershipViewTokenMixin, SessionTokenMixin, L
     link_extra = "This will also update your Squire account's email and real name."
 
     def get_link_description(self):
-        return format_html("Logging in will automatically link membership data for <i>{0}</i> to your account.", self.url_object.get_full_name(allow_spoof=False))
+        return format_html(
+            "Logging in will automatically link membership data for <i>{0}</i> to your account.",
+            self.url_object.get_full_name(allow_spoof=False),
+        )
 
     def get_register_url(self):
+        # Show a link to the registration page if the user is not authenticated.
         if self.request.user.is_authenticated:
             return None
         return reverse("membership:link_account/register", args=(self.kwargs[self.object_id_kwarg_name],))
@@ -448,6 +526,7 @@ class LinkMembershipLoginView(LinkMembershipViewTokenMixin, SessionTokenMixin, L
 
     def form_valid(self, form: ConfirmLinkMembershipLoginForm):
         form.save()
+        self.delete_token()
         messages.success(self.request, "Membership data linked successfully!")
         return super().form_valid(form)
 

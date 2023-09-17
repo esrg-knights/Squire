@@ -31,8 +31,14 @@ User = get_user_model()
 # @since 15 JUL 2019
 ##################################################################################
 
+
 class LoginView(DjangoLoginView):
-    template_name = 'core/user_accounts/login.html'
+    """
+    An extension of Django's standard LoginView that allows dynamically setting URLs to
+    the registration and password reset page.
+    """
+
+    template_name = "core/user_accounts/login.html"
     authentication_form = LoginForm
     redirect_authenticated_user = False
     # Setting to True will enable Social Media Fingerprinting.
@@ -43,25 +49,29 @@ class LoginView(DjangoLoginView):
     reset_password_url = reverse_lazy("core:user_accounts/password_reset")
 
     def get_register_url(self):
-        """TODO"""
+        """Gets the URL for the register page"""
         return self.register_url
 
     def get_reset_password_url(self):
-        """TODO"""
+        """Gets the URL for the password reset page"""
         return self.reset_password_url
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context.update({'register_url': self.get_register_url(), 'reset_password_url': self.get_reset_password_url()})
+        context.update({"register_url": self.get_register_url(), "reset_password_url": self.get_reset_password_url()})
         return context
 
+
 class LogoutSuccessView(TemplateView):
+    """View that is displayed when a user is logged out."""
+
     template_name = "core/user_accounts/logout-success.html"
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         if request.user.is_authenticated:
             return HttpResponseRedirect(reverse("core:user_accounts/logout"))
         return super().get(request, *args, **kwargs)
+
 
 class GlobalPreferenceRequiredMixin:
     """Mixin that requires a specific global_preference to be non-empty or True. Throws a HTTP 404 otherwise."""
@@ -86,8 +96,10 @@ class NewsletterView(GlobalPreferenceRequiredMixin, MembershipRequiredMixin, Tem
 class RegisterSuccessView(TemplateView):
     template_name = "core/user_accounts/register/register_done.html"
 
+
 class RegisterUserView(FormView):
-    """ Register a user. `login_url` is a url to the login page. """
+    """Register a user. Allows dynamically setting URLs to the login page."""
+
     template_name = "core/user_accounts/register/register.html"
     form_class = RegisterForm
     success_url = reverse_lazy("core:user_accounts/register/success")
@@ -95,12 +107,12 @@ class RegisterUserView(FormView):
     login_url = reverse_lazy("core:user_accounts/login")
 
     def get_login_url(self):
-        """TODO"""
+        """Gets the URL for the login page"""
         return self.login_url
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context.update({'login_url': self.get_login_url()})
+        context.update({"login_url": self.get_login_url()})
         return context
 
 

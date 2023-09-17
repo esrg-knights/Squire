@@ -11,7 +11,7 @@ If this email was not meant for you, then do let us know.
 See you soon!
 
 {{ sender.name }}
-{{ sender.role }} {{ sender.board_number }}
-{{ sender.board_name }}
+{{ sender.description }}{% if sender.extra_description %}
+{{ sender.extra_description }}{%endif%}
 ESRG Knights of the Kitchen Table
 {% endautoescape %}

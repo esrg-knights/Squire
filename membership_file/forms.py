@@ -13,6 +13,7 @@ from django.template import loader
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
+from dynamic_preferences.registries import global_preferences_registry
 
 from core.forms import LoginForm, RegisterForm
 from membership_file.models import Member, Room, MemberYear, Membership
@@ -116,7 +117,7 @@ class ContinueMembershipForm(forms.Form):
 
 
 class FieldsetModelFormMetaclass(ModelFormMetaclass):
-    """TODO"""
+    """Sets the `_meta.fieldsets` attribute that is required by the admin panel."""
 
     def __new__(mcs, name, bases, attrs):
         new_class = super().__new__(mcs, name, bases, attrs)
@@ -128,7 +129,10 @@ class FieldsetModelFormMetaclass(ModelFormMetaclass):
 
 
 class FieldsetAdminFormMixin(metaclass=FieldsetModelFormMetaclass):
-    """TODO"""
+    """
+    This mixin allows a form to be used in the admin panel. Notably allows using fieldsets
+    and default admin widgets (e.g. the datetime picker)
+    """
 
     required_css_class = "required"
 
@@ -160,7 +164,8 @@ class FieldsetAdminFormMixin(metaclass=FieldsetModelFormMetaclass):
 class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.ModelForm):
     """
     Registers a member in the membership file, and optionally sends them an email to link or register a Squire account.
-    Also contains some useful presets.
+    Is able to automatically link an active year or room access. Also contains some useful presets, like those for
+    educational institution.
     """
 
     class Meta:
@@ -308,12 +313,12 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
             )
 
         if self.cleaned_data["educational_institution"] and not self.cleaned_data["student_number"]:
-            # PhD'ers do not have student numbers
+            # PhD candidates do not have student numbers
             if "(PhD)" not in self.cleaned_data["educational_institution"]:
                 self.add_error(
                     "student_number",
                     ValidationError(
-                        "A student number is required when an educational institution is set.",
+                        "A student number is required when an educational institution is set. For PhD candidates, set their educational institution to: <Educational Institution> (PhD)",
                         code="student_number_required",
                     ),
                 )
@@ -331,7 +336,8 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
 
             for year in years:
                 # TODO: created_by must be a Member instance for some reason
-                Membership.objects.create(member=self.instance, year=year)  # , created_by=self.user)
+                created_member = getattr(self.user, "member", None)
+                Membership.objects.create(member=self.instance, year=year, created_by=created_member)
 
         # Room access
         if self.cleaned_data["room_access"]:
@@ -339,29 +345,44 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
 
         # Only send out an email once the member is actually saved
         if self.cleaned_data["send_registration_email"]:
+            # There is probably a better way to handle this than through a global preference,
+            #   but it should do for now. This needs to be refactored anyway after #317 is merged.
+            global_preferences = global_preferences_registry.manager()
+
             context = {
                 "member": self.instance,
                 "sender": {
                     "name": str(self.user),
-                    "role": "Secretary",
-                    "board_number": "305th board",
-                    "board_name": "Het Ontbijtboard",
+                    "description": str(global_preferences["membership__registration_description"]),
+                    "extra_description": str(global_preferences["membership__registration_extra_description"]),
                 },
                 "domain": self.domain,
                 "uid": urlsafe_base64_encode(force_bytes(self.instance.pk)),
                 "token": self.token_generator.make_token(user=self.instance),
                 "protocol": "https" if self.use_https else "http",
             }
+            # Reply-To address
+            reply_to = str(global_preferences["membership__registration_reply_to_address"]) or None
+            if reply_to is not None:
+                reply_to = reply_to.split(",")
             self.send_mail(
                 "membership_file/registration/registration_subject.txt",
                 "membership_file/registration/registration_email.txt",
                 context,
                 None,
                 self.instance.email,
+                reply_to=reply_to,
             )
 
     def send_mail(
-        self, subject_template_name, email_template_name, context, from_email, to_email, html_email_template_name=None
+        self,
+        subject_template_name,
+        email_template_name,
+        context,
+        from_email,
+        to_email,
+        html_email_template_name=None,
+        reply_to=None,
     ):
         """
         Send a django.core.mail.EmailMultiAlternatives to `to_email`.
@@ -374,7 +395,7 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
         subject = "".join(subject.splitlines())
         body = loader.render_to_string(email_template_name, context)
 
-        email_message = EmailMultiAlternatives(subject, body, from_email, [to_email])
+        email_message = EmailMultiAlternatives(subject, body, from_email, [to_email], reply_to=reply_to)
         if html_email_template_name is not None:
             html_email = loader.render_to_string(html_email_template_name, context)
             email_message.attach_alternative(html_email, "text/html")
@@ -398,6 +419,7 @@ class ConfirmLinkMembershipRegisterForm(RegisterForm):
         # Attach new user to predetermined member
         self.member.user = self.instance
         self.member.save()
+
 
 class ConfirmLinkMembershipLoginForm(LoginForm):
     """
