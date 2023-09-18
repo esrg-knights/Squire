@@ -1,3 +1,6 @@
 [tool.black]
 line-length = 119
 extend-exclude = "(.*/migrations/.*.py)"
+
+[tool.isort]
+profile = "black"
