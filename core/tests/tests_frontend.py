@@ -172,7 +172,7 @@ class RegisterFormTest(TestCase):
             "password1": "bestaatookniet",
             "password2": "bestaatookniet",
             "email": "kandi@example.com",
-            "real_name": "wijbestaanniet",
+            "first_name": "Schaduw Kandi",
         }
         form = RegisterForm(data=form_data)
 
@@ -184,7 +184,7 @@ class RegisterFormTest(TestCase):
         self.assertIsNotNone(user)
         self.assertEquals(user.email, "kandi@example.com")
         self.assertTrue(user.check_password("bestaatookniet"))
-        self.assertEqual(user.first_name, "wijbestaanniet")
+        self.assertEqual(user.first_name, "Schaduw Kandi")
 
         user = User.objects.filter(username="schaduwkandi").first()
         self.assertIsNone(user)
@@ -195,12 +195,12 @@ class RegisterFormTest(TestCase):
         self.assertIsNotNone(user)
         self.assertEquals(user.email, "kandi@example.com")
         self.assertTrue(user.check_password("bestaatookniet"))
-        self.assertEqual(user.first_name, "wijbestaanniet")
+        self.assertEqual(user.first_name, "Schaduw Kandi")
 
     # Test if a registering fails if required fields are missing
     def test_form_fields_missing(self):
         form_data = {
-            "real_name": "empty",
+            "first_name": "empty",
         }
         form = RegisterForm(data=form_data)
 
@@ -225,7 +225,7 @@ class RegisterFormTest(TestCase):
             "password1": "bestaatookniet",
             "password2": "nomatch",
             "email": "kandi@example.com",
-            "real_name": "wijbestaanniet",
+            "first_name": "wijbestaanniet",
         }
         form = RegisterForm(data=form_data)
 
@@ -243,7 +243,7 @@ class RegisterFormTest(TestCase):
             "password1": "secret",
             "password2": "secret",
             "email": "rva@example.com",
-            "real_name": "wijbestaanniet",
+            "first_name": "wijbestaanniet",
         }
         form = RegisterForm(data=form_data)
 
@@ -268,9 +268,9 @@ class RegisterFormViewTest(TestCase):
             "password1": "thisactuallyneedstobeagoodpassword",
             "password2": "thisactuallyneedstobeagoodpassword",
             "email": "email@example.com",
-            "real_name": "My Real name",
+            "first_name": "My Real name",
         }
-        check_http_response(
+        res = check_http_response(
             self, "/register", "post", TestPublicUser, redirect_url="/register/success", data=form_data
         )
 
@@ -281,7 +281,7 @@ class RegisterFormViewTest(TestCase):
         self.assertEqual(user.first_name, "My Real name")
 
     # Tests if not redirected when form data was entered incorrectly
-    def test_fail_form_enter_no_real_name(self):
+    def test_fail_form_enter_no_first_name(self):
         form_data = {
             "username": "username",
             "password1": "thisactuallyneedstobeagoodpassword",  # Real name not passed
@@ -300,7 +300,7 @@ class RegisterFormViewTest(TestCase):
             "password1": "password",  # Password too easy so should fail
             "password2": "password",
             "email": "email@example.com",
-            "real_name": "My Real name",
+            "first_name": "My Real name",
         }
         check_http_response(self, "/register", "post", TestPublicUser, data=form_data)
 

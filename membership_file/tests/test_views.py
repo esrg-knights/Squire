@@ -58,7 +58,7 @@ class ExtendMembershipSuccessViewTest(ViewValidityMixin, DynamicRegistryUsageMix
         super(ExtendMembershipSuccessViewTest, self).setUp()
 
     def get_base_url(self, content_type=None, item_id=None):
-        return reverse("membership_file/continue_success")
+        return reverse("membership:continue_success")
 
     def test_class(self):
         self.assertTrue(issubclass(ExtendMembershipSuccessView, TemplateView))

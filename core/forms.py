@@ -28,6 +28,7 @@ User = get_user_model()
 # @since 15 AUG 2019
 ##################################################################################
 
+
 class LoginForm(AuthenticationForm):
     """
     LoginForm that changes the default AuthenticationForm
@@ -36,11 +37,12 @@ class LoginForm(AuthenticationForm):
 
     If an initial `username` is provided, then the user cannot change it.
     """
-    def __init__(self, request, *args, **kwargs) -> None:
+
+    def __init__(self, request=None, *args, **kwargs) -> None:
         super().__init__(request, *args, **kwargs)
         initial = kwargs.get("initial", {})
-        if 'username' in initial:
-            self.fields['username'].disabled = True
+        if "username" in initial:
+            self.fields["username"].disabled = True
 
     def clean(self):
         # Obtain username and password
@@ -77,23 +79,36 @@ class RegisterForm(UserCreationForm):
         model = User
         fields = ("first_name", "username", "email")
         help_texts = {
-            'first_name': 'Your name will be shown instead of your username in various parts of Squire. For example, when you register for activities.',
+            "first_name": "Your name will be shown instead of your username in various parts of Squire. For example, when you register for activities.",
         }
         labels = {
-            'first_name': 'name',
+            "first_name": "name",
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # If initial data is passed to the form, ensure it cannot be changed
         initial = kwargs.get("initial", {})
-        self.fields['first_name'].required = True
-        if 'first_name' in initial:
-            self.fields['first_name'].disabled = True
+        self.fields["first_name"].required = True
+        if "first_name" in initial:
+            self.fields["first_name"].disabled = True
 
-        self.fields['email'].required = True
-        if 'email' in initial:
-            self.fields['email'].disabled = True
+        self.fields["email"].required = True
+        if "email" in initial:
+            self.fields["email"].disabled = True
+
+    def clean_email(self):
+        # Ensure that another user with the same email does not exist
+        cleaned_email = self.cleaned_data.get("email")
+        if User.objects.filter(email=cleaned_email).exists():
+            self.add_error(
+                "email",
+                ValidationError(
+                    _("A user with that email address already exists."),
+                    code="ERROR_EMAIL_EXISTS",
+                ),
+            )
+        return cleaned_email
 
 # Adds the relevant bootstrap classes to the password change form
 class PasswordChangeForm(DjangoPasswordChangeForm):

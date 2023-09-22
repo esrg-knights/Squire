@@ -288,16 +288,15 @@ class LinkMembershipRegisterView(LinkMembershipViewTokenMixin, SessionTokenMixin
         return kwargs
 
     def form_valid(self, form: ConfirmLinkMembershipRegisterForm):
-        user = form.save(commit=False)
+        res = super().form_valid(form)
         # UserCreationForm saves form with commit=False, so we need to call save_m2m ourselves
-        user.save()
         form.save_m2m()
         self.delete_token()
         if self.post_link_login:
-            auth_login(self.request, user, self.post_link_login_backend)
+            auth_login(self.request, self.object, self.post_link_login_backend)
 
         messages.success(self.request, "Membership data linked successfully!")
-        return super().form_valid(form)
+        return res
 
 
 class LinkMembershipLoginView(LinkMembershipViewTokenMixin, SessionTokenMixin, LinkedLoginView):

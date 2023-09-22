@@ -1,6 +1,5 @@
 import os
-from typing import Any
-from django import http
+from typing import Any, Dict
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -10,12 +9,13 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, HttpRequest
 from django.http.response import Http404
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
 from django.views import View
 from django.views.generic import TemplateView, FormView
+from django.views.generic.edit import CreateView
 from django.views.decorators.http import require_safe
 from dynamic_preferences.registries import global_preferences_registry
 
@@ -56,7 +56,7 @@ class LoginView(DjangoLoginView):
         """Gets the URL for the password reset page"""
         return self.reset_password_url
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context.update({"register_url": self.get_register_url(), "reset_password_url": self.get_reset_password_url()})
         return context
@@ -95,7 +95,7 @@ class LinkedLoginView(LoginView):
         """Any extra information for the data to be linked."""
         return self.link_extra
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context.update(
             {
@@ -144,7 +144,7 @@ class RegisterSuccessView(TemplateView):
     template_name = "core/user_accounts/register/register_done.html"
 
 
-class RegisterUserView(FormView):
+class RegisterUserView(CreateView):
     """Register a user. Allows dynamically setting URLs to the login page."""
 
     template_name = "core/user_accounts/register/register.html"
@@ -157,7 +157,7 @@ class RegisterUserView(FormView):
         """Gets the URL for the login page"""
         return self.login_url
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context.update({"login_url": self.get_login_url()})
         return context
