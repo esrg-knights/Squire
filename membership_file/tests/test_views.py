@@ -38,7 +38,7 @@ class ExtendMembershipViewTest(ViewValidityMixin, DynamicRegistryUsageMixin, Tes
     def test_succesful_post(self):
         response = self.client.post(self.get_base_url(), data={}, follow=True)
         self.assertRedirects(response, reverse("membership:continue_success"))
-        msg = "Succesfully extended Knights membership into {year}".format(year=MemberYear.objects.get(id=3))
+        msg = "Successfully extended Knights membership into {year}".format(year=MemberYear.objects.get(id=3))
         self.assertHasMessage(response, level=messages.SUCCESS, text=msg)
 
     @suppress_warnings

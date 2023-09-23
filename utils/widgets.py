@@ -25,7 +25,7 @@ class OtherRadioSelect(RadioSelect):
         js = ("js/other_option_widget.js",)
 
     def __init__(self, attrs=None, choices=None) -> None:
-        if attrs is None or attrs.get("class", None):
+        if attrs is None or attrs.get("class", None) is None:
             attrs = attrs or {}
             attrs["class"] = "radiolist"
         super().__init__(attrs, choices)
@@ -39,7 +39,7 @@ class OtherRadioSelect(RadioSelect):
         context["other_widget"] = self.other_widget_class().get_context(
             self.other_field_name % name,
             "" if self.any_selected else value,
-            {**self.attrs, **{"disabled": self.any_selected}},
+            {**self.attrs, **(attrs or {}), **{"disabled": self.any_selected}},
         )["widget"]
         return context
 

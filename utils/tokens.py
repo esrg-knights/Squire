@@ -1,10 +1,11 @@
 from typing import Type
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Model
 from django.forms import ValidationError
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlsafe_base64_decode
 from django.views.decorators.cache import never_cache
@@ -33,6 +34,13 @@ class TokenMixinBase:
     object_id_kwarg_name = "uidb64"
     object_class: Type[Model] = UserModel
 
+    def __init__(self) -> None:
+        super().__init__()
+        if not self.session_token_name: # pragma: no cover
+            raise ImproperlyConfigured(f"{self.__class__.__name__} should override session_token_name (cannot be None or empty).")
+        if self.token_generator is None: # pragma: no cover
+            raise ImproperlyConfigured(f"{self.__class__.__name__} should set a token_generator (cannot be None).")
+
     def get_url_object(self, uidb64: str):
         """
         Decodes the base64-encoded id for an object of type `object_class` from the URL. If
@@ -54,9 +62,11 @@ class TokenMixinBase:
     def dispatch(self, validlink, *args, **kwargs):
         # Render fail template if the URL is invalid
         if not validlink:
-            return render(self.request, self.fail_template_name)
+            return self.token_invalid()
         return super().dispatch(*args, **kwargs)
 
+    def token_invalid(self, status=400) -> TemplateResponse:
+        return TemplateResponse(self.request, self.fail_template_name, status=status)
 
 class UrlTokenMixin(TokenMixinBase):
     """
@@ -81,6 +91,11 @@ class UrlTokenMixin(TokenMixinBase):
     # Subclasses should override this
     url_token_name: str = None
     token_kwarg_name = "token"
+
+    def __init__(self) -> None:
+        super().__init__()
+        if not self.url_token_name: # pragma: no cover
+            raise ImproperlyConfigured(f"{self.__class__.__name__} should override url_token_name (cannot be None or empty).")
 
     @method_decorator(sensitive_post_parameters())
     @method_decorator(never_cache)

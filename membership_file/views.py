@@ -15,6 +15,7 @@ from django.utils.html import format_html
 from dynamic_preferences.registries import global_preferences_registry
 from core.views import LinkedLoginView, LoginView, RegisterUserView
 from utils.tokens import SessionTokenMixin, UrlTokenMixin
+from utils.views import ModelAdminFormViewMixin
 
 UserModel = get_user_model()
 
@@ -86,76 +87,13 @@ class ExtendMembershipView(MemberMixin, UpdateMemberYearMixin, FormView):
 
     def form_valid(self, form):
         form.save()
-        msg = f"Succesfully extended Knights membership into {self.year}"
+        msg = f"Successfully extended Knights membership into {self.year}"
         messages.success(self.request, msg)
         return super(ExtendMembershipView, self).form_valid(form)
 
 
 class ExtendMembershipSuccessView(MemberMixin, UpdateMemberYearMixin, TemplateView):
     template_name = "membership_file/extend_membership_successpage.html"
-
-
-class ModelAdminFormViewMixin:
-    """
-    A Mixin that allows a ModelForm (e.g in a CreateView) to be rendered
-    inside a ModelAdmin in the admin panel using features normally available there.
-
-    This includes default widgets and styling (e.g. for datetime) and formsets.
-
-    The `form_class` must also inherit `membership_file.forms.FieldsetAdminFormMixin`
-    in order for this to work.
-    Furthermore, a `model_admin` should be passed in order to instantiate this view.
-    """
-
-    # Class variable needed as we need to be able to pass this through as_view(..)
-    model_admin: ModelAdmin = None
-
-    def __init__(self, *args, model_admin: ModelAdmin = None, **kwargs) -> None:
-        assert model_admin is not None
-        self.model_admin = model_admin
-        super().__init__(*args, **kwargs)
-
-    def get_form(self, form_class: Optional[type[BaseModelForm]] = None) -> BaseModelForm:
-        # This method should return a form instance
-        if form_class is None:
-            form_class = self.get_form_class()
-
-        # Use this form_class's excludes instead of those from the ModelAdmin's form_class
-        exclude = form_class._meta.exclude or ()
-
-        # This constructs a form class
-        # NB: More defaults can be passed into the **kwargs of ModelAdmin.get_form
-        form_class = self.model_admin.get_form(
-            self.request,
-            None,
-            change=False,
-            # Fields are defined in the form
-            fields=None,
-            # Override standard ModelAdmin form and ignore its exclude list
-            form=form_class,
-            exclude=exclude,
-        )
-
-        # Use the newly constructed form class to create a form
-        return super().get_form(form_class)
-
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        form = context.pop("form")
-        adminForm = helpers.AdminForm(
-            form, list(form.get_fieldsets(self.request, self.object)), {}, model_admin=self.model_admin
-        )
-
-        context.update(
-            {
-                "adminform": adminForm,
-                "is_nav_sidebar_enabled": True,
-                "opts": Member._meta,
-                "title": "Register new member",
-            }
-        )
-
-        return context
 
 
 LINK_TOKEN_GENERATOR = LinkAccountTokenGenerator()
@@ -229,7 +167,7 @@ class LinkMembershipViewTokenMixin:
     def dispatch(self, *args, **kwargs):
         # Fail if the requesting user already has a member
         if hasattr(self.request.user, "member"):
-            return render(self.request, self.fail_template_name)
+            return self.token_invalid()
         return super().dispatch(*args, **kwargs)
 
 
@@ -271,7 +209,7 @@ class LinkMembershipRegisterView(LinkMembershipViewTokenMixin, SessionTokenMixin
     def dispatch(self, *args, **kwargs):
         # Fail if a user is logged in
         if self.request.user.is_authenticated:
-            return render(self.request, self.fail_template_name)
+            return self.token_invalid(status=403)
         return super().dispatch(*args, **kwargs)
 
     def get_login_url(self):

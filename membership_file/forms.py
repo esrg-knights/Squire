@@ -203,10 +203,9 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
         super().__init__(*args, **kwargs)
 
         # Make more fields required
-        # TODO
-        # req_fields = ('street', 'house_number', 'postal_code', 'city', 'country', 'date_of_birth')
-        # for field in req_fields:
-        #     self.fields[field].required = True
+        req_fields = ('street', 'house_number', 'postal_code', 'city', 'country', 'date_of_birth')
+        for field in req_fields:
+            self.fields[field].required = True
 
         # Add field to automatically create memberships in one or more active years
         choices = [(year.id, year.name) for year in MemberYear.objects.filter(is_active=True)]

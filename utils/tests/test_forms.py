@@ -9,6 +9,7 @@ from django.test import TestCase, RequestFactory
 from unittest.mock import MagicMock
 
 from utils.forms import (
+    FieldsetAdminFormMixin,
     RequestUserToFormModelAdminMixin,
     UpdatingUserFormMixin,
     get_basic_filter_by_field_form,
@@ -200,3 +201,77 @@ class FormGroupTestCase(TestCase):
         self.assertEqual(form_group.formset_class.call_args.kwargs["prefix"], "formset")
         form_group = self._construct_form_group(prefix="Group")
         self.assertEqual(form_group.formset_class.call_args.kwargs["prefix"], "Group-formset")
+
+
+class FieldsetAdminUserForm(FieldsetAdminFormMixin, forms.ModelForm):
+    """ModelForm that includes fieldsets."""
+
+    class Meta:
+        model = User
+        fields = ("username", "first_name", "last_name", "email", "last_login")
+
+        fieldsets = [
+            (None, {"fields": [("username",), "email", "last_login"]}),
+            ("Name", {"fields": [("first_name", "last_name")]}),
+        ]
+
+
+class FieldsetAdminFormMixinTestCase(TestCase):
+    """Tests for forms utilising FieldsetAdminFormMixin"""
+
+    class FieldAdminForm(FieldsetAdminFormMixin, forms.ModelForm):
+        """ModelForm without fieldsets."""
+
+        class Meta:
+            model = User
+            fields = ("username", "first_name", "last_name", "email")
+
+        class Media:
+            css = {"all": ("extra-css-file.css",)}
+            js = ("extra-js-file.js",)
+
+    class NoMetaForm(FieldAdminForm, forms.ModelForm):
+        """ModelForm without a Meta class"""
+
+    def test_media(self):
+        """Tests if form media is added and merged correctly"""
+        media = FieldsetAdminFormMixinTestCase.FieldAdminForm().media.render()
+        # Additional media is there
+        self.assertIn("extra-js-file.js", media)
+        self.assertIn("extra-css-file.css", media)
+        # Parent media is there
+        self.assertIn("admin/js/admin/RelatedObjectLookups.js", media)
+
+    def test_fieldsets(self):
+        """Tests whether fieldsets are properly created"""
+        # Meta has fieldsets
+        form = FieldsetAdminUserForm()
+        fieldsets = form.get_fieldsets(None)
+        self.assertEqual(len(fieldsets), 2)
+        self.assertEqual(fieldsets[1][0], "Name")
+
+        # Meta has no fieldsets (all fields are added to a single fieldset)
+        form = FieldsetAdminFormMixinTestCase.FieldAdminForm()
+        fieldsets = form.get_fieldsets(None)
+        self.assertEqual(len(fieldsets), 1)
+        name, attrs = fieldsets[0]
+        self.assertIsNone(name)
+        self.assertIn("fields", attrs)
+        self.assertDictEqual(attrs["fields"], form.fields)
+
+    def test_meta(self):
+        """Tests whether the _meta.fieldsets attribute is set"""
+        # No Meta class
+        form = FieldsetAdminFormMixinTestCase.NoMetaForm()
+        self.assertTrue(hasattr(form._meta, "fieldsets"))
+        self.assertIsNone(form._meta.fieldsets)
+
+        # Meta class (no fieldset attribute)
+        form = FieldsetAdminFormMixinTestCase.FieldAdminForm()
+        self.assertTrue(hasattr(form._meta, "fieldsets"))
+        self.assertIsNone(form._meta.fieldsets)
+
+        # Meta class (fieldset attribute)
+        form = FieldsetAdminUserForm()
+        self.assertTrue(hasattr(form._meta, "fieldsets"))
+        self.assertIsNotNone(form._meta.fieldsets)
