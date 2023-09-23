@@ -36,9 +36,11 @@ class TokenMixinBase:
 
     def __init__(self) -> None:
         super().__init__()
-        if not self.session_token_name: # pragma: no cover
-            raise ImproperlyConfigured(f"{self.__class__.__name__} should override session_token_name (cannot be None or empty).")
-        if self.token_generator is None: # pragma: no cover
+        if not self.session_token_name:  # pragma: no cover
+            raise ImproperlyConfigured(
+                f"{self.__class__.__name__} should override session_token_name (cannot be None or empty)."
+            )
+        if self.token_generator is None:  # pragma: no cover
             raise ImproperlyConfigured(f"{self.__class__.__name__} should set a token_generator (cannot be None).")
 
     def get_url_object(self, uidb64: str):
@@ -68,6 +70,7 @@ class TokenMixinBase:
     def token_invalid(self, status=400) -> TemplateResponse:
         return TemplateResponse(self.request, self.fail_template_name, status=status)
 
+
 class UrlTokenMixin(TokenMixinBase):
     """
     Stores a token passed through a URL in the session data. This allows it to be reused later, and
@@ -94,8 +97,10 @@ class UrlTokenMixin(TokenMixinBase):
 
     def __init__(self) -> None:
         super().__init__()
-        if not self.url_token_name: # pragma: no cover
-            raise ImproperlyConfigured(f"{self.__class__.__name__} should override url_token_name (cannot be None or empty).")
+        if not self.url_token_name:  # pragma: no cover
+            raise ImproperlyConfigured(
+                f"{self.__class__.__name__} should override url_token_name (cannot be None or empty)."
+            )
 
     @method_decorator(sensitive_post_parameters())
     @method_decorator(never_cache)

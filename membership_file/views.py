@@ -1,11 +1,9 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login as auth_login, logout as auth_logout
-from django.contrib.admin import helpers, ModelAdmin
 from django.core.exceptions import PermissionDenied
 from django.forms.models import BaseModelForm
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
 from django.views import View
 from django.views.generic.edit import CreateView
 from django.views.generic import TemplateView, FormView
@@ -13,7 +11,7 @@ from django.template.response import TemplateResponse
 from django.urls import reverse, reverse_lazy
 from django.utils.html import format_html
 from dynamic_preferences.registries import global_preferences_registry
-from core.views import LinkedLoginView, LoginView, RegisterUserView
+from core.views import LinkedLoginView, RegisterUserView
 from utils.tokens import SessionTokenMixin, UrlTokenMixin
 from utils.views import ModelAdminFormViewMixin
 

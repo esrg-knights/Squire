@@ -203,7 +203,7 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
         super().__init__(*args, **kwargs)
 
         # Make more fields required
-        req_fields = ('street', 'house_number', 'postal_code', 'city', 'country', 'date_of_birth')
+        req_fields = ("street", "house_number", "postal_code", "city", "country", "date_of_birth")
         for field in req_fields:
             self.fields[field].required = True
 

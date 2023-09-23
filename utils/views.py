@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Type
 from django.contrib.admin import helpers, ModelAdmin
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.forms import BaseModelForm
@@ -143,7 +143,7 @@ class ModelAdminFormViewMixin:
         self.model_admin = model_admin
         super().__init__(*args, **kwargs)
 
-    def get_form(self, form_class: Optional[type[BaseModelForm]] = None) -> BaseModelForm:
+    def get_form(self, form_class: Optional[Type[BaseModelForm]] = None) -> BaseModelForm:
         # This method should return a form instance
         if form_class is None:
             form_class = self.get_form_class()

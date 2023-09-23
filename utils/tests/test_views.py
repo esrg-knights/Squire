@@ -237,7 +237,7 @@ class ModelAdminFormViewMixinTestCase(TestCase):
         adminform: helpers.AdminForm = context["adminform"]
         form = adminform.form
         # Form fields should be converted to admin classes
-        self.assertIsInstance(form.fields['username'].widget, AdminTextInputWidget)
+        self.assertIsInstance(form.fields["username"].widget, AdminTextInputWidget)
         self.assertIsInstance(form.fields["last_login"].widget, AdminSplitDateTime)
 
         # More context needed for template
