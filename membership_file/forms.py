@@ -280,7 +280,7 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
         # This is done in _save_m2m as the member-instance must exist. This is only the case if commit=True
         super()._save_m2m()
         # Create membership in selected active years
-        if self.cleaned_data["active_years"]:
+        if "active_years" in self.cleaned_data and self.cleaned_data["active_years"]:
             # No need to do this if there were no active years to begin with
             years = MemberYear.objects.filter(id__in=self.cleaned_data["active_years"])
 
@@ -290,8 +290,8 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
                 Membership.objects.create(member=self.instance, year=year, created_by=created_member)
 
         # Room access
-        if self.cleaned_data["room_access"]:
-            self.instance.accessible_rooms.add(self.cleaned_data["room_access"])
+        if "room_access" in self.cleaned_data and self.cleaned_data["room_access"]:
+            self.instance.accessible_rooms.add(*self.cleaned_data["room_access"])
 
         # Only send out an email once the member is actually saved
         if self.cleaned_data["send_registration_email"]:

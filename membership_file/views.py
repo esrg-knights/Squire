@@ -1,6 +1,7 @@
 from typing import Any, Dict
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login as auth_login, logout as auth_logout
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.forms.models import BaseModelForm
 from django.http import HttpResponse, HttpResponseRedirect
@@ -97,7 +98,7 @@ class ExtendMembershipSuccessView(MemberMixin, UpdateMemberYearMixin, TemplateVi
 LINK_TOKEN_GENERATOR = LinkAccountTokenGenerator()
 
 
-class RegisterNewMemberAdminView(ModelAdminFormViewMixin, CreateView):
+class RegisterNewMemberAdminView(PermissionRequiredMixin, ModelAdminFormViewMixin, CreateView):
     """
     A form in the admin panel that registers a new user, and optionally
     sends them a registration email. The receiver can use this registration
@@ -105,6 +106,7 @@ class RegisterNewMemberAdminView(ModelAdminFormViewMixin, CreateView):
     account.
     """
 
+    permission_required = "membership_file.add_member"
     form_class = RegisterMemberForm
     template_name = "membership_file/register_member.html"
     token_generator = LINK_TOKEN_GENERATOR
@@ -149,7 +151,7 @@ class LinkMembershipViewTokenMixin:
     the request's user already has an associated member.
     """
 
-    fail_template_name = "membership_file/user_accounts/link_fail.html"
+    fail_template_name = "core/user_accounts/link_fail.html"
     session_token_name = "_link_account_token"
     token_generator = LINK_TOKEN_GENERATOR
 
@@ -244,7 +246,6 @@ class LinkMembershipLoginView(LinkMembershipViewTokenMixin, SessionTokenMixin, L
 
     authentication_form = ConfirmLinkMembershipLoginForm
     success_url = reverse_lazy("account:membership:view")
-    template_name = "membership_file/user_accounts/login_linked.html"
 
     link_title = "Link Membership Data"
     link_extra = "This will also update your Squire account's email and real name."

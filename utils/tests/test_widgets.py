@@ -50,7 +50,14 @@ class OtherWidgetTestCase(TestCase):
         self.assertEqual(val, "b_value")
 
         # Other option
-        val = self.widget.value_from_datadict({"test_field": "not a preset value!"}, {}, "test_field")
+        val = self.widget.value_from_datadict(
+            {
+                "test_field": OtherRadioSelect.other_option_name,
+                OtherRadioSelect.other_field_name % "test_field": "not a preset value!",
+            },
+            {},
+            "test_field",
+        )
         self.assertEqual(val, "not a preset value!")
         self.assertNotEqual(val, OtherRadioSelect.other_option_name)
 

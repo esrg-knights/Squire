@@ -1,12 +1,7 @@
 from datetime import datetime
-from typing import List
 
 from django.contrib import admin, messages
-from django.contrib.contenttypes.models import ContentType
-from django.http import HttpResponseRedirect
 from django_object_actions import DjangoObjectActions, action as object_action
-from django.urls import reverse, path
-from django.urls.resolvers import URLPattern
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV, TSV, ODS, XLSX
 

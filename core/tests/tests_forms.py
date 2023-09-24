@@ -10,7 +10,7 @@ from martor.fields import MartorFormField
 from martor.widgets import MartorWidget
 
 from core.fields import MarkdownObject, MarkdownCharField, MarkdownTextField
-from core.forms import MarkdownForm
+from core.forms import LoginForm, MarkdownForm
 from core.models import MarkdownImage
 from core.widgets import ImageUploadMartorWidget
 
@@ -29,9 +29,7 @@ class DummyLogEntryMarkdownForm(MarkdownForm):
 
 
 class MarkdownFormTest(TestCase):
-    """
-    Tests for MarkdownForm
-    """
+    """Tests for MarkdownForm"""
 
     def setUp(self):
         # Use an Admin-panel LogEntry object to test (it has a FK to user)

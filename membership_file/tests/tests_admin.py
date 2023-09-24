@@ -1,7 +1,8 @@
 from django.contrib import messages
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.sites import AdminSite
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
+from django.http import HttpResponse
 from django.test import Client, TestCase, override_settings
 from django.test.client import RequestFactory
 
@@ -23,8 +24,8 @@ class MemberAdminTest(TestCase):
     fixtures = ["test_users.json", "test_members.json"]
 
     def setUp(self):
-        self.model_admin = MemberWithLog(model=Member, admin_site=AdminSite())
-        self.user = User.objects.all().first()
+        self.model_admin: ModelAdmin = MemberWithLog(model=Member, admin_site=AdminSite())
+        self.user: User = User.objects.all().first()
 
         factory = RequestFactory()
         self.request = factory.get("/testurl/")
@@ -63,6 +64,25 @@ class MemberAdminTest(TestCase):
         )
         self.assertEqual(self.fake_message["level"], messages.SUCCESS)
         self.assertEqual(Membership.objects.filter(year__is_active=True).count(), 2)
+
+    def test_register_action(self):
+        """Tests availability of the register member action button"""
+        self.user.is_superuser = False
+        self.user.save()
+        self.user.user_permissions.clear()
+        self.request.user = User.objects.all().first()
+        actions = self.model_admin.get_changelist_actions(self.request)
+        self.assertNotIn("register_new_member", actions)
+
+        self.user.user_permissions.add(Permission.objects.get(codename="add_member"))
+        self.request.user = User.objects.all().first()
+        actions = self.model_admin.get_changelist_actions(self.request)
+        self.assertIn("register_new_member", actions)
+
+    def test_access_registration_view(self):
+        """Tests whether the registration view is accessible"""
+        res: HttpResponse = self.model_admin.register_new_member(self.request, Member.objects.all())
+        self.assertEqual(res.status_code, 200)
 
 
 # Tests Log deletion when members are deleted

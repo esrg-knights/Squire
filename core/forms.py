@@ -110,6 +110,7 @@ class RegisterForm(UserCreationForm):
             )
         return cleaned_email
 
+
 # Adds the relevant bootstrap classes to the password change form
 class PasswordChangeForm(DjangoPasswordChangeForm):
     pass

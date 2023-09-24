@@ -1,9 +1,5 @@
-from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from datetime import datetime, time
-from django.utils.crypto import constant_time_compare, salted_hmac
-from django.utils.http import base36_to_int, int_to_base36
 
 from membership_file.models import Member
 from membership_file.exceptions import UserIsNotCurrentMember
@@ -58,13 +54,14 @@ class MembershipRequiredMixin(LoginRequiredMixin, BaseMembershipRequiredMixin):
 
 class LinkAccountTokenGenerator(PasswordResetTokenGenerator):
     """
+    Strategy object used to generate and check tokens for membership account linking.
     Mentions of "user" should instead be interpreted as "member".
     """
 
     # Key salt should be different from the password token generator's key salt
     key_salt = "squire.membership_file.util.LinkAccountTokenGenerator"
 
-    def _make_hash_value(self, member: Member, timestamp):
+    def _make_hash_value(self, member: Member, timestamp: int):
         """
         Hash the members's primary key, email, and some user state
         that's sure to change after an account link to produce a token that is
@@ -77,5 +74,10 @@ class LinkAccountTokenGenerator(PasswordResetTokenGenerator):
         Running this data through salted_hmac() prevents account link cracking
         attempts using the reset token, provided the secret isn't compromised.
         """
+        # Truncate microseconds so that tokens are consistent even if the
+        # database doesn't support microseconds.
+        last_updated_date = (
+            "" if member.last_updated_date is None else member.last_updated_date.replace(microsecond=0, tzinfo=None)
+        )
         user_id = member.user.id if member.user is not None else ""
-        return f"{member.pk}{user_id}{member.last_updated_date}{timestamp}{member.email}"
+        return f"{member.pk}{last_updated_date}{user_id}{timestamp}{member.email}"

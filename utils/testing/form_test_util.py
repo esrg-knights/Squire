@@ -1,3 +1,6 @@
+from django.forms import Form
+
+
 class FormValidityMixin:
     """A mixin for TestCase classes designed to add form functionality"""
 
@@ -6,7 +9,7 @@ class FormValidityMixin:
     def get_form_kwargs(self, **kwargs):
         return kwargs
 
-    def build_form(self, data, form_class=None, **kwargs):
+    def build_form(self, data, form_class=None, **kwargs) -> Form:
         """Builds the form, form_class can overwrite the default class attribute form_class"""
         if form_class is None:
             form_class = self.form_class
@@ -71,6 +74,14 @@ class FormValidityMixin:
             raise AssertionError(fail_message)
         return form
 
+    def assertFormNotHasError(self, data, code, form_class=None, field_name=None, **form_kwargs):
+        """Opposite of assertFormHasError"""
+        try:
+            error = self.assertFormHasError(data, code, form_class=form_class, field_name=field_name, **form_kwargs)
+        except AssertionError:
+            return
+        raise AssertionError("Unexpectedly encountered an error", error)
+
     def assertFormHasError(self, data, code, form_class=None, field_name=None, **form_kwargs):
         """Asserts that a form with the given data invalidates on a certain error
         :param data: The form data
@@ -92,12 +103,12 @@ class FormValidityMixin:
                     continue
                 for error in value:
                     if error.code == code:
-                        return
+                        return error
                 raise AssertionError(f"Form did not contain an error with code '{code}' in field '{field_name}'")
             else:
                 for error in value:
                     if error.code == code:
-                        return
+                        return error
 
         if field_name:
             raise AssertionError(f"Form did not encounter an error in '{field_name}'.")

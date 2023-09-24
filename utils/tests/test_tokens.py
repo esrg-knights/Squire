@@ -233,3 +233,18 @@ class UrlTokenViewMixinTestCase(TestCase):
         req, _, token = self.build_response(self.user)
         res = self.view(req, uidb64=urlsafe_base64_encode(force_bytes(42)), token=token)
         self._test_token_fail(req, res, msg="Non-existing user")
+
+    def test_delete_token(self):
+        """Tests if token deletion works"""
+        view = self.view_class()
+        req = self.request_factory.get(f"/my_path/")
+        view.setup(req)
+
+        # Use session middleware
+        self.middleware.process_request(req)
+        req.session.save()
+
+        # Token should be removed from session data
+        req.session[self.view_class.session_token_name] = "Session token"
+        view.delete_token()
+        self.assertNotIn(self.view_class.session_token_name, req.session)
