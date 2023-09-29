@@ -3,7 +3,6 @@
 
 {% block extrahead %}{{ block.super }}
 <script src="{% url 'admin:jsi18n' %}"></script>
-<!-- media normally form.media + inline.media -->
 {{ adminform.media }}
 {% endblock %}
 
@@ -19,7 +18,8 @@
 <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
 &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
 &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
-&rsaquo; {% blocktranslate with name=opts.verbose_name %}Register new {{ name }}{% endblocktranslate %}
+{% if original %}&rsaquo; <a href="{% url opts|admin_urlname:'change' object_id=original.id %}">{{ original|truncatewords:"18" }}</a>{% endif %}
+&rsaquo; {{ breadcrumbs_title|default:title }}
 </div>
 {% endblock %}
 
@@ -37,35 +37,10 @@
 {% for fieldset in adminform %}
   {% include "admin/includes/fieldset.html" %}
 {% endfor %}
-
-{%comment%}
-    {% for field in form %}
-
-      <div class="fieldBox{% if field.field.name %} field-{{ field.field.name }}{% endif %}{% if not field.is_readonly and field.errors %} errors{% endif %}{% if field.field.is_hidden %} hidden{% endif %}"
-        >
-          {% if not line.fields|length_is:'1' and not field.is_readonly %}{{ field.errors }}{% endif %}
-          {% if field.is_checkbox %}
-          check
-              {{ field.field }}{{ field.label_tag }}
-          {% else %}
-              {{ field.label_tag }}
-              {% if field.is_readonly %}
-                  <div class="readonly">{{ field.contents }}</div>
-              {% else %}
-                  {{ field.field }}
-              {% endif %}
-          {% endif %}
-          {% if field.field.help_text %}
-              <div class="help">{{ field.field.help_text|safe }}</div>
-          {% endif %}
-      </div>
-    {% endfor %}
-  <!-- {{ form.as_p }} -->
-{%endcomment%}
 {% endblock %}
 
 <div class="submit-row">
-    <input type="submit" value="{% translate 'Register Member' %}" class="default" name="_save">
+    <input type="submit" value="{{ save_button_title|default:'Save' }}" class="default" name="_save">
 </div>
 
 {% block admin_change_form_document_ready %}

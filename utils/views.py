@@ -137,11 +137,32 @@ class ModelAdminFormViewMixin:
 
     # Class variable needed as we need to be able to pass this through as_view(..)
     model_admin: ModelAdmin = None
+    title = "Form title"
+    subtitle = None
+    breadcrumbs_title = None
+    save_button_title = None
+    template_name = "core/admin_form.html"
 
     def __init__(self, *args, model_admin: ModelAdmin = None, **kwargs) -> None:
         assert model_admin is not None
         self.model_admin = model_admin
         super().__init__(*args, **kwargs)
+
+    def get_title(self):
+        """Gets the title displayed at the top of the page"""
+        return self.title
+
+    def get_subtitle(self):
+        """Gets the title displayed at the top of the page"""
+        return self.subtitle or self.object
+
+    def get_breadcrumbs_title(self):
+        """Gets the title used in the breadcrumbs. When None, uses `title`"""
+        return self.breadcrumbs_title
+
+    def get_save_button_title(self):
+        """Gets the title used for the save button. Defaults to 'Save'"""
+        return self.save_button_title
 
     def get_form(self, form_class: Optional[Type[BaseModelForm]] = None) -> BaseModelForm:
         # This method should return a form instance
@@ -149,7 +170,9 @@ class ModelAdminFormViewMixin:
             form_class = self.get_form_class()
 
         # Use this form_class's excludes instead of those from the ModelAdmin's form_class
-        exclude = form_class._meta.exclude or ()
+        exclude = None
+        if hasattr(form_class, "_meta"):
+            exclude = form_class._meta.exclude or ()
 
         # This constructs a form class
         # NB: More defaults can be passed into the **kwargs of ModelAdmin.get_form
@@ -179,7 +202,11 @@ class ModelAdminFormViewMixin:
                 "adminform": adminForm,
                 "is_nav_sidebar_enabled": True,
                 "opts": self.model_admin.model._meta,
-                "title": "Register new member",
+                "original": self.object,
+                "title": self.get_title(),
+                "subtitle": self.get_subtitle(),
+                "breadcrumbs_title": self.get_breadcrumbs_title(),
+                "save_button_title": self.get_save_button_title(),
             }
         )
 

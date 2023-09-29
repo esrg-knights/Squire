@@ -9,7 +9,7 @@ from core.admin import DisableModificationsAdminMixin, URLLinkInlineAdminMixin
 from membership_file.forms import AdminMemberForm
 from membership_file.export import MemberResource, MembersFinancialResource
 from membership_file.models import Member, MemberLog, MemberLogField, Room, MemberYear, Membership
-from membership_file.views import RegisterNewMemberAdminView
+from membership_file.views import RegisterNewMemberAdminView, ResendRegistrationMailAdminView
 from utils.forms import RequestUserToFormModelAdminMixin
 
 
@@ -71,8 +71,24 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, Expor
         view = modeladmin.admin_site.admin_view(RegisterNewMemberAdminView.as_view(model_admin=modeladmin))
         return view(request)
 
-    # Note: get_urls is extended by
+    @object_action(label="Re-send registration email", description="Re-sends the registration email to this member.")
+    def resend_verification(self, request, object):
+        view = self.admin_site.admin_view(ResendRegistrationMailAdminView.as_view(model_admin=self))
+        return view(request, pk=object.pk)
+
+    # Note: get_urls is extended
     changelist_actions = ("register_new_member",)
+    change_actions = ("resend_verification",)
+
+    def get_change_actions(self, request, object_id, form_url):
+        # Action is only available if the user can add members normally
+        actions = super().get_change_actions(request, object_id, form_url)
+        if (
+            not request.user.has_perm("membership_file.add_member")
+            or Member.objects.get(id=object_id).user is not None
+        ):
+            actions = [action for action in actions if action != "resend_verification"]
+        return actions
 
     def get_changelist_actions(self, request):
         # Action is only available if the user can add members normally

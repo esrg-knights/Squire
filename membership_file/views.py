@@ -1,16 +1,21 @@
 from typing import Any, Dict
+from django import http
 from django.contrib import messages
+from django.contrib.admin import ModelAdmin
 from django.contrib.auth import get_user_model, login as auth_login, logout as auth_logout
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.db import models
 from django.forms.models import BaseModelForm
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.views import View
-from django.views.generic.edit import CreateView
-from django.views.generic import TemplateView, FormView
+from django.views.generic import TemplateView, FormView, DetailView
+from django.views.generic.detail import SingleObjectMixin
+from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin, FormView
 from django.template.response import TemplateResponse
 from django.urls import reverse, reverse_lazy
 from django.utils.html import format_html
+from django.utils.translation import override as translation_override
 from dynamic_preferences.registries import global_preferences_registry
 from core.views import LinkedLoginView, RegisterUserView
 from utils.tokens import SessionTokenMixin, UrlTokenMixin
@@ -26,8 +31,9 @@ from membership_file.forms import (
     ConfirmLinkMembershipRegisterForm,
     ContinueMembershipForm,
     RegisterMemberForm,
+    ResendRegistrationForm,
 )
-from membership_file.models import Membership
+from membership_file.models import MemberYear, Membership, Room
 from membership_file.util import LinkAccountTokenGenerator, MembershipRequiredMixin
 
 global_preferences = global_preferences_registry.manager()
@@ -98,17 +104,10 @@ class ExtendMembershipSuccessView(MemberMixin, UpdateMemberYearMixin, TemplateVi
 LINK_TOKEN_GENERATOR = LinkAccountTokenGenerator()
 
 
-class RegisterNewMemberAdminView(PermissionRequiredMixin, ModelAdminFormViewMixin, CreateView):
-    """
-    A form in the admin panel that registers a new user, and optionally
-    sends them a registration email. The receiver can use this registration
-    email in order to link the created membership data to a new or pre-existing
-    account.
-    """
+class MemberRegistrationFormMixin(PermissionRequiredMixin):
+    """Mixin used to render member registration forms"""
 
     permission_required = "membership_file.add_member"
-    form_class = RegisterMemberForm
-    template_name = "membership_file/register_member.html"
     token_generator = LINK_TOKEN_GENERATOR
 
     def get_form_kwargs(self) -> Dict[str, Any]:
@@ -121,9 +120,36 @@ class RegisterNewMemberAdminView(PermissionRequiredMixin, ModelAdminFormViewMixi
         )
         return kwargs
 
+
+class RegisterNewMemberAdminView(MemberRegistrationFormMixin, ModelAdminFormViewMixin, CreateView):
+    """
+    A form in the admin panel that registers a new user, and optionally
+    sends them a registration email. The receiver can use this registration
+    email in order to link the created membership data to a new or pre-existing
+    account.
+    """
+
+    form_class = RegisterMemberForm
+    title = "Register new member"
+    save_button_title = "Register Member"
+
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
-        self.email_sent = form.cleaned_data["send_registration_email"]
-        return super().form_valid(form)
+        self.email_sent = form.cleaned_data["do_send_registration_email"]
+        res = super().form_valid(form)
+
+        # Construct admin log entry
+        message = self.model_admin.construct_change_message(self.request, form, None, True)
+        with translation_override(None):
+            for q in [
+                Room.objects.filter(id__in=form.cleaned_data.get("room_access", [])),
+                MemberYear.objects.filter(id__in=form.cleaned_data.get("active_years", [])),
+            ]:
+                for added_object in q:
+                    message.append(
+                        {"added": {"name": str(added_object._meta.verbose_name), "object": str(added_object)}}
+                    )
+        self.model_admin.log_addition(self.request, self.object, message)
+        return res
 
     def get_success_url(self) -> str:
         # Send user back to the member registration form, and show a message with a link to the newly created member object
@@ -139,6 +165,40 @@ class RegisterNewMemberAdminView(PermissionRequiredMixin, ModelAdminFormViewMixi
                 format_html('Registered, but did not email member “<a href="{1}">{0}</a>”', self.object, member_link),
             )
         return reverse(f"admin:membership_file_member_actions", args=("register_new_member",))
+
+
+class ResendRegistrationMailAdminView(MemberRegistrationFormMixin, ModelAdminFormViewMixin, UpdateView):
+    """TODO
+    Object is derived from <pk> in the URLConf
+    """
+
+    form_class = ResendRegistrationForm
+    model = form_class._meta.model
+    template_name = "membership_file/resend_registration_email.html"
+    title = "Re-send membership email"
+    save_button_title = "Resend email"
+
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        res = super().dispatch(request, *args, **kwargs)
+        if self.object.user is not None:
+            return HttpResponseBadRequest("Member already has an associated user.")
+        return res
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().post(request, *args, **kwargs)
+
+    def get_success_url(self) -> str:
+        member_link = reverse(f"admin:membership_file_member_change", args=(self.object.id,))
+        messages.success(
+            self.request,
+            format_html('Re-sent registration email to member “<a href="{1}">{0}</a>”', self.object, member_link),
+        )
+        return member_link
 
 
 class LinkMembershipViewTokenMixin:

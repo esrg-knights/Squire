@@ -68,6 +68,7 @@ class LinkedLoginView(LoginView):
     the Squire account when logging in. This does not actually link any data itself;
     subclasses should implement that sort of behaviour.
     """
+
     template_name = "core/user_accounts/login_linked.html"
 
     image_source = None

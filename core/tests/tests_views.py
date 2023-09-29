@@ -1,11 +1,13 @@
 from django.test import TestCase, RequestFactory
 from core.views import LinkedLoginView
 
+
 class LinkedLoginTestCase(TestCase):
     """Tests for LinkedLoginView"""
 
     class DummyLinkedLoginView(LinkedLoginView):
         """Linked login with some overrides"""
+
         image_source = "image.png"
         image_alt = "Image"
         link_title = "Link account"

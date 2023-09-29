@@ -146,7 +146,7 @@ class RegisterMemberFormTestCase(FormValidityMixin, TestCase):
             "country": "The Netherlands",
             "date_of_birth": "1970-01-01",
             "notes": "",
-            "send_registration_email": False,
+            "do_send_registration_email": False,
         }
         self.assertFormValid(data)
 

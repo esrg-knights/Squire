@@ -129,14 +129,14 @@ class RegisterNewMemberAdminViewTestCase(ViewValidityMixin, TestCase):
     def test_messages(self):
         """Tests messages and urls they contain"""
         # With registration mail
-        data = {**self.data, "send_registration_email": True}
+        data = {**self.data, "do_send_registration_email": True}
         res = self.assertValidPostResponse(data=data, redirect_url=self.base_url)
         member = Member.objects.filter(email=self.data["email"]).first()
         self.assertIsNotNone(member, "New member should've been created.")
         member.delete()
 
         # Without registration mail
-        data = {**self.data, "send_registration_email": False}
+        data = {**self.data, "do_send_registration_email": False}
         res = self.assertValidPostResponse(data=data, redirect_url=self.base_url)
         member = Member.objects.filter(email=self.data["email"]).first()
         self.assertIsNotNone(member, "New member should've been created.")
@@ -266,7 +266,9 @@ class LinkMembershipConfirmViewTestCase(ViewValidityMixin, TestCase):
         self._regenerate_token()
         data = {"username": "newuser", "password": "linkedlogintest"}
         user = User.objects.create_user(**data)
-        member = Member.objects.create(first_name="Bar", last_name="", legal_name="Bar", email="bar@example.com", user=user)
+        member = Member.objects.create(
+            first_name="Bar", last_name="", legal_name="Bar", email="bar@example.com", user=user
+        )
         res: TemplateResponse = self.assertValidPostResponse(data, self.login_url)
         self.assertTemplateNotUsed(res, LinkMembershipLoginView.fail_template_name)
         self.assertIsInstance(res, TemplateResponse)

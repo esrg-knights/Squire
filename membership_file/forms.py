@@ -112,7 +112,91 @@ class ContinueMembershipForm(forms.Form):
         )
 
 
-class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.ModelForm):
+class RegistrationFormBase(forms.ModelForm):
+    """Base class defining email functionality for sending registration emails to (new) members"""
+
+    def __init__(self, request: HttpRequest, token_generator: LinkAccountTokenGenerator, *args, **kwargs):
+        self.domain = get_current_site(request).domain
+        self.use_https = request.is_secure()
+        self.token_generator = token_generator
+        super().__init__(*args, **kwargs)
+
+    def send_registration_email(self):
+        """Generates and sends a registration email"""
+        # There is probably a better way to handle this than through a global preference,
+        #   but it should do for now. This needs to be refactored anyway after #317 is merged.
+        global_preferences = global_preferences_registry.manager()
+
+        context = {
+            "member": self.instance,
+            "sender": {
+                "name": str(self.user),
+                "description": str(global_preferences["membership__registration_description"]),
+                "extra_description": str(global_preferences["membership__registration_extra_description"]),
+            },
+            "domain": self.domain,
+            "uid": urlsafe_base64_encode(force_bytes(self.instance.pk)),
+            "token": self.token_generator.make_token(user=self.instance),
+            "protocol": "https" if self.use_https else "http",
+        }
+        # Reply-To address
+        reply_to = str(global_preferences["membership__registration_reply_to_address"]) or None
+        if reply_to is not None:
+            reply_to = reply_to.split(",")
+        self.send_mail(
+            "membership_file/registration/registration_subject.txt",
+            "membership_file/registration/registration_email.txt",
+            context,
+            None,
+            self.instance.email,
+            reply_to=reply_to,
+        )
+
+    def send_mail(
+        self,
+        subject_template_name,
+        email_template_name,
+        context,
+        from_email,
+        to_email,
+        html_email_template_name=None,
+        reply_to=None,
+    ):
+        """
+        Send a django.core.mail.EmailMultiAlternatives to `to_email`.
+        """
+
+        subject = loader.render_to_string(subject_template_name, context)
+        # Email subject *must not* contain newlines
+        subject = "".join(subject.splitlines())
+        body = loader.render_to_string(email_template_name, context)
+
+        email_message = EmailMultiAlternatives(subject, body, from_email, [to_email], reply_to=reply_to)
+        if html_email_template_name is not None:
+            html_email = loader.render_to_string(html_email_template_name, context)
+            email_message.attach_alternative(html_email, "text/html")
+
+        email_message.send()
+
+
+class ResendRegistrationForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, RegistrationFormBase):
+    """
+    Form that allows sending a registration email to a member.
+    There's no fields here; we basically only want a submit button.
+    """
+
+    class Meta:
+        model = Member
+        fields = ()
+
+    def save(self, commit=True) -> Any:
+        # We don't call super().save(commit) because the object didn't actually change
+        #   There's no need to activate signals or update auto_now fields
+        self.send_registration_email()
+        return self.instance
+
+
+class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, RegistrationFormBase):
     """
     Registers a member in the membership file, and optionally sends them an email to link or register a Squire account.
     Is able to automatically link an active year or room access. Also contains some useful presets, like those for
@@ -159,7 +243,7 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
                 {
                     "fields": [
                         "email",
-                        "send_registration_email",
+                        "do_send_registration_email",
                         "phone_number",
                         ("street", "house_number", "house_number_addition"),
                         ("postal_code", "city"),
@@ -190,16 +274,14 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
             ),
         }
 
-    send_registration_email = forms.BooleanField(
+    do_send_registration_email = forms.BooleanField(
+        label="Send registration email?",
         initial=True,
         required=False,
         help_text="Whether to email a registration link to the new member, allowing them to link their account to this membership data.",
     )
 
-    def __init__(self, request: HttpRequest, token_generator: LinkAccountTokenGenerator, *args, **kwargs):
-        self.domain = get_current_site(request).domain
-        self.use_https = request.is_secure()
-        self.token_generator = token_generator
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # Make more fields required
@@ -294,63 +376,8 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, forms.Mo
             self.instance.accessible_rooms.add(*self.cleaned_data["room_access"])
 
         # Only send out an email once the member is actually saved
-        if self.cleaned_data["send_registration_email"]:
-            # There is probably a better way to handle this than through a global preference,
-            #   but it should do for now. This needs to be refactored anyway after #317 is merged.
-            global_preferences = global_preferences_registry.manager()
-
-            context = {
-                "member": self.instance,
-                "sender": {
-                    "name": str(self.user),
-                    "description": str(global_preferences["membership__registration_description"]),
-                    "extra_description": str(global_preferences["membership__registration_extra_description"]),
-                },
-                "domain": self.domain,
-                "uid": urlsafe_base64_encode(force_bytes(self.instance.pk)),
-                "token": self.token_generator.make_token(user=self.instance),
-                "protocol": "https" if self.use_https else "http",
-            }
-            # Reply-To address
-            reply_to = str(global_preferences["membership__registration_reply_to_address"]) or None
-            if reply_to is not None:
-                reply_to = reply_to.split(",")
-            self.send_mail(
-                "membership_file/registration/registration_subject.txt",
-                "membership_file/registration/registration_email.txt",
-                context,
-                None,
-                self.instance.email,
-                reply_to=reply_to,
-            )
-
-    def send_mail(
-        self,
-        subject_template_name,
-        email_template_name,
-        context,
-        from_email,
-        to_email,
-        html_email_template_name=None,
-        reply_to=None,
-    ):
-        """
-        Send a django.core.mail.EmailMultiAlternatives to `to_email`.
-        """
-        # registration/registration_subject.txt
-        # registration/registration_email.html
-
-        subject = loader.render_to_string(subject_template_name, context)
-        # Email subject *must not* contain newlines
-        subject = "".join(subject.splitlines())
-        body = loader.render_to_string(email_template_name, context)
-
-        email_message = EmailMultiAlternatives(subject, body, from_email, [to_email], reply_to=reply_to)
-        if html_email_template_name is not None:
-            html_email = loader.render_to_string(html_email_template_name, context)
-            email_message.attach_alternative(html_email, "text/html")
-
-        email_message.send()
+        if self.cleaned_data["do_send_registration_email"]:
+            self.send_registration_email()
 
 
 class ConfirmLinkMembershipRegisterForm(RegisterForm):
