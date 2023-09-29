@@ -13,7 +13,7 @@ class ViewValidityMixin:
     """A mixin for testing views. Takes over a bit of behind the scenes overhead
     base_user_id: the id for the user running the sessions normally
     base_url: The basic url to navigate to
-    permission_required: The name of the permission that is required to view the tested page
+    permission_required: The name (or list of names) of the permission(s) that is required to view the tested page
     """
 
     client = None
@@ -31,7 +31,11 @@ class ViewValidityMixin:
             self.client.force_login(self.user)
 
         if self.user and self.permission_required:
-            self._set_user_perm(self.user, self.permission_required)
+            perms = self.permission_required
+            if isinstance(self.permission_required, str):
+                perms = [self.permission_required]
+            for perm in perms:
+                self._set_user_perm(self.user, perm)
 
     def _set_user_perm(self, user: User, perm):
         if user.has_perm(perm):

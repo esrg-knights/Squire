@@ -84,6 +84,35 @@ class MemberAdminTest(TestCase):
         res: HttpResponse = self.model_admin.register_new_member(self.request, Member.objects.all())
         self.assertEqual(res.status_code, 200)
 
+    def test_resend_email_action(self):
+        """Tests availability of the re-send registration email action button"""
+        # No permission
+        member = Member.objects.create(first_name="Foo", last_name="", legal_name="Foo", email="foo@example.com")
+        self.user.is_superuser = False
+        self.user.save()
+        self.user.user_permissions.clear()
+        self.request.user = User.objects.all().first()
+        actions = self.model_admin.get_change_actions(self.request, member.id, "")
+        self.assertNotIn("resend_verification", actions)
+
+        # With permission
+        self.user.user_permissions.add(Permission.objects.get(codename="add_member"))
+        self.request.user = User.objects.all().first()
+        actions = self.model_admin.get_change_actions(self.request, member.id, "")
+        self.assertIn("resend_verification", actions)
+
+        # Already has an associated user
+        member.user = self.user
+        member.save()
+        actions = self.model_admin.get_change_actions(self.request, member.id, "")
+        self.assertNotIn("resend_verification", actions)
+
+    def test_access_resend_email_view(self):
+        """Tests whether the re-send registration email view is accessible"""
+        member = Member.objects.create(first_name="Foo", last_name="", legal_name="Foo", email="foo@example.com")
+        res: HttpResponse = self.model_admin.resend_verification(self.request, member)
+        self.assertEqual(res.status_code, 200)
+
 
 # Tests Log deletion when members are deleted
 class MemberLogCleanupTest(TestCase):

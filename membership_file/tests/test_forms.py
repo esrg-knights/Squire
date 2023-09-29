@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from django.urls import reverse
 
-from membership_file.forms import ContinueMembershipForm, RegisterMemberForm
+from membership_file.forms import ContinueMembershipForm, RegisterMemberForm, ResendRegistrationForm
 from membership_file.models import Member, MemberYear, Membership, Room
 from membership_file.util import LinkAccountTokenGenerator
 from utils.testing.form_test_util import FormValidityMixin
@@ -52,6 +52,28 @@ class ContinueMembershipFormTest(FormValidityMixin, TestCase):
                 member=Member.objects.filter(id=999).first(),
                 year=MemberYear.objects.get(id=1),
             )
+
+
+@patch("django.http.request.HttpRequest.get_host", return_value="example.com")
+class ResendRegistrationFormTestCase(FormValidityMixin, TestCase):
+    """Tests for ResendRegistrationForm"""
+
+    form_class = ResendRegistrationForm
+
+    def get_form_kwargs(self, **kwargs):
+        kwargs = super().get_form_kwargs(**kwargs)
+        kwargs.update(request=HttpRequest(), token_generator=LinkAccountTokenGenerator())
+        return kwargs
+
+    def test_fields(self, _):
+        """Tests the existence of fields"""
+        # No fields should exist
+        form = self.build_form({})
+        self.assertDictEqual(form.fields, {})
+
+    def test_save(self, _):
+        """Tests saving"""
+        self.assertFormValid({})
 
 
 @patch("django.http.request.HttpRequest.get_host", return_value="example.com")

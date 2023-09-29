@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.admin.models import LogEntry
 from django.contrib.auth import get_user_model
 from django.template.response import TemplateResponse
 from django.test import TestCase
@@ -10,7 +11,7 @@ from dynamic_preferences.registries import global_preferences_registry
 
 from core.tests.util import suppress_warnings, DynamicRegistryUsageMixin
 from membership_file.forms import ContinueMembershipForm
-from membership_file.models import Member, MemberYear
+from membership_file.models import Member, MemberYear, Room
 from membership_file.views import (
     ExtendMembershipView,
     ExtendMembershipSuccessView,
@@ -133,6 +134,9 @@ class RegisterNewMemberAdminViewTestCase(ViewValidityMixin, TestCase):
         res = self.assertValidPostResponse(data=data, redirect_url=self.base_url)
         member = Member.objects.filter(email=self.data["email"]).first()
         self.assertIsNotNone(member, "New member should've been created.")
+        self.assertHasMessage(
+            res, messages.SUCCESS, reverse(f"admin:membership_file_member_change", args=(member.id,))
+        )
         member.delete()
 
         # Without registration mail
@@ -142,6 +146,58 @@ class RegisterNewMemberAdminViewTestCase(ViewValidityMixin, TestCase):
         self.assertIsNotNone(member, "New member should've been created.")
         self.assertHasMessage(
             res, messages.WARNING, reverse(f"admin:membership_file_member_change", args=(member.id,))
+        )
+
+    def test_admin_log(self):
+        """Tests if an admin log entry is created"""
+        Room.objects.create(name="Room", access="Master Key")
+        data = {**self.data, "do_send_registration_email": True}
+        res = self.assertValidPostResponse(data=data, redirect_url=self.base_url)
+        logs = LogEntry.objects.all()
+        self.assertEqual(len(logs), 1, "Admin log entry should've been created.")
+        self.assertEqual(logs.first().user.id, self.base_user_id)
+        self.assertEqual(logs.first().object_id, str(Member.objects.filter(email=self.data["email"]).first().id))
+
+
+class ResendRegistrationEmailAdminViewTestCase(ViewValidityMixin, TestCase):
+    """Tests for ResendRegistrationMailAdminView"""
+
+    fixtures = ["test_users"]
+    base_url = None
+    base_user_id = 4
+    permission_required = ("membership_file.add_member", "membership_file.view_member")
+    form_context_name = "adminform"
+
+    def setUp(self):
+        self.member = Member.objects.create(first_name="Foo", last_name="", legal_name="Foo", email="foo@example.com")
+        return super().setUp()
+
+    def get_base_url(self):
+        return reverse(
+            "admin:membership_file_member_actions", kwargs={"pk": self.member.id, "tool": "resend_verification"}
+        )
+
+    @suppress_warnings
+    def test_resend_access(self):
+        """Tests if the view is only accessible if certain conditions are met"""
+        # Permission membership_file.add_member
+        self.assertRequiresPermission("membership_file.add_member")
+
+        # Already has an associated member
+        self.member.user = self.user
+        self.member.save()
+        res = self.client.get(self.get_base_url())
+        self.assertEqual(res.status_code, 400)
+
+    def test_successful_get(self):
+        res = self.assertValidGetResponse()
+
+    def test_messages(self):
+        """Tests messages and urls they contain"""
+        url = reverse(f"admin:membership_file_member_change", args=(self.member.id,))
+        res = self.assertValidPostResponse(redirect_url=url)
+        self.assertHasMessage(
+            res, messages.SUCCESS, reverse(f"admin:membership_file_member_change", args=(self.member.id,))
         )
 
 
