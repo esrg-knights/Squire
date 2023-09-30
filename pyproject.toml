@@ -1,3 +1,11 @@
 [tool.black]
 line-length = 119
 extend-exclude = "(.*/migrations/.*.py)"
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+# needed for VS Code integration
+DJANGO_SETTINGS_MODULE = "squire.settings"
+python_files = ["**/tests/**.py"]

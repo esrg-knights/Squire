@@ -1,6 +1,5 @@
 from django.views.generic import TemplateView
 
-
 from committees.mixins import AssociationGroupMixin
 
 

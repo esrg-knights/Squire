@@ -10,8 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
-import os
 import json
+import os
 
 from . import util
 
@@ -419,8 +419,9 @@ if DEBUG:
 # Easy way to debug the application at a specific datetime
 #   This is obviously an ugly hack and should not be used in production
 if DEBUG and False:  # pragma: no cover
-    from django.utils import timezone
     from datetime import datetime
+
+    from django.utils import timezone
 
     timezone.now = lambda: datetime(year=2021, month=9, day=14, hour=21, minute=20, tzinfo=timezone.utc)
     print("=====WARNING=====")

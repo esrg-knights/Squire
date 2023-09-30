@@ -8,6 +8,9 @@
         {% if activity_moment.promotion_image %}
             background-image: url({{ activity_moment.promotion_image.url }});
             background-size: cover;
+        {% elif activity_moment.parent_activity.organisers.0.icon %}
+            background-image: url({{ activity_moment.parent_activity.organisers.0.icon }});
+            background-size: auto 95%;
         {% else %}
             background-image: url({% static "images/header_logo.png" %});
             background-size: auto 95%;

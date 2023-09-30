@@ -1,24 +1,22 @@
 from datetime import datetime, timedelta
-
-from django.contrib.auth.mixins import AccessMixin
-from django.core.exceptions import PermissionDenied
-from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render, get_object_or_404
-from django.urls import reverse
-from django.utils import timezone, dateparse
-from django.utils.translation import gettext_lazy as _
-from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-
-from django.views.decorators.http import require_safe
-from django.views.generic import TemplateView, ListView
-from django.views.generic.edit import FormView, FormMixin
-
 from urllib.parse import quote, unquote
 
+from django.contrib import messages
+from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin, UserPassesTestMixin
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q
+from django.http import Http404, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
+from django.utils import dateparse, timezone
+from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_safe
+from django.views.generic import ListView, TemplateView
+from django.views.generic.edit import FormMixin, FormView
+
+from .constants import ActivityType, SlotCreationType
 from .forms import *
 from .models import Activity, ActivityMoment
-from .constants import ActivityType, SlotCreationType
 
 __all__ = "CreateSlotView, get_activity_detail_view, activity_collection"
 
@@ -39,7 +37,10 @@ class ActivityOverview(ListView):
         start_date, end_date = self.get_time_range_data()
 
         activities = []
-        for activity in Activity.objects.filter(published_date__lte=timezone.now(), type=ActivityType.ACTIVITY_PUBLIC):
+        activity_filter = Q(type=ActivityType.ACTIVITY_PUBLIC)
+        if self.request.member is not None:
+            activity_filter |= Q(type=ActivityType.ACTIVITY_MEETING) & Q(organisers__members=self.request.member)
+        for activity in Activity.objects.filter(published_date__lte=timezone.now()).filter(activity_filter).distinct():
             for activity_moment in activity.get_activitymoments_between(start_date, end_date):
                 activities.append(activity_moment)
 

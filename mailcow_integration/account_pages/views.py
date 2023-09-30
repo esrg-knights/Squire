@@ -1,12 +1,13 @@
 from typing import Any, Dict, Type
+
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView
 from dynamic_preferences.users.forms import preference_form_builder
+
 from mailcow_integration.account_pages.forms import MemberMailPreferencesForm
 from mailcow_integration.squire_mailcow import get_mailcow_manager
-
 from user_interaction.accountcollective import AccountViewMixin
 
 

@@ -1,5 +1,6 @@
 from django.apps import AppConfig
 from django.contrib.auth import get_user_model
+
 from utils.spoofs import optimise_naming_scheme
 
 

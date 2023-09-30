@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.utils import timezone
+from django.forms.widgets import DateTimeInput
 
 from committees.models import AssociationGroup
 from utils.testing import FormValidityMixin
@@ -28,7 +29,7 @@ class AddMeetingFormTestCase(FormValidityMixin, TestCase):
             "local_start_date",
             required=True,
             label="Start date and time",
-            widget__class=BootstrapDateTimePickerInput,
+            widget__class=DateTimeInput,
         )
 
     def test_requires_association_group(self):

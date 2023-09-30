@@ -2,7 +2,6 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-
 from utils.testing.form_test_util import FormValidityMixin
 
 
