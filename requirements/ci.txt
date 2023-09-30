@@ -7,3 +7,4 @@
 codecov~=2.1.12 # CodeCov Integration
 coverage~=6.4.4 # Code Coverage
 django-test-migrations==1.2.0 # Testing migrations
+pytest-order

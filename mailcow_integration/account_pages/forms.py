@@ -1,4 +1,5 @@
 from typing import Any, Mapping, Optional, Type, Union
+
 from django.apps import apps
 from django.forms.utils import ErrorList
 from dynamic_preferences.users.forms import UserPreferenceForm

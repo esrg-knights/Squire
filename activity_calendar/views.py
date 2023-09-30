@@ -37,14 +37,10 @@ class ActivityOverview(ListView):
         start_date, end_date = self.get_time_range_data()
 
         activities = []
-        for activity in (
-            Activity.objects.filter(published_date__lte=timezone.now())
-            .filter(
-                Q(type=ActivityType.ACTIVITY_PUBLIC)
-                | (Q(type=ActivityType.ACTIVITY_MEETING) & Q(organisers__members=self.request.member))
-            )
-            .distinct()
-        ):
+        activity_filter = Q(type=ActivityType.ACTIVITY_PUBLIC)
+        if self.request.member != None:
+            activity_filter |= Q(type=ActivityType.ACTIVITY_MEETING) & Q(organisers__members=self.request.member)
+        for activity in Activity.objects.filter(published_date__lte=timezone.now()).filter(activity_filter).distinct():
             for activity_moment in activity.get_activitymoments_between(start_date, end_date):
                 activities.append(activity_moment)
 

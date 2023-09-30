@@ -245,4 +245,4 @@ class TestMixinMixin:
             raise AssertionError(f"Response was not successful. It returned code {response.status_code} instead.")
         if response.content != b"test successful":
             # HttpResponse content property is in byte form
-            raise AssertionError(f"Response was not successful. It returned unexpected html content")
+            raise AssertionError("Response was not successful. It returned unexpected html content")

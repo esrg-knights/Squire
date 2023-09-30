@@ -1,5 +1,7 @@
 from django.urls import path
+
 from user_interaction.accountcollective import AccountBaseConfig
+
 from .views import AchievementAccountView
 
 

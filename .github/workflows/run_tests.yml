@@ -39,3 +39,4 @@ jobs:
           fail_ci_if_error: true
           files: ./coverage/coverage.xml
           flags: unittests
+      - run: pytest

@@ -1,6 +1,6 @@
+from django.forms.widgets import DateTimeInput
 from django.utils.timezone import now
 from tempus_dominus.widgets import DateTimePicker
-
 
 __all__ = ["BootstrapDateTimePickerInput"]
 
@@ -43,3 +43,11 @@ class BootstrapDateTimePickerInput(DateTimePicker):
         if self.set_min_date_to_now:
             self.js_options["minDate"] = now().date().strftime("%Y-%m-%d 00:00")
         return super(BootstrapDateTimePickerInput, self).render(name, value, attrs=attrs, renderer=renderer)
+
+
+class NativeDateTimePickerInput(DateTimeInput):
+    input_type = "datetime-local"
+
+
+def AutoDateTimePickerInput(*args, **kwargs) -> BootstrapDateTimePickerInput | NativeDateTimePickerInput:
+    return NativeDateTimePickerInput()

@@ -1,6 +1,5 @@
 from committees.committee_pages.config import AssociationGroupHomeConfig
 from committees.models import AssociationGroup
-
 from roleplaying.committee_pages.views import CampaignDetailView
 
 

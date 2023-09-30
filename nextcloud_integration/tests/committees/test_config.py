@@ -1,7 +1,6 @@
 from django.test import TestCase
 
 from committees.committeecollective import CommitteeBaseConfig
-
 from nextcloud_integration.committee_pages.config import NextcloudGroupConfig
 
 

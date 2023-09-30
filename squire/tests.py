@@ -1,8 +1,9 @@
-from django.test import TestCase
-from django.conf import settings
-from . import util
-
 import os
+
+from django.conf import settings
+from django.test import TestCase
+
+from . import util
 
 ##################################################################################
 # Test cases for util.py

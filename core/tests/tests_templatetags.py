@@ -1,9 +1,11 @@
+import re
+
 from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured
+from django.template import Context, Template
 from django.test import TestCase
 from django.test.client import RequestFactory
-from django.template import Context, Template
 
 from core.models import MarkdownImage
 from core.widgets import ImageUploadMartorWidget
@@ -139,9 +141,9 @@ class BuildAbsoluteURITemplateTagTest(TestCase):
     # Match behaviour if left empty
     def test_build_absolute_uri_empty(self):
         request = self.factory.get("/some_location")
-        out = Template("{% load build_absolute_uri %}" "{% build_absolute_uri request %}").render(
-            Context({"request": request})
-        )
+        out = Template(
+            "{% load build_absolute_uri %}" "{% build_absolute_uri request %}",
+        ).render(Context({"request": request}))
         self.assertEqual(out, request.build_absolute_uri())
 
     # Match behaviour if filled
@@ -159,3 +161,18 @@ class BuildAbsoluteURITemplateTagTest(TestCase):
             "{% load build_absolute_uri %}" "{% build_absolute_image_uri request 'image_located_in_static' %}"
         ).render(Context({"request": request}))
         self.assertEqual(out, request.build_absolute_uri("static/image_located_in_static"))
+
+    def test_webcal(self):
+        request = self.factory.get("/some_location")
+        out: str = Template(
+            "{% load build_absolute_uri %}"
+            '{% url "activity_calendar:icalendar" as calendar_url %}'
+            "{% webcal_uri request calendar_url %}"
+        ).render(Context({"request": request}))
+
+        # This simple regex is based on https://stackoverflow.com/a/26987741/4633439
+        webcal_re = re.compile(
+            r"^(webcal:\/\/)(?P<domain>(((?!-))(xn--|_)?[a-z0-9-]{0,61}[a-z0-9]{1,1}\.)*(xn--)?([a-z0-9][a-z0-9\-]{0,60}|[a-z0-9-]{1,30}\.[a-z]{2,}))\/api\/calendar\/ical$",
+            re.IGNORECASE,
+        )
+        self.assertIsNotNone(webcal_re.match(out))
