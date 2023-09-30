@@ -1,3 +1,5 @@
+from typing import Union
+
 from django.forms.widgets import DateTimeInput
 from django.utils.timezone import now
 from tempus_dominus.widgets import DateTimePicker
@@ -49,5 +51,5 @@ class NativeDateTimePickerInput(DateTimeInput):
     input_type = "datetime-local"
 
 
-def AutoDateTimePickerInput(*args, **kwargs) -> BootstrapDateTimePickerInput | NativeDateTimePickerInput:
+def AutoDateTimePickerInput(*args, **kwargs) -> Union[BootstrapDateTimePickerInput, NativeDateTimePickerInput]:
     return NativeDateTimePickerInput()
