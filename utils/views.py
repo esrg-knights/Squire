@@ -202,6 +202,8 @@ class ModelAdminFormViewMixin:
                 "adminform": adminForm,
                 "is_nav_sidebar_enabled": True,
                 "opts": self.model_admin.model._meta,
+                "site_url": self.model_admin.admin_site.site_url,
+                "has_permission": True,
                 "original": self.object,
                 "title": self.get_title(),
                 "subtitle": self.get_subtitle(),
