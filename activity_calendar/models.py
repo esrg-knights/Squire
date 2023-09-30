@@ -550,7 +550,7 @@ class Activity(models.Model):
 
             # EXRULEs (RFC 2445) are deprecated (per RFC 5545)
             if len(r.exrules) > 0:
-                recurrence_errors.append(f"Exclusion Rules are unsupported (Exclusion Dates can still be used)")
+                recurrence_errors.append("Exclusion Rules are unsupported (Exclusion Dates can still be used)")
 
             if recurrence_errors:
                 errors.update({"recurrences": recurrence_errors})
@@ -645,7 +645,7 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     objects = models.Manager()
     meetings = MeetingManager()
 
-    parent_activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+    parent_activity: Activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
     recurrence_id = models.DateTimeField(verbose_name="parent activity date/time")
 
     created_date = models.DateTimeField(auto_now_add=True)
@@ -728,6 +728,10 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
     @property
     def is_cancelled(self):
         return self.status != ActivityStatus.STATUS_NORMAL
+
+    @property
+    def organiser_logo(self):
+        return self.parent_activity.organisers.icon;
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)

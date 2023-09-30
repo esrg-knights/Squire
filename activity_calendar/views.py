@@ -38,7 +38,7 @@ class ActivityOverview(ListView):
 
         activities = []
         activity_filter = Q(type=ActivityType.ACTIVITY_PUBLIC)
-        if self.request.member != None:
+        if self.request.member is not None:
             activity_filter |= Q(type=ActivityType.ACTIVITY_MEETING) & Q(organisers__members=self.request.member)
         for activity in Activity.objects.filter(published_date__lte=timezone.now()).filter(activity_filter).distinct():
             for activity_moment in activity.get_activitymoments_between(start_date, end_date):
