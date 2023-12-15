@@ -49,6 +49,7 @@
 
     /*Calendar day color*/
     --fc-neutral-bg-color: green;
+    --fc-neutral-bg-color: oklch(51.98% 0.17685825418032053 156.75);
 
     /* Make the default elements the dark colour */
     color-scheme: dark;
