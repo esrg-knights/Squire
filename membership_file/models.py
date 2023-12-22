@@ -33,7 +33,7 @@ class MemberManager(models.Manager):
 
         # Active membership year set; only return members registered in these years.
         #   Honorary members are always active, regardless of active years
-        return filter.filter(models.Q(memberyear__in=active_years) | models.Q(is_honorary_member=True))
+        return filter.filter(models.Q(memberyear__in=active_years) | models.Q(is_honorary_member=True)).distinct()
 
 
 # The Member model represents a Member in the membership file

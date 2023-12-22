@@ -369,7 +369,7 @@ class MailcowStatusView(TemplateView):
             aliases = list(self.mailcow_manager.get_alias_all(use_cache=False))
             mailboxes = list(self.mailcow_manager.get_mailbox_all(use_cache=False))
             # Force cache update; we don't care about the result
-            self.mailcow_manager.get_internal_alias_rspamd_setting(use_cache=False)
+            self.mailcow_manager.get_internal_alias_rspamd_settings(use_cache=False)
         except MailcowAuthException as e:
             context["error"] = "No valid API key set."
         except MailcowAPIReadWriteAccessDenied as e:
@@ -388,9 +388,10 @@ class MailcowStatusView(TemplateView):
             context["unused_aliases"] = self._init_unused_squire_addresses_list(
                 aliases, context["member_aliases"], context["committee_aliases"], context["global_committee_aliases"]
             )
-            context["internal_alias_rspamd_setting"] = self.mailcow_manager.get_internal_alias_rspamd_setting(
-                use_cache=False
-            )
+            (
+                context["internal_alias_rspamd_setting_allow"],
+                context["internal_alias_rspamd_setting_block"],
+            ) = self.mailcow_manager.get_internal_alias_rspamd_settings()
             context["mailcow_host"] = self.mailcow_manager.mailcow_host
         return context
 
