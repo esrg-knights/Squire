@@ -24,6 +24,9 @@
     --input-prepend-bg-color: var(--body-alt-bg-color);
     --input-prepend-text-color: #c3bbbb;
 
+    --input-bg-color-disabled: rgba(13, 17, 23, 0.79);
+    --input-text-color-disabled: rgb(196, 203, 210);
+
     /* Colors for highlighted text (e.g. h1, strong) */
     --title-text-color: white;
 
@@ -78,4 +81,10 @@ a:hover {
 
 .bg-light.border-danger {
     background-color: red !important;
+}
+
+/* Bootstrap's styling of disabled form fields doesn't work in dark mode */
+.form-control:disabled {
+    background-color: var(--input-bg-color-disabled);
+    color: var(--input-text-color-disabled);
 }

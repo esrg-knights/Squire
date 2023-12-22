@@ -71,8 +71,9 @@ class Member(models.Model):
     ##################################
     # STUDENT INFORMATION
     ##################################
+    EDUCATIONAL_INSTITUTION_TUE = "TU/e"
     student_number = models.CharField(max_length=15, blank=True)
-    educational_institution = models.CharField(max_length=255, blank=True, default="TU/e")
+    educational_institution = models.CharField(max_length=255, blank=True, default=EDUCATIONAL_INSTITUTION_TUE)
 
     ##################################
     # CARD NUMBERS
@@ -229,9 +230,10 @@ class Member(models.Model):
         return self.get_full_name()
 
     # Gets the name of the member
-    def get_full_name(self):
+    def get_full_name(self, allow_spoof=True):
+        """The member's full name. If `allow_spoof`, then this name can be modified for the purposes of jokes."""
         first_name = self.first_name
-        if global_preferences["homepage__april_2022"]:
+        if allow_spoof and global_preferences["homepage__april_2022"]:
             # This bit is from the april fools joke 2022
             first_name = optimise_naming_scheme(first_name)
 

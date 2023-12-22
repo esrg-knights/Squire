@@ -10,10 +10,10 @@ from core.tests.util import suppress_warnings
 
 
 class ViewValidityMixin:
-    """A mixin for testing views. Takes over a bit of behind the scenes overheasd
+    """A mixin for testing views. Takes over a bit of behind the scenes overhead
     base_user_id: the id for the user running the sessions normally
     base_url: The basic url to navigate to
-    permission_required: The name of the permission that is required to view the tested page
+    permission_required: The name (or list of names) of the permission(s) that is required to view the tested page
     """
 
     client = None
@@ -21,6 +21,7 @@ class ViewValidityMixin:
     base_user_id = None
     base_url = None
     permission_required = None
+    form_context_name = "form"
 
     def setUp(self):
         self.client = Client()
@@ -30,7 +31,11 @@ class ViewValidityMixin:
             self.client.force_login(self.user)
 
         if self.user and self.permission_required:
-            self._set_user_perm(self.user, self.permission_required)
+            perms = self.permission_required
+            if isinstance(self.permission_required, str):
+                perms = [self.permission_required]
+            for perm in perms:
+                self._set_user_perm(self.user, perm)
 
     def _set_user_perm(self, user: User, perm):
         if user.has_perm(perm):
@@ -84,11 +89,15 @@ class ViewValidityMixin:
         """
         url = url or self.get_base_url()
         data = data or {}
-        response = self.client.post(url, data=data)
+        response = self.client.post(url, data=data, follow=fetch_redirect_response)
         if redirect_url:
-            # If a form errors, it returns a templateresponse instead. So we can instantly debug
-            if isinstance(response, TemplateResponse):
-                errors = response.context_data["form"].errors.as_data()
+            # If a form errors, it won't redirect (chain is empty). So we can instantly debug
+            #   redirect chain is only set when follow=True
+            if hasattr(response, "context_data") and (
+                (not fetch_redirect_response and response.status_code != 302)
+                or (fetch_redirect_response and not response.redirect_chain)
+            ):
+                errors = response.context_data[self.form_context_name].errors.as_data()
                 print(f"Form on {url} contained errors: \n {errors}")
             self.assertRedirects(response, redirect_url, fetch_redirect_response=fetch_redirect_response)
         else:
@@ -115,6 +124,7 @@ class ViewValidityMixin:
         :param url: The url to be visited
         :param perm: The perm that needs to be validated
         """
+        assert not self.user.is_superuser
         perm = perm or self.permission_required
         self._remove_user_perm(self.user, perm)
         self.assertPermissionDenied(data=data, url=url)
@@ -127,7 +137,7 @@ class ViewValidityMixin:
         """
         Assert that the response contains a specific message
         :param response: The response object
-        :param level: The level of the message (messages.SUCCESS/ EROOR or custom...)
+        :param level: The level of the message (messages.SUCCESS/ERROR or custom...)
         :param text: (part of) the message string that it should contain
         :param print_all: prints all messages encountered useful to trace errors if present
         :return: Raises AssertionError if not asserted
@@ -136,8 +146,6 @@ class ViewValidityMixin:
         level = getattr(msg_constants, str(level), level)
 
         for message in response.context["messages"]:
-            # if print_all:
-            #     print(message)
             if message.level == level or level is None:
                 if text is None or str(text) in message.message:
                     return

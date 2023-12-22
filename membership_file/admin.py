@@ -1,13 +1,15 @@
 from datetime import datetime
 
 from django.contrib import admin, messages
+from django_object_actions import DjangoObjectActions, action as object_action
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV, TSV, ODS, XLSX
 
-from .forms import AdminMemberForm
-from .models import Member, MemberLog, MemberLogField, Room, MemberYear, Membership
 from core.admin import DisableModificationsAdminMixin, URLLinkInlineAdminMixin
+from membership_file.forms import AdminMemberForm
 from membership_file.export import MemberResource, MembersFinancialResource
+from membership_file.models import Member, MemberLog, MemberLogField, Room, MemberYear, Membership
+from membership_file.views import RegisterNewMemberAdminView, ResendRegistrationMailAdminView
 from utils.forms import RequestUserToFormModelAdminMixin
 
 
@@ -53,7 +55,7 @@ class MemberLogReadOnlyInline(DisableModificationsAdminMixin, URLLinkInlineAdmin
 
 
 @admin.register(Member)
-class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRelatedNameAdmin):
+class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, ExportActionMixin, HideRelatedNameAdmin):
     ##############################
     #  Export functionality
     resource_class = MemberResource
@@ -63,6 +65,37 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
         TSVUnicodeBOM,
         ODS,
     )
+
+    @object_action(attrs={"class": "addlink"})
+    def register_new_member(modeladmin, request, queryset):
+        view = modeladmin.admin_site.admin_view(RegisterNewMemberAdminView.as_view(model_admin=modeladmin))
+        return view(request)
+
+    @object_action(label="Re-send registration email", description="Re-sends the registration email to this member.")
+    def resend_verification(self, request, object):
+        view = self.admin_site.admin_view(ResendRegistrationMailAdminView.as_view(model_admin=self))
+        return view(request, pk=object.pk)
+
+    # Note: get_urls is extended
+    changelist_actions = ("register_new_member",)
+    change_actions = ("resend_verification",)
+
+    def get_change_actions(self, request, object_id, form_url):
+        # Action is only available if the user can add members normally
+        actions = super().get_change_actions(request, object_id, form_url)
+        if (
+            not request.user.has_perm("membership_file.add_member")
+            or Member.objects.get(id=object_id).user is not None
+        ):
+            actions = [action for action in actions if action != "resend_verification"]
+        return actions
+
+    def get_changelist_actions(self, request):
+        # Action is only available if the user can add members normally
+        actions = super().get_changelist_actions(request)
+        if not request.user.has_perm("membership_file.add_member"):
+            actions = [action for action in actions if action != "register_new_member"]
+        return actions
 
     def has_export_permission(self, request):
         return request.user.has_perm("membership_file.can_export_membership_file")
@@ -208,7 +241,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, ExportActionMixin, HideRel
         return True
 
 
-# Prevents MemberLogField creation, edting, or deletion in the Django Admin Panel
+# Prevents MemberLogField creation, editing, or deletion in the Django Admin Panel
 class MemberLogFieldReadOnlyInline(DisableModificationsAdminMixin, admin.TabularInline):
     model = MemberLogField
     extra = 0

@@ -1,5 +1,8 @@
+import copy
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.forms.models import ModelFormMetaclass
 
 
 def get_basic_filter_by_field_form(field_name):
@@ -57,7 +60,7 @@ class UpdatingUserFormMixin:
 
 class RequestUserToFormModelAdminMixin:
     """
-    Mixin that passes the requeesting user as a kwarg to
+    Mixin that passes the requesting user as a kwarg to
     the ModelAdmin's Form.
     """
 
@@ -74,7 +77,8 @@ class RequestUserToFormModelAdminMixin:
 
 
 class FormGroup:
-    """A formgroup functions as a shell to a form and any number of formsets. This is ideal when editing an
+    """
+    A formgroup functions as a shell to a form and any number of formsets. This is ideal when editing an
     object along with some directly related objects. Can be used on FormViews
     form_class: The class of the main form
     formset_class: The class of the formset
@@ -146,3 +150,48 @@ class FormGroup:
         for formset in self.formsets:
             if hasattr(formset, "save"):
                 formset.save()
+
+
+class FieldsetModelFormMetaclass(ModelFormMetaclass):
+    """Sets the `_meta.fieldsets` attribute that is required by the admin panel."""
+
+    def __new__(mcs, name, bases, attrs):
+        new_class = super().__new__(mcs, name, bases, attrs)
+        new_class._meta.fieldsets = None
+        meta_class = getattr(new_class, "Meta", None)
+        if meta_class is not None:
+            new_class._meta.fieldsets = getattr(meta_class, "fieldsets", None)
+        return new_class
+
+
+class FieldsetAdminFormMixin(metaclass=FieldsetModelFormMetaclass):
+    """
+    This mixin allows a form to be used in the admin panel. Notably allows using fieldsets
+    and default admin widgets (e.g. the datetime picker)
+    """
+
+    required_css_class = "required"
+
+    # ModelAdmin media
+    @property
+    def media(self):
+        extra = "" if settings.DEBUG else ".min"
+        js = [
+            "vendor/jquery/jquery%s.js" % extra,
+            "jquery.init.js",
+            "core.js",
+            "admin/RelatedObjectLookups.js",
+            "actions.js",
+            "urlify.js",
+            "prepopulate.js",
+            "vendor/xregexp/xregexp%s.js" % extra,
+        ]
+        return forms.Media(js=["admin/js/%s" % url for url in js]) + super().media
+
+    def get_fieldsets(self, request, obj=None):
+        """
+        Hook for specifying fieldsets.
+        """
+        if self._meta.fieldsets:
+            return copy.deepcopy(self._meta.fieldsets)
+        return [(None, {"fields": self.fields})]

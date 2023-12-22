@@ -4,7 +4,12 @@ from django.contrib.auth.models import Permission
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
-from dynamic_preferences.types import ModelMultipleChoicePreference, StringPreference, BooleanPreference
+from dynamic_preferences.types import (
+    BooleanPreference,
+    LongStringPreference,
+    ModelMultipleChoicePreference,
+    StringPreference,
+)
 from dynamic_preferences.preferences import Section
 from dynamic_preferences.registries import global_preferences_registry
 
@@ -16,7 +21,7 @@ homepage = Section("homepage")
 
 
 @global_preferences_registry.register
-class HomePageMessage(StringPreference):
+class HomePageMessage(LongStringPreference):
     section = homepage
     name = "home_page_message"
     verbose_name = "Home Page Message"

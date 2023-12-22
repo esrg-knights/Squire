@@ -1,0 +1,13 @@
+{% extends "core/admin_form.html" %}
+
+{% block content_subtitle %}
+    {{ block.super }}
+    <p>
+        This action will re-send a registration email to {{ original.email|urlize }}.
+        This email allows them to link {{ original }}'s membership data to a new account or an already existing account.
+    </p>
+    <p class="help">
+        Members registered through the <a href="{% url "admin:membership_file_member_actions" tool="register_new_member" %}">
+            admin member registration page</a> will have already received this email.
+    </p>
+{% endblock %}

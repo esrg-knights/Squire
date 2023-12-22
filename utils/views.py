@@ -1,4 +1,7 @@
+from typing import Any, Dict, Optional, Type
+from django.contrib.admin import helpers, ModelAdmin
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.forms import BaseModelForm
 from django.http.response import HttpResponseRedirect
 from django.contrib.messages import success, warning
 
@@ -118,3 +121,95 @@ class SuperUserRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 
     def test_func(self):
         return self.request.user.is_superuser
+
+
+class ModelAdminFormViewMixin:
+    """
+    A Mixin that allows a ModelForm (e.g in a CreateView) to be rendered
+    inside a ModelAdmin in the admin panel using features normally available there.
+
+    This includes default widgets and styling (e.g. for datetime) and formsets.
+
+    The `form_class` must also inherit `utils.forms.FieldsetAdminFormMixin`
+    in order for this to work.
+    Furthermore, a `model_admin` should be passed in order to instantiate this view.
+    """
+
+    # Class variable needed as we need to be able to pass this through as_view(..)
+    model_admin: ModelAdmin = None
+    title = "Form title"
+    subtitle = None
+    breadcrumbs_title = None
+    save_button_title = None
+    template_name = "core/admin_form.html"
+
+    def __init__(self, *args, model_admin: ModelAdmin = None, **kwargs) -> None:
+        assert model_admin is not None
+        self.model_admin = model_admin
+        super().__init__(*args, **kwargs)
+
+    def get_title(self):
+        """Gets the title displayed at the top of the page"""
+        return self.title
+
+    def get_subtitle(self):
+        """Gets the title displayed at the top of the page"""
+        return self.subtitle or self.object
+
+    def get_breadcrumbs_title(self):
+        """Gets the title used in the breadcrumbs. When None, uses `title`"""
+        return self.breadcrumbs_title
+
+    def get_save_button_title(self):
+        """Gets the title used for the save button. Defaults to 'Save'"""
+        return self.save_button_title
+
+    def get_form(self, form_class: Optional[Type[BaseModelForm]] = None) -> BaseModelForm:
+        # This method should return a form instance
+        if form_class is None:
+            form_class = self.get_form_class()
+
+        # Use this form_class's excludes instead of those from the ModelAdmin's form_class
+        exclude = None
+        if hasattr(form_class, "_meta"):
+            exclude = form_class._meta.exclude or ()
+
+        # This constructs a form class
+        # NB: More defaults can be passed into the **kwargs of ModelAdmin.get_form
+        form_class = self.model_admin.get_form(
+            self.request,
+            None,
+            change=False,
+            # Fields are defined in the form
+            fields=None,
+            # Override standard ModelAdmin form and ignore its exclude list
+            form=form_class,
+            exclude=exclude,
+        )
+
+        # Use the newly constructed form class to create a form
+        return super().get_form(form_class)
+
+    def get_context_data(self, **kwargs) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        form = context.pop("form")
+        adminForm = helpers.AdminForm(
+            form, list(form.get_fieldsets(self.request, self.object)), {}, model_admin=self.model_admin
+        )
+
+        context.update(
+            {
+                "adminform": adminForm,
+                "is_nav_sidebar_enabled": True,
+                "opts": self.model_admin.model._meta,
+                "site_url": self.model_admin.admin_site.site_url,
+                "has_permission": True,
+                "original": self.object,
+                "title": self.get_title(),
+                "subtitle": self.get_subtitle(),
+                "breadcrumbs_title": self.get_breadcrumbs_title(),
+                "save_button_title": self.get_save_button_title(),
+            }
+        )
+
+        return context

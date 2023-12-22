@@ -29,7 +29,7 @@ class MembershipDataView(AccountViewMixin, PermissionRequiredMixin, TemplateView
                 "msg_text": f"A new adventure awaits! Continue your membership into {year} now!",
                 "msg_type": "info",
                 "btn_text": "Continue Questing!",
-                "btn_url": reverse_lazy("membership_file/continue_membership"),
+                "btn_url": reverse_lazy("membership:continue_membership"),
             }
         context["memberyears"] = self.request.member.memberyear_set.order_by("name")
         # Due to overlapping years at the beginning of the year we need to take multiple instances into account

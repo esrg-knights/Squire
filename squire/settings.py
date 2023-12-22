@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     # External Libraries
     "bootstrap4",
     "tempus_dominus",  # Bootstrap DateTime picker
+    "django_object_actions",  # Dynamic admin panel actions
     "dynamic_preferences",  # Global Preferences
     "dynamic_preferences.users.apps.UserPreferencesConfig",  # Per-user preferences
     "recurrence",
@@ -284,7 +285,7 @@ LOGOUT_URL = "/logout"
 
 # The URL or named URL pattern where requests are redirected after
 # logout if LogoutView doesn’t have a next_page attribute.
-LOGOUT_REDIRECT_URL = "/logout/success"
+LOGOUT_REDIRECT_URL = "/logout/success/"
 
 ####################################################################
 # Martor settings (Markdown Editor)
