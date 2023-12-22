@@ -4,6 +4,7 @@ from functools import wraps
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
+from django.http import HttpResponse
 from django.test import TestCase
 from dynamic_preferences.registries import global_preferences_registry
 from dynamic_preferences.serializers import UNSET
@@ -58,7 +59,7 @@ def check_http_response(
     redirect_url: str = None,
     data: dict = {},
     **kwargs,
-):
+) -> HttpResponse:
     """
     Checks whether a given url can be accessed with a given HTTP Method by a
         given Squire User (e.g. account holders, anonymous users, etc.)

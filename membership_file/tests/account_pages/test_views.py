@@ -65,7 +65,7 @@ class MembershipDataViewTestCase(ViewValidityMixin, TestCase):
         self.assertIn("msg_text", msg)
         self.assertIn("btn_text", msg)
         self.assertEqual(msg["msg_type"], "info")
-        self.assertEqual(msg["btn_url"], reverse("membership_file/continue_membership"))
+        self.assertEqual(msg["btn_url"], reverse("membership:continue_membership"))
 
 
 class MembershipChangeViewTestCase(ViewValidityMixin, TestCase):

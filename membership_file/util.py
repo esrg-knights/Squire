@@ -1,13 +1,8 @@
-from django.conf import settings
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth import REDIRECT_FIELD_NAME
-from django.http import HttpResponseRedirect
-from django.shortcuts import resolve_url
-from functools import wraps
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 from membership_file.models import Member
-from .exceptions import UserIsNotCurrentMember
+from membership_file.exceptions import UserIsNotCurrentMember
 
 
 def user_is_current_member(user):
@@ -55,3 +50,34 @@ class BaseMembershipRequiredMixin:
 
 class MembershipRequiredMixin(LoginRequiredMixin, BaseMembershipRequiredMixin):
     pass
+
+
+class LinkAccountTokenGenerator(PasswordResetTokenGenerator):
+    """
+    Strategy object used to generate and check tokens for membership account linking.
+    Mentions of "user" should instead be interpreted as "member".
+    """
+
+    # Key salt should be different from the password token generator's key salt
+    key_salt = "squire.membership_file.util.LinkAccountTokenGenerator"
+
+    def _make_hash_value(self, member: Member, timestamp: int):
+        """
+        Hash the members's primary key, email, and some user state
+        that's sure to change after an account link to produce a token that is
+        invalidated when it's used:
+        1. The last_updated_date will change upon an account link.
+        2. The user field will will also change upon an account link.
+        Failing those things, settings.PASSWORD_RESET_TIMEOUT eventually
+        invalidates the token.
+
+        Running this data through salted_hmac() prevents account link cracking
+        attempts using the reset token, provided the secret isn't compromised.
+        """
+        # Truncate microseconds so that tokens are consistent even if the
+        # database doesn't support microseconds.
+        last_updated_date = (
+            "" if member.last_updated_date is None else member.last_updated_date.replace(microsecond=0, tzinfo=None)
+        )
+        user_id = member.user.id if member.user is not None else ""
+        return f"{member.pk}{last_updated_date}{user_id}{timestamp}{member.email}"

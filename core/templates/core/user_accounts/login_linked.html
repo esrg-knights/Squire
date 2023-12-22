@@ -1,0 +1,29 @@
+{% extends 'core/user_accounts/login.html' %}
+
+{% load static %}
+
+{% block title %}
+    Squire - Linked Login
+{% endblock title %}
+
+{% block content %}
+<div class="card mb-3 mx-auto card-responsive" style="max-width: 650px;">
+    <div class="row no-gutters">
+        <div class="col-md-3 card-img-wrapper">
+            {% with img=image_alt|default:"images/header_logo.png"%}
+                <img src="{% static img %}" class="card-img p-3" alt="{{ image_alt|default:'Squire icon' }}">
+            {% endwith %}
+        </div>
+        <div class="col-md-9">
+            <div class="card-body pl-md-1 pr-md-3 py-md-3 pt-md-3 pt-0">
+                <h5 class="card-title">{{ link_title|default:"Link Service" }}</h5>
+                <p class="card-text">{{ link_description|default:"Link service description" }}</p>
+                {% if link_extra %}
+                    <p class="card-text"><small class="text-muted">{{ link_extra }}</small></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{{ block.super }}
+{% endblock content %}

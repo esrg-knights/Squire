@@ -40,7 +40,7 @@ urlpatterns = [
     # Committee pages
     path("groups/", include("committees.urls")),
     # Membership File
-    path("", include("membership_file.urls")),
+    path("", include("membership_file.urls", namespace="membership")),
     # Redirect all other paths to the core module
     path("", include("core.urls", namespace="core")),
     path("", include("user_interaction.urls")),

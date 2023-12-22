@@ -1,0 +1,3 @@
+{% load i18n %}{% autoescape off %}
+{% blocktranslate %}ESRG Knights of the Kitchen Table | Membership registered in Squire!{% endblocktranslate %}
+{% endautoescape %}

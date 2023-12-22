@@ -1,42 +1,125 @@
 import os
+from typing import Any, Dict
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import JsonResponse, HttpRequest
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, HttpRequest
 from django.http.response import Http404
-from django.shortcuts import redirect, render
-from django.urls import reverse
+from django.shortcuts import render
+from django.urls import reverse, reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
 from django.views import View
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, FormView
+from django.views.generic.edit import CreateView
 from django.views.decorators.http import require_safe
-
-from membership_file.util import MembershipRequiredMixin
-
-from .forms import RegisterForm
-from .models import MarkdownImage, Shortcut
-
 from dynamic_preferences.registries import global_preferences_registry
 
+from core.forms import LoginForm, RegisterForm
+from core.models import MarkdownImage, Shortcut
+from membership_file.util import MembershipRequiredMixin
+
 global_preferences = global_preferences_registry.manager()
-
-from django.contrib.auth import get_user_model
-
 User = get_user_model()
+
 ##################################################################################
 # Contains render-code for displaying general pages.
 # @since 15 JUL 2019
 ##################################################################################
 
 
-@require_safe
-def logoutSuccess(request):
-    if request.user.is_authenticated:
-        return redirect(reverse("core:user_accounts/logout"))
-    return render(request, "core/user_accounts/logout-success.html", {})
+class LoginView(DjangoLoginView):
+    """
+    An extension of Django's standard LoginView that allows dynamically setting URLs to
+    the registration and password reset page.
+    """
+
+    template_name = "core/user_accounts/login.html"
+    authentication_form = LoginForm
+    redirect_authenticated_user = False
+    # Setting to True will enable Social Media Fingerprinting.
+    # For more information, see the corresponding warning at:
+    #  https://docs.djangoproject.com/en/3.2/topics/auth/default/#all-authentication-views
+
+    register_url = reverse_lazy("core:user_accounts/register")
+    reset_password_url = reverse_lazy("core:user_accounts/password_reset")
+
+    def get_register_url(self):
+        """Gets the URL for the register page"""
+        return self.register_url
+
+    def get_reset_password_url(self):
+        """Gets the URL for the password reset page"""
+        return self.reset_password_url
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context.update({"register_url": self.get_register_url(), "reset_password_url": self.get_reset_password_url()})
+        return context
+
+
+class LinkedLoginView(LoginView):
+    """
+    A variant of the standard LoginView that shows that some data will be linked to
+    the Squire account when logging in. This does not actually link any data itself;
+    subclasses should implement that sort of behaviour.
+    """
+
+    template_name = "core/user_accounts/login_linked.html"
+
+    image_source = None
+    image_alt = None
+    link_title = None
+    link_description = None
+    link_extra = None
+
+    def get_image_source(self):
+        """The image for the data to be linked. Defaults to Squire's logo."""
+        return self.image_source
+
+    def get_image_alt(self):
+        """Alt text for the image."""
+        return self.image_alt
+
+    def get_link_title(self):
+        """Title for the data to be linked."""
+        return self.link_title
+
+    def get_link_description(self):
+        """A description of the data to be linked."""
+        return self.link_description
+
+    def get_link_extra(self):
+        """Any extra information for the data to be linked."""
+        return self.link_extra
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "image_source": self.get_image_source(),
+                "image_alt": self.get_image_alt(),
+                "link_title": self.get_link_title(),
+                "link_description": self.get_link_description(),
+                "link_extra": self.get_link_extra(),
+            }
+        )
+        return context
+
+
+class LogoutSuccessView(TemplateView):
+    """View that is displayed when a user is logged out."""
+
+    template_name = "core/user_accounts/logout-success.html"
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        if request.user.is_authenticated:
+            return HttpResponseRedirect(reverse("core:user_accounts/logout"))
+        return super().get(request, *args, **kwargs)
 
 
 class GlobalPreferenceRequiredMixin:
@@ -59,27 +142,27 @@ class NewsletterView(GlobalPreferenceRequiredMixin, MembershipRequiredMixin, Tem
     template_name = "core/newsletters.html"
 
 
-@require_safe
-def registerSuccess(request):
-    return render(request, "core/user_accounts/register/register_done.html", {})
+class RegisterSuccessView(TemplateView):
+    template_name = "core/user_accounts/register/register_done.html"
 
 
-def register(request):
-    # if this is a POST request we need to process the form data
-    if request.method == "POST":
-        # create a form instance and populate it with data from the request:
-        form = RegisterForm(request.POST)
-        # check whether it's valid:
-        if form.is_valid():
-            # Save the user
-            form.save(commit=True)
-            return redirect(reverse("core:user_accounts/register/success"))
+class RegisterUserView(CreateView):
+    """Register a user. Allows dynamically setting URLs to the login page."""
 
-    # if a GET (or any other method) we'll create a blank form
-    else:
-        form = RegisterForm()
+    template_name = "core/user_accounts/register/register.html"
+    form_class = RegisterForm
+    success_url = reverse_lazy("core:user_accounts/register/success")
 
-    return render(request, "core/user_accounts/register/register.html", {"form": form})
+    login_url = reverse_lazy("core:user_accounts/login")
+
+    def get_login_url(self):
+        """Gets the URL for the login page"""
+        return self.login_url
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context.update({"login_url": self.get_login_url()})
+        return context
 
 
 ##################################################################################

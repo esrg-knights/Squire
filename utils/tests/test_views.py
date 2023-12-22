@@ -1,4 +1,7 @@
 from django.core.exceptions import ValidationError, PermissionDenied
+from django.contrib.admin import helpers, ModelAdmin
+from django.contrib.admin.widgets import AdminTextInputWidget, AdminSplitDateTime
+from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.messages import constants
@@ -9,11 +12,18 @@ from django.test import TestCase, RequestFactory
 from django.views import View
 from django.views.generic import ListView, FormView
 from django.forms import Form, BooleanField
+from utils.tests.test_forms import FieldsetAdminUserForm
 
 User = get_user_model()
 
 
-from utils.views import SearchFormMixin, RedirectMixin, PostOnlyFormViewMixin, SuperUserRequiredMixin
+from utils.views import (
+    ModelAdminFormViewMixin,
+    SearchFormMixin,
+    RedirectMixin,
+    PostOnlyFormViewMixin,
+    SuperUserRequiredMixin,
+)
 
 
 class TestForm(Form):
@@ -197,3 +207,40 @@ class TestSuperUserRequiredMixin(TestCase):
         self.request.user = self.staff
         with self.assertRaises(PermissionDenied):
             self.view(self.request)
+
+
+class ModelAdminFormViewMixinTestCase(TestCase):
+    """Tests for ModelAdminFormViewMixin"""
+
+    class DummyModelFormView(ModelAdminFormViewMixin, FormView):
+        """FormView in combination with FieldsetAdminUserForm"""
+
+        form_class = FieldsetAdminUserForm
+        template_name = "utils/testing/test_mixin_template.html"
+
+    view_class = DummyModelFormView
+
+    def setUp(self) -> None:
+        self.model_admin = ModelAdmin(model=User, admin_site=AdminSite())
+        self.view = self.view_class(model_admin=self.model_admin)
+        request_factory = RequestFactory()
+        req = request_factory.get(f"/my_path/")
+        self.view.setup(req)
+        self.view.object = None
+
+        return super().setUp()
+
+    def test_admin_widgets(self):
+        """Tests whether admin widgets properly replace standard widgets. E.g. AdminSplitDateTime"""
+        context = self.view.get_context_data()
+        self.assertIsInstance(context.get("adminform", None), helpers.AdminForm)
+        adminform: helpers.AdminForm = context["adminform"]
+        form = adminform.form
+        # Form fields should be converted to admin classes
+        self.assertIsInstance(form.fields["username"].widget, AdminTextInputWidget)
+        self.assertIsInstance(form.fields["last_login"].widget, AdminSplitDateTime)
+
+        # More context needed for template
+        self.assertTrue(context.get("is_nav_sidebar_enabled", False))
+        self.assertIsNotNone(context.get("opts", None))
+        self.assertIn("title", context)
