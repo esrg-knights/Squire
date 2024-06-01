@@ -12,7 +12,7 @@ django-recurrence~=1.11.1 # Recurring Dates
 django-import-export~=2.9.0 # Import/Export models
 django-dynamic-preferences~=1.16.0 # Global Preferences / User Preferences
 django-object-actions~=4.2.0 # Dynamic admin panel actions
-martor~=1.6.14, <=1.6.26; # Markdown Editor
+martor==1.6.14, <=1.6.26; # Markdown Editor
 pymdown-extensions~=9.11 # Extra markdown features
 django-pwa~=1.1.0 # Progressive Webapp
 requests~=2.32.3 # Requests (needed for Mailcow API)

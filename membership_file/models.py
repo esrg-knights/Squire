@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.conf import settings
 from django.core.validators import RegexValidator, MinValueValidator
 from django.db import models
@@ -113,7 +114,7 @@ class Member(models.Model):
 
     # External cards require a deposit, which has changed over the years
     external_card_deposit = models.DecimalField(
-        validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(Decimal(0))],
         max_digits=5,
         decimal_places=2,
         null=True,
