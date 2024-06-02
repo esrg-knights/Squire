@@ -2,6 +2,12 @@
 
 A re-introduction of the web application for ESRG Knights of the Kitchen Table using Django 3.2.
 
+![Testrun workflow](https://github.com/esrg-knights/Squire/actions/workflows/run_tests.yml/badge.svg)
+[![codecov](https://codecov.io/gh/esrg-knights/Squire/graph/badge.svg?token=BRTHryxW4X)](https://codecov.io/gh/esrg-knights/Squire)
+![Django Version](https://img.shields.io/badge/django%20versions-3.2-blue)
+![Python Version](https://img.shields.io/badge/python-3.8-blue)
+![License](https://img.shields.io/github/license/esrg-knights/Squire)
+
 ## Getting started with development
 
 1. Install the latest version of Python 3. If you are on Windows, you can download Python from [python.org]. If you are not, check if you already have a recent version by running `python3 --version`. As of writing, Python 3.8 or higher is recent enough, but this may change in the future.

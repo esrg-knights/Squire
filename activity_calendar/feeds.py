@@ -20,13 +20,6 @@ from .constants import ActivityStatus, ActivityType
 import activity_calendar.util as util
 
 
-# Monkey-patch; Why is this not open for extension in the first place?
-feedgenerator.ITEM_EVENT_FIELD_MAP = (
-    *(feedgenerator.ITEM_EVENT_FIELD_MAP),
-    ("recurrenceid", "recurrence-id"),
-)
-
-
 def only_for(class_type, default=None):
     def only_for_decorator(func):
         def func_wrapper(self, item):
@@ -259,7 +252,7 @@ class CESTEventFeed(ICalFeed):
 
     # RECURRENCE-ID
     @only_for(ActivityMoment)
-    def item_recurrenceid(self, item):
+    def item_recurrence_id(self, item):
         if item.is_part_of_recurrence:
             return item.recurrence_id.astimezone(timezone.get_current_timezone())
         return None
@@ -276,9 +269,9 @@ class CESTEventFeed(ICalFeed):
     def item_extra_kwargs(self, item):
         kwargs = super().item_extra_kwargs(item)
 
-        val = self._get_dynamic_attr("item_recurrenceid", item)
+        val = self._get_dynamic_attr("item_recurrence_id", item)
         if val:
-            kwargs["recurrenceid"] = val
+            kwargs["recurrence_id"] = val
         return kwargs
 
 
