@@ -227,7 +227,6 @@ class MemberLogTest(TestCase):
             "student_number": "",
             "educational_institution": "TU/e",
             "external_card_digits": "",
-            "external_card_cluster": "",
             "email": self.email,
             "street": "De Lampendriessen",
             "house_number": "31",

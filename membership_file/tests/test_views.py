@@ -150,7 +150,7 @@ class RegisterNewMemberAdminViewTestCase(ViewValidityMixin, TestCase):
 
     def test_admin_log(self):
         """Tests if an admin log entry is created"""
-        Room.objects.create(name="Room", access="Master Key")
+        Room.objects.create(name="Room", access_type=Room.ACCESS_OTHER)
         data = {**self.data, "do_send_registration_email": True}
         res = self.assertValidPostResponse(data=data, redirect_url=self.base_url)
         logs = LogEntry.objects.all()

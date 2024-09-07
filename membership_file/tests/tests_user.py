@@ -127,26 +127,17 @@ class MemberRenderTest(TestCase):
         # Display None if there is no card number
         self.member_to_run_tests_on.external_card_number = None
         self.member_to_run_tests_on.external_card_digits = None
-        self.member_to_run_tests_on.external_card_cluster = None
         self.assertIsNone(self.member_to_run_tests_on.display_external_card_number())
 
         # Display 1234567-123 if they exist
         self.member_to_run_tests_on.external_card_number = "1234567"
         self.member_to_run_tests_on.external_card_digits = "980"
-        self.member_to_run_tests_on.external_card_cluster = None
         self.assertEqual("1234567-980", self.member_to_run_tests_on.display_external_card_number())
 
-        # Display 1234567 (Cluster) if they exist
+        # Display 1234567 if they exist
         self.member_to_run_tests_on.external_card_number = "1234567"
         self.member_to_run_tests_on.external_card_digits = None
-        self.member_to_run_tests_on.external_card_cluster = "K. Nights"
-        self.assertEqual("1234567 (K. Nights)", self.member_to_run_tests_on.display_external_card_number())
-
-        # Display 1234567-980 (Cluster) if they exist
-        self.member_to_run_tests_on.external_card_number = "1234567"
-        self.member_to_run_tests_on.external_card_digits = "980"
-        self.member_to_run_tests_on.external_card_cluster = "K. Nights"
-        self.assertEqual("1234567-980 (K. Nights)", self.member_to_run_tests_on.display_external_card_number())
+        self.assertEqual("1234567", self.member_to_run_tests_on.display_external_card_number())
 
     # Tests the address display method
     def test_address(self):

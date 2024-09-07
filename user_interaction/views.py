@@ -78,6 +78,14 @@ welcome_messages = [
     "The Knights of the Kitchen Table are the best, largest, and only boardgame and roleplay association in Eindhoven!",
     "Frambozen bestaan",
     "This message is sponsored by Fantasy Court",
+    "Fun fact: The boardgame committee's favourite boardgame is Fortnite Monopoly!",
+    "Fun fact: The roleplaying committee's favourite system is the Rolepearing Game!",
+    "Fun fact: The Ivoren Wachter's favourite swordfighting-move is the shield bash!",
+    "Fun fact: The cooking committee's favourite dish is Soep Ultiem!",
+    "Fun fact: Fantasy Court's favourite vendor is Conferences!",
+    "Fun fact: The activity committee's favourite activity is drinking away sorrows in Hubble!",
+    "Fun fact: The board's favourite board is board 18!",
+    "The Knights have their own alumni association: The Lords of the Kitchen Table. If you're old, message the board!",
 ]
 
 

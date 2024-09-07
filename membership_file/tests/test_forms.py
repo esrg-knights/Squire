@@ -110,7 +110,7 @@ class RegisterMemberFormTestCase(FormValidityMixin, TestCase):
         )
 
         # Rooms become available once they exist
-        kitchen = Room.objects.create(name="Kitchen", access="Crowbar")
+        kitchen = Room.objects.create(name="Kitchen", access_type=Room.ACCESS_OTHER, access_specification="Crowbar")
         self.assertHasField("room_access", required=False, initial=None, choices=[(kitchen.id, str(kitchen))])
 
         # Fieldsets should exist
@@ -120,9 +120,26 @@ class RegisterMemberFormTestCase(FormValidityMixin, TestCase):
 
     def test_clean(self, _):
         """Tests field cleaning"""
-        # Phone number should be provided if room access is requested
+        # Phone number should be provided if room access is requested for rooms with keys,
+        #   even if a tue card number is provided
         self.assertFormHasError(
-            {"room_access": [Room.objects.create(name="Kitchen", access="Crowbar").pk]},
+            {
+                "room_access": [
+                    Room.objects.create(name="Kitchen", access_type=Room.ACCESS_OTHER).pk,
+                    Room.objects.create(name="Basement", access_type=Room.ACCESS_CARD).pk,
+                ],
+                "tue_card_number": "01234567",
+            },
+            "phone_required",
+            field_name="phone_number",
+        )
+
+        # If all requested rooms requires card access, and a tue card is provided, then no phone number is needed
+        self.assertFormNotHasError(
+            {
+                "room_access": [Room.objects.create(name="Basement", access_type=Room.ACCESS_CARD).pk],
+                "tue_card_number": "01234567",
+            },
             "phone_required",
             field_name="phone_number",
         )
@@ -173,7 +190,7 @@ class RegisterMemberFormTestCase(FormValidityMixin, TestCase):
         self.assertFormValid(data)
 
         # Room Access
-        room = Room.objects.create(name="Kitchen", access="Crowbar")
+        room = Room.objects.create(name="Kitchen", access_type=Room.ACCESS_OTHER, access_specification="Crowbar")
         data = {**data, "room_access": [room.pk]}
         form = self.build_form(data)
         self.assertFormValid(data)

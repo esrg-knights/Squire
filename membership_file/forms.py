@@ -327,10 +327,24 @@ class RegisterMemberForm(UpdatingUserFormMixin, FieldsetAdminFormMixin, Registra
         res = super().clean()
         # Phone number requirements
         if not self.cleaned_data["phone_number"] and self.cleaned_data["room_access"]:
-            self.add_error(
-                "phone_number",
-                ValidationError("A phone number is required if room access is provided.", code="phone_required"),
+            any_room_not_card = any(
+                [
+                    Room.objects.get(id=room_id).access_type != Room.ACCESS_CARD
+                    for room_id in self.cleaned_data["room_access"]
+                ]
             )
+            # There is >=1 room that uses a key, or all rooms require card access and no TUe card number was provided
+            if any_room_not_card or not self.cleaned_data["tue_card_number"]:
+                msg = "A phone number is required; access was requested for rooms with keys."
+                if not any_room_not_card:
+                    msg = "A phone number is required, or a TUe card number should be entered. Access was only requested for rooms with card access."
+                self.add_error(
+                    "phone_number",
+                    ValidationError(
+                        msg,
+                        code="phone_required",
+                    ),
+                )
 
         # Educational institution requirements
         if (

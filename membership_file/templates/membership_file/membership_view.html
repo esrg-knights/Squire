@@ -138,7 +138,7 @@
             {% if member.last_updated_by is not None %}
                 This information was last changed on {{member.last_updated_date|date:"M j, Y \a\t H\:i"}} by {{member.display_last_updated_name}}
             {% else %}
-                This information was never updated since its creation on {{member.last_updated_date|date:"M j, Y \a\t H\:i"}}
+                This information was last changed on {{member.last_updated_date|date:"M j, Y \a\t H\:i"}}
             {% endif %}
             <br>
             {% if member.marked_for_deletion %}
