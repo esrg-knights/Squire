@@ -82,7 +82,8 @@ class Member(models.Model):
     # NB: These numbers may start with 0, which is why they are not IntegerFields
     ##################################
     tue_card_number_regex = RegexValidator(
-        regex=r"^[0-9]{7,8}$", message="TUe card numbers must only consist of exactly 7 or 8 digits. E.g. 1234567"
+        regex=r"^[0-9]{8}$",
+        message="TUe card numbers must only consist of exactly 8 digits. For older cards (pre 2017) that only used 7 digits, prepend a 0. E.g. 01457347",
     )
     tue_card_number = models.CharField(
         validators=[tue_card_number_regex],
@@ -94,7 +95,7 @@ class Member(models.Model):
     )
 
     external_card_digits_regex = RegexValidator(
-        regex=r"^[0-9]{3}$", message="External card digits must consist of exactly 3 digits. E.g. 012"
+        regex=r"^[0-9]{4}$", message="External card digits must consist of exactly 4 digits. E.g. 0012"
     )
 
     # External card uses the same number formatting as Tue cards, but its number does not necessarily need to be unique
@@ -103,14 +104,12 @@ class Member(models.Model):
         max_length=15,
         null=True,
         blank=True,
-        help_text="External cards are blue, whereas Tu/e cards are currently red (since sept. 2021) or orange (before sept. 2021).",
+        help_text="External cards mention 'FMC', whereas Tu/e cards are currently red (since sept. 2021) or orange (before sept. 2021).",
     )
-    # 3-digit code at the bottom of a card
+    # 4-digit code at the bottom of a card; only used for external cards
     external_card_digits = models.CharField(
-        validators=[external_card_digits_regex], max_length=3, blank=True, verbose_name="digits"
+        validators=[external_card_digits_regex], max_length=4, blank=True, verbose_name="digits"
     )
-    # The cluster contains additional information of an external card
-    external_card_cluster = models.CharField(max_length=255, blank=True, verbose_name="cluster")
 
     # External cards require a deposit, which has changed over the years
     external_card_deposit = models.DecimalField(
@@ -257,12 +256,8 @@ class Member(models.Model):
 
         display_card = self.external_card_number
         if self.external_card_digits:
-            # Not all external card have a 3-digit code (E.g. parking cards)
+            # Not all external card have a 4-digit code (E.g. parking cards)
             display_card += f"-{self.external_card_digits}"
-
-        if self.external_card_cluster:
-            # Not all external cards have a cluster
-            display_card += f" ({self.external_card_cluster})"
 
         return display_card
 
@@ -286,11 +281,22 @@ class Member(models.Model):
 
 
 class Room(models.Model):
-    class Meta:
-        ordering = ["access", "name"]
+    """A room that can be gained access through by a card or key."""
 
     name = models.CharField(max_length=63)
-    access = models.CharField(max_length=15, help_text="How access is provided. E.g. 'Key 12' or 'Campus Card'")
+    room_number = models.CharField(max_length=15, blank=True)
+
+    ACCESS_KEY = "KEY"
+    ACCESS_CARD = "CARD"
+    ACCESS_OTHER = "MISC"
+    _ACCESS_TYPES = [
+        (ACCESS_KEY, "Key"),
+        (ACCESS_CARD, "TUe Card/External Card"),
+        (ACCESS_OTHER, "Other"),
+    ]
+    access_type = models.CharField(max_length=4, choices=_ACCESS_TYPES)
+    access_specification = models.CharField(max_length=15, help_text="E.g. key number", blank=True)
+
     notes = models.TextField(blank=True)
 
     # Members who have access to this room
@@ -299,7 +305,12 @@ class Room(models.Model):
     members_with_access = models.ManyToManyField(Member, blank=True, related_name="accessible_rooms")
 
     def __str__(self):
-        return f"{self.name} ({self.access})"
+        access = self.get_access_type_display()
+        if self.access_specification:
+            access += " - " + self.access_specification
+        if self.room_number:
+            return f"{self.room_number} - {self.name} ({access})"
+        return f"{self.name} ({access})"
 
 
 ##################################################################################

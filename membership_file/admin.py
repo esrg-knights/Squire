@@ -164,7 +164,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, Expor
             ('street', 'house_number', 'house_number_addition'), ('postal_code', 'city'), 'country']}),
         ('Room Access', {'fields':
             ['key_id', 'tue_card_number',
-            ('external_card_number', 'external_card_digits', 'external_card_cluster'),
+            ('external_card_number', 'external_card_digits'),
             'external_card_deposit', 'accessible_rooms']}),
         ('Legal Information', {'fields':
             ['educational_institution', 'student_number',
@@ -266,12 +266,28 @@ class MemberLogReadOnly(DisableModificationsAdminMixin, HideRelatedNameAdmin):
 class RoomAdmin(admin.ModelAdmin):
     model = Room
 
-    list_display = ("id", "name", "access")
+    list_display = ("id", "name", "room_number", "access_type", "access_specification")
     list_display_links = ("id", "name")
-    search_fields = ["name", "access"]
-
-    ordering = ("access",)
+    search_fields = ["name", "room_number"]
+    ordering = ("access_type", "access_specification")
     filter_horizontal = ("members_with_access",)
+
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": [
+                    (
+                        "name",
+                        "room_number",
+                    ),
+                    ("access_type", "access_specification"),
+                    "notes",
+                    "members_with_access",
+                ]
+            },
+        ),
+    ]
 
 
 @admin.register(MemberYear)

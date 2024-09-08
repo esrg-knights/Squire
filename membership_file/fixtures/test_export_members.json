@@ -10,9 +10,8 @@
           "last_name": "Doe",
           "student_number": "1234567",
           "educational_institution": "TUe",
-          "external_card_number": "1234567",
+          "external_card_number": "01234567",
           "external_card_digits": "",
-          "external_card_cluster": "Luna Cluster 3",
           "email": "johndoe@example.com",
           "last_updated_date": "1970-01-01T12:00:00Z",
           "last_updated_by": null
@@ -38,7 +37,8 @@
         "pk": 1,
         "fields": {
           "name": "Room 1",
-          "access": "Key 12",
+          "access_type": "KEY",
+          "access_specification": "12",
           "members_with_access": [
             1
           ]
@@ -49,7 +49,7 @@
         "pk": 2,
         "fields": {
           "name": "Room 2",
-          "access": "Campus Card",
+          "access_type": "CARD",
           "members_with_access": [
             1
           ]

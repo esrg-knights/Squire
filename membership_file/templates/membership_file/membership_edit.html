@@ -43,7 +43,7 @@
           <h3>Room Access</h3>
           {% generic_field form.key_id -1 %}
           {% generic_field form.tue_card_number -1 %}
-          {% generic_field form.external_card_number form.external_card_digits form.external_card_cluster 110 70 -1 %}
+          {% generic_field form.external_card_number form.external_card_digits 110 70 %}
           {% if form.external_card_number.value %}
             <!-- Only show deposits if the member has an external card -->
             {% generic_field form.external_card_deposit -1 %}

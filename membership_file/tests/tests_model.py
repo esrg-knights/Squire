@@ -138,8 +138,11 @@ class MemberModelTest(TestCase):
 class RoomModelTest(TestCase):
     # Tests the display method of Room
     def test_room_display(self):
-        room = Room(id=2, name="Basement", access="Keycard")
-        self.assertEqual(str(room), "Basement (Keycard)")
+        room = Room(id=2, name="Basement", access_type=Room.ACCESS_OTHER, access_specification="Keycard")
+        self.assertEqual(str(room), "Basement (Other - Keycard)")
+
+        room = Room(id=2, name="Basement", access_type=Room.ACCESS_KEY, room_number="1.042")
+        self.assertEqual(str(room), "1.042 - Basement (Key)")
 
 
 class MemberYearTest(TestCase):
