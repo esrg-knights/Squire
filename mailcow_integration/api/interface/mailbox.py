@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+import logging
+from typing import Dict, List, Optional
 
 from mailcow_integration.api.interface.base import MailcowAPIResponse
 
@@ -47,6 +48,10 @@ class MailboxAttributes(MailcowAPIResponse):
     mailbox_format: str = "maildir:"  # ??? E.g. 'maildir:'
     quarantine_notification: QuarantineNotification = QuarantineNotification.NEVER
     quarantine_category: QuarantaineNotificationCategory = QuarantaineNotificationCategory.REJECT
+    passwd_update: bool = False
+    relayhost: bool = False
+    sieve_access: bool = False
+    recovery_email: str = ""
 
     @classmethod
     def from_json(cls, json: dict) -> "MailboxAttributes":
@@ -63,6 +68,10 @@ class MailboxAttributes(MailcowAPIResponse):
                 "xmpp_admin": json["xmpp_admin"] != "0",
                 "quarantine_notification": QuarantineNotification(json["quarantine_notification"]),
                 "quarantine_category": QuarantaineNotificationCategory(json["quarantine_category"]),
+                "passwd_update": json["passwd_update"] != "0",
+                "relayhost": json["relayhost"] != "0",
+                "sieve_access": json["sieve_access"] != "0",
+                "recovery_email": json.get("recovery_email", ""),
             }
         )
         return cls(**json)
@@ -79,6 +88,8 @@ class MailcowMailbox(MailcowAPIResponse):
 
     active: MailboxStatus = MailboxStatus.ACTIVE
     active_int: int = None  # ??? Always identical to active
+    created: Optional[datetime] = None
+    modified: Optional[datetime] = None
 
     messages: int = 0  # Number of messages in the mailbox
     quota: int = 0  # in bytes; 0 for infinite
@@ -102,6 +113,8 @@ class MailcowMailbox(MailcowAPIResponse):
     percent_class: str = "success"  # ??? E.g. 'success'
 
     attributes: MailboxAttributes = field(default_factory=MailboxAttributes)
+    custom_attributes: Dict[str, str] = field(default_factory=dict)
+    tags: List[str] = field(default_factory=list)
 
     def __post_init__(self):
         index = self.username.find("@")
@@ -119,18 +132,20 @@ class MailcowMailbox(MailcowAPIResponse):
         json.update(
             {
                 "active": MailboxStatus(json["active"]),
+                "created": datetime.fromisoformat(json["created"]),
+                "modified": datetime.fromisoformat(json["modified"]) if json["modified"] is not None else None,
                 "percent_in_use": int(json["percent_in_use"]) if json["percent_in_use"] != "- " else None,
                 "rl": bool(json["rl"]),
                 "is_relayed": bool(json["is_relayed"]),
-                "last_imap_login": datetime.fromtimestamp(int(json["last_imap_login"]))
-                if json["last_imap_login"] != "0"
-                else None,
-                "last_smtp_login": datetime.fromtimestamp(int(json["last_smtp_login"]))
-                if json["last_smtp_login"] != "0"
-                else None,
-                "last_pop3_login": datetime.fromtimestamp(int(json["last_pop3_login"]))
-                if json["last_pop3_login"] != "0"
-                else None,
+                "last_imap_login": (
+                    datetime.fromtimestamp(int(json["last_imap_login"])) if json["last_imap_login"] != "0" else None
+                ),
+                "last_smtp_login": (
+                    datetime.fromtimestamp(int(json["last_smtp_login"])) if json["last_smtp_login"] != "0" else None
+                ),
+                "last_pop3_login": (
+                    datetime.fromtimestamp(int(json["last_pop3_login"])) if json["last_pop3_login"] != "0" else None
+                ),
                 "pushover_active": bool(json["pushover_active"]),
                 "attributes": MailboxAttributes.from_json(json["attributes"]),
             }
