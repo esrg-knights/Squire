@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, List
+from typing import Optional, List, Set
 
 from datetime import datetime
 from dataclasses import dataclass
@@ -38,6 +38,11 @@ class MailcowAlias(MailcowAPIResponse):
     created: Optional[datetime] = None
     modified: Optional[datetime] = None
 
+    _cleanable_bools = ("active", "is_catch_all", "sogo_visible")
+    _cleanable_ints = ("id", "active_int", "sogo_visible_int")
+    _cleanable_strings = ("in_primary_domain", "domain")
+    _cleanable_datetimes = ("created",)
+
     def __post_init__(self):
         if self.active_int is None:
             self.active_int = int(self.active)
@@ -54,17 +59,43 @@ class MailcowAlias(MailcowAPIResponse):
         return AliasType.NORMAL
 
     @classmethod
-    def from_json(cls, json: dict) -> "MailcowAlias":
-        json.update(
-            {
-                "goto": json["goto"].split(","),
-                "active": bool(json["active"]),
-                "is_catch_all": bool(json["is_catch_all"]),
-                "public_comment": json["public_comment"] or "",
-                "private_comment": json["private_comment"] or "",
-                "sogo_visible": bool(json["sogo_visible"]),
-                "created": datetime.fromisoformat(json["created"]),
-                "modified": datetime.fromisoformat(json["modified"]) if json["modified"] is not None else None,
-            }
-        )
-        return cls(**json)
+    def clean(cls, json: dict, extra_keys: Set[str] = None) -> dict:
+        address = json.get("address", None)
+        if address is None:
+            cls._issue_warning("address", address)
+            raise AttributeError(f"address was not provided when creating {cls.__name__}")
+
+        # Goto-addresses are comma-separated strings
+        goto = json.get("goto", None)
+        if goto is None or not isinstance(goto, str):
+            cls._issue_warning("goto", goto, "list")
+            raise AttributeError(f"goto was not provided or had an invalid value when creating {cls.__name__}")
+
+        new_json = {
+            "address": address,
+            "goto": goto.split(","),
+        }
+
+        # Modified can be returned as None
+        if "modified" not in json:
+            cls._issue_warning("modified", None, "ISO-datetime (or None)")
+        else:
+            modified = json.get("modified")
+            if modified is not None:
+                modified = cls._parse_as_dt("modified", json)
+            new_json["modified"] = modified
+
+        # Same for the private/public comment
+        if "public_comment" not in json:
+            cls._issue_warning("public_comment", None, "string (or None)")
+        else:
+            new_json["public_comment"] = str(json.get("public_comment") or "")
+
+        if "private_comment" not in json:
+            cls._issue_warning("private_comment", None, "string (or None)")
+        else:
+            new_json["private_comment"] = str(json.get("private_comment") or "")
+
+        extra_keys = extra_keys or set()
+        new_json.update(**super().clean(json, extra_keys=new_json.keys() | extra_keys))
+        return new_json

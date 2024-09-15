@@ -393,7 +393,7 @@ MARKDOWN_IMAGE_MODELS = (
     "roleplaying.roleplayingsystem",
 )
 
-# Maror static overrides
+# Martor static overrides
 MARTOR_ALTERNATIVE_JS_FILE_THEME = None
 MARTOR_ALTERNATIVE_CSS_FILE_THEME = "theming/martor-admin-bootstrap.css"  # default None
 MARTOR_ALTERNATIVE_JQUERY_JS_FILE = None
@@ -419,6 +419,9 @@ SERVER_EMAIL = f"{APPLICATION_NAME} Error <{APPLICATION_NAME.lower()}-error@kotk
 
 # Default email address to use for various automated correspondence from the site manager(s).
 DEFAULT_FROM_EMAIL = f"{APPLICATION_NAME} <{APPLICATION_NAME.lower()}-noreply@kotkt.nl>"
+
+# Ensure logs directory exists
+os.makedirs(os.path.join(BASE_DIR, "squire", "logs"), exist_ok=True)
 
 # Debug settings
 # Also run the following command to imitate an SMTP server locally: python -m smtpd -n -c DebuggingServer localhost:1025

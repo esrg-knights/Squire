@@ -8,10 +8,6 @@
   Logging
 {% endblock title %}
 
-{% block content-frame-class %}
-    wideContentFrame
-{% endblock %}
-
 {% block css %}
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'css/bootstrap_tabs.css' %}">
@@ -20,12 +16,28 @@
 {% block content %}
     {% bootstrap_tabs tabs %}
     <h1>Logs</h1>
-    <h4>{{ log1_name }}</h4>
-    <samp class="text-break">{{ log1 }}</samp>
-    <hr>
-    <h4>{{ log2_name }}</h4>
-    <samp>{{ log2 }}</samp>
-    <hr>
+    <p>Logging created by various modules. Logs are written to two rotating files sizing (at most) 5MB each.</p>
+    {% if log1 is not None %}
+        <h4>{{ log1_name }}</h4>
+        {% if not log1 %}
+            <p class="font-italic">No logging written.</p>
+        {% else %}
+            <samp class="text-break">{{ log1 }}</samp>
+        {% endif %}
+        <hr>
+    {% endif %}
+    {% if log2 is not None %}
+        <h4>{{ log2_name }}</h4>
+        {% if not log2 %}
+            <p class="font-italic">No logging written.</p>
+        {% else %}
+            <samp class="text-break">{{ log2 }}</samp>
+        {% endif %}
+        <hr>
+    {% endif %}
+    {% if log1 is None and log2 is None %}
+        <p class="font-italic">No logging written.</p>
+    {% endif %}
 {% endblock content %}
 
 {% block js_bottom %}
