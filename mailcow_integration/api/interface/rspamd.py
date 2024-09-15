@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Set
 
 from mailcow_integration.api.interface.base import MailcowAPIResponse
 
@@ -13,7 +13,6 @@ class RspamdSettings(MailcowAPIResponse):
     content: str  # rspamd configuration
     active: bool = True
 
-    @classmethod
-    def from_json(cls, json: dict) -> "RspamdSettings":
-        json.update({"active": bool(json["active"])})
-        return cls(**json)
+    _cleanable_bools = ("active",)
+    _cleanable_ints = ("id",)
+    _cleanable_strings = ("desc", "content")

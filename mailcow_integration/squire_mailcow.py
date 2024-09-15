@@ -131,6 +131,8 @@ class SquireMailcowManager:
         # Fetch all Rspamd settings
         settings = self._client.get_rspamd_setting_all()
         for setting in settings:
+            if setting is None:
+                continue
             # Setting description matches the one we normally set
             if setting.desc == self.INTERNAL_ALIAS_SETTING_NAME % self.INTERNAL_ALIAS_SETTING_WHITELIST_NAME:
                 self._internal_rspamd_setting_whitelist = setting
@@ -206,7 +208,7 @@ class SquireMailcowManager:
         """Gets all email aliases"""
         if use_cache and self._alias_cache is not None:
             return self._alias_cache
-        self._alias_cache = list(self._client.get_alias_all())
+        self._alias_cache = [a for a in self._client.get_alias_all() if a is not None]
         self._alias_map_cache = None
         return self._alias_cache
 
@@ -214,7 +216,7 @@ class SquireMailcowManager:
         """Gets all mailboxes"""
         if use_cache and self._mailbox_cache is not None:
             return self._mailbox_cache
-        self._mailbox_cache = list(self._client.get_mailbox_all())
+        self._mailbox_cache = [m for m in self._client.get_mailbox_all() if m is not None]
         self._mailbox_map_cache = None
         return self._mailbox_cache
 

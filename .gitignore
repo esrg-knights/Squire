@@ -136,11 +136,13 @@ htdocs/media/images/*
 htdocs/static
 /output/
 /test/output/
+/squire/logs
 
 # Secrets
 /squire/local_settings.py
 /squire/mailcowconfig.json
 /squire/secret_key.txt
+/squire/config
 
 # Disables tracking of membership Card file, need to be added manually
 /membership_file/static/images/MembershipCard.jpg

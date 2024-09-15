@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+import logging
+from typing import Dict, List, Optional, Set
 
 from mailcow_integration.api.interface.base import MailcowAPIResponse
 
@@ -47,25 +48,49 @@ class MailboxAttributes(MailcowAPIResponse):
     mailbox_format: str = "maildir:"  # ??? E.g. 'maildir:'
     quarantine_notification: QuarantineNotification = QuarantineNotification.NEVER
     quarantine_category: QuarantaineNotificationCategory = QuarantaineNotificationCategory.REJECT
+    passwd_update: Optional[datetime] = None  # When a password was last updated
+    relayhost: bool = False
+    sieve_access: bool = False
+    recovery_email: str = ""
+
+    _cleanable_bools = (
+        "force_pw_update",
+        "tls_enforce_in",
+        "tls_enforce_out",
+        "sogo_access",
+        "imap_access",
+        "pop3_access",
+        "smtp_access",
+        "xmpp_access",
+        "xmpp_admin",
+        "relayhost",
+        "sieve_access",
+    )
+    _cleanable_strings = ("mailbox_format",)
+    _cleanable_datetimes = ("passwd_update",)
 
     @classmethod
-    def from_json(cls, json: dict) -> "MailboxAttributes":
-        json.update(
-            {
-                "force_pw_update": json["force_pw_update"] != "0",
-                "tls_enforce_in": json["tls_enforce_in"] != "0",
-                "tls_enforce_out": json["tls_enforce_out"] != "0",
-                "sogo_access": json["sogo_access"] != "0",
-                "imap_access": json["imap_access"] != "0",
-                "pop3_access": json["pop3_access"] != "0",
-                "smtp_access": json["smtp_access"] != "0",
-                "xmpp_access": json["xmpp_access"] != "0",
-                "xmpp_admin": json["xmpp_admin"] != "0",
-                "quarantine_notification": QuarantineNotification(json["quarantine_notification"]),
-                "quarantine_category": QuarantaineNotificationCategory(json["quarantine_category"]),
-            }
-        )
-        return cls(**json)
+    def clean(cls, json: dict, extra_keys: Set[str] = None):
+        new_json = {}
+
+        # Quarantine
+        notif = cls._parse_as_enum("quarantine_notification", json, QuarantineNotification)
+        if notif is not None:
+            new_json["quarantine_notification"] = notif
+
+        cat = cls._parse_as_enum("quarantine_category", json, QuarantaineNotificationCategory)
+        if cat is not None:
+            new_json["quarantine_category"] = cat
+
+        # Recovery email can be '' or absent from the JSON when it is not set
+        rec = json.get("recovery_email", None)
+        if rec is not None:
+            new_json["recovery_email"] = str(rec)
+
+        extra_keys = extra_keys or set()
+        new_json.update(**super().clean(json, extra_keys=new_json.keys() | extra_keys))
+
+        return new_json
 
 
 @dataclass
@@ -79,6 +104,8 @@ class MailcowMailbox(MailcowAPIResponse):
 
     active: MailboxStatus = MailboxStatus.ACTIVE
     active_int: int = None  # ??? Always identical to active
+    created: Optional[datetime] = None
+    modified: Optional[datetime] = None
 
     messages: int = 0  # Number of messages in the mailbox
     quota: int = 0  # in bytes; 0 for infinite
@@ -94,14 +121,25 @@ class MailcowMailbox(MailcowAPIResponse):
     last_smtp_login: Optional[datetime] = None
     last_pop3_login: Optional[datetime] = None
 
-    domain_xmpp: int = 0
-    domain_xmpp_prefix: str = ""  # ???
-
     spam_aliases: int = 0  # ???
     pushover_active: bool = False  # Push notification settings
     percent_class: str = "success"  # ??? E.g. 'success'
 
     attributes: MailboxAttributes = field(default_factory=MailboxAttributes)
+    custom_attributes: Dict[str, str] = field(default_factory=dict)
+    tags: List[str] = field(default_factory=list)
+
+    _cleanable_bools = ("rl", "is_relayed", "pushover_active")
+    _cleanable_strings = ("local_part", "domain", "rl_scope", "percent_class")
+    _cleanable_ints = (
+        "active_int",
+        "messages",
+        "quota",
+        "quota_used",
+        "max_new_quota",
+        "spam_aliases",
+    )
+    _cleanable_datetimes = ("created", "modified", "last_imap_login", "last_smtp_login", "last_pop3_login")
 
     def __post_init__(self):
         index = self.username.find("@")
@@ -115,24 +153,57 @@ class MailcowMailbox(MailcowAPIResponse):
             self.active_int = self.active.value
 
     @classmethod
-    def from_json(cls, json: dict) -> "MailcowMailbox":
-        json.update(
-            {
-                "active": MailboxStatus(json["active"]),
-                "percent_in_use": int(json["percent_in_use"]) if json["percent_in_use"] != "- " else None,
-                "rl": bool(json["rl"]),
-                "is_relayed": bool(json["is_relayed"]),
-                "last_imap_login": datetime.fromtimestamp(int(json["last_imap_login"]))
-                if json["last_imap_login"] != "0"
-                else None,
-                "last_smtp_login": datetime.fromtimestamp(int(json["last_smtp_login"]))
-                if json["last_smtp_login"] != "0"
-                else None,
-                "last_pop3_login": datetime.fromtimestamp(int(json["last_pop3_login"]))
-                if json["last_pop3_login"] != "0"
-                else None,
-                "pushover_active": bool(json["pushover_active"]),
-                "attributes": MailboxAttributes.from_json(json["attributes"]),
-            }
-        )
-        return cls(**json)
+    def clean(cls, json: dict, extra_keys: Set[str] = None):
+        username = json.get("username", None)
+        name = json.get("name", None)
+        if username is None:
+            cls._issue_warning("username", username)
+            raise AttributeError(f"username was not provided when creating {cls.__name__}")
+        if name is None:
+            cls._issue_warning("name", name)
+            raise AttributeError(f"name was not provided when creating {cls.__name__}")
+
+        # Validate custom attributes
+        custom_attributes = json.get("custom_attributes", None)
+        if isinstance(custom_attributes, dict):
+            custom_attributes = {str(k): str(v) for k, v in custom_attributes.items()}
+        else:
+            if not isinstance(custom_attributes, list) or custom_attributes:
+                # If no custom_attributes are set, the API returns it as []
+                cls._issue_warning("custom_attributes", custom_attributes, "dict")
+            custom_attributes = {}
+
+        # Validate tags
+        tags = json.get("tags", [])
+        if isinstance(tags, list):
+            tags = [str(tag) for tag in tags]
+        else:
+            cls._issue_warning("tags", tags, "list")
+            tags = []
+
+        new_json = {
+            "username": username,
+            "name": name,
+            "attributes": MailboxAttributes.from_json(json.get("attributes", {})) or MailboxAttributes(),
+            "custom_attributes": custom_attributes,
+            "tags": tags,
+        }
+
+        # Active-status
+        active = cls._parse_as_enum("active", json, MailboxStatus)
+        if active is not None:
+            new_json["active"] = active
+
+        # Mailbox percentage is a number, or "- " if unlimited
+        percent = json.get("percent_in_use")
+        if percent == "- ":
+            new_json["percent_in_use"] = None
+        elif not isinstance(percent, int):
+            cls._issue_warning("percent_in_use", percent, "int (or '- ')")
+        else:
+            new_json["percent_in_use"] = percent
+
+        extra_keys = extra_keys or set()
+        new_json.update(**super().clean(json, extra_keys=new_json.keys() | extra_keys))
+
+        return new_json
