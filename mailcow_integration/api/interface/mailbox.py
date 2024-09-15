@@ -147,7 +147,7 @@ class MailcowMailbox(MailcowAPIResponse):
                     datetime.fromtimestamp(int(json["last_pop3_login"])) if json["last_pop3_login"] != "0" else None
                 ),
                 "pushover_active": bool(json["pushover_active"]),
-                "attributes": MailboxAttributes.from_json(json["attributes"]),
+                "attributes": MailboxAttributes.from_json_safe(json["attributes"]) or MailboxAttributes(),
             }
         )
         return cls(**json)

@@ -136,6 +136,7 @@ htdocs/media/images/*
 htdocs/static
 /output/
 /test/output/
+/squire/logs
 
 # Secrets
 /squire/local_settings.py

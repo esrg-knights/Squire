@@ -197,7 +197,7 @@ LOCALE_PATHS = [
 ]
 
 # Log Settings
-APPLICATION_LOG_LEVEL = "INFO"
+APPLICATION_LOG_LEVEL = "INFO" if DEBUG else "ERROR"
 
 LOGGING = {
     "version": 1,
@@ -207,11 +207,21 @@ LOGGING = {
             # exact format is not important, this is the minimum information
             "format": "%(asctime)s (%(name)-12s) [%(levelname)s] %(message)s",
         },
+        "file": {
+            "format": "%(asctime)s (%(name)s) [%(levelname)s] %(message)s",
+        },
     },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "console",
+        },
+        "logfile": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "squire", "logs", "squire.log"),
+            "maxBytes": 1024 * 1024 * 5,  # 5MB
+            "backupCount": 1,  # Keep 1 historical versions
+            "formatter": "file",
         },
     },
     "loggers": {
@@ -242,6 +252,10 @@ LOGGING = {
         "mailcow_integration": {
             "handlers": ["console"],
             "level": APPLICATION_LOG_LEVEL,
+        },
+        "mailcow_api": {
+            "handlers": ["console", "logfile"],
+            "level": "WARNING",
         },
     },
 }

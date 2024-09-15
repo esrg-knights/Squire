@@ -2,7 +2,7 @@ from enum import Enum
 import json
 import logging
 import requests
-from typing import Generator, List, Union
+from typing import Generator, List, Optional, Union
 
 from mailcow_integration.api.exceptions import *
 from mailcow_integration.api.interface.alias import AliasType, MailcowAlias
@@ -98,15 +98,15 @@ class MailcowAPIClient:
     ################
     # ALIASES
     ################
-    def get_alias_all(self) -> Generator[MailcowAlias, None, None]:
+    def get_alias_all(self) -> Generator[Optional[MailcowAlias], None, None]:
         """Gets a list of all email aliases"""
         content = self._make_request(f"get/alias/all")
-        return map(lambda alias: MailcowAlias.from_json(alias), content)
+        return map(lambda alias: MailcowAlias.from_json_safe(alias), content)
 
-    def get_alias(self, id: int) -> MailcowAlias:
+    def get_alias(self, id: int) -> Optional[MailcowAlias]:
         """Gets an email alias with a specific id"""
         content = self._make_request(f"get/alias/{id}")
-        return MailcowAlias.from_json(content)
+        return MailcowAlias.from_json_safe(content)
 
     def update_alias(self, alias: MailcowAlias) -> dict:
         """Updates an alias"""
@@ -176,23 +176,23 @@ class MailcowAPIClient:
     ################
     # MAILBOXES
     ################
-    def get_mailbox_all(self) -> Generator[MailcowMailbox, None, None]:
+    def get_mailbox_all(self) -> Generator[Optional[MailcowMailbox], None, None]:
         """Gets a list of all mailboxes"""
         content = self._make_request(f"get/mailbox/all")
-        return map(lambda mailbox: MailcowMailbox.from_json(mailbox), content)
+        return map(lambda mailbox: MailcowMailbox.from_json_safe(mailbox), content)
 
     ################
     # RSPAMD SETTINGS (undocumented API)
     ################
-    def get_rspamd_setting_all(self) -> Generator[RspamdSettings, None, None]:
+    def get_rspamd_setting_all(self) -> Generator[Optional[RspamdSettings], None, None]:
         """Gets all Rspamd settings maps"""
         content = self._make_request("get/rsetting/all")
-        return map(lambda rspamdsetting: RspamdSettings.from_json(rspamdsetting), content)
+        return map(lambda rspamdsetting: RspamdSettings.from_json_safe(rspamdsetting), content)
 
-    def get_rspamd_setting(self, id: int) -> RspamdSettings:
+    def get_rspamd_setting(self, id: int) -> Optional[RspamdSettings]:
         """Gets an Rspamd settings map with a specific id"""
         content = self._make_request(f"get/rsetting/{id}")
-        return RspamdSettings.from_json(content)
+        return RspamdSettings.from_json_safe(content)
 
     def update_rspamd_setting(self, setting: RspamdSettings) -> dict:
         """Updates the RspamdSetting associated to the given ID with the given data"""

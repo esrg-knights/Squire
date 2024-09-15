@@ -1,0 +1,34 @@
+
+{% extends 'core/base.html' %}
+
+{% load static %}
+{% load bootstrap_tabs %}
+
+{% block title %}
+  Logging
+{% endblock title %}
+
+{% block content-frame-class %}
+    wideContentFrame
+{% endblock %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/bootstrap_tabs.css' %}">
+{% endblock css %}
+
+{% block content %}
+    {% bootstrap_tabs tabs %}
+    <h1>Logs</h1>
+    <h4>{{ log1_name }}</h4>
+    <samp class="text-break">{{ log1 }}</samp>
+    <hr>
+    <h4>{{ log2_name }}</h4>
+    <samp>{{ log2 }}</samp>
+    <hr>
+{% endblock content %}
+
+{% block js_bottom %}
+    {{ block.super }}
+    <script src="{% static "js/activate_bootstrap_tooltip.js" %}"></script>
+{% endblock %}
