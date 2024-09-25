@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "django_object_actions",  # Dynamic admin panel actions
     "dynamic_preferences",  # Global Preferences
     "dynamic_preferences.users.apps.UserPreferencesConfig",  # Per-user preferences
+    "martor",
     "recurrence",
     "rest_framework",
     # Internal Components
@@ -72,7 +73,6 @@ INSTALLED_APPS = [
     "mailcow_integration",
     # More External Libraries
     "django_cleanup.apps.CleanupConfig",
-    "martor",
     "import_export",
     "pwa",
 ]
@@ -362,7 +362,6 @@ MARTOR_MARKDOWN_EXTENSION_CONFIGS = {}
 MARTOR_ENABLE_LABEL = True
 
 # Markdown urls
-MARTOR_MARKDOWNIFY_URL = "/api/martor/markdownify/"
 # MARTOR_SEARCH_USERS_URL = '/martor/search-user/' # for mention
 
 # Markdown Extensions
