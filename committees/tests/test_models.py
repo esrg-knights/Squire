@@ -65,7 +65,7 @@ class TestAssociationGroupMembership(TestCase):
             member_id=3,
             group_id=3,
         )
-        self.assertNotEquals(original, None)
+        self.assertNotEqual(original, None)
 
         # Attempt to create a copy
         with self.assertRaises(Exception):

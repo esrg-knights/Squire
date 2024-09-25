@@ -29,8 +29,8 @@ class TestCaseICalendarExport(TestCase):
 
         vevents = [sub for sub in calendar.subcomponents if isinstance(sub, icalendar.cal.Event)]
 
-        self.assertEquals(len(vevents), 1)
-        self.assertEquals(vevents[0]["SUMMARY"].to_ical(), b"Weekly CEST Event")
+        self.assertEqual(len(vevents), 1)
+        self.assertEqual(vevents[0]["SUMMARY"].to_ical(), b"Weekly CEST Event")
 
     # Ensure that DST does not affect EXDATE's start dates
     def test_recurrence_dst(self):
@@ -46,21 +46,21 @@ class TestCaseICalendarExport(TestCase):
 
         vevents = [sub for sub in calendar.subcomponents if isinstance(sub, icalendar.cal.Event)]
 
-        self.assertEquals(len(vevents), 1)
+        self.assertEqual(len(vevents), 1)
         vevent = vevents[0]
 
         # Start and end date converted to local time
-        self.assertEquals(vevent["DTSTART"].to_ical(), b"20200816T120000")
-        self.assertEquals(vevent["DTSTART"].params["TZID"], "Europe/Amsterdam")
+        self.assertEqual(vevent["DTSTART"].to_ical(), b"20200816T120000")
+        self.assertEqual(vevent["DTSTART"].params["TZID"], "Europe/Amsterdam")
 
-        self.assertEquals(vevent["DTEND"].to_ical(), b"20200816T173000")
-        self.assertEquals(vevent["DTEND"].params["TZID"], "Europe/Amsterdam")
+        self.assertEqual(vevent["DTEND"].to_ical(), b"20200816T173000")
+        self.assertEqual(vevent["DTEND"].params["TZID"], "Europe/Amsterdam")
 
         # EXDATEs converted to local time.
         # NB: Their start times must match the start time of the event, as dst
         #   is automatically accounted for by calendar software
-        self.assertEquals(vevent["EXDATE"].to_ical(), b"20201017T120000,20201114T120000")
-        self.assertEquals(vevent["EXDATE"].params["TZID"], "Europe/Amsterdam")
+        self.assertEqual(vevent["EXDATE"].to_ical(), b"20201017T120000,20201114T120000")
+        self.assertEqual(vevent["EXDATE"].params["TZID"], "Europe/Amsterdam")
 
     # Ensure that the VTIMEZONE field is correctly set
     def test_vtimezone(self):
@@ -72,11 +72,11 @@ class TestCaseICalendarExport(TestCase):
 
         vtimezones = [sub for sub in calendar.subcomponents if isinstance(sub, icalendar.cal.Timezone)]
 
-        self.assertEquals(len(vtimezones), 1)
+        self.assertEqual(len(vtimezones), 1)
         vtimezone = vtimezones[0]
 
-        self.assertEquals(vtimezone["TZID"], "Europe/Amsterdam")
-        self.assertEquals(vtimezone["X-LIC-LOCATION"], "Europe/Amsterdam")
+        self.assertEqual(vtimezone["TZID"], "Europe/Amsterdam")
+        self.assertEqual(vtimezone["X-LIC-LOCATION"], "Europe/Amsterdam")
 
         for sub in vtimezone.subcomponents:
             if isinstance(sub, icalendar.cal.TimezoneDaylight):

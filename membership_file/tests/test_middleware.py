@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User, AnonymousUser
 from django.test import TestCase, RequestFactory
+from unittest.mock import MagicMock
 
 from membership_file.exceptions import UserIsNotCurrentMember
 from membership_file.middleware import MembershipMiddleware
@@ -10,7 +11,8 @@ class MembershipMiddlewareTestCase(TestCase):
     fixtures = ["test_users", "test_members"]
 
     def setUp(self):
-        self.middleware = MembershipMiddleware()
+        get_response = MagicMock()
+        self.middleware = MembershipMiddleware(get_response)
 
     def _create_request(self, user_id):
         request = RequestFactory().get("")

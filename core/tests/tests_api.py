@@ -89,7 +89,7 @@ class MartorImageUploadTest(TestCase):
 
     def test_martor_settings_correct(self):
         """Tests if the relevant URLs for Martor have been set up"""
-        self.assertEqual(reverse("martor_markdownfy"), "martor_markdownfy")
+        self.assertEqual(reverse("martor_markdownfy"), "/api/martor/markdownfy/")
         self.assertEqual(self.martor_image_upload_url, settings.MARTOR_UPLOAD_URL)
 
     @suppress_warnings

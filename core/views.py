@@ -11,7 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, HttpRe
 from django.http.response import Http404
 from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404
 from django.views import View
 from django.views.generic import TemplateView, FormView

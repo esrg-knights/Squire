@@ -1030,7 +1030,7 @@ class ActivityMomentTestCase(TestCase):
         self.assertEqual(participations.last().user_id, 1)
 
         # AnonymousUsers return empty querysets
-        self.assertEquals(ActivityMoment.objects.get(id=3).get_user_subscriptions(AnonymousUser()).count(), 0)
+        self.assertEqual(ActivityMoment.objects.get(id=3).get_user_subscriptions(AnonymousUser()).count(), 0)
 
     def test_get_guest_subscriptions(self):
         participants = ActivityMoment.objects.get(id=3).get_guest_subscriptions()

@@ -190,7 +190,7 @@ class RegisterFormTest(TestCase):
         # Ensure the correct object is returned (but not saved)
         user = form.save(commit=False)
         self.assertIsNotNone(user)
-        self.assertEquals(user.email, "kandi@example.com")
+        self.assertEqual(user.email, "kandi@example.com")
         self.assertTrue(user.check_password("bestaatookniet"))
         self.assertEqual(user.first_name, "Schaduw Kandi")
 
@@ -201,7 +201,7 @@ class RegisterFormTest(TestCase):
         form.save(commit=True)
         user = User.objects.filter(username="schaduwkandi").first()
         self.assertIsNotNone(user)
-        self.assertEquals(user.email, "kandi@example.com")
+        self.assertEqual(user.email, "kandi@example.com")
         self.assertTrue(user.check_password("bestaatookniet"))
         self.assertEqual(user.first_name, "Schaduw Kandi")
 
@@ -308,7 +308,7 @@ class RegisterFormViewTest(TestCase):
 
         user = User.objects.filter(username="username").first()
         self.assertIsNotNone(user)
-        self.assertEquals(user.email, "email@example.com")
+        self.assertEqual(user.email, "email@example.com")
         self.assertTrue(user.check_password("thisactuallyneedstobeagoodpassword"))
         self.assertEqual(user.first_name, "My Real name")
 
