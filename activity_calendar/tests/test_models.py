@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import zoneinfo
 
 from django.db import models
@@ -11,6 +11,7 @@ from django.utils import timezone
 from unittest.mock import patch
 from recurrence import deserialize as deserialize_recurrence_test
 
+from activity_calendar.util import set_time_for_RDATE_EXDATE
 from core.models import PresetImage
 
 from . import mock_now
@@ -303,6 +304,31 @@ class EXDATEandRDATEwithDSTTests(TestCase):
             timezone.datetime(2020, 10, 27, 19, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam")
         )
         self.assertIsNone(self.activity.get_occurrence_at(exdate_dt))
+
+    def _test_set_time_for_RDATE_EXDATE(self):
+        """Tests RDATE/EXDATE time conversion"""
+        datetimes = [
+            datetime(2024, 3, 20, tzinfo=timezone.utc),
+            datetime(2024, 6, 28, tzinfo=timezone.utc),
+            datetime(2024, 11, 30, tzinfo=timezone.utc),
+        ]
+        dt_time = datetime(2024, 1, 1, 11, 20, 18, tzinfo=zoneinfo.ZoneInfo("Europe/Amsterdam"))
+        for dt in list(set_time_for_RDATE_EXDATE(datetimes, dt_time)):
+            self.assertIsNotNone(
+                dt.tzinfo, "RDATE/EXDATE must have their timezone set. The iCal export will break otherwise."
+            )
+            self.assertEqual(dt.tzinfo.key, "Europe/Amsterdam")
+            self.assertEqual(dt.time(), time(11, 20, 18), "Start time should be 11:20:18 regardless of DST")
+
+    @patch("django.utils.timezone.now", side_effect=mock_now(timezone.datetime(2024, 6, 20)))
+    def test_set_time_for_RDATE_EXDATE_dst(self, _):
+        """Tests RDATE/EXDATE time conversion during DST"""
+        self._test_set_time_for_RDATE_EXDATE()
+
+    @patch("django.utils.timezone.now", side_effect=mock_now(timezone.datetime(2024, 1, 20)))
+    def test_set_time_for_RDATE_EXDATE_std(self, _):
+        """Tests RDATE/EXDATE time conversion during standard time"""
+        self._test_set_time_for_RDATE_EXDATE()
 
 
 class TestCaseActivityClean(TestCase):
