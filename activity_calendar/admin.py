@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.utils.timezone import localtime
 
 from .forms import ActivityAdminForm, ActivityMomentAdminForm
 from .models import (

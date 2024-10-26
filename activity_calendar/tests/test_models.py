@@ -314,8 +314,12 @@ class TestCaseActivityClean(TestCase):
             "title": "Test Activity",
             "description": "This is a testcase!\n\nWith a cool new line!",
             "location": "In a testcase",
-            "start_date": timezone.get_current_timezone().localize(datetime(1970, 1, 1, 0, 0), is_dst=None),
-            "end_date": timezone.get_current_timezone().localize(datetime(1970, 1, 1, 23, 59), is_dst=None),
+            "start_date": timezone.make_aware(
+                timezone.datetime(1970, 1, 1, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam")
+            ),
+            "end_date": timezone.make_aware(
+                timezone.datetime(1970, 1, 1, 23, 59), zoneinfo.ZoneInfo("Europe/Amsterdam")
+            ),
         }
         self.base_activity = Activity.objects.create(**self.base_activity_dict)
 

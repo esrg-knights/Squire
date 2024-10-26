@@ -265,7 +265,7 @@ class Activity(models.Model):
         :param exclude_cancelled: Whether activitymoments with status cancelled should not be included (default False)
         :return: The activitymoment instance that will occur next
         """
-        dtstart = timezone.localtime(dtstart) or timezone.now()
+        dtstart = timezone.localtime(dtstart)
         e_ext = "e" if inc else ""  # Search query for inclusion statement
 
         activity_moments = self.activitymoment_set
@@ -368,23 +368,25 @@ class Activity(models.Model):
         :param date: Datetime instance of the occurrence
         :return:
         """
-        # Check activitymoments on server
+        # An activitymoment with this recurrence_id already exists
         activitymoments = self.activitymoment_set.filter(recurrence_id=date)
         if activitymoments.count() == 1:
             return activitymoments.first()
 
-        # Find recurring moments that have not yet been created on the server
+        # An activitymoment for this occurrence might not exist yet
         if self.is_recurring:
-            occurrences = list(self.get_occurrences_starting_between(date, date))
-            if occurrences:
-                return occurrences[0]
-        else:
-            # A single activity that is non-recurring and also contains no activitymoment yet
-            if date == self.start_date:
+            # Activity is recurring
+            if list(self.get_occurrences_starting_between(date, date)):
                 return ActivityMoment(
                     parent_activity=self,
                     recurrence_id=date,
                 )
+        elif date == self.start_date:
+            # A non-recurring activity only has one occurrence
+            return ActivityMoment(
+                parent_activity=self,
+                recurrence_id=date,
+            )
         return None
 
     def _get_queries_for_alt_start_time_activity_moments(self, after, before):
@@ -458,8 +460,24 @@ class Activity(models.Model):
         ActivityMoment into account.
         """
         dtstart = timezone.localtime(self.start_date)
+
+        # Make a copy so we don't modify our own recurrence
+        recurrences = copy.deepcopy(self.recurrences)
+
+        # EXDATEs and RDATEs should match the event's start time, but in the recurrence-widget they
+        #   occur at midnight!
+        # Since there is no possibility to select the RDATE/EXDATE time in the UI either, we need to
+        #   override their time here so that it matches the event's start time. Their timezone are
+        #   also changed into that of the event's start date
+        # print(f"pre: {recurrences.exdates}")
+        recurrences.exdates = list(util.set_time_for_RDATE_EXDATE(recurrences.exdates, dtstart))
+        # if recurrences.exdates:
+        #     print(recurrences.exdates[0].tzinfo)
+
+        recurrences.rdates = list(util.set_time_for_RDATE_EXDATE(recurrences.rdates, dtstart))
+
         # Get all occurrences according to the recurrence module
-        occurences = self.recurrences.between(after, before, dtstart=dtstart, inc=True, **kwargs)
+        occurences = recurrences.between(after, before, dtstart=dtstart, inc=True, **kwargs)
         return occurences
 
     def clean_fields(self, exclude=None):
