@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import zoneinfo
 
 from django.db import models
 from django.contrib.auth.models import AnonymousUser
@@ -85,7 +86,7 @@ class ModelMethodsDSTDependentTests(TestCase):
         - the queried occurence is in CET
         """
         query_dt = timezone.make_aware(
-            timezone.datetime(2020, 10, 27, 15, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
+            timezone.datetime(2020, 10, 27, 15, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam")
         )
 
         occurence_at_query_dt = self.activity.get_occurrence_at(query_dt)
@@ -99,9 +100,7 @@ class ModelMethodsDSTDependentTests(TestCase):
         - our current timezone is in CET
         - the queried occurence is in CEST
         """
-        query_dt = timezone.make_aware(
-            timezone.datetime(2020, 3, 31, 15, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        query_dt = timezone.make_aware(timezone.datetime(2020, 3, 31, 15, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
 
         occurence_at_query_dt = self.activity.get_occurrence_at(query_dt)
         self.assertIsNotNone(occurence_at_query_dt)
@@ -115,12 +114,12 @@ class ModelMethodsDSTDependentTests(TestCase):
         - the queried occurence is in CET
         """
         # Make start/end date in CEST (UTC+2)
-        # Start dt: 01 MAR 2020, 16.00 (CEST)
+        # Start dt: 01 JUN 2020, 16.00 (CEST)
         self.activity.start_date = timezone.datetime(2020, 6, 1, 14, 0, 0, tzinfo=timezone.utc)
         self.activity.end_date = timezone.datetime(2020, 6, 1, 18, 0, 0, tzinfo=timezone.utc)
 
         query_dt = timezone.make_aware(
-            timezone.datetime(2020, 10, 27, 16, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
+            timezone.datetime(2020, 10, 27, 16, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam")
         )
 
         occurence_at_query_dt = self.activity.get_occurrence_at(query_dt)
@@ -134,9 +133,7 @@ class ModelMethodsDSTDependentTests(TestCase):
         - our current timezone is in CEST
         - the queried occurence is in CEST
         """
-        query_dt = timezone.make_aware(
-            timezone.datetime(2020, 3, 31, 15, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        query_dt = timezone.make_aware(timezone.datetime(2020, 3, 31, 15, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
 
         occurence_at_query_dt = self.activity.get_occurrence_at(query_dt)
         self.assertIsNotNone(occurence_at_query_dt)
@@ -150,12 +147,12 @@ class ModelMethodsDSTDependentTests(TestCase):
         - the queried occurence is in CET
         """
         # Make start/end date in CEST (UTC+2)
-        # Start dt: 01 MAR 2020, 16.00 (CEST)
+        # Start dt: 01 JUN 2020, 16.00 (CEST)
         self.activity.start_date = timezone.datetime(2020, 6, 1, 14, 0, 0, tzinfo=timezone.utc)
         self.activity.end_date = timezone.datetime(2020, 6, 1, 18, 0, 0, tzinfo=timezone.utc)
 
         query_dt = timezone.make_aware(
-            timezone.datetime(2020, 10, 27, 16, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
+            timezone.datetime(2020, 10, 27, 16, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam")
         )
 
         occurence_at_query_dt = self.activity.get_occurrence_at(query_dt)
@@ -198,19 +195,19 @@ class EXDATEandRDATEwithDSTTests(TestCase):
 
         # 30 December RDATE
         rdate_dt = timezone.make_aware(
-            timezone.datetime(2020, 12, 30, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
+            timezone.datetime(2020, 12, 30, 19, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam")
         )
         self.assertIsNotNone(self.activity.get_occurrence_at(rdate_dt))
 
         # 29 December EXDATE
         exdate_dt = timezone.make_aware(
-            timezone.datetime(2020, 12, 29, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
+            timezone.datetime(2020, 12, 29, 19, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam")
         )
         self.assertIsNone(self.activity.get_occurrence_at(exdate_dt))
 
         # 12 January EXDATE
         exdate_dt = timezone.make_aware(
-            timezone.datetime(2021, 1, 12, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
+            timezone.datetime(2021, 1, 12, 19, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam")
         )
         self.assertIsNone(self.activity.get_occurrence_at(exdate_dt))
 
@@ -250,15 +247,11 @@ class EXDATEandRDATEwithDSTTests(TestCase):
         self.activity.recurrences = deserialize_recurrence_test(self.recurrence_iso)
 
         # 17 April RDATE
-        rdate_dt = timezone.make_aware(
-            timezone.datetime(2021, 4, 17, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        rdate_dt = timezone.make_aware(timezone.datetime(2021, 4, 17, 19, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
         self.assertIsNotNone(self.activity.get_occurrence_at(rdate_dt))
 
         # 04 April EXDATE
-        exdate_dt = timezone.make_aware(
-            timezone.datetime(2021, 4, 4, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        exdate_dt = timezone.make_aware(timezone.datetime(2021, 4, 4, 19, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
         self.assertIsNone(self.activity.get_occurrence_at(exdate_dt))
 
     @patch("django.utils.timezone.now", side_effect=mock_now(timezone.datetime(2020, 12, 3, 0, 0)))
@@ -301,13 +294,13 @@ class EXDATEandRDATEwithDSTTests(TestCase):
 
         # 22 October RDATE
         rdate_dt = timezone.make_aware(
-            timezone.datetime(2020, 10, 22, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
+            timezone.datetime(2020, 10, 22, 19, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam")
         )
         self.assertIsNotNone(self.activity.get_occurrence_at(rdate_dt))
 
         # 27 October EXDATE
         exdate_dt = timezone.make_aware(
-            timezone.datetime(2020, 10, 27, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
+            timezone.datetime(2020, 10, 27, 19, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam")
         )
         self.assertIsNone(self.activity.get_occurrence_at(exdate_dt))
 
