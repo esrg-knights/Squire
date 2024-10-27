@@ -153,7 +153,7 @@ class ModelAdminFormViewMixin:
         return self.title
 
     def get_subtitle(self):
-        """Gets the title displayed at the top of the page"""
+        """Gets the subtitle displayed at the top of the page"""
         return self.subtitle or self.object
 
     def get_breadcrumbs_title(self):
@@ -199,14 +199,12 @@ class ModelAdminFormViewMixin:
 
         context.update(
             {
-                "adminform": adminForm,
-                "is_nav_sidebar_enabled": True,
-                "opts": self.model_admin.model._meta,
-                "site_url": self.model_admin.admin_site.site_url,
-                "has_permission": True,
-                "original": self.object,
+                **self.model_admin.admin_site.each_context(self.request),
                 "title": self.get_title(),
                 "subtitle": self.get_subtitle(),
+                "adminform": adminForm,
+                "original": self.object,
+                "opts": self.model_admin.model._meta,
                 "breadcrumbs_title": self.get_breadcrumbs_title(),
                 "save_button_title": self.get_save_button_title(),
             }

@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "core",  # Core Module should load first
-    "django.contrib.admin",
+    "squire.apps.SquireAdminConfig",  # replaces django.contrib.admin
     # External Libraries
     "bootstrap4",
     "tempus_dominus",  # Bootstrap DateTime picker
@@ -187,8 +187,6 @@ LANGUAGES = [
 TIME_ZONE = "Europe/Amsterdam"
 
 USE_I18N = True
-
-USE_L10N = True
 
 USE_TZ = True
 
