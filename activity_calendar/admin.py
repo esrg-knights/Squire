@@ -89,6 +89,7 @@ class ActivityAdmin(MarkdownImageInlineAdmin):
     list_display_links = ("id", "title")
     date_hierarchy = "start_date"
     search_fields = ["title"]
+    search_help_text = "Search for title"
     autocomplete_fields = [
         "author",
     ]
@@ -108,6 +109,7 @@ class ActivityMomentAdmin(MarkdownImageInlineAdmin):
     list_filter = ["recurrence_id", "local_start_date", "parent_activity__type"]
     date_hierarchy = "recurrence_id"
     search_fields = ["local_title", "parent_activity__title"]
+    search_help_text = "Search for title"
     autocomplete_fields = [
         "parent_activity",
     ]
@@ -167,6 +169,7 @@ class ActivitySlotAdmin(admin.ModelAdmin):
     list_display_links = ("id", "title")
     date_hierarchy = "parent_activitymoment__recurrence_id"
     search_fields = ["parent_activitymoment__parent_activity__title", "parent_activitymoment__local_title", "title"]
+    search_help_text = "Search for slot name or activity title"
     autocomplete_fields = [
         "parent_activitymoment",
     ]

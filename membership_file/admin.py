@@ -145,6 +145,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, Expor
         "external_card_number",
         "key_id",
     ]
+    search_help_text = "Search for name, email, phone number, TUe/external card number, key ID"
 
     readonly_fields = ["last_updated_by", "last_updated_date"]
 
@@ -269,6 +270,7 @@ class RoomAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "room_number", "access_type", "access_specification")
     list_display_links = ("id", "name")
     search_fields = ["name", "room_number"]
+    search_help_text = "Search for name, room number"
     ordering = ("access_type", "access_specification")
     filter_horizontal = ("members_with_access",)
 

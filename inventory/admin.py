@@ -18,6 +18,7 @@ class OwnershipAdmin(admin.ModelAdmin):
     list_display_links = ("id", "owner")
     # Note search_fields does not work on GenericRelation fields
     search_fields = ["group__name", "member__first_name", "member__last_name"]
+    search_help_text = "Search for group name, member name"
 
     autocomplete_fields = ["member", "group", "added_by"]
     list_filter = (
@@ -68,6 +69,7 @@ class ItemAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "current_possession_count")
     list_display_links = ("id", "name")
     search_fields = ["name"]
+    search_help_text = "Search for name"
     inlines = [OwnershipInline]
     list_filter = (
         ("ownerships__group", admin.RelatedOnlyFieldListFilter),

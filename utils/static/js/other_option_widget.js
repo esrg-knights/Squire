@@ -5,9 +5,9 @@ window.addEventListener('load', function () {
     for (var i = 0; i < optionWidgets.length; i++) {
         const widget = optionWidgets[i]
         // Fetch elements
-        const otherRad = widget.querySelector("li:last-child input:first-child")
-        const otherInput = widget.querySelectorAll("li:last-child input:not(:first-child)")
-        const rads = widget.querySelectorAll("li:not(:last-child) input")
+        const otherRad = widget.querySelector(".radiolist > div:last-child input:first-child")
+        const otherInput = widget.querySelectorAll(".radiolist > div:last-child input:not(:first-child)")
+        const rads = widget.querySelectorAll(".radiolist > div:not(:last-child) input")
         // Disable the free text field
         const disableInput = () => {
             for (var i = 0; i < otherInput.length; i++) {

@@ -7,6 +7,7 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "priority")
     list_display_links = ("id", "name")
     search_fields = ("name",)
+    search_help_text = "Search for name"
 
 
 admin.site.register(Category, CategoryAdmin)
@@ -23,6 +24,7 @@ class AchievementAdmin(admin.ModelAdmin):
     list_filter = ["category", "is_public"]
     list_display_links = ("id", "name")
     search_fields = ("name",)
+    search_help_text = "Search for name"
     autocomplete_fields = ["category"]
 
     inlines = [ClaimantInline]
@@ -40,6 +42,7 @@ class AchievementItemInline(GenericTabularInline):
 
 class AchievementItemLinkAdmin(admin.ModelAdmin):
     search_fields = ("achievement__name",)
+    search_help_text = "Search for achievement name"
     list_display = ("id", "achievement", "content_object")
     list_display_links = ("id", "achievement")
     autocomplete_fields = ["achievement"]

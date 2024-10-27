@@ -63,6 +63,7 @@ class SquireUserAdmin(UserAdmin):
         "last_login",
     )
     search_fields = ("username", "first_name", "email", "member__first_name", "member__last_name")
+    search_help_text = "Search for username, account real name, member name"
     list_display = ("id", "username", "email", "first_name", "member", "is_staff", "is_superuser", "date_joined")
     list_display_links = ("id", "username")
     readonly_fields = ("member",)
@@ -88,6 +89,7 @@ admin.site.register(User, SquireUserAdmin)
 class SquireGroupAdmin(GroupAdmin):
     list_filter = (("associationgroup", admin.EmptyFieldListFilter),)
     search_fields = ("name", "associationgroup__shorthand")
+    search_help_text = "Search for name, committee shorthand"
     list_display = ("id", "name", "has_assoc_group")
     list_display_links = ("id", "name")
     readonly_fields = ("associationgroup",)
@@ -112,6 +114,7 @@ class PresetImageAdmin(admin.ModelAdmin):
     list_filter = ["selectable"]
     list_display_links = ("id", "name")
     search_fields = ("name",)
+    search_help_text = "Search for name"
 
 
 admin.site.register(PresetImage, PresetImageAdmin)
@@ -147,6 +150,7 @@ class MarkdownImageAdmin(RequestUserToFormModelAdminMixin, admin.ModelAdmin):
         ("object_id", admin.EmptyFieldListFilter),
     )
     search_fields = ("uploader__username",)
+    search_help_text = "Search for uploader username"
     readonly_fields = ("upload_date", "content_object", "id", "uploader")
     ordering = ("-upload_date",)
     fieldsets = (
@@ -182,6 +186,7 @@ class SquireGlobalPreferencesAdmin(GlobalPreferenceAdmin):
     fields = ("verbose_name", "description", "raw_value", "default_value", "section_name")
     readonly_fields = ("verbose_name", "description", "section_name", "default_value")
     search_fields = ["name", "verbose_name", "description", "section"]
+    search_help_text = "Search for name, description, section"
 
     # Description of the permission
     def description(self, obj):
