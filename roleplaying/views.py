@@ -102,12 +102,9 @@ class DownloadDigitalItemView(MembershipRequiredMixin, RoleplayingItemMixin, Vie
         if filename == "" or filename is None:
             filename = slugify(self.roleplay_item.name)
 
-        # Assure the correct extention
+        # Assure the correct extension
         filename, _ = os.path.splitext(filename)
         _, extension = os.path.splitext(self.roleplay_item.local_file.name)
 
-        # file = open(self.roleplay_item.digital_version.url, 'rb')
-        response = FileResponse(self.roleplay_item.local_file)
-        response["Content-Disposition"] = f"attachment; filename={filename}{extension}"
-
+        response = FileResponse(self.roleplay_item.local_file, as_attachment=True, filename=filename + extension)
         return response

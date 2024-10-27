@@ -10,8 +10,8 @@ class SquireAdminSite(admin.AdminSite):
     site_header = "Squire Administration"
     site_title = "Squire site admin"
 
-    def get_app_list(self, request) -> list[Any]:
-        app_list = super().get_app_list(request)
+    def get_app_list(self, *args, **kwargs) -> list[Any]:
+        app_list = super().get_app_list(*args, **kwargs)
         app_dict: dict[str, Any] = {app["app_label"]: app for app in app_list}
 
         # Merge dynamic preferences (global & user)

@@ -1,23 +1,22 @@
-import datetime
+from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
-from django.test import TestCase, Client
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.test import TestCase, Client
 from django.test.utils import override_settings
-from django.utils import timezone, dateparse
-from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
+from django.utils import dateparse
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView, FormView, TemplateView
-
-from unittest.mock import patch
 
 from activity_calendar.models import *
 from activity_calendar.views import (
     CreateSlotView,
     ActivityMomentWithSlotsView,
     ActivitySimpleMomentView,
-    EditActivityMomentView,
     ActivityOverview,
     ActivityMixin,
     ActivityMomentCancelledView,
@@ -26,13 +25,9 @@ from activity_calendar.views import (
 )
 from activity_calendar.forms import *
 from activity_calendar.constants import ActivityType, SlotCreationType, ActivityStatus
-
 from core.tests.util import suppress_warnings
 from utils.testing.view_test_utils import ViewValidityMixin, TestMixinMixin
-
 from . import mock_now, mock_is_organiser
-
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
@@ -53,7 +48,7 @@ class TestActivityViewMixin:
         self.user = User.objects.create(username="new_user")
         self.client.force_login(self.user)
 
-        self.recurrence_id = datetime.datetime.fromisoformat(self.default_iso_dt)
+        self.recurrence_id = datetime.fromisoformat(self.default_iso_dt)
         self.activity = Activity.objects.get(id=self.default_activity_id)
 
         self.activity_moment, _ = ActivityMoment.objects.get_or_create(
@@ -64,7 +59,7 @@ class TestActivityViewMixin:
             "activity_calendar:" + self.default_url_name,
             kwargs={
                 "activity_id": self.default_activity_id,
-                "recurrence_id": datetime.datetime.fromisoformat(self.default_iso_dt),
+                "recurrence_id": datetime.fromisoformat(self.default_iso_dt),
             },
         )
         super(TestActivityViewMixin, self).setUp()
@@ -87,7 +82,7 @@ class TestActivityViewMixin:
                 "activity_calendar:" + url_name,
                 kwargs={
                     "activity_id": activity_id,
-                    "recurrence_id": datetime.datetime.fromisoformat(iso_dt),
+                    "recurrence_id": datetime.fromisoformat(iso_dt),
                 },
             ),
             data=data,
@@ -136,7 +131,7 @@ class ActivityAdminTest(TestCase):
             "activity_calendar:activity_slots_on_day",
             kwargs={
                 "activity_id": 2,
-                "recurrence_id": datetime.datetime.fromisoformat("2020-08-19T14:00:00").replace(tzinfo=timezone.utc),
+                "recurrence_id": datetime.fromisoformat("2020-08-19T14:00:00").replace(tzinfo=timezone.utc),
             },
         )
 
@@ -147,8 +142,8 @@ class ActivityAdminTest(TestCase):
         response = self.client.get("/calendar/activity/2//", data={})
         self.assertEqual(response.status_code, 404)
 
-        # No occurence at the given date
-        non_matching_dt = datetime.datetime.fromisoformat("2020-08-20T14:00:00").replace(tzinfo=timezone.utc)
+        # No occurrence at the given date
+        non_matching_dt = datetime.fromisoformat("2020-08-20T14:00:00").replace(tzinfo=timezone.utc)
         response = self.client.get(
             reverse(
                 "activity_calendar:activity_slots_on_day", kwargs={"activity_id": 2, "recurrence_id": non_matching_dt}
@@ -159,7 +154,7 @@ class ActivityAdminTest(TestCase):
 
     @patch("django.utils.timezone.now", side_effect=mock_now())
     def test_get_slots_valid_date(self, mock_tz):
-        # Valid (occurence) date given
+        # Valid (occurrence) date given
         response = self.client.get(self.base_url, data={})
         self.assertEqual(response.status_code, 200)
 
@@ -168,7 +163,7 @@ class ActivityAdminTest(TestCase):
         self.assertEqual(context["activity"].title, "Boardgame Evening")
         self.assertEqual(
             context["recurrence_id"],
-            datetime.datetime.fromisoformat("2020-08-19T14:00:00").replace(tzinfo=timezone.utc),
+            datetime.fromisoformat("2020-08-19T14:00:00").replace(tzinfo=timezone.utc),
         )
 
         slots = []
@@ -193,7 +188,7 @@ class ActivityAdminTest(TestCase):
         response = self.client.post("/calendar/activity/2/", data={})
         self.assertEqual(response.status_code, 404)
 
-        # No occurence at the given date
+        # No occurrence at the given date
         response = self.client.post("/calendar/activity/2/2020-09-03T14%3A00%3A00%2B00%3A00/", data={})
         self.assertEqual(response.status_code, 404)
 
@@ -294,7 +289,7 @@ class ActivityMixinTest(TestMixinMixin, TestCase):
         self.assertIn("show_participants", context_data)
 
     def test_can_edit_activity_through_permission(self):
-        """Tests that editing access is availlable through change_activitymoment permission"""
+        """Tests that editing access is available through change_activitymoment permission"""
         # Set base user to 2 as that is not a superuser
         self.base_user_id = 2
 
@@ -393,7 +388,7 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         self.assertEqual(ActivitySimpleMomentView.form_class, RegisterForActivityForm)
         self.assertEqual(ActivitySimpleMomentView.template_name, "activity_calendar/activity_page_no_slots.html")
 
-        # Test errror messages
+        # Test error messages
         self.assertIn("activity-full", ActivitySimpleMomentView.error_messages)
         self.assertIn("already-registered", ActivitySimpleMomentView.error_messages)
         self.assertIn("not-registered", ActivitySimpleMomentView.error_messages)
@@ -502,7 +497,7 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
             response, level=messages.ERROR, text=ActivitySimpleMomentView.error_messages["not-registered"]
         )
 
-    @patch("django.utils.timezone.now", side_effect=mock_now(datetime.datetime(2020, 8, 25, 0, 0)))
+    @patch("django.utils.timezone.now", side_effect=mock_now(datetime(2020, 8, 25, 0, 0)))
     def test_outdated_activity(self, mock_tz):
         # The basic set-up is valid. User can create a slot
         response = self.build_get_response()
@@ -517,8 +512,8 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         self.user.user_permissions.add(*permissions)
 
         # Modify activity start/end time
-        self.activity.start_date = datetime.datetime.fromisoformat(recurrence_id)
-        self.activity.end_date = self.activity.start_date + datetime.timedelta(hours=2)
+        self.activity.start_date = datetime.fromisoformat(recurrence_id)
+        self.activity.end_date = self.activity.start_date + timedelta(hours=2)
         self.activity.save()
 
         response = self.build_get_response(iso_dt=recurrence_id)
@@ -549,7 +544,7 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         """Tests which text appear for activity moments that have a different start_date than their
         occurrence
         """
-        recurrence_id = timezone.datetime(2020, 8, 14, 19, 0, 0, tzinfo=timezone.utc)
+        recurrence_id = datetime(2020, 8, 14, 19, 0, 0, tzinfo=timezone.utc)
         self.activity_moment = ActivityMoment.objects.get(
             parent_activity=self.activity,
             recurrence_id=recurrence_id,
@@ -561,20 +556,20 @@ class ActivitySimpleViewTest(TestActivityViewMixin, TestCase):
         self.assertNotContains(response, "than normal!")
 
         # Occurs at a different day
-        self.activity_moment.local_start_date = timezone.datetime(2020, 8, 15, 14, 0, 0, tzinfo=timezone.utc)
+        self.activity_moment.local_start_date = datetime(2020, 8, 15, 14, 0, 0, tzinfo=timezone.utc)
         self.activity_moment.save()
         response = self.build_get_response(iso_dt=recurrence_id.isoformat())
         self.assertContains(response, "Replacement for the same activity on", status_code=200)
 
         # Occurson the same day (earlier)
-        self.activity_moment.local_start_date = recurrence_id - timezone.timedelta(hours=1)
+        self.activity_moment.local_start_date = recurrence_id - timedelta(hours=1)
         self.activity_moment.save()
         response = self.build_get_response(iso_dt=recurrence_id.isoformat())
         self.assertContains(response, "than normal!", status_code=200)
         self.assertContains(response, "earlier")
 
         # Occurson the same day (later)
-        self.activity_moment.local_start_date = recurrence_id + timezone.timedelta(hours=1)
+        self.activity_moment.local_start_date = recurrence_id + timedelta(hours=1)
         self.activity_moment.save()
         response = self.build_get_response(iso_dt=recurrence_id.isoformat())
         self.assertContains(response, "than normal!", status_code=200)
@@ -760,11 +755,11 @@ class CreateSlotViewTest(TestActivityViewMixin, TestCase):
     @suppress_warnings
     @patch("django.utils.timezone.now", side_effect=mock_now())
     def test_get_slots_invalid_dates(self, mock_tz):
-        # No occurence at the given date
+        # No occurrence at the given date
         response = self.build_get_response(iso_dt="2020-08-17T14:00:00+00:00")
         self.assertEqual(response.status_code, 404)
 
-        # Occureance is of a different activity
+        # Occurrence is of a different activity
         response = self.build_get_response(activity_id=1)
         self.assertEqual(response.status_code, 404)
 
@@ -772,14 +767,13 @@ class CreateSlotViewTest(TestActivityViewMixin, TestCase):
     def test_redirect_on_base_invalidness(self, mock_tz):
         # Sign-ups are not open, so one can not create a slot
         response = self.build_get_response(iso_dt="2020-08-26T14:00:00+00:00", follow=True)
-        # self.assertEqual(response.status_code, 302)
         self.assertRedirects(
             response,
             reverse(
                 "activity_calendar:activity_slots_on_day",
                 kwargs={
                     "activity_id": 2,
-                    "recurrence_id": datetime.datetime.fromisoformat("2020-08-26T14:00:00+00:00"),
+                    "recurrence_id": datetime.fromisoformat("2020-08-26T14:00:00+00:00"),
                 },
             ),
         )
@@ -793,7 +787,7 @@ class CreateSlotViewTest(TestActivityViewMixin, TestCase):
                 "activity_calendar:activity_slots_on_day",
                 kwargs={
                     "activity_id": 1,
-                    "recurrence_id": datetime.datetime.fromisoformat("2020-08-14T19:00:00+00:00"),
+                    "recurrence_id": datetime.fromisoformat("2020-08-14T19:00:00+00:00"),
                 },
             ),
         )
@@ -853,7 +847,7 @@ class CreateSlotViewTest(TestActivityViewMixin, TestCase):
                 "activity_calendar:activity_slots_on_day",
                 kwargs={
                     "activity_id": 2,
-                    "recurrence_id": datetime.datetime.fromisoformat("2020-08-12T14:00:00+00:00"),
+                    "recurrence_id": datetime.fromisoformat("2020-08-12T14:00:00+00:00"),
                 },
             ),
         )
@@ -886,7 +880,7 @@ class CreateSlotViewTest(TestActivityViewMixin, TestCase):
                 "activity_calendar:activity_slots_on_day",
                 kwargs={
                     "activity_id": 2,
-                    "recurrence_id": datetime.datetime.fromisoformat("2020-08-12T14:00:00+00:00"),
+                    "recurrence_id": datetime.fromisoformat("2020-08-12T14:00:00+00:00"),
                 },
             ),
         )
@@ -949,7 +943,7 @@ class EditActivityMomentDataViewTest(TestActivityViewMixin, TestCase):
                 "activity_calendar:activity_slots_on_day",
                 kwargs={
                     "activity_id": self.default_activity_id,
-                    "recurrence_id": datetime.datetime.fromisoformat(self.default_iso_dt),
+                    "recurrence_id": datetime.fromisoformat(self.default_iso_dt),
                 },
             ),
         )
@@ -1004,7 +998,7 @@ class CancelActivityMomentViewTest(TestActivityViewMixin, TestCase):
     def test_successful_post(self):
         """Tests that a successful post is processed correctly"""
         self.client.force_login(User.objects.get(is_superuser=True))
-        local_datetime = datetime.datetime.fromisoformat(self.default_iso_dt)
+        local_datetime = datetime.fromisoformat(self.default_iso_dt)
 
         response = self.build_post_response(
             {
@@ -1020,7 +1014,7 @@ class CancelActivityMomentViewTest(TestActivityViewMixin, TestCase):
                 "activity_calendar:activity_slots_on_day",
                 kwargs={
                     "activity_id": self.default_activity_id,
-                    "recurrence_id": datetime.datetime.fromisoformat(self.default_iso_dt),
+                    "recurrence_id": datetime.fromisoformat(self.default_iso_dt),
                 },
             ),
         )

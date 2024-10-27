@@ -117,8 +117,10 @@
 									{% endif %}
                                 {% endif %}
 								<div class="dropdown-divider"></div>
-								<a class="dropdown-item" href="{% url 'core:user_accounts/logout' %}">
-                                    <i class="fas fa-power-off"></i> Sign out</a>
+								<form id="logout-form"  method="post" action="{% url 'core:user_accounts/logout' %}">
+									{% csrf_token %}
+									<button type="submit" class="dropdown-item"><i class="fas fa-power-off"></i> Sign out</button>
+								</form>
 							</div>
 						</li>
 					{% else %}

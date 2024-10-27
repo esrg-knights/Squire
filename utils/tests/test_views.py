@@ -227,6 +227,7 @@ class ModelAdminFormViewMixinTestCase(TestCase):
         self.view = self.view_class(model_admin=self.model_admin)
         request_factory = RequestFactory()
         req = request_factory.get(f"/my_path/")
+        req.user = User.objects.create(username="admin", is_superuser=True)
         self.view.setup(req)
         self.view.object = None
 

@@ -32,14 +32,12 @@ class FrontEndTest(TestCase):
 
     def test_logout_success_when_logged_in(self):
         """Tests if the logout-success page can be accessed if logged in"""
-        check_http_response(
-            self, settings.LOGOUT_REDIRECT_URL, "get", TestAccountUser, redirect_url=settings.LOGOUT_REDIRECT_URL
-        )
+        check_http_response(self, settings.LOGOUT_REDIRECT_URL, "get", TestAccountUser, redirect_url="/")
 
     def test_logout_redirect(self):
         """Tests if the logout page can be accessed if not logged in"""
         check_http_response(
-            self, settings.LOGOUT_URL, "get", TestPublicUser, redirect_url=settings.LOGOUT_REDIRECT_URL
+            self, settings.LOGOUT_URL, "post", TestPublicUser, redirect_url=settings.LOGOUT_REDIRECT_URL
         )
 
     def test_register(self):

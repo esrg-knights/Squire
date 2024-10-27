@@ -118,7 +118,8 @@ class LogoutSuccessView(TemplateView):
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         if request.user.is_authenticated:
-            return HttpResponseRedirect(reverse("core:user_accounts/logout"))
+            # Redirect to homepage when logged in
+            return HttpResponseRedirect("/")
         return super().get(request, *args, **kwargs)
 
 

@@ -742,6 +742,10 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         Gets all slots for this activity moment
         :return: Queryset of all slots associated with this activity at this moment
         """
+        if not self.pk:
+            # If the activitymoment wasn't created yet, it cannot have any slots.
+            # Attempting to retrieve them anyway will raise a ValueError
+            return ActivitySlot.objects.none()
         return self.activity_slot_set.all()
 
     def is_open_for_subscriptions(self):

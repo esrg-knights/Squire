@@ -50,7 +50,7 @@
             "name": "D&D book online",
             "system": 1,
             "local_file": "roleplaying/this-is-a-test-file.txt",
-            "local_file_name": "test_file"
+            "local_file_name": "test_file with spaces"
         }
     },
     {

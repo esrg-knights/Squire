@@ -233,14 +233,18 @@ class CESTEventFeed(ICalFeed):
             # The RDATES in the recurrency module store only dates and not times, so we need to address that
             exclude_dates += list(util.set_time_for_RDATE_EXDATE(item.recurrences.exdates, item.start_date))
 
-        cancelled_moments = item.activitymoment_set.filter(status=ActivityStatus.STATUS_REMOVED).values_list(
-            "recurrence_id", flat=True
-        )
-        tz = timezone.get_current_timezone()
-        exclude_dates += filter(
-            lambda occ: occ not in exclude_dates,
-            map(lambda occ: occ.astimezone(tz), cancelled_moments),
-        )
+        if item.pk:
+            # Some feeds create activities on the fly (e.g. BirthdayCalendarFeed)
+            # Those activities cannot retrieve their corresponding activitymoments, it'll cause a ValueError
+            # Since these activities won't have activitymoments anyway, we can skip this step for them
+            cancelled_moments = item.activitymoment_set.filter(status=ActivityStatus.STATUS_REMOVED).values_list(
+                "recurrence_id", flat=True
+            )
+            tz = timezone.get_current_timezone()
+            exclude_dates += filter(
+                lambda occ: occ not in exclude_dates,
+                map(lambda occ: occ.astimezone(tz), cancelled_moments),
+            )
 
         # If there are no exclude_dates, don't bother including it in the icalendar file
         return exclude_dates or None

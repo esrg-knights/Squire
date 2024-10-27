@@ -1,12 +1,10 @@
-from django.utils.timezone import now, localtime, get_current_timezone
 import icalendar
 import datetime
-
-import zoneinfo
-
 import zoneinfo._zoneinfo
 
-from django.utils.timezone import utc
+from django.utils.timezone import localtime, get_current_timezone
+
+utc = datetime.timezone.utc
 
 
 def set_time_for_RDATE_EXDATE(dates: list[datetime.datetime], time: datetime):

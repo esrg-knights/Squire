@@ -477,6 +477,12 @@ PWA_SERVICE_WORKER_PATH = os.path.join(BASE_DIR, "core", "static", "js", "servic
 PWA_APP_DIR = "ltr"
 PWA_APP_LANG = "en-US"
 
+####################################################################
+# The default renderer will change in Django 5.0. This allows early adoption
+# See: https://docs.djangoproject.com/en/4.1/releases/4.1/#form-rendering-accessibility
+FORM_RENDERER = "django.forms.renderers.DjangoDivFormRenderer"
+
+####################################################################
 try:
     from .local_settings import *
 except ImportError:
