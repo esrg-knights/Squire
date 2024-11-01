@@ -437,7 +437,7 @@ if DEBUG and False:  # pragma: no cover
     from django.utils import timezone
     from datetime import datetime
 
-    timezone.now = lambda: datetime(year=2021, month=9, day=14, hour=21, minute=20, tzinfo=timezone.utc)
+    timezone.now = lambda: datetime(year=2025, month=1, day=10, hour=21, minute=20, tzinfo=timezone.utc)
     print("=====WARNING=====")
     print("timezone.now was overridden")
     print("It will be " + str(timezone.now()) + " until the end of times!")
