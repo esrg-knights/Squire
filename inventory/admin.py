@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 from import_export.admin import ExportActionMixin
 from import_export.fields import Field
+from import_export.forms import ExportForm
+from import_export.formats.base_formats import CSV, ODS, TSV, XLSX
 from import_export.resources import ModelResource
 
 from inventory.models import *
@@ -43,7 +45,7 @@ class OwnershipValueResource(ModelResource):
 
     class Meta:
         model = OwnershipValueProxy
-        fields = ("id", "group__name", "value")
+        fields = ("id", "group__name", "value", "item_type", "item_name")
         export_order = ("id", "group__name", "item_type", "item_name", "value")
 
     def dehydrate_item_type(self, ownership):
@@ -59,7 +61,10 @@ class OwnershipValues(ExportActionMixin, admin.ModelAdmin):
     list_display_links = ("owner",)
     list_filter = ("group",)
     fields = ("value",)
-    resource_class = OwnershipValueResource
+
+    export_form_class = ExportForm
+    formats = (CSV, XLSX, TSV, ODS)
+    resource_classes = [OwnershipValueResource]
 
     def get_queryset(self, request):
         return super(OwnershipValues, self).get_queryset(request).filter(group__isnull=False)

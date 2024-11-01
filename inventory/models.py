@@ -178,7 +178,7 @@ class Ownership(models.Model):
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
-        # Make exlude a list to prevent complex if statements
+        # Make exclude a list to prevent complex if statements
         exclude = exclude or []
 
         if "content_type" not in exclude and "object_id" not in exclude:

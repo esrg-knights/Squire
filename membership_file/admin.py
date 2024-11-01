@@ -3,7 +3,8 @@ from datetime import datetime
 from django.contrib import admin, messages
 from django_object_actions import DjangoObjectActions, action as object_action
 from import_export.admin import ExportActionMixin
-from import_export.formats.base_formats import CSV, TSV, ODS, XLSX
+from import_export.forms import ExportForm
+from import_export.formats.base_formats import CSV, ODS, TSV, XLSX
 
 from core.admin import DisableModificationsAdminMixin, URLLinkInlineAdminMixin
 from membership_file.forms import AdminMemberForm
@@ -58,13 +59,9 @@ class MemberLogReadOnlyInline(DisableModificationsAdminMixin, URLLinkInlineAdmin
 class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, ExportActionMixin, HideRelatedNameAdmin):
     ##############################
     #  Export functionality
-    resource_class = MemberResource
-    formats = (
-        CSV,
-        XLSX,
-        TSVUnicodeBOM,
-        ODS,
-    )
+    resource_classes = [MemberResource]
+    export_form_class = ExportForm
+    formats = (CSV, XLSX, TSV, ODS)
 
     @object_action(attrs={"class": "addlink"})
     def register_new_member(modeladmin, request, queryset):
@@ -296,13 +293,9 @@ class RoomAdmin(admin.ModelAdmin):
 class MemberYearAdmin(ExportActionMixin, admin.ModelAdmin):
     ##############################
     #  Export functionality
-    resource_class = MembersFinancialResource
-    formats = (
-        CSV,
-        XLSX,
-        TSVUnicodeBOM,
-        ODS,
-    )
+    resource_classes = [MembersFinancialResource]
+    export_form_class = ExportForm
+    formats = (CSV, XLSX, TSV, ODS)
 
     def has_export_permission(self, request):
         return request.user.has_perm("membership_file.can_export_membership_file")
