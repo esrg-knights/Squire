@@ -8,6 +8,7 @@ class NCFolderAdmin(admin.ModelAdmin):
     list_display = ("id", "display_name", "description", "is_missing")
     list_display_links = ("id", "display_name")
     search_fields = ["display_name", "description"]
+    search_help_text = "Search for name, description"
 
     list_filter = ("is_missing", "requires_membership", "on_overview_page")
 
@@ -22,6 +23,7 @@ class NCFileAdmin(admin.ModelAdmin):
         "connection",
     )
     search_fields = ["display_name", "description", "folder__display_name"]
+    search_help_text = "Search for name, description, folder name"
     readonly_fields = ["connection"]
 
     def folder_name(self, file):

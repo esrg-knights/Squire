@@ -140,10 +140,11 @@ class Activity(models.Model):
     )
 
     # Possible slot-creation options:
-    # - Never: Slots can only be created in the admin panel
+    # - Staff: Slots can only be created by organisers in the front-end or through the admin panel
     # - Auto: Slots are created automatically. They are only actually created in the DB once a participant joins.
     #                                          Until that time they do look like real slots though (in the UI)
     # - Users: Slots can be created by users. Users can be the owner of at most max_slots_join_per_participant slots
+    # - No signup: No slots; users cannot sign up for this activity
     slot_creation = models.CharField(
         max_length=15,
         choices=[
@@ -152,7 +153,7 @@ class Activity(models.Model):
             (SlotCreationType.SLOT_CREATION_USER, "By Users"),
             (SlotCreationType.SLOT_CREATION_NONE, "No signup"),
         ],
-        default=SlotCreationType.SLOT_CREATION_AUTO,
+        default=SlotCreationType.SLOT_CREATION_NONE,
     )
 
     # Possible activity types:
@@ -195,9 +196,6 @@ class Activity(models.Model):
         #   specified time period, so there's no need to look back even further.
         activity_duration = self.duration
         recurrency_occurences = self.get_occurrences_starting_between(start_date - activity_duration, end_date)
-
-        # Note that DST-offsets have already been handled earlier
-        #   in self.get_occurrences_between -> util.dst_aware_to_dst_ignore
 
         # Get the correct activitymoment instances from the database
         activity_moments_between_query = Q(recurrence_id__gte=(start_date - activity_duration)) & Q(
@@ -267,7 +265,7 @@ class Activity(models.Model):
         :param exclude_cancelled: Whether activitymoments with status cancelled should not be included (default False)
         :return: The activitymoment instance that will occur next
         """
-        dtstart = timezone.localtime(dtstart) or timezone.now()
+        dtstart = timezone.localtime(dtstart)
         e_ext = "e" if inc else ""  # Search query for inclusion statement
 
         activity_moments = self.activitymoment_set
@@ -335,39 +333,15 @@ class Activity(models.Model):
 
     def _get_next_recurring_occurence(self, dtstart, inc=False):
         """
-         Returns the next occurence according to the recurring format.
+        Returns the next occurrence according to the recurring format.
         :param dtstart: The starttime of the search
         :param inc: Whether dtstart is included in the search
-        :return: A DST-ignored datetime instance of the next occurence since dtstart
+        :return: The next occurrence since `dtstart` according to this activity's recurrence schema
         """
-        # Make a copy so we don't modify our own recurrence
-        recurrences = copy.deepcopy(self.recurrences)
-
-        # EXDATEs and RDATEs should match the event's start time, but in the recurrence-widget they
-        #   occur at midnight!
-        # Since there is no possibility to select the RDATE/EXDATE time in the UI either, we need to
-        #   override their time here so that it matches the event's start time. Their timezones are
-        #   also changed into that of the event's start date
-        # recurrences.exdates = list(util.set_time_for_RDATE_EXDATE(recurrences.exdates, dtstart, make_dst_ignore=True))
-        # recurrences.rdates = list(util.set_time_for_RDATE_EXDATE(recurrences.rdates, dtstart, make_dst_ignore=True))
-
-        # If dtstart is set in a different dst-period than the activities original start date recurrences might
-        # incorrectly be of by an hour thus finding matches at the dst included hour even though 'inc' is set to false
-        # For example. When retrieving the next N upcoming activities in summertime for an activity that starts in
-        # wintertime, the time set will be 1 hour earlier than recurrence has stored and thus always keep returning
-        # the first one, unless we correct for that.
-        dst_ignore_dtstart = util.dst_aware_to_dst_ignore(dtstart, timezone.localtime(self.start_date), reverse=True)
-
         # The after function does not know the initial start date of the recurrent activities
         # So dtstart should be set to the activity start date not search start date
-        next_recurrence = recurrences.after(dst_ignore_dtstart, inc=inc, dtstart=timezone.localtime(self.start_date))
-        # print(f"C: {next_recurrence} - {self.start_date} - {timezone.localtime(self.start_date)}")
-
-        # the recurrences package does not work with DST. Since we want our activities
-        #   to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00
-        #   in winter, and vice versa), we have to account for the difference here.
-        if next_recurrence is not None:
-            next_recurrence = util.dst_aware_to_dst_ignore(next_recurrence, timezone.localtime(self.start_date))
+        next_recurrence = self.recurrences.after(dtstart, inc=inc, dtstart=timezone.localtime(self.start_date))
+        # print(f"C: {next_recurrence} - {self.start_date} - {timezone.localtime(self.start_date)}"
 
         return next_recurrence
 
@@ -387,37 +361,32 @@ class Activity(models.Model):
         """Gets the duration of this activity"""
         return self.end_date - self.start_date
 
-    def get_occurrence_at(self, date, is_dst_aware=False):
+    def get_occurrence_at(self, date):
         """
         Whether this activity has an occurrence that starts at the specified time
         Note: This does not take shifts in starting moment into account!
         :param date: Datetime instance of the occurrence
-        :param is_dst_aware: Whether the datetime instance is dst aware (relevant for recurrent activities)
         :return:
         """
-        # Check activitymoments on server
+        # An activitymoment with this recurrence_id already exists
         activitymoments = self.activitymoment_set.filter(recurrence_id=date)
         if activitymoments.count() == 1:
             return activitymoments.first()
 
-        # Find recurrent moments that have not yet been created on the server
+        # An activitymoment for this occurrence might not exist yet
         if self.is_recurring:
-            if not is_dst_aware:
-                dst_ignored_date = util.dst_aware_to_dst_ignore(date, self.start_date, reverse=True)
-            occurences = list(self.get_occurrences_starting_between(dst_ignored_date, dst_ignored_date))
-            if occurences:
-                # Make sure to use the ORIGINAL data and not the moved one.
+            # Activity is recurring
+            if list(self.get_occurrences_starting_between(date, date)):
                 return ActivityMoment(
                     parent_activity=self,
                     recurrence_id=date,
                 )
-        else:
-            # A single activity that is non-recurrent and also contains no activitymoment yet
-            if date == self.start_date:
-                return ActivityMoment(
-                    parent_activity=self,
-                    recurrence_id=date,
-                )
+        elif date == self.start_date:
+            # A non-recurring activity only has one occurrence
+            return ActivityMoment(
+                parent_activity=self,
+                recurrence_id=date,
+            )
         return None
 
     def _get_queries_for_alt_start_time_activity_moments(self, after, before):
@@ -498,19 +467,17 @@ class Activity(models.Model):
         # EXDATEs and RDATEs should match the event's start time, but in the recurrence-widget they
         #   occur at midnight!
         # Since there is no possibility to select the RDATE/EXDATE time in the UI either, we need to
-        #   override their time here so that it matches the event's start time. Their timezones are
+        #   override their time here so that it matches the event's start time. Their timezone are
         #   also changed into that of the event's start date
-        recurrences.exdates = list(util.set_time_for_RDATE_EXDATE(recurrences.exdates, dtstart, make_dst_ignore=True))
-        recurrences.rdates = list(util.set_time_for_RDATE_EXDATE(recurrences.rdates, dtstart, make_dst_ignore=True))
+        # print(f"pre: {recurrences.exdates}")
+        recurrences.exdates = list(util.set_time_for_RDATE_EXDATE(recurrences.exdates, dtstart))
+        # if recurrences.exdates:
+        #     print(recurrences.exdates[0].tzinfo)
 
-        # Get all occurences according to the recurrence module
+        recurrences.rdates = list(util.set_time_for_RDATE_EXDATE(recurrences.rdates, dtstart))
+
+        # Get all occurrences according to the recurrence module
         occurences = recurrences.between(after, before, dtstart=dtstart, inc=True, **kwargs)
-
-        # the recurrences package does not work with DST. Since we want our activities
-        #   to ignore DST (E.g. events starting at 16.00 is summer should still start at 16.00
-        #   in winter, and vice versa), we have to account for the difference here.
-        occurences = map(lambda occurence: util.dst_aware_to_dst_ignore(occurence, dtstart), occurences)
-
         return occurences
 
     def clean_fields(self, exclude=None):
@@ -710,16 +677,13 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
 
     @property
     def is_part_of_recurrence(self):
-        # A non-recurring activity can not be part of a recurrence
+        # A non-recurring activity cannot be part of a recurrence
         if not self.parent_activity.is_recurring:
             return False
 
-        # Shift daylight savings time to connect to the correct time
-        local_recurrence_id = util.dst_aware_to_dst_ignore(
-            self.recurrence_id, self.parent_activity.start_date, reverse=True
-        )
+        local_recurrence_id = self.recurrence_id
         # Get the next instance of the recurring activity, include the given date. So it should return the activity
-        # iteself. If not, than it is not part of the recurring activity
+        # itself. If not, than it is not part of the recurring activity
         recurrence_date = self.parent_activity.recurrences.after(
             local_recurrence_id, inc=True, dtstart=self.parent_activity.start_date
         )
@@ -778,6 +742,10 @@ class ActivityMoment(models.Model, metaclass=ActivityDuplicate):
         Gets all slots for this activity moment
         :return: Queryset of all slots associated with this activity at this moment
         """
+        if not self.pk:
+            # If the activitymoment wasn't created yet, it cannot have any slots.
+            # Attempting to retrieve them anyway will raise a ValueError
+            return ActivitySlot.objects.none()
         return self.activity_slot_set.all()
 
     def is_open_for_subscriptions(self):

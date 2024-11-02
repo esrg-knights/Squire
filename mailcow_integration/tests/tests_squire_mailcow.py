@@ -70,7 +70,7 @@ class SquireMailcowManagerTest(TestCase):
 
         # Default is opt-in, so those without a preference must also be present
         expected_subs = Member.objects.filter(first_name__in=["Subbed", "NoPref", "NoUser"])
-        self.assertQuerysetEqual(subs, expected_subs)
+        self.assertQuerySetEqual(subs, expected_subs)
 
     def test_subscribed_members_default_opt_out(self):
         """Tests whether the correct members are returned based on their
@@ -80,7 +80,7 @@ class SquireMailcowManagerTest(TestCase):
 
         # Default is opt-out, so those only those with an opt-in preference should be present
         expected_subs = Member.objects.filter(first_name__in=["Subbed"])
-        self.assertQuerysetEqual(subs, expected_subs)
+        self.assertQuerySetEqual(subs, expected_subs)
 
     def test_str(self):
         """Tests the __str__ method"""
@@ -101,7 +101,7 @@ class SquireMailcowManagerTest(TestCase):
 
         cleaned = self.squire_mailcow_manager.clean_emails(User.objects.all(), email_field="email")
         # Blocklisted email addresses are filtered out
-        self.assertQuerysetEqual(cleaned, User.objects.filter(email__in=[baz.email, baq.email]), ordered=False)
+        self.assertQuerySetEqual(cleaned, User.objects.filter(email__in=[baz.email, baq.email]), ordered=False)
 
         # Items in the queryset are sorted by email
         self.assertEqual(cleaned[0].email, "baq@example.com")
@@ -112,7 +112,7 @@ class SquireMailcowManagerTest(TestCase):
 
         # Passing the "extra" keyword extends the blocklist, but does not modify it for future runs
         cleaned = self.squire_mailcow_manager.clean_emails(User.objects.all(), exclude=[baz.email])
-        self.assertQuerysetEqual(cleaned, User.objects.filter(email__in=[baq.email]))
+        self.assertQuerySetEqual(cleaned, User.objects.filter(email__in=[baq.email]))
         self.assertEqual(
             self.squire_mailcow_manager.BLOCKLISTED_EMAIL_ADDRESSES, ["foo@example.com", "bar@example.com"]
         )

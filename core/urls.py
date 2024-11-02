@@ -12,11 +12,6 @@ app_name = "core"
 
 # fmt: off
 urlpatterns = [
-    # Martor
-    path('api/martor/', include([
-        path('markdownify/', markdownfy_view, name='martor_markdownify'),
-        path('image_uploader/', views.MartorImageUploadAPIView.as_view(), name='martor_image_upload'),
-    ])),
     # Login and logout
     path('login', views.LoginView.as_view(), name='user_accounts/login'),
     path('logout', django_views.LogoutView.as_view(), name='user_accounts/logout'),

@@ -32,14 +32,12 @@ class FrontEndTest(TestCase):
 
     def test_logout_success_when_logged_in(self):
         """Tests if the logout-success page can be accessed if logged in"""
-        check_http_response(
-            self, settings.LOGOUT_REDIRECT_URL, "get", TestAccountUser, redirect_url=settings.LOGOUT_REDIRECT_URL
-        )
+        check_http_response(self, settings.LOGOUT_REDIRECT_URL, "get", TestAccountUser, redirect_url="/")
 
     def test_logout_redirect(self):
         """Tests if the logout page can be accessed if not logged in"""
         check_http_response(
-            self, settings.LOGOUT_URL, "get", TestPublicUser, redirect_url=settings.LOGOUT_REDIRECT_URL
+            self, settings.LOGOUT_URL, "post", TestPublicUser, redirect_url=settings.LOGOUT_REDIRECT_URL
         )
 
     def test_register(self):
@@ -190,7 +188,7 @@ class RegisterFormTest(TestCase):
         # Ensure the correct object is returned (but not saved)
         user = form.save(commit=False)
         self.assertIsNotNone(user)
-        self.assertEquals(user.email, "kandi@example.com")
+        self.assertEqual(user.email, "kandi@example.com")
         self.assertTrue(user.check_password("bestaatookniet"))
         self.assertEqual(user.first_name, "Schaduw Kandi")
 
@@ -201,7 +199,7 @@ class RegisterFormTest(TestCase):
         form.save(commit=True)
         user = User.objects.filter(username="schaduwkandi").first()
         self.assertIsNotNone(user)
-        self.assertEquals(user.email, "kandi@example.com")
+        self.assertEqual(user.email, "kandi@example.com")
         self.assertTrue(user.check_password("bestaatookniet"))
         self.assertEqual(user.first_name, "Schaduw Kandi")
 
@@ -308,7 +306,7 @@ class RegisterFormViewTest(TestCase):
 
         user = User.objects.filter(username="username").first()
         self.assertIsNotNone(user)
-        self.assertEquals(user.email, "email@example.com")
+        self.assertEqual(user.email, "email@example.com")
         self.assertTrue(user.check_password("thisactuallyneedstobeagoodpassword"))
         self.assertEqual(user.first_name, "My Real name")
 

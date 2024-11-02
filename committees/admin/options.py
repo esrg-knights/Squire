@@ -26,6 +26,7 @@ class AssociationGroupAdmin(MarkdownImageInlineAdmin):
     list_filter = ["type", "is_public"]
     list_display_links = ("id", "name")
     search_fields = ("site_group__name", "shorthand", "contact_email")
+    search_help_text = "Search for name, shorthand, or email"
     fields = [
         (
             "name",
@@ -61,6 +62,7 @@ class GroupExternalURLAdmin(admin.ModelAdmin):
     list_filter = [("association_group", RelatedOnlyFieldListFilter)]
     list_display_links = ("id", "name")
     search_fields = ("asssociation_group__site_group__name", "name")
+    search_help_text = "Search for name"
 
     autocomplete_fields = [
         "association_group",

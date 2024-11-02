@@ -10,8 +10,8 @@ jobs:
       DJANGO_ENV: "TESTING"
     strategy:
       matrix:
-        python: ["3.8"]
-        ubuntu: ["ubuntu-20.04"]
+        python: ["3.10"]
+        ubuntu: ["ubuntu-22.04"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

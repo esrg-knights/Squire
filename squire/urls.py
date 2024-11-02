@@ -12,14 +12,16 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 import os
 
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-from django.conf.urls import handler403, handler404
+from martor.views import markdownfy_view
 
+from core.views import MartorImageUploadAPIView
 
 urlpatterns = [
     # Progressive web app
@@ -44,6 +46,16 @@ urlpatterns = [
     # Redirect all other paths to the core module
     path("", include("core.urls", namespace="core")),
     path("", include("user_interaction.urls")),
+    # Martor (martor_markdownfy cannot have a core: namespace; the URL is hardcoded in martor internals)
+    path(
+        "api/martor/",
+        include(
+            [
+                path("markdownfy/", markdownfy_view, name="martor_markdownfy"),
+                path("image_uploader/", MartorImageUploadAPIView.as_view(), name="martor_image_upload"),
+            ]
+        ),
+    ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 # NB: 'static(...) above only works when Debug=True! In production, the web server should be set up to serve files
 # For production use, view the following:

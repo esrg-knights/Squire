@@ -39,6 +39,9 @@ class SquireNextCloudFolder(models.Model):
     def save(self, **kwargs):
         if self.folder and (self.path is None or self.path == ""):
             self.path = self.folder.path
+            update_fields: set = kwargs.get("update_fields")
+            if update_fields is not None and "folder" in update_fields:
+                kwargs["update_fields"].add("path")
 
         if self.slug is None or self.slug == "":
             self.slug = slugify(self.display_name)
@@ -97,6 +100,9 @@ class SquireNextCloudFile(models.Model):
     def save(self, **kwargs):
         if self.file and (self.file_name == "" or self.file_name is None):
             self.file_name = self.file.name
+            update_fields: set = kwargs.get("update_fields")
+            if update_fields is not None and "file" in update_fields:
+                kwargs["update_fields"].add("file_name")
 
         # Cleaning is not guaranteed when saving
         self._set_slug()

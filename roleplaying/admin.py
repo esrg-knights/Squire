@@ -12,6 +12,7 @@ class RoleplaySystemAdmin(MarkdownImageInlineAdmin):
     list_display = ("id", "name", "more_info_url", "is_public", "get_num_items")
     list_display_links = ("id", "name")
     search_fields = ["name"]
+    search_help_text = "Search for name"
     list_filter = ("is_public",)
     inlines = [AchievementItemInline]
 

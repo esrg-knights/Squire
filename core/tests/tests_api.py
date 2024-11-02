@@ -47,7 +47,7 @@ class MartorImageUploadTest(TestCase):
         self.valid_filename = os.path.join(settings.BASE_DIR, "test", "input", "images", "valid_image.png")
         self.invalid_filename = os.path.join(settings.BASE_DIR, "test", "input", "images", "not_an_image.png")
 
-        self.martor_image_upload_url = reverse("core:martor_image_upload")
+        self.martor_image_upload_url = reverse("martor_image_upload")
 
     def _test_image_upload(
         self,
@@ -89,7 +89,7 @@ class MartorImageUploadTest(TestCase):
 
     def test_martor_settings_correct(self):
         """Tests if the relevant URLs for Martor have been set up"""
-        self.assertEqual(reverse("core:martor_markdownify"), settings.MARTOR_MARKDOWNIFY_URL)
+        self.assertEqual(reverse("martor_markdownfy"), "/api/martor/markdownfy/")
         self.assertEqual(self.martor_image_upload_url, settings.MARTOR_UPLOAD_URL)
 
     @suppress_warnings

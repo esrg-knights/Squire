@@ -2,19 +2,19 @@
 # These are libraries that are needed for any environment
 
 # Import the common-dependencies
-Django~=3.2.23
-django-bootstrap4~=22.2
-django-cleanup~=8.1.0 # Removes old FileField files upon saving
+Django~=4.2.16
+django-bootstrap4~=24.4
+django-cleanup~=9.0.0 # Removes old FileField files upon saving
 djangorestframework~=3.15.1 # TODO: Deprecate
-Pillow~=10.3.0 # ImageField support
+Pillow~=11.0.0 # ImageField support
 django-ical~=1.9.2 # iCalendar export
 django-recurrence~=1.11.1 # Recurring Dates
-django-import-export~=2.9.0 # Import/Export models
+django-import-export[xlsx,ods]~=4.2.0 # Import/Export models
 django-dynamic-preferences~=1.16.0 # Global Preferences / User Preferences
-django-object-actions~=4.2.0 # Dynamic admin panel actions
-martor==1.6.14, <=1.6.26; # Markdown Editor
-pymdown-extensions~=9.11 # Extra markdown features
-django-pwa~=1.1.0 # Progressive Webapp
+django-object-actions~=4.3.0 # Dynamic admin panel actions
+martor~=1.6.44; # Markdown Editor
+pymdown-extensions~=9.11 # Extra markdown features (Cannot upgrade due to martor, which requires Markdown<3.6)
+django-pwa~=2.0.1 # Progressive Webapp
 requests~=2.32.3 # Requests (needed for Mailcow API)
 django-tempus-dominus~=5.1.2.17 # DateTimePicker
 easywebdav~=1.2.0 # For Nextcloud

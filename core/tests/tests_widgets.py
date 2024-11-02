@@ -26,7 +26,7 @@ class ImageUploadMartorWidgetTest(TestCase):
         self.widget.placeholder = None
         self.widget.placeholder_detail_title = "Cool title!"
 
-        html = self.widget.render("markdown_field_name", "**markdown** content", attrs={})
+        html = self.widget.render("markdown_field_name", "**markdown** content", attrs={"id": "foo"})
         self.assertNotIn("Cool title!", html)
         self.assertNotIn('div class="md-placeholder"', html)
         self.assertIn("**markdown** content", html)
@@ -36,7 +36,7 @@ class ImageUploadMartorWidgetTest(TestCase):
         self.widget.placeholder = MarkdownObject("placeholder _markdown_ text")
         self.widget.placeholder_detail_title = None
 
-        html = self.widget.render("markdown_field_name", "**markdown** content", attrs={})
+        html = self.widget.render("markdown_field_name", "**markdown** content", attrs={"id": "foo"})
         self.assertNotIn("<i>click to expand/hide</i>", html)
         self.assertIn('div class="md-placeholder"', html)
         self.assertIn("**markdown** content", html)
@@ -47,14 +47,14 @@ class ImageUploadMartorWidgetTest(TestCase):
     def test_hiddenfields_no_object_id(self):
         """Tests if the hidden fields for image uploads are correctly set without an object-id"""
         self.widget.object_id = None
-        html = self.widget.render("markdown_field_name", "**markdown** content", attrs={})
+        html = self.widget.render("markdown_field_name", "**markdown** content", attrs={"id": "foo"})
 
         self.assertNotIn("martor-image-upload:id", html)
         self.assertIn("martor-image-upload:content_type", html)
 
     def test_hiddenfields_with_object_id(self):
         """Tests if the hidden fields for image uploads are correctly set with an object-id"""
-        html = self.widget.render("markdown_field_name", "**markdown** content", attrs={})
+        html = self.widget.render("markdown_field_name", "**markdown** content", attrs={"id": "foo"})
 
         self.assertIn("martor-image-upload:id", html)
         self.assertIn("martor-image-upload:content_type", html)

@@ -1,3 +1,4 @@
+from unittest.mock import MagicMock
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.contrib.admin import helpers, ModelAdmin
 from django.contrib.admin.widgets import AdminTextInputWidget, AdminSplitDateTime
@@ -90,7 +91,8 @@ class TestPostOnlyFormViewMixin(TestCase):
 
         # Requsetfactory does not support middleware, so it should be added manually
         # adding session
-        middleware = SessionMiddleware()
+        get_response = MagicMock()
+        middleware = SessionMiddleware(get_response)
         middleware.process_request(request)
         request.session.save()
 
@@ -225,6 +227,7 @@ class ModelAdminFormViewMixinTestCase(TestCase):
         self.view = self.view_class(model_admin=self.model_admin)
         request_factory = RequestFactory()
         req = request_factory.get(f"/my_path/")
+        req.user = User.objects.create(username="admin", is_superuser=True)
         self.view.setup(req)
         self.view.object = None
 

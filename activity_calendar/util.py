@@ -1,144 +1,122 @@
-from django.utils.timezone import pytz, now, localtime, get_current_timezone
 import icalendar
 import datetime
+import zoneinfo._zoneinfo
+
+from django.utils.timezone import localtime, get_current_timezone
+
+utc = datetime.timezone.utc
 
 
-def dst_aware_to_dst_ignore(date, origin_date, reverse=False):
-    """
-    Takes the difference in UTC-offsets for two given dates, and applies that
-    difference to the first date. A reverse keyword indicates which direction
-    the offset should be shifted.
-
-    Can be used to account keep times similar as if Daylight Saving Time did not exist.
-    E.g. If a date at 16.00h in CEST (UTC+2) should be considered to be the same time
-    as an origin date at 16.00h in CET (UTC+1), even though their UTC-times do not match.
-
-    :param date: The date to modify
-    :param origin_date: The origin date
-    :param reverse: If True,  shifts `date` backwards (i.e. `date` already acted as if it had
-                        the UTC-offset of `origin_date`, and we wish to reverse this change.)
-                    Otherwise, shifts `date` forward (i.e. makes the `date` act as if it had
-                        the UTC-offset of `origin_date`)
-    """
-
-    start_utc_offset = localtime(origin_date).utcoffset()
-    date_utc_offset = localtime(date).utcoffset()
-
-    if reverse:
-        date = date - (start_utc_offset - date_utc_offset)
-    else:
-        date = date + (start_utc_offset - date_utc_offset)
-    return localtime(date)
-
-
-def set_time_for_RDATE_EXDATE(dates, time, make_dst_ignore=False):
+def set_time_for_RDATE_EXDATE(dates: list[datetime.datetime], time: datetime):
     """
     Sets the time (with the corresponding timezone) for a given set of dates.
 
     :param dates: Collection of datetime objects of which the time should be set
     :param time: A datetime object whose date and timezone are set to the collection of dates
-    :param make_dst_ignore: If these dates (RDATES or EXDATEs) are made dst-aware later on,
-        then this difference can be accounted here by offsetting this change backwards.
     """
-    local_time = localtime(time).time()
-    set_time_fn = lambda date: get_current_timezone().localize(
-        datetime.datetime.combine(localtime(date).date(), local_time),
+    set_time_fn = lambda date: datetime.datetime.combine(
+        localtime(date), localtime(time).time(), tzinfo=get_current_timezone()
     )
-
-    if not make_dst_ignore:
-        return map(set_time_fn, dates)
-
-    return map(lambda date: dst_aware_to_dst_ignore(set_time_fn(date), time, reverse=True), dates)
+    return map(set_time_fn, dates)
 
 
-# Based on: https://djangosnippets.org/snippets/10569/
-def generate_vtimezone(timezone, for_date=None, num_years=None):
-    if not timezone or "utc" in timezone.lower():  # UTC doesn't need a timezone definition
-        return None
-    if not for_date:
-        for_date = now()
-    z = pytz.timezone(timezone)
-    transitions = zip(z._utc_transition_times, z._transition_info)
-    try:
-        end_year = (num_years or 1) + for_date.year
-        tzswitches = filter(
-            lambda x: x[0].year >= for_date.year and (num_years is None or x[0].year <= end_year), transitions
-        )
+class ICalTimezoneFactory:
+    """
+    Aids in generating VTIMEZONE components.
+    NOTE: This only generates a STANDARD and DAYLIGHT component for the most recent
+    changes to DST-rules. This works for `Europe/Amsterdam`, but not for `America/New York`
+    which has had its rules changed multiple times since the 1970s
+    """
 
-        return _vtimezone_with_dst(tzswitches, timezone)
-    except:
-        # Timezone has no DST
-        std = (z._utc_transition_times[-1], z._transition_info[-1])
-        if std[0].year > for_date.year:
+    WEEKDAYS = ("SU", "MO", "TU", "WE", "TH", "FR", "SA")
+    _zones: list[str, icalendar.Timezone] = {}
+
+    def generate_vtimezone(self, timezone_name: str):
+        """
+        Generates a VTIMEZONE component, based on the given `timezone_name`.
+        If this component was already generated earlier for this timezone, it is
+        retrieved from a cache.
+        """
+        if not timezone_name or "utc" in timezone_name.lower():  # UTC doesn't need a timezone definition
             return None
-        return _vtimezone_without_dst(std, timezone)
 
+        if timezone_name in self._zones:
+            return self._zones[timezone_name]
 
-def _vtimezone_without_dst(std, timezone):
-    vtimezone = icalendar.Timezone(tzid=timezone)
-    standard = icalendar.TimezoneStandard()
-    utc_offset, dst_offset, tz_name = std[1]
-    standard.add("dtstart", std[0])
-    standard.add("tzoffsetfrom", utc_offset)
-    standard.add("tzoffsetto", utc_offset)
-    standard.add("tzname", tz_name)
-    vtimezone.add_component(standard)
-    return vtimezone
+        # timezone_name = "America/Tijuana"  # GMT-6/7
+        # timezone_name = "America/Godthab" # GMT-1/2
+        # timezone_name = "America/Guayaquil"  # GMT -5/5
+        z = zoneinfo._zoneinfo.ZoneInfo(timezone_name)
 
+        transition_info = z._tz_after
+        transitions: list[icalendar.TimezoneStandard | icalendar.TimezoneDaylight] = []
+        if isinstance(transition_info, zoneinfo._zoneinfo._ttinfo):
+            # No DST
+            transitions.append(self._vtimezone_without_dst(transition_info))
+        else:
+            # DST
+            transitions += self._vtimezone_with_dst(transition_info)
 
-def _vtimezone_with_dst(tzswitches, timezone):
-    daylight = []
-    standard = []
-
-    prev_prev_transition_info = None
-    prev_prev_component = None
-    prev_component = None
-    _, prev_transition_info = next(tzswitches, None)
-
-    if prev_transition_info is not None:
-        for transition_time, transition_info in tzswitches:
-            utc_offset, dst_offset, tz_name = transition_info
-
-            # utc-offset of the previous component
-            prev_utc_offset = prev_transition_info[0]
-
-            if prev_prev_component is not None and transition_info == prev_prev_transition_info:
-                # DST-change is the same as earlier; merge the components rather than creating a new one!
-                prev_prev_component.add("rdate", transition_time + prev_utc_offset)
-
-                # Swap prev_prev and prev components
-                temp_component = prev_component
-                prev_component = prev_prev_component
-                prev_prev_component = temp_component
-            else:
-                component = None
-                lst = None
-                is_dst = dst_offset.total_seconds() != 0
-
-                if is_dst:
-                    component = icalendar.TimezoneDaylight()
-                    lst = daylight
-                else:
-                    component = icalendar.TimezoneStandard()
-                    lst = standard
-
-                component.add("dtstart", transition_time + prev_utc_offset)
-                component.add("rdate", transition_time + prev_utc_offset)
-                component.add("tzoffsetfrom", prev_utc_offset)
-                component.add("tzoffsetto", utc_offset)
-                component.add("tzname", tz_name)
-
-                lst.append(component)
-                prev_prev_component = prev_component
-                prev_component = component
-
-            prev_prev_transition_info = prev_transition_info
-            prev_transition_info = transition_info
-
-        # Create timezone component, and add all standard/dst components to it
-        vtimezone = icalendar.Timezone(tzid=timezone)
-        for d in daylight:
-            vtimezone.add_component(d)
-        for s in standard:
-            vtimezone.add_component(s)
+        # Generate component based with the calculated transitions
+        vtimezone = icalendar.Timezone(tzid=timezone_name)
+        for trans in transitions:
+            vtimezone.add_component(trans)
+        vtimezone.add("x-lic-location", timezone_name)
+        self._zones[timezone_name] = vtimezone
         return vtimezone
+
+    def _vtimezone_without_dst(self, transition_info: zoneinfo._zoneinfo._ttinfo) -> icalendar.TimezoneStandard:
+        """Generates a STANDARD-timezone"""
+        component = icalendar.TimezoneStandard()
+        component.add("tzoffsetfrom", transition_info.utcoff)
+        component.add("tzoffsetto", transition_info.utcoff)
+        component.add("tzname", transition_info.tzname)
+        component.add("dtstart", datetime.datetime(1970, 1, 1))
+        return component
+
+    def _vtimezone_with_dst(
+        self,
+        transition_info: zoneinfo._zoneinfo._TZStr,
+    ) -> list[icalendar.TimezoneStandard | icalendar.TimezoneDaylight]:
+        """Generates a DAYLIGHT and STANDARD timezone"""
+        # Generate DAYLIGHT item
+        component_dst = icalendar.TimezoneDaylight()
+        component_dst.add("tzoffsetfrom", transition_info.std.utcoff)
+        component_dst.add("tzoffsetto", transition_info.dst.utcoff)
+        component_dst.add("tzname", transition_info.dst.tzname)
+        dst_start_dt = datetime.datetime.fromtimestamp(transition_info.start.year_to_epoch(1970), tz=utc)
+        component_dst.add("dtstart", dst_start_dt.replace(tzinfo=None))
+        week = transition_info.start.w
+        if week == 5:
+            week = -1
+        rrule = icalendar.vRecur(
+            {
+                "FREQ": "YEARLY",
+                "BYMONTH": transition_info.start.m,
+                "BYDAY": f"{week}{self.WEEKDAYS[transition_info.start.d]}",
+            }
+        )
+        component_dst.add("rrule", rrule)
+
+        # Generate STANDARD item
+        component_std = icalendar.TimezoneStandard()
+        component_std.add("tzoffsetfrom", transition_info.dst.utcoff)
+        component_std.add("tzoffsetto", transition_info.std.utcoff)
+        component_std.add("tzname", transition_info.std.tzname)
+        std_start_dt = datetime.datetime.fromtimestamp(transition_info.end.year_to_epoch(1970), tz=utc)
+        component_std.add("dtstart", std_start_dt.replace(tzinfo=None))
+        week = transition_info.end.w
+        if week == 5:
+            week = -1
+        rrule = icalendar.vRecur(
+            {
+                "FREQ": "YEARLY",
+                "BYMONTH": transition_info.end.m,
+                "BYDAY": f"{week}{self.WEEKDAYS[transition_info.end.d]}",
+            }
+        )
+        component_std.add("rrule", rrule)
+        return [component_dst, component_std]
+
+
+ical_timezone_factory = ICalTimezoneFactory()

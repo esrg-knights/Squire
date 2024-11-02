@@ -151,7 +151,7 @@ class TestDownloadDigitalItemView(ViewValidityMixin, TestCase):
 
     @suppress_warnings
     def test_nonexistent_item(self):
-        # Tests that a nonexistent item returns 404
+        # Tests that a non-existent item returns 404
         url = reverse("roleplaying:download_roleplay_item", kwargs={"item_id": 99})
         response = self.client.get(url, data={})
         self.assertEqual(response.status_code, 404)
@@ -164,6 +164,8 @@ class TestDownloadDigitalItemView(ViewValidityMixin, TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_digital_file(self):
+        # NOTE: In Python's -Wa mode, this throws a ResourceWarning of a memory leak on the downloaded file.
+        #   Doing the same in the front-end does not issue the same warning
         item = RoleplayingItem.objects.get(id=2)
 
         # Tests that an item without a digital version returns a 404 error
@@ -176,5 +178,5 @@ class TestDownloadDigitalItemView(ViewValidityMixin, TestCase):
         self.assertIn("attachment", content_disposition)
 
         # Make sure that the file name is equal to the in the instance defined filename
-        file_name = content_disposition.split("filename=")[1].split()[0]
-        self.assertEqual(file_name, f"{item.local_file_name}.txt")
+        file_name = content_disposition.split("filename=")[1].split("; ")[0]
+        self.assertEqual(file_name, f'"{item.local_file_name}.txt"')

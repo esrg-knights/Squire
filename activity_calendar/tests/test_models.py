@@ -1,22 +1,20 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time, timezone
+import zoneinfo
 
 from django.db import models
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.core.validators import ValidationError
-from django.conf import settings
 from django.test import TestCase
-from django.utils import timezone
-
-from unittest.mock import patch
+from django.utils import timezone as djtimezone
 from recurrence import deserialize as deserialize_recurrence_test
-
-from core.models import PresetImage
-
-from . import mock_now
+from unittest.mock import patch
 
 from activity_calendar.models import Activity, ActivitySlot, Participant, ActivityMoment, MemberCalendarSettings
-
-from django.contrib.auth import get_user_model
+from activity_calendar.util import set_time_for_RDATE_EXDATE
+from core.models import PresetImage
+from . import mock_now
 
 User = get_user_model()
 
@@ -70,93 +68,83 @@ class ModelMethodsDSTDependentTests(TestCase):
             "title": "DST Test Event",
             # Start/end dates are during CET (UTC+1)
             # Start dt: 01 JAN 2020, 15.00 (CET)
-            "start_date": timezone.datetime(2020, 1, 1, 14, 0, 0, tzinfo=timezone.utc),
-            "end_date": timezone.datetime(2020, 1, 1, 18, 0, 0, tzinfo=timezone.utc),
+            "start_date": datetime(2020, 1, 1, 14, 0, 0, tzinfo=timezone.utc),
+            "end_date": datetime(2020, 1, 1, 18, 0, 0, tzinfo=timezone.utc),
             "recurrences": "RRULE:FREQ=WEEKLY;BYDAY=TU",
         }
         self.activity = Activity(**activity_data)
 
-    @patch("django.utils.timezone.now", side_effect=mock_now(timezone.datetime(2020, 3, 20, 0, 0)))
+    @patch("django.utils.timezone.now", side_effect=mock_now(datetime(2020, 3, 20, 0, 0)))
     def test_get_occurence_at_same_dst(self, mock_tz):
         """
-        Query an activity ocurrence when
-        - that activity's first occurence was in CET
+        Query an activity occurrence when
+        - that activity's first occurrence was in CET
         - our current timezone is in CET
-        - the queried occurence is in CET
+        - the queried occurrence is in CET
         """
-        query_dt = timezone.make_aware(
-            timezone.datetime(2020, 10, 27, 15, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        query_dt = djtimezone.make_aware(datetime(2020, 10, 27, 15, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
 
         occurence_at_query_dt = self.activity.get_occurrence_at(query_dt)
         self.assertIsNotNone(occurence_at_query_dt)
 
-    @patch("django.utils.timezone.now", side_effect=mock_now(timezone.datetime(2020, 3, 20, 0, 0)))
+    @patch("django.utils.timezone.now", side_effect=mock_now(datetime(2020, 3, 20, 0, 0)))
     def test_CET_get_occurence_at_CET_to_CEST(self, mock_tz):
         """
-        Query an activity ocurrence when
-        - that activity's first occurence was in CET
+        Query an activity occurrence when
+        - that activity's first occurrence was in CET
         - our current timezone is in CET
-        - the queried occurence is in CEST
+        - the queried occurrence is in CEST
         """
-        query_dt = timezone.make_aware(
-            timezone.datetime(2020, 3, 31, 15, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        query_dt = djtimezone.make_aware(datetime(2020, 3, 31, 15, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
 
         occurence_at_query_dt = self.activity.get_occurrence_at(query_dt)
         self.assertIsNotNone(occurence_at_query_dt)
 
-    @patch("django.utils.timezone.now", side_effect=mock_now(timezone.datetime(2020, 3, 20, 0, 0)))
+    @patch("django.utils.timezone.now", side_effect=mock_now(datetime(2020, 3, 20, 0, 0)))
     def test_CET_get_occurence_at_CEST_to_CET(self, mock_tz):
         """
-        Query an activity ocurrence when
-        - that activity's first occurence was in CEST
+        Query an activity occurrence when
+        - that activity's first occurrence was in CEST
         - our current timezone is in CET
-        - the queried occurence is in CET
+        - the queried occurrence is in CET
         """
         # Make start/end date in CEST (UTC+2)
-        # Start dt: 01 MAR 2020, 16.00 (CEST)
-        self.activity.start_date = timezone.datetime(2020, 6, 1, 14, 0, 0, tzinfo=timezone.utc)
-        self.activity.end_date = timezone.datetime(2020, 6, 1, 18, 0, 0, tzinfo=timezone.utc)
+        # Start dt: 01 JUN 2020, 16.00 (CEST)
+        self.activity.start_date = datetime(2020, 6, 1, 14, 0, 0, tzinfo=timezone.utc)
+        self.activity.end_date = datetime(2020, 6, 1, 18, 0, 0, tzinfo=timezone.utc)
 
-        query_dt = timezone.make_aware(
-            timezone.datetime(2020, 10, 27, 16, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        query_dt = djtimezone.make_aware(datetime(2020, 10, 27, 16, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
 
         occurence_at_query_dt = self.activity.get_occurrence_at(query_dt)
         self.assertIsNotNone(occurence_at_query_dt)
 
-    @patch("django.utils.timezone.now", side_effect=mock_now(timezone.datetime(2020, 10, 20, 0, 0)))
+    @patch("django.utils.timezone.now", side_effect=mock_now(datetime(2020, 10, 20, 0, 0)))
     def test_CEST_get_occurence_at_CET_to_CEST(self, mock_tz):
         """
-        Query an activity ocurrence when
-        - that activity's first occurence was in CET
+        Query an activity occurrence when
+        - that activity's first occurrence was in CET
         - our current timezone is in CEST
-        - the queried occurence is in CEST
+        - the queried occurrence is in CEST
         """
-        query_dt = timezone.make_aware(
-            timezone.datetime(2020, 3, 31, 15, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        query_dt = djtimezone.make_aware(datetime(2020, 3, 31, 15, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
 
         occurence_at_query_dt = self.activity.get_occurrence_at(query_dt)
         self.assertIsNotNone(occurence_at_query_dt)
 
-    @patch("django.utils.timezone.now", side_effect=mock_now(timezone.datetime(2020, 10, 20, 0, 0)))
+    @patch("django.utils.timezone.now", side_effect=mock_now(datetime(2020, 10, 20, 0, 0)))
     def test_CEST_get_occurence_at_CEST_to_CET(self, mock_tz):
         """
-        Query an activity ocurrence when
-        - that activity's first occurence was in CEST
+        Query an activity occurrence when
+        - that activity's first occurrence was in CEST
         - our current timezone is in CET
-        - the queried occurence is in CET
+        - the queried occurrence is in CET
         """
         # Make start/end date in CEST (UTC+2)
-        # Start dt: 01 MAR 2020, 16.00 (CEST)
-        self.activity.start_date = timezone.datetime(2020, 6, 1, 14, 0, 0, tzinfo=timezone.utc)
-        self.activity.end_date = timezone.datetime(2020, 6, 1, 18, 0, 0, tzinfo=timezone.utc)
+        # Start dt: 01 JUN 2020, 16.00 (CEST)
+        self.activity.start_date = datetime(2020, 6, 1, 14, 0, 0, tzinfo=timezone.utc)
+        self.activity.end_date = datetime(2020, 6, 1, 18, 0, 0, tzinfo=timezone.utc)
 
-        query_dt = timezone.make_aware(
-            timezone.datetime(2020, 10, 27, 16, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        query_dt = djtimezone.make_aware(datetime(2020, 10, 27, 16, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
 
         occurence_at_query_dt = self.activity.get_occurrence_at(query_dt)
         self.assertIsNotNone(occurence_at_query_dt)
@@ -175,17 +163,17 @@ class EXDATEandRDATEwithDSTTests(TestCase):
             "title": "DST Test Event 2: Electric Boogaloo",
             # Start/end dates are during CET (UTC+1)
             # Start dt: 03 NOV 2020, 19.00 (CET)
-            "start_date": timezone.datetime(2020, 11, 3, 18, 0, 0, tzinfo=timezone.utc),
-            "end_date": timezone.datetime(2020, 11, 3, 23, 30, 0, tzinfo=timezone.utc),
+            "start_date": datetime(2020, 11, 3, 18, 0, 0, tzinfo=timezone.utc),
+            "end_date": datetime(2020, 11, 3, 23, 30, 0, tzinfo=timezone.utc),
             "recurrences": self.recurrence_iso,
         }
         self.activity = Activity(**activity_data)
 
-    @patch("django.utils.timezone.now", side_effect=mock_now(timezone.datetime(2020, 12, 3, 0, 0)))
+    @patch("django.utils.timezone.now", side_effect=mock_now(datetime(2020, 12, 3, 0, 0)))
     def test_RDATE_EXDATE_at_same_dst(self, mock_tz):
         """
         Query RDATEs and EXDATEs when:
-        - the activity's first occurence was in CET
+        - the activity's first occurrence was in CET
         - our current timezone is in CET
         - RDATE/EXDATE are in CET
 
@@ -197,38 +185,32 @@ class EXDATEandRDATEwithDSTTests(TestCase):
         self.activity.recurrences = deserialize_recurrence_test(self.recurrence_iso)
 
         # 30 December RDATE
-        rdate_dt = timezone.make_aware(
-            timezone.datetime(2020, 12, 30, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        rdate_dt = djtimezone.make_aware(datetime(2020, 12, 30, 19, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
         self.assertIsNotNone(self.activity.get_occurrence_at(rdate_dt))
 
         # 29 December EXDATE
-        exdate_dt = timezone.make_aware(
-            timezone.datetime(2020, 12, 29, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        exdate_dt = djtimezone.make_aware(datetime(2020, 12, 29, 19, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
         self.assertIsNone(self.activity.get_occurrence_at(exdate_dt))
 
         # 12 January EXDATE
-        exdate_dt = timezone.make_aware(
-            timezone.datetime(2021, 1, 12, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        exdate_dt = djtimezone.make_aware(datetime(2021, 1, 12, 19, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
         self.assertIsNone(self.activity.get_occurrence_at(exdate_dt))
 
-    @patch("django.utils.timezone.now", side_effect=mock_now(timezone.datetime(2020, 12, 3, 0, 0)))
+    @patch("django.utils.timezone.now", side_effect=mock_now(datetime(2020, 12, 3, 0, 0)))
     def test_CET_RDATE_EXDATE_CET_to_CEST(self, mock_tz):
         """
         Query RDATEs and EXDATEs when:
-        - the activity's first occurence was in CET
+        - the activity's first occurrence was in CET
         - our current timezone is in CET
         - RDATE/EXDATE are in CEST
         """
         self._test_RDATE_EXDATE_CET_to_CEST()
 
-    @patch("django.utils.timezone.now", side_effect=mock_now(timezone.datetime(2021, 5, 1, 0, 0)))
+    @patch("django.utils.timezone.now", side_effect=mock_now(datetime(2021, 5, 1, 0, 0)))
     def test_CEST_RDATE_EXDATE_CET_to_CEST(self, mock_tz):
         """
         Query RDATEs and EXDATEs when:
-        - the activity's first occurence was in CET
+        - the activity's first occurrence was in CET
         - our current timezone is in CEST
         - RDATE/EXDATE are in CEST
         """
@@ -237,7 +219,7 @@ class EXDATEandRDATEwithDSTTests(TestCase):
     def _test_RDATE_EXDATE_CET_to_CEST(self):
         """
         Query RDATEs and EXDATEs when:
-        - the activity's first occurence was in CET
+        - the activity's first occurrence was in CET
         - RDATE/EXDATE are in CEST
 
         The current timezone is set in a calling function
@@ -250,32 +232,28 @@ class EXDATEandRDATEwithDSTTests(TestCase):
         self.activity.recurrences = deserialize_recurrence_test(self.recurrence_iso)
 
         # 17 April RDATE
-        rdate_dt = timezone.make_aware(
-            timezone.datetime(2021, 4, 17, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        rdate_dt = djtimezone.make_aware(datetime(2021, 4, 17, 19, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
         self.assertIsNotNone(self.activity.get_occurrence_at(rdate_dt))
 
         # 04 April EXDATE
-        exdate_dt = timezone.make_aware(
-            timezone.datetime(2021, 4, 4, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        exdate_dt = djtimezone.make_aware(datetime(2021, 4, 4, 19, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
         self.assertIsNone(self.activity.get_occurrence_at(exdate_dt))
 
-    @patch("django.utils.timezone.now", side_effect=mock_now(timezone.datetime(2020, 12, 3, 0, 0)))
+    @patch("django.utils.timezone.now", side_effect=mock_now(datetime(2020, 12, 3, 0, 0)))
     def test_CET_RDATE_EXDATE_CEST_to_CET(self, mock_tz):
         """
         Query RDATEs and EXDATEs when:
-        - the activity's first occurence was in CEST
+        - the activity's first occurrence was in CEST
         - our current timezone is in CET
         - RDATE/EXDATE are in CET
         """
         self._test_RDATE_EXDATE_CEST_to_CET()
 
-    @patch("django.utils.timezone.now", side_effect=mock_now(timezone.datetime(2021, 5, 1, 0, 0)))
+    @patch("django.utils.timezone.now", side_effect=mock_now(datetime(2021, 5, 1, 0, 0)))
     def test_CEST_RDATE_EXDATE_CEST_to_CET(self, mock_tz):
         """
         Query RDATEs and EXDATEs when:
-        - the activity's first occurence was in CEST
+        - the activity's first occurrence was in CEST
         - our current timezone is in CET
         - RDATE/EXDATE are in CET
         """
@@ -284,7 +262,7 @@ class EXDATEandRDATEwithDSTTests(TestCase):
     def _test_RDATE_EXDATE_CEST_to_CET(self):
         """
         Query RDATEs and EXDATEs when:
-        - the activity's first occurence was in CEST
+        - the activity's first occurrence was in CEST
         - RDATE/EXDATE are in CET
 
         The current timezone is set in a calling function
@@ -293,23 +271,44 @@ class EXDATEandRDATEwithDSTTests(TestCase):
         EXDATE: Tuesday 27 October 2020
         """
         # Start dt: 20 OCT 2020, 19.00 (CEST; UTC+2)
-        self.activity.start_date = timezone.datetime(2020, 10, 20, 17, 0, 0, tzinfo=timezone.utc)
+        self.activity.start_date = datetime(2020, 10, 20, 17, 0, 0, tzinfo=timezone.utc)
 
         self.recurrence_iso += "\n\nRDATE:20201021T230000Z"
         self.recurrence_iso += "\nEXDATE:20201026T230000Z"
         self.activity.recurrences = deserialize_recurrence_test(self.recurrence_iso)
 
         # 22 October RDATE
-        rdate_dt = timezone.make_aware(
-            timezone.datetime(2020, 10, 22, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        rdate_dt = djtimezone.make_aware(datetime(2020, 10, 22, 19, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
         self.assertIsNotNone(self.activity.get_occurrence_at(rdate_dt))
 
         # 27 October EXDATE
-        exdate_dt = timezone.make_aware(
-            timezone.datetime(2020, 10, 27, 19, 0, 0), timezone.pytz.timezone("Europe/Amsterdam")
-        )
+        exdate_dt = djtimezone.make_aware(datetime(2020, 10, 27, 19, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam"))
         self.assertIsNone(self.activity.get_occurrence_at(exdate_dt))
+
+    def _test_set_time_for_RDATE_EXDATE(self):
+        """Tests RDATE/EXDATE time conversion"""
+        datetimes = [
+            datetime(2024, 3, 20, tzinfo=timezone.utc),
+            datetime(2024, 6, 28, tzinfo=timezone.utc),
+            datetime(2024, 11, 30, tzinfo=timezone.utc),
+        ]
+        dt_time = datetime(2024, 1, 1, 11, 20, 18, tzinfo=zoneinfo.ZoneInfo("Europe/Amsterdam"))
+        for dt in list(set_time_for_RDATE_EXDATE(datetimes, dt_time)):
+            self.assertIsNotNone(
+                dt.tzinfo, "RDATE/EXDATE must have their timezone set. The iCal export will break otherwise."
+            )
+            self.assertEqual(dt.tzinfo.key, "Europe/Amsterdam")
+            self.assertEqual(dt.time(), time(11, 20, 18), "Start time should be 11:20:18 regardless of DST")
+
+    @patch("django.utils.timezone.now", side_effect=mock_now(datetime(2024, 6, 20)))
+    def test_set_time_for_RDATE_EXDATE_dst(self, _):
+        """Tests RDATE/EXDATE time conversion during DST"""
+        self._test_set_time_for_RDATE_EXDATE()
+
+    @patch("django.utils.timezone.now", side_effect=mock_now(datetime(2024, 1, 20)))
+    def test_set_time_for_RDATE_EXDATE_std(self, _):
+        """Tests RDATE/EXDATE time conversion during standard time"""
+        self._test_set_time_for_RDATE_EXDATE()
 
 
 class TestCaseActivityClean(TestCase):
@@ -321,8 +320,8 @@ class TestCaseActivityClean(TestCase):
             "title": "Test Activity",
             "description": "This is a testcase!\n\nWith a cool new line!",
             "location": "In a testcase",
-            "start_date": timezone.get_current_timezone().localize(datetime(1970, 1, 1, 0, 0), is_dst=None),
-            "end_date": timezone.get_current_timezone().localize(datetime(1970, 1, 1, 23, 59), is_dst=None),
+            "start_date": djtimezone.make_aware(datetime(1970, 1, 1, 0, 0), zoneinfo.ZoneInfo("Europe/Amsterdam")),
+            "end_date": djtimezone.make_aware(datetime(1970, 1, 1, 23, 59), zoneinfo.ZoneInfo("Europe/Amsterdam")),
         }
         self.base_activity = Activity.objects.create(**self.base_activity_dict)
 
@@ -332,7 +331,7 @@ class TestCaseActivityClean(TestCase):
 
     # Start date must be after end date
     def test_clean_wrong_start_date(self):
-        self.base_activity.start_date = datetime(1971, 1, 1).astimezone(timezone.get_current_timezone())
+        self.base_activity.start_date = datetime(1971, 1, 1).astimezone(djtimezone.get_current_timezone())
 
         with self.assertRaises(ValidationError) as error:
             self.base_activity.clean_fields()
@@ -410,15 +409,15 @@ class ActivityTestCase(TestCase):
 
     def test_get_activitymoments_between(self):
         """Tests the Activity get_activitymoments_between method"""
-        after = timezone.datetime(2020, 10, 2, 0, 0, 0, tzinfo=timezone.utc)
-        before = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
+        after = datetime(2020, 10, 2, 0, 0, 0, tzinfo=timezone.utc)
+        before = datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
         activity_moments = self.activity.get_activitymoments_between(after, before)
 
         # There are two activities
         self.assertEqual(len(activity_moments), 2)
         dts = [
-            timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc),
-            timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc),
+            datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc),
+            datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc),
         ]
         # Check if all expected dates are present and not a single one more
         for activity_moment in activity_moments:
@@ -443,18 +442,18 @@ class ActivityTestCase(TestCase):
 
     def test_get_occurrences_starting_between(self):
         """Tests the get_occurrences_starting_between method, returning all activities according to the recurring rules"""
-        after = timezone.datetime(2020, 10, 2, 0, 0, 0, tzinfo=timezone.utc)
-        before = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
+        after = datetime(2020, 10, 2, 0, 0, 0, tzinfo=timezone.utc)
+        before = datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
         recurrences = list(self.activity.get_occurrences_starting_between(after, before))
 
         self.assertEqual(len(recurrences), 2)
-        self.assertEqual(recurrences[0], timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc))
-        self.assertEqual(recurrences[1], timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc))
+        self.assertEqual(recurrences[0], datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc))
+        self.assertEqual(recurrences[1], datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc))
 
     def test_get_occurrences_starting_between_exclude(self):
         """Tests the get_occurrences_starting_between method, confirms that excluded dates are processed accurately"""
-        after = timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
-        before = timezone.datetime(2020, 10, 23, 0, 0, 0, tzinfo=timezone.utc)
+        after = datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
+        before = datetime(2020, 10, 23, 0, 0, 0, tzinfo=timezone.utc)
         recurrences = list(self.activity.get_occurrences_starting_between(after, before))
 
         # There is normally an activity on the 21st, but it's excluded so it doesn't happen.
@@ -464,12 +463,12 @@ class ActivityTestCase(TestCase):
         """Tests if an occurrence starting before the specified time, but ending after it
         (thus still partially taking place during the specified period) is included"""
         # Note: Activity has an occurrence on 07-10-21, which ends the next day at 02:00 (UTC)
-        after = timezone.datetime(2020, 10, 8, 0, 0, 0, tzinfo=timezone.utc)
-        before = timezone.datetime(2020, 10, 10, 0, 0, 0, tzinfo=timezone.utc)
+        after = datetime(2020, 10, 8, 0, 0, 0, tzinfo=timezone.utc)
+        before = datetime(2020, 10, 10, 0, 0, 0, tzinfo=timezone.utc)
         recurrences = list(self.activity.get_activitymoments_between(after, before))
 
         self.assertEqual(len(recurrences), 1)
-        self.assertEqual(recurrences[0].recurrence_id, timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc))
+        self.assertEqual(recurrences[0].recurrence_id, datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc))
 
         # The activity does not START betwee the specified bounds
         self.assertEqual(len(list(self.activity.get_occurrences_starting_between(after, before))), 0)
@@ -482,7 +481,7 @@ class ActivityTestCase(TestCase):
         specified alternative start and end times, is included/excluded in
         get_activitymoments_between
         """
-        recurrence_id = recurrence_id or timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)
+        recurrence_id = recurrence_id or datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)
         self.activity_moment, _ = ActivityMoment.objects.get_or_create(
             parent_activity=self.activity,
             recurrence_id=recurrence_id,
@@ -494,8 +493,8 @@ class ActivityTestCase(TestCase):
         self.activity_moment.save()
 
         # Get activitymoments in this interval
-        after = after or timezone.datetime(2020, 10, 9, 0, 0, 0, tzinfo=timezone.utc)
-        before = before or timezone.datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
+        after = after or datetime(2020, 10, 9, 0, 0, 0, tzinfo=timezone.utc)
+        before = before or datetime(2020, 10, 16, 0, 0, 0, tzinfo=timezone.utc)
         activity_moments = list(self.activity.get_activitymoments_between(after, before))
 
         # All expected occurrences should be there
@@ -520,11 +519,11 @@ class ActivityTestCase(TestCase):
         Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
         but with a local_start_date between these same bounds, is included in the result.
         """
-        recurrence_id = timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
+        recurrence_id = datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
         self._test_get_activitymoments_between(
-            [recurrence_id, timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)],
+            [recurrence_id, datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)],
             recurrence_id=recurrence_id,
-            new_start_date=timezone.datetime(2020, 10, 13, 14, 0, 0, tzinfo=timezone.utc),
+            new_start_date=datetime(2020, 10, 13, 14, 0, 0, tzinfo=timezone.utc),
         )
 
     def test_get_activitymoments_between_with_nonrecurring_extra_moment(self):
@@ -532,12 +531,12 @@ class ActivityTestCase(TestCase):
         Tests that an activity occuring irregardless of the recurrence setup is returned. Just not as part of
         that recurrence.
         """
-        recurrence_id = timezone.datetime(2020, 10, 15, 10, 0, 0, tzinfo=timezone.utc)
+        recurrence_id = datetime(2020, 10, 15, 10, 0, 0, tzinfo=timezone.utc)
         self._test_get_activitymoments_between(
             [recurrence_id],
             recurrence_id=recurrence_id,
-            after=timezone.datetime(2020, 10, 15, 8, 0, 0, tzinfo=timezone.utc),
-            before=timezone.datetime(2020, 10, 15, 23, 30, 0, tzinfo=timezone.utc),
+            after=datetime(2020, 10, 15, 8, 0, 0, tzinfo=timezone.utc),
+            before=datetime(2020, 10, 15, 23, 30, 0, tzinfo=timezone.utc),
         )
 
     def test_get_activitymoments_between_extra_start_outside_bounds(self):
@@ -545,11 +544,11 @@ class ActivityTestCase(TestCase):
         Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
         and with a local_start_date also outside these same bounds, is excluded in the result.
         """
-        recurrence_id = timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
+        recurrence_id = datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
         self._test_get_activitymoments_between(
-            [timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)],
+            [datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)],
             recurrence_id=recurrence_id,
-            new_start_date=timezone.datetime(2020, 11, 1, 14, 0, 0, tzinfo=timezone.utc),
+            new_start_date=datetime(2020, 11, 1, 14, 0, 0, tzinfo=timezone.utc),
         )
 
     def test_get_activitymoments_between_extra_end_within_bounds(self):
@@ -557,12 +556,12 @@ class ActivityTestCase(TestCase):
         Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
         but with a local_end_date between these same bounds, is included in the result.
         """
-        recurrence_id = timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
+        recurrence_id = datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
         self._test_get_activitymoments_between(
-            [recurrence_id, timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)],
+            [recurrence_id, datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)],
             recurrence_id=recurrence_id,
-            new_start_date=timezone.datetime(2020, 10, 1, 14, 0, 0, tzinfo=timezone.utc),
-            new_end_date=timezone.datetime(2020, 10, 13, 14, 0, 0, tzinfo=timezone.utc),
+            new_start_date=datetime(2020, 10, 1, 14, 0, 0, tzinfo=timezone.utc),
+            new_end_date=datetime(2020, 10, 13, 14, 0, 0, tzinfo=timezone.utc),
         )
 
     def test_get_activitymoments_between_extra_wrap_bounds_just_end(self):
@@ -570,11 +569,11 @@ class ActivityTestCase(TestCase):
         Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
         but with a local_end_date making it wrap the bounds, is included in the result.
         """
-        recurrence_id = timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
+        recurrence_id = datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
         self._test_get_activitymoments_between(
-            [recurrence_id, timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)],
+            [recurrence_id, datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)],
             recurrence_id=recurrence_id,
-            new_end_date=timezone.datetime(2020, 10, 30, 14, 0, 0, tzinfo=timezone.utc),
+            new_end_date=datetime(2020, 10, 30, 14, 0, 0, tzinfo=timezone.utc),
         )
 
     def test_get_activitymoments_between_extra_wrap_bounds_start_and_end(self):
@@ -582,12 +581,12 @@ class ActivityTestCase(TestCase):
         Tests if an occurrence with a recurrence_id outside the bounds of get_occurrences_between,
         but completely wrapping the bounds with a new start AND end date, is included in the result.
         """
-        recurrence_id = timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
+        recurrence_id = datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
         self._test_get_activitymoments_between(
-            [recurrence_id, timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)],
+            [recurrence_id, datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)],
             recurrence_id=recurrence_id,
-            new_start_date=timezone.datetime(2020, 10, 1, 14, 0, 0, tzinfo=timezone.utc),
-            new_end_date=timezone.datetime(2020, 10, 30, 14, 0, 0, tzinfo=timezone.utc),
+            new_start_date=datetime(2020, 10, 1, 14, 0, 0, tzinfo=timezone.utc),
+            new_end_date=datetime(2020, 10, 30, 14, 0, 0, tzinfo=timezone.utc),
         )
 
     def test_get_activitymoments_between_extra_default_end_within_bounds(self):
@@ -596,12 +595,12 @@ class ActivityTestCase(TestCase):
         but with a local_start_date just before the bounds, such that the activity's default duration
         makes it end within the bounds, is included in the result.
         """
-        recurrence_id = timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
+        recurrence_id = datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
         self._test_get_activitymoments_between(
-            [recurrence_id, timezone.datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)],
+            [recurrence_id, datetime(2020, 10, 14, 14, 0, 0, tzinfo=timezone.utc)],
             recurrence_id=recurrence_id,
             # Start half an hour before the bounds
-            new_start_date=timezone.datetime(2020, 10, 9, 23, 30, 0, tzinfo=timezone.utc),
+            new_start_date=datetime(2020, 10, 9, 23, 30, 0, tzinfo=timezone.utc),
         )
 
     def test_get_activitymoments_between_surplus_start_outside(self):
@@ -611,7 +610,7 @@ class ActivityTestCase(TestCase):
         """
         self._test_get_activitymoments_between(
             [],
-            new_start_date=timezone.datetime(2020, 10, 18, 14, 0, 0, tzinfo=timezone.utc),
+            new_start_date=datetime(2020, 10, 18, 14, 0, 0, tzinfo=timezone.utc),
         )
 
     def test_get_activitymoments_between_surplus_end_earlier(self):
@@ -621,31 +620,31 @@ class ActivityTestCase(TestCase):
         """
         self._test_get_activitymoments_between(
             [],
-            new_end_date=timezone.datetime(2020, 10, 14, 15, 30, 0, tzinfo=timezone.utc),
-            after=timezone.datetime(2020, 10, 14, 17, 0, 0, tzinfo=timezone.utc),
-            before=timezone.datetime(2020, 10, 14, 23, 30, 0, tzinfo=timezone.utc),
+            new_end_date=datetime(2020, 10, 14, 15, 30, 0, tzinfo=timezone.utc),
+            after=datetime(2020, 10, 14, 17, 0, 0, tzinfo=timezone.utc),
+            before=datetime(2020, 10, 14, 23, 30, 0, tzinfo=timezone.utc),
         )
 
     def test_get_activitymoments_between_cancellation(self):
         # Test that a Cancelled activity still shows up in this query (id=7)
         self._test_get_activitymoments_between(
-            [timezone.datetime(2021, 9, 15, 14, 0, 0, tzinfo=timezone.utc)],
-            after=timezone.datetime(2021, 9, 12, 0, 0, 0, tzinfo=timezone.utc),
-            before=timezone.datetime(2021, 9, 18, 0, 0, 0, tzinfo=timezone.utc),
+            [datetime(2021, 9, 15, 14, 0, 0, tzinfo=timezone.utc)],
+            after=datetime(2021, 9, 12, 0, 0, 0, tzinfo=timezone.utc),
+            before=datetime(2021, 9, 18, 0, 0, 0, tzinfo=timezone.utc),
         )
         # Test that a Removed activity does not show up in this query (id=8)
         self._test_get_activitymoments_between(
             [],
-            after=timezone.datetime(2021, 9, 4, 0, 0, 0, tzinfo=timezone.utc),
-            before=timezone.datetime(2021, 9, 11, 0, 0, 0, tzinfo=timezone.utc),
+            after=datetime(2021, 9, 4, 0, 0, 0, tzinfo=timezone.utc),
+            before=datetime(2021, 9, 11, 0, 0, 0, tzinfo=timezone.utc),
         )
 
         # Test method exclusion parameter
         self.assertTrue(
             any(
                 self.activity.get_activitymoments_between(
-                    start_date=timezone.datetime(2021, 9, 4, 0, 0, 0, tzinfo=timezone.utc),
-                    end_date=timezone.datetime(2021, 9, 11, 0, 0, 0, tzinfo=timezone.utc),
+                    start_date=datetime(2021, 9, 4, 0, 0, 0, tzinfo=timezone.utc),
+                    end_date=datetime(2021, 9, 11, 0, 0, 0, tzinfo=timezone.utc),
                     exclude_removed=False,
                 )
             )
@@ -655,41 +654,41 @@ class ActivityTestCase(TestCase):
         """Check that excluded recursion dates are not returned"""
         self.assertGreater(
             self.activity.get_next_activitymoment(
-                dtstart=timezone.datetime(2020, 10, 20, 23, 30, 0, tzinfo=timezone.utc)
+                dtstart=datetime(2020, 10, 20, 23, 30, 0, tzinfo=timezone.utc)
             ).start_date,
-            timezone.datetime(2020, 10, 24, 15, 00, 0, tzinfo=timezone.utc),
+            datetime(2020, 10, 24, 15, 00, 0, tzinfo=timezone.utc),
         )
 
     def test_get_next_activitymoment_dsl(self):
         self.assertEqual(
             self.activity.get_next_activitymoment(
-                dtstart=timezone.datetime(2020, 10, 25, 23, 30, 0, tzinfo=timezone.utc)
+                dtstart=datetime(2020, 10, 25, 23, 30, 0, tzinfo=timezone.utc)
             ).start_date,
-            timezone.datetime(2020, 10, 28, 15, 00, 0, tzinfo=timezone.utc),
+            datetime(2020, 10, 28, 15, 00, 0, tzinfo=timezone.utc),
         )
 
     def test_get_next_activitymoment_moved(self):
         # Test moving back
         am = ActivityMoment.objects.create(
             parent_activity=self.activity,
-            recurrence_id=timezone.datetime(2021, 7, 14, 14, 00, 0, tzinfo=timezone.utc),
-            local_start_date=timezone.datetime(2021, 7, 15, 14, 00, 0, tzinfo=timezone.utc),
+            recurrence_id=datetime(2021, 7, 14, 14, 00, 0, tzinfo=timezone.utc),
+            local_start_date=datetime(2021, 7, 15, 14, 00, 0, tzinfo=timezone.utc),
         )
         self.assertEqual(
             self.activity.get_next_activitymoment(
-                dtstart=timezone.datetime(2021, 7, 12, 00, 00, 0, tzinfo=timezone.utc)
+                dtstart=datetime(2021, 7, 12, 00, 00, 0, tzinfo=timezone.utc)
             ).start_date,
-            timezone.datetime(2021, 7, 15, 14, 00, 0, tzinfo=timezone.utc),
+            datetime(2021, 7, 15, 14, 00, 0, tzinfo=timezone.utc),
         )
 
         # Test moving forward in time
-        am.local_start_date = timezone.datetime(2021, 7, 14, 10, 00, 0, tzinfo=timezone.utc)
+        am.local_start_date = datetime(2021, 7, 14, 10, 00, 0, tzinfo=timezone.utc)
         am.save()
         self.assertEqual(
             self.activity.get_next_activitymoment(
-                dtstart=timezone.datetime(2021, 7, 12, 00, 00, 0, tzinfo=timezone.utc)
+                dtstart=datetime(2021, 7, 12, 00, 00, 0, tzinfo=timezone.utc)
             ).start_date,
-            timezone.datetime(2021, 7, 14, 10, 00, 0, tzinfo=timezone.utc),
+            datetime(2021, 7, 14, 10, 00, 0, tzinfo=timezone.utc),
         )
 
     def test_get_next_activity_moment_dst_shift_on_recurrences(self):
@@ -705,15 +704,15 @@ class ActivityTestCase(TestCase):
         activity = Activity.objects.get(id=5)
         self.assertEqual(
             activity.get_next_activitymoment(
-                dtstart=timezone.datetime(2023, 4, 3, 19, 00, 0, tzinfo=timezone.utc), inc=True
+                dtstart=datetime(2023, 4, 3, 19, 00, 0, tzinfo=timezone.utc), inc=True
             ).start_date,
-            timezone.datetime(2023, 4, 3, 19, 00, 0, tzinfo=timezone.utc),
+            datetime(2023, 4, 3, 19, 00, 0, tzinfo=timezone.utc),
         )
         self.assertEqual(
             activity.get_next_activitymoment(
-                dtstart=timezone.datetime(2023, 4, 3, 19, 00, 0, tzinfo=timezone.utc), inc=False
+                dtstart=datetime(2023, 4, 3, 19, 00, 0, tzinfo=timezone.utc), inc=False
             ).start_date,
-            timezone.datetime(2023, 4, 10, 19, 00, 0, tzinfo=timezone.utc),
+            datetime(2023, 4, 10, 19, 00, 0, tzinfo=timezone.utc),
         )
 
     def test_get_next_activity_moment_inc_false(self):
@@ -721,22 +720,22 @@ class ActivityTestCase(TestCase):
         # Test recurrence inclusion
         self.assertEqual(
             self.activity.get_next_activitymoment(
-                dtstart=timezone.datetime(2021, 7, 7, 14, 00, 0, tzinfo=timezone.utc), inc=False
+                dtstart=datetime(2021, 7, 7, 14, 00, 0, tzinfo=timezone.utc), inc=False
             ).start_date,
-            timezone.datetime(2021, 7, 14, 14, 00, 0, tzinfo=timezone.utc),
+            datetime(2021, 7, 14, 14, 00, 0, tzinfo=timezone.utc),
         )
 
         # Test moved activitymoment inclusion
         ActivityMoment.objects.create(
             parent_activity=self.activity,
-            recurrence_id=timezone.datetime(2021, 7, 7, 14, 00, 0, tzinfo=timezone.utc),
-            local_start_date=timezone.datetime(2021, 7, 6, 14, 00, 0, tzinfo=timezone.utc),
+            recurrence_id=datetime(2021, 7, 7, 14, 00, 0, tzinfo=timezone.utc),
+            local_start_date=datetime(2021, 7, 6, 14, 00, 0, tzinfo=timezone.utc),
         )
         self.assertEqual(
             self.activity.get_next_activitymoment(
-                dtstart=timezone.datetime(2021, 7, 6, 14, 00, 0, tzinfo=timezone.utc), inc=False
+                dtstart=datetime(2021, 7, 6, 14, 00, 0, tzinfo=timezone.utc), inc=False
             ).start_date,
-            timezone.datetime(2021, 7, 14, 14, 00, 0, tzinfo=timezone.utc),
+            datetime(2021, 7, 14, 14, 00, 0, tzinfo=timezone.utc),
         )
 
     def test_get_next_activity_moment_inc_true(self):
@@ -744,75 +743,75 @@ class ActivityTestCase(TestCase):
         # Test recurrence inclusion
         self.assertEqual(
             self.activity.get_next_activitymoment(
-                dtstart=timezone.datetime(2021, 7, 7, 14, 00, 0, tzinfo=timezone.utc), inc=True
+                dtstart=datetime(2021, 7, 7, 14, 00, 0, tzinfo=timezone.utc), inc=True
             ).start_date,
-            timezone.datetime(2021, 7, 7, 14, 00, 0, tzinfo=timezone.utc),
+            datetime(2021, 7, 7, 14, 00, 0, tzinfo=timezone.utc),
         )
 
         # Test moved activitymoment inclusion
         ActivityMoment.objects.create(
             parent_activity=self.activity,
-            recurrence_id=timezone.datetime(2021, 7, 7, 14, 00, 0, tzinfo=timezone.utc),
-            local_start_date=timezone.datetime(2021, 7, 6, 14, 00, 0, tzinfo=timezone.utc),
+            recurrence_id=datetime(2021, 7, 7, 14, 00, 0, tzinfo=timezone.utc),
+            local_start_date=datetime(2021, 7, 6, 14, 00, 0, tzinfo=timezone.utc),
         )
         self.assertEqual(
             self.activity.get_next_activitymoment(
-                dtstart=timezone.datetime(2021, 7, 6, 14, 00, 0, tzinfo=timezone.utc), inc=True
+                dtstart=datetime(2021, 7, 6, 14, 00, 0, tzinfo=timezone.utc), inc=True
             ).start_date,
-            timezone.datetime(2021, 7, 6, 14, 00, 0, tzinfo=timezone.utc),
+            datetime(2021, 7, 6, 14, 00, 0, tzinfo=timezone.utc),
         )
 
     def test_get_next_activitymoment_recurrent(self):
         self.assertEqual(
             self.activity.get_next_activitymoment(
-                dtstart=timezone.datetime(2020, 9, 20, 23, 30, 0, tzinfo=timezone.utc)
+                dtstart=datetime(2020, 9, 20, 23, 30, 0, tzinfo=timezone.utc)
             ).start_date,
-            timezone.datetime(2020, 9, 23, 14, 00, 0, tzinfo=timezone.utc),
+            datetime(2020, 9, 23, 14, 00, 0, tzinfo=timezone.utc),
         )
 
     def test_get_next_activitymoment_cancelled(self):
         """Check that excluded recursion dates are not returned"""
         # Test that a Cancelled activity still shows up in this query (id=7)
         activity_moment = self.activity.get_next_activitymoment(
-            dtstart=timezone.datetime(2021, 9, 12, 0, 0, 0, tzinfo=timezone.utc)
+            dtstart=datetime(2021, 9, 12, 0, 0, 0, tzinfo=timezone.utc)
         )
-        self.assertEqual(activity_moment.start_date, timezone.datetime(2021, 9, 15, 14, 0, 0, tzinfo=timezone.utc))
+        self.assertEqual(activity_moment.start_date, datetime(2021, 9, 15, 14, 0, 0, tzinfo=timezone.utc))
         self.assertTrue(activity_moment.is_cancelled)
 
         # Test that a Removed activity does not show up in this query (id=8)
         # There is removed activity at 2021-9-8
         self.assertGreater(
             self.activity.get_next_activitymoment(
-                dtstart=timezone.datetime(2021, 9, 5, 0, 0, 0, tzinfo=timezone.utc)
+                dtstart=datetime(2021, 9, 5, 0, 0, 0, tzinfo=timezone.utc)
             ).start_date,
-            timezone.datetime(2021, 9, 9, 0, 0, 0, tzinfo=timezone.utc),
+            datetime(2021, 9, 9, 0, 0, 0, tzinfo=timezone.utc),
         )
 
         # Test exclusion parameter
         self.assertLess(
             self.activity.get_next_activitymoment(
-                dtstart=timezone.datetime(2021, 9, 5, 0, 0, 0, tzinfo=timezone.utc), exclude_removed=False
+                dtstart=datetime(2021, 9, 5, 0, 0, 0, tzinfo=timezone.utc), exclude_removed=False
             ).start_date,
-            timezone.datetime(2021, 9, 9, 0, 0, 0, tzinfo=timezone.utc),
+            datetime(2021, 9, 9, 0, 0, 0, tzinfo=timezone.utc),
         )
 
     def test_get_occurrence_at_nonexistent(self):
-        test_date = timezone.datetime(2020, 8, 14, 19, 0, 0, tzinfo=timezone.utc)
+        test_date = datetime(2020, 8, 14, 19, 0, 0, tzinfo=timezone.utc)
         occurrence = self.activity.get_occurrence_at(test_date)
         self.assertIsNone(occurrence)
 
     def test_get_occurrence_at_recurrent(self):
-        test_date = timezone.datetime(2020, 9, 9, 14, 0, 0, tzinfo=timezone.utc)
+        test_date = datetime(2020, 9, 9, 14, 0, 0, tzinfo=timezone.utc)
         occurrence = self.activity.get_occurrence_at(test_date)
         self.assertEqual(occurrence.parent_activity, self.activity)
         self.assertEqual(occurrence.recurrence_id, test_date)
 
     def test_get_occurrence_at_recurrent_dst(self):
-        test_date = timezone.datetime(2020, 11, 11, 14, 0, 0, tzinfo=timezone.utc)
+        test_date = datetime(2020, 11, 11, 14, 0, 0, tzinfo=timezone.utc)
         occurrence = self.activity.get_occurrence_at(test_date)
         self.assertIsNone(occurrence)
         # Set time to 15:00 instead of 14:00 due to timeshift
-        test_date = timezone.datetime(2020, 11, 11, 15, 0, 0, tzinfo=timezone.utc)
+        test_date = datetime(2020, 11, 11, 15, 0, 0, tzinfo=timezone.utc)
         occurrence = self.activity.get_occurrence_at(test_date)
         self.assertEqual(occurrence.parent_activity, self.activity)
         self.assertEqual(occurrence.recurrence_id, test_date)
@@ -820,14 +819,14 @@ class ActivityTestCase(TestCase):
 
     def test_get_occurrence_at_db_activitymoment(self):
         """Make sure the method retrieves activitymoments from the database if present"""
-        test_date = timezone.datetime(2020, 8, 19, 14, 0, 0, tzinfo=timezone.utc)
+        test_date = datetime(2020, 8, 19, 14, 0, 0, tzinfo=timezone.utc)
         occurrence = self.activity.get_occurrence_at(test_date)
         self.assertEqual(occurrence.parent_activity, self.activity)
         self.assertEqual(occurrence.recurrence_id, test_date)
         self.assertEqual(occurrence.id, 3)  # As defined in the fixture
 
     def test_get_occurrence_from_non_db_instance(self):
-        test_date = timezone.datetime(2020, 8, 14, 19, 0, 0, tzinfo=timezone.utc)
+        test_date = datetime(2020, 8, 14, 19, 0, 0, tzinfo=timezone.utc)
         occurrence = Activity.objects.get(id=3).get_occurrence_at(test_date)
         self.assertEqual(occurrence.parent_activity_id, 3)
         self.assertEqual(occurrence.recurrence_id, test_date)
@@ -840,18 +839,18 @@ class ActivityTestCase(TestCase):
         Tests an activity that starts just after midnight in CEST, but just before in UTC.
         """
         # Occurs weekly on Wednesday 12 aug, 01:30 CEST
-        self.activity.start_date = timezone.datetime(2020, 8, 11, 23, 30, 0, tzinfo=timezone.utc)
+        self.activity.start_date = datetime(2020, 8, 11, 23, 30, 0, tzinfo=timezone.utc)
         self.activity.save()
 
-        after = timezone.datetime(2020, 8, 11, 0, 0, 0, tzinfo=timezone.utc)
-        before = timezone.datetime(2020, 8, 25, 0, 0, 0, tzinfo=timezone.utc)
+        after = datetime(2020, 8, 11, 0, 0, 0, tzinfo=timezone.utc)
+        before = datetime(2020, 8, 25, 0, 0, 0, tzinfo=timezone.utc)
         recurrences = list(self.activity.get_occurrences_starting_between(after, before))
 
         # Should have an occurrence at the start
-        self.assertIn(timezone.datetime(2020, 8, 11, 23, 30, 0, tzinfo=timezone.utc), recurrences)
+        self.assertIn(datetime(2020, 8, 11, 23, 30, 0, tzinfo=timezone.utc), recurrences)
 
         # Should have an occurrence the week after (19 aug, 01:30 CEST)
-        self.assertIn(timezone.datetime(2020, 8, 18, 23, 30, 0, tzinfo=timezone.utc), recurrences)
+        self.assertIn(datetime(2020, 8, 18, 23, 30, 0, tzinfo=timezone.utc), recurrences)
 
         # Should not have other occurrences
         self.assertEqual(len(recurrences), 2)
@@ -861,13 +860,13 @@ class ActivityTestCase(TestCase):
         Tests if get_occurrence_at does not break if the activitymoment for that occurrence
         has a different start time
         """
-        recurrence_id = timezone.datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
+        recurrence_id = datetime(2020, 10, 7, 14, 0, 0, tzinfo=timezone.utc)
         self.activity_moment = ActivityMoment.objects.get(
             parent_activity=self.activity,
             recurrence_id=recurrence_id,
         )
         # Occur later instead
-        alt_start_time = timezone.datetime(2020, 10, 18, 14, 0, 0, tzinfo=timezone.utc)
+        alt_start_time = datetime(2020, 10, 18, 14, 0, 0, tzinfo=timezone.utc)
         self.activity_moment.local_start_date = alt_start_time
         self.activity_moment.save()
 
@@ -940,17 +939,17 @@ class ActivityMomentTestCase(TestCase):
 
         self.assertEqual(activity_moment.start_date, activity_moment.recurrence_id)
 
-        new_date = timezone.datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        new_date = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
         activity_moment.local_start_date = new_date
         self.assertEqual(activity_moment.start_date, new_date)
 
     def test_overwrites_end_date(self):
         """Tests if the end_date can be changed"""
         activity_moment: ActivityMoment = ActivityMoment.objects.get(id=1)
-        cur_date = timezone.datetime(2020, 8, 14, 21, 0, 0, tzinfo=timezone.utc)
+        cur_date = datetime(2020, 8, 14, 21, 0, 0, tzinfo=timezone.utc)
         self.assertEqual(activity_moment.end_date, cur_date)
 
-        new_date = timezone.datetime(2020, 8, 15, 23, 30, 0, tzinfo=timezone.utc)
+        new_date = datetime(2020, 8, 15, 23, 30, 0, tzinfo=timezone.utc)
         activity_moment.local_end_date = new_date
         self.assertEqual(activity_moment.end_date, new_date)
 
@@ -962,11 +961,11 @@ class ActivityMomentTestCase(TestCase):
 
         # Should not break without an end date
         activity_moment.full_clean()
-        activity_moment.local_start_date = timezone.datetime(2020, 8, 15, 19, 0, 0, tzinfo=timezone.utc)
+        activity_moment.local_start_date = datetime(2020, 8, 15, 19, 0, 0, tzinfo=timezone.utc)
         activity_moment.full_clean()
 
         # Should throw an error with an end date
-        new_date = timezone.datetime(2020, 8, 15, 19, 0, 0, tzinfo=timezone.utc)
+        new_date = datetime(2020, 8, 15, 19, 0, 0, tzinfo=timezone.utc)
         activity_moment.local_end_date = new_date
 
         # end_date = start_date -> invalid
@@ -974,7 +973,7 @@ class ActivityMomentTestCase(TestCase):
             activity_moment.full_clean()
 
         # Should throw an error with an end date, but without a start_date
-        new_date = timezone.datetime(2020, 8, 14, 18, 30, 0, tzinfo=timezone.utc)
+        new_date = datetime(2020, 8, 14, 18, 30, 0, tzinfo=timezone.utc)
         activity_moment.local_end_date = new_date
         activity_moment.local_start_date = None
 
@@ -983,9 +982,9 @@ class ActivityMomentTestCase(TestCase):
             activity_moment.full_clean()
 
         # Should not break if end_date > start_date
-        activity_moment.local_end_date = activity_moment.recurrence_id + timezone.timedelta(hours=3)
+        activity_moment.local_end_date = activity_moment.recurrence_id + timedelta(hours=3)
         activity_moment.full_clean()
-        activity_moment.local_start_date = activity_moment.recurrence_id + timezone.timedelta(hours=2)
+        activity_moment.local_start_date = activity_moment.recurrence_id + timedelta(hours=2)
         activity_moment.full_clean()
 
     def test_is_full(self):
@@ -1030,7 +1029,7 @@ class ActivityMomentTestCase(TestCase):
         self.assertEqual(participations.last().user_id, 1)
 
         # AnonymousUsers return empty querysets
-        self.assertEquals(ActivityMoment.objects.get(id=3).get_user_subscriptions(AnonymousUser()).count(), 0)
+        self.assertEqual(ActivityMoment.objects.get(id=3).get_user_subscriptions(AnonymousUser()).count(), 0)
 
     def test_get_guest_subscriptions(self):
         participants = ActivityMoment.objects.get(id=3).get_guest_subscriptions()
@@ -1053,16 +1052,16 @@ class ActivityMomentTestCase(TestCase):
     def test_is_open_for_subscriptions_moved_forward(self, mock_tz):
         activitymoment = ActivityMoment.objects.get(id=6)
         self.assertTrue(activitymoment.is_open_for_subscriptions())
-        activitymoment.local_start_date = timezone.datetime(2020, 9, 27, 14, 0, tzinfo=timezone.utc)
+        activitymoment.local_start_date = datetime(2020, 9, 27, 14, 0, tzinfo=timezone.utc)
         self.assertFalse(activitymoment.is_open_for_subscriptions())
 
     @patch("django.utils.timezone.now", side_effect=mock_now(datetime(2020, 10, 1, 0, 0)))
     def test_is_open_for_subscriptions_moved_backward(self, mock_tz):
         activitymoment = ActivityMoment.objects.get(id=6)
         self.assertFalse(activitymoment.is_open_for_subscriptions())
-        activitymoment.local_start_date = timezone.datetime(2020, 10, 2, 14, 0, tzinfo=timezone.utc)
+        activitymoment.local_start_date = datetime(2020, 10, 2, 14, 0, tzinfo=timezone.utc)
         self.assertTrue(activitymoment.is_open_for_subscriptions())
-        activitymoment.local_start_date = timezone.datetime(2020, 10, 20, 14, 0, tzinfo=timezone.utc)
+        activitymoment.local_start_date = datetime(2020, 10, 20, 14, 0, tzinfo=timezone.utc)
         self.assertFalse(activitymoment.is_open_for_subscriptions())
 
 

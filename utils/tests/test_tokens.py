@@ -1,4 +1,5 @@
 from typing import Optional, Tuple
+from unittest.mock import MagicMock
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.sessions.middleware import SessionMiddleware
@@ -30,7 +31,8 @@ class SessionTokenViewMixinTestCase(TestCase):
     def setUp(self) -> None:
         self.view = self.view_class.as_view()
         self.request_factory = RequestFactory()
-        self.middleware = SessionMiddleware()
+        get_response = MagicMock()
+        self.middleware = SessionMiddleware(get_response)
 
         self.user = UserModel.objects.create(username="user")
 
@@ -132,7 +134,8 @@ class UrlTokenViewMixinTestCase(TestCase):
     def setUp(self) -> None:
         self.view = self.view_class.as_view()
         self.request_factory = RequestFactory()
-        self.middleware = SessionMiddleware()
+        get_response = MagicMock()
+        self.middleware = SessionMiddleware(get_response)
 
         self.user = UserModel.objects.create(username="user")
 
