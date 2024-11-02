@@ -5,5 +5,5 @@
 -r common.txt
 
 # Import the prod-dependencies
-gunicorn~=20.1.0
-sentry-sdk~=1.9.8
+gunicorn~=23.0.0
+sentry-sdk~=2.17.0

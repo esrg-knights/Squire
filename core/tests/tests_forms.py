@@ -1,4 +1,3 @@
-
 from django.contrib.admin.models import LogEntry, ADDITION
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
@@ -11,7 +10,7 @@ from martor.fields import MartorFormField
 from martor.widgets import MartorWidget
 
 from core.fields import MarkdownObject, MarkdownCharField, MarkdownTextField
-from core.forms import MarkdownForm
+from core.forms import LoginForm, MarkdownForm
 from core.models import MarkdownImage
 from core.widgets import ImageUploadMartorWidget
 
@@ -19,19 +18,19 @@ User = get_user_model()
 
 
 class DummyLogEntryMarkdownForm(MarkdownForm):
-    """ Dummy Form to test MarkdownForm """
+    """Dummy Form to test MarkdownForm"""
+
     class Meta:
         model = LogEntry
         fields = "__all__"
-        widgets = {
-            'object_repr': MartorWidget
-        }
+        widgets = {"object_repr": MartorWidget}
+
     updating_user_field_name = "user"
 
+
 class MarkdownFormTest(TestCase):
-    """
-        Tests for MarkdownForm
-    """
+    """Tests for MarkdownForm"""
+
     def setUp(self):
         # Use an Admin-panel LogEntry object to test (it has a FK to user)
         self.user = User.objects.create(username="test_user")
@@ -39,9 +38,9 @@ class MarkdownFormTest(TestCase):
         self.content_type = ContentType.objects.get_for_model(LogEntry)
 
     def test_widget_changes(self):
-        """ Tests if MartorWidgets are changed to ImageUploadMartorWidget """
+        """Tests if MartorWidgets are changed to ImageUploadMartorWidget"""
         form = DummyLogEntryMarkdownForm(model_to_dict(self.obj), instance=self.obj, user=self.user)
-        obj_repr_field = form['object_repr']
+        obj_repr_field = form["object_repr"]
         self.assertIsNotNone(obj_repr_field)
         widget = obj_repr_field.field.widget
         self.assertIsNotNone(widget)
@@ -53,8 +52,8 @@ class MarkdownFormTest(TestCase):
 
     def test_adopt_orphan_images_on_new_save(self):
         """
-            Tests if uploaded images without an object-id are associated
-            with a new model instance upon saving it
+        Tests if uploaded images without an object-id are associated
+        with a new model instance upon saving it
         """
         md_img_content_type = ContentType.objects.get_for_model(MarkdownImage)
 
@@ -73,4 +72,3 @@ class MarkdownFormTest(TestCase):
         self.assertIsNone(MarkdownImage.objects.get(id=other_img.id).object_id)
         self.assertIsNone(MarkdownImage.objects.get(id=diff_img.id).object_id)
         self.assertEqual(MarkdownImage.objects.get(id=child_img.id).object_id, 123)
-

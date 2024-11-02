@@ -7,6 +7,7 @@ from committees.templatetags.association_group_config_tags import *
 from committees.templatetags.association_group_tags import *
 from committees.committeecollective import CommitteeBaseConfig, registry
 
+
 class AssociationConfigTagsTestCase(TestCase):
     def setUp(self):
         self.association_group = AssociationGroup.objects.create()
@@ -44,14 +45,13 @@ class AssociationConfigTagsTestCase(TestCase):
 
     def test_render_options(self):
         mock_setting_option = Mock()
-        context = {'association_group': self.association_group}
+        context = {"association_group": self.association_group}
         render = render_options(context, mock_setting_option)
         mock_setting_option.render.assert_called_with(association_group=self.association_group)
         self.assertIsNotNone(render)
 
 
 class AssociationGroupTagsTestCase(TestCase):
-
     @patch("committees.templatetags.association_group_tags.user_in_association_group")
     def test_is_in_group(self, mock_is_in_group: Mock):
         user = User()
@@ -64,8 +64,8 @@ class AssociationGroupTagsTestCase(TestCase):
 
     def test_is_type(self):
         association_group = AssociationGroup(type=AssociationGroup.ORDER)
-        self.assertTrue(is_type(association_group, 'ORDER'))
-        self.assertFalse(is_type(association_group, 'BOARD'))
+        self.assertTrue(is_type(association_group, "ORDER"))
+        self.assertFalse(is_type(association_group, "BOARD"))
         association_group = AssociationGroup(type=AssociationGroup.WORKGROUP)
-        self.assertTrue(is_type(association_group, 'WORKGROUP'))
-        self.assertFalse(is_type(association_group, 'CAMPAIGN'))
+        self.assertTrue(is_type(association_group, "WORKGROUP"))
+        self.assertFalse(is_type(association_group, "CAMPAIGN"))

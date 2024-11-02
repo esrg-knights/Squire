@@ -10,7 +10,7 @@ from boardgames.models import BoardGame
 
 class BoardGameView(SearchFormMixin, ListView):
     template_name = "boardgames/boardgames_overview.html"
-    context_object_name = 'boardgames'
+    context_object_name = "boardgames"
     search_form_class = BoardgameFilterForm
 
     paginate_by = 15
@@ -20,5 +20,5 @@ class BoardGameView(SearchFormMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super(BoardGameView, self).get_context_data()
-        context['content_type'] = ContentType.objects.get_for_model(BoardGame)
+        context["content_type"] = ContentType.objects.get_for_model(BoardGame)
         return context

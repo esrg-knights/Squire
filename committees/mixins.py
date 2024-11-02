@@ -4,7 +4,8 @@ from utils.viewcollectives import *
 
 
 class AssociationGroupMixin(ViewCollectiveViewMixin):
-    """ Mixin that stores the retrieved group from the url group_id keyword. Also verifies user is part of that group """
+    """Mixin that stores the retrieved group from the url group_id keyword. Also verifies user is part of that group"""
+
     association_group = None
     selected_tab_name = None
 
@@ -17,19 +18,17 @@ class AssociationGroupMixin(ViewCollectiveViewMixin):
         Returns a dict with other kwargs for validation checks (e.g. association_group)
         :return:
         """
-        return {
-            'association_group': self.association_group
-        }
+        return {"association_group": self.association_group}
 
     def get_context_data(self, **kwargs):
         context = super(AssociationGroupMixin, self).get_context_data(**kwargs)
-        context['association_group'] = self.association_group
-        context['config'] = self.config
+        context["association_group"] = self.association_group
+        context["config"] = self.config
         return context
 
     def _get_tab_url(self, url_name, **url_kwargs):
-        """ Returns the url for the tab. Interject url_kwargs to add extra perameters"""
-        url_kwargs['group_id'] = self.association_group
+        """Returns the url for the tab. Interject url_kwargs to add extra perameters"""
+        url_kwargs["group_id"] = self.association_group
         return super(AssociationGroupMixin, self)._get_tab_url(url_name, **url_kwargs)
 
 
@@ -63,11 +62,9 @@ class GroupSettingsMixin(AssociationGroupMixin):
         return self.settings_option.check_option_access(self.association_group)
 
     def get_context_data(self, **kwargs):
-        options = sorted(
-            self.config.get_options(self.association_group),
-            key= lambda option: option.order)
+        options = sorted(self.config.get_options(self.association_group), key=lambda option: option.order)
 
         context = super(GroupSettingsMixin, self).get_context_data(**kwargs)
-        context['settings_option'] = self.settings_option
-        context['options_list'] = options
+        context["settings_option"] = self.settings_option
+        context["options_list"] = options
         return context

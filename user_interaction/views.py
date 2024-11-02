@@ -29,10 +29,8 @@ class HomeNonAuthenticatedView(TemplateView):
     template_name = "user_interaction/home_non_authenticated.html"
 
     def get_context_data(self, **kwargs):
-        return super(HomeNonAuthenticatedView, self).get_context_data(
-            form=LoginForm(),
-            **kwargs
-        )
+        return super(HomeNonAuthenticatedView, self).get_context_data(form=LoginForm(), **kwargs)
+
 
 ################
 # BEGIN APRIL FOOLS VIEWS
@@ -40,9 +38,12 @@ class HomeNonAuthenticatedView(TemplateView):
 class April2022SquirePremiumView(TemplateView):
     template_name = "user_interaction/april_2022.html"
 
+
 class April2023LiveStreamView(MembershipRequiredMixin, TemplateView):
     template_name = "user_interaction/april_2023.html"
     requires_active_membership = False
+
+
 ################
 # END APRIL FOOLS VIEWS
 ################
@@ -58,17 +59,33 @@ welcome_messages = [
     "Time to join the dark knights side, we have cookies",
     "Message from the board: We are aware of the kobold infestation.",
     "I hope you are having a splendid day",
-    "Knights room now open 23/7",
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce tristique quam rutrum augue dapibus, quis condimentum ligula porttitor.",
-    "Don't forget to like, subscribe, and hit that notification bell!"
-    "",
+    "Don't forget to like, subscribe, and hit that notification bell!",
     "Für Wissen... und Weisheit!",
     "Man, man, man. Wat een avontuur!",
     "This is what we will offer this time, now available in wonderous rhyme!",
-    "Have an amazing quote said around the Knights? Email it to quotcie@kotkt.nl",
+    "Have an amazing quote said around the Knights? Send it in #all-the-quotes on Discord!",
     "Ḛ͈̅͆̑͂͟ͅv̠͔̗͒͗͟ͅe͊͌ͣͫ҉͙͈͍̘̲r͖̖̼̐̏̍̕y̛͉͍̲̹͔̫̐ͅtͥͦ̎҉̪̰̪̭͖̮̰ͅh̛͇̮̝ͬ̓į̮̞̬̟̫̼̌ͭ̀n̉ͪ҉̬̭͈̫̱̣̳ͅg̤͕̲͚̓͢ ̝͚̙͚̱̬̎̈́͌͟ḯ̡̥̰̼͍͎ͪs̨̜̺̣͌̈́ͭ̚ ̛̞̖͉͈̖̓ͨ̇n̨̮̺͈̩͇̞͍̽́o̲͔̹̹̩̰̙͙̐͘r̟͍͚ͣͥ̂̈́͠m̷̻͎ͤ̅ͬa̜͓͎͇̭̖ͮ̓̎̃͘l̷̞̬̩̮̠̟̤̐͗ͪ",
     "ᗷᒪOOᗪ ᔕᗩᑕᖇᗩᖴIᑕEᔕ ᗩᖇE ᑎOT ᗩᒪᒪOᗯEᗪ Oᑎ TᕼE Tᑌ/E ᑕᗩᗰᑭᑌᔕ",
     "Good dawning to thee, friend. May thy day be blissful.",
+    "Anoniem lid X is bij deze gejsorsd.",
+    "ERROR 404: Welcome message not found",
+    "Congratulations, you are the 1,000,000th visitor!",
+    "Pam fyddech chi'n cyfieithu'r neges hon?",
+    "We wish you a merry Christmas!",
+    "The kitchen pool has reopened.",
+    "Days since the last accident: 0",
+    "The Knights of the Kitchen Table are the best, largest, and only boardgame and roleplay association in Eindhoven!",
+    "Frambozen bestaan",
+    "This message is sponsored by Fantasy Court",
+    "Fun fact: The boardgame committee's favourite boardgame is Fortnite Monopoly!",
+    "Fun fact: The roleplaying committee's favourite system is the Rolepearing Game!",
+    "Fun fact: The Ivoren Wachter's favourite swordfighting-move is the shield bash!",
+    "Fun fact: The cooking committee's favourite dish is Soep Ultiem!",
+    "Fun fact: Fantasy Court's favourite vendor is Conferences!",
+    "Fun fact: The activity committee's favourite activity is drinking away sorrows in Hubble!",
+    "Fun fact: The board's favourite board is board 18!",
+    "The Knights have their own alumni association: The Lords of the Kitchen Table. If you're old, message the board!",
 ]
 
 
@@ -81,7 +98,7 @@ class HomeUsersView(TemplateView):
         end_date = start_date + timedelta(days=7)
 
         welcome_name = self.request.member.first_name if self.request.member else self.request.user.first_name
-        if global_preferences['homepage__april_2022']:
+        if global_preferences["homepage__april_2022"]:
             # This bit is from the april fools joke 2022
             welcome_name = optimise_naming_scheme(welcome_name)
 
@@ -92,8 +109,8 @@ class HomeUsersView(TemplateView):
 
         kwargs.update(
             activities=sorted(activities, key=lambda activity: activity.start_date),
-            greeting_line = random.choice(welcome_messages),
-            unique_messages = self.get_unique_messages(),
+            greeting_line=random.choice(welcome_messages),
+            unique_messages=self.get_unique_messages(),
             welcome_name=welcome_name,
         )
 
@@ -102,32 +119,38 @@ class HomeUsersView(TemplateView):
     def get_unique_messages(self):
         unique_messages = []
 
-        if global_preferences['homepage__home_page_message']:
-            unique_messages.append({
-                'msg_text': str(global_preferences['homepage__home_page_message']),
-                'msg_type': "info",
-            })
-        if global_preferences['membership__signup_year']:
-            year = global_preferences['membership__signup_year']
+        if global_preferences["homepage__home_page_message"]:
+            unique_messages.append(
+                {
+                    "msg_text": str(global_preferences["homepage__home_page_message"]),
+                    "msg_type": "info",
+                }
+            )
+        if global_preferences["membership__signup_year"]:
+            year = global_preferences["membership__signup_year"]
             if not Membership.objects.filter(member=self.request.member, year=year).exists():
-                unique_messages.append({
-                    'msg_text': f"A new adventure awaits! Continue your membership into {year} now!",
-                    'msg_type': "info",
-                    'btn_text': "Continue Questing!",
-                    'btn_url': reverse_lazy('membership_file/continue_membership'),
-                })
+                unique_messages.append(
+                    {
+                        "msg_text": f"A new adventure awaits! Continue your membership into {year} now!",
+                        "msg_type": "info",
+                        "btn_text": "Continue Questing!",
+                        "btn_url": reverse_lazy("membership:continue_membership"),
+                    }
+                )
 
         ################
         # BEGIN APRIL 2022
         ################
         # Squire Premium
-        if global_preferences['homepage__april_2022']:
-            unique_messages.append({
-                'msg_text': "Squire 2.0 will release soon. Read about the details and new features it brings, and upgrade now!",
-                'msg_type': "danger",
-                'btn_text': "Visit Upgrade Page",
-                'btn_url': reverse_lazy('user_interaction:squire_premium'),
-            })
+        if global_preferences["homepage__april_2022"]:
+            unique_messages.append(
+                {
+                    "msg_text": "Squire 2.0 will release soon. Read about the details and new features it brings, and upgrade now!",
+                    "msg_type": "danger",
+                    "btn_text": "Visit Upgrade Page",
+                    "btn_url": reverse_lazy("user_interaction:squire_premium"),
+                }
+            )
         ################
         # BEGIN APRIL 2022
         ################

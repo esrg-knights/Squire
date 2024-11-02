@@ -1,11 +1,11 @@
 // Modify the DOM
 $(document).ready(function () {
     /****************************************************************
-     * Generate Navbar Rickroll
+     * Generate Navbar Knights rap
      *****************************************************************/
     $(".navbar-nav.mr-auto").append(`
         <li>
-            <a class="nav-link" href="https://bit.ly/2URPMEe">Lustrum</a>
+            <a class="nav-link" href="https://www.youtube.com/watch?v=1iQzFLO8xeE">Lustrum</a>
         </li>
     `)
 

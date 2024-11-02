@@ -1,13 +1,13 @@
-from django.test import TestCase
-from django.utils import timezone
+from datetime import datetime, timezone
 
-from committees.models import AssociationGroup
-from utils.testing import FormValidityMixin
+from django.test import TestCase
 
 from activity_calendar.committee_pages.forms import *
 from activity_calendar.constants import ActivityType, ActivityStatus
 from activity_calendar.models import ActivityMoment, Activity
 from activity_calendar.widgets import BootstrapDateTimePickerInput
+from committees.models import AssociationGroup
+from utils.testing import FormValidityMixin
 
 
 class AddMeetingFormTestCase(FormValidityMixin, TestCase):
@@ -45,7 +45,7 @@ class AddMeetingFormTestCase(FormValidityMixin, TestCase):
     def test_save_default_recurrence_id(self):
         form = self.assertFormValid({"local_start_date": "2023-02-27T12:00:00Z"})
         form.save()
-        self.assertEqual(form.instance.recurrence_id, timezone.datetime(2023, 2, 27, 12, 00, 0, tzinfo=timezone.utc))
+        self.assertEqual(form.instance.recurrence_id, datetime(2023, 2, 27, 12, 00, 0, tzinfo=timezone.utc))
 
     def test_save_defualt_location(self):
         form = self.assertFormValid({"local_start_date": "2023-02-27T12:00:00Z"})

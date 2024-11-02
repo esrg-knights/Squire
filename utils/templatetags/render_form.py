@@ -11,7 +11,8 @@ register = template.Library()
 submit_text_default = "Submit"
 submit_class_default = "btn btn-default"
 
-@register.inclusion_tag('utils/snippets/form_total.html', takes_context=True)
+
+@register.inclusion_tag("utils/snippets/form_total.html", takes_context=True)
 def render_form(context, form=None, has_submit_button=True, uses_file_field=False, **kwargs):
     """
     Renders a complete form with all fields with bootstrap defined styling
@@ -23,17 +24,17 @@ def render_form(context, form=None, has_submit_button=True, uses_file_field=Fals
     :return: A fully rendered form
     """
     if form is None:
-        form = context['form']
+        form = context["form"]
 
     return {
-        'request': context['request'],
-        'form': form,
-        'form_id': kwargs.get('id', None),
-        'form_action': kwargs.get('action', None),
-        'form_method': kwargs.get('method', None),
-        'form_class': kwargs.get('form_class', None),
-        'form_enctype': "multipart/form-data" if uses_file_field else None,
-        'submit_display': has_submit_button,
-        'submit_class': kwargs.get('submit_class', submit_class_default),
-        'submit_text': _(kwargs.get('submit_text', submit_text_default))
+        "request": context["request"],
+        "form": form,
+        "form_id": kwargs.get("id", None),
+        "form_action": kwargs.get("action", None),
+        "form_method": kwargs.get("method", None),
+        "form_class": kwargs.get("form_class", None),
+        "form_enctype": "multipart/form-data" if uses_file_field else None,
+        "submit_display": has_submit_button,
+        "submit_class": kwargs.get("submit_class", submit_class_default),
+        "submit_text": _(kwargs.get("submit_text", submit_text_default)),
     }

@@ -1,0 +1,174 @@
+
+{% extends 'core/base.html' %}
+
+{% load static %}
+{% load bootstrap_tabs %}
+
+{% block title %}
+  Mailcow Server Status
+{% endblock title %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/bootstrap_tabs.css' %}">
+{% endblock css %}
+
+{% block content %}
+    {% bootstrap_tabs tabs %}
+    <h1>Mailcow Server Status</h1>
+    {% if not mailcow_host %}
+        <p>Mailcow client is not set up. Modify settings.py and add a host and API key.</p>
+    {% else %}
+        <p>Mailcow Host: <a href="{{ mailcow_host }}">{{ mailcow_host }}</a></p>
+
+        {% if error %}
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <i class="fas fa-exclamation-triangle mr-3"></i> {{ error }}
+        </div>
+        {% endif %}
+
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>Member Aliases</h2>
+            <button type="submit" class="btn btn-info" data-toggle="modal" data-target="#rspamdModal" {% if error %}disabled{%endif%}><i class="fas fa-pencil-ruler"></i> Rspamd Rule</button>
+            {% if error %}
+                <button type="button" class="btn btn-primary" disabled><i class="fas fa-redo-alt"></i> Update</button>
+            {% else %}
+                <form id="update_member_aliases" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="alias_type" value="members"/>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-redo-alt"></i> Update</button>
+                </form>
+            {% endif %}
+        </div>
+        <p>
+            A member alias is an alias that can be used to send mails to specific groups of members registered in Squire, depending on their <a href="{% url 'account:site_account' %}" >personal preferences</a>.
+            The alias can be 'internal' in the sense that only mailboxes in the domain can send emails to this alias. Note that <b>public</b> aliases on the domain can also allow external emails to reach these 'internal' addresses, which is undesired.
+        </p>
+        {% include "mailcow_integration/snippets/alias_list.html" with aliases=member_aliases host=mailcow_host only %}
+
+        <div class="modal fade" id="rspamdModal" tabindex="-1" role="dialog" aria-labelledby="rspamdModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="rspamdModalLabel">
+                            Rspamd Settings - Internal Alias
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="nav-item">
+                              <a class="nav-link active" data-toggle="tab" href="#rspamd-internal-allow" role="tab" aria-controls="rspamd-internal-block" aria-selected="true">
+                                {% if not internal_alias_rspamd_setting_allow %}
+                                <i class="fas fa-question-circle"></i>
+                                {% elif not internal_alias_rspamd_setting_allow.active %}
+                                <i class="fas fa-pause-circle"></i>
+                                {% else %}
+                                <i class="fas fa-check-circle"></i>
+                                {% endif %}
+                                Allow Rule
+                            </a>
+                            </li>
+                            <li class="nav-item">
+                              <a class="nav-link" data-toggle="tab" href="#rspamd-internal-block" role="tab" aria-controls="rspamd-internal-allow" aria-selected="false">
+                                {% if not internal_alias_rspamd_setting_block %}
+                                <i class="fas fa-question-circle"></i>
+                                {% elif not internal_alias_rspamd_setting_block.active %}
+                                <i class="fas fa-pause-circle"></i>
+                                {% else %}
+                                <i class="fas fa-check-circle"></i>
+                                {% endif %}
+                                Reject Rule
+                            </a>
+                            </li>
+                        </ul>
+                            <div class="tab-content" id="myTabContent">
+                            <div class="tab-pane fade show active" id="rspamd-internal-allow" role="tabpanel" aria-labelledby="home-tab">
+                                {% include "mailcow_integration/snippets/rspamd_setting.html" with rspamd_setting=internal_alias_rspamd_setting_allow %}
+                            </div>
+                            <div class="tab-pane fade" id="rspamd-internal-block" role="tabpanel" aria-labelledby="profile-tab">
+                                {% include "mailcow_integration/snippets/rspamd_setting.html" with rspamd_setting=internal_alias_rspamd_setting_block %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="d-flex justify-content-end" style="gap: 4px;">
+                            <form id="update_internal_aliases" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="alias_type" value="internal_alias"/>
+                                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-redo-alt"></i> Update</button>
+                            </form>
+
+                            <a class="btn btn-primary btn-sm" href="{{ mailcow_host }}/admin"
+                                target="_blank" rel="noopener noreferrer"
+                                role="button"><i class="fas fa-pen"></i> Edit in Mailcow</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="d-flex justify-content-between align-items-center">
+            <span>Likewise, all committees can be emailed through the following aliases.</span>
+            {% if error %}
+                <button type="button" class="btn btn-primary" disabled><i class="fas fa-redo-alt"></i> Update</button>
+            {% else %}
+                <form id="update_global_committee_aliases" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="alias_type" value="global_committee"/>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-redo-alt"></i> Update</button>
+                </form>
+            {% endif %}
+        </div>
+
+        {% include "mailcow_integration/snippets/alias_list.html" with aliases=global_committee_aliases host=mailcow_host only %}
+
+        <hr>
+
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>Committee Aliases</h2>
+            {% if error %}
+                <button type="button" class="btn btn-primary" disabled><i class="fas fa-redo-alt"></i> Update</button>
+            {% else %}
+                <form id="update_committee_aliases" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="alias_type" value="committees"/>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-redo-alt"></i> Update</button>
+                </form>
+            {% endif %}
+        </div>
+        <p>
+            A committee alias is a <b>public</b> alias that can be used to send mails to specific members of a committee, order, or workgroup set up in Squire.
+            These aliases are public, allowing external domains to also send emails to members of such committees.
+        </p>
+        {% include "mailcow_integration/snippets/alias_list.html" with aliases=committee_aliases host=mailcow_host only %}
+
+        <hr>
+
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>Orphan Data</h2>
+            {% if error %}
+                <button type="button" class="btn btn-primary" disabled><i class="fas fa-trash"></i> Remove</button>
+            {% else %}
+                <form id="remove_orphan_data" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="alias_type" value="orphan"/>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-trash"></i> Remove</button>
+                </form>
+            {% endif %}
+        </div>
+        <p>
+            Squire leaves behind a specific message on aliases it creates. It may happen that some of this data is left behind when Squire no longer needs it.
+        </p>
+        {% include "mailcow_integration/snippets/alias_list.html" with aliases=unused_aliases host=mailcow_host empty_message="No orphan data found." only %}
+    {% endif %}
+{% endblock content %}
+
+{% block js_bottom %}
+    {{ block.super }}
+    <script src="{% static "js/activate_bootstrap_tooltip.js" %}"></script>
+{% endblock %}

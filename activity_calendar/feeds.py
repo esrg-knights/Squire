@@ -20,13 +20,6 @@ from .constants import ActivityStatus, ActivityType
 import activity_calendar.util as util
 
 
-# Monkey-patch; Why is this not open for extension in the first place?
-feedgenerator.ITEM_EVENT_FIELD_MAP = (
-    *(feedgenerator.ITEM_EVENT_FIELD_MAP),
-    ("recurrenceid", "recurrence-id"),
-)
-
-
 def only_for(class_type, default=None):
     def only_for_decorator(func):
         def func_wrapper(self, item):
@@ -102,7 +95,8 @@ class CESTEventFeed(ICalFeed):
     # def __call__(self, *args, **kwargs):
     #     response = super(CESTEventFeed, self).__call__(*args, **kwargs)
     #     from django.http import HttpResponse
-    #     return HttpResponse(content=response._container, content_type='text')
+
+    #     return HttpResponse(content=response._container, content_type="text")
 
     def title(self):
         if self.calendar_title is None:
@@ -123,8 +117,7 @@ class CESTEventFeed(ICalFeed):
     #######################################################
     # Timezone information (Daylight-saving time, etc.)
     def vtimezone(self):
-        tz_info = util.generate_vtimezone(settings.TIME_ZONE, datetime(2020, 1, 1))
-        tz_info.add("x-lic-location", settings.TIME_ZONE)
+        tz_info = util.ical_timezone_factory.generate_vtimezone(settings.TIME_ZONE)
         return tz_info
 
     #######################################################
@@ -240,26 +233,25 @@ class CESTEventFeed(ICalFeed):
             # The RDATES in the recurrency module store only dates and not times, so we need to address that
             exclude_dates += list(util.set_time_for_RDATE_EXDATE(item.recurrences.exdates, item.start_date))
 
-        cancelled_moments = item.activitymoment_set.filter(status=ActivityStatus.STATUS_REMOVED).values_list(
-            "recurrence_id", flat=True
-        )
+        if item.pk:
+            # Some feeds create activities on the fly (e.g. BirthdayCalendarFeed)
+            # Those activities cannot retrieve their corresponding activitymoments, it'll cause a ValueError
+            # Since these activities won't have activitymoments anyway, we can skip this step for them
+            cancelled_moments = item.activitymoment_set.filter(status=ActivityStatus.STATUS_REMOVED).values_list(
+                "recurrence_id", flat=True
+            )
+            tz = timezone.get_current_timezone()
+            exclude_dates += filter(
+                lambda occ: occ not in exclude_dates,
+                map(lambda occ: occ.astimezone(tz), cancelled_moments),
+            )
 
-        # Correct timezone to the default timezone settings
-        cancelled_moments = [
-            util.dst_aware_to_dst_ignore(recurrence_id, item.start_date, reverse=True)
-            for recurrence_id in cancelled_moments
-        ]
-        exclude_dates += filter(lambda occ: occ not in exclude_dates, cancelled_moments)
-
-        # If there are no exclude_dates, don't bother including it
-        if exclude_dates:
-            return exclude_dates
-        else:
-            return None
+        # If there are no exclude_dates, don't bother including it in the icalendar file
+        return exclude_dates or None
 
     # RECURRENCE-ID
     @only_for(ActivityMoment)
-    def item_recurrenceid(self, item):
+    def item_recurrence_id(self, item):
         if item.is_part_of_recurrence:
             return item.recurrence_id.astimezone(timezone.get_current_timezone())
         return None
@@ -276,9 +268,9 @@ class CESTEventFeed(ICalFeed):
     def item_extra_kwargs(self, item):
         kwargs = super().item_extra_kwargs(item)
 
-        val = self._get_dynamic_attr("item_recurrenceid", item)
+        val = self._get_dynamic_attr("item_recurrence_id", item)
         if val:
-            kwargs["recurrenceid"] = val
+            kwargs["recurrence_id"] = val
         return kwargs
 
 
@@ -287,8 +279,8 @@ class PublicCalendarFeed(CESTEventFeed):
 
     product_id = "-//Squire//Activity Calendar//EN"
     file_name = "knights-calendar.ics"
-    calendar_title = "Activiteiten Agenda - Knights"
-    calendar_description = "Knights of the Kitchen Table Activiteiten en Evenementen."
+    calendar_title = "ESRG Knights of the Kitchen Table"
+    calendar_description = "Activities and events for ESRG Knights of the Kitchen Table."
 
     def items(self):
         # Only consider published activities

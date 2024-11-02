@@ -1,6 +1,4 @@
-
-
 def member_context(request):
     return {
-        'member': request.member,
+        "member": getattr(request, "member", None),
     }

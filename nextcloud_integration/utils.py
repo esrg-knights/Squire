@@ -3,7 +3,7 @@ from nextcloud_integration.nextcloud_client import construct_client
 
 
 def refresh_status(folder: SquireNextCloudFolder):
-    """ Refreshes the status of the folder and it's contents
+    """Refreshes the status of the folder and it's contents
     :param folder: The nextcloud folder validated
     :return True if all files were present on Squire
     """

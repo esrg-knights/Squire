@@ -1,4 +1,3 @@
-
 from django.contrib.auth import get_user, PermissionDenied
 from django.contrib.auth.models import User, Permission
 from django.contrib.messages import add_message, DEBUG, ERROR, SUCCESS
@@ -12,14 +11,14 @@ from utils.testing.view_test_utils import ViewValidityMixin, TestMixinMixin
 
 
 class TestMessageView(View):
-
     def dispatch(self, request, *args, level=None, msg=None, **kwargs):
         add_message(request, level, message=msg)
         return HttpResponse()
 
 
 class FakeClient:
-    """ A fake client to test get and post assert methods with """
+    """A fake client to test get and post assert methods with"""
+
     def __init__(self, http_class, **kwargs):
         self.http_class = http_class
         self.http_init_kwargs = kwargs
@@ -60,9 +59,7 @@ class TestViewValidityMixin(ViewValidityMixin, TestCase):
 
         # Assert that it fails when presented a forbidden page
         self.client = FakeClient(HttpResponseForbidden)
-        error = raisesAssertionError(
-            self.assertValidGetResponse
-        )
+        error = raisesAssertionError(self.assertValidGetResponse)
         self.assertEqual(error.__str__(), "403 != 200 : Response was not a valid Http200 response")
 
     def test_valid_post_response(self):
@@ -86,10 +83,12 @@ class TestViewValidityMixin(ViewValidityMixin, TestCase):
         # We can imitate that as long as the messages are actual messages.
         class FakeResponse:
             context = {
-            'messages':[
-                Message(DEBUG, 'test_debug_message'),
-                Message(ERROR, 'test_error_message'),
-            ]}
+                "messages": [
+                    Message(DEBUG, "test_debug_message"),
+                    Message(ERROR, "test_error_message"),
+                ]
+            }
+
         response = FakeResponse()
 
         self.assertHasMessage(response, DEBUG, "test_debug_message")
@@ -97,60 +96,64 @@ class TestViewValidityMixin(ViewValidityMixin, TestCase):
 
         # Incorrect text
         error = raisesAssertionError(self.assertHasMessage, response, ERROR, "test_message")
-        self.assertLess(-1, error.__str__().find(
-            "There was no message for the given criteria: level: '{level}' text: '{text}'. "
-            "The following messages were found instead:".format(
-                level=ERROR,
-                text="test_message",
-        )))
+        self.assertLess(
+            -1,
+            error.__str__().find(
+                "There was no message for the given criteria: level: '{level}' text: '{text}'. "
+                "The following messages were found instead:".format(
+                    level=ERROR,
+                    text="test_message",
+                )
+            ),
+        )
 
         error = raisesAssertionError(self.assertHasMessage, response, SUCCESS)
-        self.assertLess(-1, error.__str__().find(
-            "There was no message for the given criteria: level: '{level}'.".format(
-                level=SUCCESS
-        )))
+        self.assertLess(
+            -1,
+            error.__str__().find(
+                "There was no message for the given criteria: level: '{level}'.".format(level=SUCCESS)
+            ),
+        )
 
     def test_assert_permission_denied(self):
         self.client = FakeClient(HttpResponseForbidden)
         self.assertPermissionDenied()
 
     def test_changing_user_perm(self):
-        self._set_user_perm(self.user, 'auth.change_user')
+        self._set_user_perm(self.user, "auth.change_user")
         # These two caches need to be cleared in order for the cache to be updated
-        self.assertFalse(hasattr(self.user, '_perm_cache'))
-        self.assertFalse(hasattr(self.user, '_user_perm_cache'))
+        self.assertFalse(hasattr(self.user, "_perm_cache"))
+        self.assertFalse(hasattr(self.user, "_user_perm_cache"))
 
-        self.assertTrue(self.user.has_perm('auth.change_user'))
+        self.assertTrue(self.user.has_perm("auth.change_user"))
 
     def test_remove_user_perm(self):
-        self._set_user_perm(self.user, 'auth.change_user')
-        self._remove_user_perm(self.user, 'auth.change_user')
+        self._set_user_perm(self.user, "auth.change_user")
+        self._remove_user_perm(self.user, "auth.change_user")
         # These two caches need to be cleared in order for the cache to be updated
-        self.assertFalse(hasattr(self.user, '_perm_cache'))
-        self.assertFalse(hasattr(self.user, '_user_perm_cache'))
+        self.assertFalse(hasattr(self.user, "_perm_cache"))
+        self.assertFalse(hasattr(self.user, "_user_perm_cache"))
 
-        self.assertFalse(self.user.has_perm('auth.change_user'))
+        self.assertFalse(self.user.has_perm("auth.change_user"))
 
     def test_assert_requires_permission(self):
         class FakePermClient(View):
             def get(fake_self, request, *args, **kwargs):
-                if fake_self.user.has_perm('auth.change_user'):
+                if fake_self.user.has_perm("auth.change_user"):
                     return HttpResponse()
                 else:
                     return HttpResponseForbidden
 
         self.client = FakePermClient()
         self.client.user = self.user
-        self.assertRequiresPermission(perm='auth.change_user')
-
+        self.assertRequiresPermission(perm="auth.change_user")
 
 
 class TestableMixin:
-
     def dispatch(self, request, *args, **kwargs):
-        if 'deny' in kwargs.keys():
+        if "deny" in kwargs.keys():
             raise PermissionDenied()
-        if 'lost' in kwargs.keys():
+        if "lost" in kwargs.keys():
             raise Http404()
         else:
             return super(TestableMixin, self).dispatch(request, *args, **kwargs)
@@ -170,13 +173,13 @@ class TestMixinMixinTestCase(TestMixinMixin, TestCase):
         self.assertTrue(self.view.request.user.is_authenticated)
 
     def test_assertRaises404(self):
-        self.assertRaises404(url_kwargs={'lost': True})
+        self.assertRaises404(url_kwargs={"lost": True})
 
         error = raisesAssertionError(self.assertRaises404)
         self.assertEqual(error.__str__(), "No '404: Page not Found' error was raised")
 
     def test_assertRaises403(self):
-        self.assertRaises403(url_kwargs={'deny': True})
+        self.assertRaises403(url_kwargs={"deny": True})
 
         error = raisesAssertionError(self.assertRaises403)
         self.assertEqual(error.__str__(), "No '403: Permission Denied' error was raised")

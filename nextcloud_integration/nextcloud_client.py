@@ -11,7 +11,7 @@ from nextcloud_integration.exceptions import ClientNotImplemented
 from nextcloud_integration.nextcloud_resources import NextCloudFile, NextCloudFolder, NextCloudResource
 
 
-__all__ = ['NextCloudFile', 'NextCloudFolder']
+__all__ = ["NextCloudFile", "NextCloudFolder"]
 
 
 """
@@ -30,8 +30,8 @@ class NextCloudClient(Client):
 
     def __init__(self, *args, path=None, **kwargs):
         self.local_baseurl = "{local_url}/{username}".format(
-            local_url=self.dav_path.strip('/'),
-            username=kwargs.get('username', ""))
+            local_url=self.dav_path.strip("/"), username=kwargs.get("username", "")
+        )
         if path:
             path = f"{path.strip('/')}/{self.local_baseurl}"
         else:
@@ -45,7 +45,7 @@ class NextCloudClient(Client):
         :param file: The NextCloudFile to be downloaded
         :return:
         """
-        return self._send('GET', file.path, 200, stream=True)
+        return self._send("GET", file.path, 200, stream=True)
 
     def mkdir(self, folder):
         if isinstance(folder, NextCloudFolder):
@@ -55,24 +55,24 @@ class NextCloudClient(Client):
             folder = NextCloudFolder(folder)
         return folder
 
-    def ls(self, remote_path=''):
-        headers = {'Depth': '1'}
-        response = self._send('PROPFIND', remote_path, expected_code=207, headers=headers)
+    def ls(self, remote_path=""):
+        headers = {"Depth": "1"}
+        response = self._send("PROPFIND", remote_path, expected_code=207, headers=headers)
 
         tree = xml.fromstring(response.content)
         # The bit below is adjusted to take the new constructs into account
-        resources = [self.construct_nextcloud_resource(dav_node) for dav_node in tree.findall('{DAV:}response')]
+        resources = [self.construct_nextcloud_resource(dav_node) for dav_node in tree.findall("{DAV:}response")]
         # It also returns the folder itself, which is redundant, so remove it from the results
         return list(filter(lambda r: r.name != remote_path, resources))
 
-    def mv(self, file:NextCloudFile, to_folder: NextCloudFolder):
-        new_path = self._get_url(to_folder.path).strip('/')+'/'+file.path.split('/')[-1]
-        headers = {'DESTINATION': new_path}
-        self._send('MOVE', file.path, expected_code=201, headers=headers)
+    def mv(self, file: NextCloudFile, to_folder: NextCloudFolder):
+        new_path = self._get_url(to_folder.path).strip("/") + "/" + file.path.split("/")[-1]
+        headers = {"DESTINATION": new_path}
+        self._send("MOVE", file.path, expected_code=201, headers=headers)
         file.path = new_path
 
-    def exists(self, resource:NextCloudResource=None, path:str=None):
-        """ Determines whether a certain resource or path exists on the nextcloud """
+    def exists(self, resource: NextCloudResource = None, path: str = None):
+        """Determines whether a certain resource or path exists on the nextcloud"""
         assert not (resource and path)
         assert resource or path
 
@@ -84,19 +84,19 @@ class NextCloudClient(Client):
         return res
 
     def _get_dav_prop(self, elem, name, default=None):
-        """ Obtain data for the given property or return default if it is not present """
-        child = elem.find('.//{DAV:}' + name)
+        """Obtain data for the given property or return default if it is not present"""
+        child = elem.find(".//{DAV:}" + name)
         return default if child is None or child.text is None else child.text
 
     def construct_nextcloud_resource(self, dav_node):
-        """ Factory method for the given method """
-        path=self._get_dav_prop(dav_node, 'href')
-        path=path[path.index(self.local_baseurl)+len(self.local_baseurl):]
+        """Factory method for the given method"""
+        path = self._get_dav_prop(dav_node, "href")
+        path = path[path.index(self.local_baseurl) + len(self.local_baseurl) :]
 
         # Get the name
-        name = path[max(0, path[:-1].rfind('/')):].replace('%20', ' ').strip('/')
+        name = path[max(0, path[:-1].rfind("/")) :].replace("%20", " ").strip("/")
 
-        if self._get_dav_prop(dav_node, 'getcontentlength') is None:
+        if self._get_dav_prop(dav_node, "getcontentlength") is None:
             return NextCloudFolder(
                 path=path,
                 name=name,
@@ -105,8 +105,8 @@ class NextCloudClient(Client):
             return NextCloudFile(
                 path=path,
                 name=name,
-                last_modified=self._get_dav_prop(dav_node, 'getlastmodified', ''),
-                content_type=self._get_dav_prop(dav_node, 'getcontenttype', ''),
+                last_modified=self._get_dav_prop(dav_node, "getlastmodified", ""),
+                content_type=self._get_dav_prop(dav_node, "getcontenttype", ""),
             )
 
 
@@ -122,10 +122,10 @@ def construct_client():
             host=host,
             username=username,
             password=password,
-            protocol='https',
+            protocol="https",
             path=getattr(settings, "NEXTCLOUD_URL", ""),  # Local url is optional
         )
 
 
 # Append OperationFailed operations with additional methods
-OperationFailed._OPERATIONS['MOVE'] = "Move file"
+OperationFailed._OPERATIONS["MOVE"] = "Move file"

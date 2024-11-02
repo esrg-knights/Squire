@@ -6,20 +6,29 @@ from unittest.mock import patch
 
 from nextcloud_integration.nextcloud_client import NextCloudClient as Client
 from nextcloud_integration.nextcloud_client import construct_client
-from nextcloud_integration.nextcloud_resources import NextCloudFolder, NextCloudFile, get_file_type, \
-    WordFileType, AbstractFileType, CompressedFileType, CreativeFileType, ExcelFileType, ImageFileType, \
-    PDFFileType, PowerpointFileType, TextFileType
-
+from nextcloud_integration.nextcloud_resources import (
+    NextCloudFolder,
+    NextCloudFile,
+    get_file_type,
+    WordFileType,
+    AbstractFileType,
+    CompressedFileType,
+    CreativeFileType,
+    ExcelFileType,
+    ImageFileType,
+    PDFFileType,
+    PowerpointFileType,
+    TextFileType,
+)
 
 
 class NextCloudClientTestCase(TestCase):
-
     def setUp(self):
         self.client = Client(
             host="example.com",
             username="example_user",
             password="example_pw",
-            protocol='https',
+            protocol="https",
             path="",
         )
 
@@ -45,12 +54,9 @@ class NextCloudClientTestCase(TestCase):
         assert not (side_effect and status_code)
 
         if side_effect is None:
-            side_effect=[self._construct_send_response(file_name=file_name, status_code=status_code)]
+            side_effect = [self._construct_send_response(file_name=file_name, status_code=status_code)]
 
-        return patch(
-            "nextcloud_integration.nextcloud_client.NextCloudClient._send",
-            side_effect=side_effect
-        )
+        return patch("nextcloud_integration.nextcloud_client.NextCloudClient._send", side_effect=side_effect)
 
     def test_ls(self):
         with self._patch_send(file_name="ls_response.xml", status_code=207) as mock:
@@ -59,7 +65,7 @@ class NextCloudClientTestCase(TestCase):
             # Test send data
             self.assertEqual(mock.call_args.args[0], "PROPFIND")
             self.assertEqual(mock.call_args.kwargs["expected_code"], 207)
-            self.assertEqual(mock.call_args.kwargs["headers"]["Depth"], '1')
+            self.assertEqual(mock.call_args.kwargs["headers"]["Depth"], "1")
 
             # Test responses
             nc_folders = {}
@@ -140,9 +146,9 @@ class NextCloudClientTestCase(TestCase):
             self.assertEqual(mock.call_args.args[0], "GET")
             self.assertEqual(mock.call_args.args[1], "files/testfile.txt")
             self.assertEqual(mock.call_args.args[2], 200)
-            self.assertEqual(mock.call_args.kwargs.get('stream', None), True)
+            self.assertEqual(mock.call_args.kwargs.get("stream", None), True)
 
-    @patch('nextcloud_integration.nextcloud_client.NextCloudClient')
+    @patch("nextcloud_integration.nextcloud_client.NextCloudClient")
     def test_constructor(self, mock_client):
         with self.settings(
             NEXTCLOUD_HOST="test.nl",
@@ -151,30 +157,30 @@ class NextCloudClientTestCase(TestCase):
             NEXTCLOUD_URL=None,
         ):
             construct_client()
-            self.assertEqual(mock_client.call_args.kwargs['host'], "test.nl")
-            self.assertEqual(mock_client.call_args.kwargs['username'], "user_account")
-            self.assertEqual(mock_client.call_args.kwargs['password'], "user_password")
-            self.assertEqual(mock_client.call_args.kwargs['protocol'], "https")
-            self.assertEqual(mock_client.call_args.kwargs['path'], None)
+            self.assertEqual(mock_client.call_args.kwargs["host"], "test.nl")
+            self.assertEqual(mock_client.call_args.kwargs["username"], "user_account")
+            self.assertEqual(mock_client.call_args.kwargs["password"], "user_password")
+            self.assertEqual(mock_client.call_args.kwargs["protocol"], "https")
+            self.assertEqual(mock_client.call_args.kwargs["path"], None)
 
         with self.settings(
             NEXTCLOUD_HOST="test.nl",
             NEXTCLOUD_USERNAME="user_account",
             NEXTCLOUD_PASSWORD="user_password",
-            NEXTCLOUD_URL="local_url/"
+            NEXTCLOUD_URL="local_url/",
         ):
             construct_client()
-            self.assertEqual(mock_client.call_args.kwargs['path'], "local_url/")
+            self.assertEqual(mock_client.call_args.kwargs["path"], "local_url/")
 
     def test_baseurl(self):
-        """ Test functioning of the client base_url being adjusted if a special path is given """
+        """Test functioning of the client base_url being adjusted if a special path is given"""
         client = Client(
             host="example.com",
             username="example_user",
             password="example_pw",
-            protocol='https',
+            protocol="https",
         )
-        self.assertEqual(client.baseurl, 'https://example.com:443/remote.php/dav/files/example_user')
+        self.assertEqual(client.baseurl, "https://example.com:443/remote.php/dav/files/example_user")
         # Path inserts a local url on the server indicating the location of the Nextcloud
         # From here the client appends the local url of the nextcloud API
         # Thus ensure that if a path is given, the path is appended in between the host and the nextcloud api url
@@ -182,30 +188,28 @@ class NextCloudClientTestCase(TestCase):
             host="example.com",
             username="example_user",
             password="example_pw",
-            protocol='https',
+            protocol="https",
             path="/unique_url/",
         )
-        self.assertEqual(client.baseurl, 'https://example.com:443/unique_url/remote.php/dav/files/example_user')
+        self.assertEqual(client.baseurl, "https://example.com:443/unique_url/remote.php/dav/files/example_user")
         client = Client(
             host="example.com",
             username="example_user",
             password="example_pw",
-            protocol='https',
+            protocol="https",
             path="unique_url/cloud",
         )
         # Test that first and last dashes are irrelvant
-        self.assertEqual(client.baseurl, 'https://example.com:443/unique_url/cloud/remote.php/dav/files/example_user')
+        self.assertEqual(client.baseurl, "https://example.com:443/unique_url/cloud/remote.php/dav/files/example_user")
 
 
 class FileTypeTestCase(TestCase):
-    """ Tests file type returns """
+    """Tests file type returns"""
 
     def assertExpectedFileType(self, file_name, file_type_class):
         file_type = get_file_type(file_name)
         if file_type != file_type_class:
-            raise AssertionError(
-                f"{file_name} did not yield {file_type_class}, but {file_type} instead"
-            )
+            raise AssertionError(f"{file_name} did not yield {file_type_class}, but {file_type} instead")
 
     def test_word_file_type(self):
         self.assertExpectedFileType("name.doc", WordFileType)

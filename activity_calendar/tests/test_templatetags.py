@@ -1,15 +1,13 @@
-from datetime import timedelta
-
-from django.test import TestCase
-from django.utils import timezone, dateparse
-
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
-from . import mock_now
+from django.test import TestCase
+from django.utils import dateparse
 
 from activity_calendar.constants import ActivityStatus
 from activity_calendar.models import Activity, ActivityMoment
 from activity_calendar.templatetags.activity_tags import readable_activity_datetime, get_next_activity_instances
+from . import mock_now
 
 
 class TestActivityTags(TestCase):
@@ -45,7 +43,7 @@ class TestActivityTags(TestCase):
         self._set_activity_vars(
             full_day=False,
             display_end_time=True,
-            end_date=timezone.datetime(2020, 8, 16, 10, 0, 0, tzinfo=timezone.utc),
+            end_date=datetime(2020, 8, 16, 10, 0, 0, tzinfo=timezone.utc),
         )
 
         self.assertEqual(
@@ -64,7 +62,7 @@ class TestActivityTags(TestCase):
         self._set_activity_vars(
             full_day=True,
             display_end_time=True,
-            end_date=timezone.datetime(2020, 8, 16, 10, 0, 0, tzinfo=timezone.utc),
+            end_date=datetime(2020, 8, 16, 10, 0, 0, tzinfo=timezone.utc),
         )
         self.assertEqual(readable_activity_datetime(self.activity_moment), "Friday 14 August - Sunday 16 August")
 

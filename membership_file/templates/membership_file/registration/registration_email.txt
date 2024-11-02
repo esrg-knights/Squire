@@ -1,0 +1,17 @@
+{% load i18n %}{% autoescape off %}
+Hail {{ member.first_name }}!
+You're receiving this email because your Knights membership was just processed in Squire! Squire is the membership portal for the Knights. Here you can view upcoming activities, look through an overview of our committees and boardgame/roleplay inventory, and manage your membership data and email preferences.
+
+You can register an account for {{ member.get_full_name }} through the following link. Doing so will automatically link it to your membership data.
+
+{{ protocol }}://{{ domain }}{% url 'membership:link_account/confirm' uidb64=uid token=token %}
+
+If this email was not meant for you, then do let us know.
+
+See you soon!
+
+{{ sender.name }}
+{{ sender.description }}{% if sender.extra_description %}
+{{ sender.extra_description }}{%endif%}
+ESRG Knights of the Kitchen Table
+{% endautoescape %}

@@ -9,12 +9,14 @@ from core.models import MarkdownImage
 
 User = get_user_model()
 
-@override_settings(MARKDOWN_IMAGE_MODELS=['core.markdownimage'])
+
+@override_settings(MARKDOWN_IMAGE_MODELS=["core.markdownimage"])
 class MarkdownImageAdminTest(TestCase):
     """
-        Tests for the MarkdownImageAdmin ModelAdmin.
+    Tests for the MarkdownImageAdmin ModelAdmin.
     """
-    fixtures = ['test_users']
+
+    fixtures = ["test_users"]
 
     def setUp(self):
         self.model_admin = MarkdownImageAdmin(model=MarkdownImage, admin_site=AdminSite())
@@ -23,7 +25,7 @@ class MarkdownImageAdminTest(TestCase):
         self.object_with_related = MarkdownImage.objects.create(content_object=self.object_without_related)
 
     def test_contentobject(self):
-        """ Tests if the related object (if any) can be clicked through a link """
+        """Tests if the related object (if any) can be clicked through a link"""
         # Has a related object -> must provide a link
         column_str = self.model_admin.content_object(self.object_with_related)
         self.assertIn(reverse(f"admin:core_markdownimage_change", args=[self.object_without_related.id]), column_str)
@@ -34,7 +36,7 @@ class MarkdownImageAdminTest(TestCase):
         self.assertEqual(column_str, "-")
 
     def test_formfield_for_fk(self):
-        """ Tests if the available ContentTypes are properly limited to those in the settings """
+        """Tests if the available ContentTypes are properly limited to those in the settings"""
         # Limit selection of ContentTypes
         fk_content_types = self.model_admin.formfield_for_foreignkey(MarkdownImage.content_type.field, request=None)
         self.assertEqual(len(fk_content_types.queryset), 1)
@@ -43,4 +45,3 @@ class MarkdownImageAdminTest(TestCase):
         # Other selections are unaffected
         fk_users = self.model_admin.formfield_for_foreignkey(MarkdownImage.uploader.field, request=None)
         self.assertEqual(fk_users.queryset.count(), User.objects.all().count())
-

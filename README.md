@@ -2,6 +2,12 @@
 
 A re-introduction of the web application for ESRG Knights of the Kitchen Table using Django 3.2.
 
+![Testrun workflow](https://github.com/esrg-knights/Squire/actions/workflows/run_tests.yml/badge.svg)
+[![codecov](https://codecov.io/gh/esrg-knights/Squire/graph/badge.svg?token=BRTHryxW4X)](https://codecov.io/gh/esrg-knights/Squire)
+![Django Version](https://img.shields.io/badge/django%20versions-4.2-blue)
+![Python Version](https://img.shields.io/badge/python-3.10-blue)
+![License](https://img.shields.io/github/license/esrg-knights/Squire)
+
 ## Getting started with development
 
 1. Install the latest version of Python 3. If you are on Windows, you can download Python from [python.org]. If you are not, check if you already have a recent version by running `python3 --version`. As of writing, Python 3.8 or higher is recent enough, but this may change in the future.
@@ -12,7 +18,7 @@ A re-introduction of the web application for ESRG Knights of the Kitchen Table u
 1. Install the dependencies: `pip install -r requirements/dev.txt`. These dependencies include common dependencies (such as _Django_) as well as dev-dependencies that speed up or ease the development process (such as _coverage.py_). For more information about dependencies, view the _Dependencies_ section below.
 1. Setup the database by running `python manage.py migrate`. This ensures your database can store the items we expect to store in it.
 1. Start the server: `python manage.py runserver`. This starts a web server, which you can access using your webbrowser and going to `localhost:8000`.
-1. If wanting to use functionality that involves sending emails (such as resetting a password), then you'll also need to run the following command in another command prompt/terminal: `python -m smtpd -n -c DebuggingServer localhost:1025`. This will mimic an smtp email server. Any emails that would normally be sent will instead show up in this terminal.
+1. If wanting to use functionality that involves sending emails (such as resetting a password), then you'll also need to run the following command in another command prompt/terminal: `python -m aiosmtpd -n -c aiosmtpd.handlers.Debugging stdout -l localhost:1025`. This will mimic an smtp email server. Any emails that would normally be sent will instead show up in this terminal.
    <br/><br/>
 
 ## Dependencies

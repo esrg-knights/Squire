@@ -10,10 +10,10 @@ from core.tests.util import suppress_warnings
 
 
 class ViewValidityMixin:
-    """ A mixin for testing views. Takes over a bit of behind the scenes overheasd
+    """A mixin for testing views. Takes over a bit of behind the scenes overhead
     base_user_id: the id for the user running the sessions normally
     base_url: The basic url to navigate to
-    permission_required: The name of the permission that is required to view the tested page
+    permission_required: The name (or list of names) of the permission(s) that is required to view the tested page
     """
 
     client = None
@@ -21,6 +21,7 @@ class ViewValidityMixin:
     base_user_id = None
     base_url = None
     permission_required = None
+    form_context_name = "form"
 
     def setUp(self):
         self.client = Client()
@@ -30,9 +31,13 @@ class ViewValidityMixin:
             self.client.force_login(self.user)
 
         if self.user and self.permission_required:
-            self._set_user_perm(self.user, self.permission_required)
+            perms = self.permission_required
+            if isinstance(self.permission_required, str):
+                perms = [self.permission_required]
+            for perm in perms:
+                self._set_user_perm(self.user, perm)
 
-    def _set_user_perm(self, user:User, perm):
+    def _set_user_perm(self, user: User, perm):
         if user.has_perm(perm):
             return
         user.user_permissions.add(self._get_perm_by_name(perm))
@@ -42,7 +47,7 @@ class ViewValidityMixin:
         del user._perm_cache
 
     def _get_perm_by_name(self, perm):
-        app_label, perm_name = perm.split('.')
+        app_label, perm_name = perm.split(".")
 
         return Permission.objects.get(
             codename=perm_name,
@@ -52,9 +57,7 @@ class ViewValidityMixin:
     def _remove_user_perm(self, user: User, perm):
         if not user.has_perm(perm):
             return
-        user.user_permissions.remove(
-            self._get_perm_by_name(perm)
-        )
+        user.user_permissions.remove(self._get_perm_by_name(perm))
         # Delete the user permission cache
         del user._user_perm_cache
         del user._perm_cache
@@ -86,12 +89,16 @@ class ViewValidityMixin:
         """
         url = url or self.get_base_url()
         data = data or {}
-        response = self.client.post(url, data=data)
+        response = self.client.post(url, data=data, follow=fetch_redirect_response)
         if redirect_url:
-            # If a form errors, it returns a templateresponse instead. So we can instantly debug
-            if isinstance(response, TemplateResponse):
-                errors = response.context_data['form'].errors.as_data()
-                print(f'Form on {url} contained errors: \n {errors}')
+            # If a form errors, it won't redirect (chain is empty). So we can instantly debug
+            #   redirect chain is only set when follow=True
+            if hasattr(response, "context_data") and (
+                (not fetch_redirect_response and response.status_code != 302)
+                or (fetch_redirect_response and not response.redirect_chain)
+            ):
+                errors = response.context_data[self.form_context_name].errors.as_data()
+                print(f"Form on {url} contained errors: \n {errors}")
             self.assertRedirects(response, redirect_url, fetch_redirect_response=fetch_redirect_response)
         else:
             self.assertEqual(response.status_code, 200, "Response was not a valid Http200 response")
@@ -112,11 +119,12 @@ class ViewValidityMixin:
         self.assertEqual(response.status_code, 403, "Access was not forbidden")
 
     def assertRequiresPermission(self, perm=None, data=None, url=None):
-        """ Asserts that the given permission name is required for this view
+        """Asserts that the given permission name is required for this view
         :param data: URL data
         :param url: The url to be visited
         :param perm: The perm that needs to be validated
         """
+        assert not self.user.is_superuser
         perm = perm or self.permission_required
         self._remove_user_perm(self.user, perm)
         self.assertPermissionDenied(data=data, url=url)
@@ -129,7 +137,7 @@ class ViewValidityMixin:
         """
         Assert that the response contains a specific message
         :param response: The response object
-        :param level: The level of the message (messages.SUCCESS/ EROOR or custom...)
+        :param level: The level of the message (messages.SUCCESS/ERROR or custom...)
         :param text: (part of) the message string that it should contain
         :param print_all: prints all messages encountered useful to trace errors if present
         :return: Raises AssertionError if not asserted
@@ -137,9 +145,7 @@ class ViewValidityMixin:
         # Update the level with the constant if the name of such a constant is given
         level = getattr(msg_constants, str(level), level)
 
-        for message in response.context['messages']:
-            # if print_all:
-            #     print(message)
+        for message in response.context["messages"]:
             if message.level == level or level is None:
                 if text is None or str(text) in message.message:
                     return
@@ -151,7 +157,7 @@ class ViewValidityMixin:
             if text:
                 msg += f" text: '{text}'"
             msg += ". The following messages were found instead: "
-            for message in response.context['messages']:
+            for message in response.context["messages"]:
                 msg += f"{message.level}: {message.message}, "
         else:
             msg = "There was no message"
@@ -165,7 +171,7 @@ class TestMixinMixin:
     pre_inherit_classes = []
     view = None
 
-    def _build_get_response(self, url=None, url_kwargs=None, save_view = True, user=None, post_inherit_class=None):
+    def _build_get_response(self, url=None, url_kwargs=None, save_view=True, user=None, post_inherit_class=None):
         """
         Constructs a get response through a temporary view that inheirts the Testcases mixin class
         :param url: The url path
@@ -199,7 +205,7 @@ class TestMixinMixin:
         return ""
 
     def get_base_url_kwargs(self):
-        """ Constructs the url kwargs default values for each check """
+        """Constructs the url kwargs default values for each check"""
         return {}
 
     def get_as_full_view_class(self, post_inherit_class=None):
@@ -215,7 +221,8 @@ class TestMixinMixin:
             classes.append(post_inherit_class)
 
         class BaseMixinTestView:
-            """ This class returns a default response indicating the mixin has been handled """
+            """This class returns a default response indicating the mixin has been handled"""
+
             def dispatch(self, request, *args, **kwargs):
                 return HttpResponse("test successful")
 
@@ -244,6 +251,6 @@ class TestMixinMixin:
     def assertResponseSuccessful(self, response):
         if response.status_code != 200:
             raise AssertionError(f"Response was not successful. It returned code {response.status_code} instead.")
-        if response.content != b'test successful':
+        if response.content != b"test successful":
             # HttpResponse content property is in byte form
             raise AssertionError(f"Response was not successful. It returned unexpected html content")

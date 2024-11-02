@@ -10,8 +10,8 @@ jobs:
       DJANGO_ENV: "TESTING"
     strategy:
       matrix:
-        python: ["3.8"]
-        ubuntu: ["ubuntu-20.04"]
+        python: ["3.10"]
+        ubuntu: ["ubuntu-22.04"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -33,8 +33,9 @@ jobs:
       - name: Output Coverage
         run: coverage report && coverage xml
       - name: Upload coverage to CodeCov
-        uses: codecov/codecov-action@v3 # https://github.com/codecov/codecov-action
+        uses: codecov/codecov-action@v4 # https://github.com/codecov/codecov-action
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           env_vars: OS,PYTHON
           fail_ci_if_error: true
           files: ./coverage/coverage.xml

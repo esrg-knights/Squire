@@ -6,6 +6,7 @@ from django.urls import reverse
 
 register = template.Library()
 
+
 @register.inclusion_tag("utils/snippets/bootstrap_tabs.html")
 def bootstrap_tabs(tabs):
     """
@@ -21,14 +22,14 @@ def bootstrap_tabs(tabs):
     selected = None
 
     for tab in tabs:
-        if tab.get('url', None) is None:
-            if tab.get('url_name', None) is None:
+        if tab.get("url", None) is None:
+            if tab.get("url_name", None) is None:
                 raise KeyError(f"Url on tab '{tab.get('name', '?')}' invalid. No url nor url_name was given ")
-            tab['url'] = reverse(viewname=tab.get('url_name'))
-        if tab.get('selected', False):
+            tab["url"] = reverse(viewname=tab.get("url_name"))
+        if tab.get("selected", False):
             selected = tab
 
     return {
-        'tabs': tabs,
-        'selected': selected,
+        "tabs": tabs,
+        "selected": selected,
     }

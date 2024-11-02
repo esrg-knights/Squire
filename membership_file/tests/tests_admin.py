@@ -1,7 +1,8 @@
 from django.contrib import messages
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.sites import AdminSite
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
+from django.http import HttpResponse
 from django.test import Client, TestCase, override_settings
 from django.test.client import RequestFactory
 
@@ -16,51 +17,101 @@ from membership_file.models import Member, MemberLog, MemberLogField, MemberYear
 # @since 19 JUL 2019
 ##################################################################################
 
+
 class MemberAdminTest(TestCase):
-    """ Testcases for MemberWithLog """
-    fixtures = ['test_users.json', 'test_members.json']
+    """Testcases for MemberWithLog"""
+
+    fixtures = ["test_users.json", "test_members.json"]
 
     def setUp(self):
-        self.model_admin = MemberWithLog(model=Member, admin_site=AdminSite())
-        self.user = User.objects.all().first()
+        self.model_admin: ModelAdmin = MemberWithLog(model=Member, admin_site=AdminSite())
+        self.user: User = User.objects.all().first()
 
         factory = RequestFactory()
-        self.request = factory.get('/testurl/')
+        self.request = factory.get("/testurl/")
         self.request.user = self.user
 
     def test_mark_as_current_member(self):
         # Sneaky hacky work-around due to uninstalled message framework in factorytestcase
         self.fake_message = None
+
         def message_replacement(request, message, level=None):
-            self.fake_message = {
-                'message': message,
-                'level': level
-            }
+            self.fake_message = {"message": message, "level": level}
+
         self.model_admin.message_user = message_replacement
 
         queryset = Member.objects.exclude(id=2)
         # Ensure that an error is caused when there are multiple active years
         self.model_admin.mark_as_current_member(self.request, queryset)
         self.assertIsNotNone(self.fake_message)
-        self.assertEqual(self.fake_message['level'], messages.ERROR)
+        self.assertEqual(self.fake_message["level"], messages.ERROR)
 
         # Ensure that an error message is created when there are no active years
         self.fake_message = None
         MemberYear.objects.update(is_active=False)
         self.model_admin.mark_as_current_member(self.request, queryset)
         self.assertIsNotNone(self.fake_message)
-        self.assertEqual(self.fake_message['level'], messages.ERROR)
+        self.assertEqual(self.fake_message["level"], messages.ERROR)
 
         # Ensure that all goes well
         self.fake_message = None
-        test_year = MemberYear.objects.create(name='new_year', is_active=True)
+        test_year = MemberYear.objects.create(name="new_year", is_active=True)
         Membership.objects.create(member_id=3, year=test_year)
         self.model_admin.mark_as_current_member(self.request, queryset)
         self.assertIsNotNone(self.fake_message)
-        self.assertEqual(self.fake_message['message'],
-                         "Succesfully created 1 new members. 1 instances were already a member")
-        self.assertEqual(self.fake_message['level'], messages.SUCCESS)
+        self.assertEqual(
+            self.fake_message["message"], "Succesfully created 1 new members. 1 instances were already a member"
+        )
+        self.assertEqual(self.fake_message["level"], messages.SUCCESS)
         self.assertEqual(Membership.objects.filter(year__is_active=True).count(), 2)
+
+    def test_register_action(self):
+        """Tests availability of the register member action button"""
+        self.user.is_superuser = False
+        self.user.save()
+        self.user.user_permissions.clear()
+        self.request.user = User.objects.all().first()
+        actions = self.model_admin.get_changelist_actions(self.request)
+        self.assertNotIn("register_new_member", actions)
+
+        self.user.user_permissions.add(Permission.objects.get(codename="add_member"))
+        self.request.user = User.objects.all().first()
+        actions = self.model_admin.get_changelist_actions(self.request)
+        self.assertIn("register_new_member", actions)
+
+    def test_access_registration_view(self):
+        """Tests whether the registration view is accessible"""
+        res: HttpResponse = self.model_admin.register_new_member(self.request, Member.objects.all())
+        self.assertEqual(res.status_code, 200)
+
+    def test_resend_email_action(self):
+        """Tests availability of the re-send registration email action button"""
+        # No permission
+        member = Member.objects.create(first_name="Foo", last_name="", legal_name="Foo", email="foo@example.com")
+        self.user.is_superuser = False
+        self.user.save()
+        self.user.user_permissions.clear()
+        self.request.user = User.objects.all().first()
+        actions = self.model_admin.get_change_actions(self.request, member.id, "")
+        self.assertNotIn("resend_verification", actions)
+
+        # With permission
+        self.user.user_permissions.add(Permission.objects.get(codename="add_member"))
+        self.request.user = User.objects.all().first()
+        actions = self.model_admin.get_change_actions(self.request, member.id, "")
+        self.assertIn("resend_verification", actions)
+
+        # Already has an associated user
+        member.user = self.user
+        member.save()
+        actions = self.model_admin.get_change_actions(self.request, member.id, "")
+        self.assertNotIn("resend_verification", actions)
+
+    def test_access_resend_email_view(self):
+        """Tests whether the re-send registration email view is accessible"""
+        member = Member.objects.create(first_name="Foo", last_name="", legal_name="Foo", email="foo@example.com")
+        res: HttpResponse = self.model_admin.resend_verification(self.request, member)
+        self.assertEqual(res.status_code, 200)
 
 
 # Tests Log deletion when members are deleted
@@ -176,7 +227,6 @@ class MemberLogTest(TestCase):
             "student_number": "",
             "educational_institution": "TU/e",
             "external_card_digits": "",
-            "external_card_cluster": "",
             "email": self.email,
             "street": "De Lampendriessen",
             "house_number": "31",
@@ -200,7 +250,7 @@ class MemberLogTest(TestCase):
         self.client.force_login(self.admin)
 
         # Issue a POST request.
-        response = self.client.post('/admin/membership_file/member/add/', data=self.data, follow=True)
+        response = self.client.post("/admin/membership_file/member/add/", data=self.data, follow=True)
 
         # Ensure that the request is correctly handled
         self.assertEqual(response.status_code, 200)
@@ -211,7 +261,6 @@ class MemberLogTest(TestCase):
         # Only 1 log should exist
         self.assertEqual(1, MemberLog.objects.all().count())
 
-
     # Tests if an INSERT MemberLog is created after creating a new member
     # Should also create a DELETE MemberLog afterwards
     def test_create_memberlog_insert_marked_for_deletion(self):
@@ -219,10 +268,10 @@ class MemberLogTest(TestCase):
         self.client.force_login(self.admin)
 
         # Newly created member was immediately marked for deletion
-        self.data['marked_for_deletion'] = 'on'
+        self.data["marked_for_deletion"] = "on"
 
         # Issue a POST request.
-        response = self.client.post('/admin/membership_file/member/add/', data=self.data, follow=True)
+        response = self.client.post("/admin/membership_file/member/add/", data=self.data, follow=True)
 
         # Ensure that the request is correctly handled
         self.assertEqual(response.status_code, 200)
@@ -233,9 +282,9 @@ class MemberLogTest(TestCase):
 
         # Ensure that a DELETE-MemberLog was also created
         deleteLog = MemberLog.objects.filter(
-            user__id = self.admin.id,
-            member__id = member.id,
-            log_type = "DELETE",
+            user__id=self.admin.id,
+            member__id=member.id,
+            log_type="DELETE",
         ).first()
         self.assertIsNotNone(deleteLog)
 
@@ -243,7 +292,7 @@ class MemberLogTest(TestCase):
         self.assertEqual(2, MemberLog.objects.all().count())
 
         # A DELETE-log does not have fields
-        self.assertIsNone(MemberLogField.objects.filter(member_log__id = deleteLog.id).first())
+        self.assertIsNone(MemberLogField.objects.filter(member_log__id=deleteLog.id).first())
 
         # The DELETE-log should be created later than the INSERT-log
         self.assertGreater(deleteLog.id, insertLog.id)
@@ -254,19 +303,21 @@ class MemberLogTest(TestCase):
         self.client.force_login(self.admin)
 
         # The member got marked for deletion
-        self.memberData['marked_for_deletion'] = 'on'
+        self.memberData["marked_for_deletion"] = "on"
 
         # Issue a POST request.
-        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/change/', data=self.memberData, follow=True)
+        response = self.client.post(
+            "/admin/membership_file/member/" + str(self.member.id) + "/change/", data=self.memberData, follow=True
+        )
 
         # Ensure that the request is correctly handled
         self.assertEqual(response.status_code, 200)
 
         # Ensure that a DELETE-MemberLog was also created
         deleteLog = MemberLog.objects.filter(
-            user__id = self.admin.id,
-            member__id = self.member.id,
-            log_type = "DELETE",
+            user__id=self.admin.id,
+            member__id=self.member.id,
+            log_type="DELETE",
         ).first()
         self.assertIsNotNone(deleteLog)
 
@@ -276,7 +327,6 @@ class MemberLogTest(TestCase):
         # No MemberLogFields should exist
         self.assertIsNone(MemberLogField.objects.filter().first())
 
-
     # Tests if an UPDATE MemberLog is created after updating a member
     # but without marked_for_deletion
     def test_create_memberlog_update(self):
@@ -285,13 +335,15 @@ class MemberLogTest(TestCase):
 
         # The member's data got updated
         updatedFields = {
-            'first_name': 'NewFirstName',
-            'email': 'newemail@example.com',
+            "first_name": "NewFirstName",
+            "email": "newemail@example.com",
         }
         self.memberData = {**self.memberData, **updatedFields}
 
         # Issue a POST request.
-        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/change/', data=self.memberData, follow=True)
+        response = self.client.post(
+            "/admin/membership_file/member/" + str(self.member.id) + "/change/", data=self.memberData, follow=True
+        )
 
         # Ensure that the request is correctly handled
         self.assertEqual(response.status_code, 200)
@@ -302,7 +354,6 @@ class MemberLogTest(TestCase):
         # Only 1 log should exist
         self.assertEqual(1, MemberLog.objects.all().count())
 
-
     # Tests if an UPDATE MemberLog is created after updating a member
     # Should also create a DELETE MemberLog afterwards
     def test_create_memberlog_update_marked_for_deletion(self):
@@ -311,14 +362,16 @@ class MemberLogTest(TestCase):
 
         # The member's data got updated
         updatedFields = {
-            'first_name': 'NewFirstName',
-            'email': 'newemail@example.com',
-            'marked_for_deletion': 'on',
+            "first_name": "NewFirstName",
+            "email": "newemail@example.com",
+            "marked_for_deletion": "on",
         }
         self.memberData = {**self.memberData, **updatedFields}
 
         # Issue a POST request.
-        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/change/', data=self.memberData, follow=True)
+        response = self.client.post(
+            "/admin/membership_file/member/" + str(self.member.id) + "/change/", data=self.memberData, follow=True
+        )
 
         # Ensure that the request is correctly handled
         self.assertEqual(response.status_code, 200)
@@ -328,9 +381,9 @@ class MemberLogTest(TestCase):
 
         # Ensure that a DELETE-MemberLog was also created
         deleteLog = MemberLog.objects.filter(
-            user__id = self.admin.id,
-            member__id = self.member.id,
-            log_type = "DELETE",
+            user__id=self.admin.id,
+            member__id=self.member.id,
+            log_type="DELETE",
         ).first()
         self.assertIsNotNone(deleteLog)
 
@@ -338,10 +391,11 @@ class MemberLogTest(TestCase):
         self.assertEqual(2, MemberLog.objects.all().count())
 
         # A DELETE-log does not have fields
-        self.assertIsNone(MemberLogField.objects.filter(member_log__id = deleteLog.id).first())
+        self.assertIsNone(MemberLogField.objects.filter(member_log__id=deleteLog.id).first())
 
         # The DELETE-log should be created later than the UPDATE-log
         self.assertGreater(deleteLog.id, updateLog.id)
+
 
 # Checks if a member got correctly added and if the correct logs were created
 # @param self An instance of the MemberLogTest-class
@@ -353,14 +407,10 @@ def member_got_correctly_added(self: MemberLogTest) -> MemberLog:
     self.assertIsNotNone(member)
 
     # ID-field was created in the process
-    self.data['id'] = str(member.id)
+    self.data["id"] = str(member.id)
 
     # There must exist an INSERT-MemberLog for this member
-    memberLogs = MemberLog.objects.filter(
-        user__id = self.admin.id,
-        member__id = member.id,
-        log_type = "INSERT"
-    )
+    memberLogs = MemberLog.objects.filter(user__id=self.admin.id, member__id=member.id, log_type="INSERT")
     # There must exist exactly 1 INSERT-memberlog
     self.assertEqual(1, memberLogs.count())
     memberLog = memberLogs.first()
@@ -369,12 +419,14 @@ def member_got_correctly_added(self: MemberLogTest) -> MemberLog:
     for key in self.data:
         # MemberLogField only exists if non-empty data was passed
         if self.data[key]:
-            self.assertIsNotNone(MemberLogField.objects.filter(
-                member_log__id = memberLog.id,
-                field = key,
-                old_value = None,
-                new_value = self.data[key],
-            ))
+            self.assertIsNotNone(
+                MemberLogField.objects.filter(
+                    member_log__id=memberLog.id,
+                    field=key,
+                    old_value=None,
+                    new_value=self.data[key],
+                )
+            )
 
     # No other MemberLogFields got added (except the ID-field)
     self.assertEqual(self.numNonEmptyFields + 1, MemberLogField.objects.filter().count())
@@ -389,11 +441,7 @@ def member_got_correctly_added(self: MemberLogTest) -> MemberLog:
 # @returns The UPDATE-log that was created
 def member_got_correctly_updated(self: MemberLogTest, updatedFields: dict) -> MemberLog:
     # There must exist an UPDATE-MemberLog for this member
-    memberLogs = MemberLog.objects.filter(
-        user__id = self.admin.id,
-        member__id = self.member.id,
-        log_type = "UPDATE"
-    )
+    memberLogs = MemberLog.objects.filter(user__id=self.admin.id, member__id=self.member.id, log_type="UPDATE")
     # There must exist exactly 1 UPDATE-memberlog
     self.assertEqual(1, memberLogs.count())
     memberLog = memberLogs.first()
@@ -402,15 +450,17 @@ def member_got_correctly_updated(self: MemberLogTest, updatedFields: dict) -> Me
     for key in updatedFields:
         # MemberLogField only exists if non-empty data was passed
         if updatedFields[key]:
-            self.assertIsNotNone(MemberLogField.objects.filter(
-                member_log__id = memberLog.id,
-                field = key,
-                old_value = None,
-                new_value = updatedFields[key],
-            ))
+            self.assertIsNotNone(
+                MemberLogField.objects.filter(
+                    member_log__id=memberLog.id,
+                    field=key,
+                    old_value=None,
+                    new_value=updatedFields[key],
+                )
+            )
 
     # No other MemberLogFields got added
-    numLogs = len(updatedFields) - (1 if updatedFields.get('marked_for_deletion') else 0)
+    numLogs = len(updatedFields) - (1 if updatedFields.get("marked_for_deletion") else 0)
     self.assertEqual(numLogs, MemberLogField.objects.filter().count())
 
     return memberLog
@@ -472,15 +522,15 @@ class DeleteMemberTest(TestCase):
         self.client.force_login(self.admin)
 
         # Issue a POST request.
-        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/delete/', data={"post": "yes"}, follow=True)
+        response = self.client.post(
+            "/admin/membership_file/member/" + str(self.member.id) + "/delete/", data={"post": "yes"}, follow=True
+        )
 
         # Ensure that the a 403 Forbidden response is issued
         self.assertEqual(response.status_code, 403)
 
         # The member should not be deleted
         self.assertEqual(1, Member.objects.all().count())
-
-
 
     # Tests if a member cannot be deleted by the user that marked it for deletion
     @suppress_warnings
@@ -495,7 +545,9 @@ class DeleteMemberTest(TestCase):
         Member.save(self.member)
 
         # Issue a POST request.
-        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/delete/', data={"post": "yes"}, follow=True)
+        response = self.client.post(
+            "/admin/membership_file/member/" + str(self.member.id) + "/delete/", data={"post": "yes"}, follow=True
+        )
 
         # Ensure that a 403 Forbidden response is issued
         self.assertEqual(response.status_code, 403)
@@ -515,7 +567,9 @@ class DeleteMemberTest(TestCase):
         Member.save(self.member)
 
         # Issue a POST request.
-        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/delete/', data={"post": "yes"}, follow=True)
+        response = self.client.post(
+            "/admin/membership_file/member/" + str(self.member.id) + "/delete/", data={"post": "yes"}, follow=True
+        )
 
         # Ensure that the request is correctly handled
         self.assertEqual(response.status_code, 200)
@@ -531,7 +585,7 @@ class DeleteMemberTest(TestCase):
         # Set the member marked to be deleted
         self.member.marked_for_deletion = True
         self.member.last_updated_by = self.admin2
-        self.memberData['marked_for_deletion'] = 'on'
+        self.memberData["marked_for_deletion"] = "on"
 
         self.member.save()
 
@@ -540,18 +594,20 @@ class DeleteMemberTest(TestCase):
 
         # Try to update this member's, even though marked_for_deletion = True
         updatedFields = {
-            'first_name': 'NewFirstName',
+            "first_name": "NewFirstName",
         }
         postData = {**self.memberData, **updatedFields}
 
         # Issue a POST request.
-        response = self.client.post('/admin/membership_file/member/' + str(self.member.id) + '/change/', data=postData, follow=True)
+        response = self.client.post(
+            "/admin/membership_file/member/" + str(self.member.id) + "/change/", data=postData, follow=True
+        )
 
         # Ensure that the readonly_fields are ignored
         self.assertEqual(response.status_code, 200)
 
         # Ensure that the name of the member was unchanged
-        self.assertEqual(Member.objects.get(id=self.member.id).first_name, self.memberData['first_name'])
+        self.assertEqual(Member.objects.get(id=self.member.id).first_name, self.memberData["first_name"])
 
         # Ensure that no memberlog got created
         self.assertEqual(MemberLog.objects.all().count(), 0)

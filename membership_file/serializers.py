@@ -8,4 +8,3 @@ class MemberSerializer(serializers.ModelSerializer):
         model = Member
         fields = "__all__"
         depth = 0
-        

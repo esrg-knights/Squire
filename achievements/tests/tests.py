@@ -1,14 +1,18 @@
 from django.test import TestCase
 
 from achievements.models import Achievement, Category
-from core.tests.util import check_http_response, TestPublicUser, TestAccountUser, check_http_response_with_login_redirect
+from core.tests.util import (
+    check_http_response,
+    TestPublicUser,
+    TestAccountUser,
+    check_http_response_with_login_redirect,
+)
 
 
 class TestCaseAchievementFrontEndViews(TestCase):
     fixtures = TestAccountUser.get_fixtures()
 
     def setUp(self):
-
         # Make a Category
         self.categoryData = {
             "name": "ZG-Category",
@@ -28,6 +32,5 @@ class TestCaseAchievementFrontEndViews(TestCase):
         self.achievement = Achievement.objects.create(**self.achievementData)
         Achievement.save(self.achievement)
 
-
     def test_public_achievements(self):
-        check_http_response(self, '/achievements', 'get', TestPublicUser)
+        check_http_response(self, "/achievements", "get", TestPublicUser)

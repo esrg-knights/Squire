@@ -9,7 +9,7 @@ from django.utils import dateparse
 
 
 class DateTimeIsoConverter:
-    regex = '[A-Z,0-9:+%-]*'
+    regex = "[A-Z,0-9:+%-]*"
 
     # Note, quote and unquote change the string between iso string and valid url (without : and +)
 
