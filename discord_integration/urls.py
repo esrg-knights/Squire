@@ -1,5 +1,4 @@
-from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
 
 from discord_integration import views
 
@@ -17,4 +16,4 @@ urlpatterns = [
 # 2. Set General Information > Linked roles verification URL: <ngrok url>/linked-role
 # 3. Set OAuth2 > General > Redirects: <ngrok url>/discord-oauth-callback
 # (4.) Add bot to a server: OAuth2 > URL Generator > Scopes: bot (then generate URL and paste it in the browser)
-# 5. Modify squire/discordconfig.json with the correct callback url (it needs to match up with the one in the bot settings)
+# 5. Modify squire/config/discordconfig.json with the correct callback url (it needs to match up with the one in the bot settings)

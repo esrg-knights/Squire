@@ -1,30 +1,16 @@
 from dataclasses import dataclass
-from enum import Enum
 import json
 import logging
 import requests
-from typing import Optional, Tuple, Type
-import uuid
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractBaseUser
 from django.utils import timezone
 
+from discord_integration.api.metadata import DiscordSquireMetadata
 from discord_integration.models import LinkedOAuthToken
 
 User = get_user_model()
-
-from discord_integration.api.metadata import DiscordSquireMetadata
-
 logger = logging.getLogger(__name__)
-
-
-class RequestType(Enum):
-    """Different types of requests that can be made to the Mailcow API"""
-
-    GET = "get"
-    POST = "post"
-    PUT = "put"
 
 
 @dataclass
@@ -80,7 +66,7 @@ class DiscordAPIClient:
         Given an OAuth2 code from the scope approval page, make a request to Discord's
         OAuth2 service to retrieve an access token, refresh token, and expiration.
 
-        :param: code: Passed by the Discord API
+        :param: :code: Passed by the Discord API
         """
         url = "https://discord.com/api/v10/oauth2/token"
         body = {
@@ -99,8 +85,11 @@ class DiscordAPIClient:
             return OAuthTokens(data["access_token"], data["refresh_token"], data["expires_in"])
         raise ValueError(f"Error fetching Discord OAuth tokens: [{res.status_code}] {res.content}")
 
-    def get_user_data(self, tokens: OAuthTokens) -> dict:
-        """Given a user based access token, fetch profile information for the current user."""
+    def get_authorization_data(self, tokens: OAuthTokens) -> dict:
+        """
+        Given a user based access token, fetch profile information for the current user.
+        See: https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information
+        """
         url = "https://discord.com/api/v10/oauth2/@me"
         headers = {"Authorization": f"Bearer {tokens.access_token}"}
         res = requests.get(url, headers=headers)
@@ -112,7 +101,7 @@ class DiscordAPIClient:
     def get_access_token(self, tokens: LinkedOAuthToken) -> str:
         """
         The initial token request comes with both an access token and a refresh
-        token.  Check if the access token has expired, and if it has, use the
+        token. Check if the access token has expired, and if it has, use the
         refresh token to acquire a new, fresh access token.
         """
         if timezone.now() <= tokens.expiry_date:
@@ -175,59 +164,3 @@ class DiscordAPIClient:
         if res.status_code == 200:
             return res.json()
         raise ValueError(f"Error pushing Discord metadata: [{res.status_code}] {res.content}")
-
-
-# /**
-#  * The initial token request comes with both an access token and a refresh
-#  * token.  Check if the access token has expired, and if it has, use the
-#  * refresh token to acquire a new, fresh access token.
-#  */
-# export async function getAccessToken(userId, tokens) {
-#   if (Date.now() > tokens.expires_at) {
-#     const url = 'https://discord.com/api/v10/oauth2/token';
-#     const body = new URLSearchParams({
-#       client_id: config.DISCORD_CLIENT_ID,
-#       client_secret: config.DISCORD_CLIENT_SECRET,
-#       grant_type: 'refresh_token',
-#       refresh_token: tokens.refresh_token,
-#     });
-#     const response = await fetch(url, {
-#       body,
-#       method: 'POST',
-#       headers: {
-#         'Content-Type': 'application/x-www-form-urlencoded',
-#       },
-#     });
-#     if (response.ok) {
-#       const tokens = await response.json();
-#       tokens.expires_at = Date.now() + tokens.expires_in * 1000;
-#       await storage.storeDiscordTokens(userId, tokens);
-#       return tokens.access_token;
-#     } else {
-#       throw new Error(`Error refreshing access token: [${response.status}] ${response.statusText}`);
-#     }
-#   }
-#   return tokens.access_token;
-# }
-
-
-# /**
-#  * Fetch the metadata currently pushed to Discord for the currently logged
-#  * in user, for this specific bot.
-#  */
-# export async function getMetadata(userId, tokens) {
-#   // GET /users/@me/applications/:id/role-connection
-#   const url = `https://discord.com/api/v10/users/@me/applications/${config.DISCORD_CLIENT_ID}/role-connection`;
-#   const accessToken = await getAccessToken(userId, tokens);
-#   const response = await fetch(url, {
-#     headers: {
-#       Authorization: `Bearer ${accessToken}`,
-#     },
-#   });
-#   if (response.ok) {
-#     const data = await response.json();
-#     return data;
-#   } else {
-#     throw new Error(`Error getting discord metadata: [${response.status}] ${response.statusText}`);
-#   }
-# }

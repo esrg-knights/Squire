@@ -37,9 +37,12 @@ if os.getenv("SENTRY_DSN"):  # pragma: no cover
     )
 
 # Hosts on which the application will run
-ALLOWED_HOSTS = ["f85d-2a00-bba0-110d-5000-a9f1-b4c0-bba1-b3c2.ngrok-free.app"]
+ALLOWED_HOSTS = ["f0f4-84-247-45-80.ngrok-free.app", "127.0.0.1"]
 if os.getenv("SQUIRE_ALLOWED_HOSTS"):  # pragma: no cover
     ALLOWED_HOSTS += os.getenv("SQUIRE_ALLOWED_HOSTS").split(",")
+
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS = ["https://f0f4-84-247-45-80.ngrok-free.app"]
 
 # Application definition
 INSTALLED_APPS = [

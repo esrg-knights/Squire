@@ -5,14 +5,12 @@ import uuid
 from django import http
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth import login as auth_login
-from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
-from django.urls import reverse
-from django.views.generic.base import RedirectView, TemplateView
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
 from django.utils import timezone
 from core.forms import LoginForm
 
-from core.views import LoginView
 from discord_integration.api.client import DiscordAPIClient
 from discord_integration.api.metadata import DiscordSquireMetadata
 from discord_integration.models import LinkedOAuthToken
@@ -27,7 +25,7 @@ class DiscordSettings:
 
     @classmethod
     def get_client(cls):
-        with open("squire/discordconfig.json", "r") as dconfig:
+        with open("squire/config/discordconfig.json", "r") as dconfig:
             data = json.load(dconfig)
         return DiscordAPIClient(
             data["DISCORD_CLIENT_ID"],
@@ -41,10 +39,10 @@ class DiscordSettings:
 class DiscordLinkedRoleLoginView(FormView):
     """
     Route configured in the Discord developer console which facilitates the
-    connection between Discord and any additional services you may use.
+    connection between Discord and Squire.
     To start the flow, generate the OAuth2 consent dialog url for Discord,
     and redirect the user there.
-    Before continueing back to Discord, requires the user to login.
+    Before continuing back to Discord, requires the user to login.
     """
 
     template_name = "core/user_accounts/login.html"
@@ -57,7 +55,7 @@ class DiscordLinkedRoleLoginView(FormView):
     def form_valid(self, form: LoginForm) -> HttpResponse:
         """TODO"""
         # NB: Cannot get user that logged in in the next view. Move authentication code there?
-        # NOTE: If user is already logged in in Squire, then we can even skip the authentication part?
+        # TODO: If user is already logged in in Squire, then we can even skip the authentication part?
 
         # If a user was already logged in before accessing this view, keep them logged in for the normal duration
         was_authenticated_before_login = self.request.user.is_authenticated
@@ -79,21 +77,18 @@ class DiscordLinkedRoleLoginView(FormView):
         res.set_signed_cookie("clientState", csrf_token, salt=self._client.cookie_secret, max_age=1000 * 60 * 5)
         return res
 
-    def get_redirect_url(self, state, *args, **kwargs) -> Optional[str]:
-        return self._client.get_oauth_url(state)
+    # def get(self, request: http.HttpRequest, *args: Any, **kwargs: Any) -> http.HttpResponse:
+    #     # Discord expects a 'clientState' attribute as a CSRF token, which is also encoded directly in the url
+    #     res = super().get(request, *args, **kwargs)
 
-    def get(self, request: http.HttpRequest, *args: Any, **kwargs: Any) -> http.HttpResponse:
-        # Discord expects a 'clientState' attribute as a CSRF token, which is also encoded directly in the url
-        res = super().get(request, *args, **kwargs)
+    #     print("Requesting user in DiscordLinkedRoleView get()")
+    #     print(request.user)
 
-        print("Requesting user in DiscordLinkedRoleView get()")
-        print(request.user)
-
-        print(request.headers)
-        print(request.META.get("HTTP_ORIGIN"))
-        # print(request.META)
-        print(request.get_host())
-        return res
+    #     print(request.headers)
+    #     print(request.META.get("HTTP_ORIGIN"))
+    #     # print(request.META)
+    #     print(request.get_host())
+    #     return res
 
 
 class DiscordOAuthCallbackView(TemplateView):
@@ -127,38 +122,24 @@ class DiscordOAuthCallbackView(TemplateView):
         tokens = self._client.get_oauth_tokens(request.GET.get("code"))
 
         # 2. Uses the Discord Access Token to fetch the user profile
-        userdata = self._client.get_user_data(tokens)
+        userdata = self._client.get_authorization_data(tokens).get("user", {})
+        print(f"userdata: {userdata}")
 
-        #   {'application': {
-        #      'id': '1125011599321747618',
-        #       'name': 'Squire Bot',
-        #       'icon': '6afd02101e5e63c6ce677301c240c9ca',
-        #       'description': 'Verification of Squire identities.',
-        #       'summary': '',
-        #       'type': None,
-        #       'hook': True,
-        #       'bot_public': False,
-        #       'bot_require_code_grant': False,
-        #       'verify_key': '37db463d86bbc0cde205d380e1d89e01e631b7a447ac7f9fc0e5dba5b32d6b24',
-        #       'flags': 0,
-        #       'tags': ['squire']
-        #   },
-        #   'scopes': ['identify', 'role_connections.write'],
-        #   'expires': '2023-07-10T18:25:39.965000+00:00',
-        #   'user': {
-        #       'id': '277779951363817472',
-        #       'username': 'scutlet',
-        #       'global_name': 'Scutlet',
-        #       'avatar': '62b7592a30757791ed689361e14ad58e',
-        #       'discriminator': '0',
-        #       'public_flags': 256,
-        #       'avatar_decoration': None
-        #   }}
+        metadata = {
+            "user_id": userdata.get("id"),
+            "username": userdata.get("username"),
+            "global_name": userdata.get("global_name"),
+            "avatar_hash": userdata.get(
+                "avatar"
+            ),  # https://cdn.discordapp.com/avatars/<user_id>/<avatar_id>.png?size=64
+            "color": userdata.get("accent_color"),
+        }
 
         data = {
             "access_token": tokens.access_token,
             "refresh_token": tokens.refresh_token,
             "expiry_date": timezone.now() + timezone.timedelta(seconds=tokens.expires_in),
+            "metadata": metadata,
         }
         tokens, _ = LinkedOAuthToken.objects.update_or_create(name="discord", user=self.request.user, defaults=data)
 
