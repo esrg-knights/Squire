@@ -11,7 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, HttpRequest
 from django.http.response import Http404
 from django.shortcuts import render
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404
 from django.views import View
@@ -21,6 +21,7 @@ from dynamic_preferences.registries import global_preferences_registry
 
 from core.forms import LoginForm, RegisterForm
 from core.models import MarkdownImage, Shortcut
+from membership_file.util import MembershipRequiredMixin
 
 global_preferences = global_preferences_registry.manager()
 User = get_user_model()
@@ -135,14 +136,11 @@ class GlobalPreferenceRequiredMixin:
             raise Http404()
 
 
-class LoginView(DjangoLoginView):
-    """View for users logging in."""
+class NewsletterView(GlobalPreferenceRequiredMixin, MembershipRequiredMixin, TemplateView):
+    """Page for viewing newsletters"""
 
-    template_name = "core/user_accounts/login.html"
-    authentication_form = LoginForm
-    redirect_authenticated_user = False
-    # Setting to True will enable Social Media Fingerprinting.
-    #   See: https://docs.djangoproject.com/en/3.2/topics/auth/default/#all-authentication-views
+    global_preference = "newsletter__share_link"
+    template_name = "core/newsletters.html"
 
 
 class RegisterSuccessView(TemplateView):

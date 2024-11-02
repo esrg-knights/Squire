@@ -138,7 +138,7 @@ class LoginFormTest(TestCase):
         # Ensure that only one (general) error was given
         self.assertEqual(len(form.errors.as_data()), 1)
         self.assertEqual(len(form.non_field_errors().as_data()), 1)
-        self.assertEqual(form.non_field_errors().as_data()[0].code, "ERROR_INVALID_LOGIN")
+        self.assertEqual(form.non_field_errors().as_data()[0].code, "invalid_login")
 
     def test_form_username_missing(self):
         """Test if a login is disallowed if the username is missing"""

@@ -50,6 +50,7 @@ urlpatterns = [
         name='user_accounts/password_reset/success'),
     path('register', views.RegisterUserView.as_view(), name='user_accounts/register'),
     path('register/success', views.RegisterSuccessView.as_view(), name='user_accounts/register/success'),
+    path('newsletters/', views.NewsletterView.as_view(), name='newsletters'),
     path('status/', registry.get_urls()),
     # Mock 403 and 404 views for display testing in development
     path('mock/', include([
