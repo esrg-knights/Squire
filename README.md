@@ -4,8 +4,8 @@ A re-introduction of the web application for ESRG Knights of the Kitchen Table u
 
 ![Testrun workflow](https://github.com/esrg-knights/Squire/actions/workflows/run_tests.yml/badge.svg)
 [![codecov](https://codecov.io/gh/esrg-knights/Squire/graph/badge.svg?token=BRTHryxW4X)](https://codecov.io/gh/esrg-knights/Squire)
-![Django Version](https://img.shields.io/badge/django%20versions-3.2-blue)
-![Python Version](https://img.shields.io/badge/python-3.8-blue)
+![Django Version](https://img.shields.io/badge/django%20versions-4.2-blue)
+![Python Version](https://img.shields.io/badge/python-3.10-blue)
 ![License](https://img.shields.io/github/license/esrg-knights/Squire)
 
 ## Getting started with development
