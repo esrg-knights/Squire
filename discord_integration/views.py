@@ -11,6 +11,7 @@ from django.views.generic.edit import FormView
 from django.utils import timezone
 from core.forms import LoginForm
 
+from core.views import LinkedLoginView
 from discord_integration.api.client import DiscordAPIClient
 from discord_integration.api.metadata import DiscordSquireMetadata
 from discord_integration.models import LinkedOAuthToken
@@ -36,7 +37,7 @@ class DiscordSettings:
         )
 
 
-class DiscordLinkedRoleLoginView(FormView):
+class DiscordLinkedRoleLoginView(LinkedLoginView):
     """
     Route configured in the Discord developer console which facilitates the
     connection between Discord and Squire.
@@ -45,12 +46,22 @@ class DiscordLinkedRoleLoginView(FormView):
     Before continuing back to Discord, requires the user to login.
     """
 
-    template_name = "core/user_accounts/login.html"
-    form_class = LoginForm
+    register_url = None
+    link_title = "Link Discord"
+    link_description = "This will link your Squire account to Discord. This does not share personal data."
+    link_extra = "You will be sent back to Discord to authorize after logging in."
+    image_source = "images/discord-logo-blue.png"
+    image_alt = "Discord logo"
 
     def __init__(self, **kwargs: Any) -> None:
         self._client = DiscordSettings.get_client()
         super().__init__(**kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.user.is_authenticated:
+            kwargs["initial"] = {"username": self.request.user.username}
+        return kwargs
 
     def form_valid(self, form: LoginForm) -> HttpResponse:
         """TODO"""
@@ -65,7 +76,6 @@ class DiscordLinkedRoleLoginView(FormView):
         if not was_authenticated_before_login:
             # Otherwise expire session after 5 minutes
             self.request.session.set_expiry(60 * 5)
-            print("Session will expire early!")
 
         print("Requesting user in DiscordOAuthCallbackView form_valid()")
         print(self.request.user)
@@ -154,41 +164,3 @@ class DiscordOAuthCallbackView(TemplateView):
         # res.send('You did it!  Now go back to Discord.');
 
         return super().get(request, *args, **kwargs)
-
-
-#     /**
-#  *
-#  */
-#  app.get('/discord-oauth-callback', async (req, res) => {
-#   try {
-#     // 1. Uses the code and state to acquire Discord OAuth2 tokens
-#     const code = req.query['code'];
-#     const discordState = req.query['state'];
-
-#     // make sure the state parameter exists
-#     const { clientState } = req.signedCookies;
-#     if (clientState !== discordState) {
-#       console.error('State verification failed.');
-#       return res.sendStatus(403);
-#     }
-
-#     const tokens = await discord.getOAuthTokens(code);
-
-#     // 2. Uses the Discord Access Token to fetch the user profile
-#     const meData = await discord.getUserData(tokens);
-#     const userId = meData.user.id;
-#     await storage.storeDiscordTokens(userId, {
-#       access_token: tokens.access_token,
-#       refresh_token: tokens.refresh_token,
-#       expires_at: Date.now() + tokens.expires_in * 1000,
-#     });
-
-#     // 3. Update the users metadata, assuming future updates will be posted to the `/update-metadata` endpoint
-#     await updateMetadata(userId);
-
-#     res.send('You did it!  Now go back to Discord.');
-#   } catch (e) {
-#     console.error(e);
-#     res.sendStatus(500);
-#   }
-# });

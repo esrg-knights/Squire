@@ -10,7 +10,7 @@
 <div class="card mb-3 mx-auto card-responsive" style="max-width: 650px;">
     <div class="row no-gutters">
         <div class="col-md-3 card-img-wrapper">
-            {% with img=image_alt|default:"images/header_logo.png"%}
+            {% with img=image_source|default:"images/header_logo.png"%}
                 <img src="{% static img %}" class="card-img p-3" alt="{{ image_alt|default:'Squire icon' }}">
             {% endwith %}
         </div>
