@@ -1,0 +1,4 @@
+[flake8]
+# higher than black because of some exceptions
+profile = "black"
+max-line-length = 130

@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import os
-import json
 
 from . import util
 
@@ -71,6 +70,7 @@ INSTALLED_APPS = [
     "nextcloud_integration",
     "user_interaction.apps.UserInteractionConfig",
     "mailcow_integration",
+    "gsuite_intergration",
     # More External Libraries
     "django_cleanup.apps.CleanupConfig",
     "import_export",
@@ -328,7 +328,7 @@ MARTOR_TOOLBAR_BUTTONS = [
     "image-link",
     "image-upload",
     "emoji",
-    #'direct-mention',
+    # "direct-mention",
     "toggle-maximize",
     "help",
 ]
@@ -347,7 +347,7 @@ MARTOR_MARKDOWN_EXTENSIONS = [
     "pymdownx.details",  # <details> and <summary>: ???+ "SUMMARY TITLE"
     "martor.extensions.urlize",  # Convert urls to links
     "martor.extensions.del_ins",  # ~~strikethrough~~ and ++underscores++
-    #'martor.extensions.mention',       # Martor mentions
+    # 'martor.extensions.mention',       # Martor mentions
     "martor.extensions.emoji",  # Martor emoji
     # 'martor.extensions.mdx_video',    # Embed/iframe video (E.g. Youtube, Vimeo, etc.)
     "martor.extensions.escape_html",  # Handle XSS vulnerabilities
@@ -484,7 +484,8 @@ FORM_RENDERER = "django.forms.renderers.DjangoDivFormRenderer"
 
 ####################################################################
 try:
-    from .local_settings import *
+
+    from .local_settings import *  # noqa: F403
 except ImportError:
     try:
         util.create_local_settings(os.path.join(BASE_DIR, "squire", "local_settings.py"))
