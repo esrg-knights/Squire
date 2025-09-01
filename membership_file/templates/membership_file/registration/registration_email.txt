@@ -1,17 +1,51 @@
 {% load i18n %}{% autoescape off %}
+**Knights of the Kitchen Table – Welcome Letter**
 Hail {{ member.first_name }}!
-You're receiving this email because your Knights membership was just processed in Squire! Squire is the membership portal for the Knights. Here you can view upcoming activities, look through an overview of our committees and boardgame/roleplay inventory, and manage your membership data and email preferences.
+We’re excited to have you join our community of tabletop, role-playing, and board game enthusiasts! This email contains all the essential info to get you started.
 
+**Activities**
+ The knights hold some weekly and monthly activities:
+
+**•	Weekly Board Game Evenings –** Every evening at 19:30, you can join us in the living room to play board games. We recommend showing up at least 5 to 10 minutes early to find out about upcoming activities, socialise and find a group to play with.
+
+**•	Wednesday activities –** Every Wednesday, at 19:30 we (try to) organise a special activity,
+o	This includes role-playing one-shots every first Wednesday of the month.
+o	Various trading card activities
+o	Role-playing workshops
+o	Special one-off activities
+
+**•	Sword Fighting Training –** Every two weeks, we host a training session where you can practise sword fighting — or, more accurately, hit each other with foam swords.
+o	This activity starts at 19:20 and once again, we recommend showing up a bit earlier. 
+
+**•	Messing Schaar:** Arts & Crafts – Once a month, members gather for an arts & crafts day, where you can get help finding the right materials to buy, and work on cutting and sewing them into your LARP costume. You can also work on other fun crafting projects!
+
+**•	**Members weekend –** Twice a year, we go away for a themed weekend of Knights fun. During the weekend we organise a LARP, multiple role playing one-shots, other unique activities, and plenty of time to play your favourite board games!
+
+**•	Special Events –** We also run special events throughout the year, such as:
+o	**Find your Roleplaying group:** An event where you can find a group to play a role-playing campaign like DND with.
+	If you would like to run a campaign and pitch it at this event, please contact [Insert contact info]
+
+o	**Crazy cloak construction:** A full day dedicated to creating your own cloak, with no prior experience required.
+o	**Mini-painting workshop**
+
+**Communication Channels**
+
+**•	Discord –** Our main hub for chatting, finding games, and staying up-to-date.
+  [https://discord.gg/rcnjVzZsBc]
+ Once you join, contact a board member to get access to all Knights channel
+
+**•	Squire – Our Web App –** We use Squire to organise games, track achievements, manage membership, and sign up for events.
 You can register an account for {{ member.get_full_name }} through the following link. Doing so will automatically link it to your membership data.
 
 {{ protocol }}://{{ domain }}{% url 'membership:link_account/confirm' uidb64=uid token=token %}
 
+ You can browse upcoming events, access the full list of our board games, and sign up for certain activities.
+
+**WhatsApp / Telegram Announcement Channel –** Join one of our announcement channels to make sure you never miss an event.
+  [Insert invite link] WhatsApp
+  [https://t.me/KightsAankondigingen] Telegram
+
+
 If this email was not meant for you, then do let us know.
 
 See you soon!
-
-{{ sender.name }}
-{{ sender.description }}{% if sender.extra_description %}
-{{ sender.extra_description }}{%endif%}
-ESRG Knights of the Kitchen Table
-{% endautoescape %}
