@@ -42,7 +42,7 @@ You can register an account for {{ member.get_full_name }} through the following
  You can browse upcoming events, access the full list of our board games, and sign up for certain activities.
 
 **WhatsApp / Telegram Announcement Channel –** Join one of our announcement channels to make sure you never miss an event.
-  [Insert invite link] WhatsApp
+  [https://chat.whatsapp.com/G47fmdu3Ufh5rpBI9XQY7v?mode=ems_copy_c] WhatsApp
   [https://t.me/KightsAankondigingen] Telegram
 
 
