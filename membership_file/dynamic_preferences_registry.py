@@ -52,3 +52,69 @@ class RegistrationExtraDescription(StringPreference):
     help_text = "Recommended to set board name. E.g., The Alliance of Alliterating Astronauts"
     default = ""
     required = False
+
+
+@global_preferences_registry.register
+class WelcomeLetterEmail(LongStringPreference):
+    section = membership_section
+    name = "welcome_letter_email"
+    verbose_name = "welcome letter email"
+    description = "content of the welcome email members automatically get after there members file is created."
+    help_text = "Recommended to keep a welcoming part for this is the meat of the email."
+    default = ""
+    required = False
+
+
+@global_preferences_registry.register
+class BuddyLink(StringPreference):
+    section = membership_section
+    name = "buddy_link"
+    verbose_name = "Buddy link."
+    description = "Place to put the link used to sign-up for the buddy system."
+    help_text = "Recommended to keep the link to the buddy system up-to-date"
+    default = ""
+    required = False
+
+
+@global_preferences_registry.register
+class WhatsappLink(StringPreference):
+    section = membership_section
+    name = "whatsapp_link"
+    verbose_name = "Whatsapp link."
+    description = "Place to put the link used to join the knights Whatsapp."
+    help_text = "Recommended to keep the link to the Whatsapp up-to-date"
+    default = ""
+    required = False
+
+
+@global_preferences_registry.register
+class TelegramLink(StringPreference):
+    section = membership_section
+    name = "telegram-announcements_link"
+    verbose_name = "Telegram announcement link."
+    description = "Place to put the link used to join the telegram announcement chat."
+    help_text = "Recommended to keep the link to the telegram announcemnet channel up-to-date"
+    default = ""
+    required = False
+
+
+@global_preferences_registry.register
+class ScalaDiningLink(StringPreference):
+    section = membership_section
+    name = "scala_dining_link"
+    verbose_name = "Scala Dining link."
+    description = "Place to put the link to the Scala Dining system."
+    help_text = "Recommended to keep the link to the Scala Dining system up-to-date"
+    default = ""
+    required = False
+
+
+@global_preferences_registry.register
+class DiscordLink(StringPreference):
+    section = membership_section
+    name = "discord_link"
+    verbose_name = "Discord link."
+    description = "Place to put the link used join the Knights Discord."
+    help_text = "Recommended to keep the link to the Knights Discord up-to-date"
+    default = ""
+    required = False
