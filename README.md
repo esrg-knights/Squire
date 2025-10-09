@@ -85,4 +85,4 @@ Run `python manage.py runserver`
 ### Loading Existing Data
 
 Setting up things like achievements can be time consuming. Hence, it is possible to use data that was set up earlier. For instance, achievement data can be dumped to a file using `python manage.py dumpdata achievements --exclude achievements.claimant --indent 2 > achievements.json`.
-After that, the data can easily be loaded during production using `python manage.py loaddata achievements.json` (after running `the migrate` but before running `runserver`). Note that the images inside the media folder are not automatically imported; only their file path is!
+After that, the data can easily be loaded during production using `python manage.py loaddata achievements.json` (after running the `migrate` but before running `runserver`). Note that the images inside the media folder are not automatically imported; only their file path is!
