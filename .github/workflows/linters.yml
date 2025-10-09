@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Check for changed python files in commit or pull request
-        uses: tj-actions/changed-files@v41
+        uses: tj-actions/changed-files@v46
         id: changed-files
         with:
           files: "**/*.py"
