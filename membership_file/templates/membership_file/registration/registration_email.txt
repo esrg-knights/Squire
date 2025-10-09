@@ -61,8 +61,7 @@ You can register an account for {{ member.get_full_name }} through the
 following link. Doing so will automatically link it to your membership
 data.</p></li>
 </ul>
-<p>{{ protocol }}://{{ domain }}{% url ‘membership:link_account/confirm’
-uidb64=uid token=token %}</p>
+<p>{{ protocol }}://{{ domain }}{% url 'membership:link_account/confirm' uidb64=uid token=token %}</p>
 <p>You can browse upcoming events, access the full list of our board
 games, and sign up for certain activities.</p>
 <ul>
@@ -74,6 +73,8 @@ href="https://chat.whatsapp.com/G47fmdu3Ufh5rpBI9XQY7v?mode=ems_copy_c">WhatsApp
 </ul>
 <p>If this email was not meant for you, then do let us know.</p>
 <p>See you soon!</p>
-{{ sender.name }} {{ sender.description }}{% if
-sender.extra_description %} {{ sender.extra_description }}{%endif%} ESRG
-Knights of the Kitchen Table {% endautoescape %}
+{{ sender.name }}
+{{ sender.description }}{% if sender.extra_description %}
+{{ sender.extra_description }}{%endif%}
+ESRG Knights of the Kitchen Table
+{% endautoescape %}
