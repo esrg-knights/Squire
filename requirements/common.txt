@@ -18,3 +18,9 @@ django-pwa~=2.0.1 # Progressive Webapp
 requests~=2.32.3 # Requests (needed for Mailcow API)
 django-tempus-dominus~=5.1.2.17 # DateTimePicker
 easywebdav~=1.2.0 # For Nextcloud
+pymemcache
+
+# Google Workspace
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib

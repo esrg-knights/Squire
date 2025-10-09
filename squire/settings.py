@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "nextcloud_integration",
     "user_interaction.apps.UserInteractionConfig",
     "mailcow_integration",
+    "gworkspace_integration",
     # More External Libraries
     "django_cleanup.apps.CleanupConfig",
     "import_export",
@@ -144,6 +145,16 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+    }
+}
+
+# Cache settings
+#   See: https://docs.djangoproject.com/en/4.2/topics/cache/
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
+        "LOCATION": "127.0.0.1:11211",
+        # TODO: Prod socket?
     }
 }
 
