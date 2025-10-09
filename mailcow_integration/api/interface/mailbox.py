@@ -70,7 +70,7 @@ class MailboxAttributes(MailcowAPIResponse):
     _cleanable_datetimes = ("passwd_update",)
 
     @classmethod
-    def clean(cls, json: dict, extra_keys: Set[str] = None):
+    def clean(cls, json: dict, extra_keys: Set[str] | None = None):
         new_json = {}
 
         # Quarantine
@@ -153,7 +153,7 @@ class MailcowMailbox(MailcowAPIResponse):
             self.active_int = self.active.value
 
     @classmethod
-    def clean(cls, json: dict, extra_keys: Set[str] = None):
+    def clean(cls, json: dict, extra_keys: Set[str] | None = None):
         username = json.get("username", None)
         name = json.get("name", None)
         if username is None:

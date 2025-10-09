@@ -77,10 +77,25 @@ NB: Only files with a _.py_ extension are tested by default.
 There are still several things that need to be done before the application can be run. First and foremost, `DEBUG = False` should be set in `squire/settings.py`.
 Moreover, files in the `media` folder will need to be served. This should be set up on the server on which Squire is run itself.
 
-Before making anything public, run `python manage.py check --deploy` to ensure that there are no futher security warnings.
+Before making anything public, run `python manage.py check --deploy` to ensure that there are no father security warnings.
 
 Run `python manage.py migrate`
 Run `python manage.py runserver`
+
+### Google Workspace
+To test the Google Workspace configuration, run the following management command: `python manage.py test_gworkspace_client`
+
+### Caching
+Squire uses [Memcached](https://memcached.org/), a memory-based cache server. It's used by some components, such as the Google Workspace Wrapper, to prevent fetching API data too often. Django's default caching mechanism (Local-memory caching) doesn't suffice, as it doesn't allow multiple Gunicorn-workers to utilise the cache simultaneously (they'll each have their own).
+
+To install:
+- `apt-get install memcached`
+
+To run (DEV):
+- `memcached -m 64 -p 11211 -u memcache`
+
+To run (PROD):
+- TODO > Mention service file; run via socket?
 
 ### Loading Existing Data
 

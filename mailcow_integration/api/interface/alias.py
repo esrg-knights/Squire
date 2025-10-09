@@ -59,7 +59,7 @@ class MailcowAlias(MailcowAPIResponse):
         return AliasType.NORMAL
 
     @classmethod
-    def clean(cls, json: dict, extra_keys: Set[str] = None) -> dict:
+    def clean(cls, json: dict, extra_keys: Set[str] | None = None) -> dict:
         address = json.get("address", None)
         if address is None:
             cls._issue_warning("address", address)
