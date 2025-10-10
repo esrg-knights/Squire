@@ -1,0 +1,42 @@
+
+{% extends 'core/base.html' %}
+
+{% load static %}
+{% load bootstrap_tabs %}
+
+{% block title %}
+  Google Workspace Server Status
+{% endblock title %}
+
+{% block css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/bootstrap_tabs.css' %}">
+{% endblock css %}
+
+{% block content %}
+    {% bootstrap_tabs tabs %}
+    <h1>Workspace Status {%if not error %}<i class="fas fa-check-circle text-success align-middle" style="font-size: 16px;"></i>{% endif %}</h1>
+    {% if error %}
+        <div class="alert alert-{{ alert_type|default:'danger' }} d-flex align-items-center" role="alert">
+            <i class="fas fa-exclamation-triangle mr-3"></i> {{ error }}
+        </div>
+    {% endif %}
+    <p>Below is all the data synced with Google Workspaces.</p>
+
+    <h3>Workspace Users</h3>
+    <p>
+    {% for user in workspace_users %}
+        <ul>
+            <li>{{ user.name.fullName }} - {{ user.primaryEmail }}</li>
+        </ul>
+    {% empty %}
+        No workspace users fetched!
+    {% endfor %}
+    </p>
+
+{% endblock content %}
+
+{% block js_bottom %}
+    {{ block.super }}
+    <script src="{% static "js/activate_bootstrap_tooltip.js" %}"></script>
+{% endblock %}

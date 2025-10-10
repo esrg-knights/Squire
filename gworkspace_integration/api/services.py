@@ -48,6 +48,14 @@ class DirectoryService(GoogleAPIService):
             "includeInGlobalAddressList": user.includeInGlobalAddressList,
             "recoveryEmail": user.recoveryEmail,
             "suspended": user.suspended,
+            "externalIds": [
+                {
+                    "type": eid.type,
+                    "value": eid.value,
+                    **({"customType": eid.customType} if eid.type == "custom" else {}),
+                }
+                for eid in user.external_ids
+            ],
         }
 
         x = self._service.users().insert(body=data).execute()
@@ -61,7 +69,7 @@ class DirectoryService(GoogleAPIService):
         while True:
             results = (
                 self._service.users()
-                .list(customer="my_customer", **extra, query="orgUnitPath/Members", domain=self._domain)
+                .list(customer="my_customer", **extra, query="orgUnitPath=/Members", domain=self._domain)
                 .execute()
             )
             users += results.get("users", [])

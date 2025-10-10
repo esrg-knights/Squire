@@ -36,7 +36,7 @@ class WorkspaceUserEmail(WorkspaceAPIResponse):
 class WorkspaceExternalUserId(WorkspaceAPIResponse):
     """External ID's for a Google Workspace user"""
 
-    customType: str
+    customType: str = ""
     type: (
         Literal["custom"]
         | Literal["customer"]
@@ -44,8 +44,8 @@ class WorkspaceExternalUserId(WorkspaceAPIResponse):
         | Literal["network"]
         | Literal["organization"]
         | None
-    )
-    value: str
+    ) = None
+    value: str = ""
 
     _cleanable_strings = ("customType", "type", "value")
     _optional_fields = ("customType",)
@@ -85,6 +85,7 @@ class WorkspaceUser(WorkspaceAPIResponse):
     isEnforcedIn2Sv: bool = False
     archived: bool = False
 
+    orgUnitPath: str = ""
     recoveryEmail: str = ""
     recoveryPhone: str = ""
 
@@ -106,6 +107,7 @@ class WorkspaceUser(WorkspaceAPIResponse):
         "thumbnailPhotoUrl",
         "recoveryEmail",
         "recoveryPhone",
+        "orgUnitPath",
     )
     _cleanable_datetimes = ("lastLoginTime", "creationTime", "deletionTime")
 
@@ -138,7 +140,7 @@ class WorkspaceUser(WorkspaceAPIResponse):
 
         ext_ids = json.get("externalIds", [])
         if isinstance(emails, list):
-            ext_ids = [WorkspaceUserEmail.from_json(ext_id) or WorkspaceUserEmail() for ext_id in ext_ids]
+            ext_ids = [WorkspaceExternalUserId.from_json(ext_id) or WorkspaceExternalUserId() for ext_id in ext_ids]
         else:
             cls._issue_warning("externalIds", aliases, "list")
             ext_ids = []

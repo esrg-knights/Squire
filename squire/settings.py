@@ -150,13 +150,14 @@ DATABASES = {
 
 # Cache settings
 #   See: https://docs.djangoproject.com/en/4.2/topics/cache/
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
-        "LOCATION": "127.0.0.1:11211",
-        # TODO: Prod socket?
+if os.getenv("DJANGO_ENV") != "TESTING":
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
+            "LOCATION": "127.0.0.1:11211",
+            # TODO: Prod socket?
+        }
     }
-}
 
 # Default primary key field field type to use for models that don't have a field with primary_key=True
 #   This changed to BigAutoField in Django 3.2, but migrating to it doesn't work properly
@@ -263,6 +264,14 @@ LOGGING = {
             "level": APPLICATION_LOG_LEVEL,
         },
         "mailcow_api": {
+            "handlers": ["console", "logfile"],
+            "level": "WARNING",
+        },
+        "gworkspace_integration": {
+            "handlers": ["console"],
+            "level": APPLICATION_LOG_LEVEL,
+        },
+        "gworkspace_api": {
             "handlers": ["console", "logfile"],
             "level": "WARNING",
         },

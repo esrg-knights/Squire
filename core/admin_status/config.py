@@ -8,7 +8,7 @@ class LogConfig(AdminStatusBaseConfig):
     name = "Logs"
     icon_class = "fas fa-bug"
     url_name = "logs"
-    order_value = 2  # Value determining the order of the tabs on the admin status page
+    order_value = 99  # Value determining the order of the tabs on the admin status page
 
     def get_urls(self):
         return [

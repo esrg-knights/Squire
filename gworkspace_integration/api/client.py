@@ -41,7 +41,7 @@ class GoogleWorkspaceClient:
     It is by no means meant to be a complete representation of the API, but rather only
     includes functionality needed for Squire.
 
-    For an incomplete overview of the Google Workspace API, see:
+    For an overview of the Google Workspace API, see:
     https://developers.google.com/workspace/explore
     """
 

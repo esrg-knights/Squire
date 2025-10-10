@@ -9,7 +9,7 @@ class MailcowStatusConfig(AdminStatusBaseConfig):
     name = "Mailcow"
     icon_class = "far fa-envelope"
     url_name = "mailcow_status"
-    order_value = 1  # Value determining the order of the tabs on the admin status page
+    order_value = 10  # Value determining the order of the tabs on the admin status page
 
     def get_urls(self):
         return [
