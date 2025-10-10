@@ -15,23 +15,28 @@
 
 {% block content %}
     {% bootstrap_tabs tabs %}
-    <h1>Workspace Status {%if not error %}<i class="fas fa-check-circle text-success align-middle" style="font-size: 16px;"></i>{% endif %}</h1>
+    <h1>Workspace Status {%if not error %}<i class="fas fa-check-circle fa-fw text-success align-middle" style="font-size: 16px;"></i>{% endif %}</h1>
     {% if error %}
         <div class="alert alert-{{ alert_type|default:'danger' }} d-flex align-items-center" role="alert">
             <i class="fas fa-exclamation-triangle mr-3"></i> {{ error }}
         </div>
     {% endif %}
     <p>Below is all the data synced with Google Workspaces.</p>
-    <p><i class="fas fa-at"></i> {{ domain }}</p>
+    <p><i class="fas fa-at fa-fw"></i> {{ domain }}</p>
+
+    <button class="btn btn-success greenify" type="button" data-toggle="collapse" data-target=".workspace-card-collapse" aria-expanded="true" aria-controls="workspace-card-collapse">
+          Toggle all
+        </button>
+
 
     <h3>Workspace Users</h3>
-    <p>
-    {% for member, user in workspace_pairs %}
+    <div>
+    {% for member, user, errors in workspace_pairs %}
         {% include "gworkspace_integration/snippets/workspacemember.html" %}
     {% empty %}
         No workspace users fetched!
     {% endfor %}
-    </p>
+    </div>
 
 {% endblock content %}
 

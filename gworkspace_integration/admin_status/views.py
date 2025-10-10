@@ -29,13 +29,42 @@ class WorkspaceStatusView(TemplateView):
         super().__init__(*args, **kwargs)
         self._workspace_manager: SquireGoogleWorkspaceManager | None = get_workspace_manager()
 
-    def _setup_members(self, users: list[WorkspaceUser]):
+    def _validate(self, member: Member, user: WorkspaceUser | None) -> list[str]:
+        """Validates a member with corresponding user data"""
+        if user is None:
+            return []
+        # Assume the member and user refer to the same person
+        assert str(member.pk) == next(
+            (eid.value for eid in user.external_ids if eid.type == "organization"), None
+        ), f"MemberID {member.pk} not present in user externalIds: {user.external_ids}"
+        errors = []
+        # Validate name
+        if member.first_name != user.name.givenName:
+            errors.append("first_name")
+        last_name = member.last_name
+        if member.tussenvoegsel:
+            last_name = member.tussenvoegsel + " " + last_name
+        if last_name != user.name.familyName:
+            errors.append("last_name")
+        if member.email != user.recoveryEmail:
+            errors.append("recovery_email")
+        if user.deletionTime is not None:
+            errors.append("deleted")
+        if user.suspended:
+            errors.append("suspended")
+        if user.archived:
+            errors.append("archived")
+        return errors
+
+    def _setup_members(self, users: list[WorkspaceUser]) -> list[tuple[Member, WorkspaceUser | None, list[str]]]:
         """TODO"""
         assert self._workspace_manager is not None
         members = Member.objects.filter_active().order_by("first_name", "last_name")
-        res: list[tuple[Member, WorkspaceUser | None]] = []
+        res: list[tuple[Member, WorkspaceUser | None, list[str]]] = []
         for member in members:
-            res.append((member, self._workspace_manager.get_user_for_member(member)))
+            user = self._workspace_manager.get_user_for_member(member, users)
+            res.append((member, user, self._validate(member, user)))
+        print(res)
         return res
 
     def get_context_data(self, **kwargs):

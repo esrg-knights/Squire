@@ -1,13 +1,21 @@
+{% spaceless %}
 <div class="card mb-2">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="card-title m-0">{{ member.get_full_name }}{%if not user %} <i class="fas fa-exclamation-triangle text-danger" style="font-size: 16px;"></i>{% endif %}</h5>
-        <h5 class="m-0">
-            <a class="badge badge-dark" href="https://admin.google.com/ac/users{%if user %}/{%endif%}{{user.id}}" target="_blank"><i class="fab fa-google"></i> {{user.id|default:"-"}}</a>
-            <a class="badge greenify" href="{% url 'admin:membership_file_member_change' member.pk %}"
-                target="_blank"><i class="fas fa-id-card"></i> {{ member.pk }}</a>
+    <div class="card-header d-flex justify-content-between align-items-start pl-3" id="heading-member-{{member.pk}}" data-toggle="collapse" data-target="#collapse-member-{{member.pk}}" aria-expanded="false" aria-controls="collapse-member-{{member.pk}}">
+        <h5 class="card-title m-0">
+            <i class="fas fa-chevron-down fa-fw fa-xs"></i> {{ member.get_full_name }}
+        </h5>
+        <h5 class="m-0 text-right">
+            {%if not user or errors %} <span class="badge badge-danger">
+                {%if not user%}Not synced{%else%}{{ errors|length }} sync errors{%endif%} <i class="fas fa-exclamation-triangle fa-fw"></i></span>
+            {% endif %}
+            <a class="badge badge-dark ml-1" href="https://admin.google.com/ac/users{%if user %}/{%endif%}{{user.id}}" target="_blank"><i class="fab fa-google fa-fw"></i> {{user.id|default:"???"}}</a>
+            <a class="badge greenify ml-1" href="{% url 'admin:membership_file_member_change' member.pk %}"
+                target="_blank"><i class="fas fa-id-card fa-fw"></i> {{ member.pk }}</a>
         </h5>
     </div>
-    <div class="card-body">
+
+    <div id="collapse-member-{{member.pk}}" class="collapse workspace-card-collapse" aria-labelledby="heading-member-{{member.pk}}">
+        <div class="card-body">
         <div class="card-text d-flex align-items-stretch">
             <div class="w-50">
                 <ul class="list-unstyled mb-0">
@@ -22,28 +30,34 @@
             <div class="w-50">
                 {% if user %}
                 <ul class="list-unstyled mb-0">
-                    <li class="media"><i class="far fa-id-card mt-1 mr-2"></i><span class="media-body text-break">
-                        {{ user.name.givenName }}
-                        |
-                        {{ user.name.familyName }}
-                    </span></li>
-                    <li class="media"><i class="fas fa-inbox mt-1 mr-2"></i><span class="media-body text-break">{{ user.primaryEmail }}</span></li>
-                    <li class="media"><i class="far fa-envelope mt-1 mr-2"></i><span class="media-body text-break">{{ user.recoveryEmail }}</span></li>
+                    <li class="media">
+                        <i class="far fa-id-card fa-fw mt-1 mr-2"></i>
+                        <span class="media-body text-break">
+                            {%if "first_name" in errors%}<i class="fas fa-exclamation-triangle fa-fw text-danger mt-1 mr-1"></i>{%endif%}
+                            <span class='{%if "first_name" in errors%}text-danger{%endif%}'>{{ user.name.givenName }}</span>
+                            |
+                            {%if "last_name" in errors%}<i class="fas fa-exclamation-triangle fa-fw text-danger mt-1 mr-1"></i>{%endif %}
+                            <span class='{%if "last_name" in errors%} text-danger{%endif%}'>{{ user.name.familyName }}</span>
+                        </span>
+                    </li>
+                    <li class="media">
+                        <i class="far fa-envelope fa-fw mt-1 mr-2"></i>
+                        {%if "recovery_email" in errors%}<i class="fas fa-exclamation-triangle fa-fw text-danger mt-1 mr-1"></i>{%endif%}
+                        <span class="media-body text-break{%if 'recovery_email' in errors%} text-danger{%endif%}">{{ user.recoveryEmail }}</span></li>
+                    <li class="media"><i class="fas fa-inbox fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ user.primaryEmail }}</span></li>
 
-                    <li class="media mt-2"><i class="far fa-clock mt-1 mr-2"></i><span class="media-body text-break">Last login: {{ user.lastLoginTime|default:"<i>Never</i>" }}</span></li>
-                    {% if user.changePasswordAtNextLogin %}<li class="media text-info"><i class="fas fa-key mt-1 mr-2"></i><span class="media-body text-break">Forced password change at next login</span></li>{%endif%}
-                    <li class="media"><i class="fas fa-mobile-alt mt-1 mr-2"></i><span class="media-body text-break">2FA: <i>{{ user.isEnrolledIn2Sv|yesno:"Enabled,Disabled,Unknown" }}{% if user.isEnforcedIn2Sv %} (Enforced){%endif%}</i></span></li>
-                    <li class="media"><i class="fas fa-user-plus mt-1 mr-2"></i><span class="media-body text-break">Created: {{ user.creationTime }}</span></li>
-                    {% if user.deletionTime %}<li class="media"><i class="fas fa-user-minus mt-1 mr-2"></i><span class="media-body text-break">Deleted: {{ user.deletionTime }}</span></li>{% endif %}
+                    <li class="media mt-2"><i class="far fa-clock fa-fw mt-1 mr-2"></i><span class="media-body text-break">Last login: {{ user.lastLoginTime|default:"<i>Never</i>" }}</span></li>
+                    {% if user.changePasswordAtNextLogin %}<li class="media text-info"><i class="fas fa-key fa-fw mt-1 mr-2"></i><span class="media-body text-break">Forced password change at next login</span></li>{%endif%}
+                    <li class="media"><i class="fas fa-mobile-alt fa-fw mt-1 mr-2"></i><span class="media-body text-break">2FA: <i>{{ user.isEnrolledIn2Sv|yesno:"Enabled,Disabled,Unknown" }}{% if user.isEnforcedIn2Sv %} (Enforced){%endif%}</i></span></li>
+                    <li class="media"><i class="fas fa-user-plus fa-fw mt-1 mr-2"></i><span class="media-body text-break">Created: {{ user.creationTime }}</span></li>
+                    {% if user.deletionTime %}<li class="media"><i class="fas fa-user-minus fa-fw mt-1 mr-2"></i><span class="media-body text-break">Deleted: {{ user.deletionTime }}</span></li>{% endif %}
 
                     <div class="mt-2">
-                    {% if user.archived %}<li class="media text-danger mt-2"><i class="fas fa-archive mt-1 mr-2"></i><span class="media-body text-break"><i>Archived</i></span></li>{%endif%}
-                    {% if user.suspended %}<li class="media text-danger"><i class="fas fa-gavel mt-1 mr-2"></i><span class="media-body text-break"><i>{{ user.suspensionReason|default:"User is suspended (reason unknown)" }}</i></span></li>{% endif %}
-                    {% if user.includeInGlobalAddressList %}<li class="media text-danger"><i class="far fa-address-book mt-1 mr-2"></i><span class="media-body text-break"><i>Included in global address list</i></span></li>{%endif%}
+                    {% if user.archived %}<li class="media text-danger mt-2"><i class="fas fa-archive fa-fw mt-1 mr-2"></i><span class="media-body text-break"><i>Archived</i></span></li>{%endif%}
+                    {% if user.suspended %}<li class="media text-danger"><i class="fas fa-gavel fa-fw mt-1 mr-2"></i><span class="media-body text-break"><i>{{ user.suspensionReason|default:"User is suspended (reason unknown)" }}</i></span></li>{% endif %}
+                    {% if user.includeInGlobalAddressList %}<li class="media text-danger"><i class="far fa-address-book fa-fw mt-1 mr-2"></i><span class="media-body text-break"><i>Included in global address list</i></span></li>{%endif%}
                     </div>
                 </ul>
-
-                <!-- Archived,  -->
                 {% else %}
                 <div class="alert alert-danger mb-0 media align-items-center" role="alert">
                     <i class="fas fa-cloud-upload-alt mt-1 mr-4"></i><span class="media-body text-break">Member does not have a Google Workspace account</span>
@@ -51,5 +65,7 @@
                 {% endif %}
             </div>
         </div>
+        </div>
     </div>
 </div>
+{% endspaceless %}

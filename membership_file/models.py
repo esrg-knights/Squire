@@ -47,7 +47,7 @@ class Member(models.Model):
         ]
         ordering = ["first_name", "last_name"]
 
-    objects = MemberManager()
+    objects: MemberManager = MemberManager()  # type: ignore[assignment]
 
     # The User that is linked to this member
     # NB: Only one user can be linked to one member at the same time!
