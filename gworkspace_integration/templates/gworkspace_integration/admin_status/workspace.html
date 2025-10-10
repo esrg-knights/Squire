@@ -22,13 +22,12 @@
         </div>
     {% endif %}
     <p>Below is all the data synced with Google Workspaces.</p>
+    <p><i class="fas fa-at"></i> {{ domain }}</p>
 
     <h3>Workspace Users</h3>
     <p>
-    {% for user in workspace_users %}
-        <ul>
-            <li>{{ user.name.fullName }} - {{ user.primaryEmail }}</li>
-        </ul>
+    {% for member, user in workspace_pairs %}
+        {% include "gworkspace_integration/snippets/workspacemember.html" %}
     {% empty %}
         No workspace users fetched!
     {% endfor %}

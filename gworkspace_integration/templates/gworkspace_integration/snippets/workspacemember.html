@@ -1,0 +1,55 @@
+<div class="card mb-2">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title m-0">{{ member.get_full_name }}{%if not user %} <i class="fas fa-exclamation-triangle text-danger" style="font-size: 16px;"></i>{% endif %}</h5>
+        <h5 class="m-0">
+            <a class="badge badge-dark" href="https://admin.google.com/ac/users{%if user %}/{%endif%}{{user.id}}" target="_blank"><i class="fab fa-google"></i> {{user.id|default:"-"}}</a>
+            <a class="badge greenify" href="{% url 'admin:membership_file_member_change' member.pk %}"
+                target="_blank"><i class="fas fa-id-card"></i> {{ member.pk }}</a>
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="card-text d-flex align-items-stretch">
+            <div class="w-50">
+                <ul class="list-unstyled mb-0">
+                    <li class="media"><i class="far fa-id-card mt-1 mr-2"></i>
+                        <span class="media-body text-break">{{ member.first_name }} | {{member.tussenvoegsel}} {% if member.tussenvoegsel %}| {% endif %}{{ member.last_name }}</span></li>
+                    <li class="media"><i class="far fa-envelope mt-1 mr-2"></i><span class="media-body text-break">{{ member.email }}</span></li>
+                </ul>
+            </div>
+
+            <div class="border-left mx-4"></div>
+
+            <div class="w-50">
+                {% if user %}
+                <ul class="list-unstyled mb-0">
+                    <li class="media"><i class="far fa-id-card mt-1 mr-2"></i><span class="media-body text-break">
+                        {{ user.name.givenName }}
+                        |
+                        {{ user.name.familyName }}
+                    </span></li>
+                    <li class="media"><i class="fas fa-inbox mt-1 mr-2"></i><span class="media-body text-break">{{ user.primaryEmail }}</span></li>
+                    <li class="media"><i class="far fa-envelope mt-1 mr-2"></i><span class="media-body text-break">{{ user.recoveryEmail }}</span></li>
+
+                    <li class="media mt-2"><i class="far fa-clock mt-1 mr-2"></i><span class="media-body text-break">Last login: {{ user.lastLoginTime|default:"<i>Never</i>" }}</span></li>
+                    {% if user.changePasswordAtNextLogin %}<li class="media text-info"><i class="fas fa-key mt-1 mr-2"></i><span class="media-body text-break">Forced password change at next login</span></li>{%endif%}
+                    <li class="media"><i class="fas fa-mobile-alt mt-1 mr-2"></i><span class="media-body text-break">2FA: <i>{{ user.isEnrolledIn2Sv|yesno:"Enabled,Disabled,Unknown" }}{% if user.isEnforcedIn2Sv %} (Enforced){%endif%}</i></span></li>
+                    <li class="media"><i class="fas fa-user-plus mt-1 mr-2"></i><span class="media-body text-break">Created: {{ user.creationTime }}</span></li>
+                    {% if user.deletionTime %}<li class="media"><i class="fas fa-user-minus mt-1 mr-2"></i><span class="media-body text-break">Deleted: {{ user.deletionTime }}</span></li>{% endif %}
+
+                    <div class="mt-2">
+                    {% if user.archived %}<li class="media text-danger mt-2"><i class="fas fa-archive mt-1 mr-2"></i><span class="media-body text-break"><i>Archived</i></span></li>{%endif%}
+                    {% if user.suspended %}<li class="media text-danger"><i class="fas fa-gavel mt-1 mr-2"></i><span class="media-body text-break"><i>{{ user.suspensionReason|default:"User is suspended (reason unknown)" }}</i></span></li>{% endif %}
+                    {% if user.includeInGlobalAddressList %}<li class="media text-danger"><i class="far fa-address-book mt-1 mr-2"></i><span class="media-body text-break"><i>Included in global address list</i></span></li>{%endif%}
+                    </div>
+                </ul>
+
+                <!-- Archived,  -->
+                {% else %}
+                <div class="alert alert-danger mb-0 media align-items-center" role="alert">
+                    <i class="fas fa-cloud-upload-alt mt-1 mr-4"></i><span class="media-body text-break">Member does not have a Google Workspace account</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

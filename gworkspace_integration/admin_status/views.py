@@ -10,7 +10,9 @@ from django.views.generic import TemplateView
 from committees.models import AssociationGroup
 from core.status_collective import AdminStatusViewMixin
 
+from gworkspace_integration.api.formats import WorkspaceUser
 from gworkspace_integration.workspace import SquireGoogleWorkspaceManager, get_workspace_manager
+from membership_file.models import Member
 
 logger = logging.getLogger(__name__)
 
@@ -27,19 +29,25 @@ class WorkspaceStatusView(TemplateView):
         super().__init__(*args, **kwargs)
         self._workspace_manager: SquireGoogleWorkspaceManager | None = get_workspace_manager()
 
+    def _setup_members(self, users: list[WorkspaceUser]):
+        """TODO"""
+        assert self._workspace_manager is not None
+        members = Member.objects.filter_active().order_by("first_name", "last_name")
+        res: list[tuple[Member, WorkspaceUser | None]] = []
+        for member in members:
+            res.append((member, self._workspace_manager.get_user_for_member(member)))
+        return res
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # context |= {
-        #     "workspace_users": [],
-        #     "workspace_groups": [],
-        # }
         if self._workspace_manager is None:
             context["error"] = "Google Workspace integration not configured."
             context["alert_type"] = "warning"
             return context
-
+        users = self._workspace_manager.users()
         context |= {
-            "workspace_users": self._workspace_manager.users(),
+            "domain": self._workspace_manager._client._domain,
+            "workspace_pairs": self._setup_members(users),
             "workspace_groups": [],
         }
 

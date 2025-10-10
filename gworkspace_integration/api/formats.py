@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Literal, Set
 
 from gworkspace_integration.api.base import WorkspaceAPIResponse
@@ -151,7 +151,13 @@ class WorkspaceUser(WorkspaceAPIResponse):
             "emails": emails,
             "external_ids": ext_ids,
         }
+
         extra_keys = extra_keys or set()
         new_json.update(**super().clean(json, extra_keys=new_json.keys() | extra_keys))
+
+        # last login defaults to 1970-01-01 if never used
+        last_login = new_json.get("lastLoginTime", None)
+        if last_login == datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc):
+            new_json["lastLoginTime"] = None
 
         return new_json

@@ -141,6 +141,14 @@ class SquireGoogleWorkspaceManager:
             api_fn=(lambda: list(self._client.DirectoryService.users())),
         )
 
+    def get_user_for_member(self, member: Member) -> WorkspaceUser | None:
+        """Gets the user that corresponds to the given member, if any"""
+        users = self.users()
+        for user in users:
+            for eid in user.external_ids:
+                if eid.type == "organization" and eid.value == str(member.pk):
+                    return user
+
     def _create_user_for_member(self, member: Member, users: list[WorkspaceUser], clear_cache=True):
         """
         Creates a Workspace User for the given member. A list of existing `users` should

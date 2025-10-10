@@ -77,7 +77,7 @@ NB: Only files with a _.py_ extension are tested by default.
 There are still several things that need to be done before the application can be run. First and foremost, `DEBUG = False` should be set in `squire/settings.py`.
 Moreover, files in the `media` folder will need to be served. This should be set up on the server on which Squire is run itself.
 
-Before making anything public, run `python manage.py check --deploy` to ensure that there are no father security warnings.
+Before making anything public, run `python manage.py check --deploy` to ensure that there are no further security warnings.
 
 Run `python manage.py migrate`
 Run `python manage.py runserver`
