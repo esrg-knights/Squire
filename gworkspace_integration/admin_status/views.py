@@ -29,31 +29,41 @@ class WorkspaceStatusView(TemplateView):
         super().__init__(*args, **kwargs)
         self._workspace_manager: SquireGoogleWorkspaceManager | None = get_workspace_manager()
 
-    def _validate(self, member: Member, user: WorkspaceUser | None) -> list[str]:
+    def _validate(self, member: Member | None, user: WorkspaceUser | None) -> list[str]:
         """Validates a member with corresponding user data"""
-        if user is None:
-            return []
-        # Assume the member and user refer to the same person
-        assert str(member.pk) == next(
-            (eid.value for eid in user.external_ids if eid.type == "organization"), None
-        ), f"MemberID {member.pk} not present in user externalIds: {user.external_ids}"
         errors = []
-        # Validate name
-        if member.first_name != user.name.givenName:
-            errors.append("first_name")
-        last_name = member.last_name
-        if member.tussenvoegsel:
-            last_name = member.tussenvoegsel + " " + last_name
-        if last_name != user.name.familyName:
-            errors.append("last_name")
-        if member.email != user.recoveryEmail:
-            errors.append("recovery_email")
-        if user.deletionTime is not None:
-            errors.append("deleted")
-        if user.suspended:
-            errors.append("suspended")
-        if user.archived:
-            errors.append("archived")
+
+        # Workspace active?
+        if user is not None:
+            user_member_id = next((eid.value for eid in user.external_ids if eid.type == "organization"), None)
+            if user.deletionTime is not None:
+                errors.append("deleted")
+            if user.suspended:
+                errors.append("suspended")
+            if user.archived:
+                errors.append("archived")
+
+            if member is not None:
+                # Assume the member and user refer to the same person
+                assert (
+                    str(member.pk) == user_member_id
+                ), f"MemberID {member.pk} not present in user externalIds: {user.external_ids}"
+                # Validate name
+                if member.first_name != user.name.givenName:
+                    errors.append("first_name")
+                last_name = member.last_name
+                if member.tussenvoegsel:
+                    last_name = member.tussenvoegsel + " " + last_name
+                if last_name != user.name.familyName:
+                    errors.append("last_name")
+                if member.email != user.recoveryEmail:
+                    errors.append("recovery_email")
+            else:
+                errors.append("invalid_userid")
+
+        if member is not None:
+            if not member.is_active:
+                errors.append("inactive")
         return errors
 
     def _setup_members(self, users: list[WorkspaceUser]) -> list[tuple[Member, WorkspaceUser | None, list[str]]]:
@@ -64,7 +74,16 @@ class WorkspaceStatusView(TemplateView):
         for member in members:
             user = self._workspace_manager.get_user_for_member(member, users)
             res.append((member, user, self._validate(member, user)))
-        print(res)
+        return res
+
+    def _setup_orphans(self, users: list[WorkspaceUser]) -> list[tuple[Member | None, WorkspaceUser, list[str]]]:
+        """TODO"""
+        assert self._workspace_manager is not None
+        res: list[tuple[Member | None, WorkspaceUser, list[str]]] = []
+        for user in users:
+            member = self._workspace_manager.get_member_for_user(user)
+            if member is None or not member.is_active:
+                res.append((member, user, self._validate(member, user)))
         return res
 
     def get_context_data(self, **kwargs):
@@ -77,6 +96,7 @@ class WorkspaceStatusView(TemplateView):
         context |= {
             "domain": self._workspace_manager._client._domain,
             "workspace_pairs": self._setup_members(users),
+            "orphan_users": self._setup_orphans(users),
             "workspace_groups": [],
         }
 

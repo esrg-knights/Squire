@@ -25,16 +25,22 @@
     <p><i class="fas fa-at fa-fw"></i> {{ domain }}</p>
 
     <button class="btn btn-success greenify" type="button" data-toggle="collapse" data-target=".workspace-card-collapse" aria-expanded="true" aria-controls="workspace-card-collapse">
-          Toggle all
-        </button>
+        Toggle all
+    </button>
 
-
-    <h3>Workspace Users</h3>
+    <h3>Members Workspace Users</h3>
+    <p>Lists all active(!) members and their corresponding workspace users.</p>
     <div>
     {% for member, user, errors in workspace_pairs %}
         {% include "gworkspace_integration/snippets/workspacemember.html" %}
-    {% empty %}
-        No workspace users fetched!
+    {% endfor %}
+    </div>
+
+    <h3>Orphan Workspace Users</h3>
+    <p>Lists all workspace users that are either linked to an inactive(!) member or a non-existing member.</p>
+    <div>
+    {% for member, user, errors in orphan_users %}
+        {% include "gworkspace_integration/snippets/workspacemember.html" %}
     {% endfor %}
     </div>
 

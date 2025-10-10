@@ -149,6 +149,12 @@ class SquireGoogleWorkspaceManager:
                 if eid.type == "organization" and eid.value == str(member.pk):
                     return user
 
+    def get_member_for_user(self, user: WorkspaceUser) -> Member | None:
+        """Gets the member that corresponds to the given user, if any"""
+        for eid in user.external_ids:
+            if eid.type == "organization":
+                return Member.objects.filter(pk=int(eid.value)).first()
+
     def _create_user_for_member(self, member: Member, users: list[WorkspaceUser], clear_cache=True):
         """
         Creates a Workspace User for the given member. A list of existing `users` should

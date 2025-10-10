@@ -2,15 +2,20 @@
 <div class="card mb-2">
     <div class="card-header d-flex justify-content-between align-items-start pl-3" id="heading-member-{{member.pk}}" data-toggle="collapse" data-target="#collapse-member-{{member.pk}}" aria-expanded="false" aria-controls="collapse-member-{{member.pk}}">
         <h5 class="card-title m-0">
-            <i class="fas fa-chevron-down fa-fw fa-xs"></i> {{ member.get_full_name }}
+            <i class="fas fa-chevron-down fa-fw fa-xs"></i>{% firstof member.get_full_name user.name.fullName "<i>Unknown name</i>" %}
         </h5>
         <h5 class="m-0 text-right">
             {%if not user or errors %} <span class="badge badge-danger">
-                {%if not user%}Not synced{%else%}{{ errors|length }} sync errors{%endif%} <i class="fas fa-exclamation-triangle fa-fw"></i></span>
+                {%if not user%}Not synced{%else%}{{ errors|length }} sync error{{ errors|pluralize }}{%endif%} <i class="fas fa-exclamation-triangle fa-fw"></i></span>
             {% endif %}
             <a class="badge badge-dark ml-1" href="https://admin.google.com/ac/users{%if user %}/{%endif%}{{user.id}}" target="_blank"><i class="fab fa-google fa-fw"></i> {{user.id|default:"???"}}</a>
-            <a class="badge greenify ml-1" href="{% url 'admin:membership_file_member_change' member.pk %}"
-                target="_blank"><i class="fas fa-id-card fa-fw"></i> {{ member.pk }}</a>
+            <a class="badge greenify ml-1" href=
+                {% if member %}
+                    "{% url 'admin:membership_file_member_change' member.pk %}"
+                {% else %}
+                    "{% url 'admin:membership_file_member_changelist' %}"
+                {% endif %}
+                target="_blank"><i class="fas fa-chess-rook fa-fw"></i> {{ member.pk|default:"???" }}</a>
         </h5>
     </div>
 
@@ -18,11 +23,18 @@
         <div class="card-body">
         <div class="card-text d-flex align-items-stretch">
             <div class="w-50">
+                {% if member %}
                 <ul class="list-unstyled mb-0">
                     <li class="media"><i class="far fa-id-card mt-1 mr-2"></i>
                         <span class="media-body text-break">{{ member.first_name }} | {{member.tussenvoegsel}} {% if member.tussenvoegsel %}| {% endif %}{{ member.last_name }}</span></li>
                     <li class="media"><i class="far fa-envelope mt-1 mr-2"></i><span class="media-body text-break">{{ member.email }}</span></li>
+                    {% if "inactive" in errors %}<li class="media text-danger"><i class="fas fa-eye-slash fa-fw mt-1 mr-2"></i><span class="media-body text-break text-danger">Member is inactive</span></li>{%endif%}
                 </ul>
+                {% else %}
+                <div class="alert alert-danger mb-0 media align-items-center" role="alert">
+                    <i class="fas fa-cloud-upload-alt mt-1 mr-4"></i><span class="media-body text-break">No member corresponds to this Workspace account</span>
+                </div>
+                {% endif %}
             </div>
 
             <div class="border-left mx-4"></div>
@@ -30,6 +42,19 @@
             <div class="w-50">
                 {% if user %}
                 <ul class="list-unstyled mb-0">
+                    {%if "invalid_userid" in errors%}
+                    <li class="media text-danger">
+                        <i class="fas fa-chess-rook fa-fw mt-1 mr-2"></i>
+                        <span class="media-body text-break">
+                            <i>EmployeeID/MemberID: </i>
+                            {% for eid in user.external_ids %}
+                                {% if eid.type == "organization" %}
+                                    {{ eid.value }}
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                    </li>
+                    {% endif %}
                     <li class="media">
                         <i class="far fa-id-card fa-fw mt-1 mr-2"></i>
                         <span class="media-body text-break">
@@ -43,7 +68,7 @@
                     <li class="media">
                         <i class="far fa-envelope fa-fw mt-1 mr-2"></i>
                         {%if "recovery_email" in errors%}<i class="fas fa-exclamation-triangle fa-fw text-danger mt-1 mr-1"></i>{%endif%}
-                        <span class="media-body text-break{%if 'recovery_email' in errors%} text-danger{%endif%}">{{ user.recoveryEmail }}</span></li>
+                        <span class="media-body text-break{%if 'recovery_email' in errors%} text-danger{%endif%}">{{ user.recoveryEmail|default:"<i>Missing</i>" }}</span></li>
                     <li class="media"><i class="fas fa-inbox fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ user.primaryEmail }}</span></li>
 
                     <li class="media mt-2"><i class="far fa-clock fa-fw mt-1 mr-2"></i><span class="media-body text-break">Last login: {{ user.lastLoginTime|default:"<i>Never</i>" }}</span></li>
