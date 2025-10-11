@@ -1,5 +1,5 @@
 from django.contrib.auth.models import Permission
-from django.forms import Form
+from django.forms import ModelForm
 from django.forms.fields import BooleanField
 from django.forms.widgets import Input
 
@@ -35,8 +35,12 @@ class ConfigTabSelectWidget(Input):
         return False
 
 
-class AssociationGroupsTabAccessForm(Form):
+class AssociationGroupsTabAccessForm(ModelForm):
     """Form that allows changing of tab access for the given AssociationGroupPanelControl instance"""
+
+    class Meta:
+        model = AssociationGroupPanelControl
+        fields = []
 
     def __init__(self, *args, instance: AssociationGroupPanelControl = None, **kwargs):
         super(AssociationGroupsTabAccessForm, self).__init__(*args, **kwargs)
