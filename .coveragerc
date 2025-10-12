@@ -8,6 +8,7 @@ omit =
     */virtualenv/*
     */__init__.py
     */tests*.py
+    */tests/*
     */migrations/*
     manage.py
 

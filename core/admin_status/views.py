@@ -15,14 +15,15 @@ class LogFileView(AdminStatusViewMixin, TemplateView):
     """
 
     tags = {
-        "&lt;[a-z0-9_\-:\s]*&gt;": "text-danger",
-        "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}(,[0-9]{3})?": "far fa-clock text-muted",
+        "&lt;[a-z0-9_\-:\s]*&gt;": "text-danger",  # <foo>, <bar-3 baz_>, etc.
+        "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}(?:,[0-9]{3})?": "far fa-clock text-muted",
         re.escape("[debug]"): "text-secondary font-weight-bold",
         re.escape("[info]"): "text-info font-weight-bold",
         re.escape("[warning]"): "text-warning font-weight-bold",
         re.escape("[error]"): "text-danger font-weight-bold",
         re.escape("JSONParseError"): "font-weight-bold",
         re.escape("(mailcow_api)"): "far fa-envelope text-primary",
+        "\\(gworkspace[^\\)]*\\)": "fab fa-google text-primary",
     }
 
     template_name = "core/admin_status/log.html"

@@ -1,8 +1,12 @@
 from datetime import datetime
+import logging
 from typing import Iterator
 
 from gworkspace_integration.api.base import GoogleAPIService
 from gworkspace_integration.api.formats import WorkspaceUser
+
+
+logger = logging.getLogger(__name__)
 
 
 class DirectoryService(GoogleAPIService):
@@ -49,8 +53,8 @@ class DirectoryService(GoogleAPIService):
         """Retrieves all users from the Workspace"""
         users = []
         page_token = ""
-        extra = {}
-        while True:
+        extra: dict[str, str] = {}
+        for _ in range(10):
             results = (
                 self._service.users()
                 .list(customer="my_customer", **extra, query="orgUnitPath=/Members", domain=self._domain)
@@ -62,3 +66,8 @@ class DirectoryService(GoogleAPIService):
             if not page_token:
                 return filter(None, map(lambda u: WorkspaceUser.from_json(u), users))
             extra = {"pageToken": page_token}
+        # Shouldn't happen
+        logger.error(
+            f"More than 10 pages of users returned when fetching from the Directory API. {len(users)} users returned."
+        )  # pragma: no cover
+        return filter(None, map(lambda u: WorkspaceUser.from_json(u), users))

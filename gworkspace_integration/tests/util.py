@@ -1,14 +1,26 @@
+from typing import Generic, TypeVar
 from unittest.mock import Mock, patch
 
-from django.test import TestCase
+from django.core.cache import cache
+from django.test import TestCase, override_settings
+
 from gworkspace_integration.api.base import GoogleAPIService
 from gworkspace_integration.api.client import GoogleWorkspaceClient, GoogleWorkspaceSettings
 
+T = TypeVar("T", bound=GoogleAPIService)
 
-class GoogleServiceTestMixin:
+
+class GoogleServiceTestMixin(Generic[T]):
     """Mixin class that contains general tests for the various Google Services"""
 
-    service_class: type[GoogleAPIService] = None
+    service_class: type[T] = None
+
+    @patch("googleapiclient.discovery.build")
+    def setUp(self, mock_build: Mock):
+        super().setUp()
+
+        self.service = self.service_class(Mock(), "example.com", "admin@example.com")
+        self._google_service = self.service._service
 
     @classmethod
     def setUpClass(cls):
@@ -22,12 +34,7 @@ class GoogleServiceTestMixin:
         mock_creds_service = mock_creds.from_service_account_file.return_value = Mock()
         mock_creds_admin = mock_creds_service.with_subject.return_value = Mock()
 
-        settings = GoogleWorkspaceSettings(
-            service_account_token_path="example.json",
-            scopes=[],
-            domain="example.com",
-            directory_admin_username="admin@example.com",
-        )
+        settings = GoogleWorkspaceSettings.from_json("squire/example_configs/gworkspaceconfig.json")
         client = GoogleWorkspaceClient(settings)
 
         # Instantiating doesn't build any service
@@ -66,3 +73,19 @@ class GoogleServiceTestMixin:
         mock_build.reset_mock()
         getattr(client, self.service_class.__name__)
         mock_build.assert_not_called()
+
+
+TEST_CACHE = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "squire-local-test-cache",
+    }
+}
+
+
+@override_settings(CACHES=TEST_CACHE)
+class CacheTestMixin(TestCase):
+    """Mixin to be used when interacting with the cache"""
+
+    def tearDown(self):
+        cache.clear()

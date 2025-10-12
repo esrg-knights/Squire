@@ -275,6 +275,10 @@ LOGGING = {
             "handlers": ["console", "logfile"],
             "level": "WARNING",
         },
+        "gworkspace_integration.api": {
+            "handlers": ["logfile"],
+            "level": "WARNING",
+        },
     },
 }
 

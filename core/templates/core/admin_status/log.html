@@ -13,6 +13,10 @@
     <link rel="stylesheet" href="{% static 'css/bootstrap_tabs.css' %}">
 {% endblock css %}
 
+{% block content-frame-class %}
+    wideContentFrame
+{% endblock %}
+
 {% block content %}
     {% bootstrap_tabs tabs %}
     <h1>Logs</h1>
