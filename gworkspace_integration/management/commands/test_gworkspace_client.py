@@ -6,7 +6,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.service_account import Credentials
 
 from gworkspace_integration.api.client import GoogleWorkspaceClient, GoogleWorkspaceSettings
-from gworkspace_integration.api.services import DirectoryService
+from gworkspace_integration.api.services.directory_service import DirectoryService
 
 
 class Command(BaseCommand):  # pragma: no cover

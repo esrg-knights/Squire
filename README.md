@@ -1,6 +1,6 @@
 # Squire
 
-A re-introduction of the web application for ESRG Knights of the Kitchen Table using Django 3.2.
+A re-introduction of the web application for ESRG Knights of the Kitchen Table using Django.
 
 ![Testrun workflow](https://github.com/esrg-knights/Squire/actions/workflows/run_tests.yml/badge.svg)
 [![codecov](https://codecov.io/gh/esrg-knights/Squire/graph/badge.svg?token=BRTHryxW4X)](https://codecov.io/gh/esrg-knights/Squire)

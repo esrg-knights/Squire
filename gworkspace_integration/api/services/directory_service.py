@@ -1,24 +1,8 @@
 from datetime import datetime
-from typing import Generator, Iterator
-from googleapiclient.discovery import build
-from google.oauth2.service_account import Credentials
+from typing import Iterator
 
+from gworkspace_integration.api.base import GoogleAPIService
 from gworkspace_integration.api.formats import WorkspaceUser
-
-
-class GoogleAPIService:
-    """TODO"""
-
-    service_name: str = ""
-    version: str = ""
-    is_admin = False
-
-    def __init__(self, creds: Credentials, domain: str, admin_username: str = ""):
-        if self.is_admin:
-            assert admin_username != ""
-            creds = creds.with_subject(admin_username)
-        self._domain = domain
-        self._service = build(self.service_name, self.version, credentials=creds)
 
 
 class DirectoryService(GoogleAPIService):

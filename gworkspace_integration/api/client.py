@@ -1,13 +1,11 @@
 import json
-
 from dataclasses import dataclass
 from typing import Type, TypeVar, cast
 from typing_extensions import Self
-from googleapiclient.discovery import build
-from google.oauth2.service_account import Credentials
+
 from google.oauth2 import service_account
 
-from gworkspace_integration.api.services import DirectoryService, GoogleAPIService
+from gworkspace_integration.api.services.directory_service import DirectoryService, GoogleAPIService
 
 
 @dataclass
@@ -50,7 +48,6 @@ class GoogleWorkspaceClient:
             f"squire/config/{settings.service_account_token_path}", scopes=settings.scopes
         )
         self._admin = settings.directory_admin_username
-        self._admin_creds = self._base_creds.with_subject(self._admin)
         self._domain = settings.domain
         self._services: dict[str, GoogleAPIService] = {}
 
