@@ -10,7 +10,7 @@ from django.views.generic import TemplateView
 from committees.models import AssociationGroup
 from core.status_collective import AdminStatusViewMixin
 
-from gworkspace_integration.api.formats import WorkspaceUser
+from gworkspace_integration.api.formats.users import WorkspaceUser
 from gworkspace_integration.workspace import SquireGoogleWorkspaceManager, get_workspace_manager
 from membership_file.models import Member
 

@@ -127,22 +127,22 @@ class WorkspaceUser(WorkspaceAPIResponse):
         aliases = json.get("aliases", [])
         if isinstance(aliases, list):
             aliases = [str(alias) for alias in aliases]
-        else:
-            cls._issue_warning("emails", aliases, "list")
+        else:  # pragma: no cover
+            cls._issue_warning("aliases", aliases, "list")
             aliases = []
 
         emails = json.get("emails", [])
         if isinstance(emails, list):
             emails = [WorkspaceUserEmail.from_json(email) or WorkspaceUserEmail() for email in emails]
-        else:
-            cls._issue_warning("emails", aliases, "list")
+        else:  # pragma: no cover
+            cls._issue_warning("emails", emails, "list")
             emails = []
 
         ext_ids = json.get("externalIds", [])
         if isinstance(emails, list):
             ext_ids = [WorkspaceExternalUserId.from_json(ext_id) or WorkspaceExternalUserId() for ext_id in ext_ids]
-        else:
-            cls._issue_warning("externalIds", aliases, "list")
+        else:  # pragma: no cover
+            cls._issue_warning("externalIds", ext_ids, "list")
             ext_ids = []
 
         new_json = {
@@ -157,7 +157,7 @@ class WorkspaceUser(WorkspaceAPIResponse):
 
         # last login defaults to 1970-01-01 if never used
         last_login = new_json.get("lastLoginTime", None)
-        if last_login == datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc):
+        if last_login == datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc):  # pragma: no cover
             new_json["lastLoginTime"] = None
 
         return new_json

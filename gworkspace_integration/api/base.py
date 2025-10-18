@@ -24,9 +24,10 @@ class GoogleAPIService:
     version: str = ""
     is_admin = False
 
-    def __init__(self, creds: Credentials, domain: str, admin_username: str = ""):
+    def __init__(self, creds: Credentials, domain: str, members_ou: str, admin_username: str = ""):
         if self.is_admin:
             assert admin_username != ""
             creds = creds.with_subject(admin_username)
         self._domain = domain
+        self._members_ou = members_ou
         self._service = discovery.build(self.service_name, self.version, credentials=creds)

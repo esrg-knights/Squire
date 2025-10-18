@@ -3,7 +3,8 @@ import logging
 from typing import Iterator
 
 from gworkspace_integration.api.base import GoogleAPIService
-from gworkspace_integration.api.formats import WorkspaceUser
+from gworkspace_integration.api.formats.users import WorkspaceUser
+from gworkspace_integration.api.formats.groups import WorkspaceGroup
 
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,7 @@ class DirectoryService(GoogleAPIService):
             ],
         }
 
+        # Returns JSON of newly created user
         x = self._service.users().insert(body=data).execute()
         print(x)
 
@@ -57,17 +59,40 @@ class DirectoryService(GoogleAPIService):
         for _ in range(10):
             results = (
                 self._service.users()
-                .list(customer="my_customer", **extra, query="orgUnitPath=/Members", domain=self._domain)
+                .list(customer="my_customer", **extra, query=f"orgUnitPath={self._members_ou}", domain=self._domain)
                 .execute()
             )
             users += results.get("users", [])
             page_token = results.get("nextPageToken")
             # If there's no page left, return results
             if not page_token:
-                return filter(None, map(lambda u: WorkspaceUser.from_json(u), users))
+                break
             extra = {"pageToken": page_token}
-        # Shouldn't happen
-        logger.error(
-            f"More than 10 pages of users returned when fetching from the Directory API. {len(users)} users returned."
-        )  # pragma: no cover
+
+        if page_token:  # pragma: no cover
+            # Shouldn't happen
+            logger.error(
+                f"More than 10 pages of users returned when fetching from the Directory API. {len(users)} users returned."
+            )
         return filter(None, map(lambda u: WorkspaceUser.from_json(u), users))
+
+    def groups(self):
+        """Retrieve all groups from the workspace"""
+        groups = []
+        page_token = ""
+        extra: dict[str, str] = {}
+        for _ in range(10):
+            results = self._service.groups().list(customer="my_customer", **extra, domain=self._domain).execute()
+            groups += results.get("groups", [])
+            page_token = results.get("nextPageToken")
+            # If there's no page left, return results
+            if not page_token:
+                break
+            extra = {"pageToken": page_token}
+
+        if page_token:  # pragma: no cover
+            # Shouldn't happen
+            logger.error(
+                f"More than 10 pages of users returned when fetching from the Directory API. {len(groups)} users returned."
+            )
+        return filter(None, map(lambda g: WorkspaceGroup.from_json(g), groups))

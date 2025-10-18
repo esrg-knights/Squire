@@ -2,7 +2,7 @@ from unittest.mock import Mock
 from django.test import TestCase
 
 from core.tests.util import suppress_warnings
-from gworkspace_integration.api.formats import WorkspaceUser
+from gworkspace_integration.api.formats.users import WorkspaceUser
 from gworkspace_integration.api.services.directory_service import DirectoryService
 from gworkspace_integration.tests.util import GoogleServiceTestMixin
 

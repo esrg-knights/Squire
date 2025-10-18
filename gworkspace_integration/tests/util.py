@@ -19,7 +19,7 @@ class GoogleServiceTestMixin(Generic[T]):
     def setUp(self, mock_build: Mock):
         super().setUp()
 
-        self.service = self.service_class(Mock(), "example.com", "admin@example.com")
+        self.service = self.service_class(Mock(), "example.com", "/MyTestMembersOU", "admin@example.com")
         self._google_service = self.service._service
 
     @classmethod

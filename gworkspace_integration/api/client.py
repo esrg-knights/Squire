@@ -21,6 +21,7 @@ class GoogleWorkspaceSettings:
     service_account_token_path: str
     scopes: list[str]
     domain: str
+    members_ou: str
     directory_admin_username: str
 
     @classmethod
@@ -49,12 +50,13 @@ class GoogleWorkspaceClient:
         )
         self._admin = settings.directory_admin_username
         self._domain = settings.domain
+        self._members_ou = settings.members_ou
         self._services: dict[str, GoogleAPIService] = {}
 
     def _get_service(self, cls: Type[T]) -> T:
         key = f"{cls.service_name}.{cls.version}"
         if key not in self._services:
-            self._services[key] = cls(self._base_creds, self._domain, self._admin)
+            self._services[key] = cls(self._base_creds, self._domain, self._members_ou, self._admin)
         return cast(T, self._services[key])
 
     @property

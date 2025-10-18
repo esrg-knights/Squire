@@ -1,6 +1,7 @@
 {
     "service_account_token_path": "<token>.json",
     "domain": "example.com",
+    "members_ou": "/Members/TestMembers",
     "directory_admin_username": "admin@example.com",
     "scopes": [
         "https://mail.google.com/",

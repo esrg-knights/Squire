@@ -7,8 +7,23 @@ from django.apps import apps
 from django.core.cache import cache
 from django.utils.text import slugify
 
+from committees.models import AssociationGroup
 from gworkspace_integration.api.client import GoogleWorkspaceClient, GoogleWorkspaceSettings
-from gworkspace_integration.api.formats import WorkspaceExternalUserId, WorkspaceUser, WorkspaceUserName
+from gworkspace_integration.api.formats.groups import (
+    WorkspaceGroup,
+    WorkspaceGroupContactPermissions,
+    WorkspaceGroupDefaultSender,
+    WorkspaceGroupDiscoverPermissions,
+    WorkspaceGroupJoinPermissions,
+    WorkspaceGroupLeavePermissions,
+    WorkspaceGroupModerationPermissions,
+    WorkspaceGroupPostPermissions,
+    WorkspaceGroupReplyTo,
+    WorkspaceGroupSettings,
+    WorkspaceGroupViewPermissions,
+    WorkspaceGroupViewPermissionsExt,
+)
+from gworkspace_integration.api.formats.users import WorkspaceExternalUserId, WorkspaceUser, WorkspaceUserName
 from gworkspace_integration.apps import GworkspaceIntegrationConfig
 from membership_file.models import Member
 
@@ -84,7 +99,7 @@ class WorkspaceCacheManager:
                 data = cache.get(cache_key)
                 if data is not None:
                     return data
-            # # Took too long!
+            # Took too long!
             if raise_timeout:
                 raise TimeoutError(
                     f"Unable to retrieve workspace user list from cache. Another process was updating it but took too long!"
@@ -109,6 +124,9 @@ class SquireGoogleWorkspaceManager:
         settings = GoogleWorkspaceSettings.from_json("squire/config/gworkspaceconfig.json")
         self._client = GoogleWorkspaceClient(settings)
 
+    # -----------------------
+    # USERS
+    # -----------------------
     def _generate_username(self, member: Member, users: list[WorkspaceUser]):
         """
         Generates a unique username for the given member. This can happen if multiple
@@ -176,7 +194,7 @@ class SquireGoogleWorkspaceManager:
             suspended=False,
             name=WorkspaceUserName(givenName=member.first_name, familyName=last_name),
             external_ids=[WorkspaceExternalUserId(type="organization", value=member.pk)],
-            orgUnitPath="/Members",
+            orgUnitPath=self._client._members_ou,
         )
         self._client.DirectoryService.add_user(user)
         if clear_cache:
@@ -197,3 +215,75 @@ class SquireGoogleWorkspaceManager:
         # Invalidate cache after batch
         cache.delete(self.CACHE_KEY_USERS)
         return users
+
+    # -----------------------
+    # GROUPS
+    # -----------------------
+    def groups(self, ignore_cache=False) -> list[WorkspaceGroup]:
+        """Fetch all Workspace groups, using the cache if available and allowed"""
+        if ignore_cache:
+            return list(self._client.DirectoryService.groups())
+
+        return WorkspaceCacheManager.fetch_with_lock(
+            cache_key=self.CACHE_KEY_GROUPS,
+            api_fn=(lambda: list(self._client.DirectoryService.groups())),
+        )
+
+    def _get_committee_settings(self, committee: AssociationGroup) -> WorkspaceGroupSettings:
+        """Gets group settings that can be used for committee groups"""
+        return WorkspaceGroupSettings(
+            committee.contact_email,
+            name="group name",
+            description="group description",
+            whoCanJoin=WorkspaceGroupJoinPermissions.INVITED_CAN_JOIN,
+            whoCanViewMembership=WorkspaceGroupViewPermissions.ALL_OWNERS_CAN_VIEW,
+            whoCanViewGroup=WorkspaceGroupViewPermissionsExt.ALL_MANAGERS_CAN_VIEW,
+            allowExternalMembers=True,
+            whoCanPostMessage=WorkspaceGroupPostPermissions.ALL_MANAGERS_CAN_POST,
+            allowWebPosting=True,
+            replyTo=WorkspaceGroupReplyTo.REPLY_TO_SENDER,
+            includeCustomFooter=True,
+            customFooterText="You can manage your subscriptions for this email and all other emails in Squire. You can Unsubscribe there! <insert link>",
+            membersCanPostAsTheGroup=False,
+            includeInGlobalAddressList=False,
+            whoCanLeaveGroup=WorkspaceGroupLeavePermissions.NONE_CAN_LEAVE,
+            whoCanContactOwner=WorkspaceGroupContactPermissions.ALL_MANAGERS_CAN_CONTACT,
+            whoCanModerateMembers=WorkspaceGroupModerationPermissions.OWNERS_ONLY,
+            whoCanModerateContent=WorkspaceGroupModerationPermissions.OWNERS_AND_MANAGERS,
+            whoCanAssistContent=WorkspaceGroupModerationPermissions.OWNERS_AND_MANAGERS,
+            enableCollaborativeInbox=False,
+            whoCanDiscoverGroup=WorkspaceGroupDiscoverPermissions.ALL_MEMBERS_CAN_DISCOVER,
+            defaultSender=WorkspaceGroupDefaultSender.DEFAULT_SELF,
+        )
+
+    def _get_mailinglist_settings(self, email: str) -> WorkspaceGroupSettings:
+        """Gets group settings that can be used for mailing lists"""
+        return WorkspaceGroupSettings(
+            email,
+            name="group name",
+            description="group description",
+            whoCanJoin=WorkspaceGroupJoinPermissions.INVITED_CAN_JOIN,
+            whoCanViewMembership=WorkspaceGroupViewPermissions.ALL_OWNERS_CAN_VIEW,
+            whoCanViewGroup=WorkspaceGroupViewPermissionsExt.ALL_MANAGERS_CAN_VIEW,
+            allowExternalMembers=True,
+            whoCanPostMessage=WorkspaceGroupPostPermissions.ALL_MANAGERS_CAN_POST,
+            allowWebPosting=True,
+            replyTo=WorkspaceGroupReplyTo.REPLY_TO_SENDER,
+            includeCustomFooter=True,
+            customFooterText="You can manage your subscriptions for this email and all other emails in Squire. You can Unsubscribe there! <insert link>",
+            membersCanPostAsTheGroup=False,
+            includeInGlobalAddressList=False,
+            whoCanLeaveGroup=WorkspaceGroupLeavePermissions.NONE_CAN_LEAVE,
+            whoCanContactOwner=WorkspaceGroupContactPermissions.ALL_MANAGERS_CAN_CONTACT,
+            whoCanModerateMembers=WorkspaceGroupModerationPermissions.OWNERS_ONLY,
+            whoCanModerateContent=WorkspaceGroupModerationPermissions.OWNERS_AND_MANAGERS,
+            whoCanAssistContent=WorkspaceGroupModerationPermissions.OWNERS_AND_MANAGERS,
+            enableCollaborativeInbox=False,
+            whoCanDiscoverGroup=WorkspaceGroupDiscoverPermissions.ALL_MEMBERS_CAN_DISCOVER,
+            defaultSender=WorkspaceGroupDefaultSender.DEFAULT_SELF,
+        )
+
+    def create_mailinglist(self, email: str, receivers: list[str]) -> WorkspaceGroup:
+        """Creates a google group that serves as a mailing list. E.g. leden@example.com to email all members"""
+
+
