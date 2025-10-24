@@ -28,7 +28,15 @@
         Toggle all
     </button>
 
-    <h3>Members Workspace Users</h3>
+    <h3>Committee Workspace Groups</h3>
+    <p>Lists all committees and their corresponding Workspace Groups.</p>
+    <div>
+        {% for committee, group, group_members, errors in workspace_groups %}
+            {% include "gworkspace_integration/snippets/workspacegroup.html" %}
+        {% endfor %}
+    </div>
+
+    <h3>Member Workspace Users</h3>
     <p>Lists all active(!) members and their corresponding workspace users.</p>
     <div>
     {% for member, user, errors in workspace_pairs %}

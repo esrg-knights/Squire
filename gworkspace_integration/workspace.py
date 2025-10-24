@@ -1,4 +1,6 @@
 import crypt
+from enum import Enum
+import re
 from secrets import token_urlsafe
 import time
 from typing import Callable, TypeVar, cast
@@ -16,6 +18,7 @@ from gworkspace_integration.api.formats.groups import (
     WorkspaceGroupDiscoverPermissions,
     WorkspaceGroupJoinPermissions,
     WorkspaceGroupLeavePermissions,
+    WorkspaceGroupMember,
     WorkspaceGroupModerationPermissions,
     WorkspaceGroupPostPermissions,
     WorkspaceGroupReplyTo,
@@ -119,6 +122,7 @@ class SquireGoogleWorkspaceManager:
 
     CACHE_KEY_USERS = "Squire_WorkspaceUsers"
     CACHE_KEY_GROUPS = "Squire_WorkspaceGroups"
+    CACHE_KEY_GROUPMEMBERS = "Squire_WorkspaceGroupMember-%(groupKey)s"
 
     def __init__(self):
         settings = GoogleWorkspaceSettings.from_json("squire/config/gworkspaceconfig.json")
@@ -219,17 +223,48 @@ class SquireGoogleWorkspaceManager:
     # -----------------------
     # GROUPS
     # -----------------------
+    def get_group_for_committee(
+        self, committee: AssociationGroup, groups: list[WorkspaceGroup] | None = None
+    ) -> WorkspaceGroup | None:
+        """Gets the group that corresponds to the given committee, if any"""
+        groups = groups or self.groups()
+        for group in groups:
+            for alias in group.aliases:
+                if alias == f"committee-{committee.pk}@{self._client._domain}":
+                    return group
+
+    def get_committee_for_group(self, group: WorkspaceGroup) -> AssociationGroup | None:
+        """Gets the member that corresponds to the given user, if any"""
+        pattern = re.compile(rf"committee-([0-9]+)@{re.escape(self._client._domain)}")
+        for alias in group.aliases:
+            if pattern.match(alias):
+                return AssociationGroup().objects.filter(pk=int(pattern.group(1))).first()
+
+    def get_active_committees(self):
+        """Gets a queryset containing all associationGroups that should have an alias setup"""
+        return AssociationGroup.objects.filter(
+            type__in=[AssociationGroup.COMMITTEE, AssociationGroup.ORDER, AssociationGroup.WORKGROUP],
+            contact_email__isnull=False,
+            contact_email__endswith=f"@{self._client._domain}",
+        )
+
     def groups(self, ignore_cache=False) -> list[WorkspaceGroup]:
         """Fetch all Workspace groups, using the cache if available and allowed"""
         if ignore_cache:
             return list(self._client.DirectoryService.groups())
-
         return WorkspaceCacheManager.fetch_with_lock(
             cache_key=self.CACHE_KEY_GROUPS,
             api_fn=(lambda: list(self._client.DirectoryService.groups())),
         )
 
-    def _get_committee_settings(self, committee: AssociationGroup) -> WorkspaceGroupSettings:
+    def group_members(self, group: WorkspaceGroup) -> list[WorkspaceGroupMember]:
+        """Fetch all group members of a some workspace group"""
+        return WorkspaceCacheManager.fetch_with_lock(
+            cache_key=self.CACHE_KEY_GROUPMEMBERS % {"groupKey": group.id},
+            api_fn=(lambda: list(self._client.DirectoryService.group_members(group.id))),
+        )
+
+    def _get_committee_settings(self, committee: AssociationGroup, receive_only=False) -> WorkspaceGroupSettings:
         """Gets group settings that can be used for committee groups"""
         return WorkspaceGroupSettings(
             committee.contact_email,

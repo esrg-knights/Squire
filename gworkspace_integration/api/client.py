@@ -19,10 +19,11 @@ class GoogleWorkspaceSettings:
     """
 
     service_account_token_path: str
-    scopes: list[str]
     domain: str
+    customer_id: str
     members_ou: str
     directory_admin_username: str
+    scopes: list[str]
 
     @classmethod
     def from_json(cls, filepath: str) -> Self:

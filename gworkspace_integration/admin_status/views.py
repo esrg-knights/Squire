@@ -10,6 +10,7 @@ from django.views.generic import TemplateView
 from committees.models import AssociationGroup
 from core.status_collective import AdminStatusViewMixin
 
+from gworkspace_integration.api.formats.groups import WorkspaceGroup, WorkspaceGroupMember
 from gworkspace_integration.api.formats.users import WorkspaceUser
 from gworkspace_integration.workspace import SquireGoogleWorkspaceManager, get_workspace_manager
 from membership_file.models import Member
@@ -86,6 +87,18 @@ class WorkspaceStatusView(TemplateView):
                 res.append((member, user, self._validate(member, user)))
         return res
 
+    def _setup_groups(
+        self, groups: list[WorkspaceGroup]
+    ) -> list[tuple[AssociationGroup, WorkspaceGroup | None, list[WorkspaceGroupMember], list[str]]]:
+        """TODO"""
+        assert self._workspace_manager is not None
+        commitees = self._workspace_manager.get_active_committees()
+        res: list[tuple[AssociationGroup, WorkspaceGroup | None, list[str]]] = []
+        for commitee in commitees:
+            group = self._workspace_manager.get_group_for_committee(commitee, groups)
+            res.append((commitee, group, self._workspace_manager.group_members(group), []))
+        return res
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self._workspace_manager is None:
@@ -93,11 +106,15 @@ class WorkspaceStatusView(TemplateView):
             context["alert_type"] = "warning"
             return context
         users = self._workspace_manager.users()
+        groups = self._workspace_manager.groups()
+
+        workspace_pairs = self._setup_members(users)
+        orphan_pairs = self._setup_orphans(users)
         context |= {
             "domain": self._workspace_manager._client._domain,
-            "workspace_pairs": self._setup_members(users),
-            "orphan_users": self._setup_orphans(users),
-            "workspace_groups": [],
+            "workspace_pairs": workspace_pairs,
+            "orphan_users": orphan_pairs,
+            "workspace_groups": self._setup_groups(groups),
         }
 
         return context

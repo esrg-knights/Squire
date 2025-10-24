@@ -4,8 +4,9 @@ from typing import Iterator
 
 from gworkspace_integration.api.base import GoogleAPIService
 from gworkspace_integration.api.formats.users import WorkspaceUser
-from gworkspace_integration.api.formats.groups import WorkspaceGroup
+from gworkspace_integration.api.formats.groups import WorkspaceGroup, WorkspaceGroupMember
 
+from googleapiclient.http import BatchHttpRequest
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,7 @@ class DirectoryService(GoogleAPIService):
             )
         return filter(None, map(lambda u: WorkspaceUser.from_json(u), users))
 
-    def groups(self):
+    def groups(self) -> Iterator[WorkspaceGroup]:
         """Retrieve all groups from the workspace"""
         groups = []
         page_token = ""
@@ -96,3 +97,24 @@ class DirectoryService(GoogleAPIService):
                 f"More than 10 pages of users returned when fetching from the Directory API. {len(groups)} users returned."
             )
         return filter(None, map(lambda g: WorkspaceGroup.from_json(g), groups))
+
+    def group_members(self, group_key: str):
+        """Retrieves all members from a group"""
+        members = []
+        page_token = ""
+        extra: dict[str, str] = {}
+        for _ in range(10):
+            results = self._service.members().list(groupKey=group_key, **extra).execute()
+            members += results.get("members", [])
+            page_token = results.get("nextPageToken")
+            # If there's no page left, return results
+            if not page_token:
+                break
+            extra = {"pageToken": page_token}
+
+        if page_token:  # pragma: no cover
+            # Shouldn't happen
+            logger.error(
+                f"More than 10 pages of members returned when fetching from the Directory API for group {group_key}. {len(members)} members returned."
+            )
+        return filter(None, map(lambda m: WorkspaceGroupMember.from_json(m), members))

@@ -25,14 +25,14 @@
             <div class="w-50">
                 {% if member %}
                 <ul class="list-unstyled mb-0">
-                    <li class="media"><i class="far fa-id-card mt-1 mr-2"></i>
+                    <li class="media"><i class="far fa-id-card fa-fw mt-1 mr-2"></i>
                         <span class="media-body text-break">{{ member.first_name }} | {{member.tussenvoegsel}} {% if member.tussenvoegsel %}| {% endif %}{{ member.last_name }}</span></li>
-                    <li class="media"><i class="far fa-envelope mt-1 mr-2"></i><span class="media-body text-break">{{ member.email }}</span></li>
+                    <li class="media"><i class="far fa-envelope fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ member.email }}</span></li>
                     {% if "inactive" in errors %}<li class="media text-danger"><i class="fas fa-eye-slash fa-fw mt-1 mr-2"></i><span class="media-body text-break text-danger">Member is inactive</span></li>{%endif%}
                 </ul>
                 {% else %}
                 <div class="alert alert-danger mb-0 media align-items-center" role="alert">
-                    <i class="fas fa-cloud-upload-alt mt-1 mr-4"></i><span class="media-body text-break">No member corresponds to this Workspace account</span>
+                    <i class="fas fa-cloud-upload-alt fa-fw mt-1 mr-4"></i><span class="media-body text-break">No member corresponds to this Workspace account</span>
                 </div>
                 {% endif %}
             </div>

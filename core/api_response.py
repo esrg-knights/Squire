@@ -67,6 +67,10 @@ class GenericAPIResponse(ABC):
             return default
         if isinstance(val, int):
             return val
+        try:
+            return int(val)
+        except:
+            pass
         cls._issue_warning(fieldname, val, "int")
         return default
 

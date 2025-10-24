@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Literal, Set
 
 from gworkspace_integration.api.base import WorkspaceAPIResponse
+from gworkspace_integration.api.formats.users import WorkspaceUser
 
 
 @dataclass
@@ -70,9 +71,13 @@ class WorkspaceGroupViewPermissions(Enum):
     ALL_IN_DOMAIN_CAN_VIEW = "ALL_IN_DOMAIN_CAN_VIEW"
 
 
-class WorkspaceGroupViewPermissionsExt(WorkspaceGroupViewPermissions):
+class WorkspaceGroupViewPermissionsExt(Enum):
     """Extended view permissions"""
 
+    ALL_OWNERS_CAN_VIEW = "ALL_OWNERS_CAN_VIEW"  # undocumented in API specs
+    ALL_MANAGERS_CAN_VIEW = "ALL_MANAGERS_CAN_VIEW"
+    ALL_MEMBERS_CAN_VIEW = "ALL_MEMBERS_CAN_VIEW"
+    ALL_IN_DOMAIN_CAN_VIEW = "ALL_IN_DOMAIN_CAN_VIEW"
     ANYONE_CAN_VIEW = "ANYONE_CAN_VIEW"
 
 
@@ -207,3 +212,99 @@ class WorkspaceGroupSettings(WorkspaceAPIResponse):
         WorkspaceGroupDiscoverPermissions.ALL_IN_DOMAIN_CAN_DISCOVER
     )
     defaultSender: WorkspaceGroupDefaultSender = WorkspaceGroupDefaultSender.GROUP
+
+
+class WorkspaceGroupMemberRole(Enum):
+    """The role of a group member"""
+
+    MANAGER = "MANAGER"
+    MEMBER = "MEMBER"
+    OWNER = "OWNER"
+
+
+class WorkspaceGroupMemberType(Enum):
+    """The type of a group member"""
+
+    CUSTOMER = "CUSTOMER"
+    EXTERNAL = "EXTERNAL"
+    GROUP = "GROUP"
+    USER = "USER"
+
+
+class WorkspaceGroupMemberDeliverySettings(Enum):
+    """Mail delivery preferences of a member"""
+
+    ALL_MAIL = "ALL_MAIL"
+    DAILY = "DAILY"
+    DIGEST = "DIGEST"
+    DISABLED = "DISABLED"
+    NONE = "NONE"
+
+
+@dataclass
+class WorkspaceGroupMember(WorkspaceAPIResponse):
+    """Member of a Google Workspace Group"""
+
+    kind: str = ""
+    email: str = ""
+    role: WorkspaceGroupMemberRole = None
+    etag: str = ""
+    type: WorkspaceGroupMemberType = None
+    status: str = ""
+    delivery_settings: WorkspaceGroupMemberDeliverySettings = None
+    id: str = ""
+
+    _cleanable_strings = ("kind", "email", "etag", "status", "id")
+
+    @classmethod
+    def clean(cls, json, extra_keys=None):
+        new_json = {}
+        role = cls._parse_as_enum("role", json, WorkspaceGroupMemberRole)
+        if role is not None:
+            new_json["role"] = role
+
+        type = cls._parse_as_enum("type", json, WorkspaceGroupMemberType)
+        if type is not None:
+            new_json["type"] = type
+
+        delivery_settings = cls._parse_as_enum("delivery_settings", json, WorkspaceGroupMemberDeliverySettings)
+        if delivery_settings is not None:
+            new_json["delivery_settings"] = delivery_settings
+
+        extra_keys = extra_keys or set()
+        new_json.update(**super().clean(json, extra_keys=new_json.keys() | extra_keys))
+        return new_json
+
+
+@dataclass
+class WorkpaceCloudIdentityGroup(WorkspaceAPIResponse):  # pragma: no cover
+    """
+    A Cloud Identity group in Google Workspace. Note that this is an incomplete specification.
+    This can be used to lock groups.
+    NOTE: Locked groups are a premium feature, and cannot currently be used
+
+    See: https://cloud.google.com/identity/docs/reference/rest/v1/groups#Group
+    """
+
+    name: str
+    groupKey: dict[str, str] = field(default_factory=dict)
+    displayName: str = ""
+    description: str = ""
+    createTime: datetime | None = None
+    updateTime: datetime | None = None
+    labels: dict[str, str] = field(default_factory=dict)
+
+    _cleanable_strings = ("name", "displayName", "description")
+    _cleanable_datetimes = ("createTime", "updateTime")
+
+    @property
+    def group_id(self) -> str:
+        return self.name.split("group/")[-1]
+
+    @property
+    def email(self) -> str:
+        return self.groupKey["id"]
+
+    @property
+    def is_locked(self):
+        return "cloudidentity.googleapis.com/groups.locked" in self.labels

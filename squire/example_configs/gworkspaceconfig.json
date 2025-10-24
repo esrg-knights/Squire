@@ -1,5 +1,6 @@
 {
     "service_account_token_path": "<token>.json",
+    "customer_id": "ABCD1234Z",
     "domain": "example.com",
     "members_ou": "/Members/TestMembers",
     "directory_admin_username": "admin@example.com",
