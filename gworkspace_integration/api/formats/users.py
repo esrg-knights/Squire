@@ -161,3 +161,7 @@ class WorkspaceUser(WorkspaceAPIResponse):
             new_json["lastLoginTime"] = None
 
         return new_json
+
+    def __hash__(self):
+        # ID is immutable; safe to hash
+        return hash(self.id)

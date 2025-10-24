@@ -12,7 +12,12 @@ from core.status_collective import AdminStatusViewMixin
 
 from gworkspace_integration.api.formats.groups import WorkspaceGroup, WorkspaceGroupMember
 from gworkspace_integration.api.formats.users import WorkspaceUser
-from gworkspace_integration.workspace import SquireGoogleWorkspaceManager, get_workspace_manager
+from gworkspace_integration.workspace import (
+    MemberWorkspaceUserMap,
+    SquireGoogleWorkspaceManager,
+    WorkspaceUserMemberMap,
+    get_workspace_manager,
+)
 from membership_file.models import Member
 
 logger = logging.getLogger(__name__)
@@ -67,22 +72,17 @@ class WorkspaceStatusView(TemplateView):
                 errors.append("inactive")
         return errors
 
-    def _setup_members(self, users: list[WorkspaceUser]) -> list[tuple[Member, WorkspaceUser | None, list[str]]]:
+    def _setup_members(self, member_map: MemberWorkspaceUserMap):
         """TODO"""
-        assert self._workspace_manager is not None
-        members = Member.objects.filter_active().order_by("first_name", "last_name")
         res: list[tuple[Member, WorkspaceUser | None, list[str]]] = []
-        for member in members:
-            user = self._workspace_manager.get_user_for_member(member, users)
+        for member, user in member_map.items():
             res.append((member, user, self._validate(member, user)))
         return res
 
-    def _setup_orphans(self, users: list[WorkspaceUser]) -> list[tuple[Member | None, WorkspaceUser, list[str]]]:
+    def _setup_orphans(self, user_map: WorkspaceUserMemberMap):
         """TODO"""
-        assert self._workspace_manager is not None
         res: list[tuple[Member | None, WorkspaceUser, list[str]]] = []
-        for user in users:
-            member = self._workspace_manager.get_member_for_user(user)
+        for user, member in user_map.items():
             if member is None or not member.is_active:
                 res.append((member, user, self._validate(member, user)))
         return res
@@ -93,10 +93,18 @@ class WorkspaceStatusView(TemplateView):
         """TODO"""
         assert self._workspace_manager is not None
         commitees = self._workspace_manager.get_active_committees()
-        res: list[tuple[AssociationGroup, WorkspaceGroup | None, list[str]]] = []
-        for commitee in commitees:
-            group = self._workspace_manager.get_group_for_committee(commitee, groups)
-            res.append((commitee, group, self._workspace_manager.group_members(group), []))
+        res = []
+        for committee in commitees:
+            group = self._workspace_manager.get_group_for_committee(committee, groups)
+            # TODO: handle group is None
+
+            # group_members = self._workspace_manager.group_members(group)
+            # TODO: include external_person for convenience sake
+            synced_group_members = self._workspace_manager.get_sync_status(
+                group, self._workspace_manager.get_group_members_for_committee(committee)
+            )
+            # TODO: Include <Member> and <WorkspaceUser>
+            res.append((committee, group, synced_group_members, []))
         return res
 
     def get_context_data(self, **kwargs):
@@ -108,8 +116,10 @@ class WorkspaceStatusView(TemplateView):
         users = self._workspace_manager.users()
         groups = self._workspace_manager.groups()
 
-        workspace_pairs = self._setup_members(users)
-        orphan_pairs = self._setup_orphans(users)
+        member_map, user_map = self._workspace_manager.get_member_user_mappings()
+
+        workspace_pairs = self._setup_members(member_map)
+        orphan_pairs = self._setup_orphans(user_map)
         context |= {
             "domain": self._workspace_manager._client._domain,
             "workspace_pairs": workspace_pairs,

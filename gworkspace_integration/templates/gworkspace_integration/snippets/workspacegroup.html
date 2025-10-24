@@ -72,23 +72,6 @@
                         <p><i>Group has no aliases.</i></p>
                     {% endfor %}
                     </ul>
-
-                    <h5 class="mt-2"><i class="fas fa-users fa-fw"></i> Members</h5>
-                    <ul style="list-style-type: disc;">
-                    {% for member in group_members %}
-                        <li>
-                            {% if member.role.name != "MEMBER" %}
-                            <span class="badge badge-info badge-pill mr-1">{{ member.role.name }}</span>
-                            {% endif %}
-                            {% if member.type.name != "USER" %}
-                            <span class="badge badge-info badge-pill mr-1">{{ member.type.name }}</span>
-                            {% endif %}
-                            {{ member.email }}
-                        </li>
-                    {% empty %}
-                        <p><i>Group has no members.</i></p>
-                    {% endfor %}
-                    </ul>
                 </ul>
                 {% else %}
                 <div class="alert alert-danger mb-0 media align-items-center" role="alert">
@@ -96,6 +79,27 @@
                 </div>
                 {% endif %}
             </div>
+        </div>
+        <hr>
+        <div>
+            <h5 class="mt-2"><i class="fas fa-users fa-fw"></i> Members</h5>
+            <ul style="list-style-type: disc;">
+            {% for member, sync_status in group_members %}
+                <li>
+                    {% if member.role.name != "MEMBER" %}
+                    <span class="badge badge-info badge-pill mr-1">{{ member.role.name }}</span>
+                    {% endif %}
+                    {% if member.type.name != "USER" %}
+                    <span class="badge badge-info badge-pill mr-1">{{ member.type.name }}</span>
+                    {% endif %}
+                    {{ member.email }}
+
+                    {{ sync_status }}
+                </li>
+            {% empty %}
+                <p><i>Group has no members.</i></p>
+            {% endfor %}
+            </ul>
         </div>
         </div>
     </div>

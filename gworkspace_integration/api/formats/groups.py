@@ -275,6 +275,9 @@ class WorkspaceGroupMember(WorkspaceAPIResponse):
         new_json.update(**super().clean(json, extra_keys=new_json.keys() | extra_keys))
         return new_json
 
+    def __hash__(self):
+        return hash(self.email)
+
 
 @dataclass
 class WorkpaceCloudIdentityGroup(WorkspaceAPIResponse):  # pragma: no cover
