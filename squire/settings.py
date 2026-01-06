@@ -26,15 +26,18 @@ SECRET_KEY = util.get_secret_key(SECRET_KEY_FILENAME)
 DEBUG = os.getenv("DJANGO_ENV") != "PRODUCTION"
 
 if os.getenv("SENTRY_DSN"):  # pragma: no cover
+    print("Sentry trying to initialize...")
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
 
     sentry_sdk.init(
         os.getenv("SENTRY_DSN"),
-        integrations=[DjangoIntegration()],
+        integrations=[DjangoIntegration(cache_spans=True)],
         # Do not send email addresses to Sentry
         send_default_pii=False,
         traces_sample_rate=1.0,
+        profile_session_sample_rate=1.0,
+        profile_lifecycle="trace",
     )
 
 # Hosts on which the application will run
