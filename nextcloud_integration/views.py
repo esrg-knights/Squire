@@ -1,4 +1,5 @@
 import mimetypes
+import logging
 
 from django.http.response import HttpResponse, HttpResponseRedirect
 from django.contrib.messages import error as error_msg
@@ -30,6 +31,8 @@ __all__ = [
     "SyncFileToFolderView",
     "NextcloudConnectionViewMixin",
 ]
+
+logger = logging.getLogger("nextcloud_integration")
 
 
 class NextcloudConnectionViewMixin:
@@ -232,7 +235,8 @@ class DownloadFileview(MembershipRequiredMixin, NextcloudConnectionViewMixin, Si
                     "It is unknown when it will be fixed as it needs to be addressed manually."
                 )
         if msg is None:
-            msg = "Something unexpected occurred. Please inform the UUPS is this keeps occuring."
+            msg = "Something unexpected occurred. Please inform the UUPS if this keeps occuring."
         error_msg(self.request, msg)
+        logger.exception("Nextcloud operation failed: %s", error)
 
         return HttpResponseRedirect(reverse_lazy("nextcloud:site_downloads"))
