@@ -34,6 +34,7 @@ if os.getenv("SENTRY_DSN"):  # pragma: no cover
         integrations=[DjangoIntegration()],
         # Do not send email addresses to Sentry
         send_default_pii=False,
+        traces_sample_rate=1.0,
     )
 
 # Hosts on which the application will run
