@@ -1,0 +1,93 @@
+{% load i18n %}{% autoescape off %}
+<p>Hail {{ member.first_name }}! We're excited to have you join our community of tabletop, role-playing, and board game
+    enthusiasts! This email contains all the essential info to get you started.</p>
+
+<p>First, we would like you to <a
+        href="{{ protocol }}://{{ domain }}{% url 'membership:link_account/confirm' uidb64=uid token=token %}">create an
+        account in Squire</a>, our membership portal. Doing so will automatically link it to your membership data, and
+    allows you to browse upcoming events, access the full list of our boardgames, and sign up for certain activities.
+</p>
+<p></p>
+
+<h2 id="activities">Activities</h2>
+<p>The Knights organise some weekly and monthly activities:</p>
+<ul>
+    <li>
+        <p>
+            <b>Weekly Board Game Evenings –</b> Every Tuesday evening, you can join us in the living room to play board
+            games. We recommend showing up at least 5 to 10 minutes early to find out about upcoming activities,
+            socialise and find a group to play with.
+        <p>
+    </li>
+    <li>
+        <p><b>Wednesday activities –</b> Every Wednesday we (try to) organise a special activity. This includes:
+        <ul>
+            <li>Role-playing one-shots every first Wednesday of the month</li>
+            <li>Various trading card activities</li>
+            <li>Role-playing workshops</li>
+            <li>Special one-off activities</li>
+        </ul>
+        </p>
+    </li>
+    <li>
+        <p><b>Sword Fighting Training –</b> Every two weeks, we host a training session where you can practise sword
+            fighting — or, more accurately, hit each other with foam swords. We recommend showing up a bit earlier.
+        </p>
+    </li>
+    <li>
+        <p><b>Messing Schaar:</b> Arts &amp; Crafts – Once a month, members gather for an arts &amp; crafts day, where
+            you can get help finding the right materials to buy, and work on cutting and sewing them into your LARP
+            costume. You can also work on other fun crafting projects!</p>
+    </li>
+    <li>
+        <p><b>Members weekend –</b> Twice a year, we go away for a themed weekend of Knights fun. During the weekend we
+            organise a LARP, multiple role playing one-shots, other unique activities, and plenty of time to play your
+            favourite boardgames!</p>
+    </li>
+    <li>
+        <p><b>Special Events –</b> We also run special events throughout the year, such as:</p>
+        <ul>
+            <li>
+                <b>Find your Roleplaying group:</b> An event where you can find a group to play a role-playing
+                campaign like DnD with. If you would like to run a campaign and pitch it at this event, please
+                contact the roleplaying committee using the email address listed in <a
+                    href="https://leden.kotkt.nl/groups/committees/">Squire</a>.
+            </li>
+            <li>
+                <b>Crazy cloak construction:</b> A full day dedicated to creating your own cloak, with no prior
+                experience required.
+            </li>
+            <li>
+                <b>Mini-painting workshop</b>
+            </li>
+        </ul>
+    </li>
+</ul>
+
+<h2>Communication Channels</h2>
+<ul>
+    <li>
+        <p><b>Squire – Our membership portal –</b> We use Squire to organise games, track achievements, manage
+            membership, and sign up for events.<br />
+    </li>
+    {% if invite_link_discord %}
+    <li>
+        <p><b>Discord –</b> Our main hub for chatting, finding games, and staying up-to-date. Once you <a
+                href="{{ invite_link_discord }}">join</a>, ping a board member to get access to all the channels.
+        </p>
+    </li>
+    {% endif %}
+    <li><b>Announcement Channels –</b> Join one of our announcement channels to make sure you never miss an event!
+        <ul>
+            {% if invite_link_telegram %}<li><a href="{{ invite_link_telegram }}">Telegram</a></li>{% endif %}
+            {% if invite_link_whatsapp %}<li><a href="{{ invite_link_whatsapp }}">WhatsApp</a><br /></li>{% endif %}
+        </ul>
+    </li>
+</ul>
+<p>If this email was not meant for you, then do let us know.</p>
+<p>See you soon!</p>
+{{ sender.name }}<br />
+{{ sender.description }}<br />
+{% if sender.extra_description %}{{ sender.extra_description }}<br />{%endif%}
+ESRG Knights of the Kitchen Table<br />
+{% endautoescape %}
