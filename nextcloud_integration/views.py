@@ -1,3 +1,5 @@
+import mimetypes
+
 from django.http.response import HttpResponse, HttpResponseRedirect
 from django.contrib.messages import error as error_msg
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -202,7 +204,8 @@ class DownloadFileview(MembershipRequiredMixin, NextcloudConnectionViewMixin, Si
             return HttpResponseRedirect(reverse_lazy("nextcloud:site_downloads"))
 
         file_data = self.get_file(self.file)
-        response = HttpResponse(file_data.content, content_type="application/vnd.ms-excel")
+        content_type, _ = mimetypes.guess_type(self.file.file_name, strict=False)
+        response = HttpResponse(file_data.content, content_type=content_type)
         response["Content-Disposition"] = f'attachment; filename="{self.file.file_name}"'
 
         return response
