@@ -5,6 +5,7 @@ from dynamic_preferences.registries import global_preferences_registry
 from membership_file.models import MemberYear
 
 membership_section = Section("membership")
+url_section = Section("urls")
 
 
 @global_preferences_registry.register
@@ -50,5 +51,60 @@ class RegistrationExtraDescription(StringPreference):
     verbose_name = "Registration email footer extra description."
     description = "Optional extra description used in the footer of the registration email."
     help_text = "Recommended to set board name. E.g., The Alliance of Alliterating Astronauts"
+    default = ""
+    required = False
+
+
+@global_preferences_registry.register
+class ScalaDiningLink(StringPreference):
+    section = url_section
+    name = "link_scala_dining"
+    verbose_name = "Scala Dining link"
+    description = "Link to the Scala Dining system."
+    help_text = "Recommended to keep the link to the Scala Dining system up-to-date"
+    default = ""
+    required = False
+
+
+@global_preferences_registry.register
+class BuddyLink(StringPreference):
+    section = url_section
+    name = "link_buddy_system"
+    verbose_name = "Buddy system link"
+    description = "Link to sign-up for the buddy system."
+    help_text = "Recommended to keep the link to the buddy system up-to-date"
+    default = ""
+    required = False
+
+
+@global_preferences_registry.register
+class WhatsAppInviteLink(StringPreference):
+    section = url_section
+    name = "link_invite_whatsapp"
+    verbose_name = "WhatsApp invite link"
+    description = "Invite link to join the WhatsApp chat."
+    help_text = "Recommended to keep the link to the WhatsApp chat up-to-date"
+    default = ""
+    required = False
+
+
+@global_preferences_registry.register
+class TelegramInviteLink(StringPreference):
+    section = url_section
+    name = "link_invite_telegram_announcements"
+    verbose_name = "Telegram Announcement invite link"
+    description = "Invite link to join the Telegram Announcement chat."
+    help_text = "Recommended to keep the link to the Telegram Announcements channel up-to-date"
+    default = ""
+    required = False
+
+
+@global_preferences_registry.register
+class InviteLink(StringPreference):
+    section = url_section
+    name = "link_invite_discord"
+    verbose_name = "Discord invite link"
+    description = "Invite link to join the Discord server."
+    help_text = "Recommended to keep the link to the Discord server up-to-date"
     default = ""
     required = False

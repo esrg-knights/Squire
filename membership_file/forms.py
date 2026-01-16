@@ -138,6 +138,9 @@ class RegistrationFormBase(forms.ModelForm):
             "uid": urlsafe_base64_encode(force_bytes(self.instance.pk)),
             "token": self.token_generator.make_token(user=self.instance),
             "protocol": "https" if self.use_https else "http",
+            "invite_link_whatsapp": str(global_preferences["urls__link_invite_whatsapp"]),
+            "invite_link_telegram": str(global_preferences["urls__link_invite_telegram_announcements"]),
+            "invite_link_discord": str(global_preferences["urls__link_invite_discord"]),
         }
         # Reply-To address
         reply_to = str(global_preferences["membership__registration_reply_to_address"]) or None
@@ -150,6 +153,7 @@ class RegistrationFormBase(forms.ModelForm):
             None,
             self.instance.email,
             reply_to=reply_to,
+            html_email_template_name="membership_file/registration/registration_email.html",
         )
 
     def send_mail(
