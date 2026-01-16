@@ -279,6 +279,10 @@ LOGGING = {
             "handlers": ["logfile"],
             "level": "WARNING",
         },
+        "squire_gworkspace": {
+            "handlers": ["console", "logfile"],
+            "level": "INFO",
+        },
     },
 }
 

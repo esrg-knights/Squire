@@ -118,3 +118,38 @@ class DirectoryService(GoogleAPIService):
                 f"More than 10 pages of members returned when fetching from the Directory API for group {group_key}. {len(members)} members returned."
             )
         return filter(None, map(lambda m: WorkspaceGroupMember.from_json(m), members))
+
+    def bulk_change_group_members(
+        self,
+        group_key: str,
+        group_members_update: list[WorkspaceGroupMember],
+        group_members_add: list[WorkspaceGroupMember],
+        group_members_remove: list[WorkspaceGroupMember],
+    ):
+        """
+        Modifies a group's members in bulk. Supports additions, removals, and updates.
+        """
+        batch = self._service.new_batch_http_request()
+        for member in group_members_add:
+            body = {
+                "kind": member.kind,
+                "email": member.email,
+                "role": member.role.name,
+                "type": member.type.name,
+                "delivery_settings": member.delivery_settings.name,
+            }
+            batch.add(self._service.members().insert(groupKey=group_key, body=body))
+
+        for member in group_members_remove:
+            batch.add(self._service.members().delete(groupKey=group_key, memberKey=member.id))
+
+        for member in group_members_update:
+            body = {
+                "email": member.email,
+                "role": member.role.name,
+                "type": member.type.name,
+                "delivery_settings": member.delivery_settings.name,
+            }
+            batch.add(self._service.members().patch(groupKey=group_key, memberKey=member.id, body=body))
+        print(batch)
+        return batch.execute()

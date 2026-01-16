@@ -3,7 +3,7 @@ import logging
 from django.conf import settings
 from django.db.models import QuerySet
 from django.contrib import messages
-from django.http import HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html
 from django.views.generic import TemplateView
@@ -99,8 +99,6 @@ class WorkspaceStatusView(TemplateView):
             group = self._workspace_manager.get_group_for_committee(committee, groups)
             # TODO: handle group is None
 
-            # group_members = self._workspace_manager.group_members(group)
-            # TODO: include external_person for convenience sake
             synced_group_members = self._workspace_manager.get_sync_status(group, committee)
             res.append((committee, group, synced_group_members, []))
         return res
@@ -126,6 +124,23 @@ class WorkspaceStatusView(TemplateView):
         }
 
         return context
+
+    def post(self, request: HttpRequest, *args, **kwargs):
+        if "sync_group_members" in request.POST:
+            committee_id = request.POST["sync_group_members"]
+            try:
+                committee = AssociationGroup.objects.get(pk=committee_id)
+            except AssociationGroup.DoesNotExist:
+                return HttpResponseBadRequest(
+                    f"Attempted to update Workspace group members for committee_id {committee_id}. Such committee does not exist!"
+                )
+            self._workspace_manager.logger.info(
+                f"{request.user.username} ({request.user.id}) force synced group members for committee {committee.name} ({committee_id})"
+            )
+            self._workspace_manager.sync_group_members(committee)
+            messages.success(self.request, f"Updated group members for {committee.name} ({committee_id}).")
+            return HttpResponseRedirect(request.get_full_path())
+        return HttpResponseBadRequest("Invalid POST data passed")
 
 
 class WorkspaceTabbedStatusView(AdminStatusViewMixin, WorkspaceStatusView):

@@ -24,6 +24,7 @@ class LogFileView(AdminStatusViewMixin, TemplateView):
         re.escape("JSONParseError"): "font-weight-bold",
         re.escape("(mailcow_api)"): "far fa-envelope text-primary",
         "\\(gworkspace[^\\)]*\\)": "fab fa-google text-primary",
+        "\\(squire[^\\)]*\\)": "fas fa-chess-rook text-primary",
     }
 
     template_name = "core/admin_status/log.html"

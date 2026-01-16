@@ -1,5 +1,6 @@
 import crypt
 from enum import Enum
+import logging
 import re
 from secrets import token_urlsafe
 import time
@@ -129,6 +130,8 @@ class SquireGoogleWorkspaceManager:
     CACHE_KEY_USERS = "Squire_WorkspaceUsers"
     CACHE_KEY_GROUPS = "Squire_WorkspaceGroups"
     CACHE_KEY_GROUPMEMBERS = "Squire_WorkspaceGroupMember-%(groupKey)s"
+
+    logger = logging.getLogger("squire_gworkspace")
 
     def __init__(self):
         settings = GoogleWorkspaceSettings.from_json("squire/config/gworkspaceconfig.json")
@@ -396,6 +399,33 @@ class SquireGoogleWorkspaceManager:
                     else (x.workspace_user.name.fullName if x.workspace_user else "")
                 ),
                 x.wgroup_member.email,
+            ),
+        )
+
+    def sync_group_members(self, committee: AssociationGroup, groups: list[WorkspaceGroup] | None = None):
+        """Modifies the members of a Workspace group corresponding to the given committee. Adds missing members, removes excess members, and updates existing ones."""
+
+        group = self.get_group_for_committee(committee, groups)
+        assert (
+            group is not None
+        ), "Attempting to sync Workspace group members for committee, but such Workspace group did not yet exist."
+
+        synced_group_members = self.get_sync_status(group, committee)
+        print(synced_group_members)
+        print(">>>> start SYNC")
+        self._client.DirectoryService.bulk_change_group_members(
+            group.id,
+            map(
+                lambda x: x.wgroup_member,
+                filter(lambda x: x.status == WorkspaceGroupMemberSyncStatus.SYNC_SHOULD_UPDATE, synced_group_members),
+            ),
+            map(
+                lambda x: x.wgroup_member,
+                filter(lambda x: x.status == WorkspaceGroupMemberSyncStatus.SYNC_SHOULD_ADD, synced_group_members),
+            ),
+            map(
+                lambda x: x.wgroup_member,
+                filter(lambda x: x.status == WorkspaceGroupMemberSyncStatus.SYNC_SHOULD_REMOVE, synced_group_members),
             ),
         )
 

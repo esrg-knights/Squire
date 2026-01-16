@@ -1,134 +1,142 @@
 {% load textfilters %}
 
 {% spaceless %}
-<div class="card mb-2">
-    <div class="card-header d-flex justify-content-between align-items-start pl-3" id="heading-committee-{{committee.pk}}" data-toggle="collapse" data-target="#collapse-committee-{{committee.pk}}" aria-expanded="false" aria-controls="collapse-committee-{{committee.pk}}">
-        <h5 class="card-title m-0">
-            <i class="fas fa-chevron-down fa-fw fa-xs"></i>{% firstof committee.name group.name "<i>Unknown name</i>" %}
-        </h5>
-        <h5 class="m-0 text-right">
-            {%if not group or errors %} <span class="badge badge-danger">
-                {%if not group%}Not synced{%else%}{{ errors|length }} sync error{{ errors|pluralize }}{%endif%} <i class="fas fa-exclamation-triangle fa-fw"></i></span>
-            {% endif %}
-            <a class="badge badge-dark ml-1" href="https://admin.google.com/ac/groups{%if group %}/{%endif%}{{group.id}}" target="_blank"><i class="fab fa-google fa-fw"></i> {{group.id|default:"???"}}</a>
-            <a class="badge greenify ml-1" href=
-                {% if committee %}
-                    "{% url 'admin:committees_associationgroup_change' committee.pk %}"
-                {% else %}
-                    "{% url 'admin:committees_associationgroup_changelist' %}"
+<form method="post">
+    {% csrf_token %}
+    <div class="card mb-2">
+        <div class="card-header d-flex justify-content-between align-items-start pl-3" id="heading-committee-{{committee.pk}}" data-toggle="collapse" data-target="#collapse-committee-{{committee.pk}}" aria-expanded="false" aria-controls="collapse-committee-{{committee.pk}}">
+            <h5 class="card-title m-0">
+                <i class="fas fa-chevron-down fa-fw fa-xs"></i>{% firstof committee.name group.name "<i>Unknown name</i>" %}
+            </h5>
+            <h5 class="m-0 text-right">
+                {%if not group or errors %} <span class="badge badge-danger">
+                    {%if not group%}Not synced{%else%}{{ errors|length }} sync error{{ errors|pluralize }}{%endif%} <i class="fas fa-exclamation-triangle fa-fw"></i></span>
                 {% endif %}
-                target="_blank"><i class="fas fa-chess-rook fa-fw"></i> {{ committee.pk|default:"???" }}</a>
-        </h5>
-    </div>
-
-    <div id="collapse-committee-{{committee.pk}}" class="collapse workspace-card-collapse" aria-labelledby="heading-committee-{{committee.pk}}">
-        <div class="card-body">
-        <div class="card-text d-flex align-items-stretch">
-            <div class="w-50">
-                {% if committee %}
-                <ul class="list-unstyled mb-0">
-                    <li class="media"><i class="far fa-id-card fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ committee.name }}</span></li>
-                    <li class="media"><i class="fas fa-users-cog fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ committee.get_type_display }}</span></li>
-                    <li class="media"><i class="fas fa-align-left fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ committee.short_description|default:"-" }}</span></li>
-                    <li class="media"><i class="far fa-envelope fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ committee.contact_email }}</span></li>
-                    <li class="media"><i class="fas {{ committee.is_public|yesno:'fa-eye,fa-eye-slash' }} fa-fw mt-1 mr-2"></i><span class="media-body text-break"><i>{{ committee.is_public|yesno:"Public,Hidden" }}</i></span></li>
-                </ul>
-                {% else %}
-                <div class="alert alert-danger mb-0 media align-items-center" role="alert">
-                    <i class="fas fa-cloud-upload-alt mt-1 mr-4"></i><span class="media-body text-break">No committee corresponds to this Workspace account</span>
-                </div>
-                {% endif %}
-            </div>
-
-            <div class="border-left mx-4"></div>
-
-            <div class="w-50">
-                {% if group %}
-                <ul class="list-unstyled mb-0">
-                    {%if "invalid_groupid" in errors%}
-                    <li class="media text-danger">
-                        <i class="fas fa-chess-rook fa-fw mt-1 mr-2"></i>
-                        <span class="media-body text-break">
-                            <i>EmployeeID/committeeID: </i>
-                            {% for eid in group.external_ids %}
-                                {% if eid.type == "organization" %}
-                                    {{ eid.value }}
-                                {% endif %}
-                            {% endfor %}
-                        </span>
-                    </li>
-                    {% endif %}
-                    <li class="media"><i class="far fa-id-card fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ group.name }}</span></li>
-                    <li class="media"><i class="fas fa-users-cog fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ group.kind }}</span></li>
-                    <li class="media"><i class="fas fa-align-left fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ group.description|default:"-" }}</span></li>
-                    <li class="media">
-                        <i class="far fa-envelope fa-fw mt-1 mr-2"></i>
-                        {%if "recovery_email" in errors%}<i class="fas fa-exclamation-triangle fa-fw text-danger mt-1 mr-1"></i>{%endif%}
-                        <span class="media-body text-break{%if 'recovery_email' in errors%} text-danger{%endif%}">{{ group.email }}</span></li>
-
-                    <h5 class="mt-2"><i class="fas fa-mail-bulk fa-fw"></i> Aliases</h5>
-                    <ul style="list-style-type: disc;">
-                    {% for alias in group.aliases %}
-                        <li>{{ alias }}</li>
-                    {% empty %}
-                        <p><i>Group has no aliases.</i></p>
-                    {% endfor %}
-                    </ul>
-                </ul>
-                {% else %}
-                <div class="alert alert-danger mb-0 media align-items-center" role="alert">
-                    <i class="fas fa-cloud-upload-alt mt-1 mr-4"></i><span class="media-body text-break">Committee does not have a Google Group</span>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        <hr>
-        <div>
-            <h5 class="mt-2"><i class="fas fa-users fa-fw"></i> Members</h5>
-            <ul style="list-style-type: disc;">
-            {% for sync_member in group_members_sync %}
-                <li>
-                    <i class='mr-1
-                    {% if sync_member.status.name == "SYNC_SHOULD_ADD" %}
-                        fas fa-user-plus fa-fw text-success
-                    {% elif sync_member.status.name == "SYNC_SHOULD_REMOVE" %}
-                        fas fa-user-minus fa-fw text-danger
-                    {% elif sync_member.status.name == "SYNC_SHOULD_UPDATE" %}
-                        fas fa-user-edit fa-fw text-warning
-                    {% elif sync_member.status.name == "SYNC_UP_TO_DATE" %}
-                        fas fa-user-check fa-fw text-secondary
+                <a class="badge badge-dark ml-1" href="https://admin.google.com/ac/groups{%if group %}/{%endif%}{{group.id}}" target="_blank"><i class="fab fa-google fa-fw"></i> {{group.id|default:"???"}}</a>
+                <a class="badge greenify ml-1" href=
+                    {% if committee %}
+                        "{% url 'admin:committees_associationgroup_change' committee.pk %}"
                     {% else %}
-                        far fa-question-circle fa-fw text-info
+                        "{% url 'admin:committees_associationgroup_changelist' %}"
                     {% endif %}
-                    '></i>
-                    {% if sync_member.wgroup_member.role.name != "MEMBER" %}
-                    <span class="badge badge-info badge-pill mr-1">{{ sync_member.wgroup_member.role.name }}</span>
-                    {% endif %}
-                    {% if sync_member.wgroup_member.type.name != "USER" %}
-                    <span class="badge badge-info badge-pill mr-1">{{ sync_member.wgroup_member.type.name }}</span>
-                    {% endif %}
-                    {% if not sync_member.wgroup_member.email|endswith:domain %}
-                    <span class="badge badge-warning badge-pill mr-1">External</span>
-                    {% endif %}
-
-                    {% if sync_member.squire_member %}
-                        {{ sync_member.squire_member.get_full_name }} &mdash;
-                    {% endif %}
-
-                    {% if sync_member.workspace_user and sync_member.workspace_user.name.fullName != sync_member.squire_member.get_full_name %}
-                        {{ sync_member.workspace_user.name.fullName }} &mdash;
-                    {% endif %}
-
-                    {{ sync_member.wgroup_member.email }}
-
-
-                </li>
-            {% empty %}
-                <p><i>Group has no members.</i></p>
-            {% endfor %}
-            </ul>
+                    target="_blank"><i class="fas fa-chess-rook fa-fw"></i> {{ committee.pk|default:"???" }}</a>
+            </h5>
         </div>
+
+        <div id="collapse-committee-{{committee.pk}}" class="collapse workspace-card-collapse" aria-labelledby="heading-committee-{{committee.pk}}">
+            <div class="card-body">
+            <div class="card-text d-flex align-items-stretch">
+                <div class="w-50">
+                    {% if committee %}
+                    <ul class="list-unstyled mb-0">
+                        <li class="media"><i class="far fa-id-card fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ committee.name }}</span></li>
+                        <li class="media"><i class="fas fa-users-cog fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ committee.get_type_display }}</span></li>
+                        <li class="media"><i class="fas fa-align-left fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ committee.short_description|default:"-" }}</span></li>
+                        <li class="media"><i class="far fa-envelope fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ committee.contact_email }}</span></li>
+                        <li class="media"><i class="fas {{ committee.is_public|yesno:'fa-eye,fa-eye-slash' }} fa-fw mt-1 mr-2"></i><span class="media-body text-break"><i>{{ committee.is_public|yesno:"Public,Hidden" }}</i></span></li>
+                    </ul>
+                    {% else %}
+                    <div class="alert alert-danger mb-0 media align-items-center" role="alert">
+                        <i class="fas fa-cloud-upload-alt mt-1 mr-4"></i><span class="media-body text-break">No committee corresponds to this Workspace account</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="border-left mx-4"></div>
+
+                <div class="w-50">
+                    {% if group %}
+                    <ul class="list-unstyled mb-0">
+                        {%if "invalid_groupid" in errors%}
+                        <li class="media text-danger">
+                            <i class="fas fa-chess-rook fa-fw mt-1 mr-2"></i>
+                            <span class="media-body text-break">
+                                <i>EmployeeID/committeeID: </i>
+                                {% for eid in group.external_ids %}
+                                    {% if eid.type == "organization" %}
+                                        {{ eid.value }}
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                        </li>
+                        {% endif %}
+                        <li class="media"><i class="far fa-id-card fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ group.name }}</span></li>
+                        <li class="media"><i class="fas fa-users-cog fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ group.kind }}</span></li>
+                        <li class="media"><i class="fas fa-align-left fa-fw mt-1 mr-2"></i><span class="media-body text-break">{{ group.description|default:"-" }}</span></li>
+                        <li class="media">
+                            <i class="far fa-envelope fa-fw mt-1 mr-2"></i>
+                            {%if "recovery_email" in errors%}<i class="fas fa-exclamation-triangle fa-fw text-danger mt-1 mr-1"></i>{%endif%}
+                            <span class="media-body text-break{%if 'recovery_email' in errors%} text-danger{%endif%}">{{ group.email }}</span></li>
+
+                        <h5 class="mt-2"><i class="fas fa-mail-bulk fa-fw"></i> Aliases</h5>
+                        <ul style="list-style-type: disc;">
+                        {% for alias in group.aliases %}
+                            <li>{{ alias }}</li>
+                        {% empty %}
+                            <p><i>Group has no aliases.</i></p>
+                        {% endfor %}
+                        </ul>
+                    </ul>
+                    {% else %}
+                    <div class="alert alert-danger mb-0 media align-items-center" role="alert">
+                        <i class="fas fa-cloud-upload-alt mt-1 mr-4"></i><span class="media-body text-break">Committee does not have a Google Group</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <hr>
+            <div>
+                <div class="d-flex justify-content-between align-items-start mt-2">
+                    <h5><i class="fas fa-users fa-fw"></i> Members</h5>
+                    <h5 class="">
+                        <button type="submit" name="sync_group_members" value="{{ committee.pk }}" class="btn btn-primary"><i class="fas fa-sync-alt"></i></button>
+                    </h5>
+                </div>
+                <ul style="list-style-type: disc;">
+                {% for sync_member in group_members_sync %}
+                    <li>
+                        <i class='mr-1
+                        {% if sync_member.status.name == "SYNC_SHOULD_ADD" %}
+                            fas fa-user-plus fa-fw text-success
+                        {% elif sync_member.status.name == "SYNC_SHOULD_REMOVE" %}
+                            fas fa-user-minus fa-fw text-danger
+                        {% elif sync_member.status.name == "SYNC_SHOULD_UPDATE" %}
+                            fas fa-user-edit fa-fw text-warning
+                        {% elif sync_member.status.name == "SYNC_UP_TO_DATE" %}
+                            fas fa-user-check fa-fw text-secondary
+                        {% else %}
+                            far fa-question-circle fa-fw text-info
+                        {% endif %}
+                        '></i>
+                        {% if sync_member.wgroup_member.role.name != "MEMBER" %}
+                        <span class="badge badge-info badge-pill mr-1">{{ sync_member.wgroup_member.role.name }}</span>
+                        {% endif %}
+                        {% if sync_member.wgroup_member.type.name != "USER" %}
+                        <span class="badge badge-info badge-pill mr-1">{{ sync_member.wgroup_member.type.name }}</span>
+                        {% endif %}
+                        <!-- {% if not sync_member.wgroup_member.email|endswith:domain %}
+                        <span class="badge badge-warning badge-pill mr-1">External</span>
+                        {% endif %} -->
+
+                        {% if sync_member.squire_member %}
+                            {{ sync_member.squire_member.get_full_name }} &mdash;
+                        {% endif %}
+
+                        {% if sync_member.workspace_user and sync_member.workspace_user.name.fullName != sync_member.squire_member.get_full_name %}
+                            {{ sync_member.workspace_user.name.fullName }} &mdash;
+                        {% endif %}
+
+                        {{ sync_member.wgroup_member.email }}
+
+
+                    </li>
+                {% empty %}
+                    <p><i>Group has no members.</i></p>
+                {% endfor %}
+                </ul>
+            </div>
+            </div>
         </div>
     </div>
-</div>
+</form>
 {% endspaceless %}
