@@ -137,7 +137,7 @@ class WorkspaceStatusView(TemplateView):
             self._workspace_manager.logger.info(
                 f"{request.user.username} ({request.user.id}) force synced group members for committee {committee.name} ({committee_id})"
             )
-            self._workspace_manager.sync_group_members(committee)
+            self._workspace_manager.bulk_sync_group_members(committee)
             messages.success(self.request, f"Updated group members for {committee.name} ({committee_id}).")
             return HttpResponseRedirect(request.get_full_path())
         return HttpResponseBadRequest("Invalid POST data passed")

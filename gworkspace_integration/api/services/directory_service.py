@@ -129,8 +129,21 @@ class DirectoryService(GoogleAPIService):
         """
         Modifies a group's members in bulk. Supports additions, removals, and updates.
         """
+
+        def my_callback(request_id, response, exception):
+            if exception is not None:
+                # Do something with the exception
+                print(exception)
+                print(response)
+                print("==========")
+            else:
+                # Do something with the response
+                print(response)
+                print("==========")
+
         batch = self._service.new_batch_http_request()
         for member in group_members_add:
+            print(f"ADDING {member.email}, {member.id}, {member.etag}")
             body = {
                 "kind": member.kind,
                 "email": member.email,
@@ -138,18 +151,31 @@ class DirectoryService(GoogleAPIService):
                 "type": member.type.name,
                 "delivery_settings": member.delivery_settings.name,
             }
-            batch.add(self._service.members().insert(groupKey=group_key, body=body))
+            batch.add(self._service.members().insert(groupKey=group_key, body=body), callback=my_callback)
 
         for member in group_members_remove:
-            batch.add(self._service.members().delete(groupKey=group_key, memberKey=member.id))
+            print(f"REMOVING {member.email}")
+            assert (
+                member.id is not None and member.id != ""
+            ), f"member.id unexpectedly empty when deleting {member.email}"
+            batch.add(self._service.members().delete(groupKey=group_key, memberKey=member.id), callback=my_callback)
+        batch.execute()
 
+        # Updating should be done in a separate batch because of etag-shenanigans. Patch requires one, while update/delete can't have one
+        batch_update = self._service.new_batch_http_request()
         for member in group_members_update:
+            print(f"UPDATING {member.email}")
             body = {
+                "kind": member.kind,
                 "email": member.email,
                 "role": member.role.name,
                 "type": member.type.name,
                 "delivery_settings": member.delivery_settings.name,
             }
-            batch.add(self._service.members().patch(groupKey=group_key, memberKey=member.id, body=body))
-        print(batch)
-        return batch.execute()
+            assert (
+                member.id is not None and member.id != ""
+            ), f"member.id unexpectedly empty when updating {member.email}"
+            batch_update.add(
+                self._service.members().patch(groupKey=group_key, memberKey=member.id, body=body), callback=my_callback
+            )
+        batch_update.execute()

@@ -255,6 +255,7 @@ class WorkspaceGroupMember(WorkspaceAPIResponse):
     id: str = ""
 
     _cleanable_strings = ("kind", "email", "etag", "status", "id")
+    _optional_fields = ("status", "delivery_settings")
 
     @classmethod
     def clean(cls, json, extra_keys=None):

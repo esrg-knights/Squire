@@ -20,6 +20,6 @@ class WorkspaceGroupMemberSync:
     """Sync status for a workspace group member in a Squire committee"""
 
     wgroup_member: WorkspaceGroupMember
-    status: WorkspaceGroupMemberSyncStatus = WorkspaceGroupMemberSyncStatus.SYNC_SHOULD_ADD
+    status: WorkspaceGroupMemberSyncStatus = WorkspaceGroupMemberSyncStatus.SYNC_UP_TO_DATE
     workspace_user: WorkspaceUser = None
     squire_member: Member = None

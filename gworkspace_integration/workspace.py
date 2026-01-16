@@ -303,7 +303,9 @@ class SquireGoogleWorkspaceManager:
         users = users or self.users()
         return next(filter(lambda u: u.id == id, users), None)
 
-    def _get_wgroup_member(self, squire_member: Member) -> WorkspaceGroupMember:
+    def _get_wgroup_member(
+        self, squire_member: Member, workspace_user: WorkspaceUser | None = None
+    ) -> WorkspaceGroupMember:
         """Gets the Workspace group member corresponding to a Squire member"""
         return WorkspaceGroupMember(
             "admin#directory#member",
@@ -311,6 +313,7 @@ class SquireGoogleWorkspaceManager:
             WorkspaceGroupMemberRole.MEMBER,
             type=WorkspaceGroupMemberType.USER,
             delivery_settings=WorkspaceGroupMemberDeliverySettings.ALL_MAIL,
+            **({"id": workspace_user.id} if workspace_user is not None else {}),
         )
 
     def _get_group_members_sync_for_committee(self, committee: AssociationGroup) -> list[WorkspaceGroupMemberSync]:
@@ -318,8 +321,9 @@ class SquireGoogleWorkspaceManager:
         # Make Squire's admin user the group owner. We don't want Workspace admins to be owners.
         owner = WorkspaceGroupMemberSync(
             WorkspaceGroupMember(
-                email=self._client._admin,
-                role=WorkspaceGroupMemberRole.OWNER,
+                "admin#directory#member",
+                self._client._admin,
+                WorkspaceGroupMemberRole.OWNER,
                 type=WorkspaceGroupMemberType.USER,
                 delivery_settings=WorkspaceGroupMemberDeliverySettings.NONE,
             )
@@ -330,7 +334,7 @@ class SquireGoogleWorkspaceManager:
             workspace_user = self.get_user_for_member(member)
             res.append(
                 WorkspaceGroupMemberSync(
-                    self._get_wgroup_member(member),
+                    self._get_wgroup_member(member, workspace_user),
                     WorkspaceGroupMemberSyncStatus.SYNC_UP_TO_DATE,
                     workspace_user,
                     member,
@@ -371,6 +375,8 @@ class SquireGoogleWorkspaceManager:
             ):
                 # Info is out of date!
                 cmember_sync.status = WorkspaceGroupMemberSyncStatus.SYNC_SHOULD_UPDATE
+                if not cmember_sync.wgroup_member.id:
+                    cmember_sync.wgroup_member.id = current_wgroup_member.id
                 continue
 
         # All unmatched group members should be removed
@@ -402,7 +408,7 @@ class SquireGoogleWorkspaceManager:
             ),
         )
 
-    def sync_group_members(self, committee: AssociationGroup, groups: list[WorkspaceGroup] | None = None):
+    def bulk_sync_group_members(self, committee: AssociationGroup, groups: list[WorkspaceGroup] | None = None):
         """Modifies the members of a Workspace group corresponding to the given committee. Adds missing members, removes excess members, and updates existing ones."""
 
         group = self.get_group_for_committee(committee, groups)
@@ -410,6 +416,7 @@ class SquireGoogleWorkspaceManager:
             group is not None
         ), "Attempting to sync Workspace group members for committee, but such Workspace group did not yet exist."
 
+        # TODO: Handle invalid email addresses from members ()
         synced_group_members = self.get_sync_status(group, committee)
         print(synced_group_members)
         print(">>>> start SYNC")
@@ -428,6 +435,8 @@ class SquireGoogleWorkspaceManager:
                 filter(lambda x: x.status == WorkspaceGroupMemberSyncStatus.SYNC_SHOULD_REMOVE, synced_group_members),
             ),
         )
+        # Invalidate cache after batch
+        cache.delete(self.CACHE_KEY_GROUPMEMBERS % {"groupKey": group.id})
 
     def _get_committee_settings(self, committee: AssociationGroup, receive_only=False) -> WorkspaceGroupSettings:
         """Gets group settings that can be used for committee groups"""
