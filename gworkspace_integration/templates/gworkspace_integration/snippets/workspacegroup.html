@@ -1,3 +1,5 @@
+{% load textfilters %}
+
 {% spaceless %}
 <div class="card mb-2">
     <div class="card-header d-flex justify-content-between align-items-start pl-3" id="heading-committee-{{committee.pk}}" data-toggle="collapse" data-target="#collapse-committee-{{committee.pk}}" aria-expanded="false" aria-controls="collapse-committee-{{committee.pk}}">
@@ -84,17 +86,42 @@
         <div>
             <h5 class="mt-2"><i class="fas fa-users fa-fw"></i> Members</h5>
             <ul style="list-style-type: disc;">
-            {% for member, sync_status in group_members %}
+            {% for sync_member in group_members_sync %}
                 <li>
-                    {% if member.role.name != "MEMBER" %}
-                    <span class="badge badge-info badge-pill mr-1">{{ member.role.name }}</span>
+                    <i class='mr-1
+                    {% if sync_member.status.name == "SYNC_SHOULD_ADD" %}
+                        fas fa-user-plus fa-fw text-success
+                    {% elif sync_member.status.name == "SYNC_SHOULD_REMOVE" %}
+                        fas fa-user-minus fa-fw text-danger
+                    {% elif sync_member.status.name == "SYNC_SHOULD_UPDATE" %}
+                        fas fa-user-edit fa-fw text-warning
+                    {% elif sync_member.status.name == "SYNC_UP_TO_DATE" %}
+                        fas fa-user-check fa-fw text-secondary
+                    {% else %}
+                        far fa-question-circle fa-fw text-info
                     {% endif %}
-                    {% if member.type.name != "USER" %}
-                    <span class="badge badge-info badge-pill mr-1">{{ member.type.name }}</span>
+                    '></i>
+                    {% if sync_member.wgroup_member.role.name != "MEMBER" %}
+                    <span class="badge badge-info badge-pill mr-1">{{ sync_member.wgroup_member.role.name }}</span>
                     {% endif %}
-                    {{ member.email }}
+                    {% if sync_member.wgroup_member.type.name != "USER" %}
+                    <span class="badge badge-info badge-pill mr-1">{{ sync_member.wgroup_member.type.name }}</span>
+                    {% endif %}
+                    {% if not sync_member.wgroup_member.email|endswith:domain %}
+                    <span class="badge badge-warning badge-pill mr-1">External</span>
+                    {% endif %}
 
-                    {{ sync_status }}
+                    {% if sync_member.squire_member %}
+                        {{ sync_member.squire_member.get_full_name }} &mdash;
+                    {% endif %}
+
+                    {% if sync_member.workspace_user and sync_member.workspace_user.name.fullName != sync_member.squire_member.get_full_name %}
+                        {{ sync_member.workspace_user.name.fullName }} &mdash;
+                    {% endif %}
+
+                    {{ sync_member.wgroup_member.email }}
+
+
                 </li>
             {% empty %}
                 <p><i>Group has no members.</i></p>

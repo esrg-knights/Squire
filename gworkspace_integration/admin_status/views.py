@@ -18,6 +18,7 @@ from gworkspace_integration.workspace import (
     WorkspaceUserMemberMap,
     get_workspace_manager,
 )
+from gworkspace_integration.workspace_manager.groups import WorkspaceGroupMemberSync
 from membership_file.models import Member
 
 logger = logging.getLogger(__name__)
@@ -89,7 +90,7 @@ class WorkspaceStatusView(TemplateView):
 
     def _setup_groups(
         self, groups: list[WorkspaceGroup]
-    ) -> list[tuple[AssociationGroup, WorkspaceGroup | None, list[WorkspaceGroupMember], list[str]]]:
+    ) -> list[tuple[AssociationGroup, WorkspaceGroup | None, list[WorkspaceGroupMemberSync], list[str]]]:
         """TODO"""
         assert self._workspace_manager is not None
         commitees = self._workspace_manager.get_active_committees()
@@ -100,10 +101,7 @@ class WorkspaceStatusView(TemplateView):
 
             # group_members = self._workspace_manager.group_members(group)
             # TODO: include external_person for convenience sake
-            synced_group_members = self._workspace_manager.get_sync_status(
-                group, self._workspace_manager.get_group_members_for_committee(committee)
-            )
-            # TODO: Include <Member> and <WorkspaceUser>
+            synced_group_members = self._workspace_manager.get_sync_status(group, committee)
             res.append((committee, group, synced_group_members, []))
         return res
 

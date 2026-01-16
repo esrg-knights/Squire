@@ -3,7 +3,7 @@ from enum import Enum
 import re
 from secrets import token_urlsafe
 import time
-from typing import Callable, TypeVar, cast
+from typing import Callable, Iterable, TypeVar, cast
 
 from django.apps import apps
 from django.core.cache import cache
@@ -31,6 +31,7 @@ from gworkspace_integration.api.formats.groups import (
 )
 from gworkspace_integration.api.formats.users import WorkspaceExternalUserId, WorkspaceUser, WorkspaceUserName
 from gworkspace_integration.apps import GworkspaceIntegrationConfig
+from gworkspace_integration.workspace_manager.groups import WorkspaceGroupMemberSync, WorkspaceGroupMemberSyncStatus
 from membership_file.models import Member
 
 T = TypeVar("T")
@@ -41,15 +42,6 @@ WorkspaceUserMemberMap = dict[WorkspaceUser, Member | None]
 def get_workspace_manager() -> "SquireGoogleWorkspaceManager | None":
     """Access the AppConfig to obtain Squire's Google Workspace Manager that connects to the Google Workspace API."""
     return cast(GworkspaceIntegrationConfig, apps.get_app_config("gworkspace_integration")).workspace_client
-
-
-class WorkspaceGroupMemberSyncStatus(Enum):
-    """What needs to happen to a Workspace Group Member in order for it to be synced with Squire"""
-
-    SYNC_UP_TO_DATE = 0
-    SYNC_SHOULD_UPDATE = 1
-    SYNC_SHOULD_ADD = 2
-    SYNC_SHOULD_REMOVE = 3
 
 
 class WorkspaceCacheManager:
@@ -178,7 +170,7 @@ class SquireGoogleWorkspaceManager:
         )
 
     def get_user_for_member(self, member: Member, users: list[WorkspaceUser] | None = None) -> WorkspaceUser | None:
-        """Gets the user that corresponds to the given member, if any"""
+        """Gets the Workspace user that corresponds to the given member, if any"""
         users = users or self.users()
         for user in users:
             for eid in user.external_ids:
@@ -186,7 +178,7 @@ class SquireGoogleWorkspaceManager:
                     return user
 
     def get_member_for_user(self, user: WorkspaceUser) -> Member | None:
-        """Gets the member that corresponds to the given user, if any"""
+        """Gets the member that corresponds to the given Workspace user, if any"""
         for eid in user.external_ids:
             if eid.type == "organization":
                 return Member.objects.filter(pk=int(eid.value)).first()
@@ -281,7 +273,7 @@ class SquireGoogleWorkspaceManager:
 
     def get_member_user_mappings(self) -> tuple[MemberWorkspaceUserMap, MemberWorkspaceUserMap]:
         """
-        TODO
+        Build a mapping from Squire members to Workspace users, and vice versa.
         """
         users = self.users()
         # Map all relevant members to Workspace Users
@@ -303,53 +295,109 @@ class SquireGoogleWorkspaceManager:
         users = users or self.users()
         return next(filter(lambda u: u.primaryEmail == email, users), None)
 
-    def _get_group_member(self, email: str) -> WorkspaceGroupMember:
-        """TODO"""
+    def get_user_by_id(self, id: str, users: list[WorkspaceUser] | None = None) -> WorkspaceUser | None:
+        """Gets a Workspace User uniquely identified by the given Google Workspace id"""
+        users = users or self.users()
+        return next(filter(lambda u: u.id == id, users), None)
+
+    def _get_wgroup_member(self, squire_member: Member) -> WorkspaceGroupMember:
+        """Gets the Workspace group member corresponding to a Squire member"""
         return WorkspaceGroupMember(
-            email=email,
-            role=WorkspaceGroupMemberRole.MEMBER,
+            "admin#directory#member",
+            squire_member.email,
+            WorkspaceGroupMemberRole.MEMBER,
             type=WorkspaceGroupMemberType.USER,
             delivery_settings=WorkspaceGroupMemberDeliverySettings.ALL_MAIL,
         )
 
-    def get_group_members_for_committee(self, committee: AssociationGroup) -> list[WorkspaceGroupMember]:
-        """TODO"""
-        owner = WorkspaceGroupMember(
-            email=self._client._admin,
-            role=WorkspaceGroupMemberRole.OWNER,
-            type=WorkspaceGroupMemberType.USER,
-            delivery_settings=WorkspaceGroupMemberDeliverySettings.NONE,
+    def _get_group_members_sync_for_committee(self, committee: AssociationGroup) -> list[WorkspaceGroupMemberSync]:
+        """Build a group member sync for all Squire members of a committee"""
+        # Make Squire's admin user the group owner. We don't want Workspace admins to be owners.
+        owner = WorkspaceGroupMemberSync(
+            WorkspaceGroupMember(
+                email=self._client._admin,
+                role=WorkspaceGroupMemberRole.OWNER,
+                type=WorkspaceGroupMemberType.USER,
+                delivery_settings=WorkspaceGroupMemberDeliverySettings.NONE,
+            )
         )
-        return [owner] + [self._get_group_member(m.email) for m in committee.members.all()]
 
-    def get_sync_status(self, group: WorkspaceGroup, new_group_members: list[WorkspaceGroupMember]):
-        """TODO"""
-
-        current_group_members = self.group_members(group)
-        new_group_members = set(new_group_members)
-        res: list[tuple[WorkspaceGroupMember, WorkspaceGroupMemberSyncStatus]] = []
-
-        for current_member in current_group_members:
-            assert current_member.id != ""
-            member = next(filter(lambda m: m.email == current_member.email, new_group_members), None)
-            if member is None:
-                # Current group member isn't one of the new group members; remove it
-                res.append((current_member, WorkspaceGroupMemberSyncStatus.SYNC_SHOULD_REMOVE))
-                continue
-
-            # This group member is already part of the group currently, and should remain so. Clean it up.
-            new_group_members.remove(member)
-            if current_member.role != member.role or current_member.type != member.type:
-                # Info is out of date!
-                res.append((member, WorkspaceGroupMemberSyncStatus.SYNC_SHOULD_UPDATE))
-                continue
-            res.append((member, WorkspaceGroupMemberSyncStatus.SYNC_UP_TO_DATE))
-
-        # All unmatched new group members should still be added
-        for new_member in new_group_members:
-            res.append((new_member, WorkspaceGroupMemberSyncStatus.SYNC_SHOULD_ADD))
-
+        res = [owner]
+        for member in committee.members.all():
+            workspace_user = self.get_user_for_member(member)
+            res.append(
+                WorkspaceGroupMemberSync(
+                    self._get_wgroup_member(member),
+                    WorkspaceGroupMemberSyncStatus.SYNC_UP_TO_DATE,
+                    workspace_user,
+                    member,
+                )
+            )
         return res
+
+    def get_sync_status(self, group: WorkspaceGroup, committee: AssociationGroup) -> list[WorkspaceGroupMemberSync]:
+        """
+        Gets a "diff" of a given Workspace group, and how that group should be populated according to a committee.
+        Sync statuses include up-to-date, additions (not present in the Workspace group, but should be due to the
+        committee), removals (present in the Workspace group, but shouldn't), and updates (e.g. in OWNER/MEMBER-roles)
+
+        The resulting list is sorted in the following order: sync status, role, name, email
+        """
+
+        current_workspace_members = set(self.group_members(group))
+        committee_members_sync = self._get_group_members_sync_for_committee(committee)
+
+        for cmember_sync in committee_members_sync:
+            # Match based on email; this is the unique identifier for a group member in Google Workspace
+            # Workspace Users shouldn't directly be added to these groups; we wish to include the members' non-Workspace emails
+            current_wgroup_member = next(
+                filter(lambda m: m.email == cmember_sync.wgroup_member.email, current_workspace_members), None
+            )
+
+            if current_wgroup_member is None:
+                # No corresponding workspace member found to a current committee member. It should be added!
+                cmember_sync.status = WorkspaceGroupMemberSyncStatus.SYNC_SHOULD_ADD
+                continue
+
+            # GroupMember was found. Remove it so we are left with the Workspace members that do not have a corresponding Squire member.
+            current_workspace_members.remove(current_wgroup_member)
+
+            if (
+                current_wgroup_member.role != cmember_sync.wgroup_member.role
+                or current_wgroup_member.type != cmember_sync.wgroup_member.type
+            ):
+                # Info is out of date!
+                cmember_sync.status = WorkspaceGroupMemberSyncStatus.SYNC_SHOULD_UPDATE
+                continue
+
+        # All unmatched group members should be removed
+        for gmember_to_remove in current_workspace_members:
+            committee_members_sync.append(
+                WorkspaceGroupMemberSync(
+                    gmember_to_remove,
+                    WorkspaceGroupMemberSyncStatus.SYNC_SHOULD_REMOVE,
+                    workspace_user=self.get_user_by_id(gmember_to_remove.id),
+                )
+            )
+
+        # Sort based on sync status, role, name, email
+        return sorted(
+            committee_members_sync,
+            key=lambda x: (
+                x.status.value,
+                {
+                    WorkspaceGroupMemberRole.OWNER: 0,
+                    WorkspaceGroupMemberRole.MANAGER: 1,
+                    WorkspaceGroupMemberRole.MEMBER: 2,
+                }.get(x.wgroup_member.role.value, 9),
+                (
+                    x.squire_member.get_full_name(allow_spoof=False)
+                    if x.squire_member
+                    else (x.workspace_user.name.fullName if x.workspace_user else "")
+                ),
+                x.wgroup_member.email,
+            ),
+        )
 
     def _get_committee_settings(self, committee: AssociationGroup, receive_only=False) -> WorkspaceGroupSettings:
         """Gets group settings that can be used for committee groups"""

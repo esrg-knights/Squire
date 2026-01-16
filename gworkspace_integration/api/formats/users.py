@@ -51,7 +51,7 @@ class WorkspaceExternalUserId(WorkspaceAPIResponse):
     _optional_fields = ("customType",)
 
 
-@dataclass
+@dataclass(eq=False)
 class WorkspaceUser(WorkspaceAPIResponse):
     """
     A user in Google Workspace. Note that this is an incomplete specification.
@@ -161,7 +161,3 @@ class WorkspaceUser(WorkspaceAPIResponse):
             new_json["lastLoginTime"] = None
 
         return new_json
-
-    def __hash__(self):
-        # ID is immutable; safe to hash
-        return hash(self.id)

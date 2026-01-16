@@ -31,7 +31,7 @@
     <h3>Committee Workspace Groups</h3>
     <p>Lists all committees and their corresponding Workspace Groups.</p>
     <div>
-        {% for committee, group, group_members, errors in workspace_groups %}
+        {% for committee, group, group_members_sync, errors in workspace_groups %}
             {% include "gworkspace_integration/snippets/workspacegroup.html" %}
         {% endfor %}
     </div>
