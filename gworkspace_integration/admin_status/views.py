@@ -36,8 +36,8 @@ class WorkspaceStatusView(TemplateView):
         super().__init__(*args, **kwargs)
         self._workspace_manager: SquireGoogleWorkspaceManager | None = get_workspace_manager()
 
-    def _validate(self, member: Member | None, user: WorkspaceUser | None) -> list[str]:
-        """Validates a member with corresponding user data"""
+    def _calc_member_sync_errors(self, member: Member | None, user: WorkspaceUser | None) -> list[str]:
+        """Determine whether the member is correctly synced to a Workspace user. Output consists of all sync errors."""
         errors = []
 
         # Workspace active?
@@ -74,35 +74,78 @@ class WorkspaceStatusView(TemplateView):
         return errors
 
     def _setup_members(self, member_map: MemberWorkspaceUserMap):
-        """TODO"""
+        """
+        Sets up tuples consisting of Squire member, Workspace user pairs with other relevant info.
+
+        :return: tuples containing
+        - Squire member
+        - Workspace user corresponding to that member (if it exists)
+        - List of sync errors
+        """
         res: list[tuple[Member, WorkspaceUser | None, list[str]]] = []
         for member, user in member_map.items():
-            res.append((member, user, self._validate(member, user)))
+            res.append((member, user, self._calc_member_sync_errors(member, user)))
         return res
 
     def _setup_orphans(self, user_map: WorkspaceUserMemberMap):
-        """TODO"""
+        """TODO
+
+        Sets up tuples consisting of invalid Squire member, Workspace user pairs with other relevant info.
+        """
         res: list[tuple[Member | None, WorkspaceUser, list[str]]] = []
         for user, member in user_map.items():
             if member is None or not member.is_active:
-                res.append((member, user, self._validate(member, user)))
+                res.append((member, user, self._calc_member_sync_errors(member, user)))
+        return res
+
+    def _calc_group_sync_errors(
+        self, committee: AssociationGroup, wgroup: WorkspaceGroup | None, members_sync: list[WorkspaceGroupMemberSync]
+    ) -> list[str]:
+        """Determine whether the committee is correctly synced to a Workspace group. Output consists of all sync errors."""
+        if wgroup is None:
+            return []
+
+        res: list[str] = []
+        if committee.name != wgroup.name:
+            res.append("group_name")
+        if committee.short_description != wgroup.description:
+            res.append("group_description")
+        if committee.contact_email != wgroup.email:
+            res.append("group_email")
+        if any(x.status != WorkspaceGroupMemberSyncStatus.SYNC_UP_TO_DATE for x in members_sync):
+            res.append("group_members")
         return res
 
     def _setup_groups(
         self, groups: list[WorkspaceGroup]
     ) -> list[tuple[AssociationGroup, WorkspaceGroup | None, list[WorkspaceGroupMemberSync], list[str]]]:
-        """TODO"""
+        """
+        Sets up tuples consisting of Squire committee, Workspace group pairs with other relevant info.
+
+        :return: tuples containing
+        - Squire committee
+        - Workspace group corresponding to that committee (if it exists)
+        - The Workspace group members according to Squire, and their sync status to the Workspace group
+        - List of sync errors
+        """
         assert self._workspace_manager is not None
-        commitees = self._workspace_manager.get_active_committees()
+        committees = self._workspace_manager.get_active_committees()
         res = []
-        for committee in commitees:
+        for committee in committees:
             group = self._workspace_manager.get_group_for_committee(committee, groups)
             # TODO: handle group is None
             synced_group_members = []
             if group is not None:
                 # Do not sync invalid committee members
                 synced_group_members = self._workspace_manager.calc_sync_status(group, committee, False)
-            res.append((committee, group, synced_group_members, []))
+            res.append(
+                (
+                    committee,
+                    group,
+                    synced_group_members,
+                    self._calc_group_sync_errors(committee, group, synced_group_members) if group is not None else [],
+                )
+            )
         return res
 
     def get_context_data(self, **kwargs):
