@@ -1,4 +1,5 @@
 {% load textfilters %}
+{% load status_gworkspace %}
 
 {% spaceless %}
 <form method="post">
@@ -89,7 +90,8 @@
                 <div class="d-flex justify-content-between align-items-start mt-2">
                     <h5><i class="fas fa-users fa-fw"></i> Members</h5>
                     <h5 class="">
-                        <button type="submit" name="sync_group_members" value="{{ committee.pk }}" class="btn btn-primary"><i class="fas fa-sync-alt"></i></button>
+                        <button type="submit" name="sync_group_members" value="{{ committee.pk }}" class="btn greenify" {% if not group_members_sync|is_allow_sync_members %}disabled{% endif%}>
+                            <i class="fas fa-sync-alt"></i></button>
                     </h5>
                 </div>
                 <ul style="list-style-type: disc;">
@@ -104,20 +106,26 @@
                             fas fa-user-edit fa-fw text-warning
                         {% elif sync_member.status.name == "SYNC_UP_TO_DATE" %}
                             fas fa-user-check fa-fw text-secondary
+                        {% elif sync_member.status.name == "SYNC_INVALID" %}
+                            fas fa-user-lock fa-fw text-secondary
                         {% else %}
                             far fa-question-circle fa-fw text-info
                         {% endif %}
                         '></i>
+                        {% if sync_member.status.name == "SYNC_INVALID" %}
+                            <span class="badge badge-secondary badge-pill mr-1">INVALID EMAIL</span>
+                        {% endif %}
                         {% if sync_member.wgroup_member.role.name != "MEMBER" %}
-                        <span class="badge badge-info badge-pill mr-1">{{ sync_member.wgroup_member.role.name }}</span>
+                            <span class="badge badge-info badge-pill mr-1">{{ sync_member.wgroup_member.role.name }}</span>
                         {% endif %}
                         {% if sync_member.wgroup_member.type.name != "USER" %}
-                        <span class="badge badge-info badge-pill mr-1">{{ sync_member.wgroup_member.type.name }}</span>
+                            <span class="badge badge-info badge-pill mr-1">{{ sync_member.wgroup_member.type.name }}</span>
                         {% endif %}
                         <!-- {% if not sync_member.wgroup_member.email|endswith:domain %}
                         <span class="badge badge-warning badge-pill mr-1">External</span>
                         {% endif %} -->
 
+                        <span class='{% if sync_member.status.name == "SYNC_INVALID" %}text-muted font-italic{% endif %}'>
                         {% if sync_member.squire_member %}
                             {{ sync_member.squire_member.get_full_name }} &mdash;
                         {% endif %}
@@ -127,8 +135,7 @@
                         {% endif %}
 
                         {{ sync_member.wgroup_member.email }}
-
-
+                        </span>
                     </li>
                 {% empty %}
                     <p><i>Group has no members.</i></p>

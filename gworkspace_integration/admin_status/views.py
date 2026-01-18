@@ -18,7 +18,7 @@ from gworkspace_integration.workspace import (
     WorkspaceUserMemberMap,
     get_workspace_manager,
 )
-from gworkspace_integration.workspace_manager.groups import WorkspaceGroupMemberSync
+from gworkspace_integration.workspace_manager.groups import WorkspaceGroupMemberSync, WorkspaceGroupMemberSyncStatus
 from membership_file.models import Member
 
 logger = logging.getLogger(__name__)
@@ -98,8 +98,10 @@ class WorkspaceStatusView(TemplateView):
         for committee in commitees:
             group = self._workspace_manager.get_group_for_committee(committee, groups)
             # TODO: handle group is None
-
-            synced_group_members = self._workspace_manager.get_sync_status(group, committee)
+            synced_group_members = []
+            if group is not None:
+                # Do not sync invalid committee members
+                synced_group_members = self._workspace_manager.calc_sync_status(group, committee, False)
             res.append((committee, group, synced_group_members, []))
         return res
 
@@ -117,7 +119,8 @@ class WorkspaceStatusView(TemplateView):
         workspace_pairs = self._setup_members(member_map)
         orphan_pairs = self._setup_orphans(user_map)
         context |= {
-            "domain": self._workspace_manager._client._domain,
+            "domain": self._workspace_manager._client.domain,
+            "workspace_domains": self._workspace_manager._client.workspace_domains,
             "workspace_pairs": workspace_pairs,
             "orphan_users": orphan_pairs,
             "workspace_groups": self._setup_groups(groups),

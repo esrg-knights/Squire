@@ -13,6 +13,7 @@ class WorkspaceGroupMemberSyncStatus(Enum):
     SYNC_SHOULD_UPDATE = 1
     SYNC_SHOULD_ADD = 2
     SYNC_SHOULD_REMOVE = 3
+    SYNC_INVALID = 4
 
 
 @dataclass(eq=False)

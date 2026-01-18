@@ -152,7 +152,7 @@ class SquireGoogleWorkspaceManager:
         """
         name = f"{member.first_name}-{member.tussenvoegsel}{member.last_name}"
         name = slugify(member.get_full_name().replace(" ", "")).replace("-", ".")
-        suffix = "@" + self._client._domain
+        suffix = "@" + self._client.domain
         requested_name = name + suffix
         counter = 0
 
@@ -207,7 +207,7 @@ class SquireGoogleWorkspaceManager:
             suspended=False,
             name=WorkspaceUserName(givenName=member.first_name, familyName=last_name),
             external_ids=[WorkspaceExternalUserId(type="organization", value=member.pk)],
-            orgUnitPath=self._client._members_ou,
+            orgUnitPath=self._client.members_ou,
         )
         self._client.DirectoryService.add_user(user)
         if clear_cache:
@@ -239,12 +239,12 @@ class SquireGoogleWorkspaceManager:
         groups = groups or self.groups()
         for group in groups:
             for alias in group.aliases:
-                if alias == f"committee-{committee.pk}@{self._client._domain}":
+                if alias == f"committee-{committee.pk}@{self._client.domain}":
                     return group
 
     def get_committee_for_group(self, group: WorkspaceGroup) -> AssociationGroup | None:
         """Gets the member that corresponds to the given user, if any"""
-        pattern = re.compile(rf"committee-([0-9]+)@{re.escape(self._client._domain)}")
+        pattern = re.compile(rf"committee-([0-9]+)@{re.escape(self._client.domain)}")
         for alias in group.aliases:
             if pattern.match(alias):
                 return AssociationGroup().objects.filter(pk=int(pattern.group(1))).first()
@@ -254,7 +254,7 @@ class SquireGoogleWorkspaceManager:
         return AssociationGroup.objects.filter(
             type__in=[AssociationGroup.COMMITTEE, AssociationGroup.ORDER, AssociationGroup.WORKGROUP],
             contact_email__isnull=False,
-            contact_email__endswith=f"@{self._client._domain}",
+            contact_email__endswith=f"@{self._client.domain}",
         )
 
     def groups(self, ignore_cache=False) -> list[WorkspaceGroup]:
@@ -322,7 +322,7 @@ class SquireGoogleWorkspaceManager:
         owner = WorkspaceGroupMemberSync(
             WorkspaceGroupMember(
                 "admin#directory#member",
-                self._client._admin,
+                self._client.admin_username,
                 WorkspaceGroupMemberRole.OWNER,
                 type=WorkspaceGroupMemberType.USER,
                 delivery_settings=WorkspaceGroupMemberDeliverySettings.NONE,
@@ -342,7 +342,18 @@ class SquireGoogleWorkspaceManager:
             )
         return res
 
-    def get_sync_status(self, group: WorkspaceGroup, committee: AssociationGroup) -> list[WorkspaceGroupMemberSync]:
+    def is_email_valid_for_sync(self, email: str) -> bool:
+        """Whether a Workspace group member can be synced"""
+        if email == self._client.admin_username:
+            return True
+
+        return not email.endswith(self._client.domain) and not any(
+            email.endswith(domain) for domain in self._client.workspace_domains
+        )
+
+    def calc_sync_status(
+        self, group: WorkspaceGroup, committee: AssociationGroup, is_allow_invalid=False
+    ) -> list[WorkspaceGroupMemberSync]:
         """
         Gets a "diff" of a given Workspace group, and how that group should be populated according to a committee.
         Sync statuses include up-to-date, additions (not present in the Workspace group, but should be due to the
@@ -389,6 +400,11 @@ class SquireGoogleWorkspaceManager:
                 )
             )
 
+        if not is_allow_invalid:
+            for sync in committee_members_sync:
+                if not self.is_email_valid_for_sync(sync.wgroup_member.email):
+                    sync.status = WorkspaceGroupMemberSyncStatus.SYNC_INVALID
+
         # Sort based on sync status, role, name, email
         return sorted(
             committee_members_sync,
@@ -416,8 +432,9 @@ class SquireGoogleWorkspaceManager:
             group is not None
         ), "Attempting to sync Workspace group members for committee, but such Workspace group did not yet exist."
 
-        # TODO: Handle invalid email addresses from members ()
-        synced_group_members = self.get_sync_status(group, committee)
+        # Do not sync invalid committee members
+        synced_group_members = self.calc_sync_status(group, committee, False)
+
         print(synced_group_members)
         print(">>>> start SYNC")
         self._client.DirectoryService.bulk_change_group_members(

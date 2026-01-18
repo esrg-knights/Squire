@@ -14,12 +14,15 @@ class GoogleWorkspaceSettings:
     Settings for connecting to the google workspace API.
     - `service_account_token_path`: A service-account token
     - `scopes`: Scopes corresponding to the token
-    - `domain`: Limit interactions to users/groups of this domain, if applicable
+    - `domain`: Main domain of the Workspace
+    - `workspace_domains`: Domains set up in the Workspace.
+    - `members_ou`: Organizational unit to sync Squire's members to. Users in other OU's are outside the scope of Squire.
     - `directory_admin_username`: Username of an admin account. This is required to use the directory API to manage users/groups
     """
 
     service_account_token_path: str
     domain: str
+    workspace_domains: str
     customer_id: str
     members_ou: str
     directory_admin_username: str
@@ -49,15 +52,16 @@ class GoogleWorkspaceClient:
         self._base_creds = service_account.Credentials.from_service_account_file(
             f"squire/config/{settings.service_account_token_path}", scopes=settings.scopes
         )
-        self._admin = settings.directory_admin_username
-        self._domain = settings.domain
-        self._members_ou = settings.members_ou
+        self.admin_username = settings.directory_admin_username
+        self.domain = settings.domain
+        self.workspace_domains = settings.workspace_domains
+        self.members_ou = settings.members_ou
         self._services: dict[str, GoogleAPIService] = {}
 
     def _get_service(self, cls: Type[T]) -> T:
         key = f"{cls.service_name}.{cls.version}"
         if key not in self._services:
-            self._services[key] = cls(self._base_creds, self._domain, self._members_ou, self._admin)
+            self._services[key] = cls(self._base_creds, self.domain, self.members_ou, self.admin_username)
         return cast(T, self._services[key])
 
     @property

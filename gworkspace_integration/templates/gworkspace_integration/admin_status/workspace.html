@@ -22,11 +22,26 @@
         </div>
     {% endif %}
     <p>Below is all the data synced with Google Workspaces.</p>
-    <p><i class="fas fa-at fa-fw"></i> {{ domain }}</p>
+    <h5>Domains:</h5>
+    <p>
+        Main domain: <i class="fas fa-at fa-fw"></i> {{ domain }}
+    </p>
+    <p class="mb-0">
+        Additional:
+        <ul class="fa-ul">
+            {% for dom in workspace_domains %}
+            <li class="fa-i"><i class="fas fa-at fa-fw"></i> {{ dom }}</li>
+            {% empty %}
+            <li><i>No domains set up</i></li>
+        {% endfor %}
+        </ul>
+    </p>
 
+    <p class="text-right">
     <button class="btn btn-success greenify" type="button" data-toggle="collapse" data-target=".workspace-card-collapse" aria-expanded="true" aria-controls="workspace-card-collapse">
         Toggle all
     </button>
+    </p>
 
     <h3>Committee Workspace Groups</h3>
     <p>Lists all committees and their corresponding Workspace Groups.</p>
