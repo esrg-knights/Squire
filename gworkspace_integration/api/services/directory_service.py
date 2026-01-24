@@ -139,6 +139,16 @@ class DirectoryService(GoogleAPIService):
             else:
                 # Do something with the response
                 print(response)
+                # {
+                #     "kind": "admin#directory#member",
+                #     "etag": '"gpBsXqCiY3kGaDliRWSpRKSlyHGOMsQoSYVVy5SUbI8/fU3M-X6YUdHhKi0Y874EDQ7XJ-M"',
+                #     "id": "104027548304300011995",
+                #     "email": "test@example.com",
+                #     "role": "MEMBER",
+                #     "type": "USER",
+                #     "status": "ACTIVE",
+                #     "delivery_settings": "ALL_MAIL",
+                # }
                 print("==========")
 
         batch = self._service.new_batch_http_request()

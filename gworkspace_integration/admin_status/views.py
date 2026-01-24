@@ -7,9 +7,11 @@ from django.http import HttpRequest, HttpResponseBadRequest, HttpResponseRedirec
 from django.urls import reverse
 from django.utils.html import format_html
 from django.views.generic import TemplateView
+from committees.email import SquireEmailManager
 from committees.models import AssociationGroup
 from core.status_collective import AdminStatusViewMixin
 
+from gworkspace_integration.admin_status.proxy import MailingListProxy
 from gworkspace_integration.api.formats.groups import WorkspaceGroup, WorkspaceGroupMember
 from gworkspace_integration.api.formats.users import WorkspaceUser
 from gworkspace_integration.workspace import (
@@ -99,7 +101,7 @@ class WorkspaceStatusView(TemplateView):
         return res
 
     def _calc_group_sync_errors(
-        self, committee: AssociationGroup, wgroup: WorkspaceGroup | None, members_sync: list[WorkspaceGroupMemberSync]
+        self, committee: MailingListProxy, wgroup: WorkspaceGroup | None, members_sync: list[WorkspaceGroupMemberSync]
     ) -> list[str]:
         """Determine whether the committee is correctly synced to a Workspace group. Output consists of all sync errors."""
         if wgroup is None:
@@ -108,81 +110,89 @@ class WorkspaceStatusView(TemplateView):
         res: list[str] = []
         if committee.name != wgroup.name:
             res.append("group_name")
-        if committee.short_description != wgroup.description:
+        if committee.description != wgroup.description:
             res.append("group_description")
-        if committee.contact_email != wgroup.email:
+        if committee.email != wgroup.email:
             res.append("group_email")
         if any(x.status != WorkspaceGroupMemberSyncStatus.SYNC_UP_TO_DATE for x in members_sync):
             res.append("group_members")
+        if any(x.status == WorkspaceGroupMemberSyncStatus.SYNC_INVALID for x in members_sync):
+            res.append("group_members_invalid")
         return res
 
-    def _setup_groups(
-        self, groups: list[WorkspaceGroup]
-    ) -> list[tuple[AssociationGroup, WorkspaceGroup | None, list[WorkspaceGroupMemberSync], list[str]]]:
+    def _get_mailinglist_data_for_view(
+        self,
+        committee: MailingListProxy,
+        group: WorkspaceGroup | None,
+        res: list[tuple[MailingListProxy, WorkspaceGroup | None, list[WorkspaceGroupMemberSync], list[str]]],
+    ) -> None:
         """
-        Sets up tuples consisting of Squire committee, Workspace group pairs with other relevant info.
+        Gets the data to display a mailing list and its subscribers in this view. The result is appended to the resulting list `res`
 
-        :return: tuples containing
+        :param: res, tuples containing
         - Squire committee
         - Workspace group corresponding to that committee (if it exists)
         - The Workspace group members according to Squire, and their sync status to the Workspace group
         - List of sync errors
         """
+        synced_group_members = []
+        if group is not None:
+            # Do not sync invalid committee members
+            synced_group_members = self._workspace_manager.calc_sync_status_group_members(
+                group, committee, is_allow_invalid=False
+            )
+        res.append(
+            (
+                committee,
+                group,
+                synced_group_members,
+                self._calc_group_sync_errors(committee, group, synced_group_members) if group is not None else [],
+            )
+        )
+
+    def _setup_groups(
+        self, groups: list[WorkspaceGroup]
+    ) -> list[tuple[MailingListProxy, WorkspaceGroup | None, list[WorkspaceGroupMemberSync], list[str]]]:
+        """
+        Sets up tuples consisting of Squire committee, Workspace group pairs with other relevant info.
+        """
         assert self._workspace_manager is not None
         committees = self._workspace_manager.get_active_committees()
         res = []
         for committee in committees:
+            committee = MailingListProxy.from_committee(committee)
             group = self._workspace_manager.get_group_for_committee(committee, groups)
-            # TODO: handle group is None
-            synced_group_members = []
-            if group is not None:
-                # Do not sync invalid committee members
-                synced_group_members = self._workspace_manager.calc_sync_status_committee(
-                    group, committee, is_allow_invalid=False
-                )
-            res.append(
-                (
-                    committee,
-                    group,
-                    synced_group_members,
-                    self._calc_group_sync_errors(committee, group, synced_group_members) if group is not None else [],
-                )
-            )
+            self._get_mailinglist_data_for_view(committee, group, res)
+
         return res
 
-    def _setup_mailing_lists(
+    def _setup_member_mailing_lists(
         self, groups: list[WorkspaceGroup]
-    ) -> list[tuple[AssociationGroup, WorkspaceGroup | None, list[WorkspaceGroupMemberSync], list[str]]]:
+    ) -> list[tuple[MailingListProxy, WorkspaceGroup | None, list[WorkspaceGroupMemberSync], list[str]]]:
         """
-        Sets up tuples consisting of Squire mailing lists, Workspace group pairs with other relevant info.
-
-        :return: tuples containing
-        - Squire committee
-        - Workspace group corresponding to that mailing list (if it exists)
-        - The Workspace group members according to Squire, and their sync status to the Workspace group
-        - List of sync errors
+        Sets up tuples consisting of Squire member mailing lists, Workspace group pairs with other relevant info.
         """
         assert self._workspace_manager is not None
         mailing_lists = self._workspace_manager._email_mgr.settings.mailing_lists
         res = []
         for mailing_list in mailing_lists.items():
-            committee, members = self._workspace_manager.mailing_list_as_committee(mailing_list)
-            group = self._workspace_manager.get_group_for_mailinglist(mailing_list, groups)
+            committee = MailingListProxy.from_member_mailing_list(mailing_list)
+            group = self._workspace_manager.get_group_for_mailinglist(mailing_list[0], groups)
+            self._get_mailinglist_data_for_view(committee, group, res)
+        return res
 
-            synced_group_members = []
-            if group is not None:
-                # Do not sync invalid committee members
-                synced_group_members = self._workspace_manager.calc_sync_status_committee(
-                    group, committee, members, is_allow_invalid=False
-                )
-            res.append(
-                (
-                    committee,
-                    group,
-                    synced_group_members,
-                    self._calc_group_sync_errors(committee, group, synced_group_members) if group is not None else [],
-                )
-            )
+    def _setup_committee_mailing_lists(
+        self, groups: list[WorkspaceGroup]
+    ) -> list[tuple[MailingListProxy, WorkspaceGroup | None, list[WorkspaceGroupMemberSync], list[str]]]:
+        """
+        Sets up tuples consisting of Squire committee mailing lists, Workspace group pairs with other relevant info.
+        """
+        assert self._workspace_manager is not None
+        res = []
+        for email in self._workspace_manager._email_mgr.settings.committee_settings.global_addresses:
+            committee = MailingListProxy.from_committee_mailing_list(email)
+            group = self._workspace_manager.get_group_for_mailinglist(email, groups)
+            self._get_mailinglist_data_for_view(committee, group, res)
         return res
 
     def get_context_data(self, **kwargs):
@@ -204,27 +214,53 @@ class WorkspaceStatusView(TemplateView):
             "workspace_pairs": workspace_pairs,
             "orphan_users": orphan_pairs,
             "workspace_groups": self._setup_groups(groups),
-            "workspace_mailing_lists": self._setup_mailing_lists(groups),
+            "workspace_mailing_lists": self._setup_member_mailing_lists(groups),
+            "workspace_committee_lists": self._setup_committee_mailing_lists(groups),
         }
 
         return context
 
     def post(self, request: HttpRequest, *args, **kwargs):
-        if "sync_group_members" in request.POST:
-            committee_id = request.POST["sync_group_members"]
+        if "sync_group_members" not in request.POST:
+            messages.error(self.request, "Missing sync_group_members in post data")
+            return HttpResponseBadRequest("Invalid POST data passed. Missing sync_group_members")
+        mailinglist_type, pk = request.POST["sync_group_members"].split("-", 1)
+
+        committee: MailingListProxy = None
+        group: WorkspaceGroup = None
+        if mailinglist_type == "committee":
             try:
-                committee = AssociationGroup.objects.get(pk=committee_id)
+                committee = MailingListProxy.from_committee(AssociationGroup.objects.get(pk=pk))
+                group = self._workspace_manager.get_group_for_committee(committee)
             except AssociationGroup.DoesNotExist:
                 return HttpResponseBadRequest(
-                    f"Attempted to update Workspace group members for committee_id {committee_id}. Such committee does not exist!"
+                    f"Attempted to update Workspace group members for committee_id {pk}. Such committee does not exist!"
                 )
-            self._workspace_manager.logger.info(
-                f"{request.user.username} ({request.user.id}) force synced group members for committee {committee.name} ({committee_id})"
-            )
-            self._workspace_manager.bulk_sync_group_members(committee)
-            messages.success(self.request, f"Updated group members for {committee.name} ({committee_id}).")
-            return HttpResponseRedirect(request.get_full_path())
-        return HttpResponseBadRequest("Invalid POST data passed")
+        elif mailinglist_type == "memberalias":
+            try:
+                mailing_list = next(
+                    (email, settings)
+                    for email, settings in self._workspace_manager._email_mgr.settings.mailing_lists.items()
+                    if SquireEmailManager.mailing_list_to_id(email) == pk
+                )
+                pk = mailing_list[0]
+                committee = MailingListProxy.from_member_mailing_list(mailing_list)
+                group = self._workspace_manager.get_group_for_mailinglist(mailing_list[0])
+            except StopIteration:
+                return HttpResponseBadRequest(
+                    f"Attempted to update Workspace group members for member alias {pk}. Such alias does not exist!"
+                )
+        else:
+            err = f"Unknown group type {mailinglist_type} (id {pk}). Could not sync!"
+            messages.error(err)
+            return HttpResponseBadRequest(err)
+
+        self._workspace_manager.logger.info(
+            f"{request.user.username} ({request.user.id}) force synced group members for committee {committee.name} ({pk})"
+        )
+        self._workspace_manager.bulk_sync_group_members(committee, group)
+        messages.success(self.request, f"Updated group members for {committee.name} ({pk}).")
+        return HttpResponseRedirect(request.get_full_path())
 
 
 class WorkspaceTabbedStatusView(AdminStatusViewMixin, WorkspaceStatusView):

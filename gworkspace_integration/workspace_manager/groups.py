@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
+from gworkspace_integration.admin_status.proxy import MailingListMemberProxy
 from gworkspace_integration.api.formats.groups import WorkspaceGroupMember
 from gworkspace_integration.api.formats.users import WorkspaceUser
 from membership_file.models import Member
@@ -23,4 +24,4 @@ class WorkspaceGroupMemberSync:
     wgroup_member: WorkspaceGroupMember
     status: WorkspaceGroupMemberSyncStatus = WorkspaceGroupMemberSyncStatus.SYNC_UP_TO_DATE
     workspace_user: WorkspaceUser = None
-    squire_member: Member = None
+    squire_member: MailingListMemberProxy = None

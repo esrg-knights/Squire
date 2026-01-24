@@ -43,10 +43,18 @@
     </button>
     </p>
 
-    <h3>Mailing List Workspace Groups</h3>
-    <p>Lists all mailing lists and their corresponding Workspace Groups.</p>
+    <h3>Member Mailing List Workspace Groups</h3>
+    <p>Lists all mailing lists for members and their corresponding Workspace Groups.</p>
     <div>
         {% for committee, group, group_members_sync, errors in workspace_mailing_lists %}
+            {% include "gworkspace_integration/snippets/workspacegroup.html" %}
+        {% endfor %}
+    </div>
+
+    <h3>Committee Mailing List Workspace Groups</h3>
+    <p>Lists all mailing lists used to email all committees and their corresponding Workspace Groups.</p>
+    <div>
+        {% for committee, group, group_members_sync, errors in workspace_committee_lists %}
             {% include "gworkspace_integration/snippets/workspacegroup.html" %}
         {% endfor %}
     </div>

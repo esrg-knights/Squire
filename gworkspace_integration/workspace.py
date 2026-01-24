@@ -13,6 +13,7 @@ from django.utils.text import slugify
 
 from committees.email import MemberMailingListAlias, get_email_settings
 from committees.models import AssociationGroup, AssociationGroupMembership
+from gworkspace_integration.admin_status.proxy import MailingListMemberProxy, MailingListProxy
 from gworkspace_integration.api.client import GoogleWorkspaceClient, GoogleWorkspaceSettings
 from gworkspace_integration.api.formats.groups import (
     WorkspaceGroup,
@@ -176,7 +177,9 @@ class SquireGoogleWorkspaceManager:
             api_fn=(lambda: list(self._client.DirectoryService.users())),
         )
 
-    def get_user_for_member(self, member: Member, users: list[WorkspaceUser] | None = None) -> WorkspaceUser | None:
+    def get_user_for_member(
+        self, member: MailingListMemberProxy, users: list[WorkspaceUser] | None = None
+    ) -> WorkspaceUser | None:
         """Gets the Workspace user that corresponds to the given member, if any"""
         users = users or self.users()
         for user in users:
@@ -320,9 +323,7 @@ class SquireGoogleWorkspaceManager:
             **({"id": workspace_user.id} if workspace_user is not None else {}),
         )
 
-    def _get_group_members_sync_for_committee(
-        self, committee: AssociationGroup, members: QuerySet[Member] | None = None
-    ) -> list[WorkspaceGroupMemberSync]:
+    def _get_group_members_sync_for_committee(self, committee: MailingListProxy) -> list[WorkspaceGroupMemberSync]:
         """Build a group member sync for all Squire members of a committee"""
         # Make Squire's admin user the group owner. We don't want Workspace admins to be owners.
         owner = WorkspaceGroupMemberSync(
@@ -336,14 +337,14 @@ class SquireGoogleWorkspaceManager:
         )
 
         res = [owner]
-        for member in members or committee.members.all():
-            workspace_user = self.get_user_for_member(member)
+        for member_proxy in committee.members:
+            workspace_user = self.get_user_for_member(member_proxy) if member_proxy.pk is not None else None
             res.append(
                 WorkspaceGroupMemberSync(
-                    self._get_wgroup_member(member, workspace_user),
+                    self._get_wgroup_member(member_proxy, workspace_user),
                     WorkspaceGroupMemberSyncStatus.SYNC_UP_TO_DATE,
                     workspace_user,
-                    member,
+                    member_proxy,
                 )
             )
         return res
@@ -357,11 +358,10 @@ class SquireGoogleWorkspaceManager:
             email.endswith(domain) for domain in self._client.workspace_domains
         )
 
-    def calc_sync_status_committee(
+    def calc_sync_status_group_members(
         self,
         group: WorkspaceGroup,
-        committee: AssociationGroup,
-        members: QuerySet[Member] | None = None,
+        committee: MailingListProxy,
         is_allow_invalid=False,
     ) -> list[WorkspaceGroupMemberSync]:
         """
@@ -373,7 +373,7 @@ class SquireGoogleWorkspaceManager:
         """
 
         current_workspace_members = set(self.group_members(group))
-        committee_members_sync = self._get_group_members_sync_for_committee(committee, members)
+        committee_members_sync = self._get_group_members_sync_for_committee(committee)
 
         for cmember_sync in committee_members_sync:
             # Match based on email; this is the unique identifier for a group member in Google Workspace
@@ -426,7 +426,7 @@ class SquireGoogleWorkspaceManager:
                     WorkspaceGroupMemberRole.MEMBER: 2,
                 }.get(x.wgroup_member.role.value, 9),
                 (
-                    x.squire_member.get_full_name(allow_spoof=False)
+                    x.squire_member.name
                     if x.squire_member
                     else (x.workspace_user.name.fullName if x.workspace_user else "")
                 ),
@@ -434,16 +434,14 @@ class SquireGoogleWorkspaceManager:
             ),
         )
 
-    def bulk_sync_group_members(self, committee: AssociationGroup, groups: list[WorkspaceGroup] | None = None):
+    def bulk_sync_group_members(self, committee: MailingListProxy, group: WorkspaceGroup):
         """Modifies the members of a Workspace group corresponding to the given committee. Adds missing members, removes excess members, and updates existing ones."""
-
-        group = self.get_group_for_committee(committee, groups)
         assert (
             group is not None
         ), "Attempting to sync Workspace group members for committee, but such Workspace group did not yet exist."
 
         # Do not sync invalid committee members
-        synced_group_members = self.calc_sync_status_committee(group, committee, is_allow_invalid=False)
+        synced_group_members = self.calc_sync_status_group_members(group, committee, is_allow_invalid=False)
 
         print(synced_group_members)
         print(">>>> start SYNC")
@@ -469,36 +467,11 @@ class SquireGoogleWorkspaceManager:
     # GROUPS (MEMBER MAILING LISTS)
     # -----------------------
     def get_group_for_mailinglist(
-        self, mailing_list: MemberMailingListAlias, groups: list[WorkspaceGroup] | None = None
+        self, email: str, groups: list[WorkspaceGroup] | None = None
     ) -> WorkspaceGroup | None:
         """Gets the Workspace group that corresponds to the given mailing list, if any"""
         groups = groups or self.groups()
-        return next((g for g in groups if g.email == mailing_list[0]), None)
-
-    def mailing_list_as_committee(
-        self, mailing_list: MemberMailingListAlias
-    ) -> tuple[AssociationGroup, QuerySet[Member]]:
-        """
-        Docstring for mailing_list_as_committee
-
-        :param mailing_list: Description
-        :type mailing_list: MemberMailingListAlias
-        :return: Description
-        """
-        print(mailing_list)
-        email, settings = mailing_list
-        members = self._email_mgr.get_subscribed_members(
-            self._email_mgr.get_active_members(), email, settings.default_opt
-        )
-        # Cannot insert members directly as value is not actually saved to the DB
-        committee = AssociationGroup(
-            name=settings.title,
-            type=AssociationGroup.COMMITTEE,
-            is_public=True,
-            short_description=settings.description,
-            contact_email=email,
-        )
-        return committee, members
+        return next((g for g in groups if g.email == email), None)
 
     def _get_committee_settings(self, committee: AssociationGroup, receive_only=False) -> WorkspaceGroupSettings:
         """Gets group settings that can be used for committee groups"""

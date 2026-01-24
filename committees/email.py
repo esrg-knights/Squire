@@ -158,27 +158,30 @@ class SquireEmailManager:
             case _:
                 raise ValueError(f"Invalid mailing list type passed {mailing_list_type.name}")
 
-    def get_active_members(self) -> QuerySet:
+    @classmethod
+    def get_active_members(cls) -> QuerySet:
         """Helper method to obtain a queryset of active members. That is, those that have active membership."""
         return Member.objects.filter_active()
 
-    def get_active_committees(self):
+    @classmethod
+    def get_active_committees(cls):
         """Gets a queryset containing all associationGroups that should have an alias setup"""
+        # TODO: filter domain addresses?
         return AssociationGroup.objects.filter(
-            type__in=self.COMMITTEE_TYPE_WHITELIST,
+            type__in=cls.COMMITTEE_TYPE_WHITELIST,
             contact_email__isnull=False,
         )
 
     # TODO: Remove duplicates like these in SquireMailcowManager
-    def get_subscribed_members(
-        self, active_members: QuerySet[Member], alias_address: str, default: bool = True
-    ) -> QuerySet[Member]:
+    @classmethod
+    def get_subscribed_members(cls, mailing_list: MemberMailingListAlias) -> QuerySet[Member]:
         """Gets a Queryset of members subscribed to a specific member alias, based on their
         associated user's preferences. If users are opted-in by default for the given alias,
         then members without an explicit preference are included in this Queryset as well.
         If the default is opted-out, then such members are excluded.
         """
-        alias_id = self.mailing_list_to_id(alias_address)
+        alias_address, settings = mailing_list
+        alias_id = cls.mailing_list_to_id(alias_address)
 
         # Find members who have a specific opt-in/opt-out status
         #   If the default is opt-out, only keep those with an explicit opt-out preference
@@ -187,13 +190,13 @@ class SquireEmailManager:
                 instance_id=OuterRef("user_id"),
                 section="mail",
                 name=alias_id,
-                raw_value=str(not default),  # dynamic preferences stores everything as a string
+                raw_value=str(not settings.default_opt),  # dynamic preferences stores everything as a string
             )
         )
 
-        if default:
+        if settings.default_opt:
             # If the default is opt-in, exclude users that have not
             #   explicitly opted-out. Keep those without explicit preferences.
             opts = ~opts
 
-        return active_members.filter(opts)
+        return cls.get_active_members().filter(opts)
