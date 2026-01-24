@@ -8,9 +8,11 @@ from typing import Callable, Iterable, TypeVar, cast
 
 from django.apps import apps
 from django.core.cache import cache
+from django.db.models import QuerySet
 from django.utils.text import slugify
 
-from committees.models import AssociationGroup
+from committees.email import MemberMailingListAlias, get_email_settings
+from committees.models import AssociationGroup, AssociationGroupMembership
 from gworkspace_integration.api.client import GoogleWorkspaceClient, GoogleWorkspaceSettings
 from gworkspace_integration.api.formats.groups import (
     WorkspaceGroup,
@@ -136,6 +138,8 @@ class SquireGoogleWorkspaceManager:
     def __init__(self):
         settings = GoogleWorkspaceSettings.from_json("squire/config/gworkspaceconfig.json")
         self._client = GoogleWorkspaceClient(settings)
+        self._email_mgr = get_email_settings()
+        assert self._email_mgr is not None, "Cannot load Google Workspace Manager; email settings missing!"
 
     # -----------------------
     # USERS
@@ -235,7 +239,7 @@ class SquireGoogleWorkspaceManager:
     def get_group_for_committee(
         self, committee: AssociationGroup, groups: list[WorkspaceGroup] | None = None
     ) -> WorkspaceGroup | None:
-        """Gets the group that corresponds to the given committee, if any"""
+        """Gets the Workspace group that corresponds to the given committee, if any"""
         groups = groups or self.groups()
         for group in groups:
             for alias in group.aliases:
@@ -316,7 +320,9 @@ class SquireGoogleWorkspaceManager:
             **({"id": workspace_user.id} if workspace_user is not None else {}),
         )
 
-    def _get_group_members_sync_for_committee(self, committee: AssociationGroup) -> list[WorkspaceGroupMemberSync]:
+    def _get_group_members_sync_for_committee(
+        self, committee: AssociationGroup, members: QuerySet[Member] | None = None
+    ) -> list[WorkspaceGroupMemberSync]:
         """Build a group member sync for all Squire members of a committee"""
         # Make Squire's admin user the group owner. We don't want Workspace admins to be owners.
         owner = WorkspaceGroupMemberSync(
@@ -330,7 +336,7 @@ class SquireGoogleWorkspaceManager:
         )
 
         res = [owner]
-        for member in committee.members.all():
+        for member in members or committee.members.all():
             workspace_user = self.get_user_for_member(member)
             res.append(
                 WorkspaceGroupMemberSync(
@@ -351,8 +357,12 @@ class SquireGoogleWorkspaceManager:
             email.endswith(domain) for domain in self._client.workspace_domains
         )
 
-    def calc_sync_status(
-        self, group: WorkspaceGroup, committee: AssociationGroup, is_allow_invalid=False
+    def calc_sync_status_committee(
+        self,
+        group: WorkspaceGroup,
+        committee: AssociationGroup,
+        members: QuerySet[Member] | None = None,
+        is_allow_invalid=False,
     ) -> list[WorkspaceGroupMemberSync]:
         """
         Gets a "diff" of a given Workspace group, and how that group should be populated according to a committee.
@@ -363,7 +373,7 @@ class SquireGoogleWorkspaceManager:
         """
 
         current_workspace_members = set(self.group_members(group))
-        committee_members_sync = self._get_group_members_sync_for_committee(committee)
+        committee_members_sync = self._get_group_members_sync_for_committee(committee, members)
 
         for cmember_sync in committee_members_sync:
             # Match based on email; this is the unique identifier for a group member in Google Workspace
@@ -433,7 +443,7 @@ class SquireGoogleWorkspaceManager:
         ), "Attempting to sync Workspace group members for committee, but such Workspace group did not yet exist."
 
         # Do not sync invalid committee members
-        synced_group_members = self.calc_sync_status(group, committee, False)
+        synced_group_members = self.calc_sync_status_committee(group, committee, is_allow_invalid=False)
 
         print(synced_group_members)
         print(">>>> start SYNC")
@@ -454,6 +464,41 @@ class SquireGoogleWorkspaceManager:
         )
         # Invalidate cache after batch
         cache.delete(self.CACHE_KEY_GROUPMEMBERS % {"groupKey": group.id})
+
+    # -----------------------
+    # GROUPS (MEMBER MAILING LISTS)
+    # -----------------------
+    def get_group_for_mailinglist(
+        self, mailing_list: MemberMailingListAlias, groups: list[WorkspaceGroup] | None = None
+    ) -> WorkspaceGroup | None:
+        """Gets the Workspace group that corresponds to the given mailing list, if any"""
+        groups = groups or self.groups()
+        return next((g for g in groups if g.email == mailing_list[0]), None)
+
+    def mailing_list_as_committee(
+        self, mailing_list: MemberMailingListAlias
+    ) -> tuple[AssociationGroup, QuerySet[Member]]:
+        """
+        Docstring for mailing_list_as_committee
+
+        :param mailing_list: Description
+        :type mailing_list: MemberMailingListAlias
+        :return: Description
+        """
+        print(mailing_list)
+        email, settings = mailing_list
+        members = self._email_mgr.get_subscribed_members(
+            self._email_mgr.get_active_members(), email, settings.default_opt
+        )
+        # Cannot insert members directly as value is not actually saved to the DB
+        committee = AssociationGroup(
+            name=settings.title,
+            type=AssociationGroup.COMMITTEE,
+            is_public=True,
+            short_description=settings.description,
+            contact_email=email,
+        )
+        return committee, members
 
     def _get_committee_settings(self, committee: AssociationGroup, receive_only=False) -> WorkspaceGroupSettings:
         """Gets group settings that can be used for committee groups"""
@@ -513,3 +558,19 @@ class SquireGoogleWorkspaceManager:
         """Creates a google group that serves as a mailing list. E.g. leden@example.com to email all members"""
 
 
+# "allowExternalMembers": False
+# "allowWebPosting": False
+# "enableCollaborativeInbox": False
+# "includeInGlobalAddressList": False
+# "membersCanPostAsTheGroup": False
+# "messageModerationLevel": "MODERATE_NONE"
+# "spamModerationLevel": "MODERATE"
+# "whoCanAdd": "ALL_MANAGERS_CAN_ADD"
+# "whoCanDiscoverGroup": "ALL_MEMBERS_CAN_DISCOVER"
+# "whoCanJoin": "INVITED_CAN_JOIN"
+# "whoCanLeaveGroup": "NONE_CAN_LEAVE"
+# "whoCanModerateContent": "ALL_MEMBERS"
+# "whoCanModerateMembers": "OWNERS_AND_MANAGERS"
+# "whoCanPostMessage": "ANYONE_CAN_POST"
+# "whoCanViewGroup": "ALL_MEMBERS_CAN_VIEW"
+# "whoCanViewMembership": "ALL_MEMBERS_CAN_VIEW"

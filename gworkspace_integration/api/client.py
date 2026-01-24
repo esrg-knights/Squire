@@ -14,15 +14,15 @@ class GoogleWorkspaceSettings:
     Settings for connecting to the google workspace API.
     - `service_account_token_path`: A service-account token
     - `scopes`: Scopes corresponding to the token
-    - `domain`: Main domain of the Workspace
-    - `workspace_domains`: Domains set up in the Workspace.
+    - `primary_domain`: Main domain of the Workspace
+    - `domains`: Domains set up in the Workspace.
     - `members_ou`: Organizational unit to sync Squire's members to. Users in other OU's are outside the scope of Squire.
     - `directory_admin_username`: Username of an admin account. This is required to use the directory API to manage users/groups
     """
 
     service_account_token_path: str
-    domain: str
-    workspace_domains: str
+    primary_domain: str
+    domains: str
     customer_id: str
     members_ou: str
     directory_admin_username: str
@@ -53,8 +53,8 @@ class GoogleWorkspaceClient:
             f"squire/config/{settings.service_account_token_path}", scopes=settings.scopes
         )
         self.admin_username = settings.directory_admin_username
-        self.domain = settings.domain
-        self.workspace_domains = settings.workspace_domains
+        self.domain = settings.primary_domain
+        self.workspace_domains = settings.domains
         self.members_ou = settings.members_ou
         self._services: dict[str, GoogleAPIService] = {}
 

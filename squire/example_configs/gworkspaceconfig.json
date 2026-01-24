@@ -1,8 +1,8 @@
 {
     "service_account_token_path": "gworkspace_token.json",
     "customer_id": "ABCD1234Z",
-    "domain": "example.com",
-    "workspace_domains": ["example.com", "voorbeeld.nl"],
+    "primary_domain": "example.com",
+    "domains": ["example.com", "voorbeeld.nl"],
     "members_ou": "/Members/TestMembers",
     "directory_admin_username": "admin@example.com",
     "scopes": [

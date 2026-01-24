@@ -137,7 +137,44 @@ class WorkspaceStatusView(TemplateView):
             synced_group_members = []
             if group is not None:
                 # Do not sync invalid committee members
-                synced_group_members = self._workspace_manager.calc_sync_status(group, committee, False)
+                synced_group_members = self._workspace_manager.calc_sync_status_committee(
+                    group, committee, is_allow_invalid=False
+                )
+            res.append(
+                (
+                    committee,
+                    group,
+                    synced_group_members,
+                    self._calc_group_sync_errors(committee, group, synced_group_members) if group is not None else [],
+                )
+            )
+        return res
+
+    def _setup_mailing_lists(
+        self, groups: list[WorkspaceGroup]
+    ) -> list[tuple[AssociationGroup, WorkspaceGroup | None, list[WorkspaceGroupMemberSync], list[str]]]:
+        """
+        Sets up tuples consisting of Squire mailing lists, Workspace group pairs with other relevant info.
+
+        :return: tuples containing
+        - Squire committee
+        - Workspace group corresponding to that mailing list (if it exists)
+        - The Workspace group members according to Squire, and their sync status to the Workspace group
+        - List of sync errors
+        """
+        assert self._workspace_manager is not None
+        mailing_lists = self._workspace_manager._email_mgr.settings.mailing_lists
+        res = []
+        for mailing_list in mailing_lists.items():
+            committee, members = self._workspace_manager.mailing_list_as_committee(mailing_list)
+            group = self._workspace_manager.get_group_for_mailinglist(mailing_list, groups)
+
+            synced_group_members = []
+            if group is not None:
+                # Do not sync invalid committee members
+                synced_group_members = self._workspace_manager.calc_sync_status_committee(
+                    group, committee, members, is_allow_invalid=False
+                )
             res.append(
                 (
                     committee,
@@ -167,6 +204,7 @@ class WorkspaceStatusView(TemplateView):
             "workspace_pairs": workspace_pairs,
             "orphan_users": orphan_pairs,
             "workspace_groups": self._setup_groups(groups),
+            "workspace_mailing_lists": self._setup_mailing_lists(groups),
         }
 
         return context
