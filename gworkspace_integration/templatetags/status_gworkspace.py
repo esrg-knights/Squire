@@ -1,6 +1,9 @@
 from django import template
 
-from gworkspace_integration.workspace_manager.groups import WorkspaceGroupMemberSync, WorkspaceGroupMemberSyncStatus
+from gworkspace_integration.workspace_manager.services.groups import (
+    WorkspaceGroupMemberSync,
+    WorkspaceGroupMemberSyncStatus,
+)
 
 register = template.Library()
 

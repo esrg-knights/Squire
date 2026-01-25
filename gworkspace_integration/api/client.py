@@ -54,6 +54,7 @@ class GoogleWorkspaceClient:
         self._base_creds = service_account.Credentials.from_service_account_file(
             f"squire/config/{settings.service_account_token_path}", scopes=settings.scopes
         )
+        self.settings = settings
         self.admin_username = settings.directory_admin_username
         self.domain = settings.primary_domain
         self.workspace_domains = settings.domains

@@ -10,7 +10,6 @@ T = TypeVar("T", bound="Enum")
 class GenericAPIResponse(ABC):
     """Abstract base class for cleaning and verifying API responses"""
 
-    ignore_extra = False
     logger = logging.getLogger("generic_api")
 
     _cleanable_bools: tuple[str, ...] = ()
@@ -120,20 +119,18 @@ class GenericAPIResponse(ABC):
         """
         extra_keys = extra_keys or set()
 
-        if not cls.ignore_extra:
-            # Show warning for extra attributes
-            extra_attrs = json.keys() - (
-                set(cls._cleanable_bools)
-                | set(cls._cleanable_strings)
-                | set(cls._cleanable_ints)
-                | set(cls._cleanable_datetimes)
-                | set(cls._cleanable_enums.keys())
-                | set(cls._junk_fields)
-                | extra_keys
-            )
-
-            for attr in extra_attrs:
-                cls._issue_extra_warning(attr, json[attr])
+        # Show warning for extra attributes
+        extra_attrs = json.keys() - (
+            set(cls._cleanable_bools)
+            | set(cls._cleanable_strings)
+            | set(cls._cleanable_ints)
+            | set(cls._cleanable_datetimes)
+            | set(cls._cleanable_enums.keys())
+            | set(cls._junk_fields)
+            | extra_keys
+        )
+        for attr in extra_attrs:
+            cls._issue_extra_warning(attr, json[attr])
 
         cleaned_data = {}
         # Verify boolean fields

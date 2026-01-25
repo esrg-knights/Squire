@@ -131,10 +131,9 @@ class DirectoryService(GoogleAPIService):
 
         def response_callback(request_id, response, exception):
             if exception is not None:
-                logger.error(f"Error while updating group members in bulk: {exception}. {response}")
+                logger.error(f"Error while updating group members in bulk: {exception}.")
                 return
-
-            print(f"Batch response: {response}")
+            logger.debug(f"Batch response: {response}")
             # {
             #     "kind": "admin#directory#member",
             #     "etag": '"gpBsXqCiY3kGaDliRWSpRKSlyHGOMsQoSYVVy5SUbI8/fU3M-X6YUdHhKi0Y874EDQ7XJ-M"',

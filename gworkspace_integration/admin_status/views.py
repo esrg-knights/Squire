@@ -1,26 +1,22 @@
+from collections.abc import Iterator
 import logging
 
-from django.conf import settings
-from django.db.models import QuerySet
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponseBadRequest, HttpResponseRedirect
-from django.urls import reverse
-from django.utils.html import format_html
 from django.views.generic import TemplateView
+
 from committees.email import SquireEmailManager
 from committees.models import AssociationGroup
 from core.status_collective import AdminStatusViewMixin
-
-from gworkspace_integration.admin_status.proxy import MailingListProxy
-from gworkspace_integration.api.formats.groups import WorkspaceGroup, WorkspaceGroupMember
+from gworkspace_integration.workspace_manager.planner.proxy import MailingListProxy
+from gworkspace_integration.api.formats.groups import WorkspaceGroup, WorkspaceGroupMemberRole
 from gworkspace_integration.api.formats.users import WorkspaceUser
-from gworkspace_integration.workspace import (
-    MemberWorkspaceUserMap,
-    SquireGoogleWorkspaceManager,
-    WorkspaceUserMemberMap,
-    get_workspace_manager,
+from gworkspace_integration.workspace import SquireGoogleWorkspaceManager, get_workspace_manager
+from gworkspace_integration.workspace_manager.services.groups import (
+    WorkspaceGroupMemberSync,
+    WorkspaceGroupMemberSyncStatus,
 )
-from gworkspace_integration.workspace_manager.groups import WorkspaceGroupMemberSync, WorkspaceGroupMemberSyncStatus
+from gworkspace_integration.workspace_manager.services.users import MemberWorkspaceUserMap, WorkspaceUserMemberMap
 from membership_file.models import Member
 
 logger = logging.getLogger(__name__)
@@ -90,10 +86,7 @@ class WorkspaceStatusView(TemplateView):
         return res
 
     def _setup_orphans(self, user_map: WorkspaceUserMemberMap):
-        """TODO
-
-        Sets up tuples consisting of invalid Squire member, Workspace user pairs with other relevant info.
-        """
+        """Sets up tuples consisting of invalid Squire member, Workspace user pairs with other relevant info."""
         res: list[tuple[Member | None, WorkspaceUser, list[str]]] = []
         for user, member in user_map.items():
             if member is None or not member.is_active:
@@ -135,12 +128,27 @@ class WorkspaceStatusView(TemplateView):
         - The Workspace group members according to Squire, and their sync status to the Workspace group
         - List of sync errors
         """
-        synced_group_members = []
+        assert self._workspace_manager is not None
+
+        synced_group_members: Iterator[WorkspaceGroupMemberSync] = []
         if group is not None:
             # Do not sync invalid committee members
-            synced_group_members = self._workspace_manager.calc_sync_status_group_members(
-                group, committee, is_allow_invalid=False
+            # Sort based on sync status, role, name, email
+            synced_group_members = self._workspace_manager.group_service.get_group_member_syncs(committee, group)
+
+            synced_group_members = sorted(
+                synced_group_members,
+                key=lambda x: (
+                    x.status.value,
+                    {
+                        WorkspaceGroupMemberRole.OWNER: 0,
+                        WorkspaceGroupMemberRole.MANAGER: 1,
+                        WorkspaceGroupMemberRole.MEMBER: 2,
+                    }.get(x.wgroup_member.role.value, 9),
+                    (x.name),
+                ),
             )
+
         res.append(
             (
                 committee,
@@ -157,11 +165,11 @@ class WorkspaceStatusView(TemplateView):
         Sets up tuples consisting of Squire committee, Workspace group pairs with other relevant info.
         """
         assert self._workspace_manager is not None
-        committees = self._workspace_manager.get_active_committees()
+        committees = self._workspace_manager.group_service.get_active_committees()
         res = []
         for committee in committees:
             committee = MailingListProxy.from_committee(committee)
-            group = self._workspace_manager.get_group_for_committee(committee, groups)
+            group = self._workspace_manager.group_service.get_group_for_committee(committee, groups)
             self._get_mailinglist_data_for_view(committee, group, res)
 
         return res
@@ -177,7 +185,7 @@ class WorkspaceStatusView(TemplateView):
         res = []
         for mailing_list in mailing_lists.items():
             committee = MailingListProxy.from_member_mailing_list(mailing_list)
-            group = self._workspace_manager.get_group_for_mailinglist(mailing_list[0], groups)
+            group = self._workspace_manager.group_service.get_group_for_mailinglist(mailing_list[0], groups)
             self._get_mailinglist_data_for_view(committee, group, res)
         return res
 
@@ -191,7 +199,7 @@ class WorkspaceStatusView(TemplateView):
         res = []
         for email in self._workspace_manager._email_mgr.settings.committee_settings.global_addresses:
             committee = MailingListProxy.from_committee_mailing_list(email)
-            group = self._workspace_manager.get_group_for_mailinglist(email, groups)
+            group = self._workspace_manager.group_service.get_group_for_mailinglist(email, groups)
             self._get_mailinglist_data_for_view(committee, group, res)
         return res
 
@@ -201,10 +209,10 @@ class WorkspaceStatusView(TemplateView):
             context["error"] = "Google Workspace integration not configured."
             context["alert_type"] = "warning"
             return context
-        users = self._workspace_manager.users()
-        groups = self._workspace_manager.groups()
+        users = self._workspace_manager.user_service.users()
+        groups = self._workspace_manager.group_service.groups()
 
-        member_map, user_map = self._workspace_manager.get_member_user_mappings()
+        member_map, user_map = self._workspace_manager.user_service.get_member_user_mappings()
 
         workspace_pairs = self._setup_members(member_map)
         orphan_pairs = self._setup_orphans(user_map)
@@ -231,7 +239,7 @@ class WorkspaceStatusView(TemplateView):
         if mailinglist_type == "committee":
             try:
                 committee = MailingListProxy.from_committee(AssociationGroup.objects.get(pk=pk))
-                group = self._workspace_manager.get_group_for_committee(committee)
+                group = self._workspace_manager.group_service.get_group_for_committee(committee)
             except AssociationGroup.DoesNotExist:
                 return HttpResponseBadRequest(
                     f"Attempted to update Workspace group members for committee_id {pk}. Such committee does not exist!"
@@ -245,7 +253,7 @@ class WorkspaceStatusView(TemplateView):
                 )
                 pk = mailing_list[0]
                 committee = MailingListProxy.from_member_mailing_list(mailing_list)
-                group = self._workspace_manager.get_group_for_mailinglist(mailing_list[0])
+                group = self._workspace_manager.group_service.get_group_for_mailinglist(mailing_list[0])
             except StopIteration:
                 return HttpResponseBadRequest(
                     f"Attempted to update Workspace group members for member alias {pk}. Such alias does not exist!"
@@ -258,8 +266,12 @@ class WorkspaceStatusView(TemplateView):
         self._workspace_manager.logger.info(
             f"{request.user.username} ({request.user.id}) force synced group members for committee {committee.name} ({pk})"
         )
-        self._workspace_manager.bulk_sync_group_members(committee, group)
-        messages.success(self.request, f"Updated group members for {committee.name} ({pk}).")
+        self._workspace_manager.group_service.bulk_sync_group_members(committee, group)
+        # TODO: wait ~5 seconds before refreshing the cache
+        messages.success(
+            self.request,
+            f"Updated group members for {committee.name} ({pk}). It might take some time for the changes to reflect in Google Workspace",
+        )
         return HttpResponseRedirect(request.get_full_path())
 
 

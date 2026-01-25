@@ -3,14 +3,12 @@ from json import JSONDecodeError
 from django.core.management.base import BaseCommand
 from google.auth.exceptions import MalformedError, RefreshError
 from google.auth.transport.requests import Request
-from google.oauth2.service_account import Credentials
 
 from gworkspace_integration.api.client import GoogleWorkspaceClient, GoogleWorkspaceSettings
-from gworkspace_integration.api.services.directory_service import DirectoryService
 
 
 class Command(BaseCommand):  # pragma: no cover
-    help = "Quick testing for Google Workspace. Useful for development and debugging, but should not be used in production."
+    help = "Verify the validity of the Google Workspace token and related settings."
 
     def handle(self, *args, **options):
         # Check settings file validity
