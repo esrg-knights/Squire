@@ -527,9 +527,6 @@ class SquireGoogleWorkspaceManager:
             defaultSender=WorkspaceGroupDefaultSender.DEFAULT_SELF,
         )
 
-    def create_mailinglist(self, email: str, receivers: list[str]) -> WorkspaceGroup:
-        """Creates a google group that serves as a mailing list. E.g. leden@example.com to email all members"""
-
 
 # "allowExternalMembers": False
 # "allowWebPosting": False

@@ -68,20 +68,14 @@ class MailboxAttributes(MailcowAPIResponse):
     )
     _cleanable_strings = ("mailbox_format",)
     _cleanable_datetimes = ("passwd_update",)
+    _cleanable_enums = {
+        "quarantine_notification": QuarantineNotification,
+        "quarantine_category": QuarantaineNotificationCategory,
+    }
 
     @classmethod
     def clean(cls, json: dict, extra_keys: Set[str] | None = None):
         new_json = {}
-
-        # Quarantine
-        notif = cls._parse_as_enum("quarantine_notification", json, QuarantineNotification)
-        if notif is not None:
-            new_json["quarantine_notification"] = notif
-
-        cat = cls._parse_as_enum("quarantine_category", json, QuarantaineNotificationCategory)
-        if cat is not None:
-            new_json["quarantine_category"] = cat
-
         # Recovery email can be '' or absent from the JSON when it is not set
         rec = json.get("recovery_email", None)
         if rec is not None:
@@ -140,6 +134,7 @@ class MailcowMailbox(MailcowAPIResponse):
         "spam_aliases",
     )
     _cleanable_datetimes = ("created", "modified", "last_imap_login", "last_smtp_login", "last_pop3_login")
+    _cleanable_enums = {"active": MailboxStatus}
 
     def __post_init__(self):
         index = self.username.find("@")
@@ -188,11 +183,6 @@ class MailcowMailbox(MailcowAPIResponse):
             "custom_attributes": custom_attributes,
             "tags": tags,
         }
-
-        # Active-status
-        active = cls._parse_as_enum("active", json, MailboxStatus)
-        if active is not None:
-            new_json["active"] = active
 
         # Mailbox percentage is a number, or "- " if unlimited
         percent = json.get("percent_in_use")

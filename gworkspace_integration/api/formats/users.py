@@ -121,9 +121,23 @@ class WorkspaceUser(WorkspaceAPIResponse):
         "recoveryEmail",
         "recoveryPhone",
     )
+    _junk_fields = (
+        "ipWhitelisted",
+        "languages",
+        "customerId",
+        "isGuestUser",
+        "kind",
+        "etag",
+        "isMailboxSetup",
+        "agreedToTerms",
+        "isDelegatedAdmin",
+        "isAdmin",
+    )
 
     @classmethod
-    def clean(cls, json: dict, extra_keys: Set[str] | None = None):
+    def clean(cls, json: dict, extra_keys: set[str] | None = None):
+        extra_keys = extra_keys or set()
+        extra_keys |= {"aliases", "emails", "externalIds"}
         aliases = json.get("aliases", [])
         if isinstance(aliases, list):
             aliases = [str(alias) for alias in aliases]
@@ -152,7 +166,6 @@ class WorkspaceUser(WorkspaceAPIResponse):
             "external_ids": ext_ids,
         }
 
-        extra_keys = extra_keys or set()
         new_json.update(**super().clean(json, extra_keys=new_json.keys() | extra_keys))
 
         # last login defaults to 1970-01-01 if never used

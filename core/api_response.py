@@ -1,8 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from datetime import datetime
 from enum import Enum
 import logging
-from typing import Any, Optional, Set, Tuple, Type, TypeVar
+from typing import Any, Optional, TypeVar
 
 T = TypeVar("T", bound="Enum")
 
@@ -13,12 +13,15 @@ class GenericAPIResponse(ABC):
     ignore_extra = False
     logger = logging.getLogger("generic_api")
 
-    _cleanable_bools: Tuple[str, ...] = ()
-    _cleanable_strings: Tuple[str, ...] = ()
-    _cleanable_ints: Tuple[str, ...] = ()
-    _cleanable_datetimes: Tuple[str, ...] = ()
+    _cleanable_bools: tuple[str, ...] = ()
+    _cleanable_strings: tuple[str, ...] = ()
+    _cleanable_ints: tuple[str, ...] = ()
+    _cleanable_datetimes: tuple[str, ...] = ()
+    _cleanable_enums: dict[str, type[Enum]] = {}
 
     _optional_fields: tuple[str, ...] = ()
+    # Fields we're not interested in. Still explicitly set for the purposes of logging.
+    _junk_fields: tuple[str, ...] = ()
 
     @classmethod
     def _issue_warning(cls, fieldname: str, value, parse_value=""):
@@ -39,9 +42,11 @@ class GenericAPIResponse(ABC):
         val = json.get(fieldname, None)
         if val is None and fieldname in cls._optional_fields:
             return default
-        if val in ("0", "1"):
+        elif val in ("0", "1"):
             # Sometimes booleans are returned as "0"/"1"
             return val == "1"
+        elif val in ("true", "false"):
+            return val == "true"
         elif isinstance(val, bool) or val in (0, 1):
             # Booleans sometimes returned as True/False, sometimes as 0/1
             return bool(val)
@@ -87,8 +92,8 @@ class GenericAPIResponse(ABC):
             return default
 
     @classmethod
-    def _parse_as_enum(cls, fieldname: str, json: dict, enum: Type[T], default=None) -> Optional[T]:
-        """Parse a field from JSON as an Enum, or issue a warning"""
+    def _parse_as_enum(cls, fieldname: str, json: dict, enum: type[T], default=None) -> T | None:
+        """Parse a field from JSON as an Enum, or issue a warning."""
         val = json.get(fieldname, None)
         if val is None and fieldname in cls._optional_fields:
             return default
@@ -99,7 +104,7 @@ class GenericAPIResponse(ABC):
             return default
 
     @classmethod
-    def clean(cls, json: dict, extra_keys: Set[str] | None = None) -> dict:
+    def clean(cls, json: dict, extra_keys: set[str] | None = None) -> dict:
         """
         Validates and removes invalidated fields from the JSON. By default this
         looks at the various `cls._cleanable_<foo>` fields, but custom behaviour
@@ -122,6 +127,8 @@ class GenericAPIResponse(ABC):
                 | set(cls._cleanable_strings)
                 | set(cls._cleanable_ints)
                 | set(cls._cleanable_datetimes)
+                | set(cls._cleanable_enums.keys())
+                | set(cls._junk_fields)
                 | extra_keys
             )
 
@@ -149,6 +156,11 @@ class GenericAPIResponse(ABC):
             if (val := cls._parse_as_dt(dt_field, json)) is not None:
                 cleaned_data[dt_field] = val
 
+        # Verify enum fields
+        for enum_field, enum in cls._cleanable_enums.items():
+            if (val := cls._parse_as_enum(enum_field, json, enum)) is not None:
+                cleaned_data[enum_field] = val
+
         return cleaned_data
 
     @classmethod
@@ -156,6 +168,7 @@ class GenericAPIResponse(ABC):
         """Create an instance from a JSON response, or `None` if this was not possible"""
         try:
             json = cls.clean(json)
-        except AttributeError:
+        except AttributeError as e:
+            cls.logger.error(f"Failed parsing {cls.__name__} from JSON: {e}")
             return None
         return cls(**json)

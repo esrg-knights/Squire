@@ -16,7 +16,6 @@ class DirectoryService(GoogleAPIService):
 
     service_name = "admin"
     version = "directory_v1"
-    is_admin = True
 
     def add_user(self, user: WorkspaceUser):
         """Adds a user to the workspace"""
@@ -50,7 +49,7 @@ class DirectoryService(GoogleAPIService):
 
         # Returns JSON of newly created user
         x = self._service.users().insert(body=data).execute()
-        print(x)
+        print(f"add user res: {x}")
 
     def users(self) -> Iterator[WorkspaceUser]:
         """Retrieves all users from the Workspace"""
@@ -130,30 +129,26 @@ class DirectoryService(GoogleAPIService):
         Modifies a group's members in bulk. Supports additions, removals, and updates.
         """
 
-        def my_callback(request_id, response, exception):
+        def response_callback(request_id, response, exception):
             if exception is not None:
-                # Do something with the exception
-                print(exception)
-                print(response)
-                print("==========")
-            else:
-                # Do something with the response
-                print(response)
-                # {
-                #     "kind": "admin#directory#member",
-                #     "etag": '"gpBsXqCiY3kGaDliRWSpRKSlyHGOMsQoSYVVy5SUbI8/fU3M-X6YUdHhKi0Y874EDQ7XJ-M"',
-                #     "id": "104027548304300011995",
-                #     "email": "test@example.com",
-                #     "role": "MEMBER",
-                #     "type": "USER",
-                #     "status": "ACTIVE",
-                #     "delivery_settings": "ALL_MAIL",
-                # }
-                print("==========")
+                logger.error(f"Error while updating group members in bulk: {exception}. {response}")
+                return
+
+            print(f"Batch response: {response}")
+            # {
+            #     "kind": "admin#directory#member",
+            #     "etag": '"gpBsXqCiY3kGaDliRWSpRKSlyHGOMsQoSYVVy5SUbI8/fU3M-X6YUdHhKi0Y874EDQ7XJ-M"',
+            #     "id": "104027548304300011995",
+            #     "email": "test@example.com",
+            #     "role": "MEMBER",
+            #     "type": "USER",
+            #     "status": "ACTIVE",
+            #     "delivery_settings": "ALL_MAIL",
+            # }
 
         batch = self._service.new_batch_http_request()
         for member in group_members_add:
-            print(f"ADDING {member.email}, {member.id}, {member.etag}")
+            logger.debug(f"ADDING {member.email} to {group_key}")
             body = {
                 "kind": member.kind,
                 "email": member.email,
@@ -161,20 +156,22 @@ class DirectoryService(GoogleAPIService):
                 "type": member.type.name,
                 "delivery_settings": member.delivery_settings.name,
             }
-            batch.add(self._service.members().insert(groupKey=group_key, body=body), callback=my_callback)
+            batch.add(self._service.members().insert(groupKey=group_key, body=body), callback=response_callback)
 
         for member in group_members_remove:
-            print(f"REMOVING {member.email}")
+            logger.debug(f"REMOVING {member.email} from {group_key}")
             assert (
                 member.id is not None and member.id != ""
             ), f"member.id unexpectedly empty when deleting {member.email}"
-            batch.add(self._service.members().delete(groupKey=group_key, memberKey=member.id), callback=my_callback)
+            batch.add(
+                self._service.members().delete(groupKey=group_key, memberKey=member.id), callback=response_callback
+            )
         batch.execute()
 
         # Updating should be done in a separate batch because of etag-shenanigans. Patch requires one, while update/delete can't have one
         batch_update = self._service.new_batch_http_request()
         for member in group_members_update:
-            print(f"UPDATING {member.email}")
+            logger.debug(f"UPDATING {member.email} in {group_key}")
             body = {
                 "kind": member.kind,
                 "email": member.email,
@@ -186,6 +183,7 @@ class DirectoryService(GoogleAPIService):
                 member.id is not None and member.id != ""
             ), f"member.id unexpectedly empty when updating {member.email}"
             batch_update.add(
-                self._service.members().patch(groupKey=group_key, memberKey=member.id, body=body), callback=my_callback
+                self._service.members().patch(groupKey=group_key, memberKey=member.id, body=body),
+                callback=response_callback,
             )
         batch_update.execute()

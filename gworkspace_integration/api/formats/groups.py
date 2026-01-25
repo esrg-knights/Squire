@@ -89,7 +89,7 @@ class WorkspaceGroupPostPermissions(Enum):
     ALL_MANAGERS_CAN_POST = "ALL_MANAGERS_CAN_POST"
     ALL_MEMBERS_CAN_POST = "ALL_MEMBERS_CAN_POST"
     ALL_IN_DOMAIN_CAN_POST = "ALL_IN_DOMAIN_CAN_POST"
-    ANYONE_CAN_POST = "ANYONE_CAN_POST"  # Recommended to set messageModerationlevel to MODERATE_NON_MEMBERS
+    ANYONE_CAN_POST = "ANYONE_CAN_POST"  # Recommended to set messageModeration level to MODERATE_NON_MEMBERS
 
 
 class WorkspaceGroupMessageModerationPermissions(Enum):
@@ -138,13 +138,22 @@ class WorkspaceGroupContactPermissions(Enum):
     ANYONE_CAN_CONTACT = "ANYONE_CAN_CONTACT"
 
 
+class WorkspaceGroupApproveMemberPermissions(Enum):
+    """Permission to approve members who ask to join groups. Will be deprecated in favour of whoCanModerateMembers later on"""
+
+    ALL_MEMBERS_CAN_APPROVE = "ALL_MEMBERS_CAN_APPROVE"
+    ALL_MANAGERS_CAN_APPROVE = "ALL_MANAGERS_CAN_APPROVE"
+    ALL_OWNERS_CAN_APPROVE = "ALL_OWNERS_CAN_APPROVE"
+    NONE_CAN_APPROVE = "NONE_CAN_APPROVE"
+
+
 class WorkspaceGroupModerationPermissions(Enum):
     """Moderation permissions"""
 
     ALL_MEMBERS = "ALL_MEMBERS"
     OWNERS_AND_MANAGERS = "OWNERS_AND_MANAGERS"
     OWNERS_ONLY = "OWNERS_ONLY"
-    NONE = "ANYONE_NONECAN_CONTACT"
+    NONE = "NONE"
 
 
 class WorkspaceGroupDiscoverPermissions(Enum):
@@ -171,7 +180,7 @@ class WorkspaceGroupSettings(WorkspaceAPIResponse):
     See: https://developers.google.com/workspace/admin/groups-settings/v1/reference/groups#resource
     """
 
-    email: str
+    email: str = ""
     name: str = ""
     description: str = ""
     whoCanJoin: WorkspaceGroupJoinPermissions = WorkspaceGroupJoinPermissions.INVITED_CAN_JOIN
@@ -202,6 +211,12 @@ class WorkspaceGroupSettings(WorkspaceAPIResponse):
     whoCanLeaveGroup: WorkspaceGroupLeavePermissions = WorkspaceGroupLeavePermissions.NONE_CAN_LEAVE
     whoCanContactOwner: WorkspaceGroupContactPermissions = WorkspaceGroupContactPermissions.ALL_MEMBERS_CAN_CONTACT
     favoriteRepliesOnTop: bool = True
+    whoCanApproveMembers: WorkspaceGroupApproveMemberPermissions = (
+        WorkspaceGroupApproveMemberPermissions.NONE_CAN_APPROVE
+    )  # will be deprecated later in favour of whoCanModerateMembers
+    whoCanBanUsers: WorkspaceGroupModerationPermissions = (
+        WorkspaceGroupModerationPermissions.NONE
+    )  # will be deprecated later in favour of whoCanModerateMembers
     whoCanModerateMembers: WorkspaceGroupModerationPermissions = (
         WorkspaceGroupModerationPermissions.OWNERS_AND_MANAGERS
     )
@@ -212,6 +227,80 @@ class WorkspaceGroupSettings(WorkspaceAPIResponse):
         WorkspaceGroupDiscoverPermissions.ALL_IN_DOMAIN_CAN_DISCOVER
     )
     defaultSender: WorkspaceGroupDefaultSender = WorkspaceGroupDefaultSender.GROUP
+
+    _cleanable_bools = (
+        "allowExternalMembers",
+        "allowWebPosting",
+        "isArchived",
+        "archiveOnly",
+        "includeCustomFooter",
+        "sendMessageDenyNotification",
+        "membersCanPostAsTheGroup",
+        "includeInGlobalAddressList",
+        "favoriteRepliesOnTop",
+        "enableCollaborativeInbox",
+    )
+    _cleanable_strings = (
+        "email",
+        "name",
+        "description",
+        "primaryLanguage",
+        "customReplyTo",
+        "customFooterText",
+        "defaultMessageDenyNotificationText",
+    )
+    _cleanable_enums = {
+        "whoCanJoin": WorkspaceGroupJoinPermissions,
+        "whoCanViewMembership": WorkspaceGroupViewPermissions,
+        "whoCanViewGroup": WorkspaceGroupViewPermissionsExt,
+        "whoCanPostMessage": WorkspaceGroupPostPermissions,
+        "messageModerationLevel": WorkspaceGroupMessageModerationPermissions,
+        "spamModerationLevel": WorkspaceGroupModerationLevel,
+        "replyTo": WorkspaceGroupReplyTo,
+        "whoCanLeaveGroup": WorkspaceGroupLeavePermissions,
+        "whoCanContactOwner": WorkspaceGroupContactPermissions,
+        "whoCanApproveMembers": WorkspaceGroupApproveMemberPermissions,  # will be deprecated
+        "whoCanBanUsers": WorkspaceGroupModerationPermissions,  # will be deprecated
+        "whoCanModerateMembers": WorkspaceGroupModerationPermissions,
+        "whoCanModerateContent": WorkspaceGroupModerationPermissions,
+        "whoCanAssistContent": WorkspaceGroupModerationPermissions,
+        "whoCanDiscoverGroup": WorkspaceGroupDiscoverPermissions,
+        "defaultSender": WorkspaceGroupDefaultSender,
+    }
+
+    _optional_fields = "customReplyTo"
+    _junk_fields = (
+        "kind",
+        "whoCanInvite",  # deprecated, use whoCanModerateMembers instead
+        "whoCanAdd",  # deprecated, use whoCanModerateMembers instead
+        "maxMessageBytes",  # deprecated; always 25Mb
+        "showInGroupDirectory",  # deprecated; use whoCanDiscoverGroup instead
+        "allowGoogleCommunication",  # deprecated
+        "messageDisplayFont",  # deprecated; always DEFAULT_FONT
+        "whoCanAddReferences",  # deprecated; always NONE
+        "whoCanAssignTopics",  # deprecated, use whoCanAssistContent instead
+        "whoCanUnassignTopic",  # deprecated, use whoCanAssistContent instead
+        "whoCanTakeTopics",  # deprecated, use whoCanAssistContent instead
+        "whoCanMarkDuplicate",  # deprecated, use whoCanAssistContent instead
+        "whoCanMarkNoResponseNeeded",  # deprecated, use whoCanAssistContent instead
+        "whoCanMarkFavoriteReplyOnAnyTopic",  # deprecated, use whoCanAssistContent instead
+        "whoCanMarkFavoriteReplyOnOwnTopic",  # deprecated, use whoCanAssistContent instead
+        "whoCanUnmarkFavoriteReplyOnAnyTopic",  # deprecated, use whoCanAssistContent instead
+        "whoCanEnterFreeFormTags",  # deprecated, use whoCanAssistContent instead
+        "whoCanModifyTagsAndCategories",  # deprecated, use whoCanAssistContent instead
+        "whoCanModifyMembers",  # deprecated, use whoCanModerateMembers instead
+        "whoCanApproveMessages",  # deprecated, use whoCanModerateContent instead
+        "whoCanDeleteAnyPost",  # deprecated, use whoCanModerateContent instead
+        "whoCanDeleteTopics",  # deprecated, use whoCanModerateContent instead
+        "whoCanUnlockTopics",  # deprecated, use whoCanModerateContent instead
+        "whoCanLockTopics",  # deprecated, use whoCanModerateContent instead
+        "whoCanMoveTopicsIn",  # deprecated, use whoCanModerateContent instead
+        "whoCanMoveTopicsOut",  # deprecated, use whoCanModerateContent instead
+        "whoCanPostAnnouncements",  # deprecated, use whoCanModerateContent instead
+        "whoCanHideAbuse",  # deprecated, use whoCanModerateContent instead
+        "whoCanMakeTopicsSticky",  # deprecated, use whoCanModerateContent instead
+        "customRolesEnabledForSettingsToBeMerged",
+    )
 
 
 class WorkspaceGroupMemberRole(Enum):
@@ -255,26 +344,12 @@ class WorkspaceGroupMember(WorkspaceAPIResponse):
     id: str = ""
 
     _cleanable_strings = ("kind", "email", "etag", "status", "id")
+    _cleanable_enums = {
+        "role": WorkspaceGroupMemberRole,
+        "type": WorkspaceGroupMemberType,
+        "delivery_settings": WorkspaceGroupMemberDeliverySettings,
+    }
     _optional_fields = ("status", "delivery_settings")
-
-    @classmethod
-    def clean(cls, json, extra_keys=None):
-        new_json = {}
-        role = cls._parse_as_enum("role", json, WorkspaceGroupMemberRole)
-        if role is not None:
-            new_json["role"] = role
-
-        type = cls._parse_as_enum("type", json, WorkspaceGroupMemberType)
-        if type is not None:
-            new_json["type"] = type
-
-        delivery_settings = cls._parse_as_enum("delivery_settings", json, WorkspaceGroupMemberDeliverySettings)
-        if delivery_settings is not None:
-            new_json["delivery_settings"] = delivery_settings
-
-        extra_keys = extra_keys or set()
-        new_json.update(**super().clean(json, extra_keys=new_json.keys() | extra_keys))
-        return new_json
 
     def __hash__(self):
         return hash(self.email)

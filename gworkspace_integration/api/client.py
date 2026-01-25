@@ -5,7 +5,9 @@ from typing_extensions import Self
 
 from google.oauth2 import service_account
 
-from gworkspace_integration.api.services.directory_service import DirectoryService, GoogleAPIService
+from gworkspace_integration.api.base import GoogleAPIService
+from gworkspace_integration.api.services.group_settings_service import GroupSettingsService
+from gworkspace_integration.api.services.directory_service import DirectoryService
 
 
 @dataclass
@@ -67,3 +69,7 @@ class GoogleWorkspaceClient:
     @property
     def DirectoryService(self) -> DirectoryService:
         return self._get_service(DirectoryService)
+
+    @property
+    def GroupSettingsService(self) -> GroupSettingsService:
+        return self._get_service(GroupSettingsService)
