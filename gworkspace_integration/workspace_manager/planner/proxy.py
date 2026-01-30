@@ -13,14 +13,14 @@ class MailingListProxy:
     """A proxy class for data displaying a mailing list configuration"""
 
     uuid: str
-    pk: int | None
     name: str
     type: str
-    description: str
     email: str
-    is_public: bool
-    can_opt_out: bool
-    default_opt_in: bool
+    pk: int | None = None
+    description: str = ""
+    is_public: bool = False
+    can_opt_out: bool = True
+    default_opt_in: bool = False
     members: Iterable["MailingListMemberProxy"] = field(default_factory=list)
 
     @classmethod
@@ -28,15 +28,15 @@ class MailingListProxy:
         """Construct from a Committee"""
         return cls(
             f"committee-{committee.pk}",
-            committee.pk,
-            committee.name,
-            committee.get_type_display(),
-            committee.short_description,
-            committee.contact_email,
-            True,
-            False,
-            True,
-            [MailingListMemberProxy.from_member(m) for m in committee.members.all()],
+            pk=committee.pk,
+            name=committee.name,
+            type=committee.get_type_display(),
+            description=committee.short_description,
+            email=committee.contact_email,
+            is_public=True,
+            can_opt_out=False,
+            default_opt_in=True,
+            members=[MailingListMemberProxy.from_member(m) for m in committee.members.all()],
         )
 
     @classmethod
@@ -45,15 +45,17 @@ class MailingListProxy:
         email, settings = mailing_list
         return cls(
             f"memberalias-{SquireEmailManager.mailing_list_to_id(email)}",
-            None,
-            settings.title,
-            "Member Alias",
-            settings.description,
-            email,
-            not settings.internal,
-            settings.allow_opt_out,
-            settings.default_opt,
-            [MailingListMemberProxy.from_member(m) for m in SquireEmailManager.get_subscribed_members(mailing_list)],
+            pk=None,
+            name=settings.title,
+            type="Member Alias",
+            description=settings.description,
+            email=email,
+            is_public=not settings.internal,
+            can_opt_out=settings.allow_opt_out,
+            default_opt_in=settings.default_opt,
+            members=[
+                MailingListMemberProxy.from_member(m) for m in SquireEmailManager.get_subscribed_members(mailing_list)
+            ],
         )
 
     @classmethod
@@ -61,15 +63,15 @@ class MailingListProxy:
         """Construct from a committee alias"""
         return cls(
             f"committeealias-{SquireEmailManager.mailing_list_to_id(email)}",
-            None,
-            email.capitalize().split("@")[0],
-            "Committee Alias",
-            "All committees in Squire.",
-            email,
-            False,
-            False,
-            True,
-            [MailingListMemberProxy.from_committee(m) for m in SquireEmailManager.get_active_committees()],
+            pk=None,
+            name=email.capitalize().split("@")[0],
+            type="Committee Alias",
+            description="All committees in Squire.",
+            email=email,
+            is_public=False,
+            can_opt_out=False,
+            default_opt_in=True,
+            members=[MailingListMemberProxy.from_committee(m) for m in SquireEmailManager.get_active_committees()],
         )
 
 

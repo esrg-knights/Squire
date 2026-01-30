@@ -129,7 +129,7 @@ class DirectoryService(GoogleAPIService):
         Modifies a group's members in bulk. Supports additions, removals, and updates.
         """
 
-        def response_callback(request_id, response, exception):
+        def response_callback(request_id, response, exception):  # pragma: no cover
             if exception is not None:
                 logger.error(f"Error while updating group members in bulk: {exception}.")
                 return
@@ -145,27 +145,31 @@ class DirectoryService(GoogleAPIService):
             #     "delivery_settings": "ALL_MAIL",
             # }
 
-        batch = self._service.new_batch_http_request()
-        for member in group_members_add:
-            logger.debug(f"ADDING {member.email} to {group_key}")
-            body = {
-                "kind": member.kind,
-                "email": member.email,
-                "role": member.role.name,
-                "type": member.type.name,
-                "delivery_settings": member.delivery_settings.name,
-            }
-            batch.add(self._service.members().insert(groupKey=group_key, body=body), callback=response_callback)
+        if group_members_add or group_members_remove:
+            batch = self._service.new_batch_http_request()
+            for member in group_members_add:
+                logger.debug(f"ADDING {member.email} to {group_key}")
+                body = {
+                    "kind": member.kind,
+                    "email": member.email,
+                    "role": member.role.name,
+                    "type": member.type.name,
+                    "delivery_settings": member.delivery_settings.name,
+                }
+                batch.add(self._service.members().insert(groupKey=group_key, body=body), callback=response_callback)
 
-        for member in group_members_remove:
-            logger.debug(f"REMOVING {member.email} from {group_key}")
-            assert (
-                member.id is not None and member.id != ""
-            ), f"member.id unexpectedly empty when deleting {member.email}"
-            batch.add(
-                self._service.members().delete(groupKey=group_key, memberKey=member.id), callback=response_callback
-            )
-        batch.execute()
+            for member in group_members_remove:
+                logger.debug(f"REMOVING {member.email} from {group_key}")
+                assert (
+                    member.id is not None and member.id != ""
+                ), f"member.id unexpectedly empty when deleting {member.email}"
+                batch.add(
+                    self._service.members().delete(groupKey=group_key, memberKey=member.id), callback=response_callback
+                )
+            batch.execute()
+
+        if not group_members_update:
+            return
 
         # Updating should be done in a separate batch because of etag-shenanigans. Patch requires one, while update/delete can't have one
         batch_update = self._service.new_batch_http_request()

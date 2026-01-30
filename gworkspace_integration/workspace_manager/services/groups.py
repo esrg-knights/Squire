@@ -35,7 +35,7 @@ class SquireWorkspaceGroupService(SquireWorkspaceServiceBase[DirectoryService]):
     CACHE_KEY_GROUPS = "Squire_WorkspaceGroups"
     CACHE_KEY_GROUPMEMBERS = "Squire_WorkspaceGroupMember-%(groupKey)s"
 
-    def __init__(self, service, settings, user_service: SquireWorkspaceUserService):
+    def __init__(self, service: DirectoryService, settings, user_service: SquireWorkspaceUserService):
         super().__init__(service, settings)
         self._sync_planner = SquireWorkspaceGroupPlanner(settings)
         self._user_service = user_service
@@ -58,7 +58,7 @@ class SquireWorkspaceGroupService(SquireWorkspaceServiceBase[DirectoryService]):
         self, committee: AssociationGroup, groups: list[WorkspaceGroup] | None = None
     ) -> WorkspaceGroup | None:
         """Gets the Workspace group that corresponds to the given committee, if any"""
-        groups = groups or self.groups()
+        groups = groups if groups is not None else self.groups()
         for group in groups:
             for alias in group.aliases:
                 if alias == f"committee-{committee.pk}@{self.settings.primary_domain}":
@@ -67,9 +67,11 @@ class SquireWorkspaceGroupService(SquireWorkspaceServiceBase[DirectoryService]):
     def get_committee_for_group(self, group: WorkspaceGroup) -> AssociationGroup | None:
         """Gets the committee that corresponds to the given Workspace group, if any"""
         pattern = re.compile(rf"committee-([0-9]+)@{re.escape(self.settings.primary_domain)}")
+
         for alias in group.aliases:
-            if pattern.match(alias):
-                return AssociationGroup().objects.filter(pk=int(pattern.group(1))).first()
+            if match := pattern.match(alias):
+                if comm := AssociationGroup.objects.filter(pk=int(match.group(1))).first() is not None:
+                    return comm
 
     def get_active_committees(self):
         """Gets a queryset containing all associationGroups that should have an alias setup"""
@@ -79,8 +81,8 @@ class SquireWorkspaceGroupService(SquireWorkspaceServiceBase[DirectoryService]):
             contact_email__endswith=f"@{self.settings.primary_domain}",
         )
 
-    def _get_wgroup_member(self, member_proxy: MailingListMemberProxy) -> WorkspaceGroupMember:
-        """Gets the Workspace group member corresponding to a Squire member"""
+    def _get_default_wgroup_member(self, member_proxy: MailingListMemberProxy) -> WorkspaceGroupMember:
+        """Gets the default Workspace group member corresponding to a Proxy member"""
         return WorkspaceGroupMember(
             "admin#directory#member",
             member_proxy.email,
@@ -89,25 +91,29 @@ class SquireWorkspaceGroupService(SquireWorkspaceServiceBase[DirectoryService]):
             delivery_settings=WorkspaceGroupMemberDeliverySettings.ALL_MAIL,
         )
 
+    def _get_wgroup_default_owner(self) -> WorkspaceGroupMember:
+        """The default owner for a Workspace group"""
+        return WorkspaceGroupMember(
+            "admin#directory#member",
+            self.settings.directory_admin_username,
+            WorkspaceGroupMemberRole.OWNER,
+            type=WorkspaceGroupMemberType.USER,
+            delivery_settings=WorkspaceGroupMemberDeliverySettings.NONE,
+        )
+
     def _get_wgroup_members_for_mailinglist(
         self, mailing_list: MailingListProxy
     ) -> list[tuple[WorkspaceGroupMember, MailingListMemberProxy]]:
         """Sets up the Workspace group members for a given mailing list (e.g. committee or member alias)"""
         # Make Squire's admin user the group owner. We don't want Workspace admins nor regular users to be owners.
         owner = (
-            WorkspaceGroupMember(
-                "admin#directory#member",
-                self.settings.directory_admin_username,
-                WorkspaceGroupMemberRole.OWNER,
-                type=WorkspaceGroupMemberType.USER,
-                delivery_settings=WorkspaceGroupMemberDeliverySettings.NONE,
-            ),
+            self._get_wgroup_default_owner(),
             None,
         )
 
         res = [owner]
         for member_proxy in mailing_list.members:
-            res.append((self._get_wgroup_member(member_proxy), member_proxy))
+            res.append((self._get_default_wgroup_member(member_proxy), member_proxy))
         return res
 
     def get_group_member_syncs(
@@ -145,8 +151,11 @@ class SquireWorkspaceGroupService(SquireWorkspaceServiceBase[DirectoryService]):
                     to_add.append(sync.wgroup_member)
                 case WorkspaceGroupMemberSyncStatus.SYNC_SHOULD_REMOVE:
                     to_remove.append(sync.wgroup_member)
+                case WorkspaceGroupMemberSyncStatus.SYNC_INVALID:  # pragma: no cover
+                    self.logger.warning(
+                        f"Did not sync {sync.wgroup_member.email} to group {group.email}. Email considered invalid!"
+                    )
 
-        print(synced_group_members)
         print(">>>> start SYNC")
         self._gservice.bulk_change_group_members(group.id, to_update, to_add, to_remove)
         # Invalidate cache after batch
@@ -156,5 +165,5 @@ class SquireWorkspaceGroupService(SquireWorkspaceServiceBase[DirectoryService]):
         self, email: str, groups: list[WorkspaceGroup] | None = None
     ) -> WorkspaceGroup | None:
         """Gets the Workspace group that corresponds to the given mailing list, if any"""
-        groups = groups or self.groups()
+        groups = groups if groups is not None else self.groups()
         return next((g for g in groups if g.email == email), None)

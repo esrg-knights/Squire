@@ -139,6 +139,7 @@ htdocs/static
 /squire/logs
 
 # Secrets
+/squire/settings_local.py
 /squire/local_settings.py
 /squire/mailcowconfig.json
 /squire/secret_key.txt

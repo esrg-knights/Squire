@@ -24,7 +24,7 @@ class GoogleWorkspaceSettings:
 
     service_account_token_path: str
     primary_domain: str
-    domains: str
+    domains: list[str]
     customer_id: str
     members_ou: str
     directory_admin_username: str

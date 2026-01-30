@@ -32,14 +32,14 @@ class SquireWorkspaceUserService(SquireWorkspaceServiceBase[DirectoryService]):
 
     def get_user_by_id(self, id: str, users: list[WorkspaceUser] | None = None) -> WorkspaceUser | None:
         """Gets a Workspace User uniquely identified by the given Google Workspace id"""
-        users = users or self.users()
+        users = users if users is not None else self.users()
         return next(filter(lambda u: u.id == id, users), None)
 
     def get_user_for_member(
         self, member: MailingListMemberProxy, users: list[WorkspaceUser] | None = None
     ) -> WorkspaceUser | None:
         """Gets the Workspace user that corresponds to the given member, if any"""
-        users = users or self.users()
+        users = users if users is not None else self.users()
         for user in users:
             for eid in user.external_ids:
                 if eid.type == "organization" and eid.value == str(member.pk):

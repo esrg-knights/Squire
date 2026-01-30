@@ -3,16 +3,9 @@ from dataclasses import dataclass
 from enum import Enum
 
 from gworkspace_integration.api.client import GoogleWorkspaceSettings
-from gworkspace_integration.workspace_manager.planner.proxy import MailingListMemberProxy, MailingListProxy
-from gworkspace_integration.api.formats.groups import (
-    WorkspaceGroup,
-    WorkspaceGroupMember,
-    WorkspaceGroupMemberDeliverySettings,
-    WorkspaceGroupMemberRole,
-    WorkspaceGroupMemberType,
-)
+from gworkspace_integration.api.formats.groups import WorkspaceGroupMember
 from gworkspace_integration.api.formats.users import WorkspaceUser
-from membership_file.models import Member
+from gworkspace_integration.workspace_manager.planner.proxy import MailingListMemberProxy
 
 
 class WorkspaceGroupMemberSyncStatus(Enum):
@@ -44,7 +37,7 @@ class WorkspaceGroupMemberSync:
 
 
 class SquireWorkspaceGroupPlanner:
-    """TODO"""
+    """Helper class to calculate a 'diff' between to sets of members"""
 
     def __init__(self, settings: GoogleWorkspaceSettings):
         self.settings = settings

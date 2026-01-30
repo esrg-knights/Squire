@@ -55,6 +55,7 @@ class SquireGoogleWorkspaceManager:
     """
 
     def __init__(self):
+        # TODO: unhardcode path; move to Django settings
         settings = GoogleWorkspaceSettings.from_json("squire/config/gworkspaceconfig.json")
         self._client = GoogleWorkspaceClient(settings)
         self._email_mgr = get_email_settings()

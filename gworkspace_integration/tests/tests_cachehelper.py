@@ -6,17 +6,17 @@ from django.core.cache import cache
 from django.test import TestCase
 
 from gworkspace_integration.tests.util import CacheTestMixin
-from gworkspace_integration.workspace import WorkspaceCacheManager
+from gworkspace_integration.workspace_manager.services.base import APICacheHelper
 
 
-class WorkspaceCacheManagerTestCase(CacheTestMixin, TestCase):
+class APICacheHelperTestCase(CacheTestMixin, TestCase):
     """Tests for caching behaviour"""
 
     def test_cache_set(self):
         """Tests if cache is set up and the API-function is not called unnecessarily"""
 
         expensive_fn = Mock(return_value="fn_result")
-        res = WorkspaceCacheManager.fetch_with_lock(expensive_fn, "TEST_CACHE_KEY")
+        res = APICacheHelper.fetch_with_lock(expensive_fn, "TEST_CACHE_KEY")
 
         # Result is provided and cache is written to
         expensive_fn.assert_called_once()
@@ -25,7 +25,7 @@ class WorkspaceCacheManagerTestCase(CacheTestMixin, TestCase):
 
         # Calling it a second time shouldn't yield another function call, but still yield the earlier result
         expensive_fn.reset_mock()
-        res = WorkspaceCacheManager.fetch_with_lock(expensive_fn, "TEST_CACHE_KEY")
+        res = APICacheHelper.fetch_with_lock(expensive_fn, "TEST_CACHE_KEY")
         expensive_fn.assert_not_called()
         self.assertEqual(res, "fn_result")
 
@@ -37,13 +37,11 @@ class WorkspaceCacheManagerTestCase(CacheTestMixin, TestCase):
 
         # Should timeout
         with self.assertRaises(TimeoutError):
-            WorkspaceCacheManager.fetch_with_lock(
-                expensive_fn, "TEST_CACHE_KEY", lock_key="TEST_CACHE_KEY_LCK", retries=0
-            )
+            APICacheHelper.fetch_with_lock(expensive_fn, "TEST_CACHE_KEY", lock_key="TEST_CACHE_KEY_LCK", retries=0)
 
         # Should just yield the result if timeouts are disabled
         self.assertEqual(
-            WorkspaceCacheManager.fetch_with_lock(
+            APICacheHelper.fetch_with_lock(
                 expensive_fn, "TEST_CACHE_KEY", lock_key="TEST_CACHE_KEY_LCK", raise_timeout=False, retries=0
             ),
             "fn_result",
@@ -61,7 +59,7 @@ class WorkspaceCacheManagerTestCase(CacheTestMixin, TestCase):
         thread.start()
 
         self.assertEqual(
-            WorkspaceCacheManager.fetch_with_lock(
+            APICacheHelper.fetch_with_lock(
                 expensive_fn, "TEST_CACHE_KEY", lock_key="TEST_CACHE_KEY_LCK", retry_delay=0.2, retries=1
             ),
             "slow_result",
