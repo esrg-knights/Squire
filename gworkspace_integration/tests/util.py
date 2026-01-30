@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar
+from typing import Generic, Iterable, TypeVar
 from unittest.mock import Mock, patch
 
 from django.core.cache import cache
@@ -6,6 +6,7 @@ from django.test import TestCase, override_settings
 
 from gworkspace_integration.api.base import GoogleAPIService
 from gworkspace_integration.api.client import GoogleWorkspaceClient, GoogleWorkspaceSettings
+from gworkspace_integration.workspace_manager.services.base import SquireWorkspaceServiceBase
 
 T = TypeVar("T", bound=GoogleAPIService)
 
@@ -73,6 +74,34 @@ class GoogleServiceTestMixin(Generic[T]):
         mock_build.reset_mock()
         getattr(client, self.service_class.__name__)
         mock_build.assert_not_called()
+
+
+S = TypeVar("S", bound=SquireWorkspaceServiceBase[T])
+
+
+class SquireServiceTestMixin(Generic[S]):
+    """Tests Squire services"""
+
+    service_class: S
+
+    def _get_service_cls_args(self) -> Iterable:
+        """Service class args"""
+        return []
+
+    def _get_service_cls_kwargs(self) -> dict:
+        """Service class kwargs"""
+        return {}
+
+    def setUp(self):
+        settings = GoogleWorkspaceSettings(
+            "/my_token", "example.com", ["voorbeeld.nl"], "12345", "/Test", "admin@example.com", []
+        )
+        self._gservice_mock = Mock()
+        self._service: S = self.service_class(
+            self._gservice_mock, settings, *self._get_service_cls_args(), **self._get_service_cls_kwargs()
+        )
+        # We're not interested in the specifics of caching, just call the function directly!
+        self._cache_fetch = self._service.fetch_with_lock = Mock(side_effect=lambda api_fn, *args, **kwargs: api_fn())
 
 
 TEST_CACHE = {

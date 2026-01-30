@@ -5,24 +5,19 @@ from django.test import TestCase
 from committees.models import AssociationGroup
 from gworkspace_integration.api.client import GoogleWorkspaceSettings
 from gworkspace_integration.api.formats.groups import WorkspaceGroup, WorkspaceGroupMember, WorkspaceGroupMemberRole
+from gworkspace_integration.tests.util import SquireServiceTestMixin
 from gworkspace_integration.workspace_manager.planner.proxy import MailingListMemberProxy, MailingListProxy
 from gworkspace_integration.workspace_manager.services.groups import SquireWorkspaceGroupService
 
 
-class SquireGroupServiceTestCase(TestCase):
+class SquireGroupServiceTestCase(SquireServiceTestMixin[SquireWorkspaceGroupService], TestCase):
     """Tests groups service"""
 
-    def setUp(self):
-        super().setUp()
-        settings = GoogleWorkspaceSettings(
-            "/my_token", "example.com", ["voorbeeld.nl"], "12345", "/Test", "admin@example.com", []
-        )
-        self._gservice_mock = Mock()
-        self._sqservice_user_mock = Mock()
+    service_class = SquireWorkspaceGroupService
 
-        self._service = SquireWorkspaceGroupService(self._gservice_mock, settings, self._sqservice_user_mock)
-        # We're not interested in the specifics of caching, just call the function directly!
-        self._cache_fetch = self._service.fetch_with_lock = Mock(side_effect=lambda api_fn, *args, **kwargs: api_fn())
+    def _get_service_cls_args(self):
+        # We mock SquireUserService
+        return [Mock()]
 
     def test_groups(self):
         """Tests fetching groups"""

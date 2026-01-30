@@ -54,7 +54,7 @@ class SquireWorkspaceUserService(SquireWorkspaceServiceBase[DirectoryService]):
     # -------
     # ADD USER
     # -------
-    def _generate_username(self, member: Member, users: list[WorkspaceUser]):
+    def _generate_username(self, member: Member, users: list[WorkspaceUser], max_attempts=10) -> None | str:
         """
         Generates a unique username for the given member. This can happen if multiple
         members share the same name.
@@ -62,21 +62,35 @@ class SquireWorkspaceUserService(SquireWorkspaceServiceBase[DirectoryService]):
         E.g. John Doe already exists as john.doe@example.com
         Another John Doe will get username john.doe2@example.com
 
-        Assumes there is no pre-existing workspace user for the given member
+        Assumes there is no pre-existing workspace user for the given member.
+
+        :return: If creation fails `max_attempts` times, returns `None`. Otherwise returns the username
         """
         name = f"{member.first_name}-{member.tussenvoegsel}{member.last_name}"
-        name = slugify(member.get_full_name().replace(" ", "")).replace("-", ".")
+        name = slugify(member.get_full_name(allow_spoof=False).replace(" ", "")).replace("-", ".")
         suffix = "@" + self.settings.primary_domain
         requested_name = name + suffix
-        counter = 0
 
-        for user in users:
-            if user.primaryEmail == requested_name:
-                counter += 1
-                requested_name = name + str(counter) + suffix
+        valid_name_found = True
+        for i in range(1, max(max_attempts + 1, 2)):
+            valid_name_found = True
+            for user in users:
+                if user.primaryEmail == requested_name:
+                    # Username already in use, try again with the next digit. E.g. foo1@example.com
+                    requested_name = name + str(i) + suffix
+                    valid_name_found = False
+                    break
+
+        if not valid_name_found:
+            self.logger.warning(
+                f"Unable to generate variant username {name + suffix} for member {member.get_full_name(allow_spoof=False)} ({member.pk}). Stopped after {max_attempts} attempts"
+            )
+            return None
         return requested_name
 
-    def _create_user_for_member(self, member: Member, users: list[WorkspaceUser], clear_cache=True):
+    def _create_user_for_member(
+        self, member: Member, users: list[WorkspaceUser], clear_cache=True
+    ) -> WorkspaceUser | None:
         """
         Creates a Workspace User for the given member. A list of existing `users` should
         be passed to resolve naming conflicts.
@@ -86,8 +100,13 @@ class SquireWorkspaceUserService(SquireWorkspaceServiceBase[DirectoryService]):
         last_name = member.last_name
         if member.tussenvoegsel:
             last_name = member.tussenvoegsel + " " + last_name
+
+        username = self._generate_username(member, users)
+        if username is None:
+            return None
+
         user = WorkspaceUser(
-            primaryEmail=self._generate_username(member, users),
+            primaryEmail=username,
             hashFunction="crypt",
             password=crypt.crypt(token_urlsafe(32), salt=crypt.METHOD_SHA512),
             changePasswordAtNextLogin=True,
@@ -110,14 +129,17 @@ class SquireWorkspaceUserService(SquireWorkspaceServiceBase[DirectoryService]):
         """
         # Fetch all users (from cache if possible)
         users = self.users()
+        new_users = []
 
         for member in members:
             user = self._create_user_for_member(member, users, clear_cache=False)
-            users.append(user)
+            if user is not None:
+                new_users.append(user)
 
-        # Invalidate cache after batch
-        self.invalidate_cache(self.CACHE_KEY_USERS)
-        return users
+        # Invalidate cache after batch (if needed)
+        if new_users:
+            self.invalidate_cache(self.CACHE_KEY_USERS)
+        return new_users
 
     def get_member_user_mappings(self) -> tuple[MemberWorkspaceUserMap, MemberWorkspaceUserMap]:
         """
