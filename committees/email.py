@@ -1,10 +1,13 @@
 from dataclasses import dataclass, field
 from enum import Enum
 import json
+import logging
+import os
 from typing import cast
 from typing_extensions import Self
 
 from django.apps import apps
+from django.conf import settings as dj_settings
 from django.db.models import QuerySet, Exists, OuterRef
 from django.utils.text import slugify
 from dynamic_preferences.users.models import UserPreferenceModel
@@ -138,7 +141,18 @@ class SquireEmailManager:
     COMMITTEE_TYPE_WHITELIST = (AssociationGroup.COMMITTEE, AssociationGroup.ORDER, AssociationGroup.WORKGROUP)
 
     def __init__(self):
-        self.settings = EmailAliasSettings.from_json("squire/config/emailconfig.json")
+        self.logger = logging.getLogger("squire_email")
+
+        try:
+            path = os.path.join(dj_settings.CONFIG_PATH, "emailconfig.json")
+            self.settings = EmailAliasSettings.from_json(path)
+            self.logger.info(f"Loaded email config from {path}")
+        except FileNotFoundError:
+            self.logger.warning(f"No email config configuration found at {path}")
+
+    @property
+    def is_valid(self) -> bool:
+        return self.settings is not None
 
     # TODO: Remove dependency on mailcow_integration. Setting up these preferences should happen in this module instead!
     @classmethod

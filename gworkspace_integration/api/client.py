@@ -1,8 +1,10 @@
 import json
 from dataclasses import dataclass
+import os
 from typing import Type, TypeVar, cast
 from typing_extensions import Self
 
+from django.conf import settings as dj_settings
 from google.oauth2 import service_account
 
 from gworkspace_integration.api.base import GoogleAPIService
@@ -51,9 +53,8 @@ class GoogleWorkspaceClient:
     """
 
     def __init__(self, settings: GoogleWorkspaceSettings):
-        self._base_creds = service_account.Credentials.from_service_account_file(
-            f"squire/config/{settings.service_account_token_path}", scopes=settings.scopes
-        )
+        path = os.path.join(dj_settings.CONFIG_PATH, settings.service_account_token_path)
+        self._base_creds = service_account.Credentials.from_service_account_file(path, scopes=settings.scopes)
         self.settings = settings
         self.admin_username = settings.directory_admin_username
         self.domain = settings.primary_domain

@@ -17,10 +17,7 @@ class GworkspaceIntegrationConfig(AppConfig):
     def ready(self):
         from gworkspace_integration.workspace import SquireGoogleWorkspaceManager
 
-        try:
-            # Setup Workspace API client
-            self.workspace_client = SquireGoogleWorkspaceManager()
-        except FileNotFoundError:  # pragma: no cover
-            logger.warning(
-                "Google Workspace connection disabled. No workspace configuration found at squire/config/gworkspaceconfig.json."
-            )
+        # Setup Workspace API client
+        self.workspace_client = SquireGoogleWorkspaceManager()
+        if not self.workspace_client.is_valid:
+            self.workspace_client = None

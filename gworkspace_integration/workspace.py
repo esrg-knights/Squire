@@ -1,21 +1,14 @@
-from collections.abc import Callable
-import crypt
 import logging
-import re
-from secrets import token_urlsafe
-import time
-from typing import TypeVar, cast
+import os
+from typing import cast
 
 from django.apps import apps
-from django.core.cache import cache
-from django.utils.text import slugify
+from django.conf import settings as dj_settings
 
 from committees.email import get_email_settings
 from committees.models import AssociationGroup
-from gworkspace_integration.workspace_manager.planner.proxy import MailingListMemberProxy, MailingListProxy
 from gworkspace_integration.api.client import GoogleWorkspaceClient, GoogleWorkspaceSettings
 from gworkspace_integration.api.formats.groups import (
-    WorkspaceGroup,
     WorkspaceGroupContactPermissions,
     WorkspaceGroupDefaultSender,
     WorkspaceGroupDiscoverPermissions,
@@ -28,15 +21,9 @@ from gworkspace_integration.api.formats.groups import (
     WorkspaceGroupViewPermissions,
     WorkspaceGroupViewPermissionsExt,
 )
-from gworkspace_integration.api.formats.users import WorkspaceExternalUserId, WorkspaceUser, WorkspaceUserName
 from gworkspace_integration.apps import GworkspaceIntegrationConfig
-from gworkspace_integration.workspace_manager.services.groups import (
-    SquireWorkspaceGroupService,
-    WorkspaceGroupMemberSync,
-    WorkspaceGroupMemberSyncStatus,
-)
+from gworkspace_integration.workspace_manager.services.groups import SquireWorkspaceGroupService
 from gworkspace_integration.workspace_manager.services.users import SquireWorkspaceUserService
-from membership_file.models import Member
 
 
 def get_workspace_manager() -> "SquireGoogleWorkspaceManager | None":
@@ -55,15 +42,29 @@ class SquireGoogleWorkspaceManager:
     """
 
     def __init__(self):
-        # TODO: unhardcode path; move to Django settings
-        settings = GoogleWorkspaceSettings.from_json("squire/config/gworkspaceconfig.json")
-        self._client = GoogleWorkspaceClient(settings)
-        self._email_mgr = get_email_settings()
-        assert self._email_mgr is not None, "Cannot load Google Workspace Manager; email settings missing!"
         self.logger = logging.getLogger(f"squire_gworkspace")
+        path = os.path.join(dj_settings.CONFIG_PATH, "gworkspaceconfig.json")
+        try:
+            self.settings = GoogleWorkspaceSettings.from_json(path)
+            self.logger.info(f"Loaded Google Workspace config from {path}")
+        except FileNotFoundError:
+            self.logger.warning(f"Google Workspace connection disabled. No workspace configuration found at {path}")
+            return
 
-        self.user_service = SquireWorkspaceUserService(self._client.DirectoryService, settings)
-        self.group_service = SquireWorkspaceGroupService(self._client.DirectoryService, settings, self.user_service)
+        self._client = GoogleWorkspaceClient(self.settings)
+        self._email_mgr = get_email_settings()
+        if self._email_mgr is None:
+            self.logger.warning(f"Google Workspace connection disabled. Email settings missing!")
+            return
+
+        self.user_service = SquireWorkspaceUserService(self._client.DirectoryService, self.settings)
+        self.group_service = SquireWorkspaceGroupService(
+            self._client.DirectoryService, self.settings, self.user_service
+        )
+
+    @property
+    def is_valid(self):
+        return self.settings is not None and self._email_mgr is not None
 
     # -----------------------
     # GROUPS (MEMBER MAILING LISTS)

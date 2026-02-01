@@ -283,6 +283,10 @@ LOGGING = {
             "handlers": ["console", "logfile"],
             "level": "INFO",
         },
+        "squire_email": {
+            "handlers": ["console", "logfile"],
+            "level": "WARNING",
+        },
     },
 }
 
@@ -431,6 +435,11 @@ MAILCOW_HOST = None
 MAILCOW_API_KEY = None
 MEMBER_ALIASES = {}
 COMMITTEE_CONFIGS = {"archive_addresses": [], "global_addresses": [], "global_archive_addresses": []}
+
+####################################################################
+# Base path to all setting files that contain secrets. E.g. Google Workspace or Mailcow configuration.
+# Set this to squire/config in settings_local.py
+CONFIG_PATH = "squire/example_configs"
 
 ####################################################################
 # Other Settings

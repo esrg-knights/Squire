@@ -1,7 +1,4 @@
-import logging
 from django.apps import AppConfig
-
-logger = logging.getLogger(__name__)
 
 
 class CommitteesConfig(AppConfig):
@@ -15,8 +12,6 @@ class CommitteesConfig(AppConfig):
     def ready(self):
         from committees.email import SquireEmailManager
 
-        try:
-            # Setup Workspace API client
-            self.email_manager = SquireEmailManager()
-        except FileNotFoundError:
-            logger.warning("No email config configuration found at squire/config/emailconfig.json.")
+        self.email_manager = SquireEmailManager()
+        if not self.email_manager.is_valid:
+            self.email_manager = None
