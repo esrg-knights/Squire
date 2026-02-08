@@ -96,7 +96,7 @@ T = TypeVar("T", bound=GoogleAPIService)
 
 
 class SquireWorkspaceServiceBase(Generic[T], APICacheHelper):
-    """TODO"""
+    """Base class for a Squire service that interacts with various Google Services"""
 
     def __init__(self, service: T, settings: GoogleWorkspaceSettings):
         self._gservice = service

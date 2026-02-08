@@ -150,5 +150,6 @@ class WorkspaceGroupMemberWUser(WorkspaceGroupMemberProxy[WorkspaceUser]):
     def from_proxy(cls, proxy: WorkspaceUser):
         return cls(proxy, proxy.name.fullName, proxy.primaryEmail)
 
-    def is_manual(self, settings) -> bool:
+    def is_manual(self, settings: GoogleWorkspaceSettings) -> bool:
+        # Workspace user is outside the regular OU. It must've been added manually!
         return self.source_obj.orgUnitPath != settings.members_ou and self.email != settings.directory_admin_username

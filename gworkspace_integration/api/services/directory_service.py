@@ -1,13 +1,12 @@
+from collections.abc import Iterator
 from datetime import datetime
 import logging
-from typing import Iterator
 
 from gworkspace_integration.api.base import GoogleAPIService
 from gworkspace_integration.api.formats.users import WorkspaceUser
 from gworkspace_integration.api.formats.groups import WorkspaceGroup, WorkspaceGroupMember
 
-from googleapiclient.http import BatchHttpRequest
-from googleapiclient.errors import HttpError
+from googleapiclient.errors import HttpError as GHttpError
 
 logger = logging.getLogger(__name__)
 
@@ -54,12 +53,11 @@ class DirectoryService(GoogleAPIService):
 
     def user(self, userKey: str) -> WorkspaceUser | None:
         """Retrieve a specific user by ID, regardless of OU"""
-        # TODO: Handle googleapiclient.errors.HttpError
-        #   <HttpError 404 when requesting https://admin.googleapis.com/admin/directory/v1/users/<userKey>?alt=json returned "Resource Not Found: userKey". Details: "[{'message': 'Resource Not Found: userKey', 'domain': 'global', 'reason': 'notFound'}]">
         try:
             res = self._service.users().get(userKey=userKey).execute()
             return WorkspaceUser.from_json(res)
-        except HttpError as e:
+        except GHttpError as e:
+            # <HttpError 404 when requesting https://admin.googleapis.com/admin/directory/v1/users/<userKey>?alt=json returned "Resource Not Found: userKey". Details: "[{'message': 'Resource Not Found: userKey', 'domain': 'global', 'reason': 'notFound'}]">
             if e.status_code == 404:
                 logger.info(f"User with userKey {userKey} not found!")
                 return None

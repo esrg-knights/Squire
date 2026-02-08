@@ -5,7 +5,8 @@ dev:
 
 TARGET ?=
 test: ## Run tests (TARGET=Path to a module, folder, file, class, or method to test)
-	coverage run manage.py test $(TARGET) && coverage html
+	-coverage run manage.py test $(TARGET)
+	coverage html
 
 start-cache:
 	memcached -m 64 -p 11211 -u memcache

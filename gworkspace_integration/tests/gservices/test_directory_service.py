@@ -1,7 +1,8 @@
-from unittest.mock import Mock, ANY
+from unittest.mock import Mock
 from django.test import TestCase
+from googleapiclient.errors import HttpError as GHttpError
 
-from core.tests.util import suppress_warnings
+from core.tests.util import suppress_errors, suppress_warnings
 from gworkspace_integration.api.formats.groups import (
     WorkspaceGroup,
     WorkspaceGroupMember,
@@ -12,6 +13,18 @@ from gworkspace_integration.api.formats.groups import (
 from gworkspace_integration.api.formats.users import WorkspaceUser
 from gworkspace_integration.api.services.directory_service import DirectoryService
 from gworkspace_integration.tests.util import GoogleServiceTestMixin
+
+
+class TestGHttpError(GHttpError):
+    """Test class for errors"""
+
+    def __init__(self, status_code=200):
+        super().__init__(Mock(), bytes())
+        self._mock_status_code = status_code
+
+    @property
+    def status_code(self):
+        return self._mock_status_code
 
 
 class GoogleAPIDirectoryServiceTestCase(GoogleServiceTestMixin[DirectoryService], TestCase):
@@ -34,6 +47,33 @@ class GoogleAPIDirectoryServiceTestCase(GoogleServiceTestMixin[DirectoryService]
         for i in range(2):
             self.assertIsInstance(users[i], WorkspaceUser)
             self.assertEqual(users[i].id, str(i))
+
+    @suppress_warnings(logger_name="gworkspace_api")
+    @suppress_errors(logger_name="gworkspace_integration.api.services.directory_service")
+    def test_get_user_by_id(self):
+        """Tests whether a single user can be obtained by id"""
+        mock_execute: Mock = self._google_service.users.return_value.get.return_value.execute
+        mock_execute.side_effect = [{"id": "0"}]
+
+        # User found
+        user = self.service.user("my_key")
+        self.assertEqual(mock_execute.call_count, 1)
+        self.assertIsInstance(user, WorkspaceUser)
+        self.assertEqual(user.id, "0")
+
+        # Not found
+        mock_execute.reset_mock()
+        mock_execute.side_effect = TestGHttpError(404)
+        user = self.service.user("my_key")
+        self.assertEqual(mock_execute.call_count, 1)
+        self.assertIsNone(user)
+
+        # Error
+        mock_execute.reset_mock()
+        mock_execute.side_effect = TestGHttpError(500)
+        user = self.service.user("my_key")
+        self.assertEqual(mock_execute.call_count, 1)
+        self.assertIsNone(user)
 
     def test_create_user(self):
         """Tests user creation"""

@@ -1,13 +1,10 @@
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterator
 
 from gworkspace_integration.api.client import GoogleWorkspaceSettings
-from gworkspace_integration.api.formats.groups import WorkspaceGroup, WorkspaceGroupMember, WorkspaceGroupMemberType
-from gworkspace_integration.api.formats.users import WorkspaceUser
+from gworkspace_integration.api.formats.groups import WorkspaceGroupMember
 from gworkspace_integration.workspace_manager.planner.proxy import WorkspaceGroupMemberProxy
-from gworkspace_integration.workspace_manager.services.users import SquireWorkspaceUserService
 
 
 class WorkspaceGroupMemberSyncStatus(Enum):
@@ -65,12 +62,7 @@ class SquireWorkspaceGroupSyncHelper:
         - removals (present in the Workspace group, but shouldn't)
         - updates (e.g. in OWNER/MEMBER-roles)
         """
-
         current_wgroup_members = set(current_members)
-        # desired_members_sync = (
-        #     WorkspaceGroupMemberSync(wmember, WorkspaceGroupMemberSyncStatus.SYNC_UP_TO_DATE, None, member)
-        #     for wmember, member in desired_members
-        # )
 
         for desired_member_sync in desired_members_sync:
             # Match based on email; this is the unique identifier for a group member in Google Workspace
@@ -114,10 +106,11 @@ class SquireWorkspaceGroupSyncHelper:
         - no-touch (member was added manually in Google Workspace; don't touch these)
         """
         for sync in group_members_sync:
+            # Update validity
             if sync.sqmember_proxy is not None and not sync.sqmember_proxy.is_valid(self.settings):
                 sync.status = WorkspaceGroupMemberSyncStatus.SYNC_INVALID
 
-            # Workspace user is outside the regular OU. It must've been added manually!
+            # Update manual additions (these aren't synced)
             if sync.wmember_proxy is not None and sync.wmember_proxy.is_manual(self.settings):
                 sync.status = WorkspaceGroupMemberSyncStatus.SYNC_NOTOUCH
 

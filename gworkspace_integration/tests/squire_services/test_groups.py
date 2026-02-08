@@ -4,7 +4,12 @@ from django.test import TestCase
 
 from committees.models import AssociationGroup
 from gworkspace_integration.api.client import GoogleWorkspaceSettings
-from gworkspace_integration.api.formats.groups import WorkspaceGroup, WorkspaceGroupMember, WorkspaceGroupMemberRole
+from gworkspace_integration.api.formats.groups import (
+    WorkspaceGroup,
+    WorkspaceGroupMember,
+    WorkspaceGroupMemberRole,
+    WorkspaceGroupMemberType,
+)
 from gworkspace_integration.tests.util import SquireServiceTestMixin
 from gworkspace_integration.workspace_manager.planner.proxy import WorkspaceGroupMemberProxy, WorkspaceGroupProxy
 from gworkspace_integration.workspace_manager.services.groups import SquireWorkspaceGroupService
@@ -76,7 +81,9 @@ class SquireGroupServiceTestCase(SquireServiceTestMixin[SquireWorkspaceGroupServ
 
         # Default Workspace group member based on proxy member
         self.assertIsInstance(
-            self._service._get_default_wgroup_member(WorkspaceGroupMemberProxy(5, "myname", "foo@example.com")),
+            self._service._get_default_wgroup_member(
+                WorkspaceGroupMemberProxy(5, "myname", "foo@example.com"), WorkspaceGroupMemberType.USER
+            ),
             WorkspaceGroupMember,
         )
 
@@ -131,7 +138,7 @@ class SquireGroupServiceTestCase(SquireServiceTestMixin[SquireWorkspaceGroupServ
         owner = self._service._get_wgroup_default_owner()
         owner.role = WorkspaceGroupMemberRole.MANAGER
 
-        gmember_1 = self._service._get_default_wgroup_member(member_1)
+        gmember_1 = self._service._get_default_wgroup_member(member_1, WorkspaceGroupMemberType.USER)
         gmember_1.id = "gid"
         self._gservice_mock.group_members.return_value = [
             gmember_1,
