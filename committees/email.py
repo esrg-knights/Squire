@@ -149,6 +149,7 @@ class SquireEmailManager:
             self.logger.info(f"Loaded email config from {path}")
         except FileNotFoundError:
             self.logger.warning(f"No email config configuration found at {path}")
+            self.settings = None
 
     @property
     def is_valid(self) -> bool:

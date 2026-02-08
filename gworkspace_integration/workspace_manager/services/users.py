@@ -5,7 +5,6 @@ from django.utils.text import slugify
 
 from gworkspace_integration.api.formats.users import WorkspaceExternalUserId, WorkspaceUser, WorkspaceUserName
 from gworkspace_integration.api.services.directory_service import DirectoryService
-from gworkspace_integration.workspace_manager.planner.proxy import MailingListMemberProxy
 from gworkspace_integration.workspace_manager.services.base import SquireWorkspaceServiceBase
 from membership_file.models import Member
 
@@ -20,6 +19,7 @@ class SquireWorkspaceUserService(SquireWorkspaceServiceBase[DirectoryService]):
     """
 
     CACHE_KEY_USERS = "Squire_WorkspaceUsers"
+    CACHE_KEY_EXTRA_USER = "Squire_WorkspaceUser-%(userKey)s"
 
     # -------
     # FETCH USER
@@ -33,11 +33,16 @@ class SquireWorkspaceUserService(SquireWorkspaceServiceBase[DirectoryService]):
     def get_user_by_id(self, id: str, users: list[WorkspaceUser] | None = None) -> WorkspaceUser | None:
         """Gets a Workspace User uniquely identified by the given Google Workspace id"""
         users = users if users is not None else self.users()
-        return next(filter(lambda u: u.id == id, users), None)
+        user = next(filter(lambda u: u.id == id, users), None)
+        if user is not None:
+            return user
 
-    def get_user_for_member(
-        self, member: MailingListMemberProxy, users: list[WorkspaceUser] | None = None
-    ) -> WorkspaceUser | None:
+        # User not found; it might be outside our members OU
+        return self.fetch_with_lock(
+            cache_key=self.CACHE_KEY_EXTRA_USER % {"userKey": id}, api_fn=(lambda: self._gservice.user(id))
+        )
+
+    def get_user_for_member(self, member: Member, users: list[WorkspaceUser] | None = None) -> WorkspaceUser | None:
         """Gets the Workspace user that corresponds to the given member, if any"""
         users = users if users is not None else self.users()
         for user in users:

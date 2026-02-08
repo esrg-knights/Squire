@@ -1,4 +1,5 @@
 {
+    "domains": ["example.com", "voorbeeld.nl"],
     "committee_aliases": {
         "receive_archive_addresses": ["archief@example.com"],
         "global_addresses": ["commissies@example.com"],

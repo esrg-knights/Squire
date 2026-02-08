@@ -6,7 +6,7 @@ from committees.models import AssociationGroup
 from gworkspace_integration.api.client import GoogleWorkspaceSettings
 from gworkspace_integration.api.formats.groups import WorkspaceGroup, WorkspaceGroupMember, WorkspaceGroupMemberRole
 from gworkspace_integration.tests.util import SquireServiceTestMixin
-from gworkspace_integration.workspace_manager.planner.proxy import MailingListMemberProxy, MailingListProxy
+from gworkspace_integration.workspace_manager.planner.proxy import WorkspaceGroupMemberProxy, WorkspaceGroupProxy
 from gworkspace_integration.workspace_manager.services.groups import SquireWorkspaceGroupService
 
 
@@ -76,7 +76,7 @@ class SquireGroupServiceTestCase(SquireServiceTestMixin[SquireWorkspaceGroupServ
 
         # Default Workspace group member based on proxy member
         self.assertIsInstance(
-            self._service._get_default_wgroup_member(MailingListMemberProxy(5, "myname", "foo@example.com")),
+            self._service._get_default_wgroup_member(WorkspaceGroupMemberProxy(5, "myname", "foo@example.com")),
             WorkspaceGroupMember,
         )
 
@@ -88,15 +88,15 @@ class SquireGroupServiceTestCase(SquireServiceTestMixin[SquireWorkspaceGroupServ
 
     def test_default_mailinglist_members(self):
         """Tests default mailing list members"""
-        mailing_list = MailingListProxy(
+        mailing_list = WorkspaceGroupProxy(
             "uuid",
             "name",
             "type",
             "email",
             pk=5,
             members=[
-                MailingListMemberProxy(1, "foo", "foo@example.com"),
-                MailingListMemberProxy(2, "bar", "bar@example.com"),
+                WorkspaceGroupMemberProxy(1, "foo", "foo@example.com"),
+                WorkspaceGroupMemberProxy(2, "bar", "bar@example.com"),
             ],
         )
 
@@ -126,7 +126,7 @@ class SquireGroupServiceTestCase(SquireServiceTestMixin[SquireWorkspaceGroupServ
     def test_sync(self):
         """Tests syncing a committee and a Workspace group"""
         # member_1: already correctly synced (up-to-date)
-        member_1 = MailingListMemberProxy(1, "Member 1", "member-1@test.com")
+        member_1 = WorkspaceGroupMemberProxy(1, "Member 1", "member-1@test.com")
         # owner: should update (role is out of date)
         owner = self._service._get_wgroup_default_owner()
         owner.role = WorkspaceGroupMemberRole.MANAGER
@@ -140,7 +140,7 @@ class SquireGroupServiceTestCase(SquireServiceTestMixin[SquireWorkspaceGroupServ
             owner,
         ]
 
-        mailing_list = mailing_list = MailingListProxy(
+        mailing_list = mailing_list = WorkspaceGroupProxy(
             "uuid",
             "name",
             "type",
@@ -148,7 +148,7 @@ class SquireGroupServiceTestCase(SquireServiceTestMixin[SquireWorkspaceGroupServ
             pk=5,
             members=[
                 # member 2: only present in committee (should add)
-                MailingListMemberProxy(2, "Member 2", "member-2@test.com"),
+                WorkspaceGroupMemberProxy(2, "Member 2", "member-2@test.com"),
                 member_1,
             ],
         )

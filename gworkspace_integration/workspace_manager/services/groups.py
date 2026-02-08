@@ -1,23 +1,34 @@
-from collections.abc import Iterable, Iterator
-from dataclasses import dataclass
-from enum import Enum
+from collections.abc import Iterator
 import re
-from typing import Generator
 
 from committees.models import AssociationGroup
-from gworkspace_integration.api.client import GoogleWorkspaceSettings
 from gworkspace_integration.api.services.directory_service import DirectoryService
-from gworkspace_integration.workspace_manager.planner.proxy import MailingListMemberProxy, MailingListProxy
+from gworkspace_integration.workspace_manager.planner.proxy import (
+    WorkspaceGroupMemberProxy,
+    WorkspaceGroupMemberWGroup,
+    WorkspaceGroupMemberWUser,
+    WorkspaceGroupProxy,
+)
 from gworkspace_integration.api.formats.groups import (
     WorkspaceGroup,
+    WorkspaceGroupContactPermissions,
+    WorkspaceGroupDefaultSender,
+    WorkspaceGroupDiscoverPermissions,
+    WorkspaceGroupJoinPermissions,
+    WorkspaceGroupLeavePermissions,
     WorkspaceGroupMember,
     WorkspaceGroupMemberDeliverySettings,
     WorkspaceGroupMemberRole,
     WorkspaceGroupMemberType,
+    WorkspaceGroupModerationPermissions,
+    WorkspaceGroupPostPermissions,
+    WorkspaceGroupReplyTo,
+    WorkspaceGroupSettings,
+    WorkspaceGroupViewPermissions,
+    WorkspaceGroupViewPermissionsExt,
 )
-from gworkspace_integration.api.formats.users import WorkspaceUser
 from gworkspace_integration.workspace_manager.planner.sync import (
-    SquireWorkspaceGroupPlanner,
+    SquireWorkspaceGroupSyncHelper,
     WorkspaceGroupMemberSync,
     WorkspaceGroupMemberSyncStatus,
 )
@@ -37,8 +48,8 @@ class SquireWorkspaceGroupService(SquireWorkspaceServiceBase[DirectoryService]):
 
     def __init__(self, service: DirectoryService, settings, user_service: SquireWorkspaceUserService):
         super().__init__(service, settings)
-        self._sync_planner = SquireWorkspaceGroupPlanner(settings)
         self._user_service = user_service
+        self._sync_helper = SquireWorkspaceGroupSyncHelper(settings)
 
     def groups(self, ignore_cache=False) -> list[WorkspaceGroup]:
         """Fetch all Workspace groups, using the cache if available and allowed"""
@@ -53,6 +64,13 @@ class SquireWorkspaceGroupService(SquireWorkspaceServiceBase[DirectoryService]):
             cache_key=self.CACHE_KEY_GROUPMEMBERS % {"groupKey": group.id},
             api_fn=(lambda: list(self._gservice.group_members(group.id))),
         )
+
+    def get_group_by_id(self, id: str, groups: list[WorkspaceGroup] | None = None) -> WorkspaceGroup | None:
+        """Gets the Workspace group with the given id, if any"""
+        groups = groups if groups is not None else self.groups()
+        for group in groups:
+            if group.id == id:
+                return group
 
     def get_group_for_committee(
         self, committee: AssociationGroup, groups: list[WorkspaceGroup] | None = None
@@ -81,13 +99,15 @@ class SquireWorkspaceGroupService(SquireWorkspaceServiceBase[DirectoryService]):
             contact_email__endswith=f"@{self.settings.primary_domain}",
         )
 
-    def _get_default_wgroup_member(self, member_proxy: MailingListMemberProxy) -> WorkspaceGroupMember:
+    def _get_default_wgroup_member(
+        self, member_proxy: WorkspaceGroupMemberProxy, type: WorkspaceGroupMemberType
+    ) -> WorkspaceGroupMember:
         """Gets the default Workspace group member corresponding to a Proxy member"""
         return WorkspaceGroupMember(
             "admin#directory#member",
             member_proxy.email,
             WorkspaceGroupMemberRole.MEMBER,
-            type=WorkspaceGroupMemberType.USER,
+            type=type,
             delivery_settings=WorkspaceGroupMemberDeliverySettings.ALL_MAIL,
         )
 
@@ -102,8 +122,8 @@ class SquireWorkspaceGroupService(SquireWorkspaceServiceBase[DirectoryService]):
         )
 
     def _get_wgroup_members_for_mailinglist(
-        self, mailing_list: MailingListProxy
-    ) -> list[tuple[WorkspaceGroupMember, MailingListMemberProxy]]:
+        self, mailing_list: WorkspaceGroupProxy
+    ) -> list[tuple[WorkspaceGroupMember, WorkspaceGroupMemberProxy]]:
         """Sets up the Workspace group members for a given mailing list (e.g. committee or member alias)"""
         # Make Squire's admin user the group owner. We don't want Workspace admins nor regular users to be owners.
         owner = (
@@ -113,29 +133,51 @@ class SquireWorkspaceGroupService(SquireWorkspaceServiceBase[DirectoryService]):
 
         res = [owner]
         for member_proxy in mailing_list.members:
-            res.append((self._get_default_wgroup_member(member_proxy), member_proxy))
+            res.append((self._get_default_wgroup_member(member_proxy, type=member_proxy.type), member_proxy))
         return res
 
+    def attach_workspace_user_to_sync(
+        self, group_members_sync: list[WorkspaceGroupMemberSync]
+    ) -> Iterator[WorkspaceGroupMemberSync]:
+        """Attach corresponding Workspace User/Group to the sync. We'll need this for validation (manual overrides) later on"""
+        for sync in group_members_sync:
+            if sync.sqmember_proxy:
+                match sync.sqmember_proxy.source_obj:
+                    case Member():
+                        wuser = self._user_service.get_user_for_member(sync.sqmember_proxy.source_obj)
+                        if wuser is not None:
+                            sync.wmember_proxy = WorkspaceGroupMemberWUser.from_proxy(wuser)
+                    case AssociationGroup():
+                        wgroup = self.get_group_for_committee(sync.sqmember_proxy.source_obj)
+                        if wgroup is not None:
+                            sync.wmember_proxy = WorkspaceGroupMemberWGroup.from_proxy(wgroup)
+            elif sync.wgroup_member.id:
+                # id is None when: not fetched from Workspace (generated by Squire)
+                match sync.wgroup_member.type:
+                    case WorkspaceGroupMemberType.USER | WorkspaceGroupMemberType.EXTERNAL:
+                        wuser = self._user_service.get_user_by_id(sync.wgroup_member.id)
+                        if wuser is not None:
+                            sync.wmember_proxy = WorkspaceGroupMemberWUser.from_proxy(wuser)
+                    case WorkspaceGroupMemberType.GROUP:
+                        wgroup = self.get_group_by_id(sync.wgroup_member.id)
+                        if wgroup is not None:
+                            sync.wmember_proxy = WorkspaceGroupMemberWGroup.from_proxy(wgroup)
+            yield sync
+
     def get_group_member_syncs(
-        self, committee: MailingListProxy, group: WorkspaceGroup
+        self, mailing_list: WorkspaceGroupProxy, group: WorkspaceGroup
     ) -> Iterator[WorkspaceGroupMemberSync]:
         """Gets the current and desired Workspace group members for a mailing list."""
         current_wgroup_members = self.group_members(group)
-        desired_wgroup_members = self._get_wgroup_members_for_mailinglist(committee)
+        desired_wgroup_members = self._get_wgroup_members_for_mailinglist(mailing_list)
 
-        synced_group_members = self._sync_planner.calc_sync_status_group_members(
-            current_wgroup_members, desired_wgroup_members, is_allow_invalid=False
-        )
+        res_sync = self._sync_helper.get_sync(desired_wgroup_members)
+        res_sync = self._sync_helper.calc_base_sync(current_wgroup_members, res_sync)
+        res_sync = self.attach_workspace_user_to_sync(res_sync)
+        res_sync = self._sync_helper.verify_sync(res_sync)
+        return res_sync
 
-        for sync in synced_group_members:
-            if sync.squire_member and sync.squire_member.pk is not None:
-                sync.workspace_user = self._user_service.get_user_for_member(sync.squire_member)
-            elif sync.wgroup_member.id:
-                sync.workspace_user = self._user_service.get_user_by_id(sync.wgroup_member.id)
-            # yielding prevents iterating twice: once here, once in the caller (most likely)
-            yield sync
-
-    def bulk_sync_group_members(self, committee: MailingListProxy, group: WorkspaceGroup):
+    def bulk_sync_group_members(self, committee: WorkspaceGroupProxy, group: WorkspaceGroup):
         """Modifies the members of a Workspace group corresponding to the given committee. Adds missing members, removes excess members, and updates existing ones."""
         assert group is not None, "Group must be provided."
 
@@ -155,6 +197,10 @@ class SquireWorkspaceGroupService(SquireWorkspaceServiceBase[DirectoryService]):
                     self.logger.warning(
                         f"Did not sync {sync.wgroup_member.email} to group {group.email}. Email considered invalid!"
                     )
+                case WorkspaceGroupMemberSyncStatus.SYNC_NOTOUCH:  # pragma: no cover
+                    self.logger.info(
+                        f"Did not sync {sync.wgroup_member.email} to group {group.email}. Manual override!"
+                    )
 
         print(">>>> start SYNC")
         self._gservice.bulk_change_group_members(group.id, to_update, to_add, to_remove)
@@ -167,3 +213,64 @@ class SquireWorkspaceGroupService(SquireWorkspaceServiceBase[DirectoryService]):
         """Gets the Workspace group that corresponds to the given mailing list, if any"""
         groups = groups if groups is not None else self.groups()
         return next((g for g in groups if g.email == email), None)
+
+    # -----------------------
+    # GROUP SETTINGS (MEMBER MAILING LISTS)
+    # -----------------------
+
+    def _get_default_committee_settings(
+        self, committee: AssociationGroup, receive_only=False
+    ) -> WorkspaceGroupSettings:
+        """Gets group settings that can be used for committee groups"""
+        return WorkspaceGroupSettings(
+            committee.contact_email,
+            name="group name",
+            description="group description",
+            whoCanJoin=WorkspaceGroupJoinPermissions.INVITED_CAN_JOIN,
+            whoCanViewMembership=WorkspaceGroupViewPermissions.ALL_OWNERS_CAN_VIEW,
+            whoCanViewGroup=WorkspaceGroupViewPermissionsExt.ALL_MANAGERS_CAN_VIEW,
+            allowExternalMembers=True,
+            whoCanPostMessage=WorkspaceGroupPostPermissions.ALL_MANAGERS_CAN_POST,
+            allowWebPosting=True,
+            replyTo=WorkspaceGroupReplyTo.REPLY_TO_SENDER,
+            includeCustomFooter=True,
+            customFooterText="You can manage your subscriptions for this email and all other emails in Squire. You can Unsubscribe there! <insert link>",
+            membersCanPostAsTheGroup=False,
+            includeInGlobalAddressList=False,
+            whoCanLeaveGroup=WorkspaceGroupLeavePermissions.NONE_CAN_LEAVE,
+            whoCanContactOwner=WorkspaceGroupContactPermissions.ALL_MANAGERS_CAN_CONTACT,
+            whoCanModerateMembers=WorkspaceGroupModerationPermissions.OWNERS_ONLY,
+            whoCanModerateContent=WorkspaceGroupModerationPermissions.OWNERS_AND_MANAGERS,
+            whoCanAssistContent=WorkspaceGroupModerationPermissions.OWNERS_AND_MANAGERS,
+            enableCollaborativeInbox=False,
+            whoCanDiscoverGroup=WorkspaceGroupDiscoverPermissions.ALL_MEMBERS_CAN_DISCOVER,
+            defaultSender=WorkspaceGroupDefaultSender.DEFAULT_SELF,
+        )
+
+    def _get_default_mailinglist_settings(self, email: str) -> WorkspaceGroupSettings:
+        """Gets group settings that can be used for mailing lists"""
+        return WorkspaceGroupSettings(
+            email,
+            "group name",
+            description="group description",
+            whoCanJoin=WorkspaceGroupJoinPermissions.INVITED_CAN_JOIN,
+            whoCanViewMembership=WorkspaceGroupViewPermissions.ALL_OWNERS_CAN_VIEW,
+            whoCanViewGroup=WorkspaceGroupViewPermissionsExt.ALL_MANAGERS_CAN_VIEW,
+            allowExternalMembers=True,
+            whoCanPostMessage=WorkspaceGroupPostPermissions.ALL_MANAGERS_CAN_POST,
+            allowWebPosting=True,
+            replyTo=WorkspaceGroupReplyTo.REPLY_TO_SENDER,
+            includeCustomFooter=True,
+            customFooterText="You can manage your subscriptions for this email and all other emails in Squire. You can Unsubscribe there! <insert link>",
+            membersCanPostAsTheGroup=False,
+            includeInGlobalAddressList=False,
+            whoCanLeaveGroup=WorkspaceGroupLeavePermissions.NONE_CAN_LEAVE,
+            whoCanContactOwner=WorkspaceGroupContactPermissions.ALL_MANAGERS_CAN_CONTACT,
+            whoCanModerateMembers=WorkspaceGroupModerationPermissions.OWNERS_ONLY,
+            whoCanModerateContent=WorkspaceGroupModerationPermissions.OWNERS_AND_MANAGERS,
+            whoCanAssistContent=WorkspaceGroupModerationPermissions.OWNERS_AND_MANAGERS,
+            enableCollaborativeInbox=False,
+            whoCanDiscoverGroup=WorkspaceGroupDiscoverPermissions.ALL_MEMBERS_CAN_DISCOVER,
+            defaultSender=WorkspaceGroupDefaultSender.DEFAULT_SELF,
+        )
+

@@ -4,7 +4,12 @@ from django.test import TestCase
 
 from committees.email import MemberMailingListAliasSettings, SquireEmailManager
 from committees.models import AssociationGroup
-from gworkspace_integration.workspace_manager.planner.proxy import MailingListMemberProxy, MailingListProxy
+from gworkspace_integration.workspace_manager.planner.proxy import (
+    WorkspaceGroupMemberCommittee,
+    WorkspaceGroupMemberProxy,
+    WorkspaceGroupMemberSqMember,
+    WorkspaceGroupProxy,
+)
 from membership_file.models import Member
 
 
@@ -25,33 +30,37 @@ class ProxyTestCase(TestCase):
         committee = AssociationGroup.objects.create(name="Comm", contact_email="foo@example.com")
         for m in members:
             committee.members.add(m)
-        res = MailingListProxy.from_committee(committee)
+        res = WorkspaceGroupProxy.from_committee(committee)
         self.assertEqual(res.email, committee.contact_email)
         self.assertEqual(len(res.members), 3)
-        self.assertIsInstance(res.members[0], MailingListMemberProxy)
+        self.assertIsInstance(res.members[0], WorkspaceGroupMemberProxy)
 
         SquireEmailManager.get_subscribed_members = Mock(return_value=members)
-        res = MailingListProxy.from_member_mailing_list(("baz@example.com", MemberMailingListAliasSettings("T", "D")))
+        res = WorkspaceGroupProxy.from_member_mailing_list(
+            ("baz@example.com", MemberMailingListAliasSettings("T", "D"))
+        )
         self.assertEqual(res.email, "baz@example.com")
         SquireEmailManager.get_subscribed_members.assert_called_once()
         self.assertEqual(len(res.members), 3)
-        self.assertIsInstance(res.members[0], MailingListMemberProxy)
+        self.assertIsInstance(res.members[0], WorkspaceGroupMemberProxy)
 
         SquireEmailManager.get_active_committees = Mock(
             return_value=[AssociationGroup(contact_email="com@example.com")]
         )
-        res = MailingListProxy.from_committee_mailing_list("bar@example.com")
+        res = WorkspaceGroupProxy.from_committee_mailing_list("bar@example.com")
         SquireEmailManager.get_active_committees.assert_called_once()
         self.assertEqual(res.email, "bar@example.com")
-        self.assertIsInstance(res.members[0], MailingListMemberProxy)
+        self.assertIsInstance(res.members[0], WorkspaceGroupMemberProxy)
 
     def test_mailing_list_member_proxy(self):
         """MailingListMemberProxy creation methods"""
         # We're not interested in the setup of implementation specifics
         committee = AssociationGroup(name="Comm", contact_email="foo@example.com")
-        res = MailingListMemberProxy.from_committee(committee)
+        res = WorkspaceGroupMemberCommittee.from_proxy(committee)
         self.assertEqual(res.email, committee.contact_email)
 
         member = Member(email="bar@example.com")
-        res = MailingListMemberProxy.from_member(member)
+        res = WorkspaceGroupMemberSqMember.from_proxy(member)
         self.assertEqual(res.email, member.email)
+
+        # TODO: test is_valid

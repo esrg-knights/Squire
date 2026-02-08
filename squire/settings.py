@@ -439,7 +439,7 @@ COMMITTEE_CONFIGS = {"archive_addresses": [], "global_addresses": [], "global_ar
 ####################################################################
 # Base path to all setting files that contain secrets. E.g. Google Workspace or Mailcow configuration.
 # Set this to squire/config in settings_local.py
-CONFIG_PATH = "squire/example_configs"
+CONFIG_PATH = "squire/my_configs"
 
 ####################################################################
 # Other Settings

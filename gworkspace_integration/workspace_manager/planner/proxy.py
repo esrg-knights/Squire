@@ -1,15 +1,19 @@
 from dataclasses import dataclass, field
 
 from collections.abc import Iterable
+from typing import Generic, TypeVar
 from typing_extensions import Self
 
 from committees.email import MemberMailingListAlias, SquireEmailManager
 from committees.models import AssociationGroup
+from gworkspace_integration.api.client import GoogleWorkspaceSettings
+from gworkspace_integration.api.formats.groups import WorkspaceGroup, WorkspaceGroupMemberType
+from gworkspace_integration.api.formats.users import WorkspaceUser
 from membership_file.models import Member
 
 
 @dataclass
-class MailingListProxy:
+class WorkspaceGroupProxy:
     """A proxy class for data displaying a mailing list configuration"""
 
     uuid: str
@@ -21,7 +25,7 @@ class MailingListProxy:
     is_public: bool = False
     can_opt_out: bool = True
     default_opt_in: bool = False
-    members: Iterable["MailingListMemberProxy"] = field(default_factory=list)
+    members: Iterable["WorkspaceGroupMemberProxy"] = field(default_factory=list)
 
     @classmethod
     def from_committee(cls, committee: AssociationGroup) -> Self:
@@ -36,7 +40,7 @@ class MailingListProxy:
             is_public=True,
             can_opt_out=False,
             default_opt_in=True,
-            members=[MailingListMemberProxy.from_member(m) for m in committee.members.all()],
+            members=[WorkspaceGroupMemberSqMember.from_proxy(m) for m in committee.members.all()],
         )
 
     @classmethod
@@ -54,7 +58,8 @@ class MailingListProxy:
             can_opt_out=settings.allow_opt_out,
             default_opt_in=settings.default_opt,
             members=[
-                MailingListMemberProxy.from_member(m) for m in SquireEmailManager.get_subscribed_members(mailing_list)
+                WorkspaceGroupMemberSqMember.from_proxy(m)
+                for m in SquireEmailManager.get_subscribed_members(mailing_list)
             ],
         )
 
@@ -71,24 +76,79 @@ class MailingListProxy:
             is_public=False,
             can_opt_out=False,
             default_opt_in=True,
-            members=[MailingListMemberProxy.from_committee(m) for m in SquireEmailManager.get_active_committees()],
+            members=[WorkspaceGroupMemberCommittee.from_proxy(m) for m in SquireEmailManager.get_active_committees()],
         )
 
 
-@dataclass
-class MailingListMemberProxy:
-    """A proxy class for mailing list members"""
+T = TypeVar("T")
 
-    pk: int
+
+@dataclass
+class WorkspaceGroupMemberProxy(Generic[T]):
+    """A proxy class as a Workspace Group member"""
+
+    source_obj: T
     name: str
     email: str
+    type: WorkspaceGroupMemberType = WorkspaceGroupMemberType.USER
 
     @classmethod
-    def from_member(cls, member: Member) -> Self:
-        """Construct from a member"""
-        return cls(member.pk, member.get_full_name(allow_spoof=False), member.email)
+    def from_proxy(cls, proxy: T) -> Self:
+        raise NotImplementedError("Subclasses should override this")
+
+    def is_valid(self, settings: GoogleWorkspaceSettings) -> bool:
+        """Is this proxy valid?"""
+        return True
+
+    def is_manual(self, settings: GoogleWorkspaceSettings) -> bool:
+        """Was this member added manuallY?"""
+        return False
+
+
+class WorkspaceGroupMemberSqMember(WorkspaceGroupMemberProxy[Member]):
+    """Squire Member as a Workspace Group member"""
 
     @classmethod
-    def from_committee(cls, committee: AssociationGroup) -> Self:
-        """Construct from a committee"""
-        return cls(None, committee.name, committee.contact_email)
+    def from_proxy(cls, proxy: Member):
+        return cls(proxy, proxy.get_full_name(allow_spoof=False), proxy.email)
+
+    def is_valid(self, settings: GoogleWorkspaceSettings) -> bool:
+        if self.email == settings.directory_admin_username:
+            return True
+
+        return not self.email.endswith(settings.primary_domain) and not any(
+            self.email.endswith(domain) for domain in settings.domains
+        )
+
+
+class WorkspaceGroupMemberCommittee(WorkspaceGroupMemberProxy[AssociationGroup]):
+    """Committee as a Workspace Group Member"""
+
+    @classmethod
+    def from_proxy(cls, proxy: AssociationGroup) -> Self:
+        return cls(proxy, proxy.name, proxy.contact_email, WorkspaceGroupMemberType.GROUP)
+
+    def is_valid(self, settings: GoogleWorkspaceSettings) -> bool:
+        # Only domain email addresses are valid
+        return self.email.endswith(settings.primary_domain) or any(
+            self.email.endswith(domain) for domain in settings.domains
+        )
+
+
+class WorkspaceGroupMemberWGroup(WorkspaceGroupMemberProxy[WorkspaceGroup]):
+    """Workspace Group as a Workspace Group Member"""
+
+    @classmethod
+    def from_proxy(cls, proxy: WorkspaceGroup):
+        return cls(proxy, proxy.name, proxy.email, WorkspaceGroupMemberType.GROUP)
+
+
+class WorkspaceGroupMemberWUser(WorkspaceGroupMemberProxy[WorkspaceUser]):
+    """Workspace User as a Workspace Group Member"""
+
+    @classmethod
+    def from_proxy(cls, proxy: WorkspaceUser):
+        return cls(proxy, proxy.name.fullName, proxy.primaryEmail)
+
+    def is_manual(self, settings) -> bool:
+        return self.source_obj.orgUnitPath != settings.members_ou and self.email != settings.directory_admin_username

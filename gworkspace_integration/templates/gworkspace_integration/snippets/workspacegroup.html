@@ -123,12 +123,16 @@
                             fas fa-user-check fa-fw text-secondary
                         {% elif sync_member.status.name == "SYNC_INVALID" %}
                             fas fa-user-lock fa-fw text-secondary
+                        {% elif sync_member.status.name == "SYNC_NOTOUCH" %}
+                            fas fa-user-lock fa-fw text-secondary
                         {% else %}
                             far fa-question-circle fa-fw text-info
                         {% endif %}
                         '></i>
                         {% if sync_member.status.name == "SYNC_INVALID" %}
                             <span class="badge badge-secondary badge-pill mr-1">INVALID EMAIL</span>
+                        {% elif sync_member.status.name == "SYNC_NOTOUCH" %}
+                            <span class="badge badge-secondary badge-pill mr-1">MANUAL OVERRIDE</span>
                         {% endif %}
                         {% if sync_member.wgroup_member.role.name != "MEMBER" %}
                             <span class="badge badge-info badge-pill mr-1">{{ sync_member.wgroup_member.role.name }}</span>
@@ -140,13 +144,13 @@
                         <span class="badge badge-warning badge-pill mr-1">External</span>
                         {% endif %} -->
 
-                        <span class='{% if sync_member.status.name == "SYNC_INVALID" %}text-muted font-italic{% endif %}'>
-                        {% if sync_member.squire_member %}
-                            {{ sync_member.squire_member.name }} &mdash;
+                        <span class='{% if sync_member.status.name == "SYNC_INVALID" or sync_member.status.name == "SYNC_NOTOUCH" %}text-muted font-italic{% endif %}'>
+                        {% if sync_member.sqmember_proxy %}
+                            {{ sync_member.sqmember_proxy.name }} &mdash;
                         {% endif %}
 
-                        {% if sync_member.workspace_user and sync_member.workspace_user.name.fullName != sync_member.squire_member.name %}
-                            {{ sync_member.workspace_user.name.fullName }} &mdash;
+                        {% if sync_member.wmember_proxy and sync_member.wmember_proxy.name != sync_member.sqmember_proxy.name %}
+                            {{ sync_member.wmember_proxy.name }} &mdash;
                         {% endif %}
 
                         {{ sync_member.wgroup_member.email }}
