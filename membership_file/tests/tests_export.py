@@ -105,4 +105,4 @@ class MembershipFileExportAsTSVTest(TestCase):
 
     def test_BOM(self):
         exported_str = self.tsvClass.export_data(self.export)
-        exported_str.startswith("\uFEFF")
+        exported_str.startswith("\ufeff")

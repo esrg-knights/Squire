@@ -20,7 +20,6 @@ from nextcloud_integration.nextcloud_client import construct_client
 from nextcloud_integration.forms import *
 from nextcloud_integration.models import SquireNextCloudFolder, SquireNextCloudFile
 
-
 __all__ = [
     "SiteDownloadView",
     "FileBrowserView",

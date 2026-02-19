@@ -12,7 +12,6 @@ from committees.forms import (
     AssociationGroupMembershipForm,
 )
 
-
 __all__ = [
     "AssociationGroupDetailView",
     "AssociationGroupSettingsView",

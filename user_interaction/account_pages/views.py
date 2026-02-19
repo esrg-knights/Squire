@@ -12,7 +12,6 @@ from membership_file.models import Member
 from membership_file.util import MembershipRequiredMixin
 from activity_calendar.models import MemberCalendarSettings
 
-
 __all__ = [
     "SiteAccountView",
     "AccountPasswordChangeView",

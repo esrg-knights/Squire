@@ -4,7 +4,6 @@ from django.test import TestCase
 
 from membership_file.models import Member, MemberLog, MemberLogField, MemberManager, Room, MemberYear, Membership
 
-
 ##################################################################################
 # Test the Member model's methods
 # @since 16 MAR 2020
