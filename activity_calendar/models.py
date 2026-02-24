@@ -20,7 +20,6 @@ from membership_file.models import Member
 from activity_calendar.constants import ActivityType, SlotCreationType, ActivityStatus
 from activity_calendar.managers import MeetingManager
 
-
 User = get_user_model()
 
 #############################################################################

@@ -2,7 +2,6 @@ from django import template
 
 from activity_calendar.forms import RegisterForActivitySlotForm
 
-
 register = template.Library()
 
 

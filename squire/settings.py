@@ -31,7 +31,7 @@ if os.getenv("SENTRY_DSN"):  # pragma: no cover
 
     sentry_sdk.init(
         os.getenv("SENTRY_DSN"),
-        integrations=[DjangoIntegration()],
+        integrations=[DjangoIntegration(cache_spans=True)],
         # Do not send email addresses to Sentry
         send_default_pii=False,
     )

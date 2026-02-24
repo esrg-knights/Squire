@@ -15,7 +15,6 @@ from nextcloud_integration.views import (
     NextcloudConnectionViewMixin,
 )
 
-
 __all__ = [
     "CloudFoldersOverview",
     "CloudFolderEditView",

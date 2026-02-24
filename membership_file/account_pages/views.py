@@ -12,7 +12,6 @@ from user_interaction.accountcollective import AccountViewMixin
 from membership_file.models import Member, Membership
 from membership_file.forms import MemberForm
 
-
 global_preferences = global_preferences_registry.manager()
 
 

@@ -16,7 +16,6 @@ from mailcow_integration.dynamic_preferences_registry import alias_address_to_id
 
 import logging
 
-
 logger = logging.getLogger(__name__)
 
 

@@ -4,7 +4,6 @@ from django.apps import apps
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse, include, path
 
-
 __all__ = ["ViewCollectiveConfig", "ViewCollectiveViewMixin", "ViewCollectiveRegistry"]
 
 

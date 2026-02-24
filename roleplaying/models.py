@@ -10,7 +10,6 @@ from django.utils.text import slugify
 from core.fields import MarkdownTextField
 from inventory.models import Item
 
-
 __all__ = [
     "RoleplayingSystem",
     "RoleplayingItem",

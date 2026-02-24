@@ -11,7 +11,6 @@ from nextcloud_integration.nextcloud_resources import NextCloudFile, NextCloudFo
 from nextcloud_integration.models import SquireNextCloudFolder, SquireNextCloudFile
 from nextcloud_integration.widgets import NextcloudFileSelectWidget
 
-
 __all__ = ["FileMoveForm", "FolderCreateForm", "SyncFileToFolderForm", "FolderEditFormGroup"]
 
 
