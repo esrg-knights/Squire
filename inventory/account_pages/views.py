@@ -12,7 +12,6 @@ from inventory.views import OwnershipMixin
 
 from user_interaction.accountcollective import AccountViewMixin
 
-
 __all__ = ["MemberItemsOverview", "MemberItemRemovalFormView", "MemberItemLoanFormView", "MemberOwnershipAlterView"]
 
 

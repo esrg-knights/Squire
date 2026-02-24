@@ -15,7 +15,6 @@ from nextcloud_integration.forms import (
 from nextcloud_integration.models import SquireNextCloudFolder, SquireNextCloudFile
 from . import *
 
-
 # Note about the patch, make sure to select the nextcloud client constructor from forms as that is loaded before the
 # method is adjusted. As such the forms.construct_client remains the old method instead of the new one.
 

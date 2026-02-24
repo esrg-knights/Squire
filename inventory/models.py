@@ -10,7 +10,6 @@ from django.utils.text import slugify
 
 from membership_file.models import Member
 
-
 __all__ = ["valid_item_class_ids", "Ownership", "Item", "MiscellaneousItem"]
 
 

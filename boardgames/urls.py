@@ -2,7 +2,6 @@ from django.urls import path, include
 
 from boardgames.views import *
 
-
 app_name = "boardgames"
 
 urlpatterns = [

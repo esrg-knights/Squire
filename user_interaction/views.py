@@ -14,7 +14,6 @@ from membership_file.models import Membership
 from membership_file.views import MembershipRequiredMixin
 from utils.spoofs import optimise_naming_scheme
 
-
 global_preferences = global_preferences_registry.manager()
 
 

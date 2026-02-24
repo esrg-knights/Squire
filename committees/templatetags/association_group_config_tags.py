@@ -3,7 +3,6 @@ from django import template
 from committees.committee_pages.options import SettingsOptionBase
 from committees.committeecollective import registry
 
-
 __all__ = ["render_options", "get_absolute_url", "get_accessible_configs"]
 
 register = template.Library()

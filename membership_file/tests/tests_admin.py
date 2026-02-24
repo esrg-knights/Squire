@@ -11,7 +11,6 @@ from membership_file.admin import MemberWithLog
 from membership_file.tests.util import fillDictKeys
 from membership_file.models import Member, MemberLog, MemberLogField, MemberYear, Membership
 
-
 ##################################################################################
 # Test cases for MemberLog-logic and Member deletion logic on the admin-side
 # @since 19 JUL 2019

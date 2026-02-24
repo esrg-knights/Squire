@@ -1,4 +1,5 @@
 import mimetypes
+import logging
 
 from django.http.response import HttpResponse, HttpResponseRedirect
 from django.contrib.messages import error as error_msg
@@ -19,7 +20,6 @@ from nextcloud_integration.nextcloud_client import construct_client
 from nextcloud_integration.forms import *
 from nextcloud_integration.models import SquireNextCloudFolder, SquireNextCloudFile
 
-
 __all__ = [
     "SiteDownloadView",
     "FileBrowserView",
@@ -30,6 +30,8 @@ __all__ = [
     "SyncFileToFolderView",
     "NextcloudConnectionViewMixin",
 ]
+
+logger = logging.getLogger("nextcloud_integration")
 
 
 class NextcloudConnectionViewMixin:
@@ -201,6 +203,7 @@ class DownloadFileview(MembershipRequiredMixin, NextcloudConnectionViewMixin, Si
     def get(self, request, *args, **kwargs):
         if self.file.is_missing or self.file.folder.is_missing:
             error_msg(self.request, "File could not be retrieved as it missing on the cloud.")
+            logger.info("User tried to download missing file.")
             return HttpResponseRedirect(reverse_lazy("nextcloud:site_downloads"))
 
         file_data = self.get_file(self.file)
@@ -232,7 +235,12 @@ class DownloadFileview(MembershipRequiredMixin, NextcloudConnectionViewMixin, Si
                     "It is unknown when it will be fixed as it needs to be addressed manually."
                 )
         if msg is None:
-            msg = "Something unexpected occurred. Please inform the UUPS is this keeps occuring."
+            msg = "Something unexpected occurred. Please inform the UUPS if this keeps occuring."
         error_msg(self.request, msg)
+        # Logging an exception so Sentry is notified with the full traceback.
+        # Normally this happens automatically, but since this isn’t an usual exception or 500,
+        # it needs to be logged manually.
+        # There are probably better ways to do this.
+        logger.exception("Nextcloud operation failed: %s", error)
 
         return HttpResponseRedirect(reverse_lazy("nextcloud:site_downloads"))

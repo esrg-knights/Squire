@@ -1,7 +1,6 @@
 from django.utils.timezone import now
 from tempus_dominus.widgets import DateTimePicker
 
-
 __all__ = ["BootstrapDateTimePickerInput"]
 
 

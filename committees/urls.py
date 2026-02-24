@@ -5,7 +5,6 @@ from committees.views import *
 from committees.committeecollective import registry
 from committees.url_converters import AssociationgroupConverter
 
-
 register_converter(AssociationgroupConverter, "assoc_group")
 
 

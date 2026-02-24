@@ -13,7 +13,6 @@ from activity_calendar.forms import ActivityMomentFormMixin
 from activity_calendar.committee_pages.utils import get_meeting_activity, create_meeting_activity
 from activity_calendar.widgets import BootstrapDateTimePickerInput
 
-
 __all__ = [
     "CreateActivityMomentForm",
     "AddMeetingForm",

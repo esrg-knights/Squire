@@ -15,7 +15,6 @@ from utils.views import SearchFormMixin, RedirectMixin
 from inventory.models import Ownership, Item
 from inventory.forms import *
 
-
 __all__ = [
     "TypeCatalogue",
     "CatalogueInstructionsView",
