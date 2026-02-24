@@ -9,10 +9,14 @@ from .models import Activity
 from .constants import ActivityType
 
 
-def get_json_from_activity_moment(activity_moment, user=None):
+def get_json_from_activity_moment(activity_moment, user=None, show_cancelled_in_title=False):
+    title = activity_moment.title
+    if activity_moment.is_cancelled and show_cancelled_in_title:
+        title = f"Cancelled: {title}"
+
     return {
         "groupId": activity_moment.parent_activity.id,
-        "title": activity_moment.title,
+        "title": title,
         "description": activity_moment.description.as_rendered(),
         "location": activity_moment.location,
         # use urlLink instead of url as that creates unwanted interactions with the calendar js module
@@ -73,7 +77,9 @@ def fullcalendar_feed(request):
     activity_moment_jsons = []
     for activity in Activity.objects.filter(published_date__lte=timezone.now(), type=ActivityType.ACTIVITY_PUBLIC):
         for activity_moment in activity.get_activitymoments_between(start_date, end_date):
-            json_instance = get_json_from_activity_moment(activity_moment, user=request.user)
+            json_instance = get_json_from_activity_moment(
+                activity_moment, user=request.user, show_cancelled_in_title=True
+            )
             activity_moment_jsons.append(json_instance)
 
     return JsonResponse({"activities": activity_moment_jsons})
