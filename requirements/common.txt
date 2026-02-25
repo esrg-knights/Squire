@@ -2,17 +2,17 @@
 # These are libraries that are needed for any environment
 
 # Import the common-dependencies
-Django~=5.2.11
-django-bootstrap4~=24.4
+Django~=5.1.0
+django-bootstrap4~=26.1
 django-cleanup~=9.0.0 # Removes old FileField files upon saving
-djangorestframework~=3.15.1 # TODO: Deprecate
+djangorestframework~=3.16.1 # TODO: Deprecate
 Pillow~=12.1.1 # ImageField support
 django-ical~=1.9.2 # iCalendar export
-django-recurrence~=1.11.1 # Recurring Dates
-django-import-export[xlsx,ods]~=4.2.0 # Import/Export models
-django-dynamic-preferences~=1.16.0 # Global Preferences / User Preferences
-django-object-actions~=4.3.0 # Dynamic admin panel actions
-martor~=1.6.44; # Markdown Editor
+django-recurrence~=1.14 # Recurring Dates
+django-import-export[xlsx,ods]~=4.4.0 # Import/Export models
+django-dynamic-preferences~=1.17.0 # Global Preferences / User Preferences
+django-object-actions~=5.0.0 # Dynamic admin panel actions
+martor~=1.7.16; # Markdown Editor
 pymdown-extensions~=9.11 # Extra markdown features (Cannot upgrade due to martor, which requires Markdown<3.6)
 django-pwa~=2.0.1 # Progressive Webapp
 requests~=2.32.3 # Requests (needed for Mailcow API)

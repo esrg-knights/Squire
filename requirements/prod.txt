@@ -6,4 +6,4 @@
 
 # Import the prod-dependencies
 gunicorn~=23.0.0
-sentry-sdk[django]~=2.48.0
+sentry-sdk[django]~=2.53.0

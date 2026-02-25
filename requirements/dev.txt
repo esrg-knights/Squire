@@ -6,7 +6,7 @@
 
 # Import the dev-dependencies
 coverage~=7.6.4 # Code Coverage
-django-debug-toolbar~=4.4.6 # Debug Panel
-django-test-migrations~=1.4.0 # Testing migrations
+django-debug-toolbar~=6.2.0 # Debug Panel
+django-test-migrations~=1.5.0 # Testing migrations
 black # Linting
 aiosmtpd # Email debugging
