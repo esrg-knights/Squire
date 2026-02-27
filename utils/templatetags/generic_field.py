@@ -28,7 +28,7 @@ def generic_field(*args):
         # Catch errors made when passing wrong parameters, which can happen during development
         if not isinstance(boundfield, BoundField):
             raise ImproperlyConfigured(
-                "Passed a wrong parameter to generic_field; expected a Field but got %s." % str(boundfield)
+                f"Passed a wrong parameter to generic_field; expected a Field but got {str(type(boundfield))} ({boundfield})"
             )
 
         multi_or_single_widget = boundfield.field.widget

@@ -1,7 +1,10 @@
+import copy
 from datetime import datetime
 
 from django.contrib import admin, messages
 from django_object_actions import DjangoObjectActions, action as object_action
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from import_export.admin import ExportActionMixin
 from import_export.forms import ExportForm
 from import_export.formats.base_formats import CSV, ODS, TSV, XLSX
@@ -11,7 +14,7 @@ from membership_file.forms import AdminMemberForm
 from membership_file.export import MemberResource, MembersFinancialResource
 from membership_file.models import Member, MemberLog, MemberLogField, Room, MemberYear, Membership
 from membership_file.views import RegisterNewMemberAdminView, ResendRegistrationMailAdminView
-from utils.forms import RequestUserToFormModelAdminMixin
+from utils.forms import RequestUserToFormModelAdminMixin, replace_in_fieldsets
 
 
 class TSVUnicodeBOM(TSV):
@@ -30,11 +33,6 @@ class HideRelatedNameAdmin(admin.ModelAdmin):
         css = {
             "all": ("css/hide_related_model_name.css",),
         }
-
-
-class RoomInline(admin.TabularInline):
-    model = Room.members_with_access.through
-    extra = 0
 
 
 class MemberYearInline(admin.TabularInline):
@@ -163,7 +161,9 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, Expor
         ('Room Access', {'fields':
             ['key_id', 'tue_card_number',
             ('external_card_number', 'external_card_digits'),
-            'external_card_deposit', 'accessible_rooms']}),
+            'external_card_deposit',
+            '<ROOM_PLACEHOLDER>'
+            ]}),
         ('Legal Information', {'fields':
             ['educational_institution', 'student_number',
             'date_of_birth', 'legal_name']}),
@@ -220,6 +220,23 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, Expor
         )
 
     mark_as_current_member.short_description = "Assign as member of the currently active year"
+
+    # Users without change permissions should still be able to view the attached rooms. Without the behaviour below
+    #   a user would only see <None>, even if rooms are set!
+    # TODO: Generalize this so it can be used in other admin panels as well!
+    def accessible_rooms_readonly(self, obj):
+        rooms = obj.accessible_rooms.all()
+        if not rooms:
+            return "-"
+        return mark_safe("".join(format_html("<li>{}</li>", r) for r in rooms))
+
+    accessible_rooms_readonly.short_description = "Rooms"
+
+    def get_fieldsets(self, request, obj=None):
+        replacement = (
+            "accessible_rooms_change" if request.user.has_perm("app.change_member") else "accessible_rooms_readonly"
+        )
+        return replace_in_fieldsets(copy.deepcopy(self.fieldsets), "<ROOM_PLACEHOLDER>", replacement)
 
     # Disable deletion if the member was not marked for deletion
     # Disable deletion for the user that marked the member for deletion

@@ -1,6 +1,6 @@
 from typing import Any, Dict
 from django import forms
-from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.contrib.admin.widgets import FilteredSelectMultiple, RelatedFieldWidgetWrapper
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.mail import EmailMultiAlternatives
@@ -21,6 +21,8 @@ from utils.widgets import OtherRadioSelect
 # Defines forms related to the membership file.
 # @since 05 FEB 2020
 ##################################################################################
+from django.contrib import admin
+from django.db import models
 
 
 class MemberRoomForm(forms.ModelForm):
@@ -29,9 +31,16 @@ class MemberRoomForm(forms.ModelForm):
     the rooms that members have access to.
     """
 
-    accessible_rooms = forms.ModelMultipleChoiceField(
+    accessible_rooms_change = forms.ModelMultipleChoiceField(
         Room.objects.all(),
-        widget=FilteredSelectMultiple("Rooms", False),
+        label="Rooms",
+        widget=RelatedFieldWidgetWrapper(
+            widget=FilteredSelectMultiple("Rooms", False),
+            rel=models.ManyToManyRel(field=Member, to=Room, through=Member.accessible_rooms.through),
+            # TODO: Should probably be our own admin site instead!
+            admin_site=admin.site,
+        ),
+        # ,
         required=False,
     )
 
@@ -40,12 +49,12 @@ class MemberRoomForm(forms.ModelForm):
         if self.instance.pk:
             # Set initial values (not needed if creating a new instance)
             initial_rooms = self.instance.accessible_rooms.values_list("pk", flat=True)
-            self.initial["accessible_rooms"] = initial_rooms
+            self.initial["accessible_rooms_change"] = initial_rooms
 
     def _save_m2m(self):
         super()._save_m2m()
         self.instance.accessible_rooms.clear()
-        self.instance.accessible_rooms.add(*self.cleaned_data["accessible_rooms"])
+        self.instance.accessible_rooms.add(*self.cleaned_data["accessible_rooms_change"])
 
 
 class AdminMemberForm(UpdatingUserFormMixin, MemberRoomForm):
@@ -64,7 +73,13 @@ class MemberForm(UpdatingUserFormMixin, MemberRoomForm):
     class Meta:
         model = Member
         exclude = ("last_updated_by", "last_updated_date", "marked_for_deletion", "user", "notes", "is_deregistered")
-        readonly_fields = ["accessible_rooms", "member_since", "is_honorary_member", "external_card_deposit", "key_id"]
+        readonly_fields = [
+            "accessible_rooms_change",
+            "member_since",
+            "is_honorary_member",
+            "external_card_deposit",
+            "key_id",
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

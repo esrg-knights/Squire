@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 import copy
 from django import forms
 from django.conf import settings
@@ -15,6 +16,30 @@ def get_basic_filter_by_field_form(field_name):
             return queryset.filter(name__icontains=self.cleaned_data["search_field"]).order_by(field_name)
 
     return FilterByFieldForm
+
+
+def replace_in_fieldsets(fieldsets, placeholder_value: str, replacement: str | None):
+    """
+    Given some fieldset, replaces all fields named `placeholder_value` with a `replacement` field.
+    If `replacement` is `None`, the field is removed instead.
+    """
+    for _, section_data in fieldsets:
+        if "fields" in section_data:
+            fields = section_data["fields"]
+            for i, field in enumerate(fields):
+                if field == placeholder_value:
+                    if replacement is None:
+                        del fields[i]
+                    else:
+                        fields[i] = replacement
+                elif isinstance(field, Iterable):
+                    for j, subfield in enumerate(field):
+                        if subfield == placeholder_value:
+                            if replacement is None:
+                                del field[j]
+                            else:
+                                field[j] = replacement
+    return fieldsets
 
 
 class FilterForm(forms.Form):

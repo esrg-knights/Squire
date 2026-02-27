@@ -49,12 +49,12 @@
             {% generic_field form.external_card_deposit -1 %}
           {% endif %}
 
-          {% if not form.accessible_rooms.field.disabled %}
-            {% generic_field form.accessible_rooms -1 %}
+          {% if not form.accessible_rooms_change.field.disabled %}
+            {% generic_field form.accessible_rooms_change -1 %}
           {% else %}
             <strong>Accessible Rooms:</strong>
             <ul>
-              {% for x in form|selected_m2m_labels:"accessible_rooms" %}
+              {% for x in form|selected_m2m_labels:"accessible_rooms_change" %}
                 <li>{{ x }}</li>
               {% empty %}
                 <li>No rooms are accessible by you</li>
