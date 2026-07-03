@@ -2,7 +2,7 @@
 # These are libraries that are needed for any environment
 
 # Import the common-dependencies
-Django~=5.1.0
+Django~=5.2.15
 django-bootstrap4~=26.1
 django-cleanup~=9.0.0 # Removes old FileField files upon saving
 djangorestframework~=3.16.1 # TODO: Deprecate

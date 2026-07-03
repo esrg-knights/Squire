@@ -15,7 +15,7 @@ class LogFileView(AdminStatusViewMixin, TemplateView):
     """
 
     tags = {
-        "&lt;[a-z0-9_\-:\s]*&gt;": "text-danger",
+        r"&lt;[a-z0-9_\-:\s]*&gt;": "text-danger",
         "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}(,[0-9]{3})?": "far fa-clock text-muted",
         re.escape("[debug]"): "text-secondary font-weight-bold",
         re.escape("[info]"): "text-info font-weight-bold",
