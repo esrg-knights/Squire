@@ -5,4 +5,4 @@
 -r prod.txt
 
 coverage~=7.6.4 # Code Coverage
-django-test-migrations~=1.4.0 # Testing migrations
+django-test-migrations~=1.5.0 # Testing migrations
