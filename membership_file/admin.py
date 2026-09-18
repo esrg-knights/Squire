@@ -142,7 +142,7 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, Expor
     ]
     search_help_text = "Search for name, email, phone number, TUe/external card number, key ID"
 
-    readonly_fields = ["last_updated_by", "last_updated_date"]
+    readonly_fields = ["last_updated_by", "last_updated_date", "accessible_rooms_readonly"]
 
     # Display a search box instead of a dropdown menu
     autocomplete_fields = ["user"]
