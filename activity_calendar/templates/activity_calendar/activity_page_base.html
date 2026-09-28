@@ -157,7 +157,7 @@
                         <div id="event-description" class="rendered-md">{{ activity_moment.description.as_rendered  }}</div>
                     </div>
                 </div>
-				{ % if activity_moment.subscriptions_required % }
+				{% if activity_moment.subscriptions_required %}
 					{% if activity_moment.slot_creation != activity.SLOT_CREATION_NONE %}
 						<div class="d-flex">
 							<!-- Text Icon -->
