@@ -157,38 +157,34 @@
                         <div id="event-description" class="rendered-md">{{ activity_moment.description.as_rendered  }}</div>
                     </div>
                 </div>
-
-                {% if activity_moment.slot_creation != activity.SLOT_CREATION_NONE %}
-                    <div class="d-flex">
-                        <!-- Text Icon -->
-                        <div class="col-xs-2"><i class="far fa-clipboard fa-fw"></i></div>
-                        <!-- Event Description -->
-                        <div class="col align-self-center">
-                            <p id="event-status">
-                                {% if subscriptions_open %}
-                                    {% if activity_moment.is_full %}
-                                        Activity is full.
-                                    {% else %}
-                                        Activity is open for sign-ups
-                                    {% endif %}
-                                {% else %}
-                                    {% if subscription_open_date %}
-                                        Subscriptions will open on {{ subscription_open_date|date:"j E, H:i" }}
-                                    {% else %}
-                                        Sign-ups are closed
-                                    {% endif %}
-                                {% endif %}
-                                <br>
-                                {% if activity_moment.subscriptions_required %}
-                                    <i>Registrations are <strong>required</strong>! You cannot join this activity otherwise!</i>
-                                {% else %}
-                                    <small class="text-muted">Registrations are <i>optional</i>, but are appreciated!</small>
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
-                {% endif %}
-
+				{ % if activity_moment.subscriptions_required % }
+					{% if activity_moment.slot_creation != activity.SLOT_CREATION_NONE %}
+						<div class="d-flex">
+							<!-- Text Icon -->
+							<div class="col-xs-2"><i class="far fa-clipboard fa-fw"></i></div>
+							<!-- Event Description -->
+							<div class="col align-self-center">
+								<p id="event-status">
+									{% if subscriptions_open %}
+										{% if activity_moment.is_full %}
+											Activity is full.
+										{% else %}
+											Activity is open for sign-ups
+										{% endif %}
+									{% else %}
+										{% if subscription_open_date %}
+											Subscriptions will open on {{ subscription_open_date|date:"j E, H:i" }}
+										{% else %}
+											Sign-ups are closed
+										{% endif %}
+									{% endif %}
+									<br>
+									<i>Registrations are <strong>required</strong>! You cannot join this activity otherwise!</i>
+								</p>
+							</div>
+						</div>
+					{% endif %}
+				{% endif %}
                 <div style="height: 4em;" class="d-none d-md-flex">
 
                 </div>
