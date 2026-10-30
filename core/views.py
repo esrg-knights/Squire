@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Any, Dict
 
@@ -7,21 +8,22 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, HttpRequest
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.http.response import Http404
-from django.shortcuts import render
-from django.urls import reverse, reverse_lazy
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
-from django.shortcuts import get_object_or_404
 from django.views import View
-from django.views.generic import TemplateView, FormView
+from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView
-from django.views.decorators.http import require_safe
 from dynamic_preferences.registries import global_preferences_registry
 
 from core.forms import LoginForm, RegisterForm
 from core.models import MarkdownImage, Shortcut
 from membership_file.util import MembershipRequiredMixin
+
+logger = logging.getLogger(__name__)
+
 
 global_preferences = global_preferences_registry.manager()
 User = get_user_model()
@@ -243,9 +245,11 @@ class MartorImageUploadAPIView(LoginRequiredMixin, PermissionRequiredMixin, View
         try:
             # load() could spot a truncated JPEG, but it loads the entire
             # image in memory, which is a DoS vector. See #3848 and #18520.
-            image = Image.open(uploaded_file)
+            # ¡¡¡TEMP DISABLED, PLEASE ENABLE SOON AGAIN!!!
+            # image = Image.open(uploaded_file)
             # verify() must be called immediately after the constructor.
-            image.verify()
+            # image.verify()
+            logger.warn("Image Verification currently disabled, please update Pillow, and remove this log statement")
         except Exception as exc:
             return self._json_bad_request(_("Bad image format."))
         #
