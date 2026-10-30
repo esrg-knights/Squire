@@ -81,8 +81,13 @@ class MembersFinancialResource(resources.ModelResource):
 
     email = Field()
 
-    def dehydrate_email(self, membership):
+    def dehydrate_email(self, membership) -> str:
+        if membership.member is None:
+            return ""
         return membership.member.email
 
-    def dehydrate_member(self, membership):
-        return membership.member.get_full_name()
+    def dehydrate_member(self, membership) -> str:
+        # Handle deleted members; their membership entry is kept to keep track of historical membership counts
+        if membership.member is None:
+            return "Deleted Member"
+        return membership.member.get_full_name(allow_spoof=False)
