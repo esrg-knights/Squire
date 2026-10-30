@@ -65,7 +65,9 @@ class AdminMemberForm(UpdatingUserFormMixin, MemberRoomForm):
         if self.instance.marked_for_deletion:
             for field in self.fields:
                 self.fields[field].disabled = True
-            self.fields["marked_for_deletion"].disabled = False
+            if "marked_for_deletion" in self.fields:
+                # Handle cases where the admin has readonly permissions
+                self.fields["marked_for_deletion"].disabled = False
 
 
 # A form that allows a member to be updated or created
