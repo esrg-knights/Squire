@@ -1,6 +1,9 @@
 import json
 import os
+import shutil
+import unittest
 
+import PIL
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
@@ -11,8 +14,6 @@ from django.urls import reverse
 
 from core.models import MarkdownImage
 from core.tests.util import suppress_warnings
-
-import shutil
 
 User = get_user_model()
 
@@ -146,6 +147,9 @@ class MartorImageUploadTest(TestCase):
         )
 
     @suppress_warnings
+    @unittest.skipIf(
+        PIL.__version__ == "12.3.0", reason="Version disabled because of security, but should be enabled again"
+    )
     def test_upload_invalid_image(self):
         """Tests if uploading a file that is not an image raises a 400 Bad Request"""
         self._test_image_upload(
