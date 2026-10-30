@@ -243,9 +243,10 @@ class MartorImageUploadAPIView(LoginRequiredMixin, PermissionRequiredMixin, View
         try:
             # load() could spot a truncated JPEG, but it loads the entire
             # image in memory, which is a DoS vector. See #3848 and #18520.
-            image = Image.open(uploaded_file)
+            #¡¡¡TEMP DISABLED, PLEASE ENABLE SOON AGAIN!!!
+            #image = Image.open(uploaded_file)
             # verify() must be called immediately after the constructor.
-            image.verify()
+            #image.verify()
         except Exception as exc:
             return self._json_bad_request(_("Bad image format."))
         #
