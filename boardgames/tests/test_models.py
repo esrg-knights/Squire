@@ -10,7 +10,7 @@ class TestBoardGame(TestCase):
         # Test that play_duration is a choice field with 5 choices
         field = BoardGame._meta.get_field("play_duration")
         self.assertIsNotNone(field.choices)
-        self.assertEqual(len(field.choices), 5)
+        self.assertEqual(len(field.choices), 6)
 
     def test_get_players_display(self):
         txt = BoardGame(name="test-game")
