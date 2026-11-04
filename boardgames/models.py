@@ -22,6 +22,7 @@ class BoardGame(Item):
         ("XS", "<15 min."),
         ("S", "< 1 hour"),
         ("N", "1-2 hours"),
+        ("M", "2-3 hours"),
         ("L", "3-4 hours"),
         ("XL", "4+ hours"),
     ]
