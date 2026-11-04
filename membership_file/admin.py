@@ -241,6 +241,9 @@ class MemberWithLog(RequestUserToFormModelAdminMixin, DjangoObjectActions, Expor
     # Disable deletion if the member was not marked for deletion
     # Disable deletion for the user that marked the member for deletion
     def has_delete_permission(self, request, obj=None):
+        if not super().has_delete_permission(request, obj):
+            return False
+
         # User is normally allowed to delete these objects
         if obj is None:
             return True
