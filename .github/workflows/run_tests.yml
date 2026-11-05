@@ -40,3 +40,5 @@ jobs:
           fail_ci_if_error: true
           files: ./coverage/coverage.xml
           flags: unittests
+      - name: Check for database migrations
+        run: ./manage.py makemigrations && git diff --exit-code && (git ls-files --others --exclude-standard ; test -z "$(git ls-files --others --exclude-standard)")
