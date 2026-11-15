@@ -1,6 +1,6 @@
 import recurrence
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.urls import reverse_lazy
@@ -8,7 +8,6 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.utils.text import slugify
 
-from django_ical import feedgenerator
 from django_ical.feedgenerator import ICal20Feed
 from django_ical.utils import build_rrule_from_recurrences_rrule
 from django_ical.views import ICalFeed
@@ -21,6 +20,8 @@ import activity_calendar.util as util
 
 
 def only_for(class_type, default=None):
+    """Decorator to disable functions in subclasses."""
+
     def only_for_decorator(func):
         def func_wrapper(self, item):
             if isinstance(item, class_type):
@@ -33,7 +34,12 @@ def only_for(class_type, default=None):
 
 
 def get_feed_id(item):
-    # ID should be _globally_ unique
+    """
+    The feed ID generating function.
+    As of writing only used by CESTEventFeed.item_guid,
+    but since ID’s should be _globally_ unique,
+    it is defined here to be used by all feeds.
+    """
     if isinstance(item, Activity):
         return f"local_activity-name-{item.id}@kotkt.nl"
     elif isinstance(item, ActivityMoment):
@@ -108,7 +114,7 @@ class CESTEventFeed(ICalFeed):
             raise KeyError(f"'calendar_description' for {self.__class__.__name__} has not been defined.")
         return self.calendar_description
 
-    def method(self):
+    def method(self, obj: object):
         return "PUBLISH"
 
     def timezone(self):
@@ -175,7 +181,7 @@ class CESTEventFeed(ICalFeed):
     def item_updateddate(self, item):
         return item.last_updated
 
-    def item_timestamp(self, item):
+    def item_timestamp(self, item):  # pyright: ignore[reportIncompatibleMethodOverride]
         # When the item was generated, which is at this moment!
         return timezone.now()
 
